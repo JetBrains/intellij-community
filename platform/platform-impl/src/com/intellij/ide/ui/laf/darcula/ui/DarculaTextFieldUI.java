@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -27,16 +30,6 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     int minHeight = (isCompact(c) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + i.top + i.bottom;
     return DarculaEditorTextFieldBorder.isComboBoxEditor(c) || UIUtil.getParentOfType(JSpinner.class, c) != null ?
               textHeight : minHeight;
-  }
-
-  @Override
-  protected Icon getSearchIcon(boolean hovered, boolean clickable) {
-    return LafIconLookup.getIcon(clickable ? "searchWithHistory" : "search");
-  }
-
-  @Override
-  protected Icon getClearIcon(boolean hovered, boolean clickable) {
-    return !clickable ? null : LafIconLookup.getIcon("clear");
   }
 
   @Override

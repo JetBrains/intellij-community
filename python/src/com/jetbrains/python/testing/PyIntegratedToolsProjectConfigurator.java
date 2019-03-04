@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing;
 
 import com.intellij.openapi.application.Application;
@@ -24,6 +10,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectConfigurator;
@@ -56,7 +43,7 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
   private static final Logger LOG = Logger.getInstance(PyIntegratedToolsProjectConfigurator.class);
 
   @Override
-  public void configureProject(Project project, @NotNull VirtualFile baseDir, Ref<Module> moduleRef) {
+  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) {
       return;
@@ -74,7 +61,8 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
     if (module.isDisposed()) {
       return;
     }
-    assert !ApplicationManager.getApplication().isDispatchThread() : "This method should not be called on AWT";
+    final Application application = ApplicationManager.getApplication();
+    assert !application.isDispatchThread() : "This method should not be called on AWT";
 
     final PyDocumentationSettings docSettings = PyDocumentationSettings.getInstance(module);
     LOG.debug("Integrated tools configurator has started");
@@ -101,7 +89,8 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
     for (VirtualFile file : pyFiles) {
       if (file.getName().startsWith("test")) {
         if (testRunner.isEmpty()) {
-          testRunner = checkImports(file, module); //find test runner import
+          //find test runner import
+          testRunner = application.runReadAction((Computable<String>)() -> checkImports(file, module));
           if (!testRunner.isEmpty()) {
             LOG.debug("Test runner '" + testRunner + "' was detected from imports in the file '" + file.getPath() + "'");
           }
@@ -200,6 +189,7 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
 
   @NotNull
   private static String checkImports(@NotNull VirtualFile file, @NotNull Module module) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(file);
     if (psiFile instanceof PyFile) {
       final List<PyImportElement> importTargets = ((PyFile)psiFile).getImportTargets();

@@ -30,21 +30,22 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  */
 class Win32FsCache {
   private final IdeaWin32 myKernel = IdeaWin32.getInstance();
-  private Reference<TIntObjectHashMap<THashMap<String, FileAttributes>>> myCache;
+  private Reference<TIntObjectHashMap<Map<String, FileAttributes>>> myCache;
 
   void clearCache() {
     myCache = null;
   }
 
   @NotNull
-  private TIntObjectHashMap<THashMap<String, FileAttributes>> getMap() {
-    TIntObjectHashMap<THashMap<String, FileAttributes>> map = com.intellij.reference.SoftReference.dereference(myCache);
+  private TIntObjectHashMap<Map<String, FileAttributes>> getMap() {
+    TIntObjectHashMap<Map<String, FileAttributes>> map = com.intellij.reference.SoftReference.dereference(myCache);
     if (map == null) {
       map = new TIntObjectHashMap<>();
       myCache = new SoftReference<>(map);
@@ -61,9 +62,9 @@ class Win32FsCache {
     }
 
     String[] names = new String[fileInfo.length];
-    TIntObjectHashMap<THashMap<String, FileAttributes>> map = getMap();
+    TIntObjectHashMap<Map<String, FileAttributes>> map = getMap();
     int parentId = ((VirtualFileWithId)file).getId();
-    THashMap<String, FileAttributes> nestedMap = map.get(parentId);
+    Map<String, FileAttributes> nestedMap = map.get(parentId);
     if (nestedMap == null) {
       nestedMap = new THashMap<>(fileInfo.length, FileUtil.PATH_HASHING_STRATEGY);
       map.put(parentId, nestedMap);
@@ -81,8 +82,8 @@ class Win32FsCache {
   FileAttributes getAttributes(@NotNull VirtualFile file) {
     VirtualFile parent = file.getParent();
     int parentId = parent instanceof VirtualFileWithId ? ((VirtualFileWithId)parent).getId() : -((VirtualFileWithId)file).getId();
-    TIntObjectHashMap<THashMap<String, FileAttributes>> map = getMap();
-    THashMap<String, FileAttributes> nestedMap = map.get(parentId);
+    TIntObjectHashMap<Map<String, FileAttributes>> map = getMap();
+    Map<String, FileAttributes> nestedMap = map.get(parentId);
     String name = file.getName();
     FileAttributes attributes = nestedMap != null ? nestedMap.get(name) : null;
 
@@ -105,7 +106,7 @@ class Win32FsCache {
   }
 
   private static class IncompleteChildrenMap<K, V> extends THashMap<K,V> {
-    IncompleteChildrenMap(TObjectHashingStrategy<K> strategy) {
+    IncompleteChildrenMap(@NotNull TObjectHashingStrategy<K> strategy) {
       super(strategy);
     }
   }

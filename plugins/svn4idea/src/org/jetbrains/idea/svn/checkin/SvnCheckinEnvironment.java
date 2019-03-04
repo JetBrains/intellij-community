@@ -60,12 +60,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   @Override
   @Nullable
-  public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    return null;
-  }
-
-  @Override
-  @Nullable
   public String getHelpId() {
     return null;
   }
@@ -102,11 +96,11 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
     final StringBuilder committedRevisions = new StringBuilder();
     for (CommitInfo result : results) {
-      if (result != CommitInfo.EMPTY && result.getRevision() > 0) {
+      if (result != CommitInfo.EMPTY && result.getRevisionNumber() > 0) {
         if (committedRevisions.length() > 0) {
           committedRevisions.append(", ");
         }
-        committedRevisions.append(result.getRevision());
+        committedRevisions.append(result.getRevisionNumber());
       }
     }
     if (committedRevisions.length() > 0) {

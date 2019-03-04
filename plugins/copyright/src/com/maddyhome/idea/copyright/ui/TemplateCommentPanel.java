@@ -15,10 +15,12 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ui.UIUtil;
 import com.maddyhome.idea.copyright.CopyrightProfileKt;
+import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.Options;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
 import com.maddyhome.idea.copyright.pattern.VelocityHelper;
+import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -437,5 +439,13 @@ public class TemplateCommentPanel implements SearchableConfigurable {
   @NotNull
   public String getId() {
     return getHelpTopic() + "." + fileType.getName();
+  }
+
+  @NotNull
+  @Override
+  public Class<?> getOriginalClass() {
+    final FileType type = FileTypeUtil.getInstance().getFileTypeByType(fileType);
+    final UpdateCopyrightsProvider provider = type != null ? CopyrightUpdaters.INSTANCE.forFileType(type) : null;
+    return provider != null ? provider.getClass() : super.getClass();
   }
 }

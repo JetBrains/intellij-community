@@ -5,6 +5,6 @@ public class TestGenericMethodOverloading2 {
         }
     }
     {
-        new A().<ref>equals(new Object());
+        new A().<caret>equals(new Object());
     }
 }

@@ -2,6 +2,7 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -16,22 +17,26 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
+import java.io.File;
 import java.util.Set;
 
 public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtureTestCase {
-  private static final Set<String> ENABLED_TOOLS = ContainerUtil.set("UNUSED_IMPORT", "MarkedForRemoval", "Java9RedundantRequiresStatement");
+  private static final Set<String> ENABLED_TOOLS = ContainerUtil.set("UNUSED_IMPORT", "MarkedForRemoval", "Java9RedundantRequiresStatement", "GroovyUnusedAssignment");
+  private boolean myDefaultShowStructure;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    GlobalInspectionContextImpl.CREATE_VIEW_FORCE = true;
+    GlobalInspectionContextImpl.TESTING_VIEW = true;
     InspectionProfileImpl.INIT_INSPECTIONS = true;
+    myDefaultShowStructure = AnalysisUIOptions.getInstance(getProject()).SHOW_STRUCTURE;
   }
 
   @Override
   public void tearDown() {
-    GlobalInspectionContextImpl.CREATE_VIEW_FORCE = false;
+    GlobalInspectionContextImpl.TESTING_VIEW = false;
     InspectionProfileImpl.INIT_INSPECTIONS = false;
+    AnalysisUIOptions.getInstance(getProject()).SHOW_STRUCTURE = myDefaultShowStructure;
     super.tearDown();
   }
 
@@ -41,14 +46,15 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
 
     updateTree(view);
     TreeUtil.expandAll(view.getTree());
-    PlatformTestUtil.assertTreeEqual(view.getTree(), "-" + getProject() + "\n" +
+    updateTree(view);
+    PlatformTestUtil.assertTreeEqual(view.getTree(), "-InspectionViewTree\n" +
                                                      " -Java\n" +
                                                      "  -Code maturity\n" +
-                                                     "   -MarkedForRemoval\n" +
+                                                     "   -Usage of API marked for removal\n" +
                                                      "    -some.module\n" +
                                                      "     'M2' is deprecated and marked for removal(LIKE_DEPRECATED)\n" +
                                                      "  -Declaration redundancy\n" +
-                                                     "   -Java9RedundantRequiresStatement\n" +
+                                                     "   -Redundant 'requires' statement in module-info\n" +
                                                      "    -some.module\n" +
                                                      "     Redundant directive 'requires M2'\n");
 
@@ -57,18 +63,44 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
 
     updateTree(view);
     TreeUtil.expandAll(view.getTree());
-    PlatformTestUtil.assertTreeEqual(view.getTree(), "-" + getProject() + "\n" +
+    updateTree(view);
+    PlatformTestUtil.assertTreeEqual(view.getTree(), "-InspectionViewTree\n" +
                                                      " -Java\n" +
                                                      "  -Code maturity\n" +
-                                                     "   -MarkedForRemoval\n" +
-                                                     "    -Module: 'light_idea_test_case'\n" +
+                                                     "   -Usage of API marked for removal\n" +
+                                                     "    -light_idea_test_case\n" +
                                                      "     -some.module\n" +
                                                      "      'M2' is deprecated and marked for removal(LIKE_DEPRECATED)\n" +
                                                      "  -Declaration redundancy\n" +
-                                                     "   -Java9RedundantRequiresStatement\n" +
-                                                     "    -Module: 'light_idea_test_case'\n" +
+                                                     "   -Redundant 'requires' statement in module-info\n" +
+                                                     "    -light_idea_test_case\n" +
                                                      "     -some.module\n" +
                                                      "      Redundant directive 'requires M2'\n");
+  }
+
+  public void testNonJavaDirectoryModuleGrouping() throws Exception {
+    addFile("xxx/yyy/ZZZ.groovy", "class ZZZ {void mmm() { int iii = 0; }}", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2);
+    addFile("foo/bar/Baz.groovy", "class Baz {void mmm() { int iii = 0; }}", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M3);
+    InspectionResultsView view = runInspections();
+    view.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = true;
+    view.update();
+    updateTree(view);
+    TreeUtil.expandAll(view.getTree());
+    updateTree(view);
+
+    PlatformTestUtil.assertTreeEqual(view.getTree(), ("-InspectionViewTree\n" +
+                                                             " -Groovy\n" +
+                                                             "  -Data flow\n" +
+                                                             "   -Unused Assignment\n" +
+                                                             "    -light_idea_test_case_m2\n" +
+                                                             "     -src_m2/xxx/yyy\n" +
+                                                             "      -ZZZ.groovy\n" +
+                                                             "       Assignment is not used\n" +
+                                                             "    -light_idea_test_case_m3\n" +
+                                                             "     -src_m3/foo/bar\n" +
+                                                             "      -Baz.groovy\n" +
+                                                             "       Assignment is not used").replace('/', File.separatorChar));
+
   }
 
   private InspectionResultsView runInspections() {

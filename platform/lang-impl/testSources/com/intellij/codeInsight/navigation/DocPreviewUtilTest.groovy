@@ -23,7 +23,6 @@ import static org.junit.Assert.assertTrue
 
 /**
  * @author Denis Zhdanov
- * @since 07/10/2012
  */
 class DocPreviewUtilTest {
 

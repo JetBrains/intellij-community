@@ -4,7 +4,7 @@ class Test {
   enum A {X, Y, Z};
   List<String> list1, list2;
   
-  void test(List<String> tokens) {
+  void <weak_warning descr="Method 'test' is complex: data flow results could be imprecise">test</weak_warning>(List<String> tokens) {
     String t = "int";
     A s = A.X;
     A l = A.X;

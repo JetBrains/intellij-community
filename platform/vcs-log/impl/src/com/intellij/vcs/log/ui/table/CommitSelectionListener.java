@@ -33,13 +33,13 @@ import java.util.List;
 public abstract class CommitSelectionListener<T extends VcsCommitMetadata> implements ListSelectionListener {
   private final static Logger LOG = Logger.getInstance(CommitSelectionListener.class);
   @NotNull protected final VcsLogGraphTable myGraphTable;
-  @NotNull private final DataGetter<T> myCommitDetailsGetter;
+  @NotNull private final DataGetter<? extends T> myCommitDetailsGetter;
 
   @Nullable private ListSelectionEvent myLastEvent;
   @Nullable private ProgressIndicator myLastRequest;
 
   protected CommitSelectionListener(@NotNull VcsLogGraphTable table,
-                                    @NotNull DataGetter<T> dataGetter) {
+                                    @NotNull DataGetter<? extends T> dataGetter) {
     myGraphTable = table;
     myCommitDetailsGetter = dataGetter;
   }
@@ -102,7 +102,7 @@ public abstract class CommitSelectionListener<T extends VcsCommitMetadata> imple
   protected abstract void onError(@NotNull Throwable error);
 
   @CalledInAwt
-  protected abstract void onDetailsLoaded(@NotNull List<T> detailsList);
+  protected abstract void onDetailsLoaded(@NotNull List<? extends T> detailsList);
 
   @CalledInAwt
   protected abstract void onSelection(@NotNull int[] selection);

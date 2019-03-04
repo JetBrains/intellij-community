@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="com.android.tools.lint:lint-checks" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.android.tools.lint:lint-checks:26.3.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/lint/lint-checks/26.3.0/lint-checks-26.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

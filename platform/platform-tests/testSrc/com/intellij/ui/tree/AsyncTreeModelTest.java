@@ -47,6 +47,18 @@ public final class AsyncTreeModelTest {
   }
 
   @Test
+  public void testProcessingNPE() {
+    Disposable disposable = Disposer.newDisposable();
+    AsyncTreeModel model = new AsyncTreeModel(new DefaultTreeModel(new DefaultMutableTreeNode()), disposable);
+    try {
+      assert !model.isProcessing() : "created model should not update content";
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
+  @Test
   public void testNullRoot() {
     testAsync(() -> null, test
       -> testPathState0(test.tree, ()

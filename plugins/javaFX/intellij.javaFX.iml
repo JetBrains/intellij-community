@@ -28,5 +28,6 @@
     <orderEntry type="library" name="SceneBuilderKit" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.typeMigration" />
+    <orderEntry type="library" name="NanoXML" level="project" />
   </component>
 </module>

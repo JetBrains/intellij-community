@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.AbstractFileViewProvider;
 import com.intellij.psi.ExternalChangeAction;
@@ -261,10 +262,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   private void saveAllDocumentsLater() {
     // later because some document might have been blocked by PSI right now
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (ApplicationManager.getApplication().isDisposed()) {
-        return;
-      }
+    TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
       final Document[] unsavedDocuments = getUnsavedDocuments();
       for (Document document : unsavedDocuments) {
         VirtualFile file = getFile(document);
@@ -496,7 +494,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   public boolean requestWriting(@NotNull Document document, Project project) {
     final VirtualFile file = getInstance().getFile(document);
     if (project != null && file != null && file.isValid()) {
-      return !file.getFileType().isBinary() && ReadonlyStatusHandler.ensureFilesWritable(project, file);
+      boolean result = !file.getFileType().isBinary() && ReadonlyStatusHandler.ensureFilesWritable(project, file);
+      assert !result || document.isWritable();
+      return result;
     }
     if (document.isWritable()) {
       return true;
@@ -584,8 +584,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   @Override
   public void beforeContentsChange(@NotNull VirtualFileEvent event) {
     VirtualFile virtualFile = event.getFile();
-    // check file type in second order to avoid content detection running
-    if (virtualFile.getLength() == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) {
+
+    // when an empty unknown file is written into, re-run file type detection
+    long lastRecordedLength = PersistentFS.getInstance().getLastRecordedLength(virtualFile);
+    if (lastRecordedLength == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) { // check file type last to avoid content detection running
       virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
     }
 

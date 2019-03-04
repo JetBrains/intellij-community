@@ -51,6 +51,10 @@
     <component>
       <implementation-class>com.intellij.dvcs.repo.VcsRepositoryManager</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.dvcs.shelf.ShelfViewUpdater</implementation-class>
+      <headless-implementation-class/>
+    </component>
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">

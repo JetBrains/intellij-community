@@ -127,9 +127,9 @@ public class PyCallExpressionHelper {
       .collect(
         Collectors.groupingBy(markedCallee -> markedCallee.getCallableType(), LinkedHashMap::new, Collectors.toList())
       )
-      .entrySet()
+      .values()
       .stream()
-      .map(entry -> entry.getValue().stream().max(Comparator.comparingInt(PyCallExpression.PyMarkedCallee::getRate)).orElse(null))
+      .map(callees -> callees.stream().max(Comparator.comparingInt(PyCallExpression.PyMarkedCallee::getRate)).orElse(null))
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
   }
@@ -602,7 +602,7 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static Maybe<PyType> getSuperCallType(@NotNull PyCallExpression call, TypeEvalContext context) {
+  private static Maybe<PyType> getSuperCallType(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
     final PyExpression callee = call.getCallee();
     if (callee instanceof PyReferenceExpression) {
       PsiElement must_be_super_init = ((PyReferenceExpression)callee).getReference().resolve();
@@ -613,7 +613,7 @@ public class PyCallExpressionHelper {
           if (argumentList != null) {
             final PyClass containingClass = PsiTreeUtil.getParentOfType(call, PyClass.class);
             PyExpression[] args = argumentList.getArguments();
-            if (args.length > 1) {
+            if (containingClass != null && args.length > 1) {
               PyExpression first_arg = args[0];
               if (first_arg instanceof PyReferenceExpression) {
                 final PyReferenceExpression firstArgRef = (PyReferenceExpression)first_arg;
@@ -648,7 +648,9 @@ public class PyCallExpressionHelper {
   }
 
   @Nullable
-  private static PyType getSuperCallTypeForArguments(TypeEvalContext context, PyClass firstClass, PyExpression second_arg) {
+  private static PyType getSuperCallTypeForArguments(@NotNull TypeEvalContext context,
+                                                     @NotNull PyClass firstClass,
+                                                     @Nullable PyExpression second_arg) {
     // check 2nd argument, too; it should be an instance
     if (second_arg != null) {
       PyType second_type = context.getType(second_arg);
@@ -764,7 +766,7 @@ public class PyCallExpressionHelper {
       return ContainerUtil.map(PyUtil.filterTopPriorityResults(callees),
                                callee -> Pair.create(callee.getElement(), callee.getCallableType()));
     }
-    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
+    else {
       final List<Pair<PyCallable, PyCallableType>> results = new ArrayList<>();
 
       for (PsiElement result : PyUtil.multiResolveTopPriority(callSite, resolveContext)) {
@@ -780,9 +782,6 @@ public class PyCallExpressionHelper {
       }
 
       return results;
-    }
-    else {
-      return Collections.emptyList();
     }
   }
 
@@ -826,16 +825,12 @@ public class PyCallExpressionHelper {
 
   @NotNull
   public static List<PyExpression> getArgumentsMappedToPositionalContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
-    return mapping.entrySet().stream()
-      .filter(e -> e.getValue().isPositionalContainer())
-      .map(e -> e.getKey()).collect(Collectors.toList());
+    return StreamEx.ofKeys(mapping, PyCallableParameter::isPositionalContainer).toList();
   }
 
   @NotNull
   public static List<PyExpression> getArgumentsMappedToKeywordContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
-    return mapping.entrySet().stream()
-      .filter(e -> e.getValue().isKeywordContainer())
-      .map(e -> e.getKey()).collect(Collectors.toList());
+    return StreamEx.ofKeys(mapping, PyCallableParameter::isKeywordContainer).toList();
   }
 
   @NotNull
@@ -1316,11 +1311,8 @@ public class PyCallExpressionHelper {
         implicitOffset = 0;
       }
     }
-    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
-      implicitOffset = 1;
-    }
     else {
-      implicitOffset = 0;
+      implicitOffset = 1;
     }
     return parameters.subList(Math.min(implicitOffset, parameters.size()), parameters.size());
   }

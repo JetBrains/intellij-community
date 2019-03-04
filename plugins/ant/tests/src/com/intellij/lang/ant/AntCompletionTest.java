@@ -198,14 +198,5 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     return list.toArray(LookupElement.EMPTY_ARRAY);
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      LookupManager.hideActiveLookup(getProject());
-    }
-    finally {
-      super.tearDown();
-    }
-  }
 
 }

@@ -48,7 +48,7 @@ public class JsonDelegateContributor extends BuilderMethodsContributor {
     method = createMethod(name, clazz, place);
     genericType = facade.getElementFactory().createType(method.addTypeParameter("T"));
     method.addParameter("values", genericType.createArrayType());
-    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
+    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
     method.setReturnType(TypesUtil.createListType(place, genericType));
     if (!processor.process(method)) return false;
 
@@ -56,7 +56,7 @@ public class JsonDelegateContributor extends BuilderMethodsContributor {
     method = createMethod(name, clazz, place);
     genericType = facade.getElementFactory().createType(method.addTypeParameter("T"));
     method.addParameter("values", TypesUtil.createIterableType(place, genericType));
-    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
+    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
     method.setReturnType(TypesUtil.createListType(place, genericType));
     if (!processor.process(method)) return false;
 

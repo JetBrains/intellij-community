@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -27,9 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
@@ -38,8 +35,9 @@ import java.util.*;
 public class ProjectRootManagerImpl extends ProjectRootManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootManagerImpl");
 
-  @NonNls private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
-  @NonNls private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
+  private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
+  private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
+  private static final String ATTRIBUTE_VERSION = "version";
 
   protected final Project myProject;
 
@@ -48,8 +46,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private String myProjectSdkName;
   private String myProjectSdkType;
 
-  @NonNls private static final String ATTRIBUTE_VERSION = "version";
-
   private final OrderRootsCache myRootsCache;
 
   protected boolean myStartupActivityPerformed;
@@ -57,10 +53,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private final RootProviderChangeListener myRootProviderChangeListener = new RootProviderChangeListener();
 
   protected class BatchSession {
+    private final boolean myFileTypes;
     private int myBatchLevel;
     private boolean myChanged;
-
-    private final boolean myFileTypes;
 
     private BatchSession(final boolean fileTypes) {
       myFileTypes = fileTypes;
@@ -182,6 +177,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return new ModulesOrderEnumerator(modules);
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getContentRootsFromAllModules() {
     List<VirtualFile> result = new ArrayList<>();
@@ -196,7 +192,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public Sdk getProjectSdk() {
-    return myProjectSdkName == null ? null : ProjectJdkTable.getInstance().findJdk(myProjectSdkName, myProjectSdkType);
+    return myProjectSdkName == null ? null :
+           myProjectSdkType == null ? ProjectJdkTable.getInstance().findJdk(myProjectSdkName) :
+           ProjectJdkTable.getInstance().findJdk(myProjectSdkName, myProjectSdkType);
   }
 
   @Override
@@ -228,7 +226,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @Override
-  public void setProjectSdkName(String name) {
+  public void setProjectSdkName(@NotNull String name) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myProjectSdkName = name;
 
@@ -254,7 +252,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     myProjectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Element getState() {
     Element element = new Element("state");
@@ -333,6 +331,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
+  @NotNull
   protected BatchSession getBatchSession(final boolean fileTypes) {
     return fileTypes ? myFileTypesChanged : myRootsChanged;
   }
@@ -360,8 +359,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return false;
   }
 
-  protected void fireBeforeRootsChangeEvent(boolean fileTypes) {
-  }
+  protected void fireBeforeRootsChangeEvent(boolean fileTypes) { }
 
   private boolean fireRootsChanged(boolean fileTypes) {
     if (myProject.isDisposed() || Disposer.isDisposing(myProject)) return false;
@@ -394,29 +392,25 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return true;
   }
 
-  protected void fireRootsChangedEvent(boolean fileTypes) {
-  }
+  protected void fireRootsChangedEvent(boolean fileTypes) { }
 
-  protected void addRootsToWatch() {
-  }
+  protected void addRootsToWatch() { }
 
   @NotNull
   public Project getProject() {
     return myProject;
   }
 
-  protected void doSynchronizeRoots() {
+  protected void doSynchronizeRoots() { }
+
+  @NotNull
+  public static String extractLocalPath(@NotNull String url) {
+    String path = VfsUtilCore.urlToPath(url);
+    int separatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR);
+    return separatorIndex > 0 ? path.substring(0, separatorIndex) : path;
   }
 
-  public static String extractLocalPath(final String url) {
-    final String path = VfsUtilCore.urlToPath(url);
-    final int jarSeparatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR);
-    if (jarSeparatorIndex > 0) {
-      return path.substring(0, jarSeparatorIndex);
-    }
-    return path;
-  }
-
+  @NotNull
   private ModuleManager getModuleManager() {
     return ModuleManager.getInstance(myProject);
   }
@@ -474,19 +468,38 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private final Object myLibraryTableListenersLock = new Object();
   private final Map<LibraryTable, LibraryTableMultiListener> myLibraryTableMultiListeners = new HashMap<>();
 
-  private class LibraryTableMultiListener implements LibraryTable.Listener {
-    private final Set<LibraryTable.Listener> myListeners = new LinkedHashSet<>();
-    private LibraryTable.Listener[] myListenersArray;
+  private static class ListenerContainer<T> {
+    private final Set<T> myListeners = new LinkedHashSet<>();
+    @NotNull private final T[] myEmptyArray;
+    private T[] myListenersArray;
 
-    private synchronized void addListener(@NotNull LibraryTable.Listener listener) {
+    private ListenerContainer(@NotNull T[] emptyArray) {
+      myEmptyArray = emptyArray;
+    }
+
+    synchronized void addListener(@NotNull T listener) {
       myListeners.add(listener);
       myListenersArray = null;
     }
 
-    private synchronized boolean removeListener(@NotNull LibraryTable.Listener listener) {
+    synchronized boolean removeListener(@NotNull T listener) {
       myListeners.remove(listener);
       myListenersArray = null;
       return myListeners.isEmpty();
+    }
+
+    @NotNull
+    synchronized T[] getListeners() {
+      if (myListenersArray == null) {
+        myListenersArray = myListeners.toArray(myEmptyArray);
+      }
+      return myListenersArray;
+    }
+  }
+
+  private class LibraryTableMultiListener extends ListenerContainer<LibraryTable.Listener> implements LibraryTable.Listener {
+    private LibraryTableMultiListener() {
+      super(new LibraryTable.Listener[0]);
     }
 
     @Override
@@ -497,13 +510,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
           listener.afterLibraryAdded(newLibrary);
         }
       });
-    }
-
-    private synchronized LibraryTable.Listener[] getListeners() {
-      if (myListenersArray == null) {
-        myListenersArray = myListeners.toArray(new LibraryTable.Listener[0]);
-      }
-      return myListenersArray;
     }
 
     @Override
@@ -539,31 +545,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   private final JdkTableMultiListener myJdkTableMultiListener;
 
-  private class JdkTableMultiListener implements ProjectJdkTable.Listener {
-    private final Set<ProjectJdkTable.Listener> myListeners = new LinkedHashSet<>();
+  private class JdkTableMultiListener extends ListenerContainer<ProjectJdkTable.Listener> implements ProjectJdkTable.Listener {
     private final MessageBusConnection listenerConnection;
-    private ProjectJdkTable.Listener[] myListenersArray;
 
-    private JdkTableMultiListener(Project project) {
+    private JdkTableMultiListener(@NotNull Project project) {
+      super(new ProjectJdkTable.Listener[0]);
       listenerConnection = project.getMessageBus().connect();
       listenerConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this);
-    }
-
-    private synchronized void addListener(ProjectJdkTable.Listener listener) {
-      myListeners.add(listener);
-      myListenersArray = null;
-    }
-
-    private synchronized void removeListener(ProjectJdkTable.Listener listener) {
-      myListeners.remove(listener);
-      myListenersArray = null;
-    }
-
-    private synchronized ProjectJdkTable.Listener[] getListeners() {
-      if (myListenersArray == null) {
-        myListenersArray = myListeners.toArray(new ProjectJdkTable.Listener[0]);
-      }
-      return myListenersArray;
     }
 
     @Override

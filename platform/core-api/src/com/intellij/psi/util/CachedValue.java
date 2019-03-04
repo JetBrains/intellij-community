@@ -15,13 +15,13 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.RecursionGuard;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A wrapper object that holds a computation ({@link #getValueProvider()}) and caches the result of the computation.<p/>
- *
- * The recommended way of creation is to use one of {@link com.intellij.psi.util.CachedValuesManager} methods, e.g.
- * {@link com.intellij.psi.util.CachedValuesManager#getCachedValue(com.intellij.psi.PsiElement, CachedValueProvider)}
+ * A wrapper object that holds a computation ({@link #getValueProvider()}) and caches the result of the computation.
+ * The recommended way of creation is to use one of {@link CachedValuesManager#getCachedValue} methods.<p></p>
  *
  * When {@link #getValue()} is invoked the first time, the computation is run and its result is returned and remembered internally.
  * In subsequent invocations, the result will be reused to avoid running the same code again and again.<p/>
@@ -30,16 +30,63 @@ import org.jetbrains.annotations.NotNull;
  * <ol>
  *   <li/>Garbage collector collects the result cached internally (it's kept via a {@link java.lang.ref.SoftReference}).
  *   <li/>IDEA determines that cached value is outdated because some its dependencies are changed. See
- *   {@link com.intellij.psi.util.CachedValueProvider.Result#getDependencyItems()}
+ *   {@link CachedValueProvider.Result#getDependencyItems()}
  * </ol>
  *
  * The implementation is thread-safe but not atomic, i.e. if several threads request the cached value simultaneously, the computation may
- * be run concurrently on more than one thread.
+ * be run concurrently on more than one thread. Due to this and unpredictable garbage collection,
+ * cached value providers shouldn't have side effects.<p></p>
+ *
+ * <b>Result equivalence</b>: CachedValue might return a different result even if the previous one
+ * is still reachable and not garbage-collected, and dependencies haven't changed. Therefore CachedValue results
+ * should be equivalent and interchangeable if they're called multiple times. Examples:
+ * <ul>
+ *   <li>If PSI declarations are cached, {@link #equals} or at least {@link com.intellij.psi.PsiManager#areElementsEquivalent}
+ *   should hold for results from the same CachedValue.</li>
+ *   <li>{@link com.intellij.psi.ResolveResult} objects should have equivalent {@code getElement()} values.</li>
+ *   <li>Cached arrays or lists should have the same number of elements, and they also should be equivalent and come in the same order.</li>
+ *   <li>If the result object's class has a meaningful {@link #equals} method, it should hold.</li>
+ * </ul>
+ *
+ * <b>Context-independence</b>: if you store the CachedValue in a field or user data of some object {@code X}, then its {@link CachedValueProvider}
+ * may only depend on X and parts of global system state that don't change while {@code X} is alive and valid (e.g. application/project components/services).
+ * Otherwise re-invoking the CachedValueProvider after invalidation would use outdated data and produce incorrect results,
+ * possibly causing exceptions in places far, far away. In particular, the provider may not capture:
+ * <ul>
+ *   <li>Parameters of a method where CachedValue is created, except for {@code X} itself. Example:
+ *   <pre>
+ *   PsiElement resolve(PsiElement e, boolean incompleteCode) {
+ *     return CachedValuesManager.getCachedValue(e, () -> doResolve(e, incompleteCode)); // WRONG!!!
+ *   }
+ *   </pre>
+ *
+ *   </li>
+ *   <li>"this" object creating the CachedValue, if {@code X} can outlive it,
+ *   or if there can be several non-equivalent instances of "this"-object's class all creating a cached value for the same place</li>
+ *   <li>Thread-locals at the moment of creation. If you use them (either directly or via {@link RecursionGuard#currentStack()}),
+ *   please try not to. If you really have to, also use {@link RecursionGuard#prohibitResultCaching(Object)}
+ *   to ensure values depending on unstable data won't be cached.</li>
+ *   <li>PSI elements around {@code X}, when {@code X} is a {@link com.intellij.psi.PsiElement} itself,
+ *   as they can change during the lifetime of that PSI element. Example:
+ *   <pre>
+ *   PsiMethod[] methods = psiClass.getMethods();
+ *   return CachedValuesManager.getCachedValue(psiClass, () -> calculateSomeResult(methods)); // WRONG!!!
+ *   </pre>
+ *   </ul>
+ * </ul>
+ *
+ * <b>Recursion prevention</b>: The same cached value provider can be re-entered recursively on the same thread,
+ * if the computation is inherently cyclic. Note that this is likely to result in {@link StackOverflowError},
+ * so avoid such situations at all cost. If there's no other way, use
+ * {@link com.intellij.openapi.util.RecursionManager#doPreventingRecursion} instead of custom thread-locals to help get out of the endless loop. Please ensure this call happens inside
+ * the {@link CachedValueProvider}, not outside {@link CachedValue#getValue()} call. Otherwise you might get no caching at all, because
+ * CachedValue uses {@link RecursionGuard.StackStamp#mayCacheNow()} to prevent caching incomplete values, and even the top-level
+ * call would be considered incomplete if it happens inside {@code doPreventingRecursion}.
  *
  * @param <T> The type of the computation result.
  *
- * @see com.intellij.psi.util.CachedValueProvider
- * @see com.intellij.psi.util.CachedValuesManager
+ * @see CachedValueProvider
+ * @see CachedValuesManager
  */
 public interface CachedValue<T> {
 
@@ -58,4 +105,9 @@ public interface CachedValue<T> {
    * @return whether there is a cached result inside this object and it's not outdated
    */
   boolean hasUpToDateValue();
+
+  /**
+   * @return if {@link #hasUpToDateValue()}, then a wrapper around the cached value, otherwise null.
+   */
+  Getter<T> getUpToDateOrNull();
 }

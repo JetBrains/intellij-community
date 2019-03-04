@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,16 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
+ * Status bar shown on the bottom of IDE frame.
+ * <p>
+ * Displays {@link Info#set(String, Project) status text} and
+ * a number of {@link StandardWidgets builtin} and custom {@link StatusBarWidget widgets}.
+ *
  * @author spleaner
+ * @see WindowManager#getStatusBar(Project)
  */
 public interface StatusBar extends StatusBarInfo, Disposable {
+
   @SuppressWarnings({"AbstractClassNeverImplemented"})
   abstract class Info implements StatusBarInfo {
     public static final Topic<StatusBarInfo> TOPIC = Topic.create("IdeStatusBar.Text", StatusBarInfo.class);
@@ -57,8 +64,19 @@ public interface StatusBar extends StatusBarInfo, Disposable {
     }
   }
 
+  /**
+   * Adds the given widget on the right.
+   *
+   * @param widget Widget to add.
+   */
   void addWidget(@NotNull StatusBarWidget widget);
 
+  /**
+   * Adds the given widget positioned according to given anchor.
+   *
+   * @param widget Widget to add.
+   * @param anchor Anchor, see {@link Anchors}.
+   */
   void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor);
 
   void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable);
@@ -66,13 +84,13 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable);
 
   /**
-   * @deprecated use addWidget instead
+   * @deprecated use {@link #addWidget(StatusBarWidget)} instead
    */
   @Deprecated
   void addCustomIndicationComponent(@NotNull JComponent c);
 
   /**
-   * @deprecated use removeWidget instead
+   * @deprecated use {@link #removeWidget(String)} instead
    */
   @Deprecated
   void removeCustomIndicationComponent(@NotNull JComponent c);

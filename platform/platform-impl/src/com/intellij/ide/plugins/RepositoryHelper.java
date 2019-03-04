@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
@@ -19,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.InputSource;
@@ -153,7 +155,9 @@ public class RepositoryHelper {
           }
         }
         else {
-          return parsePluginList(request.getReader());
+          try (BufferedReader reader = request.getReader()) {
+            return parsePluginList(reader);
+          }
         }
       });
 
@@ -207,22 +211,45 @@ public class RepositoryHelper {
   }
 
   private static List<IdeaPluginDescriptor> loadPluginList(File file) throws IOException {
-    return parsePluginList(new InputStreamReader(new BufferedInputStream(new FileInputStream(file)), CharsetToolkit.UTF8_CHARSET));
+    try (InputStreamReader reader = new InputStreamReader(new BufferedInputStream(new FileInputStream(file)),
+                                                          CharsetToolkit.UTF8_CHARSET)) {
+      return parsePluginList(reader);
+    }
   }
 
   private static List<IdeaPluginDescriptor> parsePluginList(Reader reader) throws IOException {
+    List<IdeaPluginDescriptor> rawList;
     try {
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       RepositoryContentHandler handler = new RepositoryContentHandler();
       parser.parse(new InputSource(reader), handler);
-      return handler.getPluginsList();
+      rawList = handler.getPluginsList();
     }
     catch (ParserConfigurationException | SAXException | RuntimeException e) {
       throw new IOException(e);
     }
-    finally {
-      reader.close();
+    return getLatestCompatibleForEveryPlugin(rawList);
+  }
+
+  @NotNull
+  private static List<IdeaPluginDescriptor> getLatestCompatibleForEveryPlugin(@NotNull List<IdeaPluginDescriptor> rawList) {
+    LinkedHashMap<PluginId, IdeaPluginDescriptor> filteredPlugins = new LinkedHashMap<>(rawList.size());
+    for (IdeaPluginDescriptor descriptor : rawList) {
+      if (PluginManagerCore.isIncompatible(descriptor)) {
+        continue;
+      }
+
+      PluginId pluginId = descriptor.getPluginId();
+      IdeaPluginDescriptor filteredPluginDescriptor = filteredPlugins.get(pluginId);
+      if (filteredPluginDescriptor == null) {
+        filteredPlugins.put(pluginId, descriptor);
+      } else {
+        if (VersionComparatorUtil.compare(descriptor.getVersion(), filteredPluginDescriptor.getVersion()) > 0) {
+          filteredPlugins.put(pluginId, descriptor);
+        }
+      }
     }
+    return new ArrayList<>(filteredPlugins.values());
   }
 
   private static List<IdeaPluginDescriptor> process(String repositoryUrl, List<IdeaPluginDescriptor> list) {

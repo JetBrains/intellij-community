@@ -68,7 +68,7 @@ public class XsltStylesheetImpl extends XsltElementImpl implements XsltStyleshee
     return "XsltStylesheet";
   }
 
-  private class FunctionMatcher extends IncludeAwareMatcher {
+  private static class FunctionMatcher extends IncludeAwareMatcher {
     FunctionMatcher(XmlDocument document) {
       super(document);
     }

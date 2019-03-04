@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
  * of Java source files.
  *
  * @author yole
- * @since 5.1
  * @see IndexPatternProvider
  * @see com.intellij.psi.search.PsiTodoSearchHelper#findFilesWithTodoItems()
  */

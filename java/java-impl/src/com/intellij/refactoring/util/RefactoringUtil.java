@@ -198,7 +198,7 @@ public class RefactoringUtil {
       parent = parent.getParent();
     }
     PsiElement parentStatement = parent;
-    while (parent instanceof PsiStatement) {
+    while (parent instanceof PsiStatement && !(parent instanceof PsiSwitchLabeledRuleStatement)) {
       if (!skipScopingStatements && ((parent instanceof PsiForStatement && parentStatement == ((PsiForStatement)parent).getBody()) || (
         parent instanceof PsiForeachStatement && parentStatement == ((PsiForeachStatement)parent).getBody()) || (
         parent instanceof PsiWhileStatement && parentStatement == ((PsiWhileStatement)parent).getBody()) || (
@@ -985,6 +985,10 @@ public class RefactoringUtil {
     }
     else if (statement instanceof PsiExpressionStatement){
       ((PsiExpressionStatement)statement).getExpression().replace(body);
+    }
+    PsiElement arrow = PsiTreeUtil.skipWhitespacesBackward(body);
+    if (arrow != null && arrow.getNextSibling() != body) {
+      lambdaExpression.deleteChildRange(arrow.getNextSibling(), body.getPrevSibling());
     }
     return (PsiCodeBlock)CodeStyleManager.getInstance(project).reformat(body.replace(codeBlock));
   }

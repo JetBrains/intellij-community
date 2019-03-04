@@ -1,35 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.util.Function;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.text.FilePathHashingStrategy;
 import gnu.trove.THashMap;
@@ -41,31 +28,27 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.DosFileAttributes;
-import java.nio.file.attribute.PosixFileAttributes;
-import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.*;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+
+import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
 
 class LocalFileSystemRefreshWorker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
-  private static final Logger LOG_ATTRIBUTES = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker_Attributes");
-
   private final boolean myIsRecursive;
-  private final Queue<NewVirtualFile> myRefreshQueue = new Queue<>(100);
-  private final List<VFileEvent> myFileEventSet = new ArrayList<>();
+  private final NewVirtualFile myRefreshRoot;
+  private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
   private volatile boolean myCancelled;
 
   LocalFileSystemRefreshWorker(@NotNull NewVirtualFile refreshRoot, boolean isRecursive) {
     myIsRecursive = isRecursive;
-    myRefreshQueue.addLast(refreshRoot);
+    myRefreshRoot = refreshRoot;
   }
 
   @NotNull
   public List<VFileEvent> getEvents() {
-    return myFileEventSet;
+    return myHelper.getEvents();
   }
 
   public void cancel() {
@@ -73,7 +56,7 @@ class LocalFileSystemRefreshWorker {
   }
 
   public void scan() {
-    NewVirtualFile root = myRefreshQueue.pullFirst();
+    NewVirtualFile root = myRefreshRoot;
     boolean rootDirty = root.isDirty();
     if (LOG.isDebugEnabled()) LOG.debug("root=" + root + " dirty=" + rootDirty);
     if (!rootDirty) return;
@@ -81,7 +64,7 @@ class LocalFileSystemRefreshWorker {
     NewVirtualFileSystem fs = root.getFileSystem();
     FileAttributes rootAttributes = fs.getAttributes(root);
     if (rootAttributes == null) {
-      addDeletionEventTo(root, myFileEventSet);
+      myHelper.scheduleDeletion(root);
       root.markClean();
       return;
     }
@@ -89,74 +72,145 @@ class LocalFileSystemRefreshWorker {
       fs = PersistentFS.replaceWithNativeFS(fs);
     }
 
-    myRefreshQueue.addLast(root);
-
-    try {
-      processQueue(fs, PersistentFS.getInstance());
-    }
-    catch (RefreshCancelledException e) {
-      LOG.debug("refresh cancelled");
-    }
+    RefreshContext context = createRefreshContext(fs, PersistentFS.getInstance(), FilePathHashingStrategy.create(fs.isCaseSensitive()));
+    context.submitRefreshRequest(() -> processFile(root, context));
+    context.waitForRefreshToFinish();
   }
 
-  private void processQueue(NewVirtualFileSystem fs, PersistentFS persistence) throws RefreshCancelledException {
-    TObjectHashingStrategy<String> strategy = FilePathHashingStrategy.create(fs.isCaseSensitive());
+  @NotNull
+  private RefreshContext createRefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistentFS, @NotNull TObjectHashingStrategy<String> strategy) {
+    int parallelism = Registry.intValue("vfs.use.nio-based.local.refresh.worker.parallelism", Runtime.getRuntime().availableProcessors() - 1);
+    
+    if (myIsRecursive && parallelism > 0 && !ApplicationManager.getApplication().isDispatchThread()) {
+      return new RefreshContext(fs, persistentFS, strategy) {
+        final ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("Refresh Worker", parallelism);
+        final AtomicInteger tasksScheduled = new AtomicInteger();
+        final AtomicInteger workersInProcess = new AtomicInteger();
+        final CountDownLatch refreshFinishedLatch = new CountDownLatch(1);
 
-    while (!myRefreshQueue.isEmpty()) {
-      NewVirtualFile file = myRefreshQueue.pullFirst();
-      boolean fileDirty = file.isDirty();
-      if (LOG.isTraceEnabled()) LOG.trace("file=" + file + " dirty=" + fileDirty);
-      if (!fileDirty) continue;
-
-      checkCancelled(file);
-
-      if (file.isDirectory()) {
-        boolean fullSync = ((VirtualDirectoryImpl)file).allChildrenLoaded();
-        if (fullSync) {
-          fullDirRefresh(fs, persistence, strategy, (VirtualDirectoryImpl)file);
+        @Override
+        void submitRefreshRequest(@NotNull Runnable action) {
+          tasksScheduled.incrementAndGet();
+          
+          service.submit(() -> {
+            workersInProcess.incrementAndGet();
+            try {
+              action.run();
+            }
+            finally {
+              workersInProcess.decrementAndGet();
+              int currentTasks = tasksScheduled.decrementAndGet();
+              if (currentTasks == 0 && workersInProcess.get() == 0) {
+                refreshFinishedLatch.countDown();
+              }
+            }
+          });
         }
-        else {
-          partialDirRefresh(fs, persistence, strategy, (VirtualDirectoryImpl)file);
+
+        @Override
+        void doWaitForRefreshToFinish() {
+          try {
+            refreshFinishedLatch.await(1, TimeUnit.DAYS);
+            service.shutdown();
+          }
+          catch (InterruptedException ignore) {}
         }
+      };
+    }
+
+    return new RefreshContext(fs, persistentFS, strategy) {
+      final Queue<Runnable> myRefreshRequests = new Queue<>(100);
+      
+      @Override
+      void submitRefreshRequest(@NotNull Runnable request) {
+        myRefreshRequests.addLast(request);
+      }
+
+      @Override
+      void doWaitForRefreshToFinish() {
+        while(!myRefreshRequests.isEmpty()) {
+          Runnable request = myRefreshRequests.pullFirst();
+          request.run();
+        }
+      }
+    };
+  }
+
+  private void processFile(@NotNull NewVirtualFile file, @NotNull RefreshContext refreshContext) {
+    if (!myHelper.checkDirty(file)) {
+      return;
+    }
+
+    if(checkCancelled(file, refreshContext)) return;
+
+    if (file.isDirectory()) {
+      boolean fullSync = ((VirtualDirectoryImpl)file).allChildrenLoaded();
+      if (fullSync) {
+        fullDirRefresh((VirtualDirectoryImpl)file, refreshContext);
       }
       else {
-        refreshFile(fs, persistence, strategy, file);
+        partialDirRefresh((VirtualDirectoryImpl)file, refreshContext);
       }
+    }
+    else {
+      refreshFile(file, refreshContext);
+    }
 
-      if (myIsRecursive || !file.isDirectory()) {
-        file.markClean();
+    if(checkCancelled(file, refreshContext)) return;
+    
+    if (myIsRecursive || !file.isDirectory()) {
+      file.markClean();
+    }
+  }
+  
+  private abstract static class RefreshContext {
+    final NewVirtualFileSystem fs;
+    final PersistentFS persistence;
+    final TObjectHashingStrategy<String> strategy;
+    final BlockingQueue<NewVirtualFile> filesToBecomeDirty = new LinkedBlockingQueue<>();
+
+    RefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence, @NotNull TObjectHashingStrategy<String> strategy) {
+      this.fs = fs;
+      this.persistence = persistence;
+      this.strategy = strategy;
+    }
+
+    abstract void submitRefreshRequest(@NotNull Runnable action);
+    abstract void doWaitForRefreshToFinish();
+
+    final void waitForRefreshToFinish() {
+      doWaitForRefreshToFinish();
+
+      for (NewVirtualFile file : filesToBecomeDirty) {
+        forceMarkDirty(file);
       }
     }
   }
 
-  private void refreshFile(NewVirtualFileSystem fs,
-                           PersistentFS persistence,
-                           TObjectHashingStrategy<String> strategy,
-                           NewVirtualFile file) {
-    RefreshingFileVisitor refreshingFileVisitor = new RefreshingFileVisitor(file, persistence, fs,
-                                                                            null,
-                                                                            Collections.singletonList(file), strategy);
+  private void refreshFile(@NotNull NewVirtualFile file, @NotNull RefreshContext refreshContext) {
+    RefreshingFileVisitor refreshingFileVisitor = new RefreshingFileVisitor(file, refreshContext, null,
+                                                                            Collections.singletonList(file));
 
     refreshingFileVisitor.visit(file);
-    myFileEventSet.addAll(refreshingFileVisitor.getEventSet());
+    addAllEventsFrom(refreshingFileVisitor);
   }
 
-  private static final AtomicInteger myRequests = new AtomicInteger();
-  private static final AtomicLong myTime = new AtomicLong();
+  private void addAllEventsFrom(RefreshingFileVisitor refreshingFileVisitor) {
+    synchronized (myHelper) {
+      myHelper.addAllEventsFrom(refreshingFileVisitor.getHelper());
+    }
+  }
 
-  private void fullDirRefresh(NewVirtualFileSystem fs,
-                              PersistentFS persistence,
-                              TObjectHashingStrategy<String> strategy,
-                              VirtualDirectoryImpl dir) {
+  private void fullDirRefresh(@NotNull VirtualDirectoryImpl dir, @NotNull RefreshContext refreshContext) {
     while (true) {
       // obtaining directory snapshot
-      Pair<String[], VirtualFile[]> result = getDirectorySnapshot(persistence, dir);
+      Pair<String[], VirtualFile[]> result = getDirectorySnapshot(refreshContext.persistence, dir);
       if (result == null) return;
-      String[] currentNames = result.getFirst();
+      String[] persistedNames = result.getFirst();
       VirtualFile[] children = result.getSecond();
 
       RefreshingFileVisitor refreshingFileVisitor =
-        new RefreshingFileVisitor(dir, persistence, fs, null, Arrays.asList(children), strategy);
+        new RefreshingFileVisitor(dir, refreshContext, null, Arrays.asList(children));
 
       refreshingFileVisitor.visit(dir);
 
@@ -165,12 +219,12 @@ class LocalFileSystemRefreshWorker {
         if (ApplicationManager.getApplication().isDisposed()) {
           return true;
         }
-        if (!Arrays.equals(currentNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
+        if (!Arrays.equals(persistedNames, refreshContext.persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
           if (LOG.isDebugEnabled()) LOG.debug("retry: " + dir);
           return false;
         }
 
-        myFileEventSet.addAll(refreshingFileVisitor.getEventSet());
+        addAllEventsFrom(refreshingFileVisitor);
         return true;
       });
       if (hasEvents) {
@@ -179,19 +233,16 @@ class LocalFileSystemRefreshWorker {
     }
   }
 
-  static Pair<String[], VirtualFile[]> getDirectorySnapshot(PersistentFS persistence, VirtualDirectoryImpl dir) {
+  static Pair<String[], VirtualFile[]> getDirectorySnapshot(@NotNull PersistentFS persistence, @NotNull VirtualDirectoryImpl dir) {
     return ReadAction.compute(() -> {
-          if (ApplicationManager.getApplication().isDisposed()) {
-            return null;
-          }
-          return Pair.create(persistence.list(dir), dir.getChildren());
-        });
+      if (ApplicationManager.getApplication().isDisposed()) {
+        return null;
+      }
+      return Pair.create(persistence.list(dir), dir.getChildren());
+    });
   }
 
-  private void partialDirRefresh(NewVirtualFileSystem fs,
-                                 PersistentFS persistence,
-                                 TObjectHashingStrategy<String> strategy,
-                                 VirtualDirectoryImpl dir) {
+  private void partialDirRefresh(@NotNull VirtualDirectoryImpl dir, @NotNull RefreshContext refreshContext) {
     while (true) {
       // obtaining directory snapshot
       Pair<List<VirtualFile>, List<String>> result =
@@ -201,7 +252,7 @@ class LocalFileSystemRefreshWorker {
       List<String> wanted = result.getSecond();
 
       if (cached.isEmpty() && wanted.isEmpty()) return;
-      RefreshingFileVisitor refreshingFileVisitor = new RefreshingFileVisitor(dir, persistence, fs, wanted, cached, strategy);
+      RefreshingFileVisitor refreshingFileVisitor = new RefreshingFileVisitor(dir, refreshContext, wanted, cached);
       refreshingFileVisitor.visit(dir);
 
       // generating events unless a directory was changed in between
@@ -211,7 +262,7 @@ class LocalFileSystemRefreshWorker {
           return false;
         }
 
-        myFileEventSet.addAll(refreshingFileVisitor.getEventSet());
+        addAllEventsFrom(refreshingFileVisitor);
 
         return true;
       });
@@ -221,21 +272,17 @@ class LocalFileSystemRefreshWorker {
     }
   }
 
-  private static class RefreshCancelledException extends RuntimeException {
-  }
-
-  private void checkCancelled(@NotNull NewVirtualFile stopAt) {
-    if (myCancelled || ourCancellingCondition != null && ourCancellingCondition.fun(stopAt)) {
-      forceMarkDirty(stopAt);
-      while (!myRefreshQueue.isEmpty()) {
-        NewVirtualFile next = myRefreshQueue.pullFirst();
-        forceMarkDirty(next);
-      }
-      throw new RefreshCancelledException();
+  private boolean checkCancelled(@NotNull NewVirtualFile stopAt, @NotNull RefreshContext refreshContext) {
+    boolean myRequestedCancel = false;
+    if (myCancelled || (myRequestedCancel = ourCancellingCondition != null && ourCancellingCondition.fun(stopAt))) {
+      if (myRequestedCancel) myCancelled = true;
+      refreshContext.filesToBecomeDirty.offer(stopAt);
+      return true;
     }
+    return false;
   }
 
-  private static void forceMarkDirty(NewVirtualFile file) {
+  private static void forceMarkDirty(@NotNull NewVirtualFile file) {
     file.markClean();  // otherwise consequent markDirty() won't have any effect
     file.markDirty();
   }
@@ -248,31 +295,22 @@ class LocalFileSystemRefreshWorker {
     ourCancellingCondition = condition;
   }
 
-  private static void addDeletionEventTo(@NotNull VirtualFile file, @NotNull Collection<? super VFileEvent> myFileEvents) {
-    if (LOG.isTraceEnabled()) LOG.trace("delete file=" + file);
-    myFileEvents.add(new VFileDeleteEvent(null, file, true));
-  }
-
   private class RefreshingFileVisitor extends SimpleFileVisitor<Path> {
-    private final List<VFileEvent> myFileEvents = new ArrayList<>();
+    private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
     private final Map<String, VirtualFile> myPersistentChildren;
     private final Set<String> myChildrenWeAreInterested; // null - no limit
 
     private final VirtualFile myFileOrDir;
-    private final PersistentFS myPersistence;
-    private final NewVirtualFileSystem myFs;
+    private final RefreshContext myRefreshContext;
 
-    RefreshingFileVisitor(VirtualFile fileOrDir,
-                          PersistentFS persistence,
-                          NewVirtualFileSystem fs,
-                          Collection<String> persistentChildrenToRefresh,
-                          Collection<VirtualFile> existingPersistentChildren,
-                          TObjectHashingStrategy<String> strategy) {
+    RefreshingFileVisitor(@NotNull VirtualFile fileOrDir,
+                          @NotNull RefreshContext refreshContext,
+                          @Nullable("null means all") Collection<String> childrenToRefresh,
+                          @NotNull Collection<VirtualFile> existingPersistentChildren) {
       myFileOrDir = fileOrDir;
-      myPersistence = persistence;
-      myFs = fs;
-      myPersistentChildren = new THashMap<>(existingPersistentChildren.size(), strategy);
-      myChildrenWeAreInterested = persistentChildrenToRefresh != null ? new THashSet<>(persistentChildrenToRefresh, strategy) : null;
+      myRefreshContext = refreshContext;
+      myPersistentChildren = new THashMap<>(existingPersistentChildren.size(), refreshContext.strategy);
+      myChildrenWeAreInterested = childrenToRefresh != null ? new THashSet<>(childrenToRefresh, refreshContext.strategy) : null;
 
       for (VirtualFile child : existingPersistentChildren) {
         String name = child.getName();
@@ -281,153 +319,248 @@ class LocalFileSystemRefreshWorker {
       }
     }
 
-    private void addAttributeChangeEvent(@NotNull VirtualFile file,
-                                         @NotNull @VirtualFile.PropName String property,
-                                         Object current,
-                                         Object upToDate) {
-      if (LOG.isTraceEnabled()) LOG.trace("update '" + property + "' file=" + file);
-      myFileEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
-    }
-
-    private void addUpdateContentEvent(@NotNull VirtualFile file) {
-      if (LOG.isTraceEnabled()) LOG.trace("update file=" + file);
-      myFileEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
-    }
-
-    private void addCreationEvent(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory) {
-      if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " dir=" + isDirectory);
-      myFileEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true));
-    }
-
     @Override
     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
       String name = file.getName(file.getNameCount() - 1).toString();
 
-      if (acceptsFileName(name)) {
-        NewVirtualFile child = (NewVirtualFile)myPersistentChildren.remove(name);
-        if (child == null) { // new file is created
-          addCreationEvent(myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent(), name, attrs.isDirectory());
-          return FileVisitResult.CONTINUE;
-        }
+      if (!acceptsFileName(name)) {
+        return FileVisitResult.CONTINUE;
+      }
 
-        checkCancelled(child);
+      NewVirtualFile child = (NewVirtualFile)myPersistentChildren.remove(name);
+      boolean isDirectory = attrs.isDirectory();
+      boolean isSpecial = attrs.isOther();
+      boolean isLink = attrs.isSymbolicLink();
 
-        boolean currentIsDirectory = child.isDirectory();
-        boolean currentIsSymlink = child.is(VFileProperty.SYMLINK);
-        boolean currentIsSpecial = child.is(VFileProperty.SPECIAL);
+      if (isSpecial && isDirectory && SystemInfo.isWindows) {
+        // Windows junction is special directory, handle it as symlink
+        isSpecial = false;
+        isLink = true;
+      }
 
-        if (currentIsDirectory != attrs.isDirectory() ||
-            currentIsSymlink != attrs.isSymbolicLink() ||
-            currentIsSpecial != attrs.isOther()) { // symlink or directory or special changed
-          addDeletionEventTo(child, myFileEvents);
-          addCreationEvent(myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent(), child.getName(), attrs.isDirectory());
-          // ignore everything else
-          child.markClean();
-          return FileVisitResult.CONTINUE;
+      if (isLink) {
+        try {
+          attrs = Files.readAttributes(file, BasicFileAttributes.class);
         }
+        catch (FileSystemException ignore) {
+          attrs = brokenSymlinkAttributes;
+        }
+        isDirectory = attrs.isDirectory();
+      }
+      else if (myFileOrDir.is(VFileProperty.SYMLINK)) {
+        try {
+          attrs = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+        }
+        catch (NoSuchFileException | AccessDeniedException ignore) {
+          attrs = brokenSymlinkAttributes;
+        }
+        isLink = attrs.isSymbolicLink();
+      }
 
-        String currentName = child.getName();
-        if (!currentName.equals(name)) {
-          addAttributeChangeEvent(child, VirtualFile.PROP_NAME, currentName, name);
-        }
+      if (child == null) { // new file is created
+        VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
 
-        if (!attrs.isDirectory()) {
-          if (myPersistence.getTimeStamp(child) != attrs.lastModifiedTime().toMillis() ||
-              myPersistence.getLastRecordedLength(child) != attrs.size()) {
-            addUpdateContentEvent(child);
-            child.markClean();
-            return FileVisitResult.CONTINUE;
-          }
-        }
-        else {
-          if (myIsRecursive) {
-            myRefreshQueue.addLast(child);
-          }
-        }
+        String symlinkTarget = isLink ? file.toRealPath().toString() : null;
+        myHelper.scheduleCreation(parent, name, toFileAttributes(file, attrs, isLink), isEmptyDir(file, attrs), symlinkTarget);
+        return FileVisitResult.CONTINUE;
+      }
 
-        boolean currentWritable = myPersistence.isWritable(child);
-        boolean isWritable;
+      if(checkCancelled(child, myRefreshContext)) {
+        return FileVisitResult.TERMINATE;
+      }
 
-        if (attrs instanceof DosFileAttributes) {
-          DosFileAttributes dosFileAttributes = (DosFileAttributes)attrs;
-          isWritable = attrs.isDirectory() || !dosFileAttributes.isReadOnly();
-        }
-        else if (attrs instanceof PosixFileAttributes) {
-          isWritable = ((PosixFileAttributes)attrs).permissions().contains(PosixFilePermission.OWNER_WRITE);
-        }
-        else {
-          isWritable = file.toFile().canWrite();
-        }
+      if (!child.isDirty()) {
+        return FileVisitResult.CONTINUE;
+      }
 
-        if (LOG_ATTRIBUTES.isDebugEnabled()) {
-          LOG_ATTRIBUTES
-            .debug("file=" + file + " writable vfs=" + child.isWritable() + " persistence=" + currentWritable + " real=" + isWritable);
-        }
-        if (currentWritable != isWritable) {
-          addAttributeChangeEvent(child, VirtualFile.PROP_WRITABLE, currentWritable, isWritable);
-        }
+      boolean oldIsDirectory = child.isDirectory();
+      boolean oldIsSymlink = child.is(VFileProperty.SYMLINK);
+      boolean oldIsSpecial = child.is(VFileProperty.SPECIAL);
 
-        if (attrs instanceof DosFileAttributes) {
-          boolean currentHidden = child.is(VFileProperty.HIDDEN);
-          boolean upToDateHidden = ((DosFileAttributes)attrs).isHidden();
-          if (currentHidden != upToDateHidden) {
-            addAttributeChangeEvent(child, VirtualFile.PROP_HIDDEN, currentHidden, upToDateHidden);
-          }
-        }
+      if (oldIsDirectory != isDirectory ||
+          oldIsSymlink != isLink ||
+          oldIsSpecial != isSpecial) { // symlink or directory or special changed
+        myHelper.scheduleDeletion(child);
+        VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
+        String symlinkTarget = isLink ? file.toRealPath().toString() : null;
+        myHelper.scheduleCreation(parent, child.getName(), toFileAttributes(file, attrs, isLink), isEmptyDir(file, attrs), symlinkTarget);
+        // ignore everything else
+        child.markClean();
+        return FileVisitResult.CONTINUE;
+      }
 
-        if (attrs.isSymbolicLink()) {
-          String currentTarget = child.getCanonicalPath();
-          String upToDateTarget = myFs.resolveSymLink(child);
-          String upToDateVfsTarget = upToDateTarget != null ? FileUtil.toSystemIndependentName(upToDateTarget) : null;
-          if (!Comparing.equal(currentTarget, upToDateVfsTarget)) {
-            addAttributeChangeEvent(child, VirtualFile.PROP_SYMLINK_TARGET, currentTarget, upToDateVfsTarget);
-          }
-        }
-        if (!child.isDirectory()) child.markClean();
+      String currentName = child.getName();
+      if (!currentName.equals(name)) {
+        myHelper.scheduleAttributeChange(child, VirtualFile.PROP_NAME, currentName, name);
+      }
+
+      if (!isDirectory) {
+        myHelper.checkContentChanged(child, myRefreshContext.persistence.getTimeStamp(child), attrs.lastModifiedTime().toMillis(),
+                                     myRefreshContext.persistence.getLastRecordedLength(child), attrs.size());
+      }
+
+      myHelper.checkWritableAttributeChange(child, myRefreshContext.persistence.isWritable(child), isWritable(file, attrs, isDirectory));
+
+      if (attrs instanceof DosFileAttributes) {
+        myHelper.checkHiddenAttributeChange(child, child.is(VFileProperty.HIDDEN), ((DosFileAttributes)attrs).isHidden());
+      }
+
+      if (isLink) {
+        myHelper.checkSymbolicLinkChange(child, child.getCanonicalPath(), myRefreshContext.fs.resolveSymLink(child));
+      }
+
+      if (!child.isDirectory()) {
+        child.markClean();
+      }
+      else if (myIsRecursive) {
+        myRefreshContext.submitRefreshRequest(() -> processFile(child, myRefreshContext));
       }
       return FileVisitResult.CONTINUE;
     }
 
-    boolean acceptsFileName(String name) {
-      return !VfsUtil.isBadName(name) && (myChildrenWeAreInterested == null || myChildrenWeAreInterested.contains(name));
+    boolean acceptsFileName(@NotNull String name) {
+      return !VfsUtil.isBadName(name);
     }
 
-    public void visit(VirtualFile fileOrDir) {
-      long started = System.nanoTime();
-
+    void visit(@NotNull VirtualFile fileOrDir) {
       try {
         Path path = Paths.get(fileOrDir.getPath());
         if (fileOrDir.isDirectory()) {
-          Files.walkFileTree(path, EnumSet.noneOf(FileVisitOption.class), 1, this);
+          if (myChildrenWeAreInterested == null) {
+            // Files.walkFileTree is more efficient than File.openDirectoryStream / readAttributes because former provides access to cached 
+            // file attributes of visited children, see usages of BasicFileAttributesHolder in FileTreeWalker.getAttributes 
+            EnumSet<FileVisitOption> options = fileOrDir.is(VFileProperty.SYMLINK) ? EnumSet.of(FileVisitOption.FOLLOW_LINKS) : EnumSet.noneOf(FileVisitOption.class);
+            Files.walkFileTree(path, options, 1, this);
+          }
+          else {
+            for (String child : myChildrenWeAreInterested) {
+              try {
+                Path subPath = fixCaseIfNeeded(path.resolve(child), fileOrDir);
+                BasicFileAttributes attrs = Files.readAttributes(subPath, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+                FileVisitResult result = visitFile(subPath, attrs);
+                if (result == FileVisitResult.TERMINATE) break;
+              }
+              catch (IOException ignore) {
+              }
+            }
+          }
         }
         else {
-          visitFile(path, Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS));
+          Path file = fixCaseIfNeeded(path, fileOrDir);
+          BasicFileAttributes attrs = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+          visitFile(file, attrs);
         }
       }
-      catch (AccessDeniedException ignore) {
+      catch (AccessDeniedException | NoSuchFileException ignore) {
       }
       catch (IOException ex) {
         LOG.error(ex);
       }
-
-      int requests = myRequests.incrementAndGet();
-      long l = myTime.addAndGet(System.nanoTime() - started);
-
-      if (requests % 1000 == 0) {
-        System.out.println("refresh:" + myRequests + " for " + l / 1_000_000 + "ms");
-      }
     }
 
     @NotNull
-    List<VFileEvent> getEventSet() {
+    VfsEventGenerationHelper getHelper() {
       if (!myPersistentChildren.isEmpty()) {
-        for (VirtualFile child : myPersistentChildren.values()) {
-          addDeletionEventTo(child, myFileEvents);
+        if (!myCancelled) {
+          for (VirtualFile child : myPersistentChildren.values()) {
+            myHelper.scheduleDeletion(child);
+          }
         }
         myPersistentChildren.clear();
       }
 
-      return myFileEvents;
+      return myHelper;
     }
   }
+
+  private static Path fixCaseIfNeeded(Path path, VirtualFile file) throws IOException {
+    if (SystemInfo.isFileSystemCaseSensitive) return path;
+    // Mac: toRealPath() will return current file's name wrt case
+    // Win: toRealPath(LinkOption.NOFOLLOW_LINKS) will return current file's name wrt case
+    return file.is(VFileProperty.SYMLINK) ? path.toRealPath(LinkOption.NOFOLLOW_LINKS) : path.toRealPath();
+  }
+
+  private static boolean isWritable(Path file, BasicFileAttributes a, boolean directory) {
+    boolean isWritable;
+
+    if (a instanceof DosFileAttributes) {
+      DosFileAttributes dosFileAttributes = (DosFileAttributes)a;
+      isWritable = directory || !dosFileAttributes.isReadOnly();
+    }
+    else if (a instanceof PosixFileAttributes) {
+      isWritable = ((PosixFileAttributes)a).permissions().contains(PosixFilePermission.OWNER_WRITE);
+    }
+    else {
+      isWritable = file.toFile().canWrite();
+    }
+    return isWritable;
+  }
+
+  private static boolean isEmptyDir(Path path, BasicFileAttributes a) {
+    return a.isDirectory() && !LocalFileSystemBase.hasChildren(path);
+  }
+  
+  @NotNull
+  private static FileAttributes toFileAttributes(Path path, BasicFileAttributes a, boolean isSymlink) {
+    if (isSymlink && a == brokenSymlinkAttributes) return FileAttributes.BROKEN_SYMLINK;
+    
+    long lastModified = a.lastModifiedTime().toMillis();
+    boolean writable = isWritable(path, a, a.isDirectory());
+
+    if (SystemInfo.isWindows) {
+      boolean hidden = path.getParent() != null && ((DosFileAttributes)a).isHidden();
+      return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, hidden, a.size(), lastModified, writable);
+    }
+    else {
+      return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, false, a.size(), lastModified, writable);
+    }
+  }
+
+  private static final BasicFileAttributes brokenSymlinkAttributes = new BasicFileAttributes() {
+    private final FileTime myFileTime = FileTime.fromMillis(0);
+    @Override
+    public FileTime lastModifiedTime() {
+      return myFileTime;
+    }
+
+    @Override
+    public FileTime lastAccessTime() {
+      return myFileTime;
+    }
+
+    @Override
+    public FileTime creationTime() {
+      return myFileTime;
+    }
+
+    @Override
+    public boolean isRegularFile() {
+      return false;
+    }
+
+    @Override
+    public boolean isDirectory() {
+      return false;
+    }
+
+    @Override
+    public boolean isSymbolicLink() {
+      return true;
+    }
+
+    @Override
+    public boolean isOther() {
+      return false;
+    }
+
+    @Override
+    public long size() {
+      return 0;
+    }
+
+    @Override
+    public Object fileKey() {
+      return this;
+    }
+  };
 }

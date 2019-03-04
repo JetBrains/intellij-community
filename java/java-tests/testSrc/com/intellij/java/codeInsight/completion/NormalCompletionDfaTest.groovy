@@ -15,12 +15,15 @@
  */
 package com.intellij.java.codeInsight.completion
 
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.testFramework.LightProjectDescriptor
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-
 /**
  * @author peter
  */
+@CompileStatic
 class NormalCompletionDfaTest extends NormalCompletionTestCase {
   @NotNull
   @Override
@@ -43,19 +46,19 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testQualifierCastingBeforeLt() { doTest() }
   void testCastQualifierForPrivateFieldReference() { doTest() }
   void testOrAssignmentDfa() { doTest() }
-  void testAssignmentPreciseTypeDfa() { doTest() }
-  void testAssignmentTwicePreciseTypeDfa() { doTest() }
+  void testAssignmentPreciseTypeDfa() { doTestSecond() }
+  void testAssignmentTwicePreciseTypeDfa() { doTestSecond() }
   void testAssignmentParameterDfa() { doTest() }
   void testAssignmentNoPreciseTypeDfa() { doTest() }
   void testAssignmentPrimitiveLiteral() { doTest() }
-  void testDeclarationPreciseTypeDfa() { doTest() }
-  void testInstanceOfAssignmentDfa() { doTest() }
+  void testDeclarationPreciseTypeDfa() { doTestSecond() }
+  void testInstanceOfAssignmentDfa() { doTestSecond() }
   void testStreamDfa() { doTest() }
   void testStreamIncompleteDfa() { doTest() }
   void testOptionalDfa() { doTest() }
   void testFieldWithCastingCaret() { doTest() }
   void testCastWhenMethodComesFromDfaSuperType() { doTest() }
-  void testGenericTypeDfa() { doTest() }
+  void testGenericTypeDfa() { doTestSecond() }
   void testNarrowingReturnType() { doTest() }
   void testNarrowingReturnTypeInVoidContext() { doTest() }
   void testNoUnnecessaryCastDfa() { doTest() }
@@ -70,6 +73,8 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testComplexInstanceOfDfa() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'methodFromX', 'methodFromX2', 'methodFromY', 'methodFromY2'
+
+    assert LookupElementPresentation.renderElement(myItems[0]).tailText == '() on X'
   }
 
   void testCastTwice() {
@@ -114,4 +119,40 @@ public class FooImpl extends Foo {
     myFixture.assertPreferredCompletionItems 0, 'SString', 'SzNameInTheEnd', 'Serializable'
   }
 
+  void 'test no casts to inaccessible type'() {
+    myFixture.addClass '''
+package some;
+
+public abstract class PublicInterface {
+
+    public static PackagePrivateImplementation createPrivateImplementation() {
+        return new PackagePrivateImplementation();
+    }
+}
+
+class PackagePrivateImplementation extends PublicInterface {
+    public String getValue() { }
+}
+'''
+
+    myFixture.configureByText 'a.java', '''
+import some.PublicInterface;
+
+public class Main {
+
+    public static void main(String[] args) {
+        PublicInterface i = PublicInterface.createPrivateImplementation();
+        i.getV<caret>x
+    }
+}'''
+
+    assert myFixture.complete(CompletionType.BASIC, 2).size() == 0
+  }
+
+  private void doTestSecond() {
+    configure()
+    assert myItems?.length == 0
+    myFixture.completeBasic()
+    checkResult()
+  }
 }

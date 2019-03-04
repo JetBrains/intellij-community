@@ -61,6 +61,9 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     try {
       FontLayoutService.setInstance(null);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -184,7 +187,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     File fileWithExpectedResult = getTestDataFile(getTestDataPath(), expectedResultFileName);
     if (OVERWRITE_TESTDATA) {
       ImageIO.write(image, "png", fileWithExpectedResult);
-      System.out.println("File " + fileWithExpectedResult.getPath() + " created.");
+      System.err.println("File " + fileWithExpectedResult.getPath() + " created.");
     }
     if (fileWithExpectedResult.exists()) {
       BufferedImage expectedResult = ImageIO.read(fileWithExpectedResult);

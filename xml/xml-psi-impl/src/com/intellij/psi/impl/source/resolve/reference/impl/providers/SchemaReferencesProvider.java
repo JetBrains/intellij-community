@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @by Maxim.Mossienko
+ * @author Maxim.Mossienko
  * @author Konstantin Bulenkov
  */
 public class SchemaReferencesProvider extends PsiReferenceProvider {

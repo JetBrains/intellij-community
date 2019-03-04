@@ -16,9 +16,7 @@
 
 package com.intellij.psi.impl.cache.impl.todo;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -27,7 +25,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IntInlineKeyDescriptor;
@@ -115,10 +112,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
     final FileType fileType = file.getFileType();
 
     if (fileType instanceof LanguageFileType) {
-      final Language lang = ((LanguageFileType)fileType).getLanguage();
-      final ParserDefinition parserDef = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-      final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
-      return commentTokens != null;
+      return LanguageParserDefinitions.INSTANCE.forLanguage(((LanguageFileType)fileType).getLanguage()) != null;
     }
 
     return PlatformIdTableBuilding.isTodoIndexerRegistered(fileType) ||

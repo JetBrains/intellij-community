@@ -88,11 +88,16 @@ public class JoinLinesHandler extends EditorActionHandler {
         Ref<Integer> caretRestoreOffset = new Ref<>(-1);
         CodeEditUtil.setNodeReformatStrategy(node -> node.getTextRange().getStartOffset() >= startReformatOffset);
         try {
-          for (int count = 0; count < lineCount; count++) {
+          int count = 0;
+          while (count < lineCount) {
             indicator.checkCanceled();
             indicator.setFraction(((double)count) / lineCount);
+            int beforeLines = doc.getLineCount();
             ProgressManager.getInstance().executeNonCancelableSection(
               () -> doJoinTwoLines(doc, project, docManager, psiFile, line, caretRestoreOffset));
+            int afterLines = doc.getLineCount();
+            // Single Join two lines procedure could join more than two (e.g. if it removes braces)
+            count += Math.max(beforeLines - afterLines, 1);
           }
         }
         finally {
@@ -143,7 +148,7 @@ public class JoinLinesHandler extends EditorActionHandler {
       if (delegate instanceof JoinRawLinesHandlerDelegate) {
         rc = ((JoinRawLinesHandlerDelegate)delegate).tryJoinRawLines(doc, psiFile, start, end);
         if (rc != CANNOT_JOIN) {
-          caretRestoreOffset.set(rc);
+          caretRestoreOffset.set(checkOffset(rc, delegate, doc));
           break;
         }
       }
@@ -178,16 +183,19 @@ public class JoinLinesHandler extends EditorActionHandler {
       docManager.commitDocument(doc);
 
       for(JoinLinesHandlerDelegate delegate: JoinLinesHandlerDelegate.EP_NAME.getExtensionList()) {
-        rc = delegate.tryJoinLines(doc, psiFile, start, end);
+        rc = checkOffset(delegate.tryJoinLines(doc, psiFile, start, end), delegate, doc);
         if (rc != CANNOT_JOIN) break;
       }
     }
-    docManager.doPostponedOperationsAndUnblockDocument(doc);
 
     if (rc != CANNOT_JOIN) {
+      RangeMarker marker = doc.createRangeMarker(rc, rc);
+      docManager.doPostponedOperationsAndUnblockDocument(doc);
+      rc = marker.getStartOffset();
       if (caretRestoreOffset.get() == CANNOT_JOIN) caretRestoreOffset.set(rc);
       return;
     }
+    docManager.doPostponedOperationsAndUnblockDocument(doc);
 
     int replaceStart = start == offsets.lineEndOffset ? start : start + 1;
     if (caretRestoreOffset.get() == CANNOT_JOIN) caretRestoreOffset.set(replaceStart);
@@ -231,6 +239,19 @@ public class JoinLinesHandler extends EditorActionHandler {
     }
 
     docManager.commitDocument(doc);
+  }
+
+  private static int checkOffset(int offset, JoinLinesHandlerDelegate delegate, DocumentEx doc) {
+    if (offset == CANNOT_JOIN) return offset;
+    if (offset < 0) {
+      LOG.error("Handler returned negative offset: handler class="+delegate.getClass()+"; offset="+offset);
+      return 0;
+    } else if (offset > doc.getTextLength()) {
+      LOG.error("Handler returned an offset which exceeds the document length: handler class=" + delegate.getClass() + 
+                "; offset=" + offset + "; length=" + doc.getTextLength());
+      return doc.getTextLength();
+    }
+    return offset;
   }
 
   private static class JoinLinesOffsets {

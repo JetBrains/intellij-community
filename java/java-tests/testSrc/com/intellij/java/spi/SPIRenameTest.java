@@ -15,15 +15,15 @@
  */
 package com.intellij.java.spi;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
-import org.jetbrains.annotations.NotNull;
 
-public class SPIRenameTest extends MultiFileTestCase {
+public class SPIRenameTest extends LightMultiFileTestCase {
   public void testRenameProviderImplementation() {
     doRenameTest("Test1", "foo/Test.java");
   }
@@ -37,26 +37,22 @@ public class SPIRenameTest extends MultiFileTestCase {
   }
 
   private void doRenameTest(final String newName, final String relPath) {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) {
-        final VirtualFile file = rootDir.findFileByRelativePath(relPath);
-        assert file != null;
-        configureByExistingFile(file);
-        final PsiElement element = TargetElementUtil.findTargetElement(myEditor,
-                                                                       TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
-                                                                       TargetElementUtil.ELEMENT_NAME_ACCEPTED);
-        assert element != null;
-        final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
-        assert substitution != null;
-        new RenameProcessor(getProject(), substitution, newName, true, true).run();
-      }
+    doTest(() -> {
+      final VirtualFile file = myFixture.findFileInTempDir(relPath);
+      assert file != null;
+      myFixture.configureFromExistingVirtualFile(file);
+      final PsiElement element = TargetElementUtil.findTargetElement(getEditor(),
+                                                                     TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
+                                                                     TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+      assert element != null;
+      final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, getEditor());
+      assert substitution != null;
+      new RenameProcessor(getProject(), substitution, newName, true, true).run();
     });
   }
 
-  @NotNull
-  @Override
-  protected String getTestRoot() {
-    return  "/spi/";
+   @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/spi/";
   }
 }

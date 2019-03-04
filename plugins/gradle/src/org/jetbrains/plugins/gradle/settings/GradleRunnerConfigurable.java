@@ -6,6 +6,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
@@ -20,9 +21,14 @@ public class GradleRunnerConfigurable implements Configurable {
   private JBCheckBox myGradleAwareMakeCheckBox;
   private ComboBox myPreferredTestRunner;
   private static final TestRunnerItem[] TEST_RUNNER_ITEMS = new TestRunnerItem[]{
-    new TestRunnerItem(GradleSystemRunningSettings.PreferredTestRunner.PLATFORM_TEST_RUNNER),
-    new TestRunnerItem(GradleSystemRunningSettings.PreferredTestRunner.GRADLE_TEST_RUNNER),
-    new TestRunnerItem(GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST)};
+    new TestRunnerItem(TestRunner.PLATFORM),
+    new TestRunnerItem(TestRunner.GRADLE),
+    new TestRunnerItem(TestRunner.CHOOSE_PER_TEST)};
+  private final DefaultGradleProjectSettings mySettings;
+
+  public GradleRunnerConfigurable(@NotNull DefaultGradleProjectSettings settings) {
+    mySettings = settings;
+  }
 
   @Nls
   @Override
@@ -39,17 +45,16 @@ public class GradleRunnerConfigurable implements Configurable {
   @Override
   public void apply() throws ConfigurationException {
     boolean gradleMakeEnabled = myGradleAwareMakeCheckBox.isSelected();
-    GradleSystemRunningSettings settings = GradleSystemRunningSettings.getInstance();
-    settings.setUseGradleAwareMake(gradleMakeEnabled);
-    settings.setPreferredTestRunner(((TestRunnerItem)myPreferredTestRunner.getSelectedItem()).value);
+    mySettings.setDelegatedBuild(gradleMakeEnabled);
+    TestRunner preferredTestRunner = getSelectedRunner();
+    mySettings.setTestRunner(preferredTestRunner);
   }
 
   @Override
   public void reset() {
-    GradleSystemRunningSettings settings = GradleSystemRunningSettings.getInstance();
-    final TestRunnerItem item = getItem(settings.getLastPreferredTestRunner());
+    TestRunnerItem item = getItem(mySettings.getTestRunner());
     myPreferredTestRunner.setSelectedItem(item);
-    boolean gradleMakeEnabled = settings.isUseGradleAwareMake();
+    boolean gradleMakeEnabled = mySettings.isDelegatedBuild();
     enableGradleMake(gradleMakeEnabled);
   }
 
@@ -61,14 +66,8 @@ public class GradleRunnerConfigurable implements Configurable {
 
   @Override
   public boolean isModified() {
-    GradleSystemRunningSettings uiSettings = new GradleSystemRunningSettings();
-    final TestRunnerItem selectedItem = (TestRunnerItem)myPreferredTestRunner.getSelectedItem();
-    GradleSystemRunningSettings.PreferredTestRunner preferredTestRunner =
-      selectedItem == null ? GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST : selectedItem.value;
-    uiSettings.setPreferredTestRunner(preferredTestRunner);
-    uiSettings.setUseGradleAwareMake(myGradleAwareMakeCheckBox.isSelected());
-    GradleSystemRunningSettings settings = GradleSystemRunningSettings.getInstance();
-    return !settings.equals(uiSettings);
+    return mySettings.isDelegatedBuild() != myGradleAwareMakeCheckBox.isSelected() ||
+           mySettings.getTestRunner() != getSelectedRunner();
   }
 
   private void createUIComponents() {
@@ -81,7 +80,12 @@ public class GradleRunnerConfigurable implements Configurable {
     myGradleAwareMakeCheckBox.setSelected(enable);
   }
 
-  private static TestRunnerItem getItem(GradleSystemRunningSettings.PreferredTestRunner preferredTestRunner) {
+  private TestRunner getSelectedRunner() {
+    final TestRunnerItem selectedItem = (TestRunnerItem)myPreferredTestRunner.getSelectedItem();
+    return selectedItem == null ? TestRunner.CHOOSE_PER_TEST : selectedItem.value;
+  }
+
+  private static TestRunnerItem getItem(TestRunner preferredTestRunner) {
     for (TestRunnerItem item : getItems()) {
       if (item.value == preferredTestRunner) return item;
     }
@@ -93,11 +97,11 @@ public class GradleRunnerConfigurable implements Configurable {
   }
 
   static class TestRunnerItem {
-    TestRunnerItem(GradleSystemRunningSettings.PreferredTestRunner value) {
+    TestRunner value;
+
+    TestRunnerItem(TestRunner value) {
       this.value = value;
     }
-
-    GradleSystemRunningSettings.PreferredTestRunner value;
 
     @Override
     public boolean equals(Object o) {

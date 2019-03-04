@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -35,7 +36,7 @@ import java.util.concurrent.*;
  * {@link #cancelAllRequests()} and {@link #cancelRequest(Runnable)} allow to cancel already scheduled requests.
  */
 public class Alarm implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
 
   private volatile boolean myDisposed;
 
@@ -189,7 +190,14 @@ public class Alarm implements Disposable {
     _addRequest(request, delayMillis, modalityState);
   }
 
-  void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
+  protected void cancelAllAndAddRequest(@NotNull Runnable request, int delayMillis, @Nullable ModalityState modalityState) {
+    synchronized (LOCK) {
+      cancelAllRequests();
+      _addRequest(request, delayMillis, modalityState);
+    }
+  }
+
+  protected void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
     synchronized (LOCK) {
       checkDisposed();
       final Request requestToSchedule = new Request(request, modalityState, delayMillis);
@@ -257,10 +265,17 @@ public class Alarm implements Disposable {
 
   @TestOnly
   public void drainRequestsInTest() {
+    for (Runnable task : getUnfinishedRequests()) {
+      task.run();
+    }
+  }
+
+  @NotNull
+  protected List<Runnable> getUnfinishedRequests() {
     List<Runnable> unfinishedTasks;
     synchronized (LOCK) {
       if (myRequests.isEmpty()) {
-        return;
+        return Collections.emptyList();
       }
 
       unfinishedTasks = new ArrayList<>(myRequests.size());
@@ -272,10 +287,7 @@ public class Alarm implements Disposable {
       }
       myRequests.clear();
     }
-
-    for (Runnable task : unfinishedTasks) {
-      task.run();
-    }
+    return unfinishedTasks;
   }
 
   /**
@@ -357,7 +369,7 @@ public class Alarm implements Disposable {
         }
       }
       finally {
-        /** remove from the list after execution to be able for {@link #waitForAllExecuted(long, TimeUnit)} to wait for completion */
+        // remove from the list after execution to be able for {@link #waitForAllExecuted(long, TimeUnit)} to wait for completion
         synchronized (LOCK) {
           myRequests.remove(this);
           myFuture = null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -83,7 +83,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
       return null;
     }
 
-    ASTNode node = calcTreeElement().findChildByType(GroovyElementTypes.PACKAGE_DEFINITION);
+    ASTNode node = calcTreeElement().findChildByType(GroovyStubElementTypes.PACKAGE_DEFINITION);
     return node != null ? (GrPackageDefinition)node.getPsi() : null;
   }
 
@@ -141,10 +141,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
   public GrImportStatement[] getImportStatements() {
     final StubElement<?> stub = getStub();
     if (stub != null) {
-      return stub.getChildrenByType(GroovyElementTypes.IMPORT_STATEMENT, GrImportStatement.ARRAY_FACTORY);
+      return stub.getChildrenByType(GroovyStubElementTypes.IMPORT, GrImportStatement.ARRAY_FACTORY);
     }
 
-    return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.IMPORT_STATEMENT, GrImportStatement.ARRAY_FACTORY);
+    return calcTreeElement().getChildrenAsPsiElements(GroovyStubElementTypes.IMPORT, GrImportStatement.ARRAY_FACTORY);
   }
 
   @Override

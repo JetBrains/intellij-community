@@ -1,4 +1,4 @@
-// "Replace with min()" "true"
+// "Replace with 'min()'" "true"
 
 import java.util.*;
 import java.util.stream.Collectors;

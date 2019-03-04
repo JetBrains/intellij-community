@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -80,17 +79,24 @@ public abstract class NonCodeMembersContributor {
 
     if (aClass != null) {
       for (String superClassName : ClassUtil.getSuperClassesWithCache(aClass).keySet()) {
+        ProgressManager.checkCanceled();
         for (NonCodeMembersContributor enhancer : ourClassSpecifiedContributors.get(superClassName)) {
+          ProgressManager.checkCanceled();
           if (!invokeContributor(qualifierType, place, state, aClass, allDelegates, enhancer)) return false;
         }
       }
     }
 
     for (NonCodeMembersContributor contributor : ourAllTypeContributors) {
+      ProgressManager.checkCanceled();
       if (!invokeContributor(qualifierType, place, state, aClass, allDelegates, contributor)) return false;
     }
 
-    return GroovyDslFileIndex.processExecutors(qualifierType, place, processor, state);
+    return GroovyDslFileIndex.processExecutors(
+      qualifierType,
+      place,
+      (holder, descriptor) -> holder.processMembers(descriptor, processor, state)
+    );
   }
 
   private static boolean invokeContributor(@NotNull PsiType qualifierType,
@@ -99,8 +105,8 @@ public abstract class NonCodeMembersContributor {
                                            PsiClass aClass,
                                            List<MyDelegatingScopeProcessor> allDelegates,
                                            NonCodeMembersContributor enhancer) {
-    ProgressManager.checkCanceled();
     for (MyDelegatingScopeProcessor delegatingProcessor : allDelegates) {
+      ProgressManager.checkCanceled();
       enhancer.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
       if (!delegatingProcessor.wantMore) {
         return false;

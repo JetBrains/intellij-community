@@ -123,6 +123,19 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertSame(productionModule, testModuleProperties.getProductionModule());
   }
 
+  public void testInvalidLanguageLevel() {
+    loadProject("/jps/model-serialization/testData/testInvalidLanguageLevel/testInvalidLanguageLevel.ipr");
+    List<JpsModule> modules = myProject.getModules();
+    assertEquals(1, modules.size());
+    JpsModule testModule = modules.get(0);
+    assertEquals("testModule", testModule.getName());
+
+    JpsJavaModuleExtension moduleExtension = JpsJavaExtensionService.getInstance().getModuleExtension(testModule);
+    assertNull(moduleExtension.getLanguageLevel());
+    JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(myProject);
+    assertEquals(LanguageLevel.JDK_1_6, projectExtension.getLanguageLevel());
+  }
+
   public void testExcludePatterns() {
     String projectPath = "/jps/model-serialization/testData/excludePatterns";
     loadProject(projectPath + "/excludePatterns.ipr");

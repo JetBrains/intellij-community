@@ -91,7 +91,12 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     for (Task task : project.getTasks()) {
       if (task instanceof Jar) {
         Jar jar = (Jar)task;
-        artifacts.add(jar.getArchivePath());
+        try {
+          artifacts.add(jar.getArchivePath());
+        }
+        catch (Exception e) {
+          project.getLogger().error("warning: [task " + jar.getPath() + "] " + e.getMessage());
+        }
       }
     }
 
@@ -113,7 +118,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
         if (test.hasProperty(TEST_SRC_DIRS_PROPERTY)) {
           Object testSrcDirs = test.property(TEST_SRC_DIRS_PROPERTY);
           if (testSrcDirs instanceof Iterable) {
-            for (Object dir : Iterable.class.cast(testSrcDirs)) {
+            for (Object dir : (Iterable)testSrcDirs) {
               addFilePath(directorySet.getTestDirectories(), dir);
             }
           }

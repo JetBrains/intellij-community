@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
  * A variation of a named PSI element.
  *
  * @author Konstantin Bulenkov
- * @since 9.0
  */
 public interface PsiQualifiedNamedElement extends PsiNamedElement {
   /**

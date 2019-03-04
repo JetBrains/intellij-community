@@ -91,9 +91,9 @@ public abstract class VcsDirtyScope {
    *
    * @param iterator an iterator to invoke
    */
-  public abstract void iterate(Processor<FilePath> iterator);
+  public abstract void iterate(Processor<? super FilePath> iterator);
   
-  public abstract void iterateExistingInsideScope(Processor<VirtualFile> vf);
+  public abstract void iterateExistingInsideScope(Processor<? super VirtualFile> vf);
 
   public abstract boolean isEmpty();
 

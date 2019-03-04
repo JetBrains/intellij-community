@@ -1,146 +1,158 @@
+import org.gradle.internal.os.OperatingSystem
+
 import java.util.concurrent.TimeUnit
 
-def setupJbre = task setupJbre {}
+task setupJbre()
 
-def jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jdk'
 def targetOs = System.getProperty("intellij.build.target.os", "all")
-def bundledJreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").toInteger()
-def isBundledJreModular = bundledJreVersion >= 9
-def jreArtifactBuild = System.getProperty("intellij.build.bundled.jre.build", jdkBuild)
-def jreArtifactPrefix
-if (bundledJreVersion == 8) {
-  jreArtifactPrefix = 'jbrex8'
-}
-else if (bundledJreVersion == 9) {
-  jreArtifactPrefix = 'jbsdk9'
-}
-else {
-  throw new IllegalArgumentException("Unable to determine bundled JRE artifact prefix by JRE version $bundledJreVersion")
+def jreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").toInteger()
+def jreBuild = System.getProperty("intellij.build.bundled.jre.build", jdkBuild)
+def jrePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
+createJbreTasks(jreBuild, jreVersion, targetOs, jrePrefix)
+
+if (System.getProperty('intellij.build.bundle.second.jre', 'false').toBoolean()) {
+  def secondJreBuild = System.getProperty("intellij.build.bundled.second.jre.build", secondJreBuild)
+  def secondJreVersion = System.getProperty("intellij.build.bundled.second.jre.version", secondJreVersion).toInteger()
+  createJbreTasks(secondJreBuild, secondJreVersion, targetOs)
 }
 
-jrePlatformsToDownload(targetOs).each { platform ->
-  archToDownload(platform, !isBundledJreModular).each { arch ->
-    def jreBuild = project.ext.has("jreBuild_$platform") ? project.ext["jreBuild_$platform"] : jreArtifactBuild
-    def jbsdkArtifactName = "${jreArtifactPrefix}${jreBuild}_${platform}_$arch"
-    def jbreArtifactName = "jbre${bundledJreVersion}${jreBuild}_${platform}_$arch"
-
-    task("downloadJbre_${platform}_$arch") {
-      def outputDir = "$project.buildDir/jbre"
-      def outputFile = "$outputDir/${jbsdkArtifactName}_origin.tar.gz"
-
-      inputs.property('build', jreArtifactBuild)
-      outputs.file(outputFile)
-      doLast {
-        logger.info("Downloading $jbsdkArtifactName to $outputFile")
-        download {
-          src "$jdkRepo/${jbsdkArtifactName}.tar.gz"
-          dest outputFile
-          tempAndMove true
-          timeout TimeUnit.MINUTES.toMillis(30).toInteger()
-        }
-      }
-    }
-    cleanSetupJbre.dependsOn("cleanDownloadJbre_${platform}_$arch")
-
-    if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-      // note: tarTree extracts symlinks as 0 length files which breaks osx distributions 
-      task("untarJbre_${platform}_$arch", type: Copy, dependsOn: "downloadJbre_${platform}_$arch") {
-        def downloadOutputs = tasks["downloadJbre_${platform}_$arch"].outputs.files
-        if (isBundledJreModular) {
-          from tarTree(downloadOutputs.singleFile), {
-            exclude modularJdkSpecificFiles(platform)
-          }
-        }
-        else {
-          from tarTree(downloadOutputs.singleFile), {
-            exclude 'lib/tools.jar'
-          }
-          from tarTree(downloadOutputs.singleFile), {
-            include 'lib/tools.jar'
-            into 'jre'
-          }
-        }
-        into { "${downloadOutputs.singleFile.parent}/${downloadOutputs.singleFile.name - '.tar.gz'}/" }
-        includeEmptyDirs = false
-      }
-    }
-    else {
-      task("untarJbre_${platform}_$arch", type: Exec, dependsOn: "downloadJbre_${platform}_$arch") {
-        def downloadOutputs = tasks["downloadJbre_${platform}_$arch"].outputs.files
-        def outputDir = "${downloadOutputs.singleFile.absolutePath - '.tar.gz'}"
-        inputs.file(downloadOutputs.singleFile)
-        outputs.dir(outputDir)
-        doFirst { exec { commandLine 'mkdir', '-p', outputDir } }
-        commandLine 'tar', '-xpf', "${downloadOutputs.singleFile.absolutePath}", '--directory', outputDir
-        if (isBundledJreModular) {
-          doLast {
-            delete fileTree(outputDir) {
-              include modularJdkSpecificFiles(platform)
-            }
-          }
-        }
-        else if (platform != 'osx') {
-          doLast {
-            if (file("$outputDir/lib/tools.jar").exists()) {
-              exec {
-                commandLine 'mv', "$outputDir/lib/tools.jar", "$outputDir/jre/lib/"
-                ignoreExitValue = true
-              }
-            }
-          }
-        }
-      }
-    }
-    cleanSetupJbre.dependsOn("cleanUntarJbre_${platform}_$arch")
-
-    createTarJbreTask("tarJbre_${platform}_$arch", "untarJbre_${platform}_$arch", platform, jbreArtifactName, false, isBundledJreModular)
-    if (!isBundledJreModular) {
-      createTarJbreTask("tarJbrex_${platform}_$arch", "untarJbre_${platform}_$arch", platform, jbsdkArtifactName, true, isBundledJreModular)
-
-      setupJbre.dependsOn("tarJbrex_${platform}_$arch")
-      cleanSetupJbre.dependsOn("cleanTarJbrex_${platform}_$arch")
-    }
-
-    setupJbre.dependsOn("tarJbre_${platform}_$arch")
-    cleanSetupJbre.dependsOn("cleanTarJbre_${platform}_$arch")
+/**
+ * Update this method together with:
+ *  `setupJdk.gradle` 
+ *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
+ */
+static def splitJreBuild(String jreBuild, String version) {
+  def split = jreBuild.split('b')
+  if (split.length > 2) {
+    throw new IllegalArgumentException(
+      "$jreBuild is expected in format <update>b<build_number>. Examples: u202b1483.24, 11_0_2b140, b96"
+    )
+  }
+  if (split.length == 2) {
+    def update = split[0]
+    if (update.startsWith(version)) update -= version
+    // [11_0_2, b140] or [8u202, b1483.24]
+    ["$version$update", "b${split[1]}"]
+  }
+  else {
+    // [11, b96]
+    [version, jreBuild]
   }
 }
 
-def createTarJbreTask(String taskName,
-                      String untarTaskName,
-                      String platform,
-                      String archiveName,
-                      boolean includeToolsJar,
-                      boolean isBundledJreModular) {
-  def dirToTar = isBundledJreModular ? '.' : (platform == 'osx' ? 'jdk' : 'jre')
-
-  if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-    task(taskName, type: Tar) {
-      def untarOutputs = tasks[untarTaskName].outputs.files
-      inputs.file(untarOutputs)
-      if (isBundledJreModular) {
-        from untarOutputs.singleFile
+def createJbreTasks(String defaultBuild, int version, String targetOs, String prefix = null) {
+  def isModular = version >= 9
+  if (prefix == null) prefix = isModular ? 'jbr-' : 'jbrx-'
+  jrePlatformsToDownload(targetOs).each { platform ->
+    archToDownload(platform, !isModular).each { arch ->
+      def jreBuild = project.ext.has("jreBuild_$platform") ? project.ext["jreBuild_$platform"] : defaultBuild
+      def (update, buildNumber) = splitJreBuild(jreBuild.toString(), version.toString())
+      def jbrxArtifactName = "$prefix$update-$platform-$arch-$buildNumber".toString()
+      def download = createDownloadJbreTask(jbrxArtifactName, jreBuild.toString(), !isModular)
+      if (!isModular) {
+        def jbrArtifactName = "jbr-$update-$platform-$arch-$buildNumber"
+        def untarTask = createUntarJbreTask(download, jbrxArtifactName.capitalize(), platform)
+        createTarJbreTask("tar${jbrArtifactName.capitalize()}", untarTask, platform, jbrArtifactName, false)
+        setupJbre.dependsOn("tar${jbrArtifactName.capitalize()}")
+        cleanSetupJbre.dependsOn("cleanTar${jbrArtifactName.capitalize()}")
+        createTarJbreTask("tar${jbrxArtifactName.capitalize()}", untarTask, platform, jbrxArtifactName, true)
+        setupJbre.dependsOn("tar${jbrxArtifactName.capitalize()}")
+        cleanSetupJbre.dependsOn("cleanTar${jbrxArtifactName.capitalize()}")
       }
-      else {
-        from "$untarOutputs.singleFile/$dirToTar"
-        if (!includeToolsJar) {
-          exclude "**/tools.jar"
+    }
+  }
+}
+
+def createDownloadJbreTask(String artifactName, String build, boolean doRepackage) {
+  def outputDir = "$project.buildDir/jbre"
+  def suffix = doRepackage ? '_origin' : ''
+  def outputFile = "$outputDir/${artifactName}${suffix}.tar.gz"
+  task("download${artifactName.capitalize()}") {
+    def jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jbr'
+    inputs.property('build', build)
+    outputs.file(outputFile)
+    doLast {
+      logger.info("Downloading $artifactName to $outputFile")
+      download {
+        src "$jdkRepo/${artifactName}.tar.gz"
+        dest outputFile
+        tempAndMove true
+        timeout TimeUnit.MINUTES.toMillis(30).toInteger()
+      }
+    }
+    setupJbre.dependsOn(it)
+    cleanSetupJbre.dependsOn("clean${it.name.capitalize()}")
+  }
+  file(outputFile)
+}
+
+def createUntarJbreTask(File downloadOutputs, String taskName, String platform) {
+  Task untar
+  if (OperatingSystem.current().isWindows()) {
+    // note: tarTree extracts symlinks as 0 length files which breaks osx distributions 
+    untar = task("untar$taskName", type: Copy, dependsOn: "download$taskName") {
+      from tarTree(downloadOutputs), {
+        exclude 'lib/tools.jar'
+      }
+      from tarTree(downloadOutputs), {
+        include 'lib/tools.jar'
+        into 'jre'
+      }
+      into { "${downloadOutputs.parent}/${downloadOutputs.name - '.tar.gz'}/" }
+      includeEmptyDirs = false
+    }
+  }
+  else {
+    untar = task("untar$taskName", type: Exec, dependsOn: "download$taskName") {
+      def outputDir = "${downloadOutputs.absolutePath - '.tar.gz'}"
+      inputs.file(downloadOutputs)
+      outputs.dir(outputDir)
+      doFirst { exec { commandLine 'mkdir', '-p', outputDir } }
+      commandLine 'tar', '-xpf', "${downloadOutputs.absolutePath}", '--directory', outputDir
+      if (platform != 'osx') {
+        doLast {
+          if (file("$outputDir/lib/tools.jar").exists()) {
+            exec {
+              commandLine 'mv', "$outputDir/lib/tools.jar", "$outputDir/jre/lib/"
+              ignoreExitValue = true
+            }
+          }
         }
+      }
+    }
+  }
+  cleanSetupJbre.dependsOn("cleanUntar$taskName")
+  untar
+}
+
+def createTarJbreTask(String taskName,
+                      Task untarTask,
+                      String platform,
+                      String archive,
+                      boolean includeToolsJar) {
+  def dirToTar = platform == 'osx' ? 'jdk' : 'jre'
+  if (OperatingSystem.current().isWindows()) {
+    task(taskName, type: Tar) {
+      def untarOutputs = untarTask.outputs.files
+      inputs.file(untarOutputs)
+      from "$untarOutputs.singleFile/$dirToTar"
+      if (!includeToolsJar) {
+        exclude "**/tools.jar"
       }
       into dirToTar
       compression = Compression.GZIP
-      setArchiveName("${archiveName}.tar.gz")
+      archiveName = "${archive}.tar.gz"
       destinationDir = untarOutputs.singleFile.parentFile
     }
   }
   else {
     task(taskName, type: Exec) {
-      def untarOutputs = tasks[untarTaskName].outputs.files
-      def outputFile = "${untarOutputs.singleFile.parentFile}/${archiveName}.tar.gz"
+      def untarOutputs = untarTask.outputs.files
+      def outputFile = "${untarOutputs.singleFile.parentFile}/${archive}.tar.gz"
       inputs.files(untarOutputs)
       outputs.file(outputFile)
       def arguments = ['tar', '-czf', outputFile, '-C', untarOutputs.singleFile.absolutePath]
-      if (!isBundledJreModular && !includeToolsJar) {
+      if (!includeToolsJar) {
         arguments += ['--exclude', '**/tools.jar']
         // exclude entire lib directory (IDEA-176641)
         if (platform == 'osx') {
@@ -155,21 +167,13 @@ def createTarJbreTask(String taskName,
 
 // see org.jetbrains.intellij.build.BuildOptions.targetOS
 static def jrePlatformsToDownload(targetOs) {
-  def jrePlatformToDownload = new HashSet<String>()
-  if (targetOs == 'all' || targetOs == 'linux') jrePlatformToDownload.add('linux')
-  if (targetOs == 'all' || targetOs == 'windows') jrePlatformToDownload.add('windows')
-  if (targetOs == 'all' || targetOs == 'mac') jrePlatformToDownload.add('osx')
+  Set<String> jrePlatformToDownload = []
+  if (targetOs == 'all' || targetOs == 'linux') jrePlatformToDownload += 'linux'
+  if (targetOs == 'all' || targetOs == 'windows') jrePlatformToDownload += 'windows'
+  if (targetOs == 'all' || targetOs == 'mac') jrePlatformToDownload += 'osx'
   jrePlatformToDownload
 }
 
 static def archToDownload(platform, is32BitArchSupported) {
-  is32BitArchSupported && platform == 'windows' ? ['x86', 'x64'] : ['x64']
-}
-
-/**
- * @link https://docs.oracle.com/javase/9/install/installed-directory-structure-jdk-and-jre.htm
- */
-static def modularJdkSpecificFiles(platform) {
-  def prefix = platform == 'osx' ? 'jdk/Contents/Home/' : ''
-  ["${prefix}jmods/**", "${prefix}include/**", '**/src.zip', "${prefix}lib/src.zip"]
+  is32BitArchSupported && platform == 'windows' ? ['i586', 'x64'] : ['x64']
 }

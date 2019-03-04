@@ -16,6 +16,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,16 +28,39 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public abstract class ColoredTableCellRenderer extends SimpleColoredRenderer implements TableCellRenderer {
+  private static final Logger LOG = Logger.getInstance(ColoredTableCellRenderer.class);
+
   @Override
-  public final Component getTableCellRendererComponent(JTable table, @Nullable Object value,
-                                                       boolean isSelected, boolean hasFocus, int row, int col) {
+  public final Component getTableCellRendererComponent(JTable table,
+                                                       @Nullable Object value,
+                                                       boolean isSelected,
+                                                       boolean hasFocus,
+                                                       int row, int col) {
+    try {
+      rendererComponentInner(table, value, isSelected, hasFocus, row, col);
+    }
+    catch (Exception e) {
+      try { LOG.error(e); } catch (Exception ignore) { }
+    }
+    return this;
+  }
+
+  private void rendererComponentInner(JTable table,
+                                      @Nullable Object value,
+                                      boolean isSelected,
+                                      boolean hasFocus,
+                                      int row, int col) {
     clear();
     setPaintFocusBorder(hasFocus && table.getCellSelectionEnabled());
     acquireState(table, isSelected, hasFocus, row, col);
     getCellState().updateRenderer(this);
     customizeCellRenderer(table, value, isSelected, hasFocus, row, col);
-    return this;
   }
 
-  protected abstract void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column);
+  protected abstract void customizeCellRenderer(JTable table,
+                                                @Nullable Object value,
+                                                boolean selected,
+                                                boolean hasFocus,
+                                                int row,
+                                                int column);
 }

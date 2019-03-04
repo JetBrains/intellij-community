@@ -16,7 +16,13 @@ public interface ProductIcons {
   }
 
   /**
-   * Returns icon which may be used to represent projects which may be opened by the IDE (e.g. in file choosers).
+   * Returns a node icon to represent projects which may be opened by the IDE (e.g. in file choosers).
+   */
+  @NotNull
+  Icon getProjectNodeIcon();
+
+  /**
+   * Returns an action icon to represent a project directory.
    */
   @NotNull
   Icon getProjectIcon();

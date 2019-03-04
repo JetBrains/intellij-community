@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="16" viewBox="0 0 16 16">
+  <defs>
+    <circle id="chrome-a" cx="7" cy="7" r="7"/>
+    <linearGradient id="chrome-c" x1="4.547%" x2="36.948%" y1="62.056%" y2="33.661%">
+      <stop offset="0%" stop-color="#A52714" stop-opacity=".6"/>
+      <stop offset="66%" stop-color="#A52714" stop-opacity="0"/>
+    </linearGradient>
+    <circle id="chrome-d" cx="7" cy="7" r="7"/>
+    <linearGradient id="chrome-f" x1="83.873%" x2="36.313%" y1="87.776%" y2="66.355%">
+      <stop offset="0%" stop-color="#055524" stop-opacity=".4"/>
+      <stop offset="33%" stop-color="#055524" stop-opacity="0"/>
+    </linearGradient>
+    <circle id="chrome-g" cx="7" cy="7" r="7"/>
+    <linearGradient id="chrome-i" x1="32.625%" x2="48.553%" y1="-4.841%" y2="45.414%">
+      <stop offset="0%" stop-color="#EA6100" stop-opacity=".3"/>
+      <stop offset="66%" stop-color="#EA6100" stop-opacity="0"/>
+    </linearGradient>
+    <circle id="chrome-j" cx="7" cy="7" r="7"/>
+    <radialGradient id="chrome-k" cx="-4.872%" cy="-.248%" r="401.327%" fx="-4.872%" fy="-.248%" gradientTransform="matrix(.26722 0 0 1 -.036 0)">
+      <stop offset="0%" stop-color="#3E2723" stop-opacity=".2"/>
+      <stop offset="100%" stop-color="#3E2723" stop-opacity="0"/>
+    </radialGradient>
+    <circle id="chrome-m" cx="7" cy="7" r="7"/>
+    <radialGradient id="chrome-n" cx="-.157%" cy=".104%" r="136.321%" fx="-.157%" fy=".104%" gradientTransform="scale(1 .84752)">
+      <stop offset="0%" stop-color="#3E2723" stop-opacity=".2"/>
+      <stop offset="100%" stop-color="#3E2723" stop-opacity="0"/>
+    </radialGradient>
+    <circle id="chrome-p" cx="7" cy="7" r="7"/>
+    <radialGradient id="chrome-q" cx="10.33%" cy="-12.215%" r="226.352%" fx="10.33%" fy="-12.215%" gradientTransform="matrix(1 0 0 .49642 0 -.062)">
+      <stop offset="0%" stop-color="#263238" stop-opacity=".2"/>
+      <stop offset="100%" stop-color="#263238" stop-opacity="0"/>
+    </radialGradient>
+    <circle id="chrome-s" cx="7" cy="7" r="7"/>
+    <radialGradient id="chrome-u" cx="14.935%" cy="13.644%" r="100.426%" fx="14.935%" fy="13.644%">
+      <stop offset="0%" stop-color="#FFF" stop-opacity=".1"/>
+      <stop offset="100%" stop-color="#FFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g fill="none" fill-rule="evenodd" transform="translate(1 1)">
+    <mask id="chrome-b" fill="#fff">
+      <use xlink:href="#chrome-a"/>
+    </mask>
+    <g fill-rule="nonzero" mask="url(#chrome-b)">
+      <g transform="translate(.477 -.557)">
+        <polygon fill="#DB4437" points=".077 0 .077 10.451 3.547 10.451 6.599 4.645 14.351 4.645 14.351 0"/>
+        <polygon fill="url(#chrome-c)" points=".077 0 .077 10.451 3.547 10.451 6.599 4.645 14.351 4.645 14.351 0"/>
+      </g>
+    </g>
+    <mask id="chrome-e" fill="#fff">
+      <use xlink:href="#chrome-d"/>
+    </mask>
+    <g fill-rule="nonzero" mask="url(#chrome-e)">
+      <g transform="translate(-.557 -.636)">
+        <polygon fill="#0F9D58" points="0 14.863 7.187 14.863 10.523 11.251 10.523 8.546 4.578 8.546 0 .045"/>
+        <polygon fill="url(#chrome-f)" points="0 14.863 7.187 14.863 10.523 11.251 10.523 8.546 4.578 8.546 0 .045"/>
+      </g>
+    </g>
+    <mask id="chrome-h" fill="#fff">
+      <use xlink:href="#chrome-g"/>
+    </mask>
+    <g fill-rule="nonzero" mask="url(#chrome-h)">
+      <g transform="translate(6.364 3.898)">
+        <polygon fill="#FFCD40" points=".358 0 3.286 4.847 0 10.341 7.795 10.341 7.795 0"/>
+        <polygon fill="url(#chrome-i)" points=".412 0 3.789 4.847 0 10.341 8.989 10.341 8.989 0"/>
+      </g>
+    </g>
+    <mask id="chrome-l" fill="#fff">
+      <use xlink:href="#chrome-j"/>
+    </mask>
+    <polygon fill="url(#chrome-k)" fill-rule="nonzero" points="7.52 3.881 7.52 5.547 13.757 3.881" mask="url(#chrome-l)"/>
+    <mask id="chrome-o" fill="#fff">
+      <use xlink:href="#chrome-m"/>
+    </mask>
+    <polygon fill="url(#chrome-n)" fill-rule="nonzero" points="1.102 2.772 5.656 7.325 4.235 8.145" mask="url(#chrome-o)" transform="rotate(2 3.379 5.458)"/>
+    <mask id="chrome-r" fill="#fff">
+      <use xlink:href="#chrome-p"/>
+    </mask>
+    <polygon fill="url(#chrome-q)" fill-rule="nonzero" points="6.462 14.238 8.13 8.018 9.55 8.838" mask="url(#chrome-r)"/>
+    <mask id="chrome-t" fill="#fff">
+      <use xlink:href="#chrome-s"/>
+    </mask>
+    <g fill-rule="nonzero" mask="url(#chrome-t)">
+      <g transform="translate(3.818 3.818)">
+        <circle cx="3.182" cy="3.182" r="3.182" fill="#F1F1F1"/>
+        <circle cx="3.182" cy="3.182" r="2.545" fill="#4285F4"/>
+      </g>
+    </g>
+    <circle cx="7" cy="7" r="7" fill="url(#chrome-u)" fill-rule="nonzero"/>
+  </g>
+</svg>

@@ -14,7 +14,6 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
-import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointIntentionAction;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
@@ -23,6 +22,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -43,8 +43,8 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
-import com.sun.jdi.event.Event;
 import com.sun.jdi.event.ExceptionEvent;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,6 +159,58 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     return context;
   }
 
+  @Nullable
+  protected XNamedValue createThisNode(EvaluationContextImpl evaluationContext) {
+    ObjectReference thisObjectReference = myDescriptor.getThisObject();
+    if (thisObjectReference != null) {
+      myDescriptor.putUserData(BreakpointIntentionAction.THIS_TYPE_KEY, thisObjectReference.type().name());
+      return JavaValue.create(myNodeManager.getThisDescriptor(null, thisObjectReference), evaluationContext, myNodeManager);
+    }
+    return null;
+  }
+
+  @Nullable
+  protected XValueGroup createStaticGroup(EvaluationContextImpl evaluationContext) {
+    Location location = myDescriptor.getLocation();
+    if (location != null && myDescriptor.getThisObject() == null) {
+      StaticDescriptorImpl staticDescriptor = myNodeManager.getStaticDescriptor(myDescriptor, location.declaringType());
+      if (staticDescriptor.isExpandable()) {
+        return new JavaStaticGroup(staticDescriptor, evaluationContext, myNodeManager);
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  protected List<? extends XNamedValue> createReturnValueNodes(EvaluationContextImpl evaluationContext) {
+    Pair<Method, Value> methodValuePair = myDebugProcess.getLastExecutedMethod();
+    if (methodValuePair != null && myDescriptor.getUiIndex() == 0) {
+      Value returnValue = methodValuePair.getSecond();
+      // try to keep the value as early as possible
+      try {
+        evaluationContext.keep(returnValue);
+      }
+      catch (ObjectCollectedException ignored) {
+      }
+      ValueDescriptorImpl returnValueDescriptor =
+        myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), returnValue);
+      return Collections.singletonList(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
+    }
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  protected List<? extends XNamedValue> createExceptionNodes(EvaluationContextImpl evaluationContext) {
+    return StreamEx.of(DebuggerUtilsEx.getEventDescriptors(evaluationContext.getSuspendContext()))
+      .map(p -> p.getSecond())
+      .select(ExceptionEvent.class)
+      .map(ExceptionEvent::exception)
+      .nonNull()
+      .distinct()
+      .map(e -> JavaValue.create(myNodeManager.getThrownExceptionObjectDescriptor(myDescriptor, e), evaluationContext, myNodeManager))
+      .toList();
+  }
+
   // copied from DebuggerTree
   private void buildVariablesThreadAction(DebuggerContextImpl debuggerContext, XValueChildrenList children, XCompositeNode node) {
     try {
@@ -168,78 +220,40 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       }
       if (!debuggerContext.isEvaluationPossible()) {
         node.setErrorMessage(MessageDescriptor.EVALUATION_NOT_POSSIBLE.getLabel());
-        //myChildren.add(myNodeManager.createNode(MessageDescriptor.EVALUATION_NOT_POSSIBLE, evaluationContext));
       }
 
-      final Location location = myDescriptor.getLocation();
-
-      final ObjectReference thisObjectReference = myDescriptor.getThisObject();
-      if (thisObjectReference != null) {
-        ValueDescriptorImpl thisDescriptor = myNodeManager.getThisDescriptor(null, thisObjectReference);
-        myDescriptor.putUserData(BreakpointIntentionAction.THIS_TYPE_KEY, thisObjectReference.type().name());
-        children.add(JavaValue.create(thisDescriptor, evaluationContext, myNodeManager));
-      }
-      else if (location != null) {
-        StaticDescriptorImpl staticDecriptor = myNodeManager.getStaticDescriptor(myDescriptor, location.declaringType());
-        if (staticDecriptor.isExpandable()) {
-          children.addTopGroup(new JavaStaticGroup(staticDecriptor, evaluationContext, myNodeManager));
-        }
+      // this node
+      XNamedValue thisNode = createThisNode(evaluationContext);
+      if (thisNode != null) {
+        children.add(thisNode);
       }
 
-      DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-      if (debugProcess == null) {
-        return;
+      // static group
+      XValueGroup staticGroup = createStaticGroup(evaluationContext);
+      if (staticGroup != null) {
+        children.addTopGroup(staticGroup);
       }
 
-      // add last method return value if any
-      final Pair<Method, Value> methodValuePair = debugProcess.getLastExecutedMethod();
-      if (methodValuePair != null && myDescriptor.getUiIndex() == 0) {
-        Value returnValue = methodValuePair.getSecond();
-        // try to keep the value as early as possible
-        try {
-          evaluationContext.keep(returnValue);
-        }
-        catch (ObjectCollectedException ignored) {
-        }
-        ValueDescriptorImpl returnValueDescriptor =
-          myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), returnValue);
-        children.add(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
-      }
-      // add context exceptions
-      Set<ObjectReference> exceptions = new HashSet<>();
-      for (Pair<Breakpoint, Event> pair : DebuggerUtilsEx.getEventDescriptors(debuggerContext.getSuspendContext())) {
-        Event debugEvent = pair.getSecond();
-        if (debugEvent instanceof ExceptionEvent) {
-          ObjectReference exception = ((ExceptionEvent)debugEvent).exception();
-          if (exception != null) {
-            exceptions.add(exception);
-          }
-        }
-      }
-      exceptions.forEach(e -> children.add(
-        JavaValue.create(myNodeManager.getThrownExceptionObjectDescriptor(myDescriptor, e), evaluationContext, myNodeManager)));
+      // last method return value if any
+      createReturnValueNodes(evaluationContext).forEach(children::add);
+
+      // context exceptions
+      createExceptionNodes(evaluationContext).forEach(children::add);
 
       try {
-        buildVariables(debuggerContext, evaluationContext, debugProcess, children, thisObjectReference, location);
-        //if (classRenderer.SORT_ASCENDING) {
-        //  Collections.sort(myChildren, NodeManagerImpl.getNodeComparator());
-        //}
+        buildVariables(debuggerContext, evaluationContext, myDebugProcess, children, myDescriptor.getThisObject(),
+                       myDescriptor.getLocation());
       }
       catch (EvaluateException e) {
         node.setErrorMessage(e.getMessage());
-        //myChildren.add(myNodeManager.createMessageNode(new MessageDescriptor(e.getMessage())));
       }
     }
     catch (InvalidStackFrameException e) {
       LOG.info(e);
-      //myChildren.clear();
-      //notifyCancelled();
     }
     catch (InternalException e) {
       if (e.errorCode() == JvmtiError.INVALID_SLOT) {
         node.setErrorMessage(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()));
-        //myChildren.add(
-        //  myNodeManager.createMessageNode(new MessageDescriptor(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()))));
       }
       else {
         throw e;
@@ -292,7 +306,10 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
         Pair<Set<String>, Set<TextWithImports>> usedVars = EMPTY_USED_VARS;
         if (sourcePosition != null) {
-          usedVars = ReadAction.compute(() -> findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition));
+          usedVars = ReadAction.compute(
+            () -> DumbService.isDumb(debugProcess.getProject())
+                  ? EMPTY_USED_VARS
+                  : findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition));
         }
           // add locals
         if (myAutoWatchMode) {

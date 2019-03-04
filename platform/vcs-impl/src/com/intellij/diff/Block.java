@@ -127,9 +127,9 @@ public class Block {
   public boolean equals(Object object) {
     if (!(object instanceof Block)) return false;
     Block other = (Block)object;
-    return Arrays.equals(mySource, other.mySource)
-           && myStart == other.myStart
-           && myEnd == other.myEnd;
+    return myStart == other.myStart
+           && myEnd == other.myEnd
+           && Arrays.equals(mySource, other.mySource);
   }
 
   public int getStart() {

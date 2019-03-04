@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.filters.getters;
 
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
@@ -26,6 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +70,9 @@ public class JavaMembersGetter extends MembersGetter {
   }
 
   private void addConstantsFromReferencedClassesInSwitch(final Consumer<? super LookupElement> results) {
-    final Set<PsiField> fields = ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch(myPlace);
+    if (!JavaCompletionContributor.IN_SWITCH_LABEL.accepts(myPlace)) return;
+    PsiSwitchBlock block = ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(myPlace, PsiSwitchBlock.class));
+    final Set<PsiField> fields = ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch(block);
     final Set<PsiClass> classes = new HashSet<>();
     for (PsiField field : fields) {
       ContainerUtil.addIfNotNull(classes, field.getContainingClass());
@@ -78,7 +81,7 @@ public class JavaMembersGetter extends MembersGetter {
       processMembers(element -> {
         //noinspection SuspiciousMethodCalls
         if (!fields.contains(element.getObject())) {
-          results.consume(TailTypeDecorator.withTail(element, TailType.CASE_COLON));
+          results.consume(TailTypeDecorator.withTail(element, TailTypes.forSwitchLabel(block)));
         }
       }, aClass, true, false);
     }

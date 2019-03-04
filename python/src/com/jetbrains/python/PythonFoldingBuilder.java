@@ -19,21 +19,27 @@ import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -51,18 +57,20 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
                                                      PyElementTypes.LIST_COMP_EXPRESSION,
                                                      PyElementTypes.TUPLE_EXPRESSION);
 
+  private static final Logger LOG = Logger.getInstance(PythonFoldingBuilder.class);
+  private static final boolean ourUnderGuiTests = System.getenv("GUI_TESTS_RUN") != null;
+
   @Override
   protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
                                           @NotNull PsiElement root,
                                           @NotNull Document document,
                                           boolean quick) {
-    if (root instanceof PyFile && ((PyFile)root).getVirtualFile() instanceof LightVirtualFile) return;
     appendDescriptors(root.getNode(), descriptors);
   }
 
   private static void appendDescriptors(ASTNode node, List<FoldingDescriptor> descriptors) {
     IElementType elementType = node.getElementType();
-    if (elementType instanceof PyFileElementType) {
+    if (node.getPsi() instanceof PyFile) {
       final List<PyImportStatementBase> imports = ((PyFile)node.getPsi()).getImportBlock();
       if (imports.size() > 1) {
         final PyImportStatementBase firstImport = imports.get(0);
@@ -210,6 +218,8 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {
       PyStringLiteralExpression stringLiteralExpression = (PyStringLiteralExpression)node.getPsi();
       if (stringLiteralExpression.isDocString()) {
+        // XXX Remove when it becomes clear why PIEAE happens
+        checkStringElementsValidityInGuiTests(stringLiteralExpression);
         final String stringValue = stringLiteralExpression.getStringValue().trim();
         final String[] lines = LineTokenizer.tokenize(stringValue, true);
         if (lines.length > 2 && lines[1].trim().length() == 0) {
@@ -221,6 +231,26 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       }
     }
     return "...";
+  }
+
+  private static void checkStringElementsValidityInGuiTests(@NotNull PyStringLiteralExpression pyString) {
+    if (!ourUnderGuiTests) {
+      return;
+    }
+    try {
+      pyString.getStringElements().forEach(PsiUtilCore::ensureValid);
+    }
+    catch (PsiInvalidElementAccessException e) {
+      LOG.warn(StringUtil.join(e.getAttachments(), a -> {
+        try {
+          return a.getName() + "\n" + StreamUtil.readText(a.openContentStream(), CharsetToolkit.UTF8);
+        }
+        catch (IOException ignored) {
+          return "<corrupted stacktrace>";
+        }
+      }, "\n\n"), e);
+      throw e;
+    }
   }
 
   private static String getLanguagePlaceholderForString(PyStringLiteralExpression stringLiteralExpression) {

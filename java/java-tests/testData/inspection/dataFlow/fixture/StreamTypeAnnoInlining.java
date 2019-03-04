@@ -8,12 +8,12 @@ import java.util.stream.*;
 public class StreamTypeAnnoInlining {
   void testToArray() {
     @NotNull Object @NotNull[] foo0 = Stream.of("a", "b")
-                                            .map(x-> <warning descr="Function may return null, but it's not allowed here">"a".equals(x) ? null : x.toUpperCase()</warning>)
+                                            .map(x-> "a".equals(x) ? <warning descr="Function may return null, but it's not allowed here">null</warning> : x.toUpperCase())
                                            .toArray();
 
     // IDEA-194697
     @NotNull String @NotNull[] foo = Stream.of("a", "b")
-                                           .map(x-> <warning descr="Function may return null, but it's not allowed here">"a".equals(x) ? null : x.toUpperCase()</warning>)
+                                           .map(x-> "a".equals(x) ? <warning descr="Function may return null, but it's not allowed here">null</warning> : x.toUpperCase())
                                            .toArray(String[]::new);
 
     @NotNull String @NotNull[] foo1 = Stream.of("b", "c")

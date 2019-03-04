@@ -2,7 +2,7 @@ class Test{
   {
     new Runnable(){
       {
-        <ref>run();
+        <caret>run();
       }
     }
   }

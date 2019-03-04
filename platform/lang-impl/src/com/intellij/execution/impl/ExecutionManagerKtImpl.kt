@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionManager
 import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunProfileStarter
 import com.intellij.execution.configurations.RunProfileState
-import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
@@ -13,8 +12,6 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -128,16 +125,7 @@ class ExecutionManagerKtImpl(project: Project) : ExecutionManagerImpl(project) {
 private fun triggerUsage(environment: ExecutionEnvironment) {
   val runConfiguration = environment.runnerAndConfigurationSettings?.configuration ?: return
   val configurationFactory = runConfiguration.factory ?: return
-  val configurationType = configurationFactory.type
-  if (configurationType is UnknownConfigurationType) return
-
-  var key = configurationType.id
-  if (configurationType.configurationFactories.size > 1) {
-    key += "." + configurationFactory.id
-  }
-
-  FUSProjectUsageTrigger.getInstance(environment.project).trigger(RunConfigurationUsageTriggerCollector::class.java, key,
-                                                                  FUSUsageContext.create(environment.executor.id))
+  RunConfigurationUsageTriggerCollector.trigger(environment.project, configurationFactory, environment.executor)
 }
 
 private class ProcessExecutionListener(private val project: Project,

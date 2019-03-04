@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.RemoteStateState;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
@@ -30,7 +29,6 @@ import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import com.jetbrains.sa.SaJdwp;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,7 +111,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       }
       return attachInfo.getProcessDisplayText(res);
     }
-  };
+  }
 
   @NotNull
   @Override
@@ -131,7 +129,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       addressMap = new HashMap<>();
       contextHolder.putUserData(ADDRESS_MAP_KEY, addressMap);
       final Map<String, LocalAttachInfo> map = addressMap;
-      Set<String> attachedPids = getAttachedPids(project);
+      Set<String> attachedPids = JavaDebuggerAttachUtil.getAttachedPids(project);
       VirtualMachine.list().forEach(desc -> {
         String pid = desc.id();
         LocalAttachInfo address = getProcessAttachInfo(pid, attachedPids);
@@ -150,14 +148,6 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
   boolean isDebuggerAttach(LocalAttachInfo info) {
     return info instanceof DebuggerLocalAttachInfo;
-  }
-
-  private static Set<String> getAttachedPids(@NotNull Project project) {
-    return StreamEx.of(DebuggerManagerEx.getInstanceEx(project).getSessions())
-      .map(s -> s.getDebugEnvironment().getRemoteConnection())
-      .select(PidRemoteConnection.class)
-      .map(PidRemoteConnection::getPid)
-      .toSet();
   }
 
   @Nullable
@@ -192,6 +182,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
           if (param.startsWith("address")) {
             try {
               address = param.split("=")[1];
+              address = StringUtil.trimStart(address, "*:"); // handle java 9 format: *:5005
               return new DebuggerLocalAttachInfo(socket, address, null, pid, false);
             }
             catch (Exception e) {
@@ -225,7 +216,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
   @Nullable
   private static LocalAttachInfo getProcessAttachInfo(@NotNull String pid, @NotNull Project project) {
-    return getProcessAttachInfo(pid, getAttachedPids(project));
+    return getProcessAttachInfo(pid, JavaDebuggerAttachUtil.getAttachedPids(project));
   }
 
   @Nullable
@@ -237,7 +228,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   private static LocalAttachInfo getProcessAttachInfoInt(String pid) {
     VirtualMachine vm = null;
     try {
-      vm = VirtualMachine.attach(pid);
+      vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
       Properties agentProperties = vm.getAgentProperties();
       String command = agentProperties.getProperty("sun.java.command");
       if (!StringUtil.isEmpty(command)) {

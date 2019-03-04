@@ -47,7 +47,7 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
   private final String myDefaultExtension;
   private final Icon myIcon;
 
-  protected QtFileType(String name, String description, String defaultExtension, Icon icon) {
+  QtFileType(String name, String description, String defaultExtension, Icon icon) {
     super(XMLLanguage.INSTANCE);
     myName = name;
     myDescription = description;

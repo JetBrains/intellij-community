@@ -1,13 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.CommonBundle;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.impl.FileTemplateBase;
 import com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor;
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,8 +22,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -28,7 +33,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,6 +51,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -60,7 +65,7 @@ import java.util.zip.ZipOutputStream;
 /**
  * @author Dmitry Avdeev
  */
-public class SaveProjectAsTemplateAction extends AnAction {
+public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(SaveProjectAsTemplateAction.class);
   private static final String PROJECT_TEMPLATE_XML = "project-template.xml";
@@ -95,8 +100,25 @@ public class SaveProjectAsTemplateAction extends AnAction {
 
         @Override
         public void onSuccess() {
-          Messages.showInfoMessage(FileUtil.getNameWithoutExtension(file.getFileName().toString()) + " was successfully created.\n" +
-                                   "It's available now in Project Wizard", "Template Created");
+          AnAction newProjectAction = ActionManager.getInstance().getAction(getNewProjectActionId());
+          newProjectAction.getTemplatePresentation().setText(ActionsBundle.actionText("NewDirectoryProject"));
+          AnAction manageAction = ActionManager.getInstance().getAction("ManageProjectTemplates");
+          Notification notification = new Notification("Project Template",
+                                                       "Template Created",
+                                                       FileUtil.getNameWithoutExtension(file.getFileName().toString()) +
+                                                       " was successfully created",
+                                                       NotificationType.INFORMATION
+          );
+          notification.addAction(newProjectAction);
+          if (manageAction != null) {
+            notification.addAction(manageAction);
+          }
+          notification.notify(getProject());
+        }
+
+        @Override
+        public boolean shouldStartInBackground() {
+          return true;
         }
 
         @Override
@@ -121,14 +143,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
                                  boolean shouldEscape) {
     final Map<String, String> parameters = computeParameters(project, replaceParameters);
     indicator.setText("Saving project...");
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (project instanceof ProjectEx) {
-        (((ProjectEx)project)).save(true);
-      }
-      else {
-        project.save();
-      }
-    });
+    StoreUtil.saveSettings(project, true);
     indicator.setText("Processing project files...");
     ZipOutputStream stream = null;
     try {
@@ -190,8 +205,23 @@ public class SaveProjectAsTemplateAction extends AnAction {
     }
     else if (PlatformUtils.isPhpStorm()) {
       return FileTemplateBase.getQualifiedName("PHP File Header", "php");
+    } else if (PlatformUtils.isWebStorm()) {
+      return FileTemplateBase.getQualifiedName("JavaScript File", "js");
     } else {
       throw new IllegalStateException("Provide file header template for your IDE");
+    }
+  }
+
+  static String getNewProjectActionId() {
+    if (PlatformUtils.isIntelliJ()) {
+      return "NewProject";
+    }
+    else if (PlatformUtils.isPhpStorm()) {
+      return "NewDirectoryProject";
+    } else if (PlatformUtils.isWebStorm()) {
+      return "NewWebStormDirectoryProject";
+    } else {
+      throw new IllegalStateException("Provide new project action id for your IDE");
     }
   }
 
@@ -201,7 +231,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
     final VirtualFile descriptionFile = getDescriptionFile(project, path);
     if (descriptionFile == null) {
       stream.putNextEntry(new ZipEntry(prefix + "/" + path));
-      stream.write(text.getBytes());
+      stream.write(text.getBytes(StandardCharsets.UTF_8));
       stream.closeEntry();
     }
     else if (overwrite) {
@@ -321,7 +351,11 @@ public class SaveProjectAsTemplateAction extends AnAction {
       }
 
       char c = input.charAt(i);
-      if (c == '$' || c == '#') {
+      if (c == '$') {
+        builder.append("#[[\\$]]#");
+        continue;
+      }
+      if (c == '#') {
         builder.append('\\');
       }
       builder.append(c);
@@ -412,14 +446,15 @@ public class SaveProjectAsTemplateAction extends AnAction {
                                myPrefix + "/" + relativePath, null, null,
                                new ZipUtil.FileContentProcessor() {
                                  @Override
-                                 public InputStream getContent(final File file) throws IOException {
-                                   if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName()))
+                                 public InputStream getContent(@NotNull final File file) throws IOException {
+                                   if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName())) {
                                      return STANDARD.getContent(file);
+                                   }
                                    String result =
                                      getEncodedContent(virtualFile, myProject, myParameters, getFileHeaderTemplateName(), myShouldEscape);
-                                   return new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET));
+                                   return new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8));
                                  }
-                               });
+                               }, false);
         }
         catch (IOException e) {
           LOG.error(e);

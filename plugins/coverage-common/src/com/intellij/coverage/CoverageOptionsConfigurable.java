@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -12,7 +13,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class CoverageOptionsConfigurable implements SearchableConfigurable {
+public class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageOptions> implements SearchableConfigurable {
   private CoverageOptionsPanel myPanel;
   private final CoverageOptionsProvider myManager;
   private final Project myProject;
@@ -55,8 +56,8 @@ public class CoverageOptionsConfigurable implements SearchableConfigurable {
 
   private List<JComponent> collectExtensionOptionsComponents() {
     List<JComponent> additionalPanels = ContainerUtil.newArrayList();
-    for (CoverageOptions coverageOptions : getExtensions()) {
-      additionalPanels.add(coverageOptions.getComponent());
+    for (CoverageOptions coverageOptions : getConfigurables()) {
+      additionalPanels.add(coverageOptions.createComponent());
     }
     return additionalPanels;
   }
@@ -81,8 +82,9 @@ public class CoverageOptionsConfigurable implements SearchableConfigurable {
   }
 
   @NotNull
-  private CoverageOptions[] getExtensions() {
-    return CoverageOptions.EP_NAME.getExtensions(myProject);
+  @Override
+  protected List<CoverageOptions> createConfigurables() {
+    return CoverageOptions.EP_NAME.getExtensionList(myProject);
   }
 
   @Override
@@ -95,22 +97,14 @@ public class CoverageOptionsConfigurable implements SearchableConfigurable {
       return true;
     }
 
-    for (CoverageOptions coverageOptions : getExtensions()) {
-      if (coverageOptions.isModified()) {
-        return true;
-      }
-    }
-
-    return false;
+    return super.isModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
     myManager.setOptionsToReplace(getSelectedValue());
     myManager.setActivateViewOnRun(myPanel.myActivateCoverageViewCB.isSelected());
-    for (CoverageOptions coverageOptions : getExtensions()) {
-      coverageOptions.apply();
-    }
+    super.apply();
   }
 
   private int getSelectedValue() {
@@ -144,18 +138,13 @@ public class CoverageOptionsConfigurable implements SearchableConfigurable {
     }
 
     myPanel.myActivateCoverageViewCB.setSelected(myManager.activateViewOnRun());
-    for (CoverageOptions coverageOptions : getExtensions()) {
-      coverageOptions.reset();
-    }
+    super.reset();
   }
 
   @Override
   public void disposeUIResources() {
     myPanel = null;
-
-    for (CoverageOptions coverageOptions : getExtensions()) {
-      coverageOptions.disposeUIResources();
-    }
+    super.disposeUIResources();
   }
 
   private static class CoverageOptionsPanel {

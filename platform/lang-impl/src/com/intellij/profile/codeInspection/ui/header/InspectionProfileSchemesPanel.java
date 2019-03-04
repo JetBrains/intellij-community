@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.header;
 
 import com.intellij.application.options.schemes.AbstractDescriptionAwareSchemesPanel;
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
@@ -35,15 +36,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-
-import static com.intellij.util.JdomKt.loadElement;
 
 public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchemesPanel<InspectionProfileModifiableModel> {
-  private final static Logger LOG = Logger.getInstance(InspectionProfileSchemesPanel.class);
+  private static final Logger LOG = Logger.getInstance(InspectionProfileSchemesPanel.class);
 
   private final Project myProject;
   private final BaseInspectionProfileManager myAppProfileManager;
@@ -70,8 +67,9 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
         selectScheme(ContainerUtil.getFirstItem(currentProfiles));
       }
 
+      @NotNull
       @Override
-      protected SingleInspectionProfilePanel createPanel(InspectionProfileModifiableModel model) {
+      protected SingleInspectionProfilePanel createPanel(@NotNull InspectionProfileModifiableModel model) {
         return myConfigurable.createPanel(model);
       }
     };
@@ -103,6 +101,7 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
     return false;
   }
 
+  @NotNull
   @Override
   protected AbstractSchemeActions<InspectionProfileModifiableModel> createSchemeActions() {
     return new DescriptionAwareSchemeActions<InspectionProfileModifiableModel>(this) {
@@ -110,7 +109,7 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
       @Override
       public String getDescription(@NotNull InspectionProfileModifiableModel scheme) {
         SingleInspectionProfilePanel inspectionProfile = ((InspectionProfileSchemesModel) getModel()).getProfilePanel(scheme);
-        return inspectionProfile.getProfile().getDescription();
+        return inspectionProfile == null ? null : inspectionProfile.getProfile().getDescription();
       }
 
       @Override
@@ -134,7 +133,7 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
         FileChooser.chooseFile(descriptor, myProject, null, file -> {
           if (file != null) {
             try {
-              InspectionProfileImpl profile = importInspectionProfile(loadElement(file.getInputStream()), myAppProfileManager, myProject);
+              InspectionProfileImpl profile = importInspectionProfile(JDOMUtil.load(file.getInputStream()), myAppProfileManager, myProject);
               if (profile == null) {
                 Messages.showErrorDialog(myProject, "File '" + file.getName() + "' has invalid format.", "Inspection Settings");
                 return;
@@ -199,12 +198,13 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
         copyToAnotherLevel(scheme, false);
       }
 
+      @NotNull
       @Override
       protected Class<InspectionProfileModifiableModel> getSchemeType() {
         return InspectionProfileModifiableModel.class;
       }
 
-      private void copyToAnotherLevel(InspectionProfileModifiableModel profile, boolean copyToProject) {
+      private void copyToAnotherLevel(@NotNull InspectionProfileModifiableModel profile, boolean copyToProject) {
         getSchemesPanel().editNewSchemeName(
           profile.getName(),
           copyToProject,
@@ -217,13 +217,14 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
     };
   }
 
+  @NotNull
   @Override
   protected String getSchemeTypeName() {
     return "Profile";
   }
 
   void apply() {
-    getModel().apply(getSelectedScheme(), (p) -> {
+    getModel().apply(getSelectedScheme(), p -> {
       if (myConfigurable.setActiveProfileAsDefaultOnApply()) {
         myConfigurable.applyRootProfile(p.getName(), p.isProjectLevel());
       }
@@ -237,9 +238,9 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
 
   @NotNull
   private InspectionProfileModifiableModel copyToNewProfile(@NotNull InspectionProfileImpl selectedProfile,
-                                                 @NotNull Project project,
-                                                 @NotNull String newName,
-                                                 boolean modifyLevel) {
+                                                            @NotNull Project project,
+                                                            @NotNull String newName,
+                                                            boolean modifyLevel) {
     final boolean isProjectLevel = selectedProfile.isProjectLevel() ^ modifyLevel;
 
     BaseInspectionProfileManager profileManager = isProjectLevel ? myProjectProfileManager : myAppProfileManager;
@@ -256,7 +257,7 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
     return modifiableModel;
   }
 
-  private void addProfile(InspectionProfileModifiableModel profile) {
+  private void addProfile(@NotNull InspectionProfileModifiableModel profile) {
     final InspectionProfileModifiableModel selected = getSelectedScheme();
     getModel().addProfile(profile);
     getModel().updatePanel(this);
@@ -289,12 +290,7 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
         ContainerUtil.addAllNotNull(levels, s.getAttributeValue("level"));
       }
     }
-    for (Iterator<String> iterator = levels.iterator(); iterator.hasNext(); ) {
-      String level = iterator.next();
-      if (profileManager.getSeverityRegistrar().getSeverity(level) != null) {
-        iterator.remove();
-      }
-    }
+    levels.removeIf(level -> profileManager.getSeverityRegistrar().getSeverity(level) != null);
     if (!levels.isEmpty()) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         if (Messages.showYesNoDialog(project, "Undefined severities detected: " +
@@ -322,10 +318,10 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
     return profile;
   }
 
-  private static String getProfileName(Element rootElement) {
+  private static String getProfileName(@NotNull Element rootElement) {
     for (Element option : rootElement.getChildren("option")) {
       String optionName = option.getAttributeValue("name");
-      if (optionName.equals("myName")) {
+      if ("myName".equals(optionName)) {
         return option.getAttributeValue("value");
       }
     }

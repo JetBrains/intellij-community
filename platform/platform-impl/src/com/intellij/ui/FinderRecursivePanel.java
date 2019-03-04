@@ -50,7 +50,6 @@ import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgro
 
 /**
  * @param <T> List item type. Must implement {@code equals()/hashCode()} correctly.
- * @since 13.0
  */
 public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implements DataProvider, UserDataHolder, Disposable {
 
@@ -159,7 +158,6 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
    *
    * @param t the list item
    * @return the text to display in a tooltip for the given list item
-   * @since 2017.2
    */
   @Nullable
   protected String getItemTooltipText(T t) {
@@ -347,7 +345,6 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
    * Whether this list contains "fixed size" elements.
    *
    * @return true.
-   * @since 2017.2
    */
   protected boolean hasFixedSizeListElements() {
     return true;
@@ -397,7 +394,6 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   /**
    * @return true if already disposed.
-   * @since 2017.1
    */
   protected boolean isDisposed() {
     return Disposer.isDisposed(this);
@@ -412,7 +408,6 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
    * Performs recursive update selecting given values.
    *
    * @param pathToSelect Values to select.
-   * @since 14
    */
   public void updateSelectedPath(Object... pathToSelect) {
     if (!myUpdateSelectedPathModeActive.compareAndSet(false, true)) return;

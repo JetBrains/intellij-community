@@ -5,8 +5,11 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.*;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.ThreeState;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 public class ReorderingUtilsTest extends LightCodeInsightTestCase {
   private static final String PREFIX = "import java.util.Optional;\n" +
@@ -14,7 +17,6 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
                                        "/** @noinspection all*/\n" +
                                        "class X {Object test(Object obj, String str, int x, int y, String[] arr, " +
                                        "Optional<String> opt, List<String> list) { return ";
-  @SuppressWarnings("UnnecessarySemicolon") 
   private static final String SUFFIX = ";} static Object nullNull(Object obj) {return obj == null ? null : obj.hashCode();}}";
   private static final String SELECTION_START = "/*<*/";
   private static final String SELECTION_END = "/*>*/";
@@ -83,6 +85,12 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
     checkCanBeReordered("str != null ? /*<*/str.trim()/*>*/ : \"\"", ThreeState.NO);
     checkCanBeReordered("str != null ? \"\" : /*<*/str.trim()/*>*/", ThreeState.UNSURE);
     checkCanBeReordered("str == null ? /*<*/str.trim()/*>*/ : \"\"", ThreeState.UNSURE);
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return LightCodeInsightFixtureTestCase.JAVA_9_ANNOTATED;
   }
 
   private static void checkCanBeReordered(@Language(value = "JAVA", prefix = PREFIX, suffix = SUFFIX) String expressionText,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class SingleIntegerFieldOptionsPanel extends JPanel {
     public SingleIntegerFieldOptionsPanel(String labelString,
                                           final InspectionProfileEntry owner,
                                           @NonNls final String property) {
-        this(labelString, owner, property, 2);
+        this(labelString, owner, property, 4);
     }
 
     public SingleIntegerFieldOptionsPanel(String labelString,

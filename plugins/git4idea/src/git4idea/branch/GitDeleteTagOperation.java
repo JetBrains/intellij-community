@@ -68,7 +68,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
       GitRepository repository = next();
       GitCommandResult result = myGit.deleteTag(repository, myTagName);
       if (result.success()) {
-        repository.getRepositoryFiles().refresh();
+        repository.getRepositoryFiles().refreshTagsFiles();
         markSuccessful(repository);
       }
       else {
@@ -134,7 +134,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
     for (GitRepository repository: getSuccessfulRepositories()) {
       GitCommandResult res = myGit.createNewTag(repository, myTagName, null, myDeletedTagTips.get(repository));
       result.append(repository, res);
-      repository.getRepositoryFiles().refresh();
+      repository.getRepositoryFiles().refreshTagsFiles();
     }
     return result;
   }
@@ -160,8 +160,6 @@ class GitDeleteTagOperation extends GitBranchOperation {
   }
 
   private void pushRemotesInBackground() {
-    GitBrancher.getInstance(myProject).deleteRemoteTag(myTagName, ContainerUtil.map2Map(getRepositories(), it -> {
-      return Pair.create(it, myDeletedTagTips.get(it));
-    }));
+    GitBrancher.getInstance(myProject).deleteRemoteTag(myTagName, ContainerUtil.map2Map(getRepositories(), it -> Pair.create(it, myDeletedTagTips.get(it))));
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.configurationStore.Property;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -229,6 +230,7 @@ public class CommonCodeStyleSettings {
   }
 
 //----------------- GENERAL --------------------
+  @Property(externalName = "max_line_length")
   public int RIGHT_MARGIN = -1;
 
   public boolean LINE_COMMENT_AT_FIRST_COLUMN = true;
@@ -269,6 +271,7 @@ public class CommonCodeStyleSettings {
    */
   public int KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER = 2;
 
+  @Property(externalName = "keep_blank_lines_before_right_brace")
   public int KEEP_BLANK_LINES_BEFORE_RBRACE = 2;
 
   public int BLANK_LINES_BEFORE_PACKAGE = 0;
@@ -446,6 +449,7 @@ public class CommonCodeStyleSettings {
    */
   public boolean ALIGN_GROUP_FIELD_DECLARATIONS = false;
   public boolean ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = false;
+  public boolean ALIGN_CONSECUTIVE_ASSIGNMENTS = false;
   public boolean ALIGN_SUBSEQUENT_SIMPLE_METHODS = false;
 
 //----------------- SPACES --------------------
@@ -498,7 +502,14 @@ public class CommonCodeStyleSettings {
   public boolean SPACE_AFTER_COMMA = true;
   public boolean SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = true;
   public boolean SPACE_BEFORE_COMMA = false;
+
+  @Property(
+    externalName = "space_after_for_semicolon"
+  )
   public boolean SPACE_AFTER_SEMICOLON = true; // in for-statement
+  @Property(
+    externalName = "space_before_for_semicolon"
+  )
   public boolean SPACE_BEFORE_SEMICOLON = false; // in for-statement
 
   /**
@@ -520,6 +531,7 @@ public class CommonCodeStyleSettings {
    * or
    * "f()"
    */
+  @Property(externalName = "space_within_empty_method_call_parentheses")
   public boolean SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = false;
 
   /**
@@ -534,6 +546,7 @@ public class CommonCodeStyleSettings {
    * or
    * "void f()"
    */
+  @Property(externalName = "space_within_empty_method_parentheses")
   public boolean SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = false;
 
   /**
@@ -618,6 +631,7 @@ public class CommonCodeStyleSettings {
    * or
    * "int X[] {}"
    */
+  @Property(externalName = "space_within_empty_array_initializer_braces")
   public boolean SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES = false;
 
   public boolean SPACE_AFTER_TYPE_CAST = true;
@@ -690,6 +704,7 @@ public class CommonCodeStyleSettings {
    * or
    * "class A{"
    */
+  @Property(externalName = "space_before_class_left_brace")
   public boolean SPACE_BEFORE_CLASS_LBRACE = true;
 
   /**
@@ -697,6 +712,7 @@ public class CommonCodeStyleSettings {
    * or
    * "void f(){"
    */
+  @Property(externalName = "space_before_method_left_brace")
   public boolean SPACE_BEFORE_METHOD_LBRACE = true;
 
   /**
@@ -704,6 +720,7 @@ public class CommonCodeStyleSettings {
    * or
    * "if (...){"
    */
+  @Property(externalName = "space_before_if_left_brace")
   public boolean SPACE_BEFORE_IF_LBRACE = true;
 
   /**
@@ -711,6 +728,7 @@ public class CommonCodeStyleSettings {
    * or
    * "else{"
    */
+  @Property(externalName = "space_before_else_left_brace")
   public boolean SPACE_BEFORE_ELSE_LBRACE = true;
 
   /**
@@ -718,6 +736,7 @@ public class CommonCodeStyleSettings {
    * or
    * "while (...){"
    */
+  @Property(externalName = "space_before_while_left_brace")
   public boolean SPACE_BEFORE_WHILE_LBRACE = true;
 
   /**
@@ -725,6 +744,7 @@ public class CommonCodeStyleSettings {
    * or
    * "for (...){"
    */
+  @Property(externalName = "space_before_for_left_brace")
   public boolean SPACE_BEFORE_FOR_LBRACE = true;
 
   /**
@@ -732,6 +752,7 @@ public class CommonCodeStyleSettings {
    * or
    * "do{"
    */
+  @Property(externalName = "space_before_do_left_brace")
   public boolean SPACE_BEFORE_DO_LBRACE = true;
 
   /**
@@ -739,6 +760,7 @@ public class CommonCodeStyleSettings {
    * or
    * "switch (...){"
    */
+  @Property(externalName = "space_before_switch_left_brace")
   public boolean SPACE_BEFORE_SWITCH_LBRACE = true;
 
   /**
@@ -746,6 +768,7 @@ public class CommonCodeStyleSettings {
    * or
    * "try{"
    */
+  @Property(externalName = "space_before_try_left_brace")
   public boolean SPACE_BEFORE_TRY_LBRACE = true;
 
   /**
@@ -753,6 +776,7 @@ public class CommonCodeStyleSettings {
    * or
    * "catch (...){"
    */
+  @Property(externalName = "space_before_catch_left_brace")
   public boolean SPACE_BEFORE_CATCH_LBRACE = true;
 
   /**
@@ -760,6 +784,7 @@ public class CommonCodeStyleSettings {
    * or
    * "finally{"
    */
+  @Property(externalName = "space_before_finally_left_brace")
   public boolean SPACE_BEFORE_FINALLY_LBRACE = true;
 
   /**
@@ -767,6 +792,7 @@ public class CommonCodeStyleSettings {
    * or
    * "synchronized (...){"
    */
+  @Property(externalName = "space_before_synchronized_left_brace")
   public boolean SPACE_BEFORE_SYNCHRONIZED_LBRACE = true;
 
   /**
@@ -774,6 +800,7 @@ public class CommonCodeStyleSettings {
    * or
    * "new int[]{"
    */
+  @Property(externalName = "space_before_array_initializer_left_brace")
   public boolean SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = false;
 
   /**
@@ -781,6 +808,7 @@ public class CommonCodeStyleSettings {
    * or
    * '@SuppressWarnings( {"unchecked"})
    */
+  @Property(externalName = "space_before_annotation_array_initializer_left_brace")
   public boolean SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE = false;
 
   public boolean SPACE_BEFORE_ELSE_KEYWORD = true;
@@ -803,15 +831,21 @@ public class CommonCodeStyleSettings {
 
   public int CALL_PARAMETERS_WRAP = DO_NOT_WRAP;
   public boolean PREFER_PARAMETERS_WRAP = false;
+  @Property(externalName = "call_parameters_new_line_after_left_paren")
   public boolean CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = false; // misnamed, actually means: wrap AFTER lparen
+  @Property(externalName = "call_parameters_right_paren_on_new_line")
   public boolean CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
 
   public int METHOD_PARAMETERS_WRAP = DO_NOT_WRAP;
+  @Property(externalName = "method_parameters_new_line_after_left_paren")
   public boolean METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = false;
+  @Property(externalName = "method_parameters_right_paren_on_new_line")
   public boolean METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
 
   public int RESOURCE_LIST_WRAP = DO_NOT_WRAP;
+  @Property(externalName = "resource_list_new_line_after_left_paren")
   public boolean RESOURCE_LIST_LPAREN_ON_NEXT_LINE = false;
+  @Property(externalName = "resource_list_right_paren_on_new_line")
   public boolean RESOURCE_LIST_RPAREN_ON_NEXT_LINE = false;
 
   public int EXTENDS_LIST_WRAP = DO_NOT_WRAP;
@@ -823,7 +857,9 @@ public class CommonCodeStyleSettings {
   public int METHOD_CALL_CHAIN_WRAP = DO_NOT_WRAP;
   public boolean WRAP_FIRST_METHOD_IN_CALL_CHAIN = false;
 
+  @Property(externalName = "parentheses_expression_new_line_after_left_paren")
   public boolean PARENTHESES_EXPRESSION_LPAREN_WRAP = false;
+  @Property(externalName = "parentheses_expression_right_paren_on_new_line")
   public boolean PARENTHESES_EXPRESSION_RPAREN_WRAP = false;
 
   public int BINARY_OPERATION_WRAP = DO_NOT_WRAP;
@@ -841,11 +877,15 @@ public class CommonCodeStyleSettings {
   public boolean KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = false;
 
   public int FOR_STATEMENT_WRAP = DO_NOT_WRAP;
+  @Property(externalName = "for_statement_new_line_after_left_paren")
   public boolean FOR_STATEMENT_LPAREN_ON_NEXT_LINE = false;
+  @Property(externalName = "for_statement_right_paren_on_new_line")
   public boolean FOR_STATEMENT_RPAREN_ON_NEXT_LINE = false;
 
   public int ARRAY_INITIALIZER_WRAP = DO_NOT_WRAP;
+  @Property(externalName = "array_initializer_new_line_after_left_brace")
   public boolean ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = false;
+  @Property(externalName = "array_initializer_right_brace_on_new_line")
   public boolean ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = false;
 
   public int ASSIGNMENT_WRAP = DO_NOT_WRAP;
@@ -869,6 +909,7 @@ public class CommonCodeStyleSettings {
   }
 
   @ForceBraceConstant public int IF_BRACE_FORCE = DO_NOT_FORCE;
+  @Property(externalName = "do_while_brace_force")
   @ForceBraceConstant public int DOWHILE_BRACE_FORCE = DO_NOT_FORCE;
   @ForceBraceConstant public int WHILE_BRACE_FORCE = DO_NOT_FORCE;
   @ForceBraceConstant public int FOR_BRACE_FORCE = DO_NOT_FORCE;
@@ -883,6 +924,7 @@ public class CommonCodeStyleSettings {
   public int PARAMETER_ANNOTATION_WRAP = DO_NOT_WRAP;
   public int VARIABLE_ANNOTATION_WRAP = DO_NOT_WRAP;
 
+  @Property(externalName = "space_before_annotation_parameter_list")
   public boolean SPACE_BEFORE_ANOTATION_PARAMETER_LIST = false;
   public boolean SPACE_WITHIN_ANNOTATION_PARENTHESES = false;
 
@@ -923,6 +965,7 @@ public class CommonCodeStyleSettings {
 
     public int INDENT_SIZE = DEFAULT_INDENT_SIZE;
     public int CONTINUATION_INDENT_SIZE = DEFAULT_CONTINUATION_INDENT_SIZE;
+    @Property(externalName = "tab_width")
     public int TAB_SIZE = DEFAULT_TAB_SIZE;
     public boolean USE_TAB_CHARACTER = false;
     public boolean SMART_TABS = false;

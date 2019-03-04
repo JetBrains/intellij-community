@@ -1,26 +1,37 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.util.ArrayUtil
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Contract
-import java.nio.ByteBuffer
-import java.nio.CharBuffer
-import java.nio.charset.CodingErrorAction
 
 const val SERVICE_NAME_PREFIX = "IntelliJ Platform"
 
-fun generateServiceName(subsystem: String, key: String): String = "$SERVICE_NAME_PREFIX $subsystem — $key"
+/**
+ * The combined name of your service and name of service that requires authentication.
+ *
+ * Can be specified in:
+ * * reverse-DNS format: `com.apple.facetime: registrationV1`
+ * * prefixed human-readable format: `IntelliJ Platform Settings Repository — github.com`, where `IntelliJ Platform` is a required prefix. **You must always use this prefix**.
+ */
+fun generateServiceName(subsystem: String, key: String) = "$SERVICE_NAME_PREFIX $subsystem — $key"
 
 /**
- * requestor is deprecated. Never use it in new code.
+ * Consider using [generateServiceName] to generate [serviceName].
+ *
+ * [requestor] is deprecated (never use it in a new code).
  */
-data class CredentialAttributes @JvmOverloads constructor(val serviceName: String, val userName: String? = null, val requestor: Class<*>? = null, val isPasswordMemoryOnly: Boolean = false)
+data class CredentialAttributes @JvmOverloads constructor(val serviceName: String,
+                                                          val userName: String? = null,
+                                                          val requestor: Class<*>? = null,
+                                                          val isPasswordMemoryOnly: Boolean = false)
 
-fun CredentialAttributes.toPasswordStoreable(): CredentialAttributes = if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
-
-// user cannot be empty, but password can be
+/**
+ * Pair of user and password.
+ *
+ * @param user Account name ("John") or path to SSH key file ("/Users/john/.ssh/id_rsa").
+ * @param password Can be empty.
+ */
 class Credentials(user: String?, val password: OneTimeString? = null) {
   constructor(user: String?, password: String?) : this(user, password?.let(::OneTimeString))
 
@@ -28,30 +39,26 @@ class Credentials(user: String?, val password: OneTimeString? = null) {
 
   constructor(user: String?, password: ByteArray?) : this(user, password?.let { OneTimeString(password) })
 
-  val userName: String? = user.nullize()
+  val userName = user.nullize()
 
   fun getPasswordAsString() = password?.toString()
 
-  override fun equals(other: Any?): Boolean {
-    if (other !is Credentials) return false
-    return userName == other.userName && password == other.password
-  }
+  override fun equals(other: Any?) = other is Credentials && userName == other.userName && password == other.password
 
   override fun hashCode() = (userName?.hashCode() ?: 0) * 37 + (password?.hashCode() ?: 0)
 
   override fun toString() = "userName: $userName, password size: ${password?.length ?: 0}"
 }
 
-@Suppress("FunctionName", "DeprecatedCallableAddReplaceWith")
-/**
- * DEPRECATED. Never use it in a new code.
- */
+/** @deprecated Use [CredentialAttributes] instead. */
 @Deprecated("Never use it in a new code.")
+@Suppress("FunctionName", "DeprecatedCallableAddReplaceWith")
 fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
 
 @Contract("null -> false")
 fun Credentials?.isFulfilled() = this != null && userName != null && !password.isNullOrEmpty()
 
+@Contract("null -> false")
 fun Credentials?.hasOnlyUserName() = this != null && userName != null && password.isNullOrEmpty()
 
 fun Credentials?.isEmpty() = this == null || (userName == null && password.isNullOrEmpty())
@@ -71,29 +78,4 @@ fun getAndMigrateCredentials(oldAttributes: CredentialAttributes, newAttributes:
     }
   }
   return credentials
-}
-
-@Suppress("FunctionName")
-@JvmOverloads
-fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - offset, clearable: Boolean = false): OneTimeString {
-  if (length == 0) {
-    return OneTimeString(ArrayUtil.EMPTY_CHAR_ARRAY)
-  }
-
-  // jdk decodes to heap array, but since this code is very critical, we cannot rely on it, so, we don't use Charsets.UTF_8.decode()
-  val charsetDecoder = Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE)
-  val charArray = CharArray((value.size * charsetDecoder.maxCharsPerByte().toDouble()).toInt())
-  charsetDecoder.reset()
-  val charBuffer = CharBuffer.wrap(charArray)
-  var cr = charsetDecoder.decode(ByteBuffer.wrap(value, offset, length), charBuffer, true)
-  if (!cr.isUnderflow) {
-    cr.throwException()
-  }
-  cr = charsetDecoder.flush(charBuffer)
-  if (!cr.isUnderflow) {
-    cr.throwException()
-  }
-
-  value.fill(0, offset, offset + length)
-  return OneTimeString(charArray, 0, charBuffer.position(), clearable = clearable)
 }

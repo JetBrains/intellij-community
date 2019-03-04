@@ -45,6 +45,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -229,6 +230,9 @@ public abstract class DiffRequestProcessor implements Disposable {
           }
         }
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Throwable e) {
         LOG.error(e);
       }
@@ -288,17 +292,29 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @CalledInAwt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
+    applyRequest(request, force, scrollToChangePolicy, false);
+  }
+
+  @CalledInAwt
+  protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy, boolean sync) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myIterationState = IterationState.NONE;
 
     force = force || (myQueuedApplyRequest != null && myQueuedApplyRequest.force);
     myQueuedApplyRequest = new ApplyData(request, force, scrollToChangePolicy);
 
-    IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(() -> {
+    Runnable task = () -> {
       if (myQueuedApplyRequest == null || myDisposed) return;
       doApplyRequest(myQueuedApplyRequest.request, myQueuedApplyRequest.force, myQueuedApplyRequest.scrollToChangePolicy);
       myQueuedApplyRequest = null;
-    }, ModalityState.current());
+    };
+
+    if (sync) {
+      task.run();
+    }
+    else {
+      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(task, ModalityState.current());
+    }
   }
 
   @CalledInAwt
@@ -322,7 +338,13 @@ public abstract class DiffRequestProcessor implements Disposable {
 
       try {
         myState = createState();
-        myState.init();
+        try {
+          myState.init();
+        }
+        catch (Throwable e) {
+          myState.destroy();
+          throw e;
+        }
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -511,7 +533,10 @@ public abstract class DiffRequestProcessor implements Disposable {
   @Nullable
   public JComponent getPreferredFocusedComponent() {
     JComponent component = myState.getPreferredFocusedComponent();
-    return component != null && component.isShowing() && component.isFocusable() ? component : myToolbar.getComponent();
+    JComponent fallback = myToolbar.getComponent();
+    if (component == null || !component.isFocusable()) return fallback;
+    if (!component.isShowing() && fallback.isShowing()) return fallback;
+    return component;
   }
 
   @Nullable
@@ -556,6 +581,9 @@ public abstract class DiffRequestProcessor implements Disposable {
     public void actionPerformed(@NotNull AnActionEvent e) {
       try {
         ExternalDiffTool.showRequest(e.getProject(), myActiveRequest);
+      }
+      catch (ProcessCanceledException ex) {
+        throw ex;
       }
       catch (Throwable ex) {
         Messages.showErrorDialog(e.getProject(), ex.getMessage(), "Can't Show Diff In External Tool");
@@ -617,7 +645,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (myState.getActiveTool() == myDiffTool) return;
 
-      DiffUsageTriggerCollector.trigger("toggle.diff.tool." + myDiffTool.getName());
+      DiffUsageTriggerCollector.trigger("toggle.diff.tool", myDiffTool);
       moveToolOnTop(myDiffTool);
 
       updateRequest(true);
@@ -1221,24 +1249,29 @@ public abstract class DiffRequestProcessor implements Disposable {
       FrameDiffTool.ToolbarComponents toolbarComponents1 = myViewer.init();
       FrameDiffTool.ToolbarComponents toolbarComponents2 = myWrapperViewer.init();
 
-      List<AnAction> toolbarActions = new ArrayList<>();
-      if (toolbarComponents1.toolbarActions != null) toolbarActions.addAll(toolbarComponents1.toolbarActions);
-      if (toolbarComponents2.toolbarActions != null) {
-        if (!toolbarActions.isEmpty() && !toolbarComponents2.toolbarActions.isEmpty()) toolbarActions.add(Separator.getInstance());
-        toolbarActions.addAll(toolbarComponents2.toolbarActions);
-      }
-      buildToolbar(toolbarActions);
-
-      List<AnAction> popupActions = new ArrayList<>();
-      if (toolbarComponents1.popupActions != null) popupActions.addAll(toolbarComponents1.popupActions);
-      if (toolbarComponents2.popupActions != null) {
-        if (!popupActions.isEmpty() && !toolbarComponents2.popupActions.isEmpty()) popupActions.add(Separator.getInstance());
-        popupActions.addAll(toolbarComponents2.popupActions);
-      }
-      buildActionPopup(popupActions);
-
+      buildToolbar(mergeActions(toolbarComponents1.toolbarActions, toolbarComponents2.toolbarActions));
+      buildActionPopup(mergeActions(toolbarComponents1.popupActions, toolbarComponents2.popupActions));
 
       myToolbarStatusPanel.setContent(toolbarComponents1.statusPanel); // TODO: combine both panels ?
+    }
+
+    @Nullable
+    private List<AnAction> mergeActions(@Nullable List<AnAction> actions1, @Nullable List<AnAction> actions2) {
+      if (actions1 == null && actions2 == null) return null;
+      if (ContainerUtil.isEmpty(actions1)) return actions2;
+      if (ContainerUtil.isEmpty(actions2)) return actions1;
+
+      List<AnAction> result = new ArrayList<>(actions1);
+      result.add(Separator.getInstance());
+
+      for (AnAction action : actions2) {
+        if (action instanceof Separator ||
+            !actions1.contains(action)) {
+          result.add(action);
+        }
+      }
+
+      return result;
     }
 
     @Override

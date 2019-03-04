@@ -38,7 +38,7 @@ public interface RunnableScriptFilter {
 
   boolean isRunnableScript(PsiFile script, @NotNull Module module, Location location, @Nullable TypeEvalContext context);
 
-  public static boolean isIfNameMain(Location location) {
+  static boolean isIfNameMain(Location location) {
     PsiElement element = location.getPsiElement();
     while (true) {
       final PyIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PyIfStatement.class);

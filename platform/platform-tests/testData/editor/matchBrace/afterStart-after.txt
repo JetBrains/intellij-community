@@ -1,1 +1,1 @@
-{ a }<caret>
+{ a <caret>}

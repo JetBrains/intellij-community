@@ -38,21 +38,6 @@ public abstract class DvcsMultiRootBranchConfig<Repo extends Repository> {
     return MultiRootBranches.getCommonCurrentBranch(myRepositories);
   }
 
-  @Nullable
-  public Repository.State getState() {
-    Repository.State commonState = null;
-    for (Repo repository : myRepositories) {
-      Repository.State state = repository.getState();
-      if (commonState == null) {
-        commonState = state;
-      }
-      else if (!commonState.equals(state)) {
-        return null;
-      }
-    }
-    return commonState;
-  }
-
   @NotNull
   public abstract Collection<String> getLocalBranchNames();
 }

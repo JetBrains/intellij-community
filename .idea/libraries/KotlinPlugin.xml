@@ -23,8 +23,6 @@
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/jps-common-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-compiler-plugin.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-ide-plugin.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-coroutines-core-0.26.1-eap13.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-coroutines-jdk8-0.26.1-eap13.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
@@ -51,8 +49,6 @@
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/jps-common-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-compiler-plugin.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-ide-plugin.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-coroutines-core-0.26.1-eap13.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-coroutines-jdk8-0.26.1-eap13.jar!/" />
     </excluded>
   </library>
 </component>

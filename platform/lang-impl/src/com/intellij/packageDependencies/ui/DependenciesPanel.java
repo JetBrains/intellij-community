@@ -99,8 +99,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     myExcluded = excluded;
     final DependenciesBuilder main = myBuilders.get(0);
     myForward = !main.isBackward();
-    myScopeOfInterest = main.getScopeOfInterest();
-    myTransitiveBorder = main.getTransitiveBorder();
+    myScopeOfInterest = main instanceof BackwardDependenciesBuilder ? ((BackwardDependenciesBuilder)main).getScopeOfInterest() : null;
+    myTransitiveBorder = main instanceof ForwardDependenciesBuilder ? ((ForwardDependenciesBuilder)main).getTransitiveBorder() : 0;
     myDependencies = new HashMap<>();
     myIllegalDependencies = new HashMap<>();
     for (DependenciesBuilder builder : builders) {

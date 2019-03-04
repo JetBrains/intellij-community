@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.hierarchy;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.*;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubFileElementType;
@@ -120,7 +120,7 @@ public class GrStubIndexer extends StubHierarchyIndexer {
     for (StubElement el : classStub.getChildrenStubs()) {
       if (el instanceof GrReferenceListStub) {
         GrReferenceListStub refList = (GrReferenceListStub)el;
-        if (el.getStubType() == GroovyElementTypes.IMPLEMENTS_CLAUSE || el.getStubType() == GroovyElementTypes.EXTENDS_CLAUSE) {
+        if (el.getStubType() == GroovyStubElementTypes.IMPLEMENTS_CLAUSE || el.getStubType() == GroovyStubElementTypes.EXTENDS_CLAUSE) {
           for (String extName : refList.getBaseClasses()) {
             superList.add(id(extName, true, namesCache));
           }

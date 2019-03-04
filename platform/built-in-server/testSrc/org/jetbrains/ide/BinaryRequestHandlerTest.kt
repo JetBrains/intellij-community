@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.testFramework.ProjectRule
@@ -15,7 +15,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.io.ChannelExceptionHandler
 import org.jetbrains.io.Decoder
 import org.jetbrains.io.MessageDecoder
-import org.jetbrains.io.oioClientBootstrap
+import org.jetbrains.io.NettyUtil.nioClientBootstrap
 import org.junit.ClassRule
 import org.junit.Test
 import java.util.*
@@ -32,7 +32,7 @@ internal class BinaryRequestHandlerTest {
     val text = "Hello!"
     val result = AsyncPromise<String>()
 
-    val bootstrap = oioClientBootstrap().handler {
+    val bootstrap = nioClientBootstrap().handler {
       it.pipeline().addLast(object : Decoder() {
         override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
           val requiredLength = 4 + text.length

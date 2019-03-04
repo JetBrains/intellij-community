@@ -15,7 +15,6 @@
         </ul>
       ]]>
    </description>
-  <version>8.0</version>
 
   <depends optional="true" config-file="intellilang-xpath-support.xml">XPathView</depends>
   <depends optional="true" config-file="intellilang-java-support.xml">com.intellij.modules.java</depends>

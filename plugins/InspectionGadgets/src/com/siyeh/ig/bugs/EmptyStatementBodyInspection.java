@@ -125,7 +125,10 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     @Override
     public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
-      checkLoopStatement(statement);
+      final PsiStatement body = statement.getBody();
+      if (body != null && isEmpty(body)) {
+        registerStatementError(statement, createFix(statement, statement.getIteratedValue()));
+      }
     }
 
     private void checkLoopStatement(PsiLoopStatement statement) {

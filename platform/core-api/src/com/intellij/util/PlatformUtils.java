@@ -37,6 +37,7 @@ public class PlatformUtils {
   // NOTE: If you add any new prefixes to this list, please update the IntelliJPlatformProduct class in DevKit plugin
   public static final String IDEA_PREFIX = "idea";
   public static final String IDEA_CE_PREFIX = "Idea";
+  public static final String IDEA_EDU_PREFIX = "IdeaEdu";
   public static final String APPCODE_PREFIX = "AppCode";
   public static final String CLION_PREFIX = "CLion";
   public static final String PYCHARM_PREFIX = "Python";
@@ -68,7 +69,7 @@ public class PlatformUtils {
   }
 
   public static boolean isIntelliJ() {
-    return isIdeaUltimate() || isIdeaCommunity();
+    return isIdeaUltimate() || isIdeaCommunity() || isIdeaEducational();
   }
 
   public static boolean isIdeaUltimate() {
@@ -77,6 +78,10 @@ public class PlatformUtils {
 
   public static boolean isIdeaCommunity() {
     return is(IDEA_CE_PREFIX);
+  }
+
+  private static boolean isIdeaEducational() {
+    return is(IDEA_EDU_PREFIX);
   }
 
   public static boolean isRubyMine() {

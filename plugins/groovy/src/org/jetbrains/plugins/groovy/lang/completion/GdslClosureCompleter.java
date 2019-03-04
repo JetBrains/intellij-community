@@ -1,10 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureDescriptor;
 import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureParameterInfo;
@@ -59,15 +57,10 @@ public class GdslClosureCompleter extends ClosureCompleter {
     return null;
   }
 
-  private static void processExecutors(PsiType qtype, GrReferenceExpression ref, final ArrayList<ClosureDescriptor> descriptors) {
-    GroovyDslFileIndex.processExecutors(qtype, ref, new PsiScopeProcessor() {
-      @Override
-      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        if (element instanceof ClosureDescriptor) {
-          descriptors.add((ClosureDescriptor)element);
-        }
-        return true;
-      }
-    }, ResolveState.initial());
+  private static void processExecutors(PsiType qtype, GrReferenceExpression ref, List<ClosureDescriptor> descriptors) {
+    GroovyDslFileIndex.processExecutors(qtype, ref, (holder, descriptor) -> {
+      holder.consumeClosureDescriptors(descriptor, descriptors::add);
+      return true;
+    });
   }
 }

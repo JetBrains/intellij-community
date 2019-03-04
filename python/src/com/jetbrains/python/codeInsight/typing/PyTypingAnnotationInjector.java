@@ -76,7 +76,7 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
     final String annotationText = PyTypingTypeProvider.getTypeCommentValue(text);
     if (annotationText != null) {
       final Language language;
-      if ("ignore".equals(annotationText)) {
+      if (PyTypingTypeProvider.IGNORE.equals(annotationText)) {
         language = null;
       }
       else if (isFunctionTypeComment(host)) {

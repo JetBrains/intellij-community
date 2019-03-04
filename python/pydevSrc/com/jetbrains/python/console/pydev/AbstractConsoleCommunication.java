@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author traff
@@ -31,9 +32,9 @@ public abstract class AbstractConsoleCommunication implements ConsoleCommunicati
   }
 
   public static Pair<String, Boolean> parseExecResponseString(String str) {
-    Boolean more;
+    boolean more;
     String errorContents = null;
-    String lower = str.toLowerCase();
+    String lower = str.toLowerCase(Locale.ENGLISH);
     if (lower.equals("true") || lower.equals("1")) {
       more = true;
     }

@@ -166,20 +166,15 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   protected static class BaseOnThisTypeAction extends BaseOnThisElementAction {
 
     public BaseOnThisTypeAction() {
-      super("", DATA_KEY.getName(), LanguageTypeHierarchy.INSTANCE);
+      super(IdeBundle.message("action.base.on.this.class"), DATA_KEY.getName(), LanguageTypeHierarchy.INSTANCE);
     }
 
     @Override
     protected String correctViewType(@NotNull HierarchyBrowserBaseEx browser, String viewType) {
-      if (((TypeHierarchyBrowserBase)browser).myIsInterface && TYPE_HIERARCHY_TYPE.equals(viewType)) return SUBTYPES_HIERARCHY_TYPE;
+      if (((TypeHierarchyBrowserBase)browser).myIsInterface && TYPE_HIERARCHY_TYPE.equals(viewType)) {
+        return SUBTYPES_HIERARCHY_TYPE;
+      }
       return viewType;
-    }
-
-    @Override
-    protected String getNonDefaultText(@NotNull HierarchyBrowserBaseEx browser, @NotNull PsiElement element) {
-      return ((TypeHierarchyBrowserBase)browser).isInterface(element)
-             ? IdeBundle.message("action.base.on.this.interface")
-             : IdeBundle.message("action.base.on.this.class");
     }
   }
 

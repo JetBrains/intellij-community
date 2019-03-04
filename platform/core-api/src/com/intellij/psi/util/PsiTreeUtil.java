@@ -14,7 +14,6 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor.CollectElements;
 import com.intellij.psi.search.PsiElementProcessor.CollectFilteredElements;
 import com.intellij.psi.search.PsiElementProcessor.FindElement;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
@@ -29,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
-
-import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 public class PsiTreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiTreeUtil");
@@ -499,7 +496,6 @@ public class PsiTreeUtil {
    * @param element the element to get the child for.
    * @param classes the array of classes.
    * @return the element, or null if none was found.
-   * @since 5.1
    */
   @SafeVarargs
   @Nullable
@@ -565,7 +561,7 @@ public class PsiTreeUtil {
   @Contract("null -> null")
   public static PsiElement getStubOrPsiParent(@Nullable PsiElement element) {
     if (element instanceof StubBasedPsiElement) {
-      StubBase stub = (StubBase)((StubBasedPsiElement)element).getStub();
+      StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
       if (stub != null) {
         final StubElement parentStub = stub.getParentStub();
         return parentStub != null ? parentStub.getPsi() : null;
@@ -578,10 +574,9 @@ public class PsiTreeUtil {
   @Contract("null, _ -> null")
   public static <E extends PsiElement> E getStubOrPsiParentOfType(@Nullable PsiElement element, @NotNull Class<E> parentClass) {
     if (element instanceof StubBasedPsiElement) {
-      StubBase stub = (StubBase)((StubBasedPsiElement)element).getStub();
+      StubElement<?> stub = ((StubBasedPsiElement<?>)element).getStub();
       if (stub != null) {
-        @SuppressWarnings("unchecked") E e = (E)stub.getParentStubOfType(parentClass);
-        return e;
+        return stub.getParentStubOfType(parentClass);
       }
     }
     return getParentOfType(element, parentClass);
@@ -754,6 +749,7 @@ public class PsiTreeUtil {
     return null;
   }
 
+  @SafeVarargs
   @Nullable
   @Contract("null, _ -> null")
   public static PsiElement skipSiblingsForward(@Nullable PsiElement element, @NotNull Class<? extends PsiElement>... elementClasses) {
@@ -778,6 +774,7 @@ public class PsiTreeUtil {
     return skipSiblingsForward(element, WS_COMMENTS);
   }
 
+  @SafeVarargs
   @Nullable
   @Contract("null, _ -> null")
   public static PsiElement skipSiblingsBackward(@Nullable PsiElement element, @NotNull Class<? extends PsiElement>... elementClasses) {
@@ -802,6 +799,7 @@ public class PsiTreeUtil {
     return skipSiblingsBackward(element, WS_COMMENTS);
   }
 
+  @SafeVarargs
   @Nullable
   @Contract("null, _ -> null")
   public static PsiElement skipParentsOfType(@Nullable PsiElement element, @NotNull Class<? extends PsiElement>... parentClasses) {
@@ -1091,7 +1089,7 @@ public class PsiTreeUtil {
   }
 
   public static boolean hasErrorElements(@NotNull PsiElement element) {
-    return !psiTraverser(element).traverse().filter(PsiErrorElement.class).isEmpty();
+    return !SyntaxTraverser.psiTraverser(element).traverse().filter(PsiErrorElement.class).isEmpty();
   }
 
   @NotNull
@@ -1219,7 +1217,7 @@ public class PsiTreeUtil {
   /** use {@link SyntaxTraverser#psiTraverser()} (to be removed in IDEA 2019) */
   @Deprecated
   public static <T extends PsiElement> Iterator<T> childIterator(@NotNull PsiElement element, @NotNull Class<T> aClass) {
-    return psiTraverser().children(element).filter(aClass).iterator();
+    return SyntaxTraverser.psiTraverser().children(element).filter(aClass).iterator();
   }
   //</editor-fold>
 }

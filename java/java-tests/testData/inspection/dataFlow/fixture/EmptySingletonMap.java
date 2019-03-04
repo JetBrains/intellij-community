@@ -2,13 +2,6 @@ import java.util.*;
 import org.jetbrains.annotations.*;
 
 public class EmptySingletonMap {
-  void testEmpty() {
-    List<Object> objects = Collections.emptyList();
-    for (Object o : <warning descr="Collection 'objects' is always empty">objects</warning>) {
-      System.out.println("hello");
-    }
-  }
-
   void testMixed(int x) {
     Collection<String> strings;
     if(x > 10) {

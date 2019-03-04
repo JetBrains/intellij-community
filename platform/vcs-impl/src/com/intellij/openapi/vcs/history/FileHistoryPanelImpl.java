@@ -676,7 +676,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
           setOpaque(selected);
           Date date = (Date)value;
           if (date != null) {
-            append(DateFormatUtil.formatPrettyDateTime(date), getDefaultAttributes());
+            append(DateFormatUtil.formatDateTime(date), getDefaultAttributes());
           }
           SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
         }
@@ -697,7 +697,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
 
     @Override
     public String getPreferredStringValue() {
-      return DateFormatUtil.formatPrettyDateTime(Clock.getTime() + 1000);
+      return DateFormatUtil.formatDateTime(Clock.getTime() + 1000);
     }
 
     @Nullable
@@ -888,9 +888,9 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
 
   private static class MyTreeCellRenderer implements TreeCellRenderer {
     private final TreeCellRenderer myDefaultCellRenderer;
-    private final Getter<VcsHistorySession> myHistorySession;
+    private final Getter<? extends VcsHistorySession> myHistorySession;
 
-    MyTreeCellRenderer(final TreeCellRenderer defaultCellRenderer, final Getter<VcsHistorySession> historySession) {
+    MyTreeCellRenderer(final TreeCellRenderer defaultCellRenderer, final Getter<? extends VcsHistorySession> historySession) {
       myDefaultCellRenderer = defaultCellRenderer;
       myHistorySession = historySession;
     }
@@ -930,9 +930,9 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
   }
 
   private static class MyCellWrapper implements CellWrapper {
-    private final Getter<VcsHistorySession> myHistorySession;
+    private final Getter<? extends VcsHistorySession> myHistorySession;
 
-    MyCellWrapper(final Getter<VcsHistorySession> historySession) {
+    MyCellWrapper(final Getter<? extends VcsHistorySession> historySession) {
       myHistorySession = historySession;
     }
 

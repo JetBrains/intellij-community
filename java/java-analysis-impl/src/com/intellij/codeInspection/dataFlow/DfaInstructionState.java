@@ -17,6 +17,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -96,7 +97,7 @@ class StateQueue {
       memoryStates.add((DfaMemoryStateImpl)anotherState);
     }
 
-    if (memoryStates.size() > 1) {
+    if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
       memoryStates = squash(memoryStates);
     }
 
@@ -121,8 +122,12 @@ class StateQueue {
     List<DfaMemoryStateImpl> result = new ArrayList<>(states);
     for (Iterator<DfaMemoryStateImpl> iterator = result.iterator(); iterator.hasNext(); ) {
       DfaMemoryStateImpl left = iterator.next();
-      if (result.stream().anyMatch(right -> right != left && right.isSuperStateOf(left))) {
-        iterator.remove();
+      for (DfaMemoryStateImpl right : result) {
+        ProgressManager.checkCanceled();
+        if (right != left && right.isSuperStateOf(left)) {
+          iterator.remove();
+          break;
+        }
       }
     }
     return result;

@@ -80,7 +80,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     @Nullable
     static NullCheckParameter fromCall(PsiMethodCallExpression call) {
       PsiMethod method = call.resolveMethod();
-      if (method == null) return null;
+      if (method == null || method.isConstructor()) return null;
       if (!JavaMethodContractUtil.isPure(method)) return null;
       List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, call);
       if (contracts.isEmpty() || contracts.size() > 2) return null;

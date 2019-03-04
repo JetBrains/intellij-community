@@ -3,15 +3,18 @@ try:
 except:
     import io as StringIO
 import traceback
+import warnings
+from contextlib import contextmanager
 from os.path import basename
 
 from _pydevd_bundle import pydevd_constants
-from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, xrange
+from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, xrange, IS_PYCHARM
+from _pydevd_bundle.pydevd_utils import get_var_and_offset
 
 
 # Note: 300 is already a lot to see in the outline (after that the user should really use the shell to get things)
 # and this also means we'll pass less information to the client side (which makes debugging faster).
-MAX_ITEMS_TO_HANDLE = 300 
+MAX_ITEMS_TO_HANDLE = 300 if not IS_PYCHARM else 100
 
 TOO_LARGE_MSG = 'Too large to show contents. Max items to show: ' + str(MAX_ITEMS_TO_HANDLE)
 TOO_LARGE_ATTR = 'Unable to handle:'
@@ -54,6 +57,13 @@ except:
     MethodWrapperType = None
 
 
+@contextmanager
+def suppress_warnings():
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        yield
+
+
 #=======================================================================================================================
 # See: pydevd_extension_api module for resolver interface
 #=======================================================================================================================
@@ -68,7 +78,8 @@ class DefaultResolver:
     '''
 
     def resolve(self, var, attribute):
-        return getattr(var, attribute)
+        with suppress_warnings():
+            return getattr(var, attribute)
 
     def get_dictionary(self, var, names=None):
         if MethodWrapperType:
@@ -146,7 +157,7 @@ class DefaultResolver:
 
         if not names:
             names = self.get_names(var)
-        d = {}
+        d = OrderedDict()
 
         #Be aware that the order in which the filters are applied attempts to
         #optimize the operation by removing as many items as possible in the
@@ -163,7 +174,8 @@ class DefaultResolver:
                         continue
 
                 try:
-                    attr = getattr(var, n)
+                    with suppress_warnings():
+                        attr = getattr(var, n)
 
                     #filter builtins?
                     if filterBuiltIn:
@@ -221,25 +233,32 @@ class DictResolver:
             return key
 
     def init_dict(self):
-        return {}
+        return OrderedDict()
 
     def get_dictionary(self, dict):
+        dict, offset = get_var_and_offset(dict)
+
         ret = self.init_dict()
 
-        i = 0
-        for key, val in dict_iter_items(dict):
-            i += 1
-            #we need to add the id because otherwise we cannot find the real object to get its contents later on.
-            key = '%s (%s)' % (self.key_to_str(key), id(key))
-            ret[key] = val
-            if i > MAX_ITEMS_TO_HANDLE:
-                ret[TOO_LARGE_ATTR] = TOO_LARGE_MSG
-                break
+        for i, (key, val) in enumerate(dict_iter_items(dict)):
+            if i >= offset:
+                if i >= offset + MAX_ITEMS_TO_HANDLE:
+                    if not IS_PYCHARM:
+                        ret[TOO_LARGE_ATTR] = TOO_LARGE_MSG
+                    break
+                # we need to add the id because otherwise we cannot find the real object to get its contents later on.
+                key = '%s (%s)' % (self.key_to_str(key), id(key))
+                ret[key] = val
 
         ret['__len__'] = len(dict)
         # in case if the class extends built-in type and has some additional fields
         additional_fields = defaultResolver.get_dictionary(dict)
-        ret.update(additional_fields)
+        if IS_PYCHARM:
+            if offset == 0:
+                additional_fields.update(ret)
+                ret = additional_fields
+        else:
+            ret.update(additional_fields)
         return ret
 
 
@@ -261,24 +280,32 @@ class TupleResolver: #to enumerate tuples and lists
             return getattr(var, attribute)
 
     def get_dictionary(self, var):
+        var, offset = get_var_and_offset(var)
+
         l = len(var)
-        d = {}
+        d = OrderedDict()
 
         format_str = '%0' + str(int(len(str(l)))) + 'd'
 
-        i = 0
-        for item in var:
+        i = offset
+        for item in var[offset:offset+MAX_ITEMS_TO_HANDLE]:
             d[format_str % i] = item
             i += 1
-            
-            if i > MAX_ITEMS_TO_HANDLE:
-                d[TOO_LARGE_ATTR] = TOO_LARGE_MSG
+
+            if i > MAX_ITEMS_TO_HANDLE + offset:
+                if not IS_PYCHARM:
+                    d[TOO_LARGE_ATTR] = TOO_LARGE_MSG
                 break
-                
+
         d['__len__'] = len(var)
         # in case if the class extends built-in type and has some additional fields
         additional_fields = defaultResolver.get_dictionary(var)
-        d.update(additional_fields)
+        if IS_PYCHARM:
+            if offset == 0:
+                additional_fields.update(d)
+                d = additional_fields
+        else:
+            d.update(additional_fields)
         return d
 
 
@@ -307,21 +334,28 @@ class SetResolver:
         raise UnableToResolveVariableException('Unable to resolve %s in %s' % (attribute, var))
 
     def get_dictionary(self, var):
-        d = {}
+        var, offset = get_var_and_offset(var)
+
+        d = OrderedDict()
         i = 0
         for item in var:
+            if i >= offset:
+                if i >= offset + MAX_ITEMS_TO_HANDLE:
+                    if not IS_PYCHARM:
+                        d[TOO_LARGE_ATTR] = TOO_LARGE_MSG
+                    break
+                d[str(id(item))] = item
             i += 1
-            d[str(id(item))] = item
-            
-            if i > MAX_ITEMS_TO_HANDLE:
-                d[TOO_LARGE_ATTR] = TOO_LARGE_MSG
-                break
 
-            
         d['__len__'] = len(var)
         # in case if the class extends built-in type and has some additional fields
         additional_fields = defaultResolver.get_dictionary(var)
-        d.update(additional_fields)
+        if IS_PYCHARM:
+            if offset == 0:
+                additional_fields.update(d)
+                d = additional_fields
+        else:
+            d.update(additional_fields)
         return d
 
 
@@ -429,8 +463,33 @@ class DjangoFormResolver(DefaultResolver):
 #=======================================================================================================================
 class DequeResolver(TupleResolver):
     def get_dictionary(self, var):
-        d = TupleResolver.get_dictionary(self, var)
-        d['maxlen'] = getattr(var, 'maxlen', None)
+        var, offset = get_var_and_offset(var)
+
+        l = len(var)
+        d = OrderedDict()
+
+        format_str = '%0' + str(int(len(str(l)))) + 'd'
+
+        i = 0
+        for item in var:
+            if i >= offset:
+                if i >= offset + MAX_ITEMS_TO_HANDLE:
+                    if not IS_PYCHARM:
+                        d[TOO_LARGE_ATTR] = TOO_LARGE_MSG
+                    break
+                d[format_str % i] = item
+            i += 1
+
+        d['__len__'] = len(var)
+        # in case if the class extends built-in type and has some additional fields
+        additional_fields = defaultResolver.get_dictionary(var)
+        if IS_PYCHARM:
+            if offset == 0:
+                additional_fields['maxlen'] = getattr(var, 'maxlen', None)
+                additional_fields.update(d)
+                d = additional_fields
+        else:
+            d.update(additional_fields)
         return d
 
 

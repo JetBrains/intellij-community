@@ -16,6 +16,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -23,7 +24,6 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -39,7 +39,7 @@ public class PyPsiUtils {
 
   @NotNull
   protected static <T extends PyElement> T[] nodesToPsi(ASTNode[] nodes, T[] array) {
-    T[] psiElements = (T[])Array.newInstance(array.getClass().getComponentType(), nodes.length);
+    T[] psiElements = ArrayUtil.newArray(ArrayUtil.getComponentType(array), nodes.length);
     for (int i = 0; i < nodes.length; i++) {
       //noinspection unchecked
       psiElements[i] = (T)nodes[i].getPsi();

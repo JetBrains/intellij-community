@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.openapi.util.Pair;
@@ -30,6 +16,8 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstructi
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
 import java.util.Objects;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isNullLiteral;
 
 /**
  * @author peter
@@ -73,6 +61,16 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
       if (resolved instanceof PsiClass) {
         PsiClassType type = JavaPsiFacade.getElementFactory(element.getProject()).createType((PsiClass)resolved, result.getSubstitutor());
         return new Pair<>(left, type);
+      }
+    }
+    else if (element instanceof GrBinaryExpression) {
+      GrExpression left = ((GrBinaryExpression)element).getLeftOperand();
+      GrExpression right = ((GrBinaryExpression)element).getRightOperand();
+      if (isNullLiteral(right)) {
+        return Pair.create(left, PsiType.NULL);
+      }
+      else if (right != null && isNullLiteral(left)) {
+        return Pair.create(right, PsiType.NULL);
       }
     }
     return null;

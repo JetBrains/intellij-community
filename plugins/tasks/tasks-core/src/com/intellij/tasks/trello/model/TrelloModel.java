@@ -19,9 +19,6 @@ package com.intellij.tasks.trello.model;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Mikhail Golubev
- */
 public abstract class TrelloModel {
   public static final String ILLEGAL_ID = "ILLEGAL_ID";
 

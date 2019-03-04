@@ -15,21 +15,24 @@
  */
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
+import org.jetbrains.annotations.NotNull;
 
-public class RemoteServerConfigAction extends EditConfigurationActionBase<ServersTreeStructure.RemoteServerNode> {
+import static com.intellij.remoteServer.impl.runtime.ui.tree.actions.ServersTreeActionUtils.getRemoteServerTarget;
 
-  public RemoteServerConfigAction() {
-    super("Edit the selected remote server configuration");
+public class RemoteServerConfigAction extends DumbAwareAction {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(getRemoteServerTarget(e) != null);
   }
 
   @Override
-  protected Class<ServersTreeStructure.RemoteServerNode> getTargetNodeClass() {
-    return ServersTreeStructure.RemoteServerNode.class;
-  }
-
-  @Override
-  protected void doActionPerformed(ServersTreeStructure.RemoteServerNode node) {
-    node.editConfiguration();
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    ServersTreeStructure.RemoteServerNode node = getRemoteServerTarget(e);
+    if (node != null) {
+      node.editConfiguration();
+    }
   }
 }

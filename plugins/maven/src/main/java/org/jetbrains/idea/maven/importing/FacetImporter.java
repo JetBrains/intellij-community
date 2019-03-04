@@ -95,7 +95,6 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
    *
    * @param module Current module.
    * @return true.
-   * @since 171
    */
   protected boolean isDisableFacetAutodetection(Module module) {
     return true;

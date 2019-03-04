@@ -7,8 +7,6 @@
   <depends>com.intellij.modules.lang</depends>
   <description>This plugin helps testing IDEA and other plugins via GUI.</description>
 
-  <idea-version since-build="173"/>
-
   <extensions defaultExtensionNs="com.intellij">
     <appStarter implementation="com.intellij.testGuiFramework.impl.GuiTestStarter"/>
   </extensions>

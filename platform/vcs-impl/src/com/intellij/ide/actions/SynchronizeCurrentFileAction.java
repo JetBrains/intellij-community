@@ -48,7 +48,7 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
   }
 
   @NotNull
-  private static String getMessage(@NotNull Project project, @NotNull List<VirtualFile> files) {
+  private static String getMessage(@NotNull Project project, @NotNull List<? extends VirtualFile> files) {
     VirtualFile single = files.size() == 1 ? files.get(0) : null;
     return single != null ?
            IdeBundle.message("action.synchronize.file", VfsPresentationUtil.getPresentableNameForAction(project, single)) :
@@ -72,7 +72,7 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
     RefreshQueue.getInstance().refresh(true, true, () -> postRefresh(project, files), files);
   }
 
-  private static void postRefresh(Project project, List<VirtualFile> files) {
+  private static void postRefresh(Project project, List<? extends VirtualFile> files) {
     VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     for (VirtualFile f : files) {
       if (f.isDirectory()) {

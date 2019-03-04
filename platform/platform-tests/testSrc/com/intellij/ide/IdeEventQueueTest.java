@@ -15,7 +15,7 @@
  */
 package com.intellij.ide;
 
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
@@ -30,7 +30,7 @@ import java.awt.event.KeyEvent;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class IdeEventQueueTest extends PlatformTestCase {
+public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testManyEventsStress() {
     int N = 100000;
     PlatformTestUtil.startPerformanceTest("Event queue dispatch", 10000, () -> {
@@ -113,7 +113,7 @@ public class IdeEventQueueTest extends PlatformTestCase {
     assertEquals(mustBeConsumed, ReflectionUtil.getField(AWTEvent.class, event, boolean.class, "consumed").booleanValue());
     assertTrue(ReflectionUtil.getField(AWTEvent.class, event, boolean.class, "isPosted"));
   }
-  private boolean isConsumed(InputEvent event) {
+  private static boolean isConsumed(InputEvent event) {
     return event.isConsumed();
   }
 

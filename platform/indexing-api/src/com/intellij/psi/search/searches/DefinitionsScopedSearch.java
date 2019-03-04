@@ -25,14 +25,18 @@ import org.jetbrains.annotations.Nullable;
 public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, DefinitionsScopedSearch.SearchParameters> {
   public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.definitionsScopedSearch");
   public static final DefinitionsScopedSearch INSTANCE = new DefinitionsScopedSearch();
-  
-  static {
-    final QueryExecutor[] OLD_EXECUTORS = DefinitionsSearch.EP_NAME.getExtensions();
-    for (final QueryExecutor executor : OLD_EXECUTORS) {
-      INSTANCE.registerExecutor((queryParameters, consumer) -> executor.execute(queryParameters.getElement(), consumer));
-    }
- }
 
+  static {
+    INSTANCE.registerExecutor((queryParameters, consumer) -> {
+      //noinspection deprecation
+      for (QueryExecutor executor : DefinitionsSearch.EP_NAME.getExtensions()) {
+        //noinspection unchecked
+        if (!executor.execute(queryParameters.getElement(), consumer))
+          return false;
+      }
+      return true;
+    });
+  }
 
   public static Query<PsiElement> search(PsiElement definitionsOf) {
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(definitionsOf));

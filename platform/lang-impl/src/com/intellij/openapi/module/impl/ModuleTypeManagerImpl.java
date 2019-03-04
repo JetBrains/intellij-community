@@ -2,7 +2,6 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 
@@ -33,7 +32,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   public void registerModuleType(ModuleType type, boolean classpathProvider) {
     for (ModuleType oldType : myModuleTypes.keySet()) {
       if (oldType.getId().equals(type.getId())) {
-        LOG.error(PluginManagerCore.createPluginException("Trying to register a module type that clashes with existing one. Old=" + oldType + ", new = " + type, null, type.getClass()));
+        PluginException.logPluginError(LOG, "Trying to register a module type that clashes with existing one. Old=" + oldType + ", new = " + type, null, type.getClass());
         return;
       }
     }

@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
-import com.intellij.util.JdomKt;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,11 +16,11 @@ import org.jetbrains.annotations.Nullable;
 public class ProjectTemplatesTest extends TestCase {
 
   public void testArtifact() throws Exception {
-    Artifact artifact = XmlSerializer.deserialize(JdomKt.loadElement("  <artifact version=\"2.2.3\" name=\"Spring Batch\"\n" +
-                                                                     "            urlPrefix=\"http://download.jetbrains.com/idea/j2ee_libs/spring/batch/2.2.3/\">\n" +
-                                                                     "    <item name=\"spring-batch-core-2.2.3.RELEASE.jar\"/>\n" +
-                                                                     "    <item name=\"spring-batch-infrastructure-2.2.3.RELEASE.jar\"/>\n" +
-                                                                     "  </artifact>"), Artifact.class);
+    Artifact artifact = XmlSerializer.deserialize(JDOMUtil.load("  <artifact version=\"2.2.3\" name=\"Spring Batch\"\n" +
+                                                                "            urlPrefix=\"http://download.jetbrains.com/idea/j2ee_libs/spring/batch/2.2.3/\">\n" +
+                                                                "    <item name=\"spring-batch-core-2.2.3.RELEASE.jar\"/>\n" +
+                                                                "    <item name=\"spring-batch-infrastructure-2.2.3.RELEASE.jar\"/>\n" +
+                                                                "  </artifact>"), Artifact.class);
     assertNotNull(artifact);
     assertEquals(2, artifact.getItems().length);
 
@@ -45,7 +45,7 @@ public class ProjectTemplatesTest extends TestCase {
       }
     };
 
-    XmlSerializer.deserializeInto(JdomKt.loadElement("<template>\n" +
+    XmlSerializer.deserializeInto(JDOMUtil.load("<template>\n" +
                                                      "  <input-field default=\"com.springapp.batch\">IJ_BASE_PACKAGE</input-field>\n" +
                                                      "    <icon-path>/icons/spring.png</icon-path>\n" +
                                                      "  <framework>facet:Spring</framework>\n" +

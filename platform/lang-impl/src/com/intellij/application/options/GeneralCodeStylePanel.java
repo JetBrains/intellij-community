@@ -353,4 +353,12 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     super.setModel(model);
     myExcludedFilesList.setSchemesModel(model);
   }
+
+  @Override
+  public void dispose() {
+    for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
+      option.disposeUIResources();
+    }
+    super.dispose();
+  }
 }

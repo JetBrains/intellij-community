@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -46,18 +46,6 @@ public class BackspaceHandler extends EditorActionHandler {
     }
 
     final CompletionProgressIndicator process = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
-    if (lookup.truncatePrefix(process == null || !process.isAutopopupCompletion())) {
-      return;
-    }
-
-    if (process != null) {
-      if (hideOffset < editor.getCaretModel().getOffset()) {
-        process.scheduleRestart();
-        return;
-      }
-      process.prefixUpdated();
-    }
-
-    lookup.hideLookup(false);
+    lookup.truncatePrefix(process == null || !process.isAutopopupCompletion(), hideOffset);
   }
 }

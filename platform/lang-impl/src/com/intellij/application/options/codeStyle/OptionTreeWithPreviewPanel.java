@@ -40,8 +40,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -241,10 +241,10 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       if (group2 == null) {
         return -1;
       }
-      Integer index1 = groupOrder.indexOf(group1);
-      Integer index2 = groupOrder.indexOf(group2);
+      int index1 = groupOrder.indexOf(group1);
+      int index2 = groupOrder.indexOf(group2);
       if (index1 == -1 || index2 == -1) return group1.compareToIgnoreCase(group2);
-      return index1.compareTo(index2);
+      return Integer.compare(index1, index2);
     });
     return result;
   }

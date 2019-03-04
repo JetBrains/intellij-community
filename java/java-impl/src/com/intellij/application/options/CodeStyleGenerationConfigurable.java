@@ -67,18 +67,18 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   @SuppressWarnings("unused") private JPanel myCommenterPanel;
   private JPanel myOverridePanel;
   private JBCheckBox myReplaceInstanceOfCb;
-  private JBCheckBox myReplaceCastCb;
   private JBCheckBox myReplaceNullCheckCb;
   private JTextField myTestClassPrefix;
   private JTextField myTestClassSuffix;
   private JTextField mySubclassPrefix;
   private JTextField mySubclassSuffix;
+  private JBCheckBox myReplaceSumCb;
   private CommenterForm myCommenterForm;
   private SortedListModel<String> myRepeatAnnotationsModel;
 
   public CodeStyleGenerationConfigurable(CodeStyleSettings settings) {
     mySettings = settings;
-    myPanel.setBorder(JBUI.Borders.empty(2, 2, 2, 2));
+    myPanel.setBorder(JBUI.Borders.empty(2));
     myJavaVisibilityPanel = new JavaVisibilityPanel(false, true, RefactoringBundle.message("default.visibility.border.title"));
   }
 
@@ -132,9 +132,9 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     myRepeatSynchronizedCheckBox.setSelected(javaSettings.REPEAT_SYNCHRONIZED);
     myJavaVisibilityPanel.setVisibility(javaSettings.VISIBILITY);
 
-    myReplaceCastCb.setSelected(javaSettings.REPLACE_CAST);
-    myReplaceInstanceOfCb.setSelected(javaSettings.REPLACE_INSTANCEOF);
+    myReplaceInstanceOfCb.setSelected(javaSettings.REPLACE_INSTANCEOF_AND_CAST);
     myReplaceNullCheckCb.setSelected(javaSettings.REPLACE_NULL_CHECK);
+    myReplaceSumCb.setSelected(javaSettings.REPLACE_SUM);
 
     myRepeatAnnotationsModel.clear();
     myRepeatAnnotationsModel.addAll(javaSettings.getRepeatAnnotations());
@@ -174,9 +174,9 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
 
     javaSettings.VISIBILITY = myJavaVisibilityPanel.getVisibility();
 
-    javaSettings.REPLACE_CAST = myReplaceCastCb.isSelected();
-    javaSettings.REPLACE_INSTANCEOF = myReplaceInstanceOfCb.isSelected();
+    javaSettings.REPLACE_INSTANCEOF_AND_CAST = myReplaceInstanceOfCb.isSelected();
     javaSettings.REPLACE_NULL_CHECK = myReplaceNullCheckCb.isSelected();
+    javaSettings.REPLACE_SUM = myReplaceSumCb.isSelected();
 
 
     myCommenterForm.apply(settings);
@@ -226,9 +226,9 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     isModified |= isModified(myInsertOverrideAnnotationCheckBox, javaSettings.INSERT_OVERRIDE_ANNOTATION);
     isModified |= isModified(myRepeatSynchronizedCheckBox, javaSettings.REPEAT_SYNCHRONIZED);
 
-    isModified |= isModified(myReplaceCastCb, javaSettings.REPLACE_CAST);
-    isModified |= isModified(myReplaceInstanceOfCb, javaSettings.REPLACE_INSTANCEOF);
+    isModified |= isModified(myReplaceInstanceOfCb, javaSettings.REPLACE_INSTANCEOF_AND_CAST);
     isModified |= isModified(myReplaceNullCheckCb, javaSettings.REPLACE_NULL_CHECK);
+    isModified |= isModified(myReplaceSumCb, javaSettings.REPLACE_SUM);
 
     isModified |= !javaSettings.VISIBILITY.equals(myJavaVisibilityPanel.getVisibility());
 

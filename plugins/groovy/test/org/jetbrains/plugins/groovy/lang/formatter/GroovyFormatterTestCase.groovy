@@ -27,15 +27,25 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
+import org.jetbrains.plugins.groovy.util.TestUtils
+
+import java.lang.reflect.Field
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 /**
  * @author peter
  */
 abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTestCase {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterTestCase")
+  private static final String OPTION_START = "<option>"
+  private static final String OPTION_END = "</option>"
+  private static final Pattern PATTERN = ~"$OPTION_START(\\w+=(true|false+|\\d|\\w+))$OPTION_END\n"
   protected CodeStyleSettings myTempSettings
 
   @Override
@@ -84,7 +94,8 @@ abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTestCase {
             try {
               TextRange myTextRange = file.getTextRange()
               CodeStyleManager.getInstance(file.getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset())
-            } catch (IncorrectOperationException e) {
+            }
+            catch (IncorrectOperationException e) {
               LOG.error(e)
             }
           }
@@ -96,5 +107,62 @@ abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTestCase {
   protected void checkFormatting(String expected) {
     doFormat(myFixture.getFile())
     myFixture.checkResult(expected)
+  }
+
+  void doTest(String fileName) throws Throwable {
+    final List<String> data = TestUtils.readInput(testDataPath + fileName)
+    String inputWithOptions = data[0]
+    String input = inputWithOptions
+    while (true) {
+      def (String name, String value, Integer matcherEnd) = parseOption(input)
+      if (!name || !value) break
+
+      def (Field field, Object settingObj) = findSettings(name)
+      field.set(settingObj, evaluateValue(value))
+      input = input.substring(matcherEnd)
+    }
+
+    checkFormattingByFile(input, inputWithOptions, fileName)
+  }
+
+  protected void checkFormattingByFile(String input, String inputWithOptions, String path) {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, input)
+    doFormat(myFixture.getFile())
+    final String prefix = inputWithOptions + '\n-----\n'
+    myFixture.configureByText('test.txt', prefix + myFixture.getFile().getText())
+    myFixture.checkResultByFile(path, false)
+  }
+
+  @NotNull
+  static List parseOption(String input) {
+    final Matcher matcher = PATTERN.matcher(input)
+    if (!matcher.find()) return [null, null, null]
+    final String[] strings = matcher.group(1).split("=")
+    return [strings[0], strings[1], matcher.end()]
+  }
+
+  private List findSettings(String name) {
+    return findField(CommonCodeStyleSettings, name)?.with { [it, getGroovySettings()] }
+      ?: findField(GroovyCodeStyleSettings, name)?.with { [it, getGroovyCustomSettings()] }
+             ?: findField(CommonCodeStyleSettings.IndentOptions, name)?.with { [it, getGroovySettings().getIndentOptions()] }
+  }
+
+  private static Field findField(Class<?> clazz, String name) {
+    return clazz.fields.find { it.name == name }
+  }
+
+  @Nullable
+  private static Object evaluateValue(String value) {
+    if (value == "true" || value == "false") {
+      return Boolean.parseBoolean(value)
+    }
+    else {
+      try {
+        return Integer.parseInt(value)
+      }
+      catch (NumberFormatException ignored) {
+        return CommonCodeStyleSettings.getField(value).get(value)
+      }
+    }
   }
 }

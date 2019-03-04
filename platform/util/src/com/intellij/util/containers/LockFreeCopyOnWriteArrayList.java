@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Functions;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,13 +62,6 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
   }
 
   /**
-   * Test for equality, coping with nulls.
-   */
-  private static boolean eq(Object o1, Object o2) {
-    return o1 == null ? o2 == null : o1.equals(o2);
-  }
-
-  /**
    * static version of indexOf, to allow repeated calls without
    * needing to re-acquire array each time.
    *
@@ -93,21 +72,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    * @return index of element, or -1 if absent
    */
   private static int indexOf(Object o, @NotNull Object[] elements, int index, int fence) {
-    if (o == null) {
-      for (int i = index; i < fence; i++) {
-        if (elements[i] == null) {
-          return i;
-        }
-      }
-    }
-    else {
-      for (int i = index; i < fence; i++) {
-        if (o.equals(elements[i])) {
-          return i;
-        }
-      }
-    }
-    return -1;
+    return ArrayUtil.indexOf(elements, o, index, fence);
   }
 
   /**
@@ -273,11 +238,11 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    */
   @NotNull
   @Override
-  @SuppressWarnings("unchecked")
   public <T> T[] toArray(@NotNull T[] a) {
     Object[] elements = array;
     int len = elements.length;
     if (a.length < len) {
+      //noinspection unchecked
       return (T[])Arrays.copyOf(elements, len, a.getClass());
     }
     System.arraycopy(elements, 0, a, 0, len);
@@ -289,8 +254,8 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
 
   // Positional Access Operations
 
-  @SuppressWarnings("unchecked")
   private E get(@NotNull Object[] a, int index) {
+    //noinspection unchecked
     return (E)a[index];
   }
 
@@ -471,7 +436,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     int i;
     for (i = newLen; i != 0; --i) {
       Object element = elements[i];
-      if (eq(o, element)) {
+      if (Objects.equals(o, element)) {
         // found one;  copy remaining and exit
         System.arraycopy(elements, 0, newElements, 0, i);
         break;
@@ -480,7 +445,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     }
 
     // special handling for last cell
-    if (i == 0 && !eq(o, elements[0])) {
+    if (i == 0 && !Objects.equals(o, elements[0])) {
       return null;
     }
     return newElements;
@@ -539,7 +504,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
       int len = elements.length;
       newElements = new Object[len + 1];
       for (int i = 0; i < len; ++i) {
-        if (eq(e, elements[i])) {
+        if (Objects.equals(e, elements[i])) {
           return false; // exit, throwing away copy
         }
         newElements[i] = elements[i];
@@ -679,30 +644,28 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    */
   @Override
   public int addAllAbsent(@NotNull Collection<? extends E> c) {
-    Object[] cs = c.toArray();
-    if (cs.length == 0) {
+    // optimization: faster than calling .add() one by one
+    if (c.isEmpty()) {
       return 0;
     }
 
-    Object[] uniq = new Object[cs.length];
     Object[] elements;
     Object[] newElements;
     int added;
     do {
       elements = array;
-      added = 0;
-      int len = elements.length;
-      for (Object e : cs) { // scan for duplicates
-        if (indexOf(e, elements, 0, len) < 0 &&
-            indexOf(e, uniq, 0, added) < 0) {
-          uniq[added++] = e;
-        }
+      Set<Object> existing = ContainerUtil.map2Set(elements, Functions.identity());
+      List<Object> toAddList = new ArrayList<>(c.size());
+      for (E e : c) {
+        if (!existing.contains(e)) toAddList.add(e);
       }
+
+      added = toAddList.size();
       if (added == 0) {
         return 0;
       }
-      newElements = Arrays.copyOf(elements, len + added, Object[].class);
-      System.arraycopy(uniq, 0, newElements, len, added);
+
+      newElements = ArrayUtil.mergeArrays(elements, toAddList.toArray());
     }
     while (!replaceArray(elements, newElements));
     return added;
@@ -843,7 +806,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     List<?> list = (List<?>)o;
     Iterator<?> it = list.iterator();
     for (Object element : array) {
-      if (!it.hasNext() || !eq(element, it.next())) {
+      if (!it.hasNext() || !Objects.equals(element, it.next())) {
         return false;
       }
     }
@@ -918,7 +881,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
       throw new IndexOutOfBoundsException("Index: " + index);
     }
 
-    return elements.length == 0 ? EmptyListIterator.<E>getInstance() : new COWIterator(elements, index);
+    return elements.length == 0 ? EmptyListIterator.getInstance() : new COWIterator(elements, index);
   }
 
   private class COWIterator implements ListIterator<E> {
@@ -948,21 +911,21 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public E next() {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
       lastRet = cursor;
+      //noinspection unchecked
       return (E)snapshot[cursor++];
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public E previous() {
       if (!hasPrevious()) {
         throw new NoSuchElementException();
       }
+      //noinspection unchecked
       return (E)snapshot[lastRet = --cursor];
     }
 
@@ -981,7 +944,8 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
       if (lastRet < 0) {
         throw new NoSuchElementException();
       }
-      @SuppressWarnings("unchecked")
+
+      //noinspection unchecked
       E e = (E)snapshot[lastRet];
       lastRet = -1;
       LockFreeCopyOnWriteArrayList.this.remove(e);

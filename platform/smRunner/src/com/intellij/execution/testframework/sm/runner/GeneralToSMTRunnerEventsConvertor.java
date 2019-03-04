@@ -77,6 +77,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   @Override
   public void onFinishTesting() {
+    fireOnBeforeTestingFinished(myTestsRootProxy);
     // has been already invoked!
     // We don't know whether process was destroyed by user
     // or it finished after all tests have been run
@@ -219,10 +220,18 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
           }
         }
         if (!acceptedProxies.isEmpty()) {
-          return acceptedProxies.stream()
-            .filter(proxy -> proxy.isSuite() == preferSuite && proxy.getParent() == parentSuite)
-            .findFirst()
-            .orElse(acceptedProxies.iterator().next());
+          SMTestProxy accepted = null;
+          for (SMTestProxy proxy : acceptedProxies) {
+            if (proxy.isSuite() == preferSuite && proxy.getParent() == parentSuite) {
+              if (!proxy.isFinal()) {
+                return proxy;
+              }
+              if (accepted == null) {
+                accepted = proxy;
+              }
+            }
+          }
+          return accepted != null ? accepted : acceptedProxies.iterator().next();
         }
       }
     }

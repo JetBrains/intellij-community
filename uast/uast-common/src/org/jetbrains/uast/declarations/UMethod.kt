@@ -100,6 +100,20 @@ interface UMethod : UDeclaration, PsiMethod {
     visitor.visitMethod(this, data)
 
   override fun asLogString(): String = log("name = $name")
+
+  @JvmDefault
+  val returnTypeReference: UTypeReferenceExpression?
+    get() {
+      val sourcePsi = sourcePsi ?: return null
+      for (child in sourcePsi.children) {
+        val expression = child.toUElement(UTypeReferenceExpression::class.java)
+        if (expression != null) {
+          return expression
+        }
+      }
+      return null
+    }
+
 }
 
 interface UAnnotationMethod : UMethod, PsiAnnotationMethod {

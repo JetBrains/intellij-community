@@ -18,6 +18,7 @@ package com.intellij.java.psi;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -25,6 +26,7 @@ import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ref.GCWatcher;
 
 import java.io.File;
 
@@ -453,5 +455,22 @@ public class TypesTest extends GenericsTestCase {
     final PsiStatement declaration = factory.createStatementFromText("Byte b = 1;", null);
     final PsiExpression plusPlusPostfix = factory.createExpressionFromText("b++", declaration);
     assertEquals(PsiType.BYTE.getBoxedType(declaration), plusPlusPostfix.getType());
+  }
+
+  public void testVariableTypeInvalidation() {
+    PsiElementFactory factory = myJavaFacade.getElementFactory();
+    PsiStatement statement = factory.createStatementFromText("String s;", null);
+    PsiLocalVariable var = (PsiLocalVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
+    PsiType type = var.getType();
+    assertTrue(type.isValid());
+
+    Ref<PsiTypeElement> ref = Ref.create(var.getTypeElement());
+    ref.get().replace(factory.createTypeElement(PsiType.INT));
+
+    assertFalse(type.isValid());
+
+    GCWatcher.fromClearedRef(ref).tryGc();
+
+    assertFalse(type.isValid()); // shouldn't throw
   }
 }

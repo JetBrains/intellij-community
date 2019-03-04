@@ -18,10 +18,12 @@ package com.intellij.java.codeInsight.template
 import com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro
 import com.intellij.codeInsight.template.macro.SplitWordsMacro
 import com.intellij.psi.codeStyle.NameUtil
+import groovy.transform.CompileStatic
 import junit.framework.TestCase
 /**
  * @author peter
  */
+@CompileStatic
 class NamingConventionMacrosTest extends TestCase {
 
   void "test capitalize and underscore"() {

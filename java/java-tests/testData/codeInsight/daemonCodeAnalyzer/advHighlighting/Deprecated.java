@@ -26,7 +26,7 @@ class b extends a {
   }
 
   b() {
-    <warning descr="'b(int)' is deprecated">this</warning>(1);
+    this(1);
   }
 
   /**
@@ -39,6 +39,10 @@ class b extends a {
 }
 
 class c extends b {
+  c(int i) {
+    <warning descr="'b(int)' is deprecated">super</warning>(i);
+  }
+
   // b.f is not deprecated 
   void f() {}
 }
@@ -83,6 +87,12 @@ class Anonym {
     public Anonym(String sss) {
         System.out.println(sss);
     }
+    public void foo() {
+        new Anonym("asdasd") {};
+    }
+}
+
+class UseAnonym {
     public void foo() {
         new <warning descr="'Anonym(java.lang.String)' is deprecated">Anonym</warning>("asdasd") {};
     }

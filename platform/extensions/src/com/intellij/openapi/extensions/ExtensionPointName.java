@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,6 +8,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.stream.Stream;
 
+/**
+ * For project level extension points please use {@link ProjectExtensionPointName}.
+ */
 public final class ExtensionPointName<T> extends BaseExtensionPointName {
   public ExtensionPointName(@NotNull String name) {
     super(name);
@@ -72,15 +74,18 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
 
   @Nullable
   public <V extends T> V findExtension(@NotNull Class<V> instanceOf) {
-    return ContainerUtil.findInstance(getExtensionList(), instanceOf);
+    return findExtension(this, instanceOf, null, false);
   }
 
   @NotNull
   public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf) {
-    V result = findExtension(instanceOf);
-    if (result == null) {
-      throw new IllegalArgumentException("could not find extension implementation " + instanceOf);
-    }
-    return result;
+    //noinspection ConstantConditions
+    return findExtension(this, instanceOf, null, true);
+  }
+
+  @NotNull
+  public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @Nullable AreaInstance areaInstance) {
+    //noinspection ConstantConditions
+    return findExtension(this, instanceOf, areaInstance, true);
   }
 }

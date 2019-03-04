@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,10 @@ import java.util.EventListener;
  * @see VirtualFileListener
  */
 public interface VirtualFileListener extends EventListener {
+
   /**
-   * Fired when a virtual file is renamed from within IDEA, or its writable status is changed.
-   * For files renamed externally, {@link #fileCreated} and {@link #fileDeleted} events will be fired.
+   * Fired when a virtual file is renamed from within the IDE, or its writable status is changed.
+   * For files renamed externally, {@link #fileCreated(VirtualFileEvent)} and {@link #fileDeleted(VirtualFileEvent)} events will be fired.
    *
    * @param event the event object containing information about the change.
    */
@@ -60,7 +61,7 @@ public interface VirtualFileListener extends EventListener {
   }
 
   /**
-   * Fired when a virtual file is moved from within IDEA.
+   * Fired when a virtual file is moved from within the IDE.
    *
    * @param event the event object containing information about the change.
    */
@@ -68,7 +69,7 @@ public interface VirtualFileListener extends EventListener {
   }
 
   /**
-   * Fired when a virtual file is copied from within IDEA.
+   * Fired when a virtual file is copied from within the IDE.
    *
    * @param event the event object containing information about the change.
    */

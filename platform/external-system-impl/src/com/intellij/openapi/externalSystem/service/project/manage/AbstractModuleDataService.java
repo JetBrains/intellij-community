@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -9,7 +10,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -104,7 +104,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
 
-        if(ModuleTypeId.JAVA_MODULE.equals(module.getModuleTypeName())) {
+        if(ModuleTypeId.JAVA_MODULE.equals(module.getModuleTypeName()) && ExternalSystemApiUtil.isJavaCompatibleIde()) {
           // todo [Vlad, IDEA-187832]: extract to `external-system-java` module
           setLanguageLevel(modifiableRootModel, node.getData());
         }
@@ -245,7 +245,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
           if (!ApplicationManager.getApplication().isHeadlessEnvironment() && syncType == SyncType.RE_IMPORT) {
             try {
               // we need to save module configuration before dispose, to get the up-to-date content of the unlinked module iml
-              ServiceKt.getStateStore(module).save(new SmartList<>(), false);
+              StateStorageManagerKt.saveComponentManager(module);
               VirtualFile moduleFile = module.getModuleFile();
               if (moduleFile != null) {
                 Path orphanModulePath = unlinkedModulesDir.resolve(String.valueOf(path.hashCode()));
@@ -305,7 +305,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       Notification cleanUpNotification = ORPHAN_MODULE_NOTIFICATION_GROUP.createNotification(content, NotificationType.INFORMATION)
         .setListener((notification, event) -> {
           if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-          if (showRemovedOrphanModules(modulesToRestore, project, buildSystem)) {
+          if (showRemovedOrphanModules(modulesToRestore, project)) {
             notification.expire();
           }
         })
@@ -328,8 +328,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   }
 
   private static boolean showRemovedOrphanModules(@NotNull final List<Pair<String, Path>> orphanModules,
-                                                  @NotNull final Project project,
-                                                  @NotNull final String buildSystem) {
+                                                  @NotNull final Project project) {
     final CheckBoxList<Pair<String, Path>> orphanModulesList = new CheckBoxList<>();
     DialogWrapper dialog = new DialogWrapper(project) {
       {

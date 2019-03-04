@@ -26,6 +26,9 @@ public class NullableNotNullManagerTest extends LightPlatformTestCase {
     try {
       myManager.loadState(new Element("x"));
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

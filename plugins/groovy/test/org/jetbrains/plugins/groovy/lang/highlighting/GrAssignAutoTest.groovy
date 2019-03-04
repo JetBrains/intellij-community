@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -9,7 +9,8 @@ import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.control.MultipleCompilationErrorsException
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.RepositoryProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.util.Slow
 
@@ -66,7 +67,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
   @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return new RepositoryProjectDescriptor("org.codehaus.groovy:groovy:2.4.15") {
+    return new LibraryLightProjectDescriptor(GroovyProjectDescriptors.LIB_GROOVY_2_4) {
       @Override
       Sdk getSdk() {
         return IdeaTestUtil.getMockJdk18()

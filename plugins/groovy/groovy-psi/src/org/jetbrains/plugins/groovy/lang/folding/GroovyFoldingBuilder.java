@@ -21,7 +21,6 @@ import com.intellij.codeInsight.folding.impl.JavaFoldingBuilderBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
-import com.intellij.lang.folding.NamedFoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.project.DumbAware;
@@ -37,6 +36,8 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
@@ -78,13 +79,17 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     if (type.equals(GroovyTokenTypes.mML_COMMENT) &&
         isMultiline(element) &&
         isWellEndedComment(element)) {
-      descriptors.add(new NamedFoldingDescriptor(node, node.getTextRange(), null, "/*...*/",
-                                                 isFileHeader(node) && JavaCodeFoldingSettings.getInstance().isCollapseFileHeader(), Collections.emptySet()));
+      descriptors.add(new FoldingDescriptor(node, node.getTextRange(), null, "/*...*/",
+                                            isFileHeader(node) && JavaCodeFoldingSettings.getInstance().isCollapseFileHeader(),
+                                            Collections.emptySet()));
     }
     if (type.equals(GroovyDocElementTypes.GROOVY_DOC_COMMENT) &&
         isMultiline(element) &&
         isWellEndedComment(element)) {
-      descriptors.add(new NamedFoldingDescriptor(node, node.getTextRange(), null, "/**...*/", isFileHeader(node) ? JavaCodeFoldingSettings.getInstance().isCollapseFileHeader() : JavaCodeFoldingSettings.getInstance().isCollapseJavadocs(), Collections.emptySet()));
+      descriptors.add(new FoldingDescriptor(node, node.getTextRange(), null, "/**...*/",
+                                            isFileHeader(node) ? JavaCodeFoldingSettings.getInstance().isCollapseFileHeader()
+                                                               : JavaCodeFoldingSettings.getInstance().isCollapseJavadocs(),
+                                            Collections.emptySet()));
     }
 
     if (type.equals(GroovyTokenTypes.mSL_COMMENT) && usedComments.add(element) && !isCustomRegionElement(element)) {
@@ -101,7 +106,10 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       }
       if (end != null) {
         final TextRange range = new TextRange(element.getTextRange().getStartOffset(), end.getTextRange().getEndOffset());
-        descriptors.add(new NamedFoldingDescriptor(node, range, null, "...", isFileHeader(node) ? JavaCodeFoldingSettings.getInstance().isCollapseFileHeader() : JavaCodeFoldingSettings.getInstance().isCollapseEndOfLineComments(), Collections.emptySet()));
+        descriptors.add(new FoldingDescriptor(node, range, null, "...",
+                                              isFileHeader(node) ? JavaCodeFoldingSettings.getInstance().isCollapseFileHeader()
+                                                                 : JavaCodeFoldingSettings.getInstance().isCollapseEndOfLineComments(),
+                                              Collections.emptySet()));
       }
     }
 
@@ -121,8 +129,8 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   private static boolean isCollapseBlock(@NotNull ASTNode node) {
     IElementType type = node.getElementType();
     JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
-    if ((type == GroovyElementTypes.OPEN_BLOCK || type == GroovyElementTypes.CONSTRUCTOR_BODY) && node.getTreeParent().getElementType() ==
-                                                                                                                                    GroovyElementTypes.METHOD_DEFINITION) {
+    if ((type == GroovyElementTypes.OPEN_BLOCK ||
+         type == GroovyElementTypes.CONSTRUCTOR_BODY) && node.getTreeParent().getElementType() == GroovyStubElementTypes.METHOD) {
       return settings.isCollapseMethods();
     }
 
@@ -130,7 +138,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       return settings.isCollapseAnonymousClasses();
     }
 
-    if (type == GroovyElementTypes.CLASS_BODY) {
+    if (type == GroovyEmptyStubElementTypes.CLASS_BODY) {
       final PsiElement parent = node.getPsi().getParent();
       if (parent instanceof PsiClass) {
         if (parent instanceof PsiAnonymousClass) {
@@ -158,14 +166,18 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
           final PsiElement prev = rbrace.getPrevSibling();
           if (PsiImplUtil.isWhiteSpaceOrNls(next) && PsiImplUtil.isWhiteSpaceOrNls(prev)) {
             final FoldingGroup group = FoldingGroup.newGroup("block_group");
-            descriptors.add(new NamedFoldingDescriptor(node, new TextRange(lbrace.getTextRange().getStartOffset(), next.getTextRange().getEndOffset()), group, "{", collapse, Collections.emptySet()));
-            descriptors.add(new NamedFoldingDescriptor(node, new TextRange(prev.getTextRange().getStartOffset(), rbrace.getTextRange().getEndOffset()), group, "}", collapse, Collections.emptySet()));
+            descriptors.add(new FoldingDescriptor(node, new TextRange(lbrace.getTextRange().getStartOffset(),
+                                                                      next.getTextRange().getEndOffset()),
+                                                  group, "{", collapse, Collections.emptySet()));
+            descriptors.add(new FoldingDescriptor(node, new TextRange(prev.getTextRange().getStartOffset(),
+                                                                      rbrace.getTextRange().getEndOffset()),
+                                                  group, "}", collapse, Collections.emptySet()));
             return;
           }
         }
       }
     }
-    descriptors.add(new NamedFoldingDescriptor(node, node.getTextRange(), null, "{...}", collapse, Collections.emptySet()));
+    descriptors.add(new FoldingDescriptor(node, node.getTextRange(), null, "{...}", collapse, Collections.emptySet()));
   }
 
   private static boolean isSingleHighLevelClassBody(PsiElement element) {
@@ -185,7 +197,8 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     if (!isMultiLineStringLiteral(node)) return;
 
     if (!node.getElementType().equals(GroovyElementTypes.GSTRING) && !node.getElementType().equals(GroovyElementTypes.REGEX)) {
-      descriptors.add(new NamedFoldingDescriptor(node, node.getTextRange(), null, multiLineStringLiteralPlaceholder(node), false, Collections.emptySet()));
+      descriptors.add(new FoldingDescriptor(node, node.getTextRange(), null, multiLineStringLiteralPlaceholder(node), false,
+                                            Collections.emptySet()));
       return;
     }
 
@@ -194,7 +207,8 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
 
     final GrStringInjection[] injections = grString.getInjections();
     if (injections.length == 0) {
-      descriptors.add(new NamedFoldingDescriptor(node, node.getTextRange(), null, multiLineStringLiteralPlaceholder(node), false, Collections.emptySet()));
+      descriptors.add(new FoldingDescriptor(node, node.getTextRange(), null, multiLineStringLiteralPlaceholder(node), false,
+                                            Collections.emptySet()));
       return;
     }
     final FoldingGroup group = FoldingGroup.newGroup("GString");
@@ -205,7 +219,8 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     TextRange injectionRange = injection.getTextRange();
     if (startOffset + 1 < injectionRange.getStartOffset()) {
       final String start_quote = GrStringUtil.getStartQuote(node.getText());
-      descriptors.add(new NamedFoldingDescriptor(node, new TextRange(startOffset, injectionRange.getStartOffset()), group, start_quote, false, Collections.emptySet()));
+      descriptors.add(new FoldingDescriptor(node, new TextRange(startOffset, injectionRange.getStartOffset()), group, start_quote, false,
+                                            Collections.emptySet()));
     }
 
     startOffset = injectionRange.getEndOffset();
@@ -214,13 +229,15 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       injectionRange = injection.getTextRange();
       final int endOffset = injectionRange.getStartOffset();
       if (endOffset - startOffset >= 2) {
-        descriptors.add(new NamedFoldingDescriptor(injection.getNode().getTreePrev(), new TextRange(startOffset, endOffset), group, " ", false, Collections.emptySet()));
+        descriptors.add(new FoldingDescriptor(injection.getNode().getTreePrev(), new TextRange(startOffset, endOffset), group, " ", false,
+                                              Collections.emptySet()));
       }
       startOffset = injectionRange.getEndOffset();
     }
     if (startOffset + 1 < nodeRange.getEndOffset()) {
       final String end_quote = GrStringUtil.getEndQuote(node.getText());
-      descriptors.add(new NamedFoldingDescriptor(node.getLastChildNode(), new TextRange(startOffset, nodeRange.getEndOffset()), group, end_quote, false, Collections.emptySet()));
+      descriptors.add(new FoldingDescriptor(node.getLastChildNode(), new TextRange(startOffset, nodeRange.getEndOffset()), group, end_quote,
+                                            false, Collections.emptySet()));
     }
   }
 
@@ -240,8 +257,9 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
         int end = marker.getTextRange().getEndOffset();
         int tail = "import ".length();
         if (start + tail < end && !JavaFoldingBuilderBase.hasErrorElementsNearby(first.getContainingFile(), start, end)) {
-          FoldingDescriptor descriptor = new NamedFoldingDescriptor(first.getNode(), new TextRange(start + tail, end), null, "...", JavaCodeFoldingSettings.getInstance().isCollapseImports(), Collections
-            .emptySet());
+          FoldingDescriptor descriptor = new FoldingDescriptor(first.getNode(), new TextRange(start + tail, end), null, "...",
+                                                               JavaCodeFoldingSettings.getInstance().isCollapseImports(),
+                                                               Collections.emptySet());
           // imports are often added/removed automatically, so we enable autoupdate of folded region for foldings even if it's collapsed
           descriptor.setCanBeRemovedWhenCollapsed(true);
           descriptors.add(descriptor);
@@ -256,9 +274,9 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     return  element.getText().endsWith("*/");
   }
 
-  private static boolean isMultiline(PsiElement element) {
+  private static boolean isMultiline(@NotNull PsiElement element) {
     String text = element.getText();
-    return text.contains("\n") || text.contains("\r") || text.contains("\r\n");
+    return text.contains("\n") || text.contains("\r");
   }
 
   @Nullable
@@ -309,6 +327,6 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   @Override
   protected boolean isCustomFoldingRoot(@NotNull ASTNode node) {
     IElementType nodeType = node.getElementType();
-    return nodeType == GroovyElementTypes.CLASS_DEFINITION || nodeType == GroovyElementTypes.OPEN_BLOCK;
+    return nodeType == GroovyStubElementTypes.CLASS_TYPE_DEFINITION || nodeType == GroovyElementTypes.OPEN_BLOCK;
   }
 }

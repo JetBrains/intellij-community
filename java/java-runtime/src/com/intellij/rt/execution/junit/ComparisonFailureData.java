@@ -103,7 +103,9 @@ public class ComparisonFailureData {
       else {
         comparisonFailureMessage = (failureMessageLength > 0 ? failureMessage + "\n" : "") + comparisonFailurePrefix;
       }
-      attrs.put("message", comparisonFailureMessage);
+      if (!attrs.containsKey("message")) {
+        attrs.put("message", comparisonFailureMessage);
+      }
 
       final String filePath = notification.getFilePath();
       final String actualFilePath = notification.getActualFilePath();

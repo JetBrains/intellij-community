@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -25,11 +10,11 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -40,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -83,6 +69,7 @@ public class GroovyPsiManager {
     return ServiceManager.getService(project, GroovyPsiManager.class);
   }
 
+  @NotNull
   public PsiClassType createTypeByFQClassName(@NotNull String fqName, @NotNull GlobalSearchScope resolveScope) {
     if (ourPopularClasses.contains(fqName)) {
       PsiClass result = JavaPsiFacade.getInstance(myProject).findClass(fqName, resolveScope);
@@ -95,27 +82,26 @@ public class GroovyPsiManager {
   }
 
   public boolean isCompileStatic(@NotNull PsiMember member) {
-    Boolean aBoolean = myCompileStatic.get(member);
-    if (aBoolean == null) {
-      aBoolean = ConcurrencyUtil.cacheOrGet(myCompileStatic, member, isCompileStaticInner(member));
-    }
-    return aBoolean;
+    return myCompileStatic.computeIfAbsent(member, this::isCompileStaticInner);
   }
 
   private boolean isCompileStaticInner(@NotNull PsiMember member) {
-    PsiModifierList list = member.getModifierList();
-    if (list != null) {
-      PsiAnnotation compileStatic = list.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_STATIC);
-      if (compileStatic != null) return checkForPass(compileStatic);
-      PsiAnnotation typeChecked = list.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TYPE_CHECKED);
-      if (typeChecked != null) return checkForPass(typeChecked);
-    }
-    PsiClass aClass = member.getContainingClass();
-    if (aClass != null) return isCompileStatic(aClass);
-    return false;
+    PsiAnnotation annotation = getCompileStaticAnnotation(member);
+    if (annotation != null) return checkForPass(annotation);
+    PsiMember enclosingMember = PsiTreeUtil.getParentOfType(member, PsiMember.class, true);
+    return enclosingMember != null && isCompileStatic(enclosingMember);
   }
 
-  private static boolean checkForPass(@NotNull PsiAnnotation annotation) {
+  @Nullable
+  public static PsiAnnotation getCompileStaticAnnotation(@NotNull PsiMember member) {
+    PsiModifierList list = member.getModifierList();
+    if (list == null) return null;
+    PsiAnnotation compileStatic = list.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_STATIC);
+    if (compileStatic != null) return compileStatic;
+    return list.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TYPE_CHECKED);
+  }
+
+  public static boolean checkForPass(@NotNull PsiAnnotation annotation) {
     PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
     return value == null ||
            value instanceof PsiReference &&

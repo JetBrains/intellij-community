@@ -24,7 +24,7 @@ import java.util.ArrayList;
 
 class DummyDiffFragmentsProcessor {
   public ArrayList<LineFragment> process(String text1, String text2) {
-    ArrayList<LineFragment> lineFragments = new ArrayList<LineFragment>();
+    ArrayList<LineFragment> lineFragments = new ArrayList<>();
 
     if (text1.isEmpty() && text2.isEmpty()) {
       return lineFragments;

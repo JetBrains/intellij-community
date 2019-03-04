@@ -65,9 +65,9 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
 
   public void testUnderstandingProjectSchemaWithoutNamespace() {
     myFixture.saveText(myProjectPom,
-                     "<project>" +
-                     "  <dep<caret>" +
-                     "</project>");
+                       "<project>" +
+                       "  <dep<caret>" +
+                       "</project>");
 
     assertCompletionVariants(myProjectPom, "dependencies", "dependencyManagement");
   }
@@ -92,32 +92,32 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
 
   public void testAbsentModelVersion() {
     myFixture.saveText(myProjectPom,
-                     "<<error descr=\"'modelVersion' child tag should be defined\">project</error> xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
-                     "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
-                     "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">" +
-                     "  <artifactId>foo</artifactId>" +
-                     "</project>");
+                       "<<error descr=\"'modelVersion' child tag should be defined\">project</error> xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
+                       "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
+                       "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">" +
+                       "  <artifactId>foo</artifactId>" +
+                       "</project>");
     checkHighlighting();
   }
 
   public void testAbsentArtifactId() {
     myFixture.saveText(myProjectPom,
-                     "<<error descr=\"'artifactId' child tag should be defined\">project</error> xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
-                     "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
-                     "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">" +
-                     "  <modelVersion>4.0.0</modelVersion>" +
-                     "</project>");
+                       "<<error descr=\"'artifactId' child tag should be defined\">project</error> xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
+                       "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
+                       "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">" +
+                       "  <modelVersion>4.0.0</modelVersion>" +
+                       "</project>");
     checkHighlighting();
   }
 
   public void testUnknownModelVersion() {
     myFixture.saveText(myProjectPom,
-                     "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
-                     "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
-                     "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">" +
-                     "  <modelVersion><error descr=\"Unsupported model version. Only version 4.0.0 is supported.\">666</error></modelVersion>" +
-                     "  <artifactId>foo</artifactId>" +
-                     "</project>");
+                       "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
+                       "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
+                       "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">" +
+                       "  <modelVersion><error descr=\"Unsupported model version. Only version 4.0.0 is supported.\">666</error></modelVersion>" +
+                       "  <artifactId>foo</artifactId>" +
+                       "</project>");
     checkHighlighting();
   }
 
@@ -130,76 +130,77 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
 
   public void testAddingSettingsXmlReadingProblemsToProjectTag() throws Exception {
     myFixture.saveText(myProjectPom,
-                     "<project>" +
-                     "  <modelVersion>4.0.0</modelVersion>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>project</artifactId>" +
-                     "  <version>1</version>" +
-                     "</project>");
+                       "<project>" +
+                       "  <modelVersion>4.0.0</modelVersion>" +
+                       "  <groupId>test</groupId>" +
+                       "  <artifactId>project</artifactId>" +
+                       "  <version>1</version>" +
+                       "</project>");
     updateSettingsXml("<<<");
 
     readProjects();
 
     myFixture.saveText(myProjectPom,
-                     "<<error descr=\"'settings.xml' has syntax errors\">project</error>>" +
-                     "  <modelVersion>4.0.0</modelVersion>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>project</artifactId>" +
-                     "  <version>1</version>" +
-                     "</project>");
+                       "<<error descr=\"'settings.xml' has syntax errors\">project</error>>" +
+                       "  <modelVersion>4.0.0</modelVersion>" +
+                       "  <groupId>test</groupId>" +
+                       "  <artifactId>project</artifactId>" +
+                       "  <version>1</version>" +
+                       "</project>");
     checkHighlighting();
   }
 
   public void testAddingProfilesXmlReadingProblemsToProjectTag() {
     myFixture.saveText(myProjectPom,
-                     "<project>" +
-                     "  <modelVersion>4.0.0</modelVersion>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>project</artifactId>" +
-                     "  <version>1</version>" +
-                     "</project>");
+                       "<project>" +
+                       "  <modelVersion>4.0.0</modelVersion>" +
+                       "  <groupId>test</groupId>" +
+                       "  <artifactId>project</artifactId>" +
+                       "  <version>1</version>" +
+                       "</project>");
     createProfilesXml("<<<");
 
     readProjects();
 
     myFixture.saveText(myProjectPom,
-                     "<<error descr=\"'profiles.xml' has syntax errors\">project</error>>" +
-                     "  <modelVersion>4.0.0</modelVersion>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>project</artifactId>" +
-                     "  <version>1</version>" +
-                     "</project>");
+                       "<<error descr=\"'profiles.xml' has syntax errors\">project</error>>" +
+                       "  <modelVersion>4.0.0</modelVersion>" +
+                       "  <groupId>test</groupId>" +
+                       "  <artifactId>project</artifactId>" +
+                       "  <version>1</version>" +
+                       "</project>");
     checkHighlighting();
   }
 
   public void testAddingStructureReadingProblemsToParentTag() {
     myFixture.saveText(myProjectPom,
-                     "<project>" +
-                     "  <modelVersion>4.0.0</modelVersion>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>project</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <parent>" +
-                     "    <groupId>test</groupId>" +
-                     "    <artifactId>project</artifactId>" +
-                     "    <version>1</version>" +
-                     "  </parent>" +
-                     "</project>");
+                       "<project>" +
+                       "  <modelVersion>4.0.0</modelVersion>" +
+                       "  <groupId>test</groupId>" +
+                       "  <artifactId>project</artifactId>" +
+                       "  <version>1</version>" +
+                       "  <parent>" +
+                       "    <groupId>test</groupId>" +
+                       "    <artifactId>project</artifactId>" +
+                       "    <version>1</version>" +
+                       "  </parent>" +
+                       "</project>");
 
     readProjects();
 
     myFixture.saveText(myProjectPom,
-                     "<project>" +
-                     "  <modelVersion>4.0.0</modelVersion>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>project</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <<error descr=\"Self-inheritance found\">parent</error>>" +
-                     "    <groupId>test</groupId>" +
-                     "    <artifactId>project</artifactId>" +
-                     "    <version>1</version>" +
-                     "  </parent>" +
-                     "</project>");
+                       "<project>" +
+                       "  <modelVersion>4.0.0</modelVersion>" +
+                       "  <groupId>test</groupId>" +
+                       "  <artifactId>project</artifactId>" +
+                       "  <version>1</version>" +
+                       "  <<error descr=\"Self-inheritance found\">parent</error>>" +
+                       "    <groupId>test</groupId>" +
+                       "    <artifactId>project</artifactId>" +
+                       "    <version>1</version>" +
+                       "  </parent>" +
+                       "</project>");
+
     checkHighlighting(myProjectPom, true, false, true);
   }
 
@@ -211,97 +212,97 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                     "<<<");
 
     myFixture.saveText(myProjectPom,
-                     "<project>" +
-                     "  <modelVersion>4.0.0</modelVersion>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>project</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <parent>" +
-                     "    <groupId>test</groupId>" +
-                     "    <artifactId>parent</artifactId>" +
-                     "    <version>1</version>" +
-                     "    <relativePath>parent/pom.xml</relativePath>" +
-                     "  </parent>" +
-                     "</project>");
+                       "<project>" +
+                       "  <modelVersion>4.0.0</modelVersion>" +
+                       "  <groupId>test</groupId>" +
+                       "  <artifactId>project</artifactId>" +
+                       "  <version>1</version>" +
+                       "  <parent>" +
+                       "    <groupId>test</groupId>" +
+                       "    <artifactId>parent</artifactId>" +
+                       "    <version>1</version>" +
+                       "    <relativePath>parent/pom.xml</relativePath>" +
+                       "  </parent>" +
+                       "</project>");
     readProjects();
 
     myFixture.saveText(myProjectPom,
-                     "<project>" +
-                     "  <modelVersion>4.0.0</modelVersion>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>project</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <<error descr=\"Parent 'test:parent:1' has problems\">parent</error>>" +
-                     "    <groupId>test</groupId>" +
-                     "    <artifactId>parent</artifactId>" +
-                     "    <version>1</version>" +
-                     "    <relativePath>parent/pom.xml</relativePath>" +
-                     "  </parent>" +
-                     "</project>");
+                       "<project>" +
+                       "  <modelVersion>4.0.0</modelVersion>" +
+                       "  <groupId>test</groupId>" +
+                       "  <artifactId>project</artifactId>" +
+                       "  <version>1</version>" +
+                       "  <<error descr=\"Parent 'test:parent:1' has problems\">parent</error>>" +
+                       "    <groupId>test</groupId>" +
+                       "    <artifactId>parent</artifactId>" +
+                       "    <version>1</version>" +
+                       "    <relativePath>parent/pom.xml</relativePath>" +
+                       "  </parent>" +
+                       "</project>");
     checkHighlighting();
   }
 
   public void testDoNotAddReadingSyntaxProblemsToProjectTag() {
     myFixture.saveText(myProjectPom,
-                     "<project>" +
-                     "  <modelVersion>4.0.0</modelVersion>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>project</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <" +
-                     "</project>");
+                       "<project>" +
+                       "  <modelVersion>4.0.0</modelVersion>" +
+                       "  <groupId>test</groupId>" +
+                       "  <artifactId>project</artifactId>" +
+                       "  <version>1</version>" +
+                       "  <" +
+                       "</project>");
 
     readProjects();
 
     myFixture.saveText(myProjectPom,
-                     "<project>" +
-                     "  <modelVersion>4.0.0</modelVersion>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>project</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <" +
-                     "<error><</error>/project>");
+                       "<project>" +
+                       "  <modelVersion>4.0.0</modelVersion>" +
+                       "  <groupId>test</groupId>" +
+                       "  <artifactId>project</artifactId>" +
+                       "  <version>1</version>" +
+                       "  <" +
+                       "<error><</error>/project>");
     checkHighlighting();
   }
 
   public void testDoNotAddDependencyAndModuleProblemsToProjectTag() {
     myFixture.saveText(myProjectPom,
-                     "<project>" +
-                     "  <modelVersion>4.0.0</modelVersion>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>project</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <modules>" +
-                     "    <module>foo</module>" +
-                     "  </modules>" +
-                     "  <dependencies>" +
-                     "    <dependency>" +
-                     "      <groupId>xxx</groupId>" +
-                     "      <artifactId>yyy</artifactId>" +
-                     "      <version>xxx</version>" +
-                     "    </dependency>" +
-                     "  </dependencies>" +
-                     "</project>");
+                       "<project>" +
+                       "  <modelVersion>4.0.0</modelVersion>" +
+                       "  <groupId>test</groupId>" +
+                       "  <artifactId>project</artifactId>" +
+                       "  <version>1</version>" +
+                       "  <modules>" +
+                       "    <module>foo</module>" +
+                       "  </modules>" +
+                       "  <dependencies>" +
+                       "    <dependency>" +
+                       "      <groupId>xxx</groupId>" +
+                       "      <artifactId>yyy</artifactId>" +
+                       "      <version>xxx</version>" +
+                       "    </dependency>" +
+                       "  </dependencies>" +
+                       "</project>");
 
     readProjects();
 
     myFixture.saveText(myProjectPom,
-                     "<project>" +
-                     "  <modelVersion>4.0.0</modelVersion>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>project</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <modules>" +
-                     "    <module><error>foo</error></module>" +
-                     "  </modules>" +
-                     "  <dependencies>" +
-                     "    <dependency>" +
-                     "      <groupId><error>xxx</error></groupId>" +
-                     "      <artifactId><error>yyy</error></artifactId>" +
-                     "      <version><error>xxx</error></version>" +
-                     "    </dependency>" +
-                     "  </dependencies>" +
-                     "</project>");
+                       "<project>" +
+                       "  <modelVersion>4.0.0</modelVersion>" +
+                       "  <groupId>test</groupId>" +
+                       "  <artifactId>project</artifactId>" +
+                       "  <version>1</version>" +
+                       "  <modules>" +
+                       "    <module><error>foo</error></module>" +
+                       "  </modules>" +
+                       "  <dependencies>" +
+                       "    <dependency>" +
+                       "      <groupId><error>xxx</error></groupId>" +
+                       "      <artifactId><error>yyy</error></artifactId>" +
+                       "      <version><error>xxx</error></version>" +
+                       "    </dependency>" +
+                       "  </dependencies>" +
+                       "</project>");
     checkHighlighting();
   }
 }

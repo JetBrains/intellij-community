@@ -89,6 +89,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   private var selectedConfigurable: Configurable? = null
   private val recentsLimit = JTextField("5", 2)
   private val confirmation = JCheckBox(ExecutionBundle.message("rerun.confirmation.checkbox"), true)
+  private val confirmationDeletionFromPopup = JCheckBox(ExecutionBundle.message("popup.deletion.confirmation"), true)
   private val additionalSettings = ArrayList<Pair<UnnamedConfigurable, JComponent>>()
   private val storedComponents = THashMap<ConfigurationFactory, Configurable>()
   protected var toolbarDecorator: ToolbarDecorator? = null
@@ -433,16 +434,18 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   private fun defaultsSettingsChanged() {
     isModified = recentsLimit.text != recentsLimit.getClientProperty(INITIAL_VALUE_KEY) ||
                  confirmation.isSelected != confirmation.getClientProperty(INITIAL_VALUE_KEY) ||
+                 confirmationDeletionFromPopup.isSelected != confirmationDeletionFromPopup.getClientProperty(INITIAL_VALUE_KEY) ||
                  runDashboardTypesPanel.isModified()
   }
 
   private fun createSettingsPanel(): JPanel {
     val bottomPanel = JPanel(GridBagLayout())
-    val g = GridBag()
+    val g = GridBag().setDefaultAnchor(GridBagConstraints.WEST)
 
     bottomPanel.add(confirmation, g.nextLine().coverLine())
+    bottomPanel.add(confirmationDeletionFromPopup, g.nextLine().coverLine())
     bottomPanel.add(create(recentsLimit, ExecutionBundle.message("temporary.configurations.limit"), BorderLayout.WEST),
-                    g.nextLine().insets(JBUI.insets(10, 0, 0, 0)).anchor(GridBagConstraints.WEST))
+                    g.nextLine().insets(JBUI.insets(10, 0, 0, 0)))
 
     recentsLimit.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
@@ -450,6 +453,9 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
     })
     confirmation.addChangeListener {
+      defaultsSettingsChanged()
+    }
+    confirmationDeletionFromPopup.addChangeListener {
       defaultsSettingsChanged()
     }
     return bottomPanel
@@ -475,6 +481,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       when (dataId) {
         RunConfigurationSelector.KEY.name -> RunConfigurationSelector { configuration -> selectConfiguration(configuration) }
         TouchbarDataKeys.ACTIONS_KEY.name -> touchbarActions
+        CommonDataKeys.PROJECT.name -> project
         else -> null
       }
     }
@@ -501,6 +508,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     recentsLimit.putClientProperty(INITIAL_VALUE_KEY, recentsLimit.text)
     confirmation.isSelected = config.isRestartRequiresConfirmation
     confirmation.putClientProperty(INITIAL_VALUE_KEY, confirmation.isSelected)
+    confirmationDeletionFromPopup.isSelected = config.isDeletionFromPopupRequiresConfirmation
+    confirmationDeletionFromPopup.putClientProperty(INITIAL_VALUE_KEY, confirmationDeletionFromPopup.isSelected)
 
     runDashboardTypesPanel.reset()
 
@@ -541,6 +550,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       recentsLimit.putClientProperty(INITIAL_VALUE_KEY, recentsLimit.text)
       manager.config.isRestartRequiresConfirmation = confirmation.isSelected
       confirmation.putClientProperty(INITIAL_VALUE_KEY, confirmation.isSelected)
+      manager.config.isDeletionFromPopupRequiresConfirmation = confirmationDeletionFromPopup.isSelected
+      confirmationDeletionFromPopup.putClientProperty(INITIAL_VALUE_KEY, confirmationDeletionFromPopup.isSelected)
 
       runDashboardTypesPanel.apply()
 
@@ -859,12 +870,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   }
 
   fun createNewConfiguration(factory: ConfigurationFactory): SingleConfigurationConfigurable<RunConfiguration> {
-    var node: DefaultMutableTreeNode
-    var selectedNode: DefaultMutableTreeNode? = null
-    val selectionPath = tree.selectionPath
-    if (selectionPath != null) {
-      selectedNode = selectionPath.lastPathComponent as? DefaultMutableTreeNode
-    }
     var typeNode = getConfigurationTypeNode(factory.type)
     if (typeNode == null) {
       typeNode = DefaultMutableTreeNode(factory.type)
@@ -872,18 +877,19 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       sortTopLevelBranches()
       (tree.model as DefaultTreeModel).reload()
     }
-    node = typeNode
+
+    val selectedNode = tree.selectionPath?.lastPathComponent as? DefaultMutableTreeNode
+    var node = typeNode
     if (selectedNode != null && typeNode.isNodeDescendant(selectedNode)) {
       node = selectedNode
       if (getKind(node).isConfiguration) {
         node = node.parent as DefaultMutableTreeNode
       }
     }
+
     val settings = runManager.createConfiguration("", factory)
     val configuration = settings.configuration
-    val suggestedName = suggestName(configuration)
-    val name = createUniqueName(typeNode, suggestedName, CONFIGURATION, TEMPORARY_CONFIGURATION)
-    configuration.name = name
+    configuration.name = createUniqueName(typeNode, suggestName(configuration), CONFIGURATION, TEMPORARY_CONFIGURATION)
     (configuration as? LocatableConfigurationBase<*>)?.setNameChangedByUser(false)
     callNewConfigurationCreated(factory, configuration)
     return createNewConfiguration(settings, node, selectedNode)

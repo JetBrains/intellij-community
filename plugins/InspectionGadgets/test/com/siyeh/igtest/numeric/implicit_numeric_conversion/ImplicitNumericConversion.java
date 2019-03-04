@@ -48,7 +48,7 @@ public class ImplicitNumericConversion
         useLong(3L);
 
         int j = 0;
-        j|=<warning descr="Implicit numeric conversion of 'l' from 'long' to 'int'">l</warning>;
+        <warning descr="Implicit numeric conversion of 'j' from 'int' to 'long'">j</warning>|=<warning descr="Implicit numeric conversion of 'l' from 'long' to 'int'">l</warning>;
         System.out.println(j);
     }
 
@@ -91,5 +91,11 @@ public class ImplicitNumericConversion
         if (<warning descr="Implicit numeric conversion of 'l' from 'long' to 'float'">l</warning> == f) {}
         if (true == true == (Boolean)new Object()) {}
         if (null == null) {}
+    }
+
+    static final long FOO = <warning descr="Implicit numeric conversion of 'Integer.MAX_VALUE' from 'int' to 'long'">Integer.MAX_VALUE</warning>;
+    void foo(char a) {
+        int y = 1;
+        <warning descr="Implicit numeric conversion of 'y' from 'int' to 'long'">y</warning> += <warning descr="Implicit numeric conversion of 'FOO' from 'long' to 'int'">FOO</warning>; // <- should be highlighted by the inspection
     }
 }

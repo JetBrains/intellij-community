@@ -16,12 +16,14 @@
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.codeInspection.ui.InspectionTree;
-import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.CloseProjectAction;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -40,7 +42,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.testGuiFramework.framework.Timeouts;
 import com.intellij.testGuiFramework.framework.TimeoutsKt;
@@ -55,6 +56,7 @@ import org.fest.swing.edt.GuiTask;
 import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.fixture.ContainerFixture;
+import org.fest.swing.fixture.FrameFixture;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Timeout;
 import org.jetbrains.annotations.Contract;
@@ -92,6 +94,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   private NavigationBarFixture myNavBar;
   private RunConfigurationListFixture myRCList;
   private GutterFixture myGutter;
+  private FrameFixture myFrameFixture;
 
   @NotNull
   public static IdeFrameFixture find(@NotNull final Robot robot,
@@ -112,8 +115,6 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     };
 
     try {
-
-
       pause(new Condition("IdeFrame " + (projectPath != null ? quote(projectPath.getPath()) : "") + " to show up") {
         @Override
         public boolean test() {
@@ -136,6 +137,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   public IdeFrameFixture(@NotNull Robot robot, @NotNull IdeFrameImpl target, @NotNull File projectPath) {
     super(IdeFrameFixture.class, robot, target);
+    myFrameFixture = new FrameFixture(robot, target);
     myProjectPath = projectPath;
     final Project project = getProject();
 
@@ -146,6 +148,10 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
     //GradleSyncState.subscribe(project, myGradleProjectEventListener);
     //PostProjectBuildTasksExecutor.subscribe(project, myGradleProjectEventListener);
+  }
+
+  public void maximize(){
+    myFrameFixture.maximize();
   }
 
   @NotNull
@@ -372,7 +378,8 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     MouseEvent fakeMainMenuMouseEvent =
       new MouseEvent(jMenuBar, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, MouseInfo.getPointerInfo().getLocation().x,
                      MouseInfo.getPointerInfo().getLocation().y, 1, false);
-    DumbService.getInstance(getProject()).smartInvokeLater(() -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
+    DumbService.getInstance(getProject())
+      .smartInvokeLater(() -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
   }
 
   /**
@@ -574,7 +581,8 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
             }
         , Timeout.timeout(secondsToWait, TimeUnit.SECONDS));
     }
-    catch (WaitTimedOutError ignored){}
+    catch (WaitTimedOutError ignored) {
+    }
     robot().waitForIdle();
     return this;
   }
@@ -726,19 +734,12 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     return project;
   }
 
-  public void closeProject() {
-    closeProject(true);
+  public void closeProjectAndWaitWelcomeFrame() {
+    closeProjectAndWaitWelcomeFrame(true);
   }
 
-  public void closeProject(Boolean waitWelcomeFrame) {
-    invokeMainMenu("CloseProject");
-    execute(new GuiTask() {
-      @Override
-      protected void executeInEDT() throws Throwable {
-        RecentProjectsManager.getInstance().updateLastProjectPath();
-        WelcomeFrame.showIfNoProjectOpened();
-      }
-    });
+  public void closeProjectAndWaitWelcomeFrame(Boolean waitWelcomeFrame) {
+    closeProject();
     if (!waitWelcomeFrame) return;
     pause(new Condition("Waiting for 'Welcome' page to show up") {
       @Override
@@ -751,6 +752,13 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
         return false;
       }
     });
+  }
+
+  public void closeProject() {
+    CloseProjectAction closeAction = new CloseProjectAction();
+    AnActionEvent actionEvent =
+      AnActionEvent.createFromAnAction(closeAction, null, "", DataManager.getInstance().getDataContext(target().getComponent()));
+    DumbService.getInstance(getProject()).smartInvokeLater(() -> closeAction.actionPerformed(actionEvent));
   }
 
   @NotNull

@@ -39,8 +39,15 @@ public class MavenSurefireReportInConsoleTest extends LightCodeInsightFixtureTes
 
   @Override
   protected void tearDown() throws Exception {
-    MavenServerManager.getInstance().shutdown(true);
-    super.tearDown();
+    try {
+      MavenServerManager.getInstance().shutdown(true);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private List<String> passLine(String line) {

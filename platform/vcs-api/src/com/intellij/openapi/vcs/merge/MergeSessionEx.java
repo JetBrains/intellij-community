@@ -12,7 +12,6 @@ import java.util.List;
  *
  * @author yole
  * @see MergeProvider2#createMergeSession
- * @since 8.1
  */
 public interface MergeSessionEx extends MergeSession {
   /**

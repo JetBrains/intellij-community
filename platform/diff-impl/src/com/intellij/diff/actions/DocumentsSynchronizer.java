@@ -67,11 +67,7 @@ abstract class DocumentsSynchronizer {
                                @NotNull final CharSequence newText) {
     try {
       myDuringModification = true;
-      CommandProcessor.getInstance().executeCommand(myProject, () -> {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          document.replaceString(startOffset, endOffset, newText);
-        });
-      }, "Synchronize document and its fragment", document);
+      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(startOffset, endOffset, newText)), "Synchronize document and its fragment", document);
     }
     finally {
       myDuringModification = false;

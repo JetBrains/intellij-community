@@ -51,12 +51,14 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
       myJava3Module = null;
       myJava7Module = null;
       myJava8Module = null;
-
       super.tearDown();
     }
   }

@@ -50,12 +50,16 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
       CompilerReferenceService.IS_ENABLED_KEY.setValue(myDefaultEnableState);
       myCompilerTester.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myCompilerTester = null;
       super.tearDown();
     }
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/compiler/compilerReferenceFindUsages/";

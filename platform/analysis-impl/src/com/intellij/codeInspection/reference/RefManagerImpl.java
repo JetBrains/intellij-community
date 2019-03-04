@@ -26,7 +26,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Segment;
@@ -559,23 +558,19 @@ public class RefManagerImpl extends RefManager {
 
     return getFromRefTableOrCache(
       elem,
-      () -> ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
-        @Override
-        @Nullable
-        public RefElementImpl compute() {
-          final RefManagerExtension extension = getExtension(elem.getLanguage());
-          if (extension != null) {
-            final RefElement refElement = extension.createRefElement(elem);
-            if (refElement != null) return (RefElementImpl)refElement;
-          }
-          if (elem instanceof PsiFile) {
-            return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
-          }
-          if (elem instanceof PsiDirectory) {
-            return new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
-          }
-          return null;
+      () -> ReadAction.compute(() -> {
+        final RefManagerExtension extension = getExtension(elem.getLanguage());
+        if (extension != null) {
+          final RefElement refElement = extension.createRefElement(elem);
+          if (refElement != null) return (RefElementImpl)refElement;
         }
+        if (elem instanceof PsiFile) {
+          return new RefFileImpl((PsiFile)elem, this);
+        }
+        if (elem instanceof PsiDirectory) {
+          return new RefDirectoryImpl((PsiDirectory)elem, this);
+        }
+        return null;
       }),
       element -> ReadAction.run(() -> {
         element.initialize();

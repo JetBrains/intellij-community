@@ -188,7 +188,6 @@ public class FindManagerImpl extends FindManager {
       findInProjectSettings.addDirectory(findModel.getDirectoryName());
       myFindInProjectModel.setWithSubdirectories(findModel.isWithSubdirectories());
     }
-    FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
   }
 
   @Override

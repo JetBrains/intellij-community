@@ -13,7 +13,6 @@
          <p>Numerous plugins depend on the Git Integration plugin.</p>
       ]]>
    </description>
-  <version>8.1</version>
   <category>VCS Integration</category>
   <vendor>JetBrains</vendor>
 
@@ -41,11 +40,12 @@
     <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog"/>
     <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision"/>
 
-    <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
+    <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup" text="Checkout"
+           description="Checkout selected revision or a branch on selected commit"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
-    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch..."
+    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="Branch..."
             description="Create new branch starting from the selected commit"/>
-    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
+    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="Tag..."
             description="Create new tag pointing to this commit"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." icon="AllIcons.Actions.Rollback"/>
     <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Revert Commit"
@@ -54,6 +54,10 @@
             description="Undo last commit and put its changes into selected changelist"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Reword..."
             description="Change commit message" />
+    <action id="Git.Fixup.To.Commit" class="git4idea.rebase.GitCommitFixupBySubjectAction" text="Fixup..."
+            description="Create a fixup commit"/>
+    <action id="Git.Squash.Into.Commit" class="git4idea.rebase.GitCommitSquashBySubjectAction" text="Squash Into..."
+            description="Create a squash commit"/>
     <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction" text="Interactively Rebase from Here..."
             description="Show the dialog for interactive rebase which allows to squash, fixup, reorder, remove and reword commits" />
     <action id="Git.Commit.And.Push.Executor" class="git4idea.actions.GitCommitAndPushExecutorAction" text="Commit and &amp;Push...">
@@ -80,7 +84,8 @@
     <group id="GitRepositoryActions">
       <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="AllIcons.Vcs.Branch">
         <keyboard-shortcut first-keystroke="control shift BACK_QUOTE" keymap="$default" />
-        <keyboard-shortcut first-keystroke="control shift BACK_QUOTE" keymap="Mac OS X" remove="true" />
+        <keyboard-shortcut first-keystroke="meta shift BACK_QUOTE" keymap="Mac OS X" remove="true" />
+        <keyboard-shortcut first-keystroke="meta shift BACK_QUOTE" keymap="Mac OS X 10.5+" remove="true" />
       </action>
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag..."/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="AllIcons.Actions.ShowAsTree"/>
@@ -117,10 +122,6 @@
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
-    <group id="Git.LogContextMenu">
-      <separator/>
-    </group>
-
     <group id="Git.FileHistory.ContextMenu">
       <reference id="Git.SelectInGitLog"/>
       <separator/>
@@ -129,24 +130,31 @@
       <add-to-group group-id="Vcs.FileHistory.ContextMenu" relative-to-action="VcsHistoryActionsGroup" anchor="before"/>
     </group>
 
-    <group id="Git.Log.ContextMenu">
-      <separator/>
-      <reference id="Git.CheckoutRevision"/>
+    <group id="Git.Log.ContextMenu.CheckoutBrowse">
+      <reference id="Git.CheckoutGroup"/>
       <reference id="Git.BrowseRepoAtRevision"/>
-      <separator/>
+
+      <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.CompareRevisions" anchor="before"/>
+    </group>
+
+    <group id="Git.Log.ContextMenu">
       <reference id="Git.Reset.In.Log"/>
       <reference id="Git.Revert.In.Log"/>
       <reference id="Git.Uncommit"/>
       <separator/>
       <reference id="Git.Reword.Commit"/>
+      <reference id="Git.Fixup.To.Commit" />
+      <reference id="Git.Squash.Into.Commit" />
       <reference id="Git.Interactive.Rebase"/>
       <separator/>
       <reference id="Git.BranchOperationGroup"/>
-      <reference id="Git.CreateNewBranch"/>
-      <reference id="Git.CreateNewTag"/>
+      <group id="Git.Log.CreateNew" text="New" popup="true"
+             description="Create new branch or tag on selected commit">
+        <reference id="Git.CreateNewBranch"/>
+        <reference id="Git.CreateNewTag"/>
+      </group>
       <separator/>
-
-      <add-to-group group-id="Vcs.Log.ContextMenu"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.GoToChild" anchor="before"/>
     </group>
 
     <group id="Git.Log.Toolbar">
@@ -159,14 +167,16 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <search.topHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
+    <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
     <vcs.checkoutProcessor implementation="git4idea.checkout.GitCheckoutProcessor"/>
     <vcsRootChecker implementation="git4idea.roots.GitRootChecker"/>
+    <vcsIgnoreChecker implementation="git4idea.ignore.GitIgnoreChecker"/>
     <vcsRepositoryCreator implementation="git4idea.repo.GitRepositoryCreator"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
+    <vcsCheckinHandlerFactory implementation="git4idea.rebase.GitRebaseCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="git4idea.checkin.GitSkipHooksCommitHandlerFactory" order="last"/>
     <unresolvedMergeCheckProvider implementation="git4idea.checkin.GitUnresolvedMergeCheckProvider"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>
@@ -177,11 +187,14 @@
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitToggleAnnotationOptionsActionProvider" />
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitShowCommitInLogAnnotationGutterActionProvider" />
     <statistics.projectUsagesCollector implementation="git4idea.GitStatisticsCollector"/>
-    <statistics.projectUsagesCollector implementation="git4idea.GitUsagesTriggerCollector"/>
     <statistics.projectUsagesCollector implementation="git4idea.GitProjectMigrationStatisticsCollector"/>
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
         implementation="git4idea.diff.GitSubmoduleDiffRequestProvider"/>
+    <vcsChangesViewRefresher implementation="git4idea.ignore.GitIgnoredFilesHolder$Provider"/>
+    <vcs.ignoredFilesHolder implementation="git4idea.ignore.GitIgnoredFilesHolder$Provider"/>
+    <projectConfigurable id="vcs.Git" displayName="Git" instance="git4idea.config.GitVcsConfigurable"
+                         parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
@@ -250,6 +263,8 @@
     <logHighlighterFactory implementation="git4idea.branch.DeepComparator$Factory"/>
 
     <ignoredFileContentProvider implementation="git4idea.ignore.GitIgnoredFileContentProvider"/>
+    <openapi.vcs.changes.vcsPreservingExecutor implementation="git4idea.util.GitPreservingExecutor"/>
+    <actionPromoter implementation="git4idea.actions.GitActionPromoter"/>
   </extensions>
 
   <extensionPoints>

@@ -15,46 +15,12 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.psi.PsiMethodCallExpression;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.testFrameworks.AssertHint;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.testFrameworks.BaseAssertEqualsBetweenInconvertibleTypesInspection;
 
-public class AssertEqualsBetweenInconvertibleTypesInspection extends BaseInspection {
+public class AssertEqualsBetweenInconvertibleTypesInspection extends BaseAssertEqualsBetweenInconvertibleTypesInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("assertequals.between.inconvertible.types.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return (String)infos[0];
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new AssertEqualsBetweenInconvertibleTypesVisitor();
-  }
-
-  private static class AssertEqualsBetweenInconvertibleTypesVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final String compatibilityErrorMessage = AssertHint.areExpectedActualTypesCompatible(expression, false);
-      if (compatibilityErrorMessage != null) {
-        registerMethodCallError(expression, compatibilityErrorMessage);
-      }
-    }
+  protected boolean checkTestNG() {
+    return false;
   }
 }

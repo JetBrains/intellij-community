@@ -65,15 +65,8 @@ public class SourceCodeCompressor {
       DEFLATER.reset();
       DEFLATER.setDictionary(PRESET_BUF);
       try {
-        DeflaterOutputStream output = null;
-        try {
-          output = new DeflaterOutputStream(OUTPUT, DEFLATER);
+        try (DeflaterOutputStream output = new DeflaterOutputStream(OUTPUT, DEFLATER)) {
           output.write(source, off, len);
-        }
-        finally {
-          if (output != null) {
-            output.close();
-          }
         }
       }
       catch (IOException e) {
@@ -99,9 +92,7 @@ public class SourceCodeCompressor {
 
   public static byte[] decompress(final byte[] compressed, final int len, final int off) throws IOException {
     INFLATER.reset();
-    InflaterInputStream input = null;
-    try {
-      input = new InflaterInputStream(new ByteArrayInputStream(compressed, off, len), INFLATER);
+    try (InflaterInputStream input = new InflaterInputStream(new ByteArrayInputStream(compressed, off, len), INFLATER)) {
       final int b = input.read();
       if (b == -1) {
         INFLATER.setDictionary(PRESET_BUF);
@@ -116,9 +107,6 @@ public class SourceCodeCompressor {
       return OUTPUT.toByteArray();
     }
     finally {
-      if (input != null) {
-        input.close();
-      }
       OUTPUT.reset();
     }
   }

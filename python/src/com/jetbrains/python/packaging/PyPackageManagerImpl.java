@@ -28,20 +28,20 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PyDetectedSdk;
-import com.jetbrains.python.sdk.PyLazySdk;
-import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 /**
  * @author vlan
@@ -49,11 +49,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class PyPackageManagerImpl extends PyPackageManager {
 
   private static final String SETUPTOOLS_VERSION = "39.1.0";
-  private static final String SETUPTOOLS_VERSION_26 = "36.8.0";
   private static final String PIP_VERSION = "10.0.1";
-  private static final String PIP_VERSION_26 = "9.0.3";
   private static final String VIRTUALENV_VERSION = "16.0.0";
-  private static final String VIRTUALENV_VERSION_26 = "15.2.0";
 
   private static final int ERROR_NO_SETUPTOOLS = 3;
 
@@ -91,17 +88,16 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @Override
   public void installManagement() throws ExecutionException {
     final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(getSdk());
-    if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
+    if (languageLevel.isOlderThan(LanguageLevel.PYTHON27)) {
       throw new ExecutionException("Package management for Python " + languageLevel + " is not supported. " +
-                                   "Upgrade your project interpreter to Python " + LanguageLevel.PYTHON26 + " or newer");
+                                   "Upgrade your project interpreter to Python " + LanguageLevel.PYTHON27 + " or newer");
     }
 
-    final boolean py26 = languageLevel == LanguageLevel.PYTHON26;
     if (!refreshAndCheckForSetuptools()) {
-      installManagement(PyPackageUtil.SETUPTOOLS + "-" + (py26 ? SETUPTOOLS_VERSION_26 : SETUPTOOLS_VERSION));
+      installManagement(PyPackageUtil.SETUPTOOLS + "-" + SETUPTOOLS_VERSION);
     }
     if (PyPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP) == null) {
-      installManagement(PyPackageUtil.PIP + "-" + (py26 ? PIP_VERSION_26 : PIP_VERSION));
+      installManagement(PyPackageUtil.PIP + "-" + PIP_VERSION);
     }
   }
 
@@ -227,27 +223,14 @@ public class PyPackageManagerImpl extends PyPackageManager {
       for (PyRequirement req : requirements) {
         simplifiedArgs.addAll(req.getInstallOptions());
       }
-      throw new PyExecutionException(e.getMessage(), "pip", simplifiedArgs, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
+      throw new PyExecutionException(e.getMessage(), "pip", makeSafeToDisplayCommand(simplifiedArgs), 
+                                     e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these requirements were installed: " + requirements);
       refreshPackagesSynchronously();
       FileUtil.delete(buildDir);
     }
-  }
-
-  @NotNull
-  private String getWriteAccessAnchorPath() throws ExecutionException {
-    final VirtualFile sitePackagesDir = PythonSdkType.getSitePackagesDirectory(mySdk);
-    if (sitePackagesDir == null) {
-      // Perhaps a system interpreter on Linux that has only "dist-packages", use executable path as a fallback then
-      final String homePath = mySdk.getHomePath();
-      if (homePath == null) {
-        throw new ExecutionException("Cannot find Python interpreter for SDK " + mySdk.getName());
-      }
-      return homePath;
-    }
-    return sitePackagesDir.getPath();
   }
 
   @Override
@@ -329,9 +312,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final Sdk sdk = getSdk();
     final LanguageLevel languageLevel = getOrRequestLanguageLevelForSdk(sdk);
 
-    if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
+    if (languageLevel.isOlderThan(LanguageLevel.PYTHON27)) {
       throw new ExecutionException("Creating virtual environment for Python " + languageLevel + " is not supported. " +
-                                   "Upgrade your project interpreter to Python " + LanguageLevel.PYTHON26 + " or newer");
+                                   "Upgrade your project interpreter to Python " + LanguageLevel.PYTHON27 + " or newer");
     }
 
     final boolean usePyVenv = languageLevel.isAtLeast(LanguageLevel.PYTHON33);
@@ -348,8 +331,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         args.add("--system-site-packages");
       }
       args.add(destinationDir);
-      final boolean py26 = languageLevel == LanguageLevel.PYTHON26;
-      final String name = "virtualenv-" + (py26 ? VIRTUALENV_VERSION_26 : VIRTUALENV_VERSION);
+      final String name = "virtualenv-" + VIRTUALENV_VERSION;
       final String dirName = extractHelper(name + ".tar.gz");
       try {
         final String fileName = dirName + name + mySeparator + "virtualenv.py";
@@ -502,8 +484,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
     cmdline.add(homePath);
     cmdline.add(helperPath);
     cmdline.addAll(args);
-    LOG.info("Running packaging tool: " + StringUtil.join(cmdline, " "));
-
+    LOG.info("Running packaging tool: " + StringUtil.join(makeSafeToDisplayCommand(cmdline), " "));
+    
     try {
       final GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir);
       final Map<String, String> environment = commandLine.getEnvironment();
@@ -515,7 +497,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         flavor.commandLinePatcher().patchCommandLine(commandLine);
       }
       final Process process;
-      final boolean useSudo = askForSudo && !Files.isWritable(Paths.get(getWriteAccessAnchorPath()));
+      final boolean useSudo = askForSudo && PySdkExtKt.adminPermissionsNeeded(mySdk);
       if (useSudo) {
         process = ExecUtil.sudo(commandLine, "Please enter your password to make changes in system packages: ");
       }
@@ -548,6 +530,38 @@ public class PyPackageManagerImpl extends PyPackageManager {
     catch (IOException e) {
       throw new PyExecutionException(e.getMessage(), helperPath, args);
     }
+  }
+
+  @NotNull
+  private static List<String> makeSafeToDisplayCommand(@NotNull List<String> cmdline) {
+    final List<String> safeCommand = new ArrayList<>(cmdline);
+    for (int i = 0; i < safeCommand.size(); i++) {
+      if (cmdline.get(i).equals("--proxy") && i + 1 < cmdline.size()) {
+        safeCommand.set(i + 1, makeSafeProxyArgument(cmdline.get(i + 1)));
+      }
+    }
+    return safeCommand;
+  }
+
+  @NotNull
+  private static String makeSafeProxyArgument(@NotNull String proxyArgument) {
+    try {
+      final URI proxyUri = new URI(proxyArgument);
+      final String credentials = proxyUri.getUserInfo();
+      if (credentials != null) {
+        final int colonIndex = credentials.indexOf(":");
+        if (colonIndex >= 0) {
+          final String login = credentials.substring(0, colonIndex);
+          final String password = credentials.substring(colonIndex + 1);
+          final String maskedPassword = StringUtil.repeatSymbol('*', password.length());
+          final String maskedCredentials = login + ":" + maskedPassword;
+          return proxyArgument.replaceFirst(Pattern.quote(credentials), maskedCredentials);
+        }
+      }
+    }
+    catch (URISyntaxException ignored) {
+    }
+    return proxyArgument;
   }
 
   @NotNull

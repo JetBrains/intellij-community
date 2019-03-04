@@ -19,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.lang.psi.util.skipSameTypeParents
@@ -28,11 +27,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 
-val log: Logger = logger(::log)
+val log: Logger = logger("#org.jetbrains.plugins.groovy.lang.resolve")
 
 @JvmField
 val NON_CODE: Key<Boolean?> = Key.create("groovy.process.non.code.members")
 
+@JvmField
 val sorryCannotKnowElementKind: Key<Boolean> = Key.create("groovy.skip.kind.check.please")
 
 fun initialState(processNonCodeMembers: Boolean): ResolveState = ResolveState.initial().put(NON_CODE, processNonCodeMembers)
@@ -106,8 +106,6 @@ private fun PsiScopeProcessor.shouldProcess(kind: GroovyResolveKind): Boolean {
   return kind.declarationKinds.any(elementClassHint::shouldProcess)
 }
 
-fun wrapClassType(type: PsiType?, context: PsiElement): PsiType? = TypesUtil.createJavaLangClassType(type, context.project, context.resolveScope)
-
 fun getDefaultConstructor(clazz: PsiClass): PsiMethod {
   return getCachedValue(clazz) {
     Result.create(DefaultConstructor(clazz), clazz)
@@ -151,7 +149,7 @@ fun getName(state: ResolveState, element: PsiNamedElement): String? {
   return state[importedNameKey] ?: element.name
 }
 
-fun valid(allCandidates: Collection<GroovyResolveResult>): List<GroovyResolveResult> = allCandidates.filter {
+fun <T : GroovyResolveResult> valid(allCandidates: Collection<T>): List<T> = allCandidates.filter {
   it.isValidResult
 }
 
@@ -169,5 +167,19 @@ fun getResolveKind(element: PsiNamedElement): GroovyResolveKind? {
     is PsiVariable -> GroovyResolveKind.VARIABLE
     is GroovyProperty -> GroovyResolveKind.PROPERTY
     else -> null
+  }
+}
+
+fun GroovyResolveResult?.asJavaClassResult(): PsiClassType.ClassResolveResult {
+  if (this == null) return PsiClassType.ClassResolveResult.EMPTY
+  val clazz = element as? PsiClass ?: return PsiClassType.ClassResolveResult.EMPTY
+  return object : PsiClassType.ClassResolveResult {
+    override fun getElement(): PsiClass? = clazz
+    override fun getSubstitutor(): PsiSubstitutor = this@asJavaClassResult.substitutor
+    override fun isPackagePrefixPackageReference(): Boolean = false
+    override fun isAccessible(): Boolean = true
+    override fun isStaticsScopeCorrect(): Boolean = true
+    override fun getCurrentFileResolveScope(): PsiElement? = null
+    override fun isValidResult(): Boolean = true
   }
 }

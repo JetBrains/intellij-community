@@ -12,6 +12,7 @@ import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,6 +106,7 @@ class PreferredProducerFind {
     }
 
     for (RunConfigurationProducer producer : RunConfigurationProducer.getProducers(context.getProject())) {
+      ProgressManager.checkCanceled();
       ConfigurationFromContext fromContext = producer.findOrCreateConfigurationFromContext(context);
       if (fromContext != null) {
         configurationsFromContext.add(fromContext);

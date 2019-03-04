@@ -27,8 +27,11 @@ public abstract class ScratchFileCreationHelper {
   public static final LanguageExtension<ScratchFileCreationHelper> EXTENSION = new LanguageExtension<>(
     "com.intellij.scratch.creationHelper", new ScratchFileCreationHelper() {
   });
-  
-  
+
+  /**
+   * Override to change the default initial text for a scratch file stored in {@link Context#text} field.
+   * Return true if the text is set up as needed and no further considerations are necessary.
+   */
   public boolean prepareText(@NotNull Project project, @NotNull Context context, @NotNull DataContext dataContext) {
     return false;
   }

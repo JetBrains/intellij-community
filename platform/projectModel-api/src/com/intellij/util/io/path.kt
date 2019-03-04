@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.CharsetToolkit
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -44,7 +45,11 @@ fun Path.outputStream(): OutputStream {
   return Files.newOutputStream(this)
 }
 
+@Throws(IOException::class)
 fun Path.inputStream(): InputStream = Files.newInputStream(this)
+
+@Throws(IOException::class)
+fun Path.inputStreamSkippingBom() = CharsetToolkit.inputStreamSkippingBOM(inputStream().buffered())
 
 fun Path.inputStreamIfExists(): InputStream? {
   try {
@@ -155,13 +160,13 @@ fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
 fun Path.readText(): String = readBytes().toString(Charsets.UTF_8)
 
 @Throws(IOException::class)
-fun Path.readChars(): CharSequence = inputStream().reader().readCharSequence(size().toInt())
+fun Path.readChars() = inputStream().reader().readCharSequence(size().toInt())
 
 @Throws(IOException::class)
-fun Path.writeChild(relativePath: String, data: ByteArray): Path = resolve(relativePath).write(data)
+fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePath).write(data)
 
 @Throws(IOException::class)
-fun Path.writeChild(relativePath: String, data: String): Path = writeChild(relativePath, data.toByteArray())
+fun Path.writeChild(relativePath: String, data: String) = writeChild(relativePath, data.toByteArray())
 
 @Throws(IOException::class)
 @JvmOverloads
@@ -207,7 +212,7 @@ fun Path.basicAttributesIfExists(): BasicFileAttributes? {
   try {
     return Files.readAttributes(this, BasicFileAttributes::class.java)
   }
-  catch (ignored: NoSuchFileException) {
+  catch (ignored: FileSystemException) {
     return null
   }
 }

@@ -1,39 +1,19 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.TestClassCollector;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleFileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -41,17 +21,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.rt.execution.junit.JUnitStarter;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 class TestDirectory extends TestPackage {
   TestDirectory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -92,16 +65,6 @@ class TestDirectory extends TestPackage {
     };
   }
 
-  @Nullable
-  @Override
-  protected VirtualFile[] getRootPaths() {
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(getConfiguration().getPersistentData().getDirName()));
-    if (file == null) return null;
-    Module dirModule = ModuleUtilCore.findModuleForFile(file, getConfiguration().getProject());
-    if (dirModule == null) return null;
-    return TestClassCollector.getRootPath(dirModule, true);
-  }
-
   @Override
   protected boolean configureByModule(Module module) {
     return module != null;
@@ -127,69 +90,41 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
-  protected GlobalSearchScope filterScope(JUnitConfiguration.Data data) throws CantRunException {
+  protected GlobalSearchScope filterScope(JUnitConfiguration.Data data) {
     return GlobalSearchScope.allScope(getConfiguration().getProject());
   }
 
   @Override
-  public SearchForTestsTask createSearchingForTestsTask() {
-    if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
-      return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
-        private final THashSet<PsiClass> classes = new THashSet<>();
-        @Override
-        protected void search() throws ExecutionException {
-          PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
-          PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(directory);
-          if (aPackage != null) {
-            final Module module = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), getProject());
-            if (module != null) {
-              ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-              PsiDirectory[] directories = aPackage.getDirectories(module.getModuleScope(true));
-              boolean foundTestSources = false;
-              for (PsiDirectory dir : directories) {
-                if (fileIndex.isInTestSourceContent(dir.getVirtualFile())) {
-                  if (foundTestSources) {
-                    collectClassesRecursively(directory, Condition.TRUE, classes);
-                    break;
-                  }
-                  foundTestSources = true;
-                }
-              }
-            }
-          }
+  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiClass> classes) throws CantRunException {
+    if (module != null) {
+      PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
+      PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(directory);
+      if (aPackage != null) {
+        GlobalSearchScope projectScope = GlobalSearchScopesCore.projectTestScope(getConfiguration().getProject());
+        PsiDirectory[] directories = aPackage.getDirectories(module.getModuleScope(true).intersectWith(projectScope));
+        if (directories.length > 1) {  // need to enumerate classes in one of multiple test source roots
+          collectClassesRecursively(directory, Conditions.alwaysTrue(), classes);
         }
-
-        @Override
-        protected void onFound() throws ExecutionException {
-          String packageName = TestDirectory.super.getPackageName(getConfiguration().getPersistentData());
-          try {
-            VirtualFile[] rootPaths = getRootPaths();
-            LOG.assertTrue(rootPaths != null);
-            JUnitStarter
-              .printClassesList(Arrays.stream(rootPaths).map(root -> "\u002B" + root.getPath()).collect(Collectors.toList()), packageName, "",
-                                classes.isEmpty() ? (packageName.isEmpty() ? ".*" : packageName + "\\..*") 
-                                                  : StringUtil.join(classes, aClass -> ClassUtil.getJVMClassName(aClass), "||"),
-                                myTempFile);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        }
-      };
+      }
     }
-
-    return super.createSearchingForTestsTask();
   }
 
-  @NotNull
   @Override
-  protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
-    return "";
+  protected boolean filterOutputByDirectoryForJunit5(Set<PsiClass> classNames) {
+    return true;
   }
 
+  @Override
+  protected String getFilters(Set<PsiClass> foundClasses, String packageName) {
+    return foundClasses.isEmpty()
+           ? super.getFilters(foundClasses, packageName)
+           : StringUtil.join(foundClasses, CLASS_NAME_FUNCTION, "||");
+  }
 
   @Override
-  protected void collectClassesRecursively(TestClassFilter classFilter, Condition<? super PsiClass> acceptClassCondition, Set<? super PsiClass> classes) throws CantRunException {
+  protected void collectClassesRecursively(TestClassFilter classFilter,
+                                           Condition<? super PsiClass> acceptClassCondition,
+                                           Set<? super PsiClass> classes) throws CantRunException {
     collectClassesRecursively(getDirectory(getConfiguration().getPersistentData()), acceptClassCondition, classes);
   }
 
@@ -210,7 +145,6 @@ class TestDirectory extends TestPackage {
       }
     }
   }
-  
 
   @Override
   protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
@@ -222,11 +156,11 @@ class TestDirectory extends TestPackage {
     final String dirName = data.getDirName();
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
     if (file == null) {
-      throw new CantRunException("Directory \'" + dirName + "\' is not found");
+      throw new CantRunException(ExecutionBundle.message("directory.not.found.error.message", dirName));
     }
     final PsiDirectory directory = ReadAction.compute(() -> PsiManager.getInstance(getConfiguration().getProject()).findDirectory(file));
     if (directory == null) {
-      throw new CantRunException("Directory \'" + dirName + "\' is not found");
+      throw new CantRunException(ExecutionBundle.message("directory.not.found.error.message", dirName));
     }
     return directory;
   }
@@ -235,7 +169,7 @@ class TestDirectory extends TestPackage {
   public String suggestActionName() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final String dirName = data.getDirName();
-    return dirName.isEmpty() ? ExecutionBundle.message("all.tests.scope.presentable.text") 
+    return dirName.isEmpty() ? ExecutionBundle.message("all.tests.scope.presentable.text")
                              : ExecutionBundle.message("test.in.scope.presentable.text", StringUtil.getShortName(FileUtil.toSystemIndependentName(dirName), '/'));
   }
 
@@ -245,12 +179,8 @@ class TestDirectory extends TestPackage {
                                        PsiMethod testMethod,
                                        PsiPackage testPackage,
                                        PsiDirectory testDir) {
-    if (JUnitConfiguration.TEST_DIRECTORY.equals(configuration.getPersistentData().TEST_OBJECT) && testDir != null) {
-      if (Comparing.strEqual(FileUtil.toSystemIndependentName(configuration.getPersistentData().getDirName()),
-                             testDir.getVirtualFile().getPath())) {
-        return true;
-      }
-    }
-    return false;
+    return JUnitConfiguration.TEST_DIRECTORY.equals(configuration.getPersistentData().TEST_OBJECT) &&
+           testDir != null &&
+           FileUtil.pathsEqual(configuration.getPersistentData().getDirName(), testDir.getVirtualFile().getPath());
   }
 }

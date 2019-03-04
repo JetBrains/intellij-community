@@ -52,8 +52,8 @@ public abstract class FileEditorManager {
   public abstract void closeFile(@NotNull VirtualFile file);
 
   /**
-   * Works as {@link #openFile(VirtualFile, boolean)} but forces opening of text editor.
-   * This method ignores {@link FileEditorPolicy#HIDE_DEFAULT_EDITOR} policy.
+   * Works as {@link #openFile(VirtualFile, boolean)} but forces opening of text editor (see {@link TextEditor}).
+   * If several text editors are opened, including the default one, default text editor is focused (if requested) and returned.
    * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    *
    * @return opened text editor. The method returns {@code null} in case if text editor wasn't opened.
@@ -207,7 +207,6 @@ public abstract class FileEditorManager {
    * Returns the project with which the file editor manager is associated.
    *
    * @return the project instance.
-   * @since 5.0.1
    */
   @NotNull
   public abstract Project getProject();

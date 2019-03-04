@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.maddyhome.idea.copyright.actions;
 
@@ -44,7 +30,6 @@ import java.util.List;
 public abstract class AbstractFileProcessor {
   private final Project myProject;
   private final Module myModule;
-  private final PsiDirectory directory = null;
   private PsiFile file = null;
   private PsiFile[] files = null;
   private final String message;
@@ -69,10 +54,7 @@ public abstract class AbstractFileProcessor {
   }
 
   public void run() {
-    if (directory != null) {
-      process(directory, false);
-    }
-    else if (files != null) {
+    if (files != null) {
       process(files);
     }
     else if (file != null) {
@@ -189,12 +171,6 @@ public abstract class AbstractFileProcessor {
     });
   }
 
-  private void process(final PsiDirectory dir, final boolean subdirs) {
-    final List<PsiFile> pfiles = new ArrayList<>();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> findFiles(pfiles, dir, subdirs), title, true, myProject);
-    handleFiles(pfiles);
-  }
-
   private void process(final Project project) {
     final List<PsiFile> pfiles = new ArrayList<>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> findFiles(project, pfiles), title, true, project);
@@ -236,8 +212,11 @@ public abstract class AbstractFileProcessor {
   }
 
   private void handleFiles(final List<PsiFile> files) {
-    final VirtualFile[] vFiles = files.stream().map(PsiFile::getVirtualFile).toArray(VirtualFile[]::new);
-    if (!ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(vFiles).hasReadonlyFiles()) {
+    List<VirtualFile> list = new ArrayList<>();
+    for (PsiFile psiFile : files) {
+      list.add(psiFile.getVirtualFile());
+    }
+    if (!ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(list).hasReadonlyFiles()) {
       if (!files.isEmpty()) {
         final Runnable[] resultRunnable = new Runnable[1];
         execute(() -> resultRunnable[0] = prepareFiles(files), () -> {
@@ -270,9 +249,7 @@ public abstract class AbstractFileProcessor {
     ProgressManager.getInstance()
                    .runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(readAction), title, true,
                                                         myProject);
-    WriteCommandAction.writeCommandAction(myProject).withName(title).run(() -> {
-      writeAction.run();
-    });
+    WriteCommandAction.writeCommandAction(myProject).withName(title).run(() -> writeAction.run());
   }
 
   private static final Logger logger = Logger.getInstance(AbstractFileProcessor.class.getName());

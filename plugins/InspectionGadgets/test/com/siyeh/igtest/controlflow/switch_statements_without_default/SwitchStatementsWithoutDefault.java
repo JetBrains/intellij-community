@@ -81,6 +81,23 @@ public class SwitchStatementsWithoutDefault
                 break;
         }
     }
+    
+    public void testRules(T t, MyEnum my) {
+        switch (t) {
+            case A -> {}
+            case B -> {}
+        }
+        switch (t) {
+            case A, B -> {}
+        }
+        <warning descr="'switch' statement without 'default' branch">switch</warning> (my) {
+            case foo, bar -> {}
+        }
+        switch (my) {
+            case foo, bar -> {}
+            case baz -> {}
+        }
+    }
 
     void empty(T t) {
         switch (t) {

@@ -3,6 +3,7 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,9 @@ public abstract class BaseReference implements PsiReference, PyUserInitiatedReso
 
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
+    if (myElement instanceof PsiNamedElement) {
+      return ((PsiNamedElement)myElement).setName(newElementName);
+    }
     throw new IncorrectOperationException();
   }
 

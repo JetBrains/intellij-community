@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.docking.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -30,7 +30,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -196,7 +196,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   private class MyDragSession implements DragSession {
 
-    private final JWindow myWindow;
+    private final JDialog myWindow;
 
     private Image myDragImage;
     private final Image myDefaultDragImage;
@@ -208,7 +208,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     private final JLabel myImageContainer;
 
     private MyDragSession(MouseEvent me, @NotNull DockableContent content) {
-      myWindow = new JWindow();
+      myWindow = new JDialog(WindowManager.getInstance().getFrame(myProject));
+      myWindow.setUndecorated(true);
       myContent = content;
 
       Image previewImage = content.getPreviewImage();

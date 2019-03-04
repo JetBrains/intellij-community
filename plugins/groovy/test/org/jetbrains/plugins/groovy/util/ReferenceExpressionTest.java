@@ -6,13 +6,11 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType;
-
 public interface ReferenceExpressionTest extends ResolveTest, TypingTest {
 
   default void referenceExpressionTest(@Language("Groovy") String text, @Nullable Class<? extends PsiElement> resolved, String expectedType) {
-    GrReferenceExpression expression = configureByExpression(text, GrReferenceExpression.class);
+    GrReferenceExpression expression = lastExpression(text, GrReferenceExpression.class);
     resolveTest(expression, resolved);
-    assertType(expectedType, getLastExpression().getType());
+    typingTest(expression, expectedType);
   }
 }

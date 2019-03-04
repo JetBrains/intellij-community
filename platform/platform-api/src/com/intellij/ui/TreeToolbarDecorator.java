@@ -92,9 +92,7 @@ class TreeToolbarDecorator extends ToolbarDecorator {
         final TreePath createdPath = model.addNode(new TreePath(parent.getPath()));
         if (path != null) {
           TreeUtil.selectPath(myTree, createdPath);
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
         }
       }
     };

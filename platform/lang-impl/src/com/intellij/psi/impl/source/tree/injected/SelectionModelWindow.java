@@ -109,12 +109,12 @@ class SelectionModelWindow implements SelectionModel {
   }
 
   @Override
-  public void addSelectionListener(final SelectionListener listener) {
+  public void addSelectionListener(@NotNull final SelectionListener listener) {
     myHostModel.addSelectionListener(listener);
   }
 
   @Override
-  public void removeSelectionListener(final SelectionListener listener) {
+  public void removeSelectionListener(@NotNull final SelectionListener listener) {
     myHostModel.removeSelectionListener(listener);
   }
 

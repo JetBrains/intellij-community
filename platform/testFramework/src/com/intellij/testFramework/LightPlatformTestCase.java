@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
@@ -24,6 +24,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -44,7 +45,6 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -52,8 +52,10 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -81,7 +83,6 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
@@ -119,7 +120,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static boolean ourAssertionsInTestDetected;
   private static VirtualFile ourSourceRoot;
   private static TestCase ourTestCase;
-  public static Thread ourTestThread;
   private static LightProjectDescriptor ourProjectDescriptor;
   private static SdkLeakTracker myOldSdks;
 
@@ -164,7 +164,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @TestOnly
-  public static void disposeApplication() {
+  static void disposeApplication() {
     if (ourApplication != null) {
       ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(ourApplication));
 
@@ -231,19 +231,30 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ourPathToKeep = projectFile.getPath();
     ourPsiManager = null;
 
-    ourProjectDescriptor.setUpProject(ourProject, new LightProjectDescriptor.SetupHandler() {
-      @Override
-      public void moduleCreated(@NotNull Module module) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourModule = module;
-      }
+    try {
+      ourProjectDescriptor.setUpProject(ourProject, new LightProjectDescriptor.SetupHandler() {
+        @Override
+        public void moduleCreated(@NotNull Module module) {
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          ourModule = module;
+        }
 
-      @Override
-      public void sourceRootCreated(@NotNull VirtualFile sourceRoot) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourSourceRoot = sourceRoot;
+        @Override
+        public void sourceRootCreated(@NotNull VirtualFile sourceRoot) {
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          ourSourceRoot = sourceRoot;
+        }
+      });
+    }
+    catch (Throwable e) {
+      try {
+        closeAndDeleteProject();
       }
-    });
+      catch (Throwable suppressed) {
+        e.addSuppressed(suppressed);
+      }
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -308,14 +319,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       throw e;
     }
     if (reusedProject) {
-      DumbService.getInstance(ourProject).queueTask(new UnindexedFilesUpdater(ourProject));
+      // clear all caches, reindex
+      WriteAction.run(()-> ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true));
     }
 
     MessageBusConnection connection = ourProject.getMessageBus().connect(parentDisposable);
     connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-        fail("Adding modules is not permitted in LightIdeaTestCase.");
+        fail("Adding modules is not permitted in light tests.");
       }
     });
 
@@ -434,6 +446,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest()).
       append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
       append(() -> ((StructureViewFactoryImpl)StructureViewFactory.getInstance(project)).cleanupForNextTest()).
+      append(() -> PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
       append(() -> ourTestCase = null).
@@ -513,7 +526,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     runBareImpl(this::startRunAndTear);
   }
 
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   protected void runBareImpl(ThrowableRunnable<?> start) throws Exception {
     if (!shouldRunTest()) {
       return;
@@ -522,11 +534,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     TestRunnerUtil.replaceIdeEventQueueSafely();
     EdtTestUtil.runInEdtAndWait(() -> {
       try {
-        ourTestThread = Thread.currentThread();
         start.run();
       }
       finally {
-        ourTestThread = null;
         try {
           Application application = ApplicationManager.getApplication();
           if (application instanceof ApplicationEx) {
@@ -623,17 +633,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @NotNull
-  protected final CodeStyleSettings getCurrentCodeStyleSettings() {
+  protected static CodeStyleSettings getCurrentCodeStyleSettings() {
     return CodeStyle.getSettings(getProject());
   }
 
   @NotNull
-  protected final CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
+  protected static CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
     return getCurrentCodeStyleSettings().getCommonSettings(language);
   }
 
   @NotNull
-  protected final <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass) {
+  protected static <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass) {
     return getCurrentCodeStyleSettings().getCustomSettings(settingsClass);
   }
 
@@ -674,7 +684,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
     }
 
-    assertTrue(ProjectManagerEx.getInstanceEx().closeAndDispose(ourProject));
+    assertTrue(ProjectManagerEx.getInstanceEx().forceCloseProject(ourProject, true));
     assertTrue(ourProject.isDisposed());
 
     // project may be disposed but empty folder may still be there
@@ -737,9 +747,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     private boolean areJdksEqual(final Sdk newSdk) {
       if (mySdk == null || newSdk == null) return mySdk == newSdk;
 
-      final String[] myUrls = mySdk.getRootProvider().getUrls(OrderRootType.CLASSES);
-      final String[] newUrls = newSdk.getRootProvider().getUrls(OrderRootType.CLASSES);
-      return ContainerUtil.newHashSet(myUrls).equals(ContainerUtil.newHashSet(newUrls));
+      OrderRootType[] rootTypes = new OrderRootType[]{OrderRootType.CLASSES, AnnotationOrderRootType.getInstance()};
+      for (OrderRootType rootType : rootTypes) {
+        final String[] myUrls = mySdk.getRootProvider().getUrls(rootType);
+        final String[] newUrls = newSdk.getRootProvider().getUrls(rootType);
+        if (!ContainerUtil.newHashSet(myUrls).equals(ContainerUtil.newHashSet(newUrls))) return false;
+      }
+      return true;
     }
   }
 }

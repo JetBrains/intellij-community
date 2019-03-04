@@ -75,6 +75,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       myTearDownRunnables.forEach(Runnable::run);
       myTearDownRunnables.clear();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -128,7 +131,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   @Override
-  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
+  protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
     myTestRootDisposable = new TestDisposable();
     super.runBareRunnable(runnable);
     while (needsRestart()) {

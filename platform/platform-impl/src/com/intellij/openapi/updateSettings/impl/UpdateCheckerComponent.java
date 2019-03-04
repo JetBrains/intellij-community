@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
@@ -26,12 +25,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 
-import static com.intellij.openapi.application.PathManager.isSnap;
 import static java.lang.Math.max;
 
 /**
@@ -135,7 +134,7 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
       File updateErrorsLog = new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME);
       try {
         if (updateErrorsLog.isFile() && !StringUtil.isEmptyOrSpaces(FileUtil.loadFile(updateErrorsLog))) {
-          FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "update.failed");
+          IdeUpdateUsageTriggerCollector.trigger("update.failed");
           LOG.info("Previous update of the IDE failed");
         }
       }
@@ -158,7 +157,7 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
   }
 
   private void snapPackageNotification(Application app) {
-    if (!isSnap() || !mySettings.isCheckNeeded()) return;
+    if (!mySettings.isCheckNeeded() || ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP) return;
 
     app.executeOnPooledThread(() -> {
       final BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
@@ -176,8 +175,8 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
         try {
           updatesInfo = UpdateChecker.getUpdatesInfo(UpdateSettings.getInstance());
         }
-        catch (IOException e) {
-          LOG.error(e);
+        catch (IOException | JDOMException e) {
+          LOG.warn(e);
         }
 
         String blogPost = null;

@@ -112,7 +112,6 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     mavenHomeField = new TextFieldWithHistory();
     mavenHomeField.setHistorySize(-1);
     final ArrayList<String> foundMavenHomes = new ArrayList<>();
-    foundMavenHomes.add(MavenServerManager.BUNDLED_MAVEN_2);
     foundMavenHomes.add(MavenServerManager.BUNDLED_MAVEN_3);
     final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null);
     if (mavenHomeDirectory != null) {
@@ -153,8 +152,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
 
   @Nullable
   private static String resolveMavenHome(@Nullable String mavenHome) {
-    if (mavenHome != null && (StringUtil.equals(MavenServerManager.BUNDLED_MAVEN_2, mavenHome) ||
-                              StringUtil.equals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome))) {
+    if (StringUtil.equals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome)) {
       return mavenHome;
     }
     final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(mavenHome);

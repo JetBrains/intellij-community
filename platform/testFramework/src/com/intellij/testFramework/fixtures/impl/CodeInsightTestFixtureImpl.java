@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
@@ -66,7 +66,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.*;
@@ -81,7 +80,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -93,16 +93,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
-import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.*;
@@ -120,6 +115,7 @@ import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
@@ -161,6 +157,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
+  private ResourceBundle[] myMessageBundles = new ResourceBundle[0];
 
   public CodeInsightTestFixtureImpl(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -258,8 +255,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public static void ensureIndexesUpToDate(@NotNull Project project) {
     if (!DumbService.isDumb(project)) {
       ReadAction.run(() -> {
-        FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, null);
-        FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, project, null);
+        for (FileBasedIndexExtension<?,?> extension : FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList()) {
+          FileBasedIndex.getInstance().ensureUpToDate(extension.getName(), project, null);
+        }
       });
     }
   }
@@ -275,7 +273,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (current != null) {
       current.waitForHighlighting(file.getProject(), editor);
     }
-    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file);
+    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file, false);
 
     List<IntentionAction> result = new ArrayList<>();
     IntentionListStep intentionListStep = new IntentionListStep(null, editor, file, file.getProject(),
@@ -353,10 +351,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private static void assertFileEndsWithCaseSensitivePath(@Nullable File sourceFile) {
     if (sourceFile == null) return;
     try {
-      String sourceName = sourceFile.getName();
+      String sourceName = sourceFile.getPath();
       File realFile = sourceFile.getCanonicalFile();
-      String realFileName = realFile.getName();
-      if (sourceName.equalsIgnoreCase(realFileName) && !sourceName.equals(realFileName)) {
+      String realFileName = realFile.getPath();
+      if (!sourceName.equals(realFileName) && sourceName.equalsIgnoreCase(realFileName)) {
         fail("Please correct case-sensitivity of path to prevent test failure on case-sensitive file systems:\n" +
              "     path " + sourceFile.getPath() + "\n" +
              "real path " + realFile.getPath());
@@ -478,7 +476,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       assertNotNull(psiFile);
       Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
       assertNotNull(document);
-      ExpectedHighlightingData datum = new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, psiFile);
+      ExpectedHighlightingData datum =
+        new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, false, psiFile, myMessageBundles);
       datum.init();
       return Trinity.create(psiFile, createEditor(file), datum);
     }).collect(Collectors.toList());
@@ -524,7 +523,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       public HighlightTestInfo doTest() {
         configureByFiles(filePaths);
         ExpectedHighlightingData data =
-          new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, getFile());
+          new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, false, getFile(),
+                                       myMessageBundles);
         if (checkSymbolNames) data.checkSymbolNames();
         data.init();
         collectAndCheckHighlighting(data);
@@ -889,7 +889,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final FindUsagesHandler handler =
       ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getFindUsagesHandler(targetElement, false);
 
-    final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<>();
+    final CommonProcessors.CollectProcessor<UsageInfo> processor =
+      new CommonProcessors.CollectProcessor<>(Collections.synchronizedList(new ArrayList<>()));
     assertNotNull("Cannot find handler for: " + targetElement, handler);
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements());
     final FindUsagesOptions options = handler.getFindUsagesOptions(null);
@@ -1024,11 +1025,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> epName, final T extension) {
+  public <T> void registerExtension(@NotNull ExtensionsArea area, @NotNull ExtensionPointName<T> epName, @NotNull T extension) {
     assertInitialized();
-    final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(epName);
-    extensionPoint.registerExtension(extension);
-    Disposer.register(myProjectFixture.getTestRootDisposable(), () -> extensionPoint.unregisterExtension(extension));
+    area.getExtensionPoint(epName).registerExtension(extension, myProjectFixture.getTestRootDisposable());
   }
 
   @NotNull
@@ -1190,8 +1189,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         closeOpenFiles();
         if (project != null) {
           ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
-          // clear order entry roots cache
-          WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true));
+          // needed for myVirtualFilePointerTracker check below
+          ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
         }
       }))
       .append(() -> {
@@ -1417,7 +1416,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                            boolean checkWeakWarnings,
                                            boolean ignoreExtraHighlighting) {
     ExpectedHighlightingData data = new ExpectedHighlightingData(
-      myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, getHostFile());
+      myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, getHostFile(), myMessageBundles);
     data.init();
     return collectAndCheckHighlighting(data);
   }
@@ -1427,18 +1426,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(hostVFile));
   }
 
-  private long collectAndCheckHighlighting(@NotNull ExpectedHighlightingData data) {
+  public long collectAndCheckHighlighting(@NotNull ExpectedHighlightingData data) {
     final Project project = getProject();
     EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
 
     PsiFileImpl file = (PsiFileImpl)getHostFile();
     FileElement hardRefToFileElement = file.calcTreeElement();//to load text
 
-    //to initialize caches
-    if (!DumbService.isDumb(project)) {
-      CacheManager.SERVICE.getInstance(project)
-        .getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(project), true);
-    }
+    // to load AST for changed files before it's prohibited by "fileTreeAccessFilter"
+    ensureIndexesUpToDate(project);
 
     final long start = System.currentTimeMillis();
     final VirtualFileFilter fileTreeAccessFilter = myVirtualFileFilter;
@@ -1471,6 +1467,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public void setVirtualFileFilter(@Nullable VirtualFileFilter filter) {
     myVirtualFileFilter = filter;
+  }
+
+  public void setMessageBundles(@NotNull ResourceBundle... messageBundles) {
+    myMessageBundles = messageBundles;
   }
 
   @Override
@@ -1863,32 +1863,47 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     // if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     Project project = file.getProject();
+    VirtualFile vFile = Objects.requireNonNull(InjectedLanguageManager.getInstance(project).getTopLevelFile(file)).getVirtualFile();
+    AtomicBoolean result = new AtomicBoolean();
+    withReadOnlyFile(vFile, project, () -> {
+      try {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          try {
+            result.set(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, actionText));
+          }
+          catch (StubTextInconsistencyException e) {
+            PsiTestUtil.compareStubTexts(e);
+          }
+        });
+        UIUtil.dispatchAllInvocationEvents();
+        checkPsiTextConsistency(project, vFile);
+      }
+      catch (AssertionError e) {
+        ExceptionUtil.rethrowUnchecked(ExceptionUtil.getRootCause(e));
+        throw e;
+      }
+    });
+    return result.get();
+  }
+
+  /**
+   * Make the given file read-only and execute the given action, afterwards make file writable again
+   * @return whether the action has made the file writable itself
+   */
+  public static boolean withReadOnlyFile(VirtualFile vFile, Project project, Runnable action) {
+    boolean writable;
     ReadonlyStatusHandlerImpl handler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(project);
-    VirtualFile vFile = Objects.requireNonNull(InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file)).getVirtualFile();
     setReadOnly(vFile, true);
     handler.setClearReadOnlyInTests(true);
-    AtomicBoolean result = new AtomicBoolean();
     try {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        try {
-          result.set(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, actionText));
-        }
-        catch (StubTextInconsistencyException e) {
-          PsiTestUtil.compareStubTexts(e);
-        }
-      });
-      UIUtil.dispatchAllInvocationEvents();
-      checkPsiTextConsistency(project, vFile);
-    }
-    catch (AssertionError e) {
-      ExceptionUtil.rethrowUnchecked(ExceptionUtil.getRootCause(e));
-      throw e;
+      action.run();
     }
     finally {
+      writable = vFile.isWritable();
       handler.setClearReadOnlyInTests(false);
       setReadOnly(vFile, false);
     }
-    return result.get();
+    return writable;
   }
 
   private static void checkPsiTextConsistency(Project project, VirtualFile vFile) {

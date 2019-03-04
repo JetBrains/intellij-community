@@ -11,6 +11,7 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.scriptDebugger.protocolReaderRuntime" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" name="kotlin-reflect" level="project" />
   </component>
 </module>

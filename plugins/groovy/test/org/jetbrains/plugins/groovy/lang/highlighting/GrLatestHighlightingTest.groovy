@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -168,7 +168,7 @@ def method(Box<A> box) {
     testHighlighting '''
 def <T> void foo(T t, Closure cl) {}
 
-foo(1) { println it }
+foo(1) { println <weak_warning descr="Cannot infer argument types">it</weak_warning> }
 '''
   }
 
@@ -560,26 +560,26 @@ void foo() {
 '''
   }
 
-//TODO: IDEA-194192
-  void '_test call without reference with generics'() {
-    testHighlighting '''
-import groovy.transform.CompileStatic
-
+  void 'test call without reference with generics'() {
+    testHighlighting '''\
 class E {
-    def <K,V> Map<K, V> call(Map<K, V> m) {
-        m
-    }
-    E bar() {null}
+    def <K,V> Map<K, V> call(Map<K, V> m) { m }
 }
 
-static <K,V> Map<K, V> getMap() {
-  return new HashMap<K,V>()
-}
+static <K,V> Map<K, V> getMap() { null }
 
-@CompileStatic
-def com() {
+@groovy.transform.CompileStatic
+def usage() {
     Map<String, Integer> correct = new E()(getMap().withDefault({ 0 }))
 }
 '''
+  }
+
+  void 'test assign empty list literal to Set'() {
+    testHighlighting 'Set<String> x = []'
+  }
+
+  void 'test assign empty list literal to Set @CS'() {
+    testHighlighting '@groovy.transform.CompileStatic def bar() { Set<String> x = [] }'
   }
 }

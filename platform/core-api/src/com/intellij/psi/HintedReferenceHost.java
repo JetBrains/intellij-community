@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
  * ({@link com.intellij.psi.PsiReferenceService.Hints#target}).
  *
  * @author peter
- * @since 144.*
  */
 public interface HintedReferenceHost extends PsiElement {
 

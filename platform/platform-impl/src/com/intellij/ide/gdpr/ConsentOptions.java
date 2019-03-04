@@ -71,19 +71,14 @@ public final class ConsentOptions {
 
       @NotNull
       private String loadText(InputStream stream) {
-        try {
-          if (stream != null) {
-            final Reader reader = new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(stream)), StandardCharsets.UTF_8);
-            try {
-              return new String(FileUtil.adaptiveLoadText(reader));
-            }
-            finally {
-              reader.close();
-            }
+        if (stream != null) {
+          try (Reader reader = new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(stream)),
+                                                     StandardCharsets.UTF_8)) {
+            return new String(FileUtil.adaptiveLoadText(reader));
           }
-        }
-        catch (IOException e) {
-          LOG.info(e);
+          catch (IOException e) {
+            LOG.info(e);
+          }
         }
         return "";
       }

@@ -9,6 +9,6 @@ public class Remove1{
   }
 
   public static void main(){
-    new A().<ref>foo("aaa");
+    new A().<caret>foo("aaa");
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.Configurable;
@@ -9,13 +10,17 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.cellvalidators.*;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -42,6 +47,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
   };
 
   private final AnimatedIcon.Default myAnimatedIcon = new AnimatedIcon.Default();
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   private final JBTable myTable = new JBTable(myModel) {
     @Override
@@ -121,6 +127,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
       }
     }});
 
+    myTable.getColumnModel().setColumnMargin(0);
     myTable.setShowColumns(false);
     myTable.setShowGrid(false);
 
@@ -128,30 +135,51 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
 
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    myTable.setDefaultRenderer(Object.class, new ColoredTableCellRenderer() {
-      @Override
-      protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
-        if (row >= 0 && row < myModel.getRowCount()) {
-          UrlInfo info = myModel.getRowValue(row);
-          setBackground(selected ? table.getSelectionBackground() : table.getBackground());
-          append(info.name, info.errorTooltip != null && !info.progress
-                            ? SimpleTextAttributes.ERROR_ATTRIBUTES
-                            : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          setToolTipText(info.errorTooltip);
-        }
-      }
-
-      @Override
-      protected SimpleTextAttributes modifyAttributes(SimpleTextAttributes attributes) {
-        return attributes;
-      }
-    });
-
-    DefaultCellEditor editor = new DefaultCellEditor(new JTextField());
+    ExtendableTextField cellEditor = new ExtendableTextField();
+    DefaultCellEditor editor = new StatefulValidatingCellEditor(cellEditor, myDisposable).
+      withStateUpdater(vi -> ValidationUtils.setExtension(cellEditor, vi));
     editor.setClickCountToStart(1);
     myTable.setDefaultEditor(Object.class, editor);
 
+    myTable.setDefaultRenderer(Object.class, new ValidatingTableCellRendererWrapper(new ColoredTableCellRenderer() {
+        { setIpad(JBUI.emptyInsets());}
+
+        @Override
+        protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+          if (row >= 0 && row < myModel.getRowCount()) {
+            UrlInfo info = myModel.getRowValue(row);
+            setForeground(selected ? table.getSelectionForeground() : table.getForeground());
+            setBackground(selected ? table.getSelectionBackground() : table.getBackground());
+            append(info.name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          }
+        }
+
+        @Override
+        protected SimpleTextAttributes modifyAttributes(SimpleTextAttributes attributes) {
+          return attributes;
+        }
+      }).
+      bindToEditorSize(cellEditor::getPreferredSize).
+      withCellValidator((value, row, column) -> {
+        if (row >= 0 && row < myModel.getRowCount()) {
+          UrlInfo info = myModel.getRowValue(row);
+          return info.errorTooltip == null || info.progress ? null : new ValidationInfo(info.errorTooltip);
+        }
+        else {
+          return null;
+        }
+      }));
+
+    new CellTooltipManager(myDisposable).
+      withCellComponentProvider(CellComponentProvider.forTable(myTable)).
+      installOn(myTable);
+
     return ToolbarDecorator.createDecorator(myTable).disableUpDownActions().createPanel();
+  }
+
+  @Override
+  public void disposeUIResources() {
+    Disposer.dispose(myDisposable);
   }
 
   private void validateRepositories(@NotNull List<UrlInfo> urls) {
@@ -175,8 +203,8 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
               results.set(i, "No plugins found. Please check log file for possible errors.");
             }
           }
-          catch (Exception e) {
-            results.set(i, "Connection failed: " + e.getMessage());
+          catch (Exception ignore) {
+            results.set(i, "Connection failed.");
           }
         }
       }

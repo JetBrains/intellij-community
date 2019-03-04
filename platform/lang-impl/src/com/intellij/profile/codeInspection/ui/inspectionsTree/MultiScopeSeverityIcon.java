@@ -21,11 +21,12 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.profile.codeInspection.ui.ScopeOrderComparator;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Batkovich
@@ -34,9 +35,9 @@ public class MultiScopeSeverityIcon implements Icon {
   private final LinkedHashMap<String, HighlightDisplayLevel> myScopeToAverageSeverityMap;
   private final String myDefaultScopeName;
 
-  public MultiScopeSeverityIcon(final Map<String, HighlightSeverity> scopeToAverageSeverityMap,
-                                final String defaultScopeName,
-                                final InspectionProfileImpl inspectionProfile) {
+  MultiScopeSeverityIcon(@NotNull Map<String, HighlightSeverity> scopeToAverageSeverityMap,
+                         final String defaultScopeName,
+                         @NotNull InspectionProfileImpl inspectionProfile) {
     myDefaultScopeName = defaultScopeName;
     final List<String> sortedScopeNames = new ArrayList<>(scopeToAverageSeverityMap.keySet());
     myScopeToAverageSeverityMap = new LinkedHashMap<>();

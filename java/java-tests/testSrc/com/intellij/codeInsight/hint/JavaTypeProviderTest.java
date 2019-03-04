@@ -32,7 +32,7 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "<table>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>Optional&lt;String&gt;</td></tr>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Optional:</td><td>present Optional</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Value:</td><td>present Optional</td></tr>" +
            "</table>");
   }
 
@@ -77,6 +77,19 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "<table>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>Object</td></tr>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Constraints:</td><td>not instanceof CharSequence, Number</td></tr>" +
+           "</table>");
+  }
+
+  public void testSpecialField() {
+    doTest("void x(int[] data) {\n" +
+           "  if (data.length == 1) {\n" +
+           "    System.out.println(java.util.Arrays.toString(<selection>data</selection>));\n" +
+           "  }\n" +
+           "}", "int[]",
+           "<table>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>int[]</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Length:</td><td>1</td></tr>" +
            "</table>");
   }
 

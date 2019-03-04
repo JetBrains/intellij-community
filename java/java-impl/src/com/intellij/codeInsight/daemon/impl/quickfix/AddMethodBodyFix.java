@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -51,7 +51,7 @@ public class AddMethodBodyFix implements IntentionAction {
     return myMethod.isValid() &&
            myMethod.getBody() == null &&
            myMethod.getContainingClass() != null &&
-           ScratchFileService.isInProjectOrScratch(myMethod);
+           BaseIntentionAction.canModify(myMethod);
   }
 
   @NotNull

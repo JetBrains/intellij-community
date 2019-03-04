@@ -36,6 +36,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.LocalSearchScope;
@@ -397,7 +399,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock != null) {
       if (tryStatement.getCatchSections().length == 0 &&
-          tryStatement.getFinallyBlock() == null) {
+          tryStatement.getFinallyBlock() == null &&
+          tryStatement.getResourceList() == null) {
         PsiElement firstBodyElement = tryBlock.getFirstBodyElement();
         if (firstBodyElement != null) {
           tryStatement.getParent().addRangeAfter(firstBodyElement, tryBlock.getLastBodyElement(), tryStatement);
@@ -963,6 +966,22 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       int newIndex = method.getParameterList().getParameterIndex(parameter);
       return oldIdx >= 0 && newIndex >= 0 && changeInfo.getNewParameters()[newIndex].getOldIndex() == oldIdx;
     }, paramName -> ArrayUtil.find(oldParameterNames, paramName) >= 0);
+
+    if (changeInfo.isReturnTypeChanged()) {
+      PsiDocComment docComment = method.getDocComment();
+      if (docComment != null) {
+        CanonicalTypes.Type type = changeInfo.getNewReturnType();
+        PsiDocTag aReturn = docComment.findTagByName("return");
+        if (PsiType.VOID.equalsToText(type.getTypeText())) {
+          if (aReturn != null) {
+            aReturn.delete();
+          }
+        }
+        else if (aReturn == null) {
+          docComment.add(JavaPsiFacade.getElementFactory(method.getProject()).createDocTagFromText("@return"));
+        }
+      }
+    }
   }
 
   private static PsiParameter createNewParameter(JavaChangeInfo changeInfo, JavaParameterInfo newParm,

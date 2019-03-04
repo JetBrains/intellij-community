@@ -272,3 +272,13 @@ fun spannedCheckbox(): JPanel {
     }
   }
 }
+
+// titledRows is not enough to test because component align depends on comment components, so, pure titledRow must be tested
+fun titledRow(): JPanel {
+  return panel {
+    titledRow("Remote settings") {
+      row("Default notebook name:") { JTextField("")() }
+      row("Spark version:") { JTextField("")() }
+    }
+  }
+}

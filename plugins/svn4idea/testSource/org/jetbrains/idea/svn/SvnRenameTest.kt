@@ -98,7 +98,7 @@ class SvnRenameTest : SvnTestCase() {
     )
 
     refreshVfs()   // wait for end of refresh operations initiated from SvnFileSystemListener
-    changeListManager.ensureUpToDate(false)
+    changeListManager.ensureUpToDate()
     assertChanges(
       "child" to "childnew",
       "child/a.txt" to "childnew/a.txt",
@@ -137,7 +137,7 @@ class SvnRenameTest : SvnTestCase() {
     val child = prepareDirectoriesForRename()
     renameFileInCommand(child, "newchild")
 
-    changeListManager.ensureUpToDate(false)
+    changeListManager.ensureUpToDate()
     val change = changeListManager.getChange(myWorkingCopyDir.findChild("newchild")!!)
     assertNotNull(change)
 
@@ -156,7 +156,7 @@ class SvnRenameTest : SvnTestCase() {
     checkin()
     moveFileInCommand(grandChild, myWorkingCopyDir)
     refreshVfs()   // wait for end of refresh operations initiated from SvnFileSystemListener
-    changeListManager.ensureUpToDate(false)
+    changeListManager.ensureUpToDate()
     assertChanges("child/grandChild" to "grandChild", "child/grandChild/a.txt" to "grandChild/a.txt")
   }
 
@@ -171,7 +171,7 @@ class SvnRenameTest : SvnTestCase() {
     val unversionedDir = createDirInCommand(child, "uc")
     createFileInCommand(unversionedDir, "c.txt", "c")
 
-    changeListManager.ensureUpToDate(false)
+    changeListManager.ensureUpToDate()
     assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(unversioned))
 
     renameFileInCommand(child, "newchild")
@@ -182,7 +182,7 @@ class SvnRenameTest : SvnTestCase() {
     assertDoesntExist(File(childPath, "u.txt"))
 
     refreshVfs()
-    changeListManager.ensureUpToDate(false)
+    changeListManager.ensureUpToDate()
     val changes = mutableListOf(
       changeListManager.getChange(myWorkingCopyDir.findChild("newchild")!!.findChild("a.txt")!!)!!,
       changeListManager.getChange(myWorkingCopyDir.findChild("newchild")!!)!!
@@ -214,7 +214,7 @@ class SvnRenameTest : SvnTestCase() {
     )
 
     refreshVfs()   // wait for end of refresh operations initiated from SvnFileSystemListener
-    changeListManager.ensureUpToDate(false)
+    changeListManager.ensureUpToDate()
     commit(changeListManager.defaultChangeList.changes.toList(), "test")
   }
 

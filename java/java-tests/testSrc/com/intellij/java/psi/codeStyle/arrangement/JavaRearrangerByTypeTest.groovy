@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.codeStyle.arrangement
 
+import groovy.transform.CompileStatic
 import org.junit.Before
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
@@ -23,8 +24,8 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Or
 
 /**
  * @author Denis Zhdanov
- * @since 7/20/12 2:45 PM
  */
+@CompileStatic
 class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
 
   @Before

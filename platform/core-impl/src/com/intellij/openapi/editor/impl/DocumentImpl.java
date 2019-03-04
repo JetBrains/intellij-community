@@ -40,7 +40,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
-import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +58,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
+  private static final int STRIP_TRAILING_SPACES_BULK_MODE_LINES_LIMIT = 1000;
 
   private final LockFreeCOWSortedArray<DocumentListener> myDocumentListeners =
     new LockFreeCOWSortedArray<>(PrioritizedDocumentListener.COMPARATOR, DocumentListener.ARRAY_FACTORY);
@@ -273,7 +274,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @TestOnly
   public boolean stripTrailingSpaces(Project project, boolean inChangedLinesOnly) {
-    return stripTrailingSpaces(project, inChangedLinesOnly, true, new int[0]);
+    return stripTrailingSpaces(project, inChangedLinesOnly, null);
   }
 
   @Override
@@ -285,10 +286,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   /**
    * @return true if stripping was completed successfully, false if the document prevented stripping by e.g. caret(s) being in the way
    */
-  boolean stripTrailingSpaces(@Nullable final Project project,
-                              boolean inChangedLinesOnly,
-                              boolean skipCaretLines,
-                              @NotNull int[] caretOffsets) {
+  boolean stripTrailingSpaces(@Nullable final Project project, boolean inChangedLinesOnly, @Nullable int[] caretOffsets) {
     if (!isStripTrailingSpacesEnabled) {
       return true;
     }
@@ -306,83 +304,68 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       }
     }
 
+    TIntIntHashMap caretPositions = null;
+    if (caretOffsets != null) {
+      caretPositions = new TIntIntHashMap(caretOffsets.length);
+      for (int caretOffset : caretOffsets) {
+        int line = getLineNumber(caretOffset);
+        // need to remember only maximum caret offset on a line
+        caretPositions.put(line, Math.max(caretOffset, caretPositions.get(line)));
+      }
+    }
+
+    LineSet lineSet = getLineSet();
+    int lineCount = getLineCount();
+    int[] targetOffsets = new int[lineCount * 2];
+    int targetOffsetPos = 0;
     boolean markAsNeedsStrippingLater = false;
     CharSequence text = myText;
-    TIntObjectHashMap<List<RangeMarker>> caretMarkers = new TIntObjectHashMap<>(caretOffsets.length);
-    try {
-      if (skipCaretLines) {
-        for (int caretOffset : caretOffsets) {
-          if (caretOffset < 0 || caretOffset > getTextLength()) {
-            continue;
-          }
-          int line = getLineNumber(caretOffset);
-          List<RangeMarker> markers = caretMarkers.get(line);
-          if (markers == null) {
-            markers = new ArrayList<>();
-            caretMarkers.put(line, markers);
-          }
-          RangeMarker marker = createRangeMarker(caretOffset, caretOffset);
-          markers.add(marker);
+    for (int line = 0; line < lineCount; line++) {
+      int maxSpacesToLeave = getMaxSpacesToLeave(line, filters);
+      if (inChangedLinesOnly && !lineSet.isModified(line) || maxSpacesToLeave < 0) continue;
+
+      int whiteSpaceStart = -1;
+      final int lineEnd = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line);
+      int lineStart = lineSet.getLineStart(line);
+      for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
+        char c = text.charAt(offset);
+        if (c != ' ' && c != '\t') {
+          break;
+        }
+        whiteSpaceStart = offset;
+      }
+      if (whiteSpaceStart == -1) continue;
+
+      if (caretPositions != null) {
+        int caretPosition = caretPositions.get(line);
+        if (whiteSpaceStart < caretPosition) {
+          markAsNeedsStrippingLater = true;
+          continue;
         }
       }
-      lineLoop:
-      for (int line = 0; line < getLineCount(); line++) {
-        LineSet lineSet = getLineSet();
-        int maxSpacesToLeave = getMaxSpacesToLeave(line, filters);
-        if (inChangedLinesOnly && !lineSet.isModified(line) || maxSpacesToLeave < 0) continue;
-        int whiteSpaceStart = -1;
-        final int lineEnd = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line);
-        int lineStart = lineSet.getLineStart(line);
-        for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
-          char c = text.charAt(offset);
-          if (c != ' ' && c != '\t') {
-            break;
-          }
-          whiteSpaceStart = offset;
-        }
-        if (whiteSpaceStart == -1) continue;
-        if (skipCaretLines) {
-          List<RangeMarker> markers = caretMarkers.get(line);
-          if (markers != null) {
-            for (RangeMarker marker : markers) {
-              if (marker.getStartOffset() >= 0 && whiteSpaceStart < marker.getStartOffset()) {
-                // mark this as a document that needs stripping later
-                // otherwise the caret would jump madly
-                markAsNeedsStrippingLater = true;
-                continue lineLoop;
-              }
-            }
-          }
-        }
-        final int finalStart = whiteSpaceStart + maxSpacesToLeave;
-        if (finalStart < lineEnd) {
-          // document must be unblocked by now. If not, some Save handler attempted to modify PSI
-          // which should have been caught by assertion in com.intellij.pom.core.impl.PomModelImpl.runTransaction
-          DocumentUtil.writeInRunUndoTransparentAction(new DocumentRunnable(this, project) {
-            @Override
-            public void run() {
-              deleteString(finalStart, lineEnd);
-            }
-          });
-        }
-        text = myText;
+
+      final int finalStart = whiteSpaceStart + maxSpacesToLeave;
+      if (finalStart < lineEnd) {
+        targetOffsets[targetOffsetPos++] = finalStart;
+        targetOffsets[targetOffsetPos++] = lineEnd;
       }
     }
-    finally {
-      caretMarkers.forEachValue(markerList -> {
-        if (markerList != null) {
-          for (RangeMarker marker : markerList) {
-            try {
-              marker.dispose();
-            }
-            catch (Exception e) {
-              LOG.error(e);
-            }
+    int finalTargetOffsetPos = targetOffsetPos;
+    // document must be unblocked by now. If not, some Save handler attempted to modify PSI
+    // which should have been caught by assertion in com.intellij.pom.core.impl.PomModelImpl.runTransaction
+    DocumentUtil.writeInRunUndoTransparentAction(new DocumentRunnable(this, project) {
+      @Override
+      public void run() {
+        DocumentUtil.executeInBulk(DocumentImpl.this, finalTargetOffsetPos > STRIP_TRAILING_SPACES_BULK_MODE_LINES_LIMIT * 2, () -> {
+          int pos = finalTargetOffsetPos;
+          while (pos > 0) {
+            int endOffset = targetOffsets[--pos];
+            int startOffset = targetOffsets[--pos];
+            deleteString(startOffset, endOffset);
           }
-        }
-        return true;
-      });
-    }
+        });
+      }
+    });
     return markAsNeedsStrippingLater;
   }
 
@@ -524,7 +507,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
     return surviveOnExternalChange
            ? new PersistentRangeMarker(this, startOffset, endOffset, true)
-           : new RangeMarkerImpl(this, startOffset, endOffset, true);
+           : new RangeMarkerImpl(this, startOffset, endOffset, true, false);
   }
 
   @Override
@@ -596,7 +579,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public void moveText(int srcStart, int srcEnd, int dstOffset) {
     assertBounds(srcStart, srcEnd);
-    if (dstOffset == srcEnd) return;
+    if (dstOffset == srcStart || dstOffset == srcEnd) return;
     ProperTextRange srcRange = new ProperTextRange(srcStart, srcEnd);
     assert !srcRange.containsOffset(dstOffset) : "Can't perform text move from range [" +srcStart+ "; " + srcEnd+ ") to offset "+dstOffset;
 
@@ -1186,7 +1169,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public String toString() {
-    return "DocumentImpl[" + FileDocumentManager.getInstance().getFile(this) + "]";
+    return "DocumentImpl[" + FileDocumentManager.getInstance().getFile(this) + (isInEventsHandling() ? ",inEventHandling" : "") + "]";
   }
 
   @NotNull

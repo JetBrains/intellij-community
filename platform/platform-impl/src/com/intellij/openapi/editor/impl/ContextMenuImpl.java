@@ -99,11 +99,6 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   }
 
   private void toggleContextToolbar(final boolean show) {
-    myActionToolbar.updateActionsImmediately();
-    if (((Container)myActionToolbar).getComponentCount() == 0) {
-      return;
-    }
-
     if (myShow != show) {
       myShow = show;
       restartTimer();
@@ -121,6 +116,12 @@ public class ContextMenuImpl extends JPanel implements Disposable {
         if (myDisposed) return;
 
         if (myTimer != null && myTimer.isRunning()) myTimer.stop();
+
+        myActionToolbar.updateActionsImmediately();
+        if (((Container)myActionToolbar).getComponentCount() == 0) {
+          myShow = false;
+          return;
+        }
 
         myTimer = UIUtil.createNamedTimer("Restart context menu now", 50, new ActionListener() {
           @Override
@@ -146,8 +147,6 @@ public class ContextMenuImpl extends JPanel implements Disposable {
 
                 scheduleHide();
               }
-
-              repaint();
             }
             else {
               if (!myVisible) {
@@ -162,9 +161,8 @@ public class ContextMenuImpl extends JPanel implements Disposable {
                 myLayeredPane.remove(ContextMenuImpl.this);
                 myLayeredPane.repaint();
               }
-
-              repaint();
             }
+            repaint();
           }
         });
 

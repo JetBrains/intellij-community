@@ -113,7 +113,7 @@ public class SubtractionInCompareToInspection extends BaseInspection {
       final PsiLambdaExpression lambdaExpression =
         PsiTreeUtil.getParentOfType(expression, PsiLambdaExpression.class, true, PsiMember.class);
       if (lambdaExpression != null) {
-        final PsiClass functionalInterface = PsiUtil.resolveClassInType(lambdaExpression.getFunctionalInterfaceType());
+        final PsiClass functionalInterface = LambdaUtil.resolveFunctionalInterfaceClass(lambdaExpression);
         if (functionalInterface != null && CommonClassNames.JAVA_UTIL_COMPARATOR.equals(functionalInterface.getQualifiedName())) {
           registerError(expression);
           return;
@@ -161,29 +161,9 @@ public class SubtractionInCompareToInspection extends BaseInspection {
       LongRangeSet leftRange = CommonDataflow.getExpressionFact(lhs, DfaFactType.RANGE);
       LongRangeSet rightRange = CommonDataflow.getExpressionFact(rhs, DfaFactType.RANGE);
       if (leftRange != null && !leftRange.isEmpty() && rightRange != null && !rightRange.isEmpty()) {
-        long leftMin = leftRange.min();
-        long leftMax = leftRange.max();
-        long rightMin = rightRange.min();
-        long rightMax = rightRange.max();
-        if (PsiType.INT.equals(type) && !overflowsInt(leftMin, rightMax) && !overflowsInt(leftMax, rightMin)) {
-          return true;
-        }
-        if (PsiType.LONG.equals(type) && !overflowsLong(leftMin, rightMax) && !overflowsLong(leftMax, rightMin)) {
-          return true;
-        }
+        if (!leftRange.subtractionMayOverflow(rightRange, PsiType.LONG.equals(type))) return true;
       }
       return false;
-    }
-
-    private boolean overflowsInt(long a, long b) {
-      long diff = a - b;
-      return diff < Integer.MIN_VALUE || diff > Integer.MAX_VALUE;
-    }
-
-    private boolean overflowsLong(long a, long b) {
-      long diff = a - b;
-      // Hacker's Delight 2nd Edition, 2-13 Overflow Detection
-      return ((a ^ b) & (a ^ diff)) < 0;
     }
 
     private boolean isSafeOperand(PsiExpression operand) {

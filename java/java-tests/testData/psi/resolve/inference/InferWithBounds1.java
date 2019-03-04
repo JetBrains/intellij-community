@@ -4,6 +4,6 @@ class Test {
      }
 
      void cc() {
-          <ref>getValue();
+          <caret>getValue();
      }
 }

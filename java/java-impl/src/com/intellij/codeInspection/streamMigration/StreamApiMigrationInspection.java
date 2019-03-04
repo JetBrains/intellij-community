@@ -834,7 +834,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     boolean breaksMe(PsiBreakStatement statement) {
-      return statement.findExitedStatement() == mySource.getMainStatement();
+      return statement.findExitedElement() == mySource.getMainStatement();
     }
   }
 
@@ -984,7 +984,8 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       if (operand == null) return null;
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(PsiUtil.skipParenthesizedExprDown(operand));
       if (assignment == null) return null;
-      PsiMethodCallExpression readerCall = tryCast(assignment.getRExpression(), PsiMethodCallExpression.class);
+      PsiMethodCallExpression readerCall =
+        tryCast(PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()), PsiMethodCallExpression.class);
       if (!BUFFERED_READER_READ_LINE.test(readerCall)) return null;
       PsiExpression reader = readerCall.getMethodExpression().getQualifierExpression();
 
@@ -1295,7 +1296,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
 
     @Override
     StreamEx<PsiExpression> expressions() {
-      return StreamEx.of(myInitializer, myExpression);
+      return StreamEx.of(myInitializer, myExpression, myCondition).nonNull();
     }
 
     @Override

@@ -31,6 +31,7 @@ public class CastConflictsWithInstanceofInspectionTest extends LightInspectionTe
   public void testIfCheckBefore() { doTest(); }
   public void testIfElseCheckBefore() { doTest(); }
   public void testAssertCheckBefore() { doTest(); }
+  public void testAssertionMethodCheckBefore() { doTest(); }
   public void testCastMethod() { doTest(); }
 
   @Nullable

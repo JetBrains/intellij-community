@@ -42,7 +42,7 @@ public class ProjectCompileScope extends FileIndexCompileScope {
   }
 
   @Override
-  public boolean belongs(String url) {
+  public boolean belongs(@NotNull String url) {
     final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
     if (file != null) {
       for (FileIndex index : getFileIndices()) {

@@ -46,6 +46,6 @@ final class WeakKeySoftValueHashMap<K,V> extends RefKeyRefValueHashMap<K,V> impl
   protected ValueReference<K, V> createValueReference(@NotNull RefHashMap.Key<K> key,
                                                       V referent,
                                                       ReferenceQueue<? super V> q) {
-    return new SoftValueReference<K, V>(key, referent, q);
+    return new SoftValueReference<>(key, referent, q);
   }
 }

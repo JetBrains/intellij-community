@@ -87,7 +87,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
           .withoutModuleSourceEntries()
           .withoutDepModules()
           .classes()
-          .usingCache().getRoots();
+          .getRoots();
 
       if (givenRoots.length == 0) return null;
 

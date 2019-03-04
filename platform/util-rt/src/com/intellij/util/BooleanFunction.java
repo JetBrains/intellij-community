@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 /**
+ * Please use {@link java.util.function.Predicate} instead
  * @author mike
  */
 public interface BooleanFunction<S> {

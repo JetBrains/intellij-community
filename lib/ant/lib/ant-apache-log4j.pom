@@ -26,25 +26,25 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.9.4</version>
+    <version>1.10.5</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <url>http://ant.apache.org/</url>  
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-apache-log4j</artifactId>
-  <version>1.9.4</version>
+  <version>1.10.5</version>
   <name>Apache Ant + Log4J</name>
   <dependencies>
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.9.4</version>
+      <version>1.10.5</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
-      <version>1.2.13</version>
+      <version>1.2.17</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>

@@ -202,4 +202,20 @@ class AdvancedArrayAccess {
   void testInitializerWrong() {
     getArray() = <error descr="Array initializer is not allowed here">{1,2,3}</error>;
   }
+
+  void testLongInitializer() {
+    int[] arr = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40};
+    arr[0] = 1;
+    if(<warning descr="Condition 'arr[20] == 20' is always 'true'">arr[20] == 20</warning>) {}
+    if(<warning descr="Condition 'arr[31] == 31' is always 'true'">arr[31] == 31</warning>) {}
+    // Too long initializers aren't tracked for mutable arrays
+    if(arr[32] == 32) {}
+    if(arr[33] == 33) {}
+    int[] arr2 = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40};
+    if(<warning descr="Condition 'arr2[20] == 20' is always 'true'">arr2[20] == 20</warning>) {}
+    if(<warning descr="Condition 'arr2[31] == 31' is always 'true'">arr2[31] == 31</warning>) {}
+    // ..but tracked for immutable arrays
+    if(<warning descr="Condition 'arr2[32] == 32' is always 'true'">arr2[32] == 32</warning>) {}
+    if(<warning descr="Condition 'arr2[33] == 33' is always 'true'">arr2[33] == 33</warning>) {}
+  }
 }

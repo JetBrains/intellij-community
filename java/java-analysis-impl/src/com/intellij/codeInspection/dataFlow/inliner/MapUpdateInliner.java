@@ -5,7 +5,6 @@ package com.intellij.codeInspection.dataFlow.inliner;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
-import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -38,7 +37,6 @@ public class MapUpdateInliner implements CallInliner {
       PsiExpression function = args[1];
       builder
         .pushExpression(qualifier)
-        .checkNotNull(call, NullabilityProblemKind.callNPE)
         .pop();
       String name = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
       switch (name) {
@@ -68,13 +66,11 @@ public class MapUpdateInliner implements CallInliner {
       PsiExpression function = args[2];
       builder
         .pushExpression(qualifier)
-        .checkNotNull(call, NullabilityProblemKind.callNPE)
         .pop()
         .pushExpression(key)
         .pop()
         .pushExpression(value)
         .boxUnbox(value, ExpectedTypeUtils.findExpectedType(value, false))
-        .checkNotNull(value, NullabilityProblemKind.passingNullableToNotNullParameter)
         .evaluateFunction(function)
         .pushUnknown()
         .ifNotNull()
@@ -92,7 +88,7 @@ public class MapUpdateInliner implements CallInliner {
   private static void flushSize(PsiExpression qualifier, CFGBuilder builder) {
     DfaValueFactory factory = builder.getFactory();
     DfaValue value = factory.createValue(qualifier);
-    DfaValue size = SpecialField.MAP_SIZE.createValue(factory, value);
+    DfaValue size = SpecialField.COLLECTION_SIZE.createValue(factory, value);
     builder.assignAndPop(size, DfaUnknownValue.getInstance());
   }
 

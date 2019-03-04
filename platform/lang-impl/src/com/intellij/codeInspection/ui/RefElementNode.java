@@ -9,24 +9,26 @@ import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreeNode;
 
 /**
  * @author max
  */
 public class RefElementNode extends SuppressableInspectionTreeNode {
-  private volatile boolean myHasDescriptorsUnder;
-  private volatile CommonProblemDescriptor mySingleDescriptor;
   private final Icon myIcon;
-  public RefElementNode(@Nullable RefEntity userObject, @NotNull InspectionToolPresentation presentation) {
-    super(userObject, presentation);
-    final RefEntity refEntity = getElement();
+  @Nullable private final RefEntity myRefEntity;
+
+  public RefElementNode(@Nullable RefEntity refEntity,
+                        @NotNull InspectionToolPresentation presentation,
+                        @NotNull InspectionTreeNode parent) {
+    super(presentation, parent);
+    myRefEntity = refEntity;
     myIcon = refEntity == null ? null : refEntity.getIcon(false);
   }
 
@@ -35,14 +37,10 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     return getElement() != null && getPresentation().isSuppressed(getElement());
   }
 
-  boolean hasDescriptorsUnder() {
-    return myHasDescriptorsUnder;
-  }
-
   @Override
   @Nullable
   public RefEntity getElement() {
-    return (RefEntity)getUserObject();
+    return myRefEntity;
   }
 
   @Override
@@ -96,28 +94,6 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public void add(MutableTreeNode newChild) {
-    checkHasDescriptorUnder(newChild);
-    super.add(newChild);
-  }
-
-  @Override
-  public InspectionTreeNode insertByOrder(InspectionTreeNode child, boolean allowDuplication) {
-    checkHasDescriptorUnder(child);
-    return super.insertByOrder(child, allowDuplication);
-  }
-
-  public void setProblem(CommonProblemDescriptor descriptor) {
-    mySingleDescriptor = descriptor;
-  }
-
-  @Nullable
-  @Override
-  public CommonProblemDescriptor getDescriptor() {
-    return mySingleDescriptor;
-  }
-
-  @Override
   public RefEntity getContainingFileLocalEntity() {
     final RefEntity element = getElement();
     return element instanceof RefElement && !(element instanceof RefDirectory)
@@ -156,16 +132,11 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     return isLeaf() ? "" : null;
   }
 
-  private void checkHasDescriptorUnder(MutableTreeNode newChild) {
-    if (myHasDescriptorsUnder) return;
-    if (newChild instanceof ProblemDescriptionNode ||
-        newChild instanceof RefElementNode && ((RefElementNode)newChild).hasDescriptorsUnder()) {
-      myHasDescriptorsUnder = true;
-      TreeNode parent = getParent();
-      while (parent instanceof RefElementNode) {
-        ((RefElementNode)parent).myHasDescriptorsUnder = true;
-        parent = parent.getParent();
-      }
-    }
+  @NotNull
+  @Override
+  public Pair<PsiElement, CommonProblemDescriptor> getSuppressContent() {
+    RefEntity refElement = getElement();
+    PsiElement element = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
+    return Pair.create(element, null);
   }
 }

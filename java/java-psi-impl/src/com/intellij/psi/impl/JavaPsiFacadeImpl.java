@@ -1,13 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.jvm.JvmClass;
 import com.intellij.lang.jvm.facade.JvmFacade;
 import com.intellij.lang.jvm.facade.JvmFacadeImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.SimpleSmartExtensionPoint;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -41,10 +38,10 @@ import java.util.concurrent.ConcurrentMap;
 public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private static final Logger LOG = Logger.getInstance(JavaPsiFacadeImpl.class);
 
-  private final SimpleSmartExtensionPoint<PsiElementFinder> myElementFinders;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final ConcurrentMap<String, PsiPackage> myPackageCache = ContainerUtil.createConcurrentSoftValueMap();
   private final ConcurrentMap<GlobalSearchScope, Map<String, PsiClass>> myClassCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
+  private final Map<GlobalSearchScope, Map<String, Collection<PsiJavaModule>>> myModuleCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
   private final Project myProject;
   private final JavaFileManager myFileManager;
   private final AtomicNotNullLazyValue<JvmFacadeImpl> myJvmFacade;
@@ -73,19 +70,13 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
           if (lastTimeSeen != now) {
             lastTimeSeen = now;
             myPackageCache.clear();
+            myModuleCache.clear();
           }
         }
       });
     }
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
-    myElementFinders = new SimpleSmartExtensionPoint<PsiElementFinder>() {
-      @NotNull
-      @Override
-      protected ExtensionPoint<PsiElementFinder> getExtensionPoint() {
-        return Extensions.getArea(myProject).getExtensionPoint(PsiElementFinder.EP_NAME);
-      }
-    };
   }
 
   @Override
@@ -218,8 +209,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return dumbService.isDumb() && dumbService.isAlternativeResolveEnabled();
   }
 
+  @NotNull
   private List<PsiElementFinder> finders() {
-    return myElementFinders.getExtensions();
+    return PsiElementFinder.EP.getPoint(myProject).getExtensionList();
   }
 
   @Override
@@ -243,6 +235,20 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     return null;
+  }
+
+  @Override
+  public PsiJavaModule findModule(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
+    Collection<PsiJavaModule> modules = findModules(moduleName, scope);
+    return modules.size() == 1 ? modules.iterator().next() : null;
+  }
+
+  @NotNull
+  @Override
+  public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
+    return myModuleCache
+      .computeIfAbsent(scope, k -> ContainerUtil.createConcurrentWeakValueMap())
+      .computeIfAbsent(moduleName, k -> JavaFileManager.getInstance(myProject).findModules(k, scope));
   }
 
   @NotNull

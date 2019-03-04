@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters
 
 import java.io.File
+import java.nio.charset.Charset
 
 /**
  * A console filter which looks for a given path in an output and creates a link for viewing a content of that file.
@@ -16,9 +17,10 @@ class ArgumentFileFilter() : Filter {
     this.fileText = fileText
   }
 
-  fun setPath(path: String) {
+  @JvmOverloads
+  fun setPath(path: String, charset: Charset = Charsets.UTF_8) {
     filePath = path
-    fileText = File(path).readText()
+    fileText = File(path).readText(charset)
   }
 
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {

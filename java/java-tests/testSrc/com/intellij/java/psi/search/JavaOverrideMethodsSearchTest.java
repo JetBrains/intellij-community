@@ -16,31 +16,33 @@
 package com.intellij.java.psi.search;
 
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
 public class JavaOverrideMethodsSearchTest extends LightCodeInsightFixtureTestCase {
-  public void testSearchInLocalScopePerformance() {
-    myFixture.addClass("public interface I {void m();}");
-    for (int i = 0; i < 1000; i++) {
-      final int dirIdx = i % 100;
-      myFixture.addFileToProject("/a" + dirIdx + "/Foo" + i + ".java", "class Foo" + i + " implements I {public void m() {}}");
-    }
-    myFixture.configureByText("a.java", "class Foo implements I {public void m<caret>(){}}");
-    final PsiMethod method = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethod.class);
-    assertNotNull(method);
-    final PsiMethod superMethod = method.findDeepestSuperMethods()[0];
-    PlatformTestUtil.startPerformanceTest("search in local scope", 200, () -> {
-      final Collection<PsiMethod> all = OverridingMethodsSearch.search(superMethod, new LocalSearchScope(getFile()), true).findAll();
-      assertOneElement(all);
-    }).useLegacyScaling().attempts(1).assertTiming();
+  public void testSearchHonorsLocalScope() {
+    myFixture.addClass("package pkg; public interface I {void m();}");
+
+    PsiFileImpl anotherFile = (PsiFileImpl)myFixture.addFileToProject("pkg2/Another.java", "class Another implements pkg.I {public void m() {}}");
+
+    myFixture.configureByText("a.java", "class Foo implements pkg.I {public void m<caret>(){}}");
+
+    PsiMethod method = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethod.class);
+    PsiMethod superMethod = method.findDeepestSuperMethods()[0];
+
+    assertNull(anotherFile.derefStub());
+    assertFalse(anotherFile.isContentsLoaded());
+
+    assertOneElement(OverridingMethodsSearch.search(superMethod, new LocalSearchScope(getFile()), true).findAll());
+
+    // check we didn't go to another file during search
+    assertNull(anotherFile.derefStub());
+    assertFalse(anotherFile.isContentsLoaded());
   }
 
   @NotNull

@@ -38,8 +38,6 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Change class type parameter") || // doesn't change file text (starts live template)
            actionText.startsWith("Rename reference") || // doesn't change file text (starts live template)
            actionText.equals("Remove") || // IDEA-177220
-           actionText.equals("Add \"use strict\" pragma") || // IDEA-187427
-           actionText.matches("Suppress for .* in injection") || // IDEA-187427
            super.shouldSkipIntention(actionText);
   }
 
@@ -66,14 +64,13 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Insert call to super method") || // super method can declare checked exceptions, unexpected at this point
            actionText.startsWith("Cast to ") || // produces uncompilable code by design
            actionText.startsWith("Unwrap 'else' branch (changes semantics)") || // might produce code with final variables are initialized several times
-           actionText.startsWith("Create missing 'switch' branches") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
+           actionText.startsWith("Create missing branches: ") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
            actionText.matches("Make .* default") || // can make interface non-functional and its lambdas incorrect
            actionText.startsWith("Unimplement") || // e.g. leaves red references to the former superclass methods
            actionText.startsWith("Add 'catch' clause for '") || // if existing catch contains "return value", new error "Missing return statement" may appear
            actionText.startsWith("Surround with try-with-resources block") || // if 'close' throws, we don't add a new 'catch' for that, see IDEA-196544
            actionText.equals("Split into declaration and initialization") || // TODO: remove when IDEA-179081 is fixed
-           //may break catches with explicit exceptions
-           actionText.matches("Replace with throws .*") ||
+           actionText.matches("Replace with throws .*") || //may break catches with explicit exceptions
            actionText.matches("Replace with '(new .+\\[]|.+\\[]::new)'"); // Suspicious toArray may introduce compilation error
   }
 
@@ -84,7 +81,6 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.startsWith("Fix doc comment") || //change formatting settings
            actionText.startsWith("Add Javadoc") ||
-           actionText.equals("Collapse 'catch' blocks") || // IDEA-195991
            super.shouldSkipIntention(actionText);
   }
 
@@ -119,6 +115,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                      intentionText.matches("Simplify '.*' to .*") ||
                                      intentionText.matches("Move '.*' to Javadoc ''@throws'' tag") ||
                                      intentionText.matches("Remove '.*' from '.*' throws list") ||
+                                     intentionText.matches("Remove type arguments") ||
                                      intentionText.matches("Remove .+ suppression");
     return !isCommentChangingAction;
   }
@@ -160,7 +157,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
            actionText.matches("Simplify '\\(+(true|false)\\)+' to \\1") ||
            // Parenthesizing sub-expression causes cutting the action name at different position, so name changes significantly
            actionText.matches("Compute constant value of '.+'") ||
-           actionText.matches("Replace '-\\(+(.+)\\)+' with constant value '-\\1'") ||
+           actionText.matches("Replace '.+' with constant value '.+'") ||
            // TODO: Remove when IDEA-195235 is fixed
            actionText.matches("Suppress .+ in injection") ||
            super.shouldSkipIntention(actionText);
@@ -182,15 +179,18 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
     while (true) {
       PsiExpression expression = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpression.class);
       if (expression == null) break;
+      if (PsiTreeUtil.getParentOfType(expression, PsiAnnotationMethod.class, true, PsiStatement.class) != null) {
+        break;
+      }
       while (shouldParenthesizeParent(expression)) {
         expression = (PsiExpression)expression.getParent();
       }
       PsiElement parent = expression.getParent();
       if (ExpressionUtils.isVoidContext(expression) ||
           parent instanceof PsiNameValuePair ||
-          parent instanceof PsiAnnotationMethod ||
           parent instanceof PsiArrayInitializerMemberValue ||
-          parent instanceof PsiSwitchLabelStatement) {
+          parent instanceof PsiExpressionList && parent.getParent() instanceof PsiSwitchLabelStatementBase ||
+          parent instanceof PsiBreakStatement && ((PsiBreakStatement)parent).getLabelExpression() != null) {
         break;
       }
       if (parent instanceof PsiVariable && expression instanceof PsiArrayInitializerExpression) break;

@@ -28,7 +28,9 @@ import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -54,8 +56,8 @@ public class SelectionReverterTest extends IntegrationTestCase {
                    "  public abstract bar();\n" +
                    "}\n";
 
-    setBinaryContent(f, before.getBytes());
-    setBinaryContent(f, after.getBytes());
+    setBinaryContent(f, before.getBytes(StandardCharsets.UTF_8));
+    setBinaryContent(f, after.getBytes(StandardCharsets.UTF_8));
 
     revertToPreviousRevision(2, 2);
     
@@ -65,15 +67,15 @@ public class SelectionReverterTest extends IntegrationTestCase {
                       "  }\n" +
                       "  public abstract bar();\n" +
                       "}\n";
-    assertEquals(expected, new String(f.contentsToByteArray()));
+    assertEquals(expected, new String(f.contentsToByteArray(), StandardCharsets.UTF_8));
   }
 
   public void testChangeSetName() throws Exception {
-    long time = new Date(2001, 1, 11, 12, 30).getTime();
+    long time = new Date(2001, Calendar.FEBRUARY, 11, 12, 30).getTime();
     Clock.setTime(time);
 
-    setBinaryContent(f, "one".getBytes());
-    setBinaryContent(f, "two".getBytes());
+    setBinaryContent(f, "one".getBytes(StandardCharsets.UTF_8));
+    setBinaryContent(f, "two".getBytes(StandardCharsets.UTF_8));
 
     revertToPreviousRevision(0, 0);
 
@@ -84,9 +86,9 @@ public class SelectionReverterTest extends IntegrationTestCase {
 
   public void testAskingForReadOnlyStatusClearingOnlyForTheSpecifiedFile() throws Exception {
     createChildData(myRoot, "foo1.txt");
-    setBinaryContent(f, "one".getBytes());
+    setBinaryContent(f, "one".getBytes(StandardCharsets.UTF_8));
     createChildData(myRoot, "foo2.txt");
-    setBinaryContent(f, "two".getBytes());
+    setBinaryContent(f, "two".getBytes(StandardCharsets.UTF_8));
     createChildData(myRoot, "foo3.txt");
 
     final List<VirtualFile> files = new ArrayList<>();

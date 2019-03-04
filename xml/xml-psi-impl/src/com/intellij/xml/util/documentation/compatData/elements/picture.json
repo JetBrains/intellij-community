@@ -1,0 +1,83 @@
+{
+  "html": {
+    "elements": {
+      "picture": {
+        "__compat": {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Element/picture",
+          "support": {
+            "chrome": {
+              "version_added": "38"
+            },
+            "chrome_android": {
+              "version_added": "38"
+            },
+            "edge": {
+              "version_added": "13"
+            },
+            "edge_mobile": {
+              "version_added": true
+            },
+            "firefox": [
+              {
+                "version_added": "38"
+              },
+              {
+                "version_added": "32",
+                "version_removed": "52",
+                "flags": [
+                  {
+                    "type": "preference",
+                    "name": "dom.image.picture.enabled",
+                    "value_to_set": "true"
+                  }
+                ]
+              }
+            ],
+            "firefox_android": [
+              {
+                "version_added": "38"
+              },
+              {
+                "version_added": "32",
+                "version_removed": "52",
+                "flags": [
+                  {
+                    "type": "preference",
+                    "name": "dom.image.picture.enabled",
+                    "value_to_set": "true"
+                  }
+                ]
+              }
+            ],
+            "ie": {
+              "version_added": false
+            },
+            "opera": {
+              "version_added": "25"
+            },
+            "opera_android": {
+              "version_added": "25"
+            },
+            "safari": {
+              "version_added": "9.1"
+            },
+            "safari_ios": {
+              "version_added": "9.3"
+            },
+            "samsunginternet_android": {
+              "version_added": true
+            },
+            "webview_android": {
+              "version_added": "38"
+            }
+          },
+          "status": {
+            "experimental": false,
+            "standard_track": true,
+            "deprecated": false
+          }
+        }
+      }
+    }
+  }
+}

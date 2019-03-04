@@ -40,6 +40,7 @@ public abstract class OrderEnumerationHandler {
 
     public abstract boolean isApplicable(@NotNull Module module);
 
+    @NotNull
     public abstract OrderEnumerationHandler createHandler(@NotNull Module module);
   }
 

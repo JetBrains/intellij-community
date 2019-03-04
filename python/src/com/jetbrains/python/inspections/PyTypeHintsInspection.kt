@@ -100,7 +100,9 @@ class PyTypeHintsInspection : PyInspection() {
     override fun visitPyElement(node: PyElement?) {
       super.visitPyElement(node)
 
-      if (node is PyTypeCommentOwner && node is PyAnnotationOwner && node.typeCommentAnnotation != null) {
+      if (node is PyTypeCommentOwner &&
+          node is PyAnnotationOwner &&
+          node.typeCommentAnnotation.let { it != null && it != PyTypingTypeProvider.IGNORE }) {
         val message = "Type(s) specified both in type comment and annotation"
 
         if (node is PyFunction) {

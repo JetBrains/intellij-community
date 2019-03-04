@@ -77,7 +77,7 @@ public class SpecialAnnotationsUtil {
       private void listChanged() {
         list.clear();
         for (int i = 0; i < listModel.getSize(); i++) {
-          list.add((String)listModel.getElementAt(i));
+          list.add(listModel.getElementAt(i));
         }
       }
 

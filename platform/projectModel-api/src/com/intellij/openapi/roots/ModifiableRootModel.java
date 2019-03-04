@@ -152,7 +152,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   boolean isWritable();
 
-  <T extends OrderEntry> void replaceEntryOfType(Class<T> entryClass, T entry);
+  <T extends OrderEntry> void replaceEntryOfType(@NotNull Class<T> entryClass, T entry);
 
   @Nullable
   String getSdkName();

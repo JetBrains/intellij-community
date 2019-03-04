@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
@@ -61,7 +62,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
   };
 
   public static boolean isAvailable() {
-    return SystemInfo.isUnix && !PathManager.isSnap() && SystemInfo.hasXdgOpen();
+    return SystemInfo.isXWindow && !ExternalUpdateManager.isRoaming() && SystemInfo.hasXdgOpen();
   }
 
   @Override

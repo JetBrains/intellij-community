@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ExecutorManager {
   private static final ExecutorService myExecutor = new ThreadPoolExecutor(3, Integer.MAX_VALUE, 30 * 60L, TimeUnit.SECONDS,
                                                                            new SynchronousQueue<Runnable>(),new ThreadFactory() {
-      AtomicInteger num = new AtomicInteger();
+      final AtomicInteger num = new AtomicInteger();
       @Override
       public Thread newThread(Runnable r) {
         return new Thread(r, "Maven Embedder "+num.getAndIncrement());

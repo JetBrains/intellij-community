@@ -42,8 +42,8 @@ class PatchTextDetectionTest : PlatformTestCase() {
     val patchFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(patchPath.replace(File.separatorChar, '/'))
 
     val patchContents = patchFile!!.contentsToByteArray()
-    val patchText = LoadTextUtil.getTextByBinaryPresentation(patchContents, patchFile);
-    assertEquals(expected, PatchReader.isPatchContent((patchText.toString())));
+    val patchText = LoadTextUtil.getTextByBinaryPresentation(patchContents, patchFile)
+    assertEquals(expected, PatchReader.isPatchContent((patchText.toString())))
   }
 
   private fun getTestDir(@TestDataFile dirName: String): String {

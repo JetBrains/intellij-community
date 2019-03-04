@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.errorreport.error.InternalEAPException;
@@ -117,14 +117,16 @@ class ITNProxy {
   static class ErrorBean {
     final IdeaLoggingEvent event;
     final String comment;
+    final String pluginId;
     final String pluginName;
     final String pluginVersion;
     final String lastActionId;
     final int previousException;
 
-    ErrorBean(IdeaLoggingEvent event, String comment, String pluginName, String pluginVersion, String lastActionId, int previousException) {
+    ErrorBean(IdeaLoggingEvent event, String comment, String pluginId, String pluginName, String pluginVersion, String lastActionId, int previousException) {
       this.event = event;
       this.comment = comment;
+      this.pluginId = pluginId;
       this.pluginName = pluginName;
       this.pluginVersion = pluginVersion;
       this.lastActionId = lastActionId;
@@ -137,7 +139,7 @@ class ITNProxy {
                         @Nullable String password,
                         @NotNull ErrorBean error,
                         @NotNull IntConsumer onSuccess,
-                        @NotNull Consumer<? super Exception> onError) {
+                        @NotNull Consumer<Exception> onError) {
     if (StringUtil.isEmptyOrSpaces(login)) {
       login = DEFAULT_USER;
       password = DEFAULT_PASS;
@@ -211,6 +213,7 @@ class ITNProxy {
     append(builder, "update.channel.status", updateSettings.getSelectedChannelStatus().getCode());
     append(builder, "update.ignored.builds", StringUtil.join(updateSettings.getIgnoredBuildNumbers(), ","));
 
+    append(builder, "plugin.id", error.pluginId);
     append(builder, "plugin.name", error.pluginName);
     append(builder, "plugin.version", error.pluginVersion);
     append(builder, "last.action", error.lastActionId);

@@ -1,55 +1,24 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
-import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author Sergey Evdokimov
  */
 @CompileStatic
 class GroovyMapAttributeTest extends LightCodeInsightFixtureTestCase {
-  final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
-    @Override
-    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel
-      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/")
-      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES)
-      modifiableModel.commit()
-    }
-  }
+
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_1_7
 
   private void doTestCompletion(String fileText, boolean exists) {
     myFixture.configureByText("a.groovy", fileText)
@@ -401,12 +370,12 @@ class CccMap extends Ccc<Map> {}
 class CccList extends Ccc<ArrayList> {}
 """)
 
-    doTestHighlighting """
+    doTestHighlighting """\
 println(new CccMap(foo: [:]))
 println(new CccList(foo: []))
 
-println(new CccMap(foo: <warning descr="Type of argument 'foo' can not be 'List'">[]</warning>))
-println(new CccList(foo: <warning descr="Type of argument 'foo' can not be 'LinkedHashMap'">[:]</warning>))
+println(new CccMap(foo: <warning descr="Type of argument 'foo' can not be 'List<Object>'">[]</warning>))
+println(new CccList(foo: <warning descr="Type of argument 'foo' can not be 'LinkedHashMap<Object, Object>'">[:]</warning>))
 """
   }
 
@@ -468,13 +437,13 @@ class Test {
   }
 
   private doTestCompletionWithinMap(String text, String text2 = null) {
-    PlatformTestUtil.registerExtension GroovyNamedArgumentProvider.EP_NAME, new GroovyNamedArgumentProvider() {
+    GroovyNamedArgumentProvider.EP_NAME.getPoint(null).registerExtension(new GroovyNamedArgumentProvider() {
       @NotNull
       @Override
       Map<String, NamedArgumentDescriptor> getNamedArguments(@NotNull GrListOrMap literal) {
         ['foo': NamedArgumentDescriptor.SIMPLE_NORMAL, 'bar': NamedArgumentDescriptor.SIMPLE_NORMAL]
       }
-    }, myFixture.testRootDisposable
+    }, myFixture.testRootDisposable)
 
     myFixture.with {
       configureByText '_.groovy', text

@@ -10,6 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib-jdk8" level="project" />
   </component>
 </module>

@@ -139,6 +139,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
   void doCopyOptionsFrom(@NotNull RunConfigurationBase<T> template) {
     myOptions.copyFrom(template.myOptions);
     myOptions.resetModificationCount();
+    myOptions.setAllowRunningInParallel(template.isAllowRunningInParallel());
     myBeforeRunTasks = ContainerUtil.copyList(template.myBeforeRunTasks);
   }
 
@@ -215,8 +216,11 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
 
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
+    boolean isAllowRunningInParallel = myOptions.isAllowRunningInParallel();
     //noinspection unchecked
     loadState((T)element);
+    // load state sets myOptions but we need to preserve transient isAllowRunningInParallel
+    myOptions.setAllowRunningInParallel(isAllowRunningInParallel);
   }
 
   @Override

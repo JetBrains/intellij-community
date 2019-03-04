@@ -29,6 +29,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -255,7 +256,7 @@ class FindInProjectTask {
     final boolean hasTrigrams = hasTrigrams(myStringToFindInIndices);
 
     class EnumContentIterator implements ContentIterator {
-      private final Set<VirtualFile> myFiles = new LinkedHashSet<>();
+      private final Set<VirtualFile> myFiles = new CompactVirtualFileSet();
 
       @Override
       public boolean processFile(@NotNull final VirtualFile virtualFile) {
@@ -270,7 +271,7 @@ class FindInProjectTask {
             }
 
             if (skipIndexed && isCoveredByIndex(virtualFile) &&
-                (fileIndex.isInContent(virtualFile) || fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile))) {
+                (fileIndex.isInContent(virtualFile) || fileIndex.isInLibrary(virtualFile))) {
               return;
             }
 
@@ -385,7 +386,7 @@ class FindInProjectTask {
       return Collections.emptySet();
     }
 
-    final Set<VirtualFile> resultFiles = new LinkedHashSet<>();
+    final Set<VirtualFile> resultFiles = new CompactVirtualFileSet();
     for(VirtualFile file:myFilesToScanInitially) {
       if (myFileMask.value(file)) {
         resultFiles.add(file);
@@ -443,8 +444,8 @@ class FindInProjectTask {
   private Pair.NonNull<PsiFile, VirtualFile> findFile(@NotNull final VirtualFile virtualFile) {
     PsiFile psiFile = myPsiManager.findFile(virtualFile);
     if (psiFile != null) {
-      PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
-      if (sourceFile != null) psiFile = sourceFile;
+      PsiElement sourceFile = psiFile.getNavigationElement();
+      if (sourceFile instanceof PsiFile) psiFile = (PsiFile)sourceFile;
       if (psiFile.getFileType().isBinary()) {
         psiFile = null;
       }

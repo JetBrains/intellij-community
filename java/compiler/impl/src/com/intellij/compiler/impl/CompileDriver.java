@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -73,15 +73,12 @@ public class CompileDriver {
   private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
   private final Map<Module, String> myModuleTestOutputPaths = new HashMap<>();
 
-  @SuppressWarnings("deprecation") private CompilerFilter myCompilerFilter = CompilerFilter.ALL;
-
   public CompileDriver(Project project) {
     myProject = project;
   }
 
-  @SuppressWarnings("deprecation")
-  public void setCompilerFilter(CompilerFilter compilerFilter) {
-    myCompilerFilter = compilerFilter == null? CompilerFilter.ALL : compilerFilter;
+  @SuppressWarnings({"deprecation", "unused"})
+  public void setCompilerFilter(@SuppressWarnings("unused") CompilerFilter compilerFilter) {
   }
 
   public void rebuild(CompileStatusNotification callback) {
@@ -97,7 +94,7 @@ public class CompileDriver {
       startup(scope, false, false, withModalProgress, callback, null);
     }
     else {
-      callback.finished(true, 0, 0, DummyCompileContext.getInstance());
+      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
     }
   }
 
@@ -149,7 +146,7 @@ public class CompileDriver {
       startup(scope, false, true, callback, null);
     }
     else {
-      callback.finished(true, 0, 0, DummyCompileContext.getInstance());
+      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
     }
   }
 
@@ -158,7 +155,7 @@ public class CompileDriver {
       startup(compileScope, true, false, callback, null);
     }
     else {
-      callback.finished(true, 0, 0, DummyCompileContext.getInstance());
+      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
     }
   }
 
@@ -205,8 +202,7 @@ public class CompileDriver {
   }
 
   @Nullable
-  private TaskFuture compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
-    throws Exception {
+  private TaskFuture compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate) {
     final CompileScope scope = compileContext.getCompileScope();
     final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
     List<TargetTypeBuildScope> scopes = getBuildScopes(compileContext, scope, paths);
@@ -309,9 +305,6 @@ public class CompileDriver {
               if (outputToArtifact != null) {
                 Collection<Artifact> artifacts = outputToArtifact.get(root);
                 if (!artifacts.isEmpty()) {
-                  for (Artifact artifact : artifacts) {
-                    ArtifactsCompiler.addChangedArtifact(compileContext, artifact);
-                  }
                   writtenArtifactOutputPaths.add(FileUtil.toSystemDependentName(DeploymentUtil.appendToPath(root, relativePath)));
                 }
               }
@@ -372,10 +365,11 @@ public class CompileDriver {
                        final CompilerMessage message) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final String contentName = CompilerBundle.message(forceCompile ? "compiler.content.name.compile" : "compiler.content.name.make");
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    final CompilerTask compileTask = new CompilerTask(myProject, contentName, isUnitTestMode, !withModalProgress, true,
-                                                      isCompilationStartedAutomatically(scope), withModalProgress);
+    final String name = CompilerBundle.message(isRebuild ? "compiler.content.name.rebuild" : forceCompile ? "compiler.content.name.recompile" : "compiler.content.name.make");
+    final CompilerTask compileTask = new CompilerTask(
+      myProject, name, isUnitTestMode, !withModalProgress, true, isCompilationStartedAutomatically(scope), withModalProgress
+    );
 
     StatusBar.Info.set("", myProject, "Compiler");
     // ensure the project model seen by build process is up-to-date
@@ -584,14 +578,21 @@ public class CompileDriver {
     final ProgressIndicator progressIndicator = context.getProgressIndicator();
     progressIndicator.pushState();
     try {
-      CompileTask[] tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTasks();
-      if (tasks.length > 0) {
+      List<CompileTask> tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTaskList();
+      if (tasks.size() > 0) {
         progressIndicator.setText(
           CompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks"));
         for (CompileTask task : tasks) {
-          if (!task.execute(context)) {
-            return false;
+          try {
+            if (!task.execute(context)) {
+              return false;
+            }
           }
+          catch (Throwable t) {
+            LOG.error("Error executing task", t);
+            context.addMessage(CompilerMessageCategory.WARNING, "Task "  + task.toString()  + " failed", null, -1, -1);
+          }
+
         }
       }
     }
@@ -736,7 +737,7 @@ public class CompileDriver {
     String nameToSelect = null;
     final StringBuilder names = new StringBuilder();
     final int maxModulesToShow = 10;
-    for (String name : modules.size() > maxModulesToShow ? modules.subList(0, maxModulesToShow) : modules) {
+    for (String name : ContainerUtil.getFirstItems(modules, maxModulesToShow)) {
       if (nameToSelect == null && !notSpecifiedValueInheritedFromProject) {
         nameToSelect = name;
       }
@@ -775,9 +776,10 @@ public class CompileDriver {
       case ERROR: case INTERNAL_BUILDER_ERROR:
         return CompilerMessageCategory.ERROR;
       case WARNING: return CompilerMessageCategory.WARNING;
-      case INFO: return CompilerMessageCategory.INFORMATION;
-      case JPS_INFO: return CompilerMessageCategory.INFORMATION;
-      case OTHER: return CompilerMessageCategory.INFORMATION;
+      case INFO:
+      case JPS_INFO:
+      case OTHER:
+        return CompilerMessageCategory.INFORMATION;
       default: return defaultCategory;
     }
   }

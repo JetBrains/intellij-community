@@ -291,7 +291,7 @@ class TestingTasksImpl extends TestingTasks {
       jvmArgs.addAll([
         "-Xmx750m",
         "-Xms750m",
-        "-Dsun.io.useCanonCaches=false"
+        "-Dsun.io.useCanonPrefixCache=false"
       ])
     }
 
@@ -305,6 +305,7 @@ class TestingTasksImpl extends TestingTasks {
       "idea.system.path"                       : "$tempDir/system".toString(),
       "intellij.build.test.patterns"           : testPatterns,
       "intellij.build.test.groups"             : testGroups,
+      "intellij.build.test.sorter"             : System.getProperty("intellij.build.test.sorter"),
       "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
       "idea.coverage.enabled.build"            : System.getProperty("idea.coverage.enabled.build"),
       "teamcity.buildConfName"                 : System.getProperty("teamcity.buildConfName"),
@@ -482,7 +483,7 @@ class TestingTasksImpl extends TestingTasks {
   private def setupTestingDependencies() {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
-      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin')
+      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin', 'setupThirdPartyPlugins', 'setupBundledMaven')
     }
   }
 

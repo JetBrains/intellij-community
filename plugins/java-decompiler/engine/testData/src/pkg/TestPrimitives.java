@@ -1,5 +1,7 @@
 package pkg;
 
+import java.util.*;
+
 public class TestPrimitives {
 
   public void printAll() {
@@ -171,4 +173,8 @@ public class TestPrimitives {
     Boolean.valueOf(value).hashCode();
   }
 
+  void testCastRequired() {
+    HashMap<String, Byte> map = new HashMap<String, Byte>();
+    map.put("test", (byte) 0);
+  }
 }

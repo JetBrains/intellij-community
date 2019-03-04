@@ -38,7 +38,9 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
+import org.jetbrains.jps.model.java.impl.JpsJavaDependenciesEnumeratorImpl;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleDependency;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
 
@@ -105,12 +107,27 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
 
   @Override
   public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {
-    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myModule).compileOnly();
+    JpsJavaDependenciesEnumeratorImpl enumerator = (JpsJavaDependenciesEnumeratorImpl)JpsJavaExtensionService.dependencies(myModule).compileOnly();
     if (!isTests()) {
       enumerator.productionOnly();
     }
     final ArrayList<BuildTarget<?>> dependencies = new ArrayList<>();
-    enumerator.processModules(module -> dependencies.add(new ModuleBuildTarget(module, myTargetType)));
+    enumerator.processDependencies(dependencyElement -> {
+      if (dependencyElement instanceof JpsModuleDependency) {
+        JpsModule depModule = ((JpsModuleDependency)dependencyElement).getModule();
+        if (depModule != null) {
+          JavaModuleBuildTargetType targetType;
+          if (myTargetType.equals(JavaModuleBuildTargetType.PRODUCTION) && enumerator.isProductionOnTests(dependencyElement)) {
+            targetType = JavaModuleBuildTargetType.TEST;
+          }
+          else {
+            targetType = myTargetType;
+          }
+          dependencies.add(new ModuleBuildTarget(depModule, targetType));
+        }
+      }
+      return true;
+    });
     if (isTests()) {
       dependencies.add(new ModuleBuildTarget(myModule, JavaModuleBuildTargetType.PRODUCTION));
     }

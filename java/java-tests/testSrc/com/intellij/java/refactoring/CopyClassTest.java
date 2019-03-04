@@ -2,35 +2,28 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.search.ProjectScope;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.copy.CopyClassesHandler;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.IncorrectOperationException;
 
-import java.io.File;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author yole
  */
-@PlatformTestCase.WrapInCommand
-public class CopyClassTest extends CodeInsightTestCase {
-  private VirtualFile myRootDir;
+public class CopyClassTest extends LightMultiFileTestCase {
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/copyClass/";
+  }
 
   public void testReplaceAllOccurrences() throws Exception {
     doTest("Foo", "Bar");
@@ -51,94 +44,74 @@ public class CopyClassTest extends CodeInsightTestCase {
   }
 
   private void doTest(final String oldName, final String copyName) throws Exception {
-    String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/copyClass/" + getTestName(true);
-
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    myRootDir = createTestProjectStructure(root);
-
+    myFixture.copyDirectoryToProject(getTestName(true), "");
     performAction(oldName, copyName);
-
-    myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    FileDocumentManager.getInstance().saveAllDocuments();
-
-    VirtualFile fileAfter = myRootDir.findChild(copyName + ".java");
-    VirtualFile fileExpected = myRootDir.findChild(copyName + ".expected.java");
+  
+    VirtualFile fileAfter = myFixture.findFileInTempDir(copyName + ".java");
+    VirtualFile fileExpected = myFixture.findFileInTempDir(copyName + ".expected.java");
 
     PlatformTestUtil.assertFilesEqual(fileExpected, fileAfter);
   }
 
-  private void performAction(final String oldName, final String copyName) throws IncorrectOperationException {
-    final PsiClass oldClass = JavaPsiFacade.getInstance(myProject).findClass(oldName, ProjectScope.getAllScope(myProject));
+  private void performAction(final String oldName, final String copyName) throws Exception {
+    final PsiClass oldClass = myFixture.findClass(oldName);
 
-    WriteCommandAction.runWriteCommandAction(null, (Computable<Collection<PsiFile>>)() -> CopyClassesHandler.doCopyClasses(
-          Collections.singletonMap(oldClass.getNavigationElement().getContainingFile(), new PsiClass[]{oldClass}), copyName,
-          myPsiManager.findDirectory(myRootDir),
-          myProject));
+    WriteCommandAction.writeCommandAction(getProject()).run(
+                                             () -> {
+                                               PsiDirectory targetDirectory =
+                                                 getPsiManager().findDirectory(myFixture.getTempDirFixture().findOrCreateDir(""));
+                                               Map<PsiFile, PsiClass[]> sourceClasses =
+                                                 Collections.singletonMap(oldClass.getNavigationElement().getContainingFile(),
+                                                                          new PsiClass[]{oldClass});
+                                               CopyClassesHandler.doCopyClasses(sourceClasses, copyName, targetDirectory, getProject());
+                                               getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+                                             });
   }
 
-  public void testPackageLocalClasses() throws Exception {
+  public void testPackageLocalClasses() {
     doMultifileTest();
   }
 
-  public void testPackageLocalMethods() throws Exception {
+  public void testPackageLocalMethods() {
     doMultifileTest();
   }
 
-  public void testPackageLocalAndExtends() throws Exception {
+  public void testPackageLocalAndExtends() {
     doMultifileTest();
   }
 
   //copy all classes from p1 -> p2
-  private void doMultifileTest() throws Exception {
-    String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/copyClass/multifile/" + getTestName(true);
-    String rootBefore = root + "/before";
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    VirtualFile rootDir = createTestProjectStructure(rootBefore);
-
-    final HashMap<PsiFile, PsiClass[]> map = new HashMap<>();
-    final VirtualFile sourceDir = rootDir.findChild("p1");
-    for (VirtualFile file : sourceDir.getChildren()) {
-      final PsiFile psiFile = myPsiManager.findFile(file);
-      if (psiFile instanceof PsiJavaFile) {
-        map.put(psiFile, ((PsiJavaFile)psiFile).getClasses());
+  private void doMultifileTest() {
+    doTest(() -> {
+      final HashMap<PsiFile, PsiClass[]> map = new HashMap<>();
+      final VirtualFile sourceDir = myFixture.findFileInTempDir("p1");
+      for (VirtualFile file : sourceDir.getChildren()) {
+        final PsiFile psiFile = getPsiManager().findFile(file);
+        if (psiFile instanceof PsiJavaFile) {
+          map.put(psiFile, ((PsiJavaFile)psiFile).getClasses());
+        }
       }
-    }
 
-    final VirtualFile targetVDir = rootDir.findChild("p2");
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CopyClassesHandler.doCopyClasses(map, null, myPsiManager.findDirectory(targetVDir), myProject);
-    });
-
-
-    String rootAfter = root + "/after";
-    VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
-    ApplicationManager.getApplication().runWriteAction(() -> myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting());
-
-    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
+      final VirtualFile targetVDir = myFixture.findFileInTempDir("p2");
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        CopyClassesHandler.doCopyClasses(map, null, getPsiManager().findDirectory(targetVDir), getProject());
+      });
+    }, "multifile/" + getTestName(true));
   }
 
-  public void testPackageHierarchy() throws Exception {
+  public void testPackageHierarchy() {
     doPackageCopy();
   }
 
-  public void testPackageOneLevelHierarchy() throws Exception {
+  public void testPackageOneLevelHierarchy() {
     doPackageCopy();
   }
 
-  private void doPackageCopy() throws Exception {
-    String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/copyClass/multifile/" + getTestName(true);
-    String rootBefore = root + "/before";
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    VirtualFile rootDir = createTestProjectStructure(rootBefore);
-
-    final VirtualFile targetVDir = rootDir.findChild("p2");
-    final PsiDirectory sourceP1Dir = myPsiManager.findDirectory(rootDir.findChild("p1"));
-    final PsiDirectory targetP2Dir = myPsiManager.findDirectory(targetVDir);
-    new CopyClassesHandler().doCopy(new PsiElement[]{sourceP1Dir}, targetP2Dir);
-
-    String rootAfter = root + "/after";
-    VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
-    myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
+  private void doPackageCopy() {
+    doTest(() -> {
+      final PsiDirectory sourceP1Dir = getPsiManager().findDirectory(myFixture.findFileInTempDir("p1"));
+      final PsiDirectory targetP2Dir = getPsiManager().findDirectory(myFixture.findFileInTempDir("p2"));
+      new CopyClassesHandler().doCopy(new PsiElement[]{sourceP1Dir}, targetP2Dir);
+    }, "multifile/" + getTestName(true));
   }
 }

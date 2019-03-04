@@ -26,7 +26,6 @@ import java.util.Properties;
  * Provides default variables which are available in file templates.
  *
  * @author yole
- * @since 8.0
  */
 public interface DefaultTemplatePropertiesProvider {
   ExtensionPointName<DefaultTemplatePropertiesProvider> EP_NAME = ExtensionPointName.create("com.intellij.defaultTemplatePropertiesProvider");

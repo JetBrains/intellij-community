@@ -28,7 +28,7 @@ class FooBool {
     <error descr="Cannot cast 'Closure<Integer>' to 'boolean'">(boolean) { int a, int b -> a + b }</error>
     (boolean) s
     <error descr="Cannot cast 'Matcher' to 'boolean'">(boolean) ("aaa" =~ /aaa/)</error>
-    <error descr="Cannot cast 'List' to 'boolean'">(boolean) []</error>
+    <error descr="Cannot cast 'List<Object>' to 'boolean'">(boolean) []</error>
   }
 
   def boolAssignment() {

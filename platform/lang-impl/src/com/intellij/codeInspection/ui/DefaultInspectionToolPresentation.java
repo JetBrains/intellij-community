@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
@@ -19,8 +18,6 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,16 +25,13 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayFactory;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
-import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,8 +50,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   protected static final Logger LOG = Logger.getInstance(DefaultInspectionToolPresentation.class);
 
   @NotNull private final InspectionToolWrapper myToolWrapper;
-  @NotNull private final GlobalInspectionContextImpl myContext;
-  protected InspectionNode myToolNode;
+  @NotNull protected final GlobalInspectionContextImpl myContext;
 
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myProblemElements = createBidiMap();
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> mySuppressedElements = createBidiMap();
@@ -186,8 +179,10 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @Override
   public void exclude(@NotNull CommonProblemDescriptor descriptor) {
-    RefEntity entity = ObjectUtils.notNull(myProblemElements.getKeyFor(descriptor), () -> myResolvedElements.getKeyFor(descriptor));
-    myExcludedElements.put(entity, descriptor);
+    RefEntity entity = ObjectUtils.chooseNotNull(myProblemElements.getKeyFor(descriptor), myResolvedElements.getKeyFor(descriptor));
+    if (entity != null) {
+      myExcludedElements.put(entity, descriptor);
+    }
   }
 
   protected String getSeverityDelegateName() {
@@ -250,14 +245,9 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     if (context.isViewClosed() || !(refElement instanceof RefElement)) {
       return;
     }
-    if (myToolWrapper instanceof LocalInspectionToolWrapper && (!ApplicationManager.getApplication().isUnitTestMode() || GlobalInspectionContextImpl.CREATE_VIEW_FORCE)) {
+    if (myToolWrapper instanceof LocalInspectionToolWrapper && (!ApplicationManager.getApplication().isUnitTestMode() || GlobalInspectionContextImpl.TESTING_VIEW)) {
       context.initializeViewIfNeed().doWhenDone(() -> context.getView().addProblemDescriptors(myToolWrapper, refElement, descriptors));
     }
-  }
-
-  @Override
-  public InspectionNode getToolNode() {
-    return myToolNode;
   }
 
   protected boolean isDisposed() {
@@ -270,8 +260,8 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     FileUtil.createParentDirs(file);
     try (PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), CharsetToolkit.UTF8_CHARSET)))) {
 
-      XMLStreamWriter xmlWriter = XMLOutputFactory.newInstance().createXMLStreamWriter(writer);
       if (!exists) {
+        XMLStreamWriter xmlWriter = XMLOutputFactory.newInstance().createXMLStreamWriter(writer);
         xmlWriter.writeStartElement(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
         xmlWriter.writeAttribute(GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE, Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper));
         xmlWriter.writeCharacters("\n");
@@ -358,49 +348,49 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   private void exportResult(@NotNull RefEntity refEntity, @NotNull CommonProblemDescriptor descriptor, @NotNull Element element) {
-    final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
+    try {
+      final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
 
-    @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
-    problemClassElement.addContent(myToolWrapper.getDisplayName());
+      @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+      problemClassElement.addContent(myToolWrapper.getDisplayName());
 
-    final HighlightSeverity severity = InspectionToolPresentation.getSeverity(refEntity, psiElement, this);
+      final HighlightSeverity severity = InspectionToolPresentation.getSeverity(refEntity, psiElement, this);
 
-    if (severity != null) {
       SeverityRegistrar severityRegistrar = myContext.getCurrentProfile().getProfileManager().getSeverityRegistrar();
       HighlightInfoType type = descriptor instanceof ProblemDescriptor
-                               ? ProblemDescriptorUtil.highlightTypeFromDescriptor((ProblemDescriptor)descriptor, severity, severityRegistrar)
-                               : ProblemDescriptorUtil.getHighlightInfoType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING, severity, severityRegistrar);
+                               ? ProblemDescriptorUtil
+                                 .highlightTypeFromDescriptor((ProblemDescriptor)descriptor, severity, severityRegistrar)
+                               : ProblemDescriptorUtil
+                                 .getHighlightInfoType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING, severity, severityRegistrar);
       problemClassElement.setAttribute("severity", type.getSeverity(psiElement).getName());
       problemClassElement.setAttribute("attribute_key", type.getAttributesKey().getExternalName());
-    }
 
-    element.addContent(problemClassElement);
-    if (myToolWrapper instanceof GlobalInspectionToolWrapper) {
-      final GlobalInspectionTool globalInspectionTool = ((GlobalInspectionToolWrapper)myToolWrapper).getTool();
-      final QuickFix[] fixes = descriptor.getFixes();
-      if (fixes != null) {
-        @NonNls Element hintsElement = new Element("hints");
-        for (QuickFix fix : fixes) {
-          final String hint = globalInspectionTool.getHint(fix);
-          if (hint != null) {
-            @NonNls Element hintElement = new Element("hint");
-            hintElement.setAttribute("value", hint);
-            hintsElement.addContent(hintElement);
+      element.addContent(problemClassElement);
+      if (myToolWrapper instanceof GlobalInspectionToolWrapper) {
+        final GlobalInspectionTool globalInspectionTool = ((GlobalInspectionToolWrapper)myToolWrapper).getTool();
+        final QuickFix[] fixes = descriptor.getFixes();
+        if (fixes != null) {
+          @NonNls Element hintsElement = new Element("hints");
+          for (QuickFix fix : fixes) {
+            final String hint = globalInspectionTool.getHint(fix);
+            if (hint != null) {
+              @NonNls Element hintElement = new Element("hint");
+              hintElement.setAttribute("value", hint);
+              hintsElement.addContent(hintElement);
+            }
           }
+          element.addContent(hintsElement);
         }
-        element.addContent(hintsElement);
       }
-    }
-    @NonNls final String template = descriptor.getDescriptionTemplate();
-    @NonNls String problemText = StringUtil.replace(StringUtil.replace(template, "#ref", psiElement != null ? ProblemDescriptorUtil
-      .extractHighlightedText(descriptor, psiElement) : ""), " #loc ", " ");
-    try {
+      @NonNls final String template = descriptor.getDescriptionTemplate();
+      @NonNls String problemText = StringUtil.replace(StringUtil.replace(template, "#ref", psiElement != null ? ProblemDescriptorUtil
+        .extractHighlightedText(descriptor, psiElement) : ""), " #loc ", " ");
       Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
       descriptionElement.addContent(problemText);
       element.addContent(descriptionElement);
     }
-    catch (IllegalDataException e) {
-      LOG.info("Cannot save results for " + refEntity.getName() + ", inspection which caused problem: " + myToolWrapper.getShortName());
+    catch (RuntimeException e) {
+      LOG.info("Cannot save results for " + refEntity.getName() + ", inspection which caused problem: " + myToolWrapper.getShortName() + ", problem descriptor " + descriptor);
     }
   }
 
@@ -465,60 +455,12 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   @Override
-  public void createToolNode(@NotNull GlobalInspectionContextImpl globalInspectionContext, @NotNull InspectionNode node,
-                             @NotNull InspectionRVContentProvider provider,
-                             @NotNull InspectionTreeNode parentNode,
-                             boolean showStructure,
-                             boolean groupBySeverity) {
-    myToolNode = node;
-  }
-
-  @Override
   @Nullable
-  public IntentionAction findQuickFixes(@NotNull final CommonProblemDescriptor problemDescriptor, final String hint) {
+  public QuickFix findQuickFixes(@NotNull final CommonProblemDescriptor problemDescriptor,
+                                 RefEntity entity,
+                                 final String hint) {
     InspectionProfileEntry tool = getToolWrapper().getTool();
-    if (!(tool instanceof GlobalInspectionTool)) return null;
-    final QuickFix fix = ((GlobalInspectionTool)tool).getQuickFix(hint);
-    if (fix == null) {
-      return null;
-    }
-    if (problemDescriptor instanceof ProblemDescriptor) {
-      final ProblemDescriptor descriptor = new ProblemDescriptorImpl(((ProblemDescriptor)problemDescriptor).getStartElement(),
-                                                                     ((ProblemDescriptor)problemDescriptor).getEndElement(),
-                                                                     problemDescriptor.getDescriptionTemplate(),
-                                                                     new LocalQuickFix[]{(LocalQuickFix)fix},
-                                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, null, false);
-      return QuickFixWrapper.wrap(descriptor, 0);
-    }
-    return new IntentionAction() {
-      @Override
-      @NotNull
-      public String getText() {
-        return fix.getName();
-      }
-
-      @Override
-      @NotNull
-      public String getFamilyName() {
-        return fix.getFamilyName();
-      }
-
-      @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        return true;
-      }
-
-      @Override
-      public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        //noinspection unchecked
-        fix.applyFix(project, problemDescriptor); //todo check type consistency
-      }
-
-      @Override
-      public boolean startInWriteAction() {
-        return true;
-      }
-    };
+    return !(tool instanceof GlobalInspectionTool) ? null : ((GlobalInspectionTool)tool).getQuickFix(hint);
   }
 
   private static SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> createBidiMap() {
@@ -541,7 +483,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
       VirtualFile file = d.getContainingFile();
       if (file != null) {
         LOG.assertTrue(ensureNotInjectedFile(file).equals(entityFile),
-                       "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate());
+                              "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate());
       }
     });
   }

@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.eventLog
 
 import com.google.gson.JsonSyntaxException
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.diagnostic.Logger
 import java.io.BufferedReader
 import java.io.File
@@ -11,15 +10,16 @@ import java.io.FileReader
 import java.io.IOException
 import java.util.*
 
-class LogEventRecordRequest(val product : String, val user: String, val records: List<LogEventRecord>) {
+class LogEventRecordRequest(val product : String, val device: String, val records: List<LogEventRecord>, val internal: Boolean) {
+  val recorder: String = "FUS"
 
   companion object {
     private const val RECORD_SIZE = 1000 * 1000 // 1000KB
     private val LOG = Logger.getInstance(LogEventRecordRequest::class.java)
 
-    fun create(file: File, filter: LogEventFilter): LogEventRecordRequest? {
+    fun create(file: File, filter: LogEventFilter, internal: Boolean): LogEventRecordRequest? {
       try {
-        return create(file, ApplicationInfo.getInstance().build.productCode, PermanentInstallationID.get(), RECORD_SIZE, filter)
+        return create(file, ApplicationInfo.getInstance().build.productCode, EventLogConfiguration.deviceId, RECORD_SIZE, filter, internal)
       }
       catch (e: Exception) {
         LOG.warn("Failed reading event log file", e)
@@ -27,7 +27,7 @@ class LogEventRecordRequest(val product : String, val user: String, val records:
       }
     }
 
-    fun create(file: File, product: String, user: String, maxRecordSize: Int, filter: LogEventFilter): LogEventRecordRequest? {
+    fun create(file: File, product: String, user: String, maxRecordSize: Int, filter: LogEventFilter, internal: Boolean): LogEventRecordRequest? {
       try {
         val records = ArrayList<LogEventRecord>()
         BufferedReader(FileReader(file.path)).use { reader ->
@@ -40,7 +40,7 @@ class LogEventRecordRequest(val product : String, val user: String, val records:
             line = fillNextBatch(reader, line, events, sizeEstimator, maxRecordSize, filter)
           }
         }
-        return LogEventRecordRequest(product, user, records)
+        return LogEventRecordRequest(product, user, records, internal)
       }
       catch (e: JsonSyntaxException) {
         LOG.warn(e)
@@ -78,7 +78,8 @@ class LogEventRecordRequest(val product : String, val user: String, val records:
     other as LogEventRecordRequest
 
     if (product != other.product) return false
-    if (user != other.user) return false
+    if (device != other.device) return false
+    if (internal != other.internal) return false
     if (records != other.records) return false
 
     return true
@@ -86,7 +87,8 @@ class LogEventRecordRequest(val product : String, val user: String, val records:
 
   override fun hashCode(): Int {
     var result = product.hashCode()
-    result = 31 * result + user.hashCode()
+    result = 31 * result + device.hashCode()
+    result = 31 * result + internal.hashCode()
     result = 31 * result + records.hashCode()
     return result
   }

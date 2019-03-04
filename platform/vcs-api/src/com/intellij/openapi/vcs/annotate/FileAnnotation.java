@@ -358,9 +358,7 @@ public abstract class FileAnnotation {
     List<VcsFileRevision> revisions = annotation.getRevisions();
     if (revisions == null) return null;
 
-    List<List<VcsRevisionNumber>> orderedRevisions = ContainerUtil.map(revisions, (revision) -> {
-      return Collections.singletonList(revision.getRevisionNumber());
-    });
+    List<List<VcsRevisionNumber>> orderedRevisions = ContainerUtil.map(revisions, (revision) -> Collections.singletonList(revision.getRevisionNumber()));
 
     return () -> orderedRevisions;
   }

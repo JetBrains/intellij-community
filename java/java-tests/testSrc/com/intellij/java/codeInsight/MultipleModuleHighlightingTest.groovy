@@ -73,25 +73,25 @@ class Class3 {
     myFixture.addFileToProject "mod1/p/A.java", '''
 package p; 
 public class A {
-   public void foo() {}
+   public void foo() { /* mod1 A */ }
 }
 '''
     myFixture.addFileToProject "mod1/p/B.java", '''
 package p; 
 public class B extends A {
-   public void foo() {}
+   public void foo() { /* mod1 B */ }
 }
 '''
     myFixture.addFileToProject "mod1/p/C.java", '''
 package p; 
 public class C extends B {
-   public void foo() {}
+   public void foo() { /* mod1 C */ }
 }
 '''
     myFixture.addFileToProject "mod2/p/A.java", '''
 package p; 
 public class A {
-   public void foo() {}
+   public void foo() { /* mod2 A */ }
 }
 '''
     myFixture.addFileToProject "mod2/p/B.java", '''

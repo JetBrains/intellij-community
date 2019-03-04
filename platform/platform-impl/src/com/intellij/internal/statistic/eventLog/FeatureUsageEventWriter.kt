@@ -14,6 +14,8 @@ interface FeatureUsageEventWriter {
   fun log(message: String)
 
   fun getFiles(): List<File>
+
+  fun cleanup()
 }
 
 class FeatureUsageLogEventWriter : FeatureUsageEventWriter {
@@ -49,5 +51,9 @@ class FeatureUsageLogEventWriter : FeatureUsageEventWriter {
     val activeLog = fileAppender?.activeLogName
     val files = File(getEventLogDir().toUri()).listFiles { f: File -> !StringUtil.equals(f.name, activeLog) }
     return files?.toList() ?: emptyList()
+  }
+
+  override fun cleanup() {
+    fileAppender?.cleanUp()
   }
 }

@@ -20,7 +20,7 @@ class SvnBranchStateProvider(val project: Project, val vcsManager: ProjectLevelV
   override fun getCurrentBranch(path: FilePath): BranchData? {
     if (!vcsManager.checkVcsIsActive(SvnVcs.VCS_NAME)) return null
 
-    val wcRoot = (vcsManager.getVcsFor(path) as? SvnVcs)?.svnFileUrlMapping?.getWcRootForFilePath(path.ioFile) ?: return null
+    val wcRoot = (vcsManager.getVcsFor(path) as? SvnVcs)?.svnFileUrlMapping?.getWcRootForFilePath(path) ?: return null
     val configuration = branchManager.svnBranchConfigManager.getConfigOrNull(wcRoot.virtualFile) ?: return null
     val branchUrl = configuration.getWorkingBranch(wcRoot.url) ?: return null
     val presentableRootName = join(wcRoot.root.presentableName, getRelativePath(wcRoot.virtualFile, wcRoot.root))

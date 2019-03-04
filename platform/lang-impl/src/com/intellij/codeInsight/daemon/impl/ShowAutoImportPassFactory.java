@@ -6,7 +6,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -24,6 +24,6 @@ public class ShowAutoImportPassFactory implements TextEditorHighlightingPassFact
   @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    return ScratchFileService.isInProjectOrScratch(file) ? new ShowAutoImportPass(myProject, file, editor) : null;
+    return BaseIntentionAction.canModify(file) ? new ShowAutoImportPass(myProject, file, editor) : null;
   }
 }

@@ -19,6 +19,7 @@ import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import icons.GithubIcons
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -40,13 +41,14 @@ internal class GithubPullRequestsToolWindowManager(private val project: Project,
 
   fun createPullRequestsTab(requestExecutor: GithubApiRequestExecutor,
                             repository: GitRepository, remote: GitRemote, remoteUrl: String,
-                            repoDetails: GithubRepoDetailed,
+                            accountDetails: GithubAuthenticatedUser, repoDetails: GithubRepoDetailed,
                             account: GithubAccount) {
     var toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID)
     val contentManager: ContentManager
 
     if (toolWindow == null) {
-      val component = componentFactory.createComponent(requestExecutor, repository, remote, repoDetails, account) ?: return
+      val component = componentFactory.createComponent(requestExecutor, repository, remote, accountDetails, repoDetails, account)
+                      ?: return
 
       toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.BOTTOM, project, true)
         .apply {
@@ -68,7 +70,8 @@ internal class GithubPullRequestsToolWindowManager(private val project: Project,
       contentManager = toolWindow.contentManager
       val existingContent = contentManager.findContent(repository, remote, remoteUrl, account)
       if (existingContent == null) {
-        val component = componentFactory.createComponent(requestExecutor, repository, remote, repoDetails, account) ?: return
+        val component = componentFactory.createComponent(requestExecutor, repository, remote, accountDetails, repoDetails, account)
+                        ?: return
         val content = createContent(contentManager, component, repository, remote, remoteUrl, account)
         contentManager.addContent(content)
       }

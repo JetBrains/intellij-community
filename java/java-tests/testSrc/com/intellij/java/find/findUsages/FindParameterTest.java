@@ -18,29 +18,28 @@ package com.intellij.java.find.findUsages;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.testFramework.PsiTestCase;
-import junit.framework.Assert;
+import com.intellij.testFramework.LightIdeaTestCase;
 
 /**
- *  @author dsl
+ * @author dsl
  */
-public class FindParameterTest extends PsiTestCase {
+public class FindParameterTest extends LightIdeaTestCase {
   public void testMethod() {
     String text =
-            "void method(final int i) {" +
-            "  Runnable runnable = new Runnable() {" +
-            "    public void run() {" +
-            "      System.out.println(i);" +
-            "    }" +
-            "  };" +
-            "  System.out.println(i);" +
-            "}";
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiManager.getProject());
-    final PsiMethod methodFromText = elementFactory.createMethodFromText(text, null);
-    final PsiParameter[] parameters = methodFromText.getParameterList().getParameters();
-    final PsiReference[] references =
+      "void method(final int i) {" +
+      "  Runnable runnable = new Runnable() {" +
+      "    public void run() {" +
+      "      System.out.println(i);" +
+      "    }" +
+      "  };" +
+      "  System.out.println(i);" +
+      "}";
+    PsiManager psiManager = PsiManager.getInstance(getProject());
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiManager.getProject());
+    PsiMethod methodFromText = elementFactory.createMethodFromText(text, null);
+    PsiParameter[] parameters = methodFromText.getParameterList().getParameters();
+    PsiReference[] references =
       ReferencesSearch.search(parameters[0], new LocalSearchScope(methodFromText), false).toArray(PsiReference.EMPTY_ARRAY);
-    Assert.assertEquals(references.length, 2);
+    assertEquals(2, references.length);
   }
 }

@@ -46,6 +46,10 @@ public class YAMLHighlightingTest extends LightPlatformCodeInsightFixtureTestCas
     doTest();
   }
 
+  public void testSameLineComposedValue() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.testHighlighting(true, false, false, getTestName(true) + ".yml");
   }

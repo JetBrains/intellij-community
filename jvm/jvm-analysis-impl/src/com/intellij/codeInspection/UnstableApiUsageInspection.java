@@ -3,6 +3,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiReference;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+
+import static com.intellij.codeInspection.deprecation.DeprecationInspectionBase.getPresentableName;
 
 public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
   public final List<String> unstableApiAnnotations = new ExternalizableStringSet(
@@ -30,8 +34,11 @@ public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
   }
 
   @Override
-  protected void createProblem(@NotNull PsiReference reference, @NotNull ProblemsHolder holder) {
-    String message = JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", getReferenceText(reference));
+  protected void createProblem(@NotNull PsiReference reference,
+                               @NotNull PsiModifierListOwner annotatedTarget,
+                               @NotNull List<PsiAnnotation> annotations,
+                               @NotNull ProblemsHolder holder) {
+    String message = JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", getPresentableName(annotatedTarget));
     holder.registerProblem(reference, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 

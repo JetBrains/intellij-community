@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -39,10 +38,10 @@ public class RefreshVFsSynchronously {
         filesToRefresh.add(vf);
       }
     }
-    VfsUtil.markDirtyAndRefresh(false, false, false, ArrayUtil.toObjectArray(filesToRefresh, VirtualFile.class));
+    VfsUtil.markDirtyAndRefresh(false, false, false, filesToRefresh.toArray(VirtualFile.EMPTY_ARRAY));
   }
 
-  private static void refreshDeletedOrReplaced(@NotNull Collection<File> deletedOrReplaced) {
+  private static void refreshDeletedOrReplaced(@NotNull Collection<? extends File> deletedOrReplaced) {
     Collection<VirtualFile> filesToRefresh = ContainerUtil.newHashSet();
     for (File file : deletedOrReplaced) {
       File parent = file.getParentFile();
@@ -51,7 +50,7 @@ public class RefreshVFsSynchronously {
         filesToRefresh.add(vf);
       }
     }
-    VfsUtil.markDirtyAndRefresh(false, true, false, ArrayUtil.toObjectArray(filesToRefresh, VirtualFile.class));
+    VfsUtil.markDirtyAndRefresh(false, true, false, filesToRefresh.toArray(VirtualFile.EMPTY_ARRAY));
   }
 
   @Nullable
@@ -65,15 +64,15 @@ public class RefreshVFsSynchronously {
     return vf == null || !vf.isValid() ? null : vf;
   }
 
-  public static void updateChangesForRollback(final List<Change> changes) {
+  public static void updateChangesForRollback(final List<? extends Change> changes) {
     updateChangesImpl(changes, RollbackChangeWrapper.ourInstance);
   }
 
-  public static void updateChanges(final Collection<Change> changes) {
+  public static void updateChanges(final Collection<? extends Change> changes) {
     updateChangesImpl(changes, DirectChangeWrapper.ourInstance);
   }
 
-  private static void updateChangesImpl(final Collection<Change> changes, final ChangeWrapper wrapper) {
+  private static void updateChangesImpl(final Collection<? extends Change> changes, final ChangeWrapper wrapper) {
     Collection<File> deletedOrReplaced = ContainerUtil.newHashSet();
     Collection<File> toRefresh = ContainerUtil.newHashSet();
     for (Change change : changes) {

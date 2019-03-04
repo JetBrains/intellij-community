@@ -163,27 +163,22 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
   @Override
   public Collection<VirtualFile> getRoots() {
     Value value = getValue();
-
     if (value instanceof RootsProvider) {
       return ((RootsProvider)value).getRoots();
-    }
-    if (value instanceof PsiFile) {
-      PsiFile vFile = ((PsiFile)value).getContainingFile();
-      if (vFile != null && vFile.getVirtualFile() != null) {
-        return Collections.singleton(vFile.getVirtualFile());
-      }
-      return EMPTY_ROOTS;
     }
     if (value instanceof VirtualFile) {
       return Collections.singleton((VirtualFile)value);
     }
     if (value instanceof PsiFileSystemItem) {
-      return Collections.singleton(((PsiFileSystemItem)value).getVirtualFile());
+      PsiFileSystemItem item = (PsiFileSystemItem)value;
+      return getDefaultRootsFor(item.getVirtualFile());
     }
-
-    return EMPTY_ROOTS;
+    return Collections.emptySet();
   }
 
+  protected static Collection<VirtualFile> getDefaultRootsFor(@Nullable VirtualFile file) {
+    return file != null ? Collections.singleton(file) : Collections.emptySet();
+  }
 
   @Override
   protected boolean hasProblemFileBeneath() {

@@ -20,6 +20,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.GithubAuthenticationManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutor$Factory"/>
@@ -29,14 +30,17 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubImageResizer"/>
+
     <projectService serviceImplementation="org.jetbrains.plugins.github.extensions.GithubAccountGitAuthenticationFailureManager"/>
     <projectService serviceInterface="org.jetbrains.plugins.github.util.GithubProjectSettings"
                     serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubSharedProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.GithubPullRequestsToolWindowManager"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.GithubPullRequestsComponentFactory"/>
+
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider"/>
-    <projectConfigurable parentId="project.propVCSSupport.Mappings" instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
+    <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500" instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
     <statistics.applicationUsagesCollector
         implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
   </extensions>
@@ -63,7 +67,6 @@
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
-      <add-to-group group-id="Git.LogContextMenu"/>
       <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
       <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
       <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
@@ -82,7 +85,14 @@
               class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshListAction"/>
     </group>
     <action id="Github.PullRequest.Preview.Refresh"
-            class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshPreviewAction"
+            class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshDetailsAction"
             internal="true"/>
+
+    <group>
+      <action id="Github.PullRequest.Zip.Commits.Toggle"
+              class="org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestChangesComponent$ToggleZipCommitsAction"/>
+
+      <add-to-group group-id="ChangesView.GroupBy" anchor="last"/>
+    </group>
   </actions>
 </idea-plugin>

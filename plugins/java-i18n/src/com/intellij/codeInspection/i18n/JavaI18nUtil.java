@@ -5,8 +5,8 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.template.macro.MacroUtil;
-import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.lang.properties.references.I18nUtil;
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
@@ -61,7 +60,7 @@ public class JavaI18nUtil extends I18nUtil {
     return isPassedToAnnotatedParam(expression, AnnotationUtil.PROPERTY_KEY, resourceBundleRef, null);
   }
 
-  public static boolean mustBePropertyKey(@NotNull ULiteralExpression expression, @Nullable Ref<? super UExpression> resourceBundleRef) {
+  public static boolean mustBePropertyKey(@NotNull UExpression expression, @Nullable Ref<? super UExpression> resourceBundleRef) {
     final UElement parent = expression.getUastParent();
     if (parent instanceof UVariable) {
       UAnnotation annotation = ((UVariable)parent).findAnnotation(AnnotationUtil.PROPERTY_KEY);
@@ -89,15 +88,7 @@ public class JavaI18nUtil extends I18nUtil {
     expression = getTopLevelExpression(expression);
     final PsiElement parent = expression.getParent();
     if (!(parent instanceof PsiExpressionList)) return false;
-    int idx = -1;
-    final PsiExpression[] args = ((PsiExpressionList)parent).getExpressions();
-    for (int i = 0; i < args.length; i++) {
-      PsiExpression arg = args[i];
-      if (PsiTreeUtil.isAncestor(arg, expression, false)) {
-        idx = i;
-        break;
-      }
-    }
+    int idx = ArrayUtil.indexOf(((PsiExpressionList)parent).getExpressions(), expression);
     if (idx == -1) return false;
 
     PsiElement grParent = parent.getParent();

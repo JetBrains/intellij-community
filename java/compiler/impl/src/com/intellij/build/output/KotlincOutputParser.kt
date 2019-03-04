@@ -2,6 +2,7 @@
 package com.intellij.build.output
 
 import com.intellij.build.FilePosition
+import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.FileMessageEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
@@ -22,7 +23,7 @@ class KotlincOutputParser : BuildOutputParser {
     private const val COMPILER_MESSAGES_GROUP = "Kotlin compiler"
   }
 
-  override fun parse(line: String, reader: BuildOutputInstantReader, consumer: Consumer<in MessageEvent>): Boolean {
+  override fun parse(line: String, reader: BuildOutputInstantReader, consumer: Consumer<in BuildEvent>): Boolean {
     val colonIndex1 = line.colon()
 
     val severity = if (colonIndex1 >= 0) line.substringBeforeAndTrim(colonIndex1) else return false
@@ -97,6 +98,7 @@ class KotlincOutputParser : BuildOutputParser {
     return colonIndex1 == 0
            || (colonIndex1 >= 0 && substring(0, colonIndex1).startsWithSeverityPrefix()) // Next Kotlin message
            || StringUtil.startsWith(this, "Note: ") // Next javac info message candidate
+           || StringUtil.startsWith(this, "> Task :") // Next gradle message candidate
            || StringUtil.containsIgnoreCase(this, "FAILURE")
            || StringUtil.containsIgnoreCase(this, "FAILED")
   }

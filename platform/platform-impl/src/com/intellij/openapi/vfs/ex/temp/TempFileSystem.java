@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.ex.temp;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -100,7 +86,8 @@ public class TempFileSystem extends LocalFileSystemBase {
     return new FakeVirtualFile(parent, file);
   }
 
-  @Nullable public VirtualFile findModelChild(@NotNull VirtualFile parent, @NotNull String name) {
+  @Nullable
+  public VirtualFile findModelChild(@NotNull VirtualFile parent, @NotNull String name) {
     FSItem child = convertDirectory(parent).findChild(name);
     return child == null ? null : new FakeVirtualFile(parent, name);
   }
@@ -265,7 +252,7 @@ public class TempFileSystem extends LocalFileSystemBase {
     public abstract boolean isDirectory();
 
     @Nullable
-    public FSItem findChild(final String name) {
+    public FSItem findChild(@NotNull String name) {
       return null;
     }
 
@@ -299,7 +286,7 @@ public class TempFileSystem extends LocalFileSystemBase {
 
     @Override
     @Nullable
-    public FSItem findChild(final String name) {
+    public FSItem findChild(@NotNull final String name) {
       return myChildren.get(name);
     }
 

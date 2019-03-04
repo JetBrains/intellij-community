@@ -15,6 +15,8 @@
  */
 package org.intellij.lang.regexp;
 
+import java.util.EnumSet;
+
 /**
  * @author yole
  */
@@ -121,4 +123,9 @@ public enum RegExpCapability {
    * MySQL character classes [=c=] [.class.] [:<:] [:>:]
    */
   MYSQL_BRACKET_EXPRESSIONS,
+  ;
+  static final EnumSet<RegExpCapability> DEFAULT_CAPABILITIES = EnumSet.of(NESTED_CHARACTER_CLASSES,
+                                                                           ALLOW_HORIZONTAL_WHITESPACE_CLASS,
+                                                                           UNICODE_CATEGORY_SHORTHAND,
+                                                                           EXTENDED_UNICODE_CHARACTER);
 }

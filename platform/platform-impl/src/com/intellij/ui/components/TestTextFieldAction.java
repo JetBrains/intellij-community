@@ -119,6 +119,15 @@ public class TestTextFieldAction extends DumbAwareAction {
             }
           },
           new ExtendableTextComponent.Extension() {
+            private final Icon fading = new AnimatedIcon.Fading(AllIcons.Ide.FatalError);
+            private final Icon blinking = new AnimatedIcon.Blinking(AllIcons.Ide.FatalError);
+
+            @Override
+            public Icon getIcon(boolean hovered) {
+              return hovered ? fading : blinking;
+            }
+          },
+          new ExtendableTextComponent.Extension() {
             private final TextIcon icon = new TextIcon("empty", null, null, 1);
 
             @Override
@@ -129,7 +138,7 @@ public class TestTextFieldAction extends DumbAwareAction {
                 icon.setForeground(getBackground());
                 return icon;
               }
-              return hovered ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight;
+              return hovered ? AllIcons.Actions.CloseHovered : AllIcons.Actions.Close;
             }
 
             @Override

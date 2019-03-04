@@ -1,11 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions
 
-import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
@@ -25,7 +23,7 @@ class AsyncStacksToggleAction : ToggleAction() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = DebuggerUtilsEx.isInJavaSession(e)
+    e.presentation.isEnabledAndVisible = DebuggerAction.isInJavaSession(e)
   }
 
   companion object {

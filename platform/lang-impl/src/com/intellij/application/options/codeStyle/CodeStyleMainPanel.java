@@ -43,7 +43,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   private final CodeStyleSchemesModel myModel;
   private final CodeStyleSettingsPanelFactory myFactory;
   private final CodeStyleSchemesPanel mySchemesPanel;
-  private boolean myIsDisposed = false;
+  private boolean myIsDisposed;
   private final Action mySetFromAction = new AbstractAction("Set from...") {
     @Override
     public void actionPerformed(ActionEvent event) {
@@ -59,7 +59,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
   private final PropertiesComponent myProperties;
 
-  private final static String SELECTED_TAB = "settings.code.style.selected.tab";
+  private static final String SELECTED_TAB = "settings.code.style.selected.tab";
 
   public CodeStyleMainPanel(CodeStyleSchemesModel model, CodeStyleSettingsPanelFactory factory, boolean schemesPanelEnabled) {
     super(new BorderLayout());
@@ -150,7 +150,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     mySettingsPanel.add(WAIT_CARD, waitPanel);
   }
 
-  public void onCurrentSchemeChanged() {
+  private void onCurrentSchemeChanged() {
     myLayout.show(mySettingsPanel, WAIT_CARD);
     final Runnable replaceLayout = () -> {
       if (!myIsDisposed) {

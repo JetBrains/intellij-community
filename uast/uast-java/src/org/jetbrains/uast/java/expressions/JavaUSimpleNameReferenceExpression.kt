@@ -18,10 +18,7 @@ package org.jetbrains.uast.java
 import com.intellij.psi.*
 import com.intellij.psi.infos.CandidateInfo
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UMultiResolvable
-import org.jetbrains.uast.USimpleNameReferenceExpression
-import org.jetbrains.uast.UTypeReferenceExpression
+import org.jetbrains.uast.*
 
 class JavaUSimpleNameReferenceExpression(
   override val psi: PsiElement?,
@@ -29,6 +26,7 @@ class JavaUSimpleNameReferenceExpression(
   givenParent: UElement?,
   val reference: PsiReference? = null
 ) : JavaAbstractUExpression(givenParent), USimpleNameReferenceExpression, UMultiResolvable {
+
   override fun resolve(): PsiElement? = (reference ?: psi as? PsiReference)?.resolve()
 
   override fun multiResolve(): Iterable<ResolveResult> =
@@ -47,6 +45,13 @@ class JavaUSimpleNameReferenceExpression(
   }
 
   override fun convertParent(): UElement? = super.convertParent().let(this::unwrapCompositeQualifiedReference)
+
+
+  override val referenceNameElement: UElement?
+    get() = when (psi) {
+      is PsiJavaCodeReferenceElement -> psi.referenceNameElement.toUElement()
+      else -> this
+    }
 
 }
 

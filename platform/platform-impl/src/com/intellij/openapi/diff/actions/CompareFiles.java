@@ -10,6 +10,7 @@ import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.diff.ex.DiffContentFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * @deprecated use {@link com.intellij.diff.actions.CompareFilesAction} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
 public class CompareFiles extends BaseDiffAction {
   public static final DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("CompareFiles.DiffRequest");
 

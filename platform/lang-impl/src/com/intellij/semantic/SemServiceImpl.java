@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.semantic;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.RecursionGuard;
@@ -26,6 +13,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ExtensionInstantiator;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,7 +33,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author peter
  */
 @SuppressWarnings({"unchecked"})
-public class SemServiceImpl extends SemService{
+public class SemServiceImpl extends SemService {
+  private static final Logger LOG = Logger.getInstance(SemServiceImpl.class);
+
   private final AtomicReference<ConcurrentMap<PsiElement, SemCacheChunk>> myCache = new AtomicReference<>();
   private volatile  MultiMap<SemKey, NullableFunction<PsiElement, Collection<? extends SemElement>>> myProducers;
   private final Project myProject;
@@ -56,12 +46,9 @@ public class SemServiceImpl extends SemService{
   public SemServiceImpl(Project project, PsiManager psiManager) {
     myProject = project;
     final MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
-      @Override
-      public void modificationCountChanged() {
-        if (!isInsideAtomicChange()) {
-          clearCache();
-        }
+    connection.subscribe(PsiModificationTracker.TOPIC, () -> {
+      if (!isInsideAtomicChange()) {
+        clearCache();
       }
     });
 
@@ -109,8 +96,18 @@ public class SemServiceImpl extends SemService{
       }
     };
 
-    for (SemContributorEP contributor : myProject.getExtensions(SemContributor.EP_NAME)) {
-      contributor.registerSemProviders(myProject.getPicoContainer(), registrar);
+    for (SemContributorEP contributor : SemContributor.EP_NAME.getExtensionList()) {
+      SemContributor semContributor;
+      try {
+        semContributor = ExtensionInstantiator.instantiateWithPicoContainerOnlyIfNeeded(contributor.implementation,
+                                                                                        myProject.getPicoContainer(),
+                                                                                        contributor.getPluginDescriptor());
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        continue;
+      }
+      semContributor.registerSemProviders(registrar, myProject);
     }
 
     return map;
@@ -145,7 +142,7 @@ public class SemServiceImpl extends SemService{
 
   @Override
   @Nullable
-  public <T extends SemElement> List<T> getSemElements(final SemKey<T> key, @NotNull final PsiElement psi) {
+  public <T extends SemElement> List<T> getSemElements(@NotNull SemKey<T> key, @NotNull final PsiElement psi) {
     List<T> cached = _getCachedSemElements(key, true, psi);
     if (cached != null) {
       return cached;
@@ -208,7 +205,7 @@ public class SemServiceImpl extends SemService{
   }
 
   @Nullable
-  private <T extends SemElement> List<T> _getCachedSemElements(SemKey<T> key, boolean paranoid, final PsiElement element) {
+  private <T extends SemElement> List<T> _getCachedSemElements(@NotNull SemKey<T> key, boolean paranoid, final PsiElement element) {
     final SemCacheChunk chunk = obtainChunk(element);
     if (chunk == null) return null;
 

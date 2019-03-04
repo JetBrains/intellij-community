@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -214,7 +212,7 @@ public class InvocationExprent extends Exprent {
       if (isBoxingCall() && canIgnoreBoxing) {
         // process general "boxing" calls, e.g. 'Object[] data = { true }' or 'Byte b = 123'
         // here 'byte' and 'short' values do not need an explicit narrowing type cast
-        ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, false, tracer);
+        ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, false, false, tracer);
         return buf;
       }
 
@@ -351,9 +349,8 @@ public class InvocationExprent extends Exprent {
         TextBuffer buff = new TextBuffer();
         boolean ambiguous = setAmbiguousParameters.get(i);
 
-        Exprent param = unboxIfNeeded(lstParameters.get(i));
         // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
-        ExprProcessor.getCastedExprent(param, descriptor.params[i], buff, indent, true, ambiguous, true, tracer);
+        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, true, true, tracer);
 
         // the last "new Object[0]" in the vararg call is not printed
         if (buff.length() > 0) {
@@ -370,14 +367,6 @@ public class InvocationExprent extends Exprent {
     buf.append(')');
 
     return buf;
-  }
-
-  public static Exprent unboxIfNeeded(Exprent param) {
-    // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
-    if (param.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)param).isBoxingCall()) {
-      param = ((InvocationExprent)param).lstParameters.get(0);
-    }
-    return param;
   }
 
   private boolean isVarArgCall() {
@@ -398,7 +387,7 @@ public class InvocationExprent extends Exprent {
     return false;
   }
 
-  private boolean isBoxingCall() {
+  public boolean isBoxingCall() {
     if (isStatic && "valueOf".equals(name) && lstParameters.size() == 1) {
       int paramType = lstParameters.get(0).getExprType().type;
 

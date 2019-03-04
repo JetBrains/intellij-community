@@ -63,8 +63,10 @@ public abstract class BasicDomElementsInspection<T extends DomElement> extends D
         helper.checkResolveProblems(genericDomValue, holder);
       }
     }
-    for (final Class<? extends T> aClass : getDomClasses()) {
-      helper.runAnnotators(element, holder, aClass);
+    if (!holder.getFileElement().getFileDescription().isAutomaticHighlightingEnabled()) {
+      for (Class<? extends T> aClass : getDomClasses()) {
+        helper.runAnnotators(element, holder, aClass);
+      }
     }
     if (oldSize != holder.getSize()) return;
 

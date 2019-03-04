@@ -128,6 +128,9 @@ public class CoverageAnnotatorIntegrationTest extends ModuleTestCase {
     try {
       myCompilerTester.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

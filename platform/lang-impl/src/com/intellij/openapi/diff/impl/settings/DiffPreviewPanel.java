@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
@@ -165,9 +164,10 @@ class DiffPreviewPanel implements PreviewPanel {
     @Override
     public void mouseMoved(@NotNull EditorMouseEvent e) {
       int line = getLineNumber(mySide, e);
-      if (getChange(mySide, line) != null || getFoldRegion(mySide, line) != null) {
-        EditorUtil.setHandCursor(e.getEditor());
-      }
+      Cursor cursor = getChange(mySide, line) != null || getFoldRegion(mySide, line) != null
+                      ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+                      : null;
+      ((EditorEx)e.getEditor()).setCustomCursor(DiffPreviewPanel.class, cursor);
     }
   }
 
@@ -217,7 +217,9 @@ class DiffPreviewPanel implements PreviewPanel {
     for (SimpleThreesideDiffChange change : myViewer.getChanges()) {
       int startLine = change.getStartLine(side);
       int endLine = change.getEndLine(side);
-      if (DiffUtil.isSelectedByLine(line, startLine, endLine)) return change;
+      if (DiffUtil.isSelectedByLine(line, startLine, endLine) && change.isChange(side)) {
+        return change;
+      }
     }
     return null;
   }

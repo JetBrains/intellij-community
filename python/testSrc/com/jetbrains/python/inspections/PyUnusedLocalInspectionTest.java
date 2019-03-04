@@ -109,6 +109,63 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
     doTest(inspection);
   }
 
+  // PY-16419, PY-26417
+  public void testPotentiallySuppressedExceptions() {
+    doTestByText(
+      "class C(object):\n" +
+      "    def __enter__(self):\n" +
+      "        return self\n" +
+      "\n" +
+      "    def __exit__(self, exc, value, traceback):\n" +
+      "        return undefined\n" +
+      "\n" +
+      "def f11():\n" +
+      "    with C():\n" +
+      "        x = 1\n" +
+      "        raise Exception()\n" +
+      "    print(x) #pass\n" +
+      "\n" +
+      "def g2():\n" +
+      "    raise Exception()\n" +
+      "\n" +
+      "def f12():\n" +
+      "    with C():\n" +
+      "        <weak_warning descr=\"Local variable 'x' value is not used\">x</weak_warning> = 2\n" +
+      "        return g2()\n" +
+      "    print(x) #pass\n" +
+      "\n" +
+      "class A1(TestCase):\n" +
+      "    def f3(self):\n" +
+      "        with C():\n" +
+      "            x = 2\n" +
+      "            g2()\n" +
+      "        print(x) #pass\n" +
+      "    \n" +
+      "import contextlib\n" +
+      "from contextlib import suppress\n" +
+      "from unittest import TestCase\n" +
+      "\n" +
+      "def f21():\n" +
+      "    with suppress(Exception):\n" +
+      "        x = 1\n" +
+      "        raise Exception()\n" +
+      "    print(x) #pass\n" +
+      "\n" +
+      "def f22():\n" +
+      "    with contextlib.suppress(Exception):\n" +
+      "        x = 2\n" +
+      "        return g2()\n" +
+      "    print(x) #pass\n" +
+      "\n" +
+      "class A2(TestCase):\n" +
+      "    def f3(self):\n" +
+      "        with self.assertRaises(Exception):\n" +
+      "            x = 2\n" +
+      "            g2()\n" +
+      "        print(x) #pass"
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

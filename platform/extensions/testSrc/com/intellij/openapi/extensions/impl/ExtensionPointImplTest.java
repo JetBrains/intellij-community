@@ -1,25 +1,36 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.util.SmartList;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.After;
 import org.junit.Test;
+import org.picocontainer.PicoContainer;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * @author AKireyev
  */
 public class ExtensionPointImplTest {
+  private Disposable disposable = Disposer.newDisposable();
+
+  @After
+  public void tearDown() {
+    if (disposable != null) {
+      Disposer.dispose(disposable);
+    }
+  }
+
   @Test
   public void testCreate() {
     ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
@@ -30,50 +41,19 @@ public class ExtensionPointImplTest {
   @Test
   public void testUnregisterObject() {
     ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
-    extensionPoint.registerExtension(new Integer(123));
-    Object[] extensions = extensionPoint.getExtensions();
-    assertThat(extensions).hasSize(1);
-    extensionPoint.unregisterExtension(new Integer(123));
-    extensions = extensionPoint.getExtensions();
-    assertThat(extensions).isEmpty();
-  }
+    extensionPoint.registerExtension(new Integer(123), disposable);
+    assertThat(extensionPoint.getExtensionList()).hasSize(1);
 
-  @Test
-  public void testRegisterUnregisterExtension() {
-    final AreaInstance area = new AreaInstance() {};
-    final ExtensionPoint<Object> extensionPoint = new ExtensionPointImpl<>(
-      "an.extension.point", Object.class.getName(), ExtensionPoint.Kind.INTERFACE, buildExtensionArea(), area,
-      new UndefinedPluginDescriptor());
+    Disposer.dispose(disposable);
+    disposable = null;
 
-    final boolean[] flags = new boolean[2];
-    Extension extension = new Extension() {
-      @Override
-      public void extensionAdded(@NotNull ExtensionPoint extensionPoint1) {
-        assertThat(extensionPoint1).isSameAs(extensionPoint);
-        assertThat(extensionPoint1.getArea()).isSameAs(area);
-        flags[0] = true;
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull ExtensionPoint extensionPoint1) {
-        assertThat(extensionPoint1).isSameAs(extensionPoint);
-        assertThat(extensionPoint1.getArea()).isSameAs(area);
-        flags[1] = true;
-      }
-    };
-
-    extensionPoint.registerExtension(extension);
-    assertThat(flags[0]).describedAs("Register call is missed").isTrue();
-    assertThat(flags[1]).isFalse();
-
-    extensionPoint.unregisterExtension(extension);
-    assertThat(flags[1]).describedAs("Unregister call is missed").isTrue();
+    assertThat(extensionPoint.getExtensionList()).isEmpty();
   }
 
   @Test
   public void testRegisterObject() {
     ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
-    extensionPoint.registerExtension(new Integer(123));
+    extensionPoint.registerExtension(new Integer(123), disposable);
     Object[] extensions = extensionPoint.getExtensions();
     assertThat(extensions).describedAs("One extension").hasSize(1);
     assertThat(extensions).isInstanceOf(Integer[].class);
@@ -83,8 +63,8 @@ public class ExtensionPointImplTest {
   @Test
   public void testRegistrationOrder() {
     ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
-    extensionPoint.registerExtension(new Integer(123));
-    extensionPoint.registerExtension(new Integer(321), LoadingOrder.FIRST);
+    extensionPoint.registerExtension(new Integer(123), disposable);
+    extensionPoint.registerExtension(new Integer(321), LoadingOrder.FIRST, disposable);
     Object[] extensions = extensionPoint.getExtensions();
     assertThat(extensions).hasSize(2);
     assertThat(extensions[0]).isEqualTo(new Integer(321));
@@ -105,14 +85,17 @@ public class ExtensionPointImplTest {
       public void extensionRemoved(@NotNull Integer extension, final PluginDescriptor pluginDescriptor) {
         removed[0] = true;
       }
-    });
+    }, true, null);
     assertThat(added[0]).isFalse();
     assertThat(removed[0]).isFalse();
-    extensionPoint.registerExtension(new Integer(123));
+    extensionPoint.registerExtension(new Integer(123), disposable);
     assertThat(added[0]).isTrue();
     assertThat(removed[0]).isFalse();
     added[0] = false;
-    extensionPoint.unregisterExtension(new Integer(123));
+
+    Disposer.dispose(disposable);
+    disposable = null;
+
     assertThat(added[0]).isFalse();
     assertThat(removed[0]).isTrue();
   }
@@ -121,18 +104,14 @@ public class ExtensionPointImplTest {
   public void testLateListener() {
     ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
     final boolean[] added = new boolean[1];
-    extensionPoint.registerExtension(new Integer(123));
+    extensionPoint.registerExtension(new Integer(123), disposable);
     assertThat(added[0]).isFalse();
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<Integer>() {
       @Override
-      public void extensionAdded(@NotNull Integer extension, final PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull Integer extension, @Nullable PluginDescriptor pluginDescriptor) {
         added[0] = true;
       }
-
-      @Override
-      public void extensionRemoved(@NotNull Integer extension, final PluginDescriptor pluginDescriptor) {
-      }
-    });
+    }, true, null);
     assertThat(added[0]).isTrue();
   }
 
@@ -142,26 +121,26 @@ public class ExtensionPointImplTest {
     ExtensionPoint extensionPoint = buildExtensionPoint(Integer.class);
 
     try {
-      extensionPoint.registerExtension(new Double(0));
+      extensionPoint.registerExtension(new Double(0), disposable);
       fail("must throw");
     }
-    catch (AssertionError ignored) {
+    catch (RuntimeException ignored) {
     }
 
-    assertThat(extensionPoint.getExtensions()).isEmpty();
+    assertThat(extensionPoint.getExtensionList()).isEmpty();
 
-    extensionPoint.registerExtension(new Integer(0));
-    assertThat(extensionPoint.getExtensions()).hasSize(1);
+    extensionPoint.registerExtension(new Integer(0), disposable);
+    assertThat(extensionPoint.getExtensionList()).hasSize(1);
   }
 
   @Test
   public void testIncompatibleAdapter() {
     ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
 
-    extensionPoint.registerExtensionAdapter(stringAdapter());
+    extensionPoint.addExtensionAdapter(stringAdapter());
 
     try {
-      assertThat(extensionPoint.getExtensions()).isEmpty();
+      assertThat(extensionPoint.getExtensionList()).isEmpty();
       fail("must throw");
     }
     catch (AssertionError ignored) {
@@ -171,70 +150,94 @@ public class ExtensionPointImplTest {
   @Test
   public void testCompatibleAdapter() {
     ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
-    extensionPoint.registerExtension(new Integer(0));
+    extensionPoint.registerExtension(new Integer(0), disposable);
     assertThat(extensionPoint.getExtensions()).hasSize(1);
   }
 
   @Test
   public void testCancelledRegistration() {
+    doTestInterruptedAdapterProcessing(() -> {
+      throw new ProcessCanceledException();
+    }, ProcessCanceledException.class);
+  }
+
+  @Test
+  public void testNotApplicableRegistration() {
+    // ExtensionNotApplicableException doesn't interrupt adapter processing,
+    // so, doTestInterruptedAdapterProcessing here is not truly logical, but still eliminates code duplication
+    doTestInterruptedAdapterProcessing(() -> {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }, null);
+  }
+
+  private void doTestInterruptedAdapterProcessing(@NotNull Runnable firework, @Nullable Class<? extends Throwable> expectedErrorClass) {
     ExtensionPoint<String> extensionPoint = buildExtensionPoint(String.class);
     MyShootingComponentAdapter adapter = stringAdapter();
 
-    extensionPoint.registerExtension("first");
-    assertThat(extensionPoint.getExtensions()).hasSize(1);
+    extensionPoint.registerExtension("first", disposable);
+    assertThat(extensionPoint.getExtensionList()).hasSize(1);
 
-    extensionPoint.registerExtension("second", LoadingOrder.FIRST);  // registers a wrapping adapter
-    ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(adapter);
-    adapter.setFire(true);
-    try {
-      extensionPoint.getExtensions();
-      fail("PCE expected");
+    // registers a wrapping adapter
+    extensionPoint.registerExtension("second", LoadingOrder.FIRST, disposable);
+    ((ExtensionPointImpl)extensionPoint).addExtensionAdapter(adapter);
+    adapter.setFire(firework);
+
+    if (expectedErrorClass == null) {
+      assertThat(extensionPoint.getExtensionList()).hasSize(2);
+      adapter.setFire(null);
+      // even if now extension is applicable, adapters is not reprocessed and result is the same
+      assertThat(extensionPoint.getExtensionList()).hasSize(2);
+      return;
     }
-    catch (ProcessCanceledException ignored) { }
+    else {
+      assertThatThrownBy(() -> extensionPoint.getExtensionList()).isInstanceOf(expectedErrorClass);
+    }
 
-    adapter.setFire(false);
-    String[] extensions = extensionPoint.getExtensions();
-    assertThat(extensions[0]).isEqualTo("second");
-    assertThat(new SmartList<>(extensions[1])).containsAnyOf("", "first");
-    assertThat(new SmartList<>(extensions[2])).containsAnyOf("", "first");
-    assertThat(extensions[2]).isNotEqualTo(extensions[1]);
+    adapter.setFire(null);
+    List<String> extensions = extensionPoint.getExtensionList();
+    assertThat(extensionPoint.getExtensionList()).hasSize(3);
+
+    assertThat(extensions.get(0)).isEqualTo("second");
+    assertThat(extensions.get(1)).isIn("", "first");
+    assertThat(extensions.get(2)).isIn("", "first");
+    assertThat(extensions.get(2)).isNotEqualTo(extensions.get(1));
   }
 
   @Test
   public void testListenerNotifications() {
     ExtensionPoint<String> extensionPoint = buildExtensionPoint(String.class);
+
     final List<String> extensions = ContainerUtil.newArrayList();
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<String>() {
       @Override
       public void extensionAdded(@NotNull String extension, @Nullable PluginDescriptor pluginDescriptor) {
         extensions.add(extension);
       }
-    });
-    MyShootingComponentAdapter adapter = stringAdapter();
+    }, true, null);
 
-    extensionPoint.registerExtension("first");
+    extensionPoint.registerExtension("first", disposable);
     assertThat(extensions).contains("first");
 
-    extensionPoint.registerExtension("second", LoadingOrder.FIRST);
-    ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(adapter);
-    adapter.setFire(true);
-    try {
-      extensionPoint.getExtensions();
-      fail("PCE expected");
-    }
-    catch (ProcessCanceledException ignored) { }
+    extensionPoint.registerExtension("second", LoadingOrder.FIRST, disposable);
+
+    MyShootingComponentAdapter adapter = stringAdapter();
+    ((ExtensionPointImpl)extensionPoint).addExtensionAdapter(adapter);
+    adapter.setFire(() -> {
+      throw new ProcessCanceledException();
+    });
+    assertThatThrownBy(() -> extensionPoint.getExtensionList()).isInstanceOf(ProcessCanceledException.class);
     assertThat(extensions).contains("first", "second");
 
-    adapter.setFire(false);
-    extensionPoint.getExtensions();
+    adapter.setFire(null);
+    extensionPoint.getExtensionList();
     assertThat(extensions).contains("first", "second", "");
   }
 
   @Test
   public void clientsCannotModifyCachedExtensions() {
     ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
-    extensionPoint.registerExtension(4);
-    extensionPoint.registerExtension(2);
+    extensionPoint.registerExtension(4, disposable);
+    extensionPoint.registerExtension(2, disposable);
 
     Integer[] extensions = extensionPoint.getExtensions();
     assertThat(extensions).containsExactly(4, 2);
@@ -244,39 +247,33 @@ public class ExtensionPointImplTest {
     assertThat(extensionPoint.getExtensions()).containsExactly(4, 2);
   }
 
-  private static <T> ExtensionPointImpl<T> buildExtensionPoint(Class<T> aClass) {
-    return new ExtensionPointImpl<>(
-      ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass.getName(), ExtensionPoint.Kind.INTERFACE,
-      buildExtensionArea(), null, new UndefinedPluginDescriptor());
-  }
-
-  private static ExtensionsAreaImpl buildExtensionArea() {
-    return new ExtensionsAreaImpl(new DefaultPicoContainer());
+  @NotNull
+  private static <T> ExtensionPointImpl<T> buildExtensionPoint(@NotNull Class<T> aClass) {
+    return new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass, new DefaultPicoContainer());
   }
 
   private static MyShootingComponentAdapter stringAdapter() {
     return new MyShootingComponentAdapter(String.class.getName());
   }
 
-  private static class MyShootingComponentAdapter extends ExtensionComponentAdapter {
-    private boolean myFire;
+  private static final class MyShootingComponentAdapter extends XmlExtensionAdapter {
+    private Runnable myFire;
 
     MyShootingComponentAdapter(@NotNull String implementationClass) {
-      super(implementationClass, new DefaultPicoContainer(), new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null);
+      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null);
     }
 
-    public void setFire(boolean fire) {
+    public void setFire(@Nullable Runnable fire) {
       myFire = fire;
     }
 
+    @NotNull
     @Override
-    public Object getExtension() {
-      if (myFire) {
-        throw new ProcessCanceledException();
+    public Object createInstance(@Nullable PicoContainer container) {
+      if (myFire != null) {
+        myFire.run();
       }
-      else {
-        return super.getExtension();
-      }
+      return super.createInstance(container);
     }
   }
 }

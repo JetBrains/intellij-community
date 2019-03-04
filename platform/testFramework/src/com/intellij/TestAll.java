@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -279,7 +278,7 @@ public class TestAll implements Test {
   }
 
   @Nullable
-  private static Test getTest(@NotNull final Class<?> testCaseClass) {
+  private Test getTest(@NotNull final Class<?> testCaseClass) {
     try {
       if ((testCaseClass.getModifiers() & Modifier.PUBLIC) == 0) {
         return null;
@@ -294,7 +293,7 @@ public class TestAll implements Test {
         return (Test)suiteMethod.invoke(null, ArrayUtil.EMPTY_OBJECT_ARRAY);
       }
 
-      if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass)) {
+      if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {
         boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
         if (runEverything) return createJUnit4Adapter(testCaseClass);
@@ -365,17 +364,22 @@ public class TestAll implements Test {
   }
 
   @NotNull
-  private static JUnit4TestAdapter createJUnit4Adapter(@NotNull Class<?> testCaseClass) {
+  protected JUnit4TestAdapter createJUnit4Adapter(@NotNull Class<?> testCaseClass) {
     return new JUnit4TestAdapter(testCaseClass, getJUnit4TestAdapterCache());
   }
 
   private static JUnit4TestAdapterCache getJUnit4TestAdapterCache() {
     if (ourUnit4TestAdapterCache == null) {
       try {
-        ourUnit4TestAdapterCache = (JUnit4TestAdapterCache)Class.forName("org.apache.tools.ant.taskdefs.optional.junit.CustomJUnit4TestAdapterCache").getMethod("getInstance").invoke(null);
+        //noinspection SpellCheckingInspection
+        ourUnit4TestAdapterCache = (JUnit4TestAdapterCache)
+          Class.forName("org.apache.tools.ant.taskdefs.optional.junit.CustomJUnit4TestAdapterCache")
+            .getMethod("getInstance")
+            .invoke(null);
       }
       catch (Exception e) {
-        System.out.println("Failed to create CustomJUnit4TestAdapterCache, the default JUnit4TestAdapterCache will be used and ignored tests won't be properly reported: " + e.toString());
+        System.out.println("Failed to create CustomJUnit4TestAdapterCache, the default JUnit4TestAdapterCache will be used" +
+                           " and ignored tests won't be properly reported: " + e.toString());
         ourUnit4TestAdapterCache = JUnit4TestAdapterCache.getDefault();
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -52,7 +52,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
   }
 
   public GrVariableDeclarationImpl(@NotNull GrVariableDeclarationStub stub) {
-    super(stub, GroovyElementTypes.VARIABLE_DEFINITION);
+    super(stub, GroovyStubElementTypes.VARIABLE_DECLARATION);
   }
 
   @Override
@@ -68,7 +68,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
   @Override
   @NotNull
   public GrModifierList getModifierList() {
-    return getRequiredStubOrPsiChild(GroovyElementTypes.MODIFIERS);
+    return getRequiredStubOrPsiChild(GroovyStubElementTypes.MODIFIER_LIST);
   }
 
   @Override

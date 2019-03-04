@@ -183,7 +183,8 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
         "test1.nested.TestA",
         "test1.nested.TestWithJunit4",
         "test1.ThirdPartyTest",
-        testB.getQualifiedName()},
+        testB.getQualifiedName(),
+        psiClass2.getQualifiedName()},
       lines);
   }
 

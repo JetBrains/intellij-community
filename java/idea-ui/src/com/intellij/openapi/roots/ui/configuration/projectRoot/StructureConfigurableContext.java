@@ -112,14 +112,17 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
     myLibraryEditorListeners.getMulticaster().libraryRenamed(library, oldName, newName);
   }
 
+  @NotNull
   public StructureLibraryTableModifiableModelProvider getGlobalLibrariesProvider() {
     return createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL);
   }
 
-  public StructureLibraryTableModifiableModelProvider createModifiableModelProvider(final String level) {
+  @NotNull
+  public StructureLibraryTableModifiableModelProvider createModifiableModelProvider(@NotNull String level) {
     return new StructureLibraryTableModifiableModelProvider(level, this);
   }
 
+  @NotNull
   public StructureLibraryTableModifiableModelProvider getProjectLibrariesProvider() {
     return createModifiableModelProvider(LibraryTablesRegistrar.PROJECT_LEVEL);
   }
@@ -134,14 +137,14 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
   }
 
   @Nullable
-  public Library getLibrary(final String libraryName, final String libraryLevel) {
+  public Library getLibrary(final String libraryName, @NotNull String libraryLevel) {
 /* the null check is added only to prevent NPE when called from getLibrary */
     final LibrariesModifiableModel model = myLevel2Providers.get(libraryLevel);
     return model == null ? null : findLibraryModel(libraryName, model);
   }
 
   @Nullable
-  private static Library findLibraryModel(final @NotNull String libraryName, @NotNull LibrariesModifiableModel model) {
+  private static Library findLibraryModel(@NotNull final String libraryName, @NotNull LibrariesModifiableModel model) {
     for (Library library : model.getLibraries()) {
       final Library libraryModel = findLibraryModel(library, model);
       if (libraryModel != null && libraryName.equals(libraryModel.getName())) {

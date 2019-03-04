@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @Deprecated
 public class GithubAuthDataHolder {
-  @NotNull private GithubAuthData myAuthData;
+  @NotNull private final GithubAuthData myAuthData;
 
   public GithubAuthDataHolder(@NotNull GithubAuthData auth) {
     myAuthData = auth;

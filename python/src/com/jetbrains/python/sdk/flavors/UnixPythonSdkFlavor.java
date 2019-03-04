@@ -60,8 +60,7 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
               final String childPath = child.getPath();
               if (!childName.endsWith("-config") &&
                   !childName.startsWith("pythonw") &&
-                  !childName.endsWith("m") &&
-                  !candidates.contains(childPath)) {
+                  !childName.endsWith("m")) {
                 candidates.add(childPath);
               }
               break;

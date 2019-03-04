@@ -3,6 +3,7 @@ package com.intellij.ide.scratch;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.NewActionGroup;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.Language;
@@ -55,19 +56,15 @@ public class ScratchFileActions {
 
     private static final String ACTION_ID = "NewScratchFile";
 
-    private static final String SMALLER_IDE_CONTAINER_GROUP = "PlatformOpenProjectGroup";
-
-    private final String myActionText;
+    private String myActionText;
 
     public NewFileAction() {
       getTemplatePresentation().setIcon(ICON);
-      // A hacky way for customizing text in IDEs without File->New-> submenu
-      myActionText = (isIdeWithoutNewSubmenu() ? "New " : "") + ActionsBundle.actionText(ACTION_ID);
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      getTemplatePresentation().setText(myActionText);
+      getTemplatePresentation().setText(getActionText());
 
       Project project = e.getProject();
       String place = e.getPlace();
@@ -101,20 +98,18 @@ public class ScratchFileActions {
     }
 
     private void updatePresentationTextAndIcon(@NotNull AnActionEvent e, @NotNull Presentation presentation) {
-      presentation.setText(myActionText);
+      presentation.setText(getActionText());
       presentation.setIcon(ICON);
-      if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
-        if (isIdeWithoutNewSubmenu()) {
-          presentation.setIcon(null);
-        }
+      if (ActionPlaces.MAIN_MENU.equals(e.getPlace()) && !NewActionGroup.isActionInNewPopupMenu(this)) {
+        presentation.setIcon(null);
       }
     }
 
-    private boolean isIdeWithoutNewSubmenu() {
-      if (PlatformUtils.isRider()) return true;
-      final AnAction group = ActionManager.getInstance().getActionOrStub(SMALLER_IDE_CONTAINER_GROUP);
-      return group instanceof DefaultActionGroup && ContainerUtil.find(((DefaultActionGroup)group).getChildActionsOrStubs(), action ->
-        action == this || (action instanceof ActionStub && ((ActionStub)action).getId().equals(ACTION_ID))) != null;
+    private String getActionText() {
+      if (myActionText == null) {
+        myActionText = (NewActionGroup.isActionInNewPopupMenu(this) ? "" : "New ") + ActionsBundle.actionText(ACTION_ID);
+      }
+      return myActionText;
     }
   }
 
@@ -272,7 +267,7 @@ public class ScratchFileActions {
     @NotNull
     protected Function<VirtualFile, Language> fileLanguage(@NotNull Project project) {
       return new Function<VirtualFile, Language>() {
-        ScratchFileService fileService = ScratchFileService.getInstance();
+        final ScratchFileService fileService = ScratchFileService.getInstance();
 
         @Override
         public Language fun(VirtualFile file) {

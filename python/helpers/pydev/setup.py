@@ -65,16 +65,21 @@ git push --tags
 '''
 
 
+import os
+import sys
+from distutils.extension import Extension
+
 from setuptools import setup
 from setuptools.dist import Distribution
-from distutils.extension import Extension
-import os
+
 
 class BinaryDistribution(Distribution):
     def is_pure(self):
         return False
 
+
 data_files = []
+
 
 def accept_file(f):
     f = f.lower()
@@ -84,21 +89,68 @@ def accept_file(f):
 
     return f in ['readme', 'makefile']
 
-data_files.append(('pydevd_attach_to_process', [os.path.join('pydevd_attach_to_process', f) for f in os.listdir('pydevd_attach_to_process') if accept_file(f)]))
-for root, dirs, files in os.walk("pydevd_attach_to_process"):
-    for d in dirs:
-        data_files.append((os.path.join(root, d), [os.path.join(root, d, f) for f in os.listdir(os.path.join(root, d)) if accept_file(f)]))
 
-import pydevd
-version = pydevd.__version__
+def add_directory_to_datafiles(datafiles, dir):
+    datafiles.append((dir, [os.path.join(dir, f) for f in os.listdir(dir) if accept_file(f)]))
+    for root, dirs, files in os.walk(dir):
+        for d in dirs:
+            datafiles.append((os.path.join(root, d), [os.path.join(root, d, f) for f in os.listdir(os.path.join(root, d)) if accept_file(f)]))
+
+
+def accept_extension(f):
+    f = f.lower()
+    for ext in '.pyd .so'.split():
+        if f.endswith(ext):
+            return True
+    return False
+
+
+def add_extensions_to_datafiles(datafiles, dir):
+    datafiles.append((dir, [os.path.join(dir, f) for f in os.listdir(dir) if accept_extension(f)]))
+
+
+add_directory_to_datafiles(data_files, 'pydevd_attach_to_process')
+add_extensions_to_datafiles(data_files, '_pydevd_bundle')
+add_extensions_to_datafiles(data_files, '_pydevd_frame_eval')
+
+
+def _get_version_from_file():
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'VERSION')) as version_file:
+        version_str = version_file.read().strip()
+    return version_str
+
+
+def _replace_version_placeholder_in_file(filepath, version_str, version_placeholder="@@BUILD_NUMBER@@"):
+    with open(filepath, 'r') as file:
+        file_text = file.read()
+    result = file_text.replace(version_placeholder, version_str)
+    with open(filepath, 'w') as file:
+        file.write(result)
+
+
+def _replace_version_placeholder(version_str):
+    pydevd_filepath = os.path.dirname(os.path.abspath(__file__))
+    pydevd_comm_filepath = os.path.join(os.path.join(pydevd_filepath, '_pydevd_bundle'), 'pydevd_comm.py')
+    _replace_version_placeholder_in_file(pydevd_comm_filepath, version_str)
+
+
+version = _get_version_from_file()
+_replace_version_placeholder(version)
+
+here = os.path.abspath(os.path.dirname(__file__))
+try:
+    README = open(os.path.join(here, 'README.rst')).read()
+except IOError:
+    README = ''
 
 args = dict(
-    name='pydevd',
+    name='pydevd-pycharm',
     version=version,
-    description = 'PyDev.Debugger (used in PyDev and PyCharm)',
-    author='Fabio Zadrozny and others',
-    url='https://github.com/fabioz/PyDev.Debugger/',
-    license='EPL (Eclipse Public License)',
+    description='PyCharm Debugger (used in PyCharm and PyDev)',
+    long_description=README,
+    author='JetBrains, Fabio Zadrozny and others',
+    url='https://github.com/JetBrains/intellij-community',
+    license='Apache 2.0',
     packages=[
         '_pydev_bundle',
         '_pydev_imps',
@@ -106,11 +158,8 @@ args = dict(
         '_pydevd_bundle',
         '_pydevd_frame_eval',
         'pydev_ipython',
-
         # 'pydev_sitecustomize', -- Not actually a package (not added)
-
         # 'pydevd_attach_to_process', -- Not actually a package (included in MANIFEST.in)
-
         'pydevd_concurrency_analyser',
         'pydevd_plugins',
         'pydevd_plugins.extensions',
@@ -124,9 +173,10 @@ args = dict(
         'pydevconsole',
         'pydevd_file_utils',
         'pydevd',
+        'pydevd_pycharm',
         'pydevd_tracing',
         # 'runfiles', -- Not needed for debugger
-        # 'setup_cython', -- Should not be included as a module
+        'setup_cython',  # Distributed to clients. See: https://github.com/fabioz/PyDev.Debugger/issues/102
         # 'setup', -- Should not be included as a module
     ],
     classifiers=[
@@ -134,14 +184,19 @@ args = dict(
         'Environment :: Console',
         'Intended Audience :: Developers',
 
-        # It seems that the license is not recognized by Pypi, so, not categorizing it for now.
-        # https://bitbucket.org/pypa/pypi/issues/369/the-eclipse-public-license-superseeded
-        # 'License :: OSI Approved :: Eclipse Public License',
+        'License :: OSI Approved :: Apache Software License',
 
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX',
         'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Software Development :: Debuggers',
     ],
     entry_points={
@@ -150,26 +205,35 @@ args = dict(
         ],
     },
     data_files=data_files,
-    keywords=['pydev', 'pydevd', 'pydev.debugger'],
+    keywords=['pydev', 'pydevd', 'pydev.debugger', 'pycharm'],
     include_package_data=True,
     zip_safe=False,
 )
 
+args_with_binaries = args.copy()
 
-
-import sys
-try:
-    args_with_binaries = args.copy()
+if sys.platform not in ('darwin', 'win32'):
     args_with_binaries.update(dict(
         distclass=BinaryDistribution,
         ext_modules=[
             # In this setup, don't even try to compile with cython, just go with the .c file which should've
             # been properly generated from a tested version.
-            Extension('_pydevd_bundle.pydevd_cython', ["_pydevd_bundle/pydevd_cython.c",])
+            Extension('_pydevd_bundle.pydevd_cython', ['_pydevd_bundle/pydevd_cython.c',])
         ]
     ))
+    if sys.version_info >= (3, 6):
+        args_with_binaries.update(dict(
+            distclass=BinaryDistribution,
+            ext_modules=[
+                # In this setup, don't even try to compile with cython, just go with the .c file which should've
+                # been properly generated from a tested version.
+                Extension('_pydevd_frame_eval.pydevd_frame_evaluator', ['_pydevd_frame_eval/pydevd_frame_evaluator.c',])
+            ]
+        ))
+
+try:
     setup(**args_with_binaries)
 except:
     # Compile failed: just setup without compiling cython deps.
     setup(**args)
-    sys.stdout.write('Plain-python version of pydevd installed (cython speedups not available).\n')
+    sys.stdout.write('Plain-python version of pydevd-pycharm installed (cython speedups not available).\n')

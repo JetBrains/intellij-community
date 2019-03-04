@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.RunAll;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -105,18 +106,19 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       //super.setUp() wasn't called
       return;
     }
-    Sdk jdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
-    if (jdk != null) {
-      WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
-    }
-
-    try {
-      Messages.setTestDialog(TestDialog.DEFAULT);
-      deleteBuildSystemDirectory();
-    }
-    finally {
-      super.tearDown();
-    }
+    new RunAll(
+      () -> {
+        Sdk jdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
+        if (jdk != null) {
+          WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
+        }
+      },
+      () -> {
+        Messages.setTestDialog(TestDialog.DEFAULT);
+        deleteBuildSystemDirectory();
+      },
+      () -> super.tearDown()
+    ).run();
   }
 
   @Override
@@ -281,5 +283,17 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   protected boolean isGradleNewerThen_4_5() {
     return GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("4.5")) > 0;
+  }
+
+  protected boolean isGradleOlderThen_5_2() {
+    return GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("5.2")) < 0;
+  }
+
+  protected boolean isGradleOlderThen_4_8() {
+    return GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("4.8")) < 0;
+  }
+
+  protected boolean isGradleNewerOrSameThen_5_0() {
+    return GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("5.0")) >= 0;
   }
 }

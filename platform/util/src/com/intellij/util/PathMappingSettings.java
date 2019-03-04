@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author traff
@@ -277,7 +278,12 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
       }
 
       String localPrefix = normLocal(myLocalRoot);
-      return !localPrefix.isEmpty() && normLocal(path).startsWith(localPrefix);
+      if (localPrefix.isEmpty()) {
+        return false;
+      }
+      final String localPath = normLocal(path);
+      final int prefixLength = localPrefix.length();
+      return localPath.startsWith(localPrefix) && (localPath.length() == prefixLength || localPath.charAt(prefixLength) == '/');
     }
 
     public String mapToRemote(@NotNull String path) {
@@ -322,8 +328,8 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
 
       PathMapping mapping = (PathMapping)o;
 
-      if (myLocalRoot != null ? !myLocalRoot.equals(mapping.myLocalRoot) : mapping.myLocalRoot != null) return false;
-      if (myRemoteRoot != null ? !myRemoteRoot.equals(mapping.myRemoteRoot) : mapping.myRemoteRoot != null) return false;
+      if (!Objects.equals(myLocalRoot, mapping.myLocalRoot)) return false;
+      if (!Objects.equals(myRemoteRoot, mapping.myRemoteRoot)) return false;
 
       return true;
     }

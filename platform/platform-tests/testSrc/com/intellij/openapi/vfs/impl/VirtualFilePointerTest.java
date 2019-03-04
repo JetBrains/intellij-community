@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -16,13 +17,17 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -60,13 +65,20 @@ public class VirtualFilePointerTest extends LightPlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    Disposer.dispose(disposable);
-    Collection<VirtualFilePointer> pointersAfter = myVirtualFilePointerManager.dumpPointers();
-    int nListeners = myVirtualFilePointerManager.numberOfListeners();
-    myVirtualFilePointerManager = null;
-    assertEquals(numberOfListenersBefore, nListeners);
-    assertEquals(pointersBefore, pointersAfter);
-    super.tearDown();
+    try {
+      Disposer.dispose(disposable);
+      Collection<VirtualFilePointer> pointersAfter = myVirtualFilePointerManager.dumpPointers();
+      int nListeners = myVirtualFilePointerManager.numberOfListeners();
+      myVirtualFilePointerManager = null;
+      assertEquals(numberOfListenersBefore, nListeners);
+      assertEquals(pointersBefore, pointersAfter);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private static class LoggingListener implements VirtualFilePointerListener {
@@ -134,36 +146,6 @@ public class VirtualFilePointerTest extends LightPlatformTestCase {
     assertEquals("[before:false, after:true]", fileToCreateListener.log.toString());
     String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(fileToCreate.getPath()));
     assertEquals(expectedUrl.toUpperCase(Locale.US), fileToCreatePointer.getUrl().toUpperCase(Locale.US));
-  }
-  
-  public void testUrlsHavingOnlyStartingSlashInCommon() {
-    VirtualFilePointer p1 = myVirtualFilePointerManager.create("file:///a/p1", disposable, null);
-    VirtualFilePointer p2 = myVirtualFilePointerManager.create("file:///b/p2", disposable, null);
-    LightVirtualFile root = new LightVirtualFile("/");
-    LightVirtualFile a = createLightFile(root, "a");
-    LightVirtualFile b = createLightFile(root, "b");
-    assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
-    assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
-  }
-  
-  public void testUrlsHavingOnlyStartingSlashInCommonAndInvalidUrlBetweenThem() {
-    VirtualFilePointer p1 = myVirtualFilePointerManager.create("file:///a/p1", disposable, null);
-    myVirtualFilePointerManager.create("file://invalid/path", disposable, null);
-    VirtualFilePointer p2 = myVirtualFilePointerManager.create("file:///b/p2", disposable, null);
-    LightVirtualFile root = new LightVirtualFile("/");
-    LightVirtualFile a = createLightFile(root, "a");
-    LightVirtualFile b = createLightFile(root, "b");
-    assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
-    assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
-  }
-
-  private static LightVirtualFile createLightFile(LightVirtualFile parent, String name) {
-    return new LightVirtualFile(name) {
-      @Override
-      public VirtualFile getParent() {
-        return parent;
-      }
-    };
   }
   
   public void testPathNormalization() throws IOException {
@@ -656,9 +638,10 @@ public class VirtualFilePointerTest extends LightPlatformTestCase {
     myVirtualFilePointerManager.create(vDir.getUrl() + "/d1/subdir", disposable, listener);
     myVirtualFilePointerManager.create(vDir.getUrl() + "/d2/subdir", disposable, listener);
 
-    File dir = newFolder("d1");
+    File dir = new File(vDir.getPath()+"/d1");
+    FileUtil.createDirectory(dir);
     getVirtualFile(dir).getChildren();
-    assertEquals("[before:false, after:false]", listener.log.toString());
+    assertEquals("[]", listener.log.toString());
     listener.log.clear();
 
     File subDir = new File(dir, "subdir");
@@ -719,5 +702,50 @@ public class VirtualFilePointerTest extends LightPlatformTestCase {
       final VirtualFile file = pointer.getFile();
       assertTrue(file == null || file.isValid());
     }
+  }
+
+  @NotNull
+  protected static VirtualFile createChildDirectory(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
+    try {
+      return WriteAction.computeAndWait(() ->
+                                          // requestor must be notnull
+                                          dir.createChildDirectory(dir, name));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  protected static void rename(@NotNull final VirtualFile vFile1, @NotNull final String newName) {
+    try {
+      WriteCommandAction.writeCommandAction(null).run(() -> vFile1.rename(vFile1, newName));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+
+  public void testVirtualPointerForSubdirMustNotFireWhenSuperDirectoryCreated() throws IOException {
+    VirtualFile vDir = getVirtualTempRoot();
+    assertNotNull(vDir);
+    vDir.getChildren();
+    vDir.refresh(false, true);
+
+    LoggingListener listener = new LoggingListener();
+    VirtualFilePointer subPtr = myVirtualFilePointerManager.create(vDir.getUrl() + "/cmake/subdir", disposable, listener);
+
+    VirtualFile cmake = createChildDirectory(vDir, "cmake");
+    assertEquals("[]", listener.log.toString());
+    listener.log.clear();
+
+    createChildDirectory(cmake, "subdir");
+    assertEquals("[before:false, after:true]", listener.log.toString());
+    assertTrue(subPtr.isValid());
+
+    listener.log.clear();
+    FileUtil.rename(new File(cmake.getPath()), "newCmake");
+    vDir.refresh(false, true);
+    assertEquals("[before:true, after:false]", listener.log.toString());
+    assertFalse(subPtr.isValid());
   }
 }

@@ -11,9 +11,15 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
 import java.io.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 public class JavacFileData {
+  public static final String CUSTOM_DATA_PLUGIN_ID = "ast.reference.collector"; // fake plugin name to fit into customOutputData API
+  public static final String CUSTOM_DATA_KIND = "JavacFileData";
+
   private static final byte CLASS_MARKER = 0;
   private static final byte METHOD_MARKER = 1;
   private static final byte FIELD_MARKER = 2;

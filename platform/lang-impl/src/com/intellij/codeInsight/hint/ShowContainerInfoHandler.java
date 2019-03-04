@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.LightweightHint;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.ref.WeakReference;
@@ -29,16 +30,7 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
 
-    PsiElement container = null;
-    WeakReference<LightweightHint> ref = editor.getUserData(MY_LAST_HINT_KEY);
-    LightweightHint hint = SoftReference.dereference(ref);
-    if (hint != null && hint.isVisible()){
-      hint.hide();
-      container = hint.getUserData(CONTAINER_KEY);
-      if (container != null && !container.isValid()){
-        container = null;
-      }
-    }
+    PsiElement container = getProcessedHint(editor);
 
     StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file);
     if (builder instanceof TreeBasedStructureViewBuilder) {
@@ -92,6 +84,25 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
         editor.putUserData(MY_LAST_HINT_KEY, new WeakReference<>(hint1));
       }
     });
+  }
+
+  /**
+   * If context info was already called before, this method will return PsiElement, that was shown (userData by CONTAINER_KEY)
+   *
+   * null if context info was new executed, or not actual anymore
+   */
+  @Nullable
+  public static PsiElement getProcessedHint(@NotNull Editor editor) {
+    WeakReference<LightweightHint> ref = editor.getUserData(MY_LAST_HINT_KEY);
+    LightweightHint hint = SoftReference.dereference(ref);
+    if (hint != null && hint.isVisible()){
+      hint.hide();
+      PsiElement container = hint.getUserData(CONTAINER_KEY);
+      if (container != null && container.isValid()){
+        return container;
+      }
+    }
+    return null;
   }
 
   @Override

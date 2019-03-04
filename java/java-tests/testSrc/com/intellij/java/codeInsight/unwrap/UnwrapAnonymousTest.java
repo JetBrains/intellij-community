@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.unwrap;
 
 import com.intellij.codeInsight.unwrap.UnwrapTestCase;
 
 public class UnwrapAnonymousTest extends UnwrapTestCase {
-  public void testUnwrap() throws Exception {
+  public void testUnwrap() {
     assertUnwrapped("{\n" +
                     "    new Runnable() {\n" +
                     "        public void run() {\n" +
@@ -32,7 +18,7 @@ public class UnwrapAnonymousTest extends UnwrapTestCase {
                     "}\n");
   }
   
-  public void testUnwrapDeclaration() throws Exception {
+  public void testUnwrapDeclaration() {
     assertUnwrapped("{\n" +
                     "    Runnable r = new Runnable() {\n" +
                     "        public void run() {\n" +
@@ -46,7 +32,7 @@ public class UnwrapAnonymousTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testUnwrapAssignment() throws Exception {
+  public void testUnwrapAssignment() {
     assertUnwrapped("{\n" +
                     "    Runnable r = null;\n" +
                     "    r = new Runnable() {\n" +
@@ -62,7 +48,7 @@ public class UnwrapAnonymousTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testInsideMethodCall() throws Exception {
+  public void testInsideMethodCall() {
     assertUnwrapped("{\n" +
                     "    foo(new Runnable() {\n" +
                     "        public void run() {\n" +
@@ -76,7 +62,7 @@ public class UnwrapAnonymousTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testInsideAnotherAnonymous() throws Exception {
+  public void testInsideAnotherAnonymous() {
     assertUnwrapped("{\n" +
                     "    new Runnable() {\n" +
                     "        public void run() {\n" +
@@ -100,7 +86,7 @@ public class UnwrapAnonymousTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testInsideAnotherAnonymousWithAssignment() throws Exception {
+  public void testInsideAnotherAnonymousWithAssignment() {
     assertUnwrapped("{\n" +
                     "    Runnable r = new Runnable() {\n" +
                     "        public void run() {\n" +
@@ -124,7 +110,7 @@ public class UnwrapAnonymousTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testDeclarationWithMethodCall() throws Exception {
+  public void testDeclarationWithMethodCall() {
     assertUnwrapped("{\n" +
                     "    Object obj = foo(new Runnable() {\n" +
                     "        public void run() {\n" +
@@ -138,7 +124,7 @@ public class UnwrapAnonymousTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testSeveralMethodCalls() throws Exception {
+  public void testSeveralMethodCalls() {
     assertUnwrapped("{\n" +
                     "    bar(foo(new Runnable() {\n" +
                     "        public void run() {\n" +
@@ -152,7 +138,7 @@ public class UnwrapAnonymousTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testWhenCaretIsOnDeclaration() throws Exception {
+  public void testWhenCaretIsOnDeclaration() {
     assertUnwrapped("{\n" +
                     "    Runnable r = new Run<caret>nable() {\n" +
                     "        public void run() {\n" +
@@ -166,7 +152,7 @@ public class UnwrapAnonymousTest extends UnwrapTestCase {
                     "}\n");
   }
   
-  public void testEmptyClass() throws Exception {
+  public void testEmptyClass() {
     assertUnwrapped("{\n" +
                     "    Runnable r = new Run<caret>nable() {}\n" +
                     "}\n",
@@ -175,7 +161,7 @@ public class UnwrapAnonymousTest extends UnwrapTestCase {
                     "<caret>}\n");
   }
 
-  public void testDoNothingWithSeveralMethods() throws Exception {
+  public void testDoNothingWithSeveralMethods() {
     assertUnwrapped("Runnable r = new Runnable() {\n" +
                     "    public void one() {\n" +
                     "        // method one\n" +
@@ -199,7 +185,7 @@ public class UnwrapAnonymousTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testReassignValue() throws Exception {
+  public void testReassignValue() {
     assertUnwrapped("int i = new Comparable<String>() {\n" +
                     "            public int compareTo(String o) {\n" +
                     "                return <caret>0;\n" +
@@ -209,7 +195,7 @@ public class UnwrapAnonymousTest extends UnwrapTestCase {
                     "int i = 0;\n");
   }
 
-  public void testReturnValue() throws Exception {
+  public void testReturnValue() {
     assertUnwrapped("return new Comparable<Integer>() {\n" +
                     "    public int compareTo(Integer o) {\n" +
                     "        return <caret>0;\n" +

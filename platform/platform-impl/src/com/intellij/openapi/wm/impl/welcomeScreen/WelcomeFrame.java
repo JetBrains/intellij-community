@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -133,22 +132,28 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
   public static void resetInstance() {
     ourInstance = null;
     if (ourTouchbar != null) {
-      ourTouchbar.dispose();
+      Disposer.dispose(ourTouchbar);
       ourTouchbar = null;
     }
   }
 
   public static void showNow() {
-    if (ourInstance != null) return;
+    if (ourInstance != null) {
+      return;
+    }
+
     if (!GeneralSettings.getInstance().isShowWelcomeScreen()) {
       ApplicationManagerEx.getApplicationEx().exit(false, true);
     }
 
     IdeFrame frame = null;
-    for (WelcomeFrameProvider provider : EP.getExtensions()) {
+    for (WelcomeFrameProvider provider : EP.getExtensionList()) {
       frame = provider.createFrame();
-      if (frame != null) break;
+      if (frame != null) {
+        break;
+      }
     }
+
     if (frame == null) {
       frame = new WelcomeFrame();
     }
@@ -159,8 +164,11 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
   }
 
   public static void showIfNoProjectOpened() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
+    ApplicationManager.getApplication().invokeLater(() -> {
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       windowManager.disposeRootFrame();
       IdeFrameImpl[] frames = windowManager.getAllProjectFrames();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.util.ImageLoader;
@@ -24,7 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.image.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.FilteredImageSource;
+import java.awt.image.ImageFilter;
+import java.awt.image.ImageObserver;
 
 import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 
@@ -32,10 +21,12 @@ import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
  * @author Konstantin Bulenkov
  */
 public class ImageUtil {
+  @NotNull
   public static BufferedImage toBufferedImage(@NotNull Image image) {
     return toBufferedImage(image, false);
   }
 
+  @NotNull
   public static BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize) {
     if (image instanceof JBHiDPIScaledImage) {
       JBHiDPIScaledImage jbImage = (JBHiDPIScaledImage)image;
@@ -142,6 +133,28 @@ public class ImageUtil {
     if (image == null) return null;
     if (UIUtil.isJreHiDPI(ctx)) {
       return RetinaImage.createFrom(image, ctx.getScale(SYS_SCALE), null);
+    }
+    return image;
+  }
+
+  /**
+   * Wraps the {@code image} with {@link JBHiDPIScaledImage} according to {@code ctx} when applicable.
+   * The real (dev) width/height of the provided image is usually calculated based on the scale context and the
+   * expected user width/height of the target wrapped image. In the {@link #ensureHiDPI(Image, ScaleContext)} method version,
+   * the expected user width/height of the wrapped image is reconstructed from the image's real width/height and the scale context.
+   * However, the real with/height may lose precision (as it is integer) and as the result the reconstructed user width/height
+   * may differ from the original values. To avoid the loss this method version accepts the original user width/height.
+   *
+   * @param image the raw image to wrap
+   * @param ctx the scale context to match
+   * @param userWidth the expected user width of the wrapped image
+   * @param userHeight the expected user height of the wrapped image
+   */
+  @Contract("null, _, _, _ -> null; !null, _, _, _ -> !null")
+  public static Image ensureHiDPI(@Nullable Image image, @NotNull ScaleContext ctx, double userWidth, double userHeight) {
+    if (image == null) return null;
+    if (UIUtil.isJreHiDPI(ctx)) {
+      return new JBHiDPIScaledImage(image, userWidth, userHeight, BufferedImage.TYPE_INT_ARGB);
     }
     return image;
   }

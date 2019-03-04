@@ -6,9 +6,9 @@ import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
@@ -16,9 +16,8 @@ import com.intellij.vcs.log.VcsLogDiffHandler;
 import com.intellij.vcs.log.history.FileHistoryUi;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -26,15 +25,6 @@ import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExtensionProvider {
-  @Nullable
-  private static FilePath getFilePath(@NotNull AnActionEvent e, @NotNull VcsLog log) {
-    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
-    if (filePath != null) return filePath;
-    List<CommitId> commits = log.getSelectedCommits();
-    if (commits.isEmpty() || commits.size() > 1) return null;
-    return VcsUtil.getFilePath(notNull(getFirstItem(commits)).getRoot());
-  }
-
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return e.getData(VcsLogDataKeys.VCS_LOG) != null && e.getData(ChangesBrowserBase.DATA_KEY) == null;
@@ -49,23 +39,19 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
       return;
     }
 
-    e.getPresentation().setVisible(true);
-
     List<CommitId> commits = log.getSelectedCommits();
     if (commits.size() != 1) {
-      e.getPresentation().setEnabled(false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
-    FilePath filePath = getFilePath(e, log);
-    VcsLogDiffHandler handler = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
-
-    e.getPresentation().setEnabled(filePath != null && filePath.getVirtualFile() != null && handler != null);
+    e.getPresentation().setVisible(true);
+    e.getPresentation().setEnabled(e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER) != null);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUsageTriggerCollector.triggerUsage(e);
+    VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
@@ -76,15 +62,7 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
 
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
-    FilePath path = getFilePath(e, log);
     VcsLogDiffHandler handler = e.getRequiredData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
-
-    FilePath pathInCommit = path;
-    FileHistoryUi historyUi = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
-    if (historyUi != null) {
-      pathInCommit = historyUi.getPathInCommit(commit.getHash());
-    }
-
-    handler.showDiffWithLocal(commit.getRoot(), pathInCommit, commit.getHash(), path);
+    handler.showDiffForPaths(commit.getRoot(), VcsLogUtil.getAffectedPaths(commit.getRoot(), e), commit.getHash(), null);
   }
 }

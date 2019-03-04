@@ -316,16 +316,16 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       super.paint(g);
       if (inDnd) {
         Rectangle bounds = getBounds();
-        Color background = JBColor.namedColor("DragAndDrop.backgroundColor", new Color(225, 235, 245));
+        Color background = JBColor.namedColor("DragAndDrop.areaBackground", new Color(225, 235, 245));
         g.setColor(new Color(background.getRed(), background.getGreen(), background.getBlue(), 206));
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-        Color backgroundBorder = JBColor.namedColor("DragAndDrop.backgroundBorderColor", new Color(137, 178, 222));
+        Color backgroundBorder = JBColor.namedColor("DragAndDrop.areaBorderColor", new Color(137, 178, 222));
         g.setColor(backgroundBorder);
         g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
         g.drawRect(bounds.x + 1 , bounds.y + 1, bounds.width - 2, bounds.height - 2);
 
-        Color foreground = JBColor.namedColor("DragAndDrop.foregroundColor", Gray._120);
+        Color foreground = JBColor.namedColor("DragAndDrop.areaForeground", Gray._120);
         g.setColor(foreground);
         Font labelFont = UIUtil.getLabelFont();
         Font font = labelFont.deriveFont(labelFont.getSize() + 5.0f);

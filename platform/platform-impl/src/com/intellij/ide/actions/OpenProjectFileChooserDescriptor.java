@@ -59,7 +59,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   public Icon getIcon(VirtualFile file) {
     if (canInspectDirectory(file)) {
       if (isIprFile(file) || isIdeaDirectory(file)) {
-        return dressIcon(file, ProductIcons.getInstance().getProjectIcon());
+        return dressIcon(file, ProductIcons.getInstance().getProjectNodeIcon());
       }
       Icon icon = getImporterIcon(file);
       if (icon != null) {
@@ -89,7 +89,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   private static Icon getImporterIcon(VirtualFile file) {
     ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(file);
     if (provider != null) {
-      return file.isDirectory() && provider.lookForProjectsInDirectory() ? ProductIcons.getInstance().getProjectIcon()
+      return file.isDirectory() && provider.lookForProjectsInDirectory() ? ProductIcons.getInstance().getProjectNodeIcon()
                                                                          : provider.getIcon(file);
     }
     return null;

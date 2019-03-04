@@ -49,9 +49,7 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return myProjectFileIndex.isInContent(file) ||
-           myProjectFileIndex.isInLibraryClasses(file) ||
-           myProjectFileIndex.isInLibrarySource(file);
+    return myProjectFileIndex.isInContent(file) || myProjectFileIndex.isInLibrary(file);
   }
 
   @Override

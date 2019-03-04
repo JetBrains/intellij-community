@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -9,12 +9,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -49,7 +49,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   public GrAnnotationImpl(GrAnnotationStub stub) {
-    super(stub, GroovyElementTypes.ANNOTATION);
+    super(stub, GroovyStubElementTypes.ANNOTATION);
   }
 
   @Override
@@ -65,7 +65,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   @Override
   @NotNull
   public GrAnnotationArgumentList getParameterList() {
-    return getRequiredStubOrPsiChild(GroovyElementTypes.ANNOTATION_ARGUMENTS);
+    return getRequiredStubOrPsiChild(GroovyEmptyStubElementTypes.ANNOTATION_ARGUMENT_LIST);
   }
 
   @Override
@@ -110,12 +110,6 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   public <T extends PsiAnnotationMemberValue> T setDeclaredAttributeValue(@Nullable @NonNls String attributeName, T value) {
     //noinspection unchecked
     return (T)PsiImplUtil.setDeclaredAttributeValue(this, attributeName, value, ANNOTATION_CREATOR);
-  }
-
-  @Override
-  @Nullable
-  public PsiMetaData getMetaData() {
-    return null;
   }
 
   @Override

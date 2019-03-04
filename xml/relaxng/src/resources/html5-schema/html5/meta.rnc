@@ -242,8 +242,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 	style.elem =
 		element style { style.inner & style.attrs }
-	style.elem.w3c =
-		element style { style.inner & style.attrs } & W3Conly
 	style.attrs =
 		(	common.attrs
 		&	style.attrs.type?
@@ -270,7 +268,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		( common.inner.anything )
 		
 	common.elem.metadata |= style.elem
-	common.elem.flow |= style.elem.w3c
 
 ## Name-Value Metadata: <meta name>
 

@@ -17,11 +17,12 @@ package com.intellij.diff.actions;
 
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.actions.impl.MutableDiffRequestChain;
+import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.Side;
@@ -77,7 +78,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
 
   @Nullable
   @Override
-  protected DiffRequest getDiffRequest(@NotNull AnActionEvent e) {
+  protected DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     Editor editor = getEditor(e);
     FileType editorFileType = getEditorFileType(e);
@@ -87,17 +88,15 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     DocumentContent content2 = createContent(project, editor, editorFileType, selectedContent);
     DocumentContent content1 = DiffContentFactory.getInstance().createClipboardContent(project, content2);
 
-    String title1 = DiffBundle.message("diff.content.clipboard.content.title");
-    String title2 = createContentTitle(editor);
+    MutableDiffRequestChain chain = new MutableDiffRequestChain(content1, content2);
+    chain.setWindowTitle(DiffBundle.message("diff.clipboard.vs.editor.dialog.title"));
+    chain.setTitle1(DiffBundle.message("diff.content.clipboard.content.title"));
+    chain.setTitle2(createContentTitle(editor));
 
-    String title = DiffBundle.message("diff.clipboard.vs.editor.dialog.title");
+    int currentLine = editor.getCaretModel().getLogicalPosition().line;
+    chain.putRequestUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, currentLine));
 
-    SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
-    request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, editor.getCaretModel().getLogicalPosition().line));
-    if (editor.isViewer()) {
-      request.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, new boolean[]{false, true});
-    }
-    return request;
+    return chain;
   }
 
   @NotNull
@@ -123,6 +122,8 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
       TextRange range = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
       content = DiffContentFactory.getInstance().createFragment(project, content, range);
     }
+
+    if (editor.isViewer()) content.putUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
 
     return content;
   }

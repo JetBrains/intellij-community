@@ -17,7 +17,9 @@
 
 package com.intellij.psi
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.ElementPatternCondition
 import com.intellij.patterns.InitialPatternCondition
@@ -42,9 +44,9 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<
                                  UastReferenceProviderAdapter(provider), priority)
 }
 
-abstract class UastReferenceProvider {
+abstract class UastReferenceProvider(open val supportedUElementTypes: List<Class<out UElement>> = listOf(UElement::class.java)) {
 
-  open val supportedUElementTypes: List<Class<out UElement>> = listOf(UElement::class.java)
+  constructor(cls: Class<out UElement>) : this(listOf(cls))
 
   abstract fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference>
 
@@ -62,6 +64,9 @@ fun uastLiteralReferenceProvider(provider: (ULiteralExpression, PsiLanguageInjec
     override fun getReferencesByULiteral(uLiteral: ULiteralExpression,
                                          host: PsiLanguageInjectionHost,
                                          context: ProcessingContext): Array<PsiReference> = provider(uLiteral, host)
+
+    override fun toString(): String = "uastLiteralReferenceProvider(${provider.javaClass})"
+
   }
 
 fun uastInjectionHostReferenceProvider(provider: (UExpression, PsiLanguageInjectionHost) -> Array<PsiReference>): UastInjectionHostReferenceProvider =
@@ -72,7 +77,18 @@ fun uastInjectionHostReferenceProvider(provider: (UExpression, PsiLanguageInject
                                                context: ProcessingContext): Array<PsiReference> = provider(uExpression, host)
   }
 
+fun <T : UElement> uastReferenceProvider(cls: Class<T>, provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
+  object : UastReferenceProvider(cls) {
+
+    override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> =
+      provider(cls.cast(element), context[REQUESTED_PSI_ELEMENT])
+  }
+
+inline fun <reified T : UElement> uastReferenceProvider(noinline provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
+  uastReferenceProvider(T::class.java, provider)
+
 private val cachedUElement = Key.create<UElement>("UastReferenceRegistrar.cachedUElement")
+internal val REQUESTED_PSI_ELEMENT = Key.create<PsiElement>("REQUESTED_PSI_ELEMENT")
 
 private fun getOrCreateCachedElement(element: PsiElement,
                                      context: ProcessingContext?,
@@ -80,6 +96,9 @@ private fun getOrCreateCachedElement(element: PsiElement,
   element as? UElement ?: context?.get(cachedUElement) ?: supportedUElementTypes.asSequence().mapNotNull {
     element.toUElement(it)
   }.firstOrNull()?.also { context?.put(cachedUElement, it) }
+
+//resolving uast-elements during pattern evaluation could bring us here again
+private val PATTERN_ADAPTER_RECURSION_GUARD = RecursionManager.createGuard("add.uast.reference.provider")
 
 private class UastPatternAdapter(
   val predicate: (UElement, ProcessingContext) -> Boolean,
@@ -89,10 +108,11 @@ private class UastPatternAdapter(
   override fun accepts(o: Any?): Boolean = accepts(o, null)
 
   override fun accepts(o: Any?, context: ProcessingContext?): Boolean = when (o) {
-    is PsiElement ->
+    is PsiElement -> PATTERN_ADAPTER_RECURSION_GUARD.doPreventingRecursion(this, false) {
       getOrCreateCachedElement(o, context, supportedUElementTypes)
-        ?.let { predicate(it, context ?: ProcessingContext()) }
+        ?.let { predicate(it, (context ?: ProcessingContext()).apply { put(REQUESTED_PSI_ELEMENT, o) }) }
       ?: false
+    } ?: false
     else -> false
   }
 
@@ -111,8 +131,19 @@ fun ElementPattern<out UElement>.asPsiPattern(vararg supportedUElementTypes: Cla
 private class UastReferenceProviderAdapter(val provider: UastReferenceProvider) : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val uElement = getOrCreateCachedElement(element, context, provider.supportedUElementTypes) ?: return PsiReference.EMPTY_ARRAY
-    return provider.getReferencesByElement(uElement, context)
+    val references = provider.getReferencesByElement(uElement, context)
+    if (ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isInternal) {
+      for (reference in references) {
+        if (reference.element !== element)
+          throw AssertionError(
+            """reference $reference was created for $element but targets ${reference.element}, provider $provider"""
+          )
+      }
+    }
+    return references
   }
+
+  override fun toString(): String = "UastReferenceProviderAdapter($provider)"
 
   override fun acceptsTarget(target: PsiElement): Boolean = provider.acceptsTarget(target)
 }

@@ -128,16 +128,10 @@ public abstract class SpellCheckerDictionaryGenerator {
       }
       builder.append(name);
     }
-    try {
-      final File dictionaryFile = new File(outFile);
-      FileUtil.createIfDoesntExist(dictionaryFile);
-      final FileWriter writer = new FileWriter(dictionaryFile.getPath());
-      try {
-        writer.write(builder.toString());
-      }
-      finally {
-        writer.close();
-      }
+    final File dictionaryFile = new File(outFile);
+    FileUtil.createIfDoesntExist(dictionaryFile);
+    try (FileWriter writer = new FileWriter(dictionaryFile.getPath())) {
+      writer.write(builder.toString());
     }
     catch (IOException e) {
       LOG.error(e);

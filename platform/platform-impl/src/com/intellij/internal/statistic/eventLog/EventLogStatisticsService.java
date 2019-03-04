@@ -5,9 +5,9 @@ import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,8 +33,9 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   public static StatisticsResult send(@NotNull EventLogSettingsService settings, @NotNull EventLogResultDecorator decorator) {
-    if (!FeatureUsageLogger.INSTANCE.isEnabled()) {
-      throw new StatServiceException("Event Log collector is not enabled");
+    if (!FeatureUsageLogger.INSTANCE.isEnabled() || !StatisticsUploadAssistant.isSendAllowed()) {
+      cleanupAllFiles();
+      return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "Event Log collector is not enabled");
     }
 
     final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
@@ -58,7 +59,7 @@ public class EventLogStatisticsService implements StatisticsService {
       int size = Math.min(MAX_FILES_TO_SEND, logs.size());
       for (int i = 0; i < size; i++) {
         final File file = logs.get(i);
-        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, filter);
+        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, filter, settings.isInternal());
         final String error = validate(recordRequest, file);
         if (StringUtil.isNotEmpty(error) || recordRequest == null) {
           if (LOG.isTraceEnabled()) {
@@ -128,8 +129,7 @@ public class EventLogStatisticsService implements StatisticsService {
     if (percent == 0) {
       return false;
     }
-    final String userId = PermanentInstallationID.get();
-    return (Math.abs(userId.hashCode()) % 100) < percent;
+    return EventLogConfiguration.INSTANCE.getBucket() < percent * 2.56;
   }
 
   @Nullable
@@ -138,11 +138,14 @@ public class EventLogStatisticsService implements StatisticsService {
       return "File is empty or has invalid format: " + file.getName();
     }
 
-    if (StringUtil.isEmpty(request.getUser())) {
-      return "Cannot upload event log, user ID is empty";
+    if (StringUtil.isEmpty(request.getDevice())) {
+      return "Cannot upload event log, device ID is empty";
     }
     else if (StringUtil.isEmpty(request.getProduct())) {
       return "Cannot upload event log, product code is empty";
+    }
+    else if (StringUtil.isEmpty(request.getRecorder())) {
+      return "Cannot upload event log, recorder code is empty";
     }
     else if (request.getRecords().isEmpty()) {
       return "Cannot upload event log, record list is empty";

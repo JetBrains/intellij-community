@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
 import com.intellij.openapi.updateSettings.impl.*
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
-import com.intellij.util.loadElement
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -146,7 +146,10 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
     assertBuild("143.2332", result.newBuild)
   }
 
-  // since 163
+  /*
+   * Since 163.
+   */
+
   @Test fun `updates from the same baseline are preferred (per-release channels)`() {
     val result = check("IU-143.2287", ChannelStatus.EAP, """
       <channel id="IDEA_143_EAP" status="eap" licensing="eap">
@@ -213,6 +216,10 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
     assertEquals("IDEA_Release", check("IU-163.1", ChannelStatus.RELEASE, (release + release15 + beta + beta15 + eap + eap15)).updatedChannel?.id)
   }
 
+  /*
+   * Since 183.
+   */
+
   @Test fun `building linear patch chain`() {
     val result = check("IU-182.3569.1", ChannelStatus.EAP, """
       <channel id="IDEA_EAP" status="eap" licensing="eap">
@@ -264,17 +271,18 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
     assertThat(result.patches?.chain).isEqualTo(listOf("183.3795.13", "183.3975.18", "183.4139.22").map(BuildNumber::fromString))
   }
 
+  //<editor-fold desc="Helpers.">
   private fun check(currentBuild: String,
                     selectedChannel: ChannelStatus,
                     testData: String,
                     ignoredBuilds: List<String> = emptyList()): CheckForUpdateResult {
-    val updates = UpdatesInfo(loadElement("""
-      <products>
-        <product name="IntelliJ IDEA">
-          <code>IU</code>
-          ${testData}
-        </product>
-      </products>"""))
+    val updates = UpdatesInfo(JDOMUtil.load("""
+          <products>
+            <product name="IntelliJ IDEA">
+              <code>IU</code>
+              ${testData}
+            </product>
+          </products>"""))
     val settings = UpdateSettings()
     settings.selectedChannelStatus = selectedChannel
     settings.ignoredBuildNumbers += ignoredBuilds
@@ -286,4 +294,5 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
   private fun assertBuild(expected: String, build: BuildInfo?) {
     assertEquals(expected, build?.number?.asStringWithoutProductCode())
   }
+  //</editor-fold>
 }

@@ -22,7 +22,6 @@ import org.junit.Test
 
 /**
  * @author Denis Zhdanov
- * @since 12/05/2012
  */
 class GradleConfigurableTest {
   

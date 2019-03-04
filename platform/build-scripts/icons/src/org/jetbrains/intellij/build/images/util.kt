@@ -1,6 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.intellij.build.images
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SVGLoader
 import java.awt.Dimension
@@ -9,6 +12,7 @@ import java.io.File
 import java.math.BigInteger
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.security.MessageDigest
 import javax.imageio.ImageIO
 
@@ -19,9 +23,15 @@ internal fun isImage(file: Path, iconsOnly: Boolean): Boolean {
   return !iconsOnly || isIcon(file)
 }
 
+val androidIcons by lazy { Paths.get(PathManager.getCommunityHomePath(), "android/artwork/resources")!! }
+
 internal fun isIcon(file: Path): Boolean {
   if (!isImage(file)) return false
   val size = imageSize(file) ?: return false
+
+  if (file.startsWith(androidIcons)) {
+    return true
+  }
   return size.height == size.width || size.height <= 100 && size.width <= 100
 }
 

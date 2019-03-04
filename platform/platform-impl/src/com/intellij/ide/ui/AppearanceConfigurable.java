@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.GeneralSettings;
@@ -141,20 +141,20 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
     UISettings settingsManager = UISettings.getInstance();
     UISettingsState settings = settingsManager.getState();
-    int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.getFontSize());
-    int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settings.getPresentationModeFontSize());
+    int _fontSize = getIntValue(myComponent.myFontSizeCombo, settingsManager.getFontSize());
+    int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settingsManager.getPresentationModeFontSize());
     boolean update = false;
     boolean shouldUpdateUI = false;
     String _fontFace = myComponent.myFontCombo.getFontName();
     LafManager lafManager = LafManager.getInstance();
-    if (_fontSize != settings.getFontSize() || !Comparing.equal(settings.getFontFace(), _fontFace)) {
-      settings.setFontSize(_fontSize);
-      settings.setFontFace(_fontFace);
+    if (_fontSize != settingsManager.getFontSize() || !Comparing.equal(settingsManager.getFontFace(), _fontFace)) {
+      settingsManager.setFontSize(_fontSize);
+      settingsManager.setFontFace(_fontFace);
       shouldUpdateUI = true;
       update = true;
     }
 
-    if (_presentationFontSize != settings.getPresentationModeFontSize()) {
+    if (_presentationFontSize != settingsManager.getPresentationModeFontSize()) {
       settings.setPresentationModeFontSize(_presentationFontSize);
       shouldUpdateUI = true;
     }
@@ -258,10 +258,10 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     if (!myComponent.myOverrideLAFFonts.isSelected()) {
       assert !shouldUpdateUI;
       int defSize = JBUI.Fonts.label().getSize();
-      settings.setFontSize(defSize);
+      settingsManager.setFontSize(defSize);
       myComponent.myFontSizeCombo.getModel().setSelectedItem(String.valueOf(defSize));
       String defName = JBUI.Fonts.label().getFontName();
-      settings.setFontFace(defName);
+      settingsManager.setFontFace(defName);
       myComponent.myFontCombo.setFontName(defName);
     }
 
@@ -327,7 +327,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     UISettingsState settings = settingsManager.getState();
 
     if (settings.getOverrideLafFonts()) {
-      myComponent.myFontCombo.setFontName(settings.getFontFace());
+      myComponent.myFontCombo.setFontName(settingsManager.getFontFace());
     } else {
       myComponent.myFontCombo.setFontName(UIUtil.getLabelFont().getFamily());
     }
@@ -338,7 +338,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myAntialiasingInIDE.setSelectedItem(settingsManager.getIdeAAType());
     myComponent.myAntialiasingInEditor.setSelectedItem(settingsManager.getEditorAAType());
 
-    myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.getFontSize()));
+    myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settingsManager.getFontSize()));
     myComponent.myPresentationModeFontSize.setSelectedItem(Integer.toString(settings.getPresentationModeFontSize()));
     myComponent.myAnimateWindowsCheckBox.setSelected(settings.getAnimateWindows());
     myComponent.myWindowShortcutsCheckBox.setSelected(settings.getShowToolWindowsNumbers());
@@ -413,13 +413,13 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     UISettingsState settings = settingsManager.getState();
 
     boolean isModified = false;
-    isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.getFontFace()) && myComponent.myOverrideLAFFonts.isSelected();
-    isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.getFontSize()));
+    isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settingsManager.getFontFace()) && myComponent.myOverrideLAFFonts.isSelected();
+    isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settingsManager.getFontSize()));
 
     isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settingsManager.getIdeAAType();
     isModified |= myComponent.myAntialiasingInEditor.getSelectedItem() != settingsManager.getEditorAAType();
 
-    isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.getAnimateWindows();
+    isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settingsManager.getAnimateWindows();
     isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.getShowToolWindowsNumbers();
     isModified |= myComponent.myShowToolStripesCheckBox.isSelected() == settings.getHideToolStripes();
     isModified |= myComponent.myCbDisplayIconsInMenu.isSelected() != settings.getShowIconsInMenus();

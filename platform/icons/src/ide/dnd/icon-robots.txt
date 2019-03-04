@@ -1,0 +1,4 @@
+deprecated: bottom.png -> /general/arrowUp.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowUp
+deprecated: left.png -> /general/arrowRight.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowRight
+deprecated: right.png -> /general/arrowLeft.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft
+deprecated: top.png -> /general/arrowDown.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowDown

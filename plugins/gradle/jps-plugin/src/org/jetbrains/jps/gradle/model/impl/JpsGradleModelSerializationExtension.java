@@ -27,6 +27,7 @@ import org.jetbrains.jps.gradle.model.impl.artifacts.JpsGradleArtifactExtensionI
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactExtensionSerializer;
 
@@ -42,11 +43,12 @@ public class JpsGradleModelSerializationExtension extends JpsModelSerializerExte
 
   @Override
   public void loadModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
-    boolean isGradleModule = "GRADLE".equals(rootElement.getAttributeValue("external.system.id")) ||
-                             rootElement.getChildren().stream()
-                                        .anyMatch(element -> GRADLE_SYSTEM_ID.equals(element.getAttributeValue("externalSystem")));
-    if (isGradleModule) {
-      JpsGradleExtensionService.getInstance().getOrCreateExtension(module, rootElement);
+    Element externalSystemComponent = JDomSerializationUtil.findComponent(rootElement, "ExternalSystem");
+    if (GRADLE_SYSTEM_ID.equals(rootElement.getAttributeValue("external.system.id"))) {
+      JpsGradleExtensionService.getInstance().getOrCreateExtension(module, rootElement.getAttributeValue("external.system.module.type"));
+    }
+    else if (externalSystemComponent != null && GRADLE_SYSTEM_ID.equals(externalSystemComponent.getAttributeValue("externalSystem"))) {
+      JpsGradleExtensionService.getInstance().getOrCreateExtension(module, externalSystemComponent.getAttributeValue("externalSystemModuleType"));
     }
   }
 

@@ -20,18 +20,8 @@ package com.intellij.util;
  * @see com.intellij.util.CommonProcessors
  */
 public interface Processor<T> {
-  Processor TRUE = new Processor() {
-    @Override
-    public boolean process(Object o) {
-      return true;
-    }
-  };
-  Processor FALSE = new Processor() {
-    @Override
-    public boolean process(Object o) {
-      return false;
-    }
-  };
+  Processor TRUE = o -> true;
+  Processor FALSE = o -> false;
   /**
    * @param t consequently takes value of each element of the set this processor is passed to for processing.
    * @return {@code true} to continue processing or {@code false} to stop.

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors
 
 import com.intellij.psi.PsiElement
@@ -53,7 +53,15 @@ abstract class AccessorAwareResolverProcessor(
 
       val properties = singleOrValid(getCandidates(GroovyResolveKind.PROPERTY))
       if (!properties.isEmpty()) {
-        return if (properties.size <= 1) properties else ContainerUtil.newSmartList(properties[0])
+        val property = properties.singleOrNull()
+        if (property != null) {
+          if (property.isStaticsOK) {
+            return properties
+          }
+        }
+        else {
+          return ContainerUtil.newSmartList(properties[0])
+        }
       }
 
       val fields = getCandidates(GroovyResolveKind.FIELD)

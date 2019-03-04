@@ -6,6 +6,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -25,6 +26,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.terminal.RequestOrigin;
@@ -59,7 +61,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   public void run() {
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Running the terminal", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Running the Terminal", false) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setText("Running the terminal...");
@@ -212,28 +214,55 @@ public abstract class AbstractTerminalRunner<T extends Process> {
           // Resize ASAP once the process started.
           // Even though it will be resized in invokeLater, it takes some time until invokeLater is executed.
           // Sometimes it's enough to have cropped output, if the output is restricted by the terminal width.
-          TerminalStarter.resizeTerminal(terminalWidget.getTerminal(), connector, size, RequestOrigin.User);
+          try {
+            TerminalStarter.resizeTerminal(terminalWidget.getTerminal(), connector, size, RequestOrigin.User);
+          }
+          catch (Exception e) {
+            LOG.info("Cannot resize right after creation, process.isAlive: " + process.isAlive(), e);
+          }
         }
 
         ApplicationManager.getApplication().invokeLater(() -> {
           try {
             terminalWidget.createTerminalSession(connector);
+          }
+          catch (Exception e) {
+            printError(terminalWidget, "Cannot create terminal session for " + runningTargetName(), e);
+          }
+          try {
             terminalWidget.start();
             terminalWidget.getComponent().revalidate();
             terminalWidget.notifyStarted();
           }
           catch (RuntimeException e) {
-            showCannotOpenTerminalDialog(e);
+            printError(terminalWidget, "Cannot open " + runningTargetName(), e);
           }
         }, modalityState);
       }
       catch (Exception e) {
-        ApplicationManager.getApplication().invokeLater(() -> showCannotOpenTerminalDialog(e), modalityState);
+        printError(terminalWidget, "Cannot open " + runningTargetName(), e);
       }
     });
   }
 
-  private void showCannotOpenTerminalDialog(@NotNull Throwable e) {
-    Messages.showErrorDialog(e.getMessage(), "Can't Open " + runningTargetName());
+  private void printError(@NotNull JBTerminalWidget terminalWidget, @NotNull String errorMessage, @NotNull Exception e) {
+    LOG.info(errorMessage, e);
+    if (terminalWidget.getTerminal().getCursorX() > 1) {
+      terminalWidget.getTerminal().newLine();
+      terminalWidget.getTerminal().carriageReturn();
+    }
+    terminalWidget.getTerminal().writeCharacters(errorMessage);
+    terminalWidget.getTerminal().newLine();
+    terminalWidget.getTerminal().carriageReturn();
+    terminalWidget.getTerminal().writeCharacters(e.getMessage());
+    terminalWidget.getTerminal().newLine();
+    terminalWidget.getTerminal().newLine();
+    terminalWidget.getTerminal().carriageReturn();
+    terminalWidget.getTerminal().writeCharacters("See your idea.log (Help | " + ShowLogAction.getActionName() + ") for the details.");
+    AppUIUtil.invokeOnEdt(() -> {
+      if (!Disposer.isDisposed(terminalWidget)) {
+        terminalWidget.getTerminalPanel().setCursorVisible(false);
+      }
+    }, myProject.getDisposed());
   }
 }

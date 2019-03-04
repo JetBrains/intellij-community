@@ -21,26 +21,29 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    IdeView view = e.getData(LangDataKeys.IDE_VIEW);
-    final Project project = e.getData(CommonDataKeys.PROJECT);
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    final IdeView view = event.getData(LangDataKeys.IDE_VIEW);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
+    if (view == null || project == null) return;
 
-    if (view == null || project == null) {
-      return;
-    }
-    PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
-
+    final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
     if (directory == null) return;
-    final boolean isDirectory = !PsiDirectoryFactory.getInstance(project).isPackage(directory);
 
-    final CreateDirectoryOrPackageHandler validator = new CreateDirectoryOrPackageHandler(project, directory, isDirectory,
-                                                                                   isDirectory ? "\\/" : ".");
-    Messages.showInputDialog(project,
-                             isDirectory ? IdeBundle.message("prompt.enter.new.directory.name")
-                                         : IdeBundle.message("prompt.enter.new.package.name"),
-                             isDirectory ? IdeBundle.message("title.new.directory")
-                                         : IdeBundle.message("title.new.package"),
-                             Messages.getQuestionIcon(), "", validator);
+    final CreateGroupHandler validator;
+    final String message, title;
+
+    if (PsiDirectoryFactory.getInstance(project).isPackage(directory)) {
+      validator = new CreatePackageHandler(project, directory);
+      message = IdeBundle.message("prompt.enter.new.package.name");
+      title = IdeBundle.message("title.new.package");
+    }
+    else {
+      validator = new CreateDirectoryHandler(project, directory);
+      message = IdeBundle.message("prompt.enter.new.directory.name");
+      title = IdeBundle.message("title.new.directory");
+    }
+
+    Messages.showInputDialog(project, message, title, Messages.getQuestionIcon(), validator.getInitialText(), validator);
 
     final PsiElement result = validator.getCreatedElement();
     if (result != null) {
@@ -94,5 +97,4 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
       presentation.setIcon(PlatformIcons.FOLDER_ICON);
     }
   }
-
 }

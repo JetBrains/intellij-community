@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.ComboBox;
 
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
-import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -172,13 +171,6 @@ public class TextFieldWithHistory extends ComboBox {
     public void setItems(List<String> aList) {
       myFullList = new ArrayList<>(aList);
       fireContentsChanged();
-    }
-  }
-
-  protected static class TextFieldWithProcessing extends JTextField {
-    @Override
-    public void processKeyEvent(KeyEvent e) {
-      super.processKeyEvent(e);
     }
   }
 }

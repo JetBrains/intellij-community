@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
-import java.awt.*;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -191,9 +191,6 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
    */
   @Nullable
   public static Editor findEditor(@NotNull PsiElement element) {
-    if (!EventQueue.isDispatchThread()) {
-      LOG.warn("Invoke findEditor() from EDT only. Otherwise, it causes deadlocks.");
-    }
     PsiFile psiFile = element.getContainingFile();
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     if (virtualFile == null) {
@@ -216,7 +213,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     if (asyncResult.isSucceeded()) {
       Editor editor = null;
       try {
-        editor = CommonDataKeys.EDITOR.getData(asyncResult.blockingGet(-1));
+        editor = CommonDataKeys.EDITOR.getData(Objects.requireNonNull(asyncResult.blockingGet(-1)));
       }
       catch (TimeoutException | ExecutionException e) {
         LOG.error(e);

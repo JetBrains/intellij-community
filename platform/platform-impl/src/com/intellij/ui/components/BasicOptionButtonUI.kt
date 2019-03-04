@@ -79,7 +79,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
                                                                       maxOf(mainButton.preferredSize.height, arrowButton.preferredSize.height))
 
   protected open fun installPopup() {
-    showPopupAction = DumbAwareAction.create { _ -> showPopup() }
+    showPopupAction = DumbAwareAction.create { showPopup() }
     showPopupAction?.registerCustomShortcutSet(CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0)), optionButton)
   }
 

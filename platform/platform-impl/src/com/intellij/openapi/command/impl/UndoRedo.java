@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -107,13 +106,11 @@ abstract class UndoRedo {
     Collection<VirtualFile> readOnlyFiles = collectReadOnlyAffectedFiles();
     if (!readOnlyFiles.isEmpty()) {
       final Project project = myManager.getProject();
-      final VirtualFile[] files = VfsUtil.toVirtualFileArray(readOnlyFiles);
-
       if (project == null) {
         return false;
       }
 
-      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
+      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyFiles);
       if (operationStatus.hasReadonlyFiles()) {
         return false;
       }
@@ -209,7 +206,7 @@ abstract class UndoRedo {
   private boolean restore(EditorAndState pair, boolean onlyIfDiffers) {
     // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
     if (pair == null || myEditor == null || !myEditor.isValid() || !pair.canBeAppliedTo(myEditor)) return false;
-    
+
     // If current editor state isn't equals to remembered state then
     // we have to try to restore previous state. But sometime it's
     // not possible to restore it. For example, it's not possible to

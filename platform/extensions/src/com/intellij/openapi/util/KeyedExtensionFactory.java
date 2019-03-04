@@ -109,6 +109,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
     return (T)result;
   }
 
+  @NotNull
   public abstract String getKey(@NotNull KeyT key);
 }
 

@@ -32,8 +32,8 @@ public class DiffTree<OT, NT> {
   private final FlyweightCapableTreeStructure<OT> myOldTree;
   private final FlyweightCapableTreeStructure<NT> myNewTree;
   private final ShallowNodeComparator<OT, NT> myComparator;
-  private final List<Ref<OT[]>> myOldChildrenLists = new ArrayList<Ref<OT[]>>();
-  private final List<Ref<NT[]>> myNewChildrenLists = new ArrayList<Ref<NT[]>>();
+  private final List<Ref<OT[]>> myOldChildrenLists = new ArrayList<>();
+  private final List<Ref<NT[]>> myNewChildrenLists = new ArrayList<>();
   private final CharSequence myOldText;
   private final CharSequence myNewText;
   private final int myOldTreeStart;
@@ -57,7 +57,7 @@ public class DiffTree<OT, NT> {
                                    @NotNull ShallowNodeComparator<OT, NT> comparator,
                                    @NotNull DiffTreeChangeBuilder<OT, NT> consumer,
                                    @NotNull CharSequence oldText) {
-    final DiffTree<OT, NT> tree = new DiffTree<OT, NT>(oldTree, newTree, comparator, oldText);
+    final DiffTree<OT, NT> tree = new DiffTree<>(oldTree, newTree, comparator, oldText);
     tree.build(oldTree.getRoot(), newTree.getRoot(), 0, consumer);
   }
 
@@ -92,9 +92,13 @@ public class DiffTree<OT, NT> {
 
   @NotNull
   private CompareResult build(@NotNull OT oldNode, @NotNull NT newNode, int level, @NotNull DiffTreeChangeBuilder<OT, NT> consumer) {
+    if (level > 1000) {
+      return CompareResult.NOT_EQUAL;
+    }
+
     if (level == myNewChildrenLists.size()) {
-      myNewChildrenLists.add(new Ref<NT[]>());
-      myOldChildrenLists.add(new Ref<OT[]>());
+      myNewChildrenLists.add(new Ref<>());
+      myOldChildrenLists.add(new Ref<>());
     }
 
     final Ref<OT[]> oldChildrenR = myOldChildrenLists.get(level);
@@ -273,7 +277,7 @@ public class DiffTree<OT, NT> {
       CompareResult c11 = looksEqual(oldChild, newChild);
 
       if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
-        c11 = textMatch(oldChild, newChild) ? build(oldChild, newChild, level + 1, DiffTree.<OT, NT>emptyConsumer()) : CompareResult.NOT_EQUAL;
+        c11 = textMatch(oldChild, newChild) ? build(oldChild, newChild, level + 1, DiffTree.emptyConsumer()) : CompareResult.NOT_EQUAL;
         assert c11 != CompareResult.DRILL_DOWN_NEEDED;
       }
       if (c11 != CompareResult.EQUAL) {

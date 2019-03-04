@@ -148,12 +148,7 @@ public abstract class Logger {
     error(String.valueOf(message));
   }
 
-  static final Function<Attachment, String> ATTACHMENT_TO_STRING = new Function<Attachment, String>() {
-    @Override
-    public String fun(Attachment attachment) {
-      return attachment.getPath() + "\n" + attachment.getDisplayText();
-    }
-  };
+  static final Function<Attachment, String> ATTACHMENT_TO_STRING = attachment -> attachment.getPath() + "\n" + attachment.getDisplayText();
 
   public void error(String message, @NotNull Attachment... attachments) {
     error(message, null, attachments);
@@ -197,6 +192,7 @@ public abstract class Logger {
   public abstract void setLevel(Level level);
 
   protected static Throwable checkException(@Nullable Throwable t) {
-    return t instanceof ControlFlowException ? new Throwable("Control-flow exceptions should never be logged", t) : t;
+    return t instanceof ControlFlowException ? new Throwable(
+      "Control-flow exceptions (like " + t.getClass().getSimpleName() + ") should never be logged", t) : t;
   }
 }

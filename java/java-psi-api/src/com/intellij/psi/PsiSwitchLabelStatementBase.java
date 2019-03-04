@@ -21,7 +21,7 @@ public interface PsiSwitchLabelStatementBase extends PsiStatement {
    */
   @Nullable PsiExpressionList getCaseValues();
 
-  /** @deprecated doesn't support enhanced "switch" statement; use {@link #getCaseValues()} instead */
+  /** @deprecated doesn't support enhanced "switch" statements; use {@link #getCaseValues()} instead */
   @Deprecated
   default PsiExpression getCaseValue() {
     PsiExpressionList expressionList = getCaseValues();
@@ -35,8 +35,15 @@ public interface PsiSwitchLabelStatementBase extends PsiStatement {
   }
 
   /**
-   * Returns the {@code switch} statement with which the section is associated,
+   * Returns the {@code switch} block (a statement or an expression) with which the section is associated,
    * or {@code null} if the element is not valid in its current context.
    */
-  @Nullable PsiSwitchStatement getEnclosingSwitchStatement();
+  @Nullable PsiSwitchBlock getEnclosingSwitchBlock();
+
+  /** @deprecated doesn't support "switch" expressions; use {@link #getEnclosingSwitchBlock()} instead */
+  @Deprecated
+  default PsiSwitchStatement getEnclosingSwitchStatement() {
+    PsiSwitchBlock block = getEnclosingSwitchBlock();
+    return block instanceof PsiSwitchStatement ? (PsiSwitchStatement)block : null;
+  }
 }

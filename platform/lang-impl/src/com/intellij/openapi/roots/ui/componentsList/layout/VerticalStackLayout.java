@@ -20,7 +20,7 @@ package com.intellij.openapi.roots.ui.componentsList.layout;
 import java.awt.*;
 
 public class VerticalStackLayout implements LayoutManager2 {
-  private final int myDefaultHeight = 200;
+  private static final int myDefaultHeight = 200;
 
   /**
    * Calculates the minimum size dimensions for the specified

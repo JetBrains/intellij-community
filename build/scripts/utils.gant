@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
+
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.impl.BuildUtils
@@ -10,7 +11,6 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 
 includeTool << JpsGantTool
 
@@ -99,7 +99,6 @@ binding.setVariable("loadProject", {
     projectBuilder.error("Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-stdlib.jar: run `./gradlew setupKotlinPlugin` in dependencies module to download Kotlin JARs")
     return
   }
-  setPathVariable("KOTLIN_BUNDLED", bundledKotlinPath)
   if (!ensureKotlinCompilerAddedToClassPath()) {
     return
   }
@@ -218,11 +217,6 @@ private void defineJdk(String jdkName, jdkHomePath) {
     }
     projectBuilder.info("JDK '$jdkName' classpath: ${jdk.getFiles(JpsOrderRootType.COMPILED)}")
   }
-}
-
-private void setPathVariable(String name, String value) {
-  def pathVars = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(global)
-  pathVars.addPathVariable(name, value)
 }
 
 binding.setVariable("findModule", {String name ->

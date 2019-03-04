@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -25,7 +11,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,15 +21,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> extends FilterPopupComponent<Filter> {
+abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterModel<Filter>>
+  extends FilterPopupComponent<Filter, Model> {
 
-  private static final int MAX_FILTER_VALUE_LENGTH = 30;
+  private static final int MAX_FILTER_VALUE_LENGTH = 20;
 
   @NotNull protected final MainVcsLogUiProperties myUiProperties;
 
   MultipleValueFilterPopupComponent(@NotNull String filterName,
                                     @NotNull MainVcsLogUiProperties uiProperties,
-                                    @NotNull FilterModel<Filter> filterModel) {
+                                    @NotNull Model filterModel) {
     super(filterName, filterModel);
     myUiProperties = uiProperties;
   }
@@ -58,6 +46,12 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
 
   @NotNull
   protected abstract List<String> getAllValues();
+
+  @Nullable
+  protected abstract Filter createFilter(@NotNull List<String> values);
+
+  @NotNull
+  protected abstract List<String> getFilterValues(@NotNull Filter filter);
 
   @NotNull
   protected ActionGroup createRecentItemsActionGroup() {
@@ -76,11 +70,27 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
   }
 
   @NotNull
-  static String displayableText(@NotNull Collection<String> values) {
+  @Override
+  protected String getText(@NotNull Filter filter) {
+    return displayableText(getFilterValues(filter), MAX_FILTER_VALUE_LENGTH);
+  }
+
+  @Nullable
+  @Override
+  protected String getToolTip(@NotNull Filter filter) {
+    return tooltip(getFilterValues(filter));
+  }
+
+  @NotNull
+  static String displayableText(@NotNull Collection<String> values, int maxLength) {
+    String text;
     if (values.size() == 1) {
-      return values.iterator().next();
+      text = ObjectUtils.notNull(ContainerUtil.getFirstItem(values));
     }
-    return StringUtil.shortenTextWithEllipsis(StringUtil.join(values, "|"), MAX_FILTER_VALUE_LENGTH, 0, true);
+    else {
+      text = StringUtil.join(values, "|");
+    }
+    return StringUtil.shortenTextWithEllipsis(text, maxLength, 0, true);
   }
 
   @NotNull
@@ -100,16 +110,23 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
     return false;
   }
 
+  @NotNull
+  private static String getActionName(@NotNull List<String> values) {
+    if (values.size() == 1) return ObjectUtils.notNull(ContainerUtil.getFirstItem(values));
+    return displayableText(values, 2 * MAX_FILTER_VALUE_LENGTH);
+  }
+  
   protected class PredefinedValueAction extends DumbAwareAction {
     @NotNull protected final List<String> myValues;
-    private boolean myAddToRecent;
+
+    private final boolean myAddToRecent;
 
     public PredefinedValueAction(@NotNull String value) {
       this(Collections.singletonList(value));
     }
 
     public PredefinedValueAction(@NotNull List<String> values) {
-      this(displayableText(values), values, true);
+      this(getActionName(values), values, true);
     }
 
     public PredefinedValueAction(@NotNull String name, @NotNull List<String> values, boolean addToRecent) {
@@ -121,7 +138,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myFilterModel.setFilter(myFilterModel.createFilter(myValues));
+      myFilterModel.setFilter(createFilter(myValues));
       if (myAddToRecent) rememberValuesInSettings(myValues);
     }
   }
@@ -143,9 +160,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
       }
 
       Filter filter = myFilterModel.getFilter();
-      List<String> values = filter == null
-                            ? Collections.emptyList()
-                            : myFilterModel.getFilterValues(filter);
+      List<String> values = filter == null ? Collections.emptyList() : getFilterValues(filter);
       final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants,
                                                                            getPopupText(values),
                                                                            supportsNegativeValues());
@@ -159,7 +174,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
               myFilterModel.setFilter(null);
             }
             else {
-              myFilterModel.setFilter(myFilterModel.createFilter(selectedValues));
+              myFilterModel.setFilter(createFilter(selectedValues));
               rememberValuesInSettings(selectedValues);
             }
           }

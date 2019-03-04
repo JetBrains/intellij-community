@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -83,7 +84,7 @@ public class GroovyPropertyUtils {
     }
     final AccessorProcessor processor = new AccessorProcessor(propertyName, PropertyKind.SETTER, (List<? extends Argument>)null, context);
     ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), context);
-    return PsiImplUtil.extractUniqueElement(processor.getResultsArray());
+    return PsiImplUtil.extractUniqueElement(processor.getResults().toArray(GroovyResolveResult.EMPTY_ARRAY));
   }
 
   @Nullable

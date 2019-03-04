@@ -7,7 +7,7 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 12
+version = 15
 
 if not hasattr(sys, '_current_frames'):
 
@@ -39,10 +39,10 @@ if not hasattr(sys, '_current_frames'):
 
                 ret[thread.getId()] = frame
             return ret
-        
-    elif IS_IRONPYTHON: 
+
+    elif IS_IRONPYTHON:
         _tid_to_last_frame = {}
-        
+
         # IronPython doesn't have it. Let's use our workaround...
         def _current_frames():
             return _tid_to_last_frame

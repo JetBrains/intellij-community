@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -22,7 +22,6 @@ import com.intellij.psi.util.ReferenceSetBase;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
@@ -31,10 +30,10 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocator;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByExtensionPoint;
+import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByExtensionPointAndId;
 
 public class ExtensionOrderConverter implements CustomReferenceConverter<String> {
   private static final Logger LOG = Logger.getInstance(ExtensionOrderConverter.class);
@@ -42,7 +41,8 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
   @NotNull
   @Override
   public PsiReference[] createReferences(GenericDomValue<String> value, PsiElement element, ConvertContext context) {
-    PsiElement originalElement = CompletionUtil.getOriginalOrSelf(element); // avoid 'IntellijIdeaRulezzz' placeholder
+    // avoid 'IntellijIdeaRulezzz' placeholder
+    PsiElement originalElement = CompletionUtil.getOriginalOrSelf(element);
     String orderValue = ElementManipulators.getValueText(originalElement);
     if (StringUtil.isEmpty(orderValue)) {
       return PsiReference.EMPTY_ARRAY;
@@ -66,7 +66,8 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
           return Collections.emptyList();
         }
 
-        String idSubPart = null; // second one, after keyword subpart
+        // second one, after keyword sub-part
+        String idSubPart = null;
         if (subParts.size() == 2) {
           idSubPart = subParts.get(1);
         }
@@ -125,7 +126,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     return (trimKeyword ? LoadingOrder.BEFORE_STR.trim() : LoadingOrder.BEFORE_STR).equalsIgnoreCase(str) ||
            (trimKeyword ? LoadingOrder.AFTER_STR.trim(): LoadingOrder.AFTER_STR).equalsIgnoreCase(str) ||
            LoadingOrder.BEFORE_STR_OLD.equalsIgnoreCase(str) ||
-           LoadingOrder.BEFORE_STR_OLD.equalsIgnoreCase(str);
+           LoadingOrder.AFTER_STR_OLD.equalsIgnoreCase(str);
   }
 
 
@@ -174,7 +175,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         return null;
       }
 
-      ExtensionLocator epAndIdLocator = ExtensionLocator.byExtensionPointAndId(extensionPoint, myReferencedId);
+      ExtensionLocator epAndIdLocator = locateExtensionsByExtensionPointAndId(extensionPoint, myReferencedId);
       List<ExtensionCandidate> candidates = epAndIdLocator.findCandidates();
       if (candidates.isEmpty()) {
         return null;
@@ -205,8 +206,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
 
-      ExtensionLocator epLocator = ExtensionLocator.byExtensionPoint(extensionPoint);
-      List<ExtensionCandidate> candidates = epLocator.findCandidates();
+      List<ExtensionCandidate> candidates = locateExtensionsByExtensionPoint(extensionPoint);
       Project project = getElement().getProject();
       DomManager domManager = DomManager.getDomManager(project);
 

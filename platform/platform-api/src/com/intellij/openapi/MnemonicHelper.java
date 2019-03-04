@@ -38,7 +38,6 @@ import java.util.Map;
  * registers the mnemonics for those characters and removes them from the control text.
  *
  * @author lesya
- * @since 5.1
  */
 public class MnemonicHelper extends ComponentTreeWatcher {
   private static final MnemonicContainerListener LISTENER = new MnemonicContainerListener();

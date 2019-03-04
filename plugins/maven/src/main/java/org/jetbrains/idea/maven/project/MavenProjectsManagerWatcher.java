@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -55,10 +56,14 @@ import java.util.concurrent.ConcurrentMap;
 
 public class MavenProjectsManagerWatcher {
 
+  private static final Logger LOG = Logger.getInstance(MavenProjectsManagerWatcher.class);
   private static final Key<ConcurrentMap<Project, Long>> CRC_WITHOUT_SPACES = Key.create("MavenProjectsManagerWatcher.CRC_WITHOUT_SPACES");
+
 
   public static final Key<Boolean> FORCE_IMPORT_AND_RESOLVE_ON_REFRESH =
     Key.create(MavenProjectsManagerWatcher.class + "FORCE_IMPORT_AND_RESOLVE_ON_REFRESH");
+  private static final boolean IMPORT_EXTERNAL_POMS =
+    Boolean.parseBoolean(System.getProperty("maven.import.external.poms.on.settings.change"));
 
   private static final int DOCUMENT_SAVE_DELAY = 1000;
 
@@ -126,7 +131,6 @@ public class MavenProjectsManagerWatcher {
           MavenProject mavenProject = myManager.findProject(module);
           if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), false);
         }
-
       }
     });
 
@@ -266,6 +270,13 @@ public class MavenProjectsManagerWatcher {
                                       final boolean forceImportAndResolve) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
+
+    if (LOG.isDebugEnabled()) {
+      String withForceOptionMessage = force ? " with force option" : "";
+      LOG.debug("Scheduling update for " + myProjectsTree + withForceOptionMessage +
+                ". Files to update: " + filesToUpdate + ". Files to delete: " + filesToDelete);
+    }
+
     myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(filesToUpdate,
                                                                           filesToDelete,
                                                                           force,
@@ -330,7 +341,8 @@ public class MavenProjectsManagerWatcher {
 
   private boolean isProfilesFile(String path) {
     if (!path.endsWith("/" + MavenConstants.PROFILES_XML)) return false;
-    return myProjectsTree.isPotentialProject(path.substring(0, path.length() - MavenConstants.PROFILES_XML.length()) + MavenConstants.POM_XML);
+    return myProjectsTree
+      .isPotentialProject(path.substring(0, path.length() - MavenConstants.PROFILES_XML.length()) + MavenConstants.POM_XML);
   }
 
   private boolean isSettingsFile(String path) {
@@ -352,7 +364,8 @@ public class MavenProjectsManagerWatcher {
     return path.endsWith(MavenConstants.JVM_CONFIG_RELATIVE_PATH) || path.endsWith(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
   }
 
-  private class MyFileChangeListener extends FileChangeListenerBase {
+  class MyFileChangeListener extends FileChangeListenerBase {
+
     private List<VirtualFile> filesToUpdate;
     private List<VirtualFile> filesToRemove;
     private boolean settingsHaveChanged;
@@ -388,14 +401,14 @@ public class MavenProjectsManagerWatcher {
       VirtualFile pom = getPomFileProfilesFile(file);
       if (pom != null) {
         if (remove || fileWasChanged(pom, event)) {
-          filesToUpdate.add(pom);
+          addPomFileToUpdate(pom);
         }
         return;
       }
 
       if (isMavenOrJvmConfigFile(file.getPath()) && (remove || fileWasChanged(file, event))) {
         VirtualFile baseDir = file.getParent().getParent();
-        MavenUtil.streamPomFiles(myProject, baseDir).forEach(filesToUpdate::add);
+        MavenUtil.streamPomFiles(myProject, baseDir).forEach(this::addPomFileToUpdate);
         return;
       }
 
@@ -404,7 +417,7 @@ public class MavenProjectsManagerWatcher {
       }
       else {
         if (fileWasChanged(file, event)) {
-          filesToUpdate.add(file);
+          addPomFileToUpdate(file);
         }
       }
     }
@@ -422,14 +435,15 @@ public class MavenProjectsManagerWatcher {
       Long newCrc;
 
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-      if(psiFile instanceof XmlFile) {
+      if (psiFile instanceof XmlFile) {
         try {
           newCrc = Long.valueOf(MavenUtil.crcWithoutSpaces(file));
         }
         catch (IOException ignored) {
           return true;
         }
-      } else {
+      }
+      else {
         newCrc = file.getModificationStamp();
       }
 
@@ -447,6 +461,11 @@ public class MavenProjectsManagerWatcher {
     private VirtualFile getPomFileProfilesFile(VirtualFile f) {
       if (!f.getName().equals(MavenConstants.PROFILES_XML)) return null;
       return f.getParent().findChild(MavenConstants.POM_XML);
+    }
+
+    @TestOnly
+    List<VirtualFile> getFilesToUpdate() {
+      return new ArrayList<>(filesToUpdate);
     }
 
     @Override
@@ -488,6 +507,18 @@ public class MavenProjectsManagerWatcher {
     private void clearLists() {
       filesToUpdate = null;
       filesToRemove = null;
+    }
+
+    private void addPomFileToUpdate(VirtualFile pom) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(pom + " added to " + myProjectsTree);
+      }
+      if (IMPORT_EXTERNAL_POMS || myProjectsTree.isPotentialProject(pom.getPath())) {
+        filesToUpdate.add(pom);
+      }
+      else {
+        LOG.debug(pom + " was not added to " + myProjectsTree);
+      }
     }
   }
 }

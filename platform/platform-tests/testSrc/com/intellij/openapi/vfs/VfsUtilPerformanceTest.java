@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -38,7 +26,7 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntHashSet;
 import org.junit.Rule;
@@ -52,7 +40,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @RunFirst
@@ -104,7 +91,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     NewVirtualFile root = ManagingFS.getInstance().findRoot(path, fs);
     PlatformTestUtil.startPerformanceTest("finding root", 10_000,
         () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-        Collections.nCopies(500, null), null, 
+        Collections.nCopies(500, null), null,
         __ -> {
           for (int i = 0; i < 20_000; i++) {
             NewVirtualFile rootJar = ManagingFS.getInstance().findRoot(path, fs);
@@ -193,7 +180,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   public void testAsyncRefresh() throws Throwable {
     Ref<Throwable> ex = Ref.create();
     boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      Arrays.asList(new Object[JobSchedulerImpl.getJobPoolParallelism()]), ProgressManager.getInstance().getProgressIndicator(), 
+      Arrays.asList(new Object[JobSchedulerImpl.getJobPoolParallelism()]), ProgressManager.getInstance().getProgressIndicator(),
       o -> {
         try {
           doAsyncRefreshTest();
@@ -209,7 +196,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   }
 
   private void doAsyncRefreshTest() throws Exception {
-    int N = 1000;
+    int N = 1_000;
     byte[] data = "xxx".getBytes(CharsetToolkit.UTF8_CHARSET);
 
     File temp = myTempDir.newFolder();
@@ -242,17 +229,24 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     for (int i = 0; i < N; i++) {
       File file = new File(temp, i + ".txt");
       FileUtil.writeToFile(file, data);
-      assertTrue(file.setLastModified(timestamp[i] - 2000));
+      assertTrue(file.setLastModified(timestamp[i] - 2_000));
       long modified = file.lastModified();
       assertTrue("File:" + file.getPath() + "; time:" + modified, timestamp[i] != modified);
       timestamp[i] = modified;
       IoTestUtil.assertTimestampsNotEqual(children[i].getTimeStamp(), modified);
     }
 
-    CountDownLatch latch = new CountDownLatch(N);
-    for (VirtualFile child : children) {
-      child.refresh(true, true, latch::countDown);
-      TimeoutUtil.sleep(10);
+    Disposable refreshEngaged = Disposer.newDisposable();
+    CountDownLatch latch;
+    try {
+      FrequentEventDetector.disableUntil(refreshEngaged);
+      latch = new CountDownLatch(N);
+      for (VirtualFile child : children) {
+        child.refresh(true, true, latch::countDown);
+      }
+    }
+    finally {
+      Disposer.dispose(refreshEngaged);
     }
     while (latch.getCount() > 0) {
       latch.await(100, TimeUnit.MILLISECONDS);
@@ -266,7 +260,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void PersistentFS_performance_ofManyFilesCreateDelete() throws IOException {
+  public void PersistentFS_performance_ofManyFilesCreateDelete() {
     int N = 30_000;
     List<VFileEvent> events = new ArrayList<>(N);
     VirtualDirectoryImpl temp = createTempFsDirectory();
@@ -274,7 +268,6 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       PlatformTestUtil.startPerformanceTest("many files creations", 3_000, () -> {
         assertEquals(N, events.size());
-        assertTrue(!temp.allChildrenLoaded());
         processEvents(events);
         assertEquals(N, temp.getCachedChildren().size());
       })
@@ -325,14 +318,14 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     events.clear();
     TempFileSystem fs = TempFileSystem.getInstance();
     IntStream.range(0, N)
-      .mapToObj(i -> new VFileCreateEvent(this, temp, i + ".txt", false, false))
+      .mapToObj(i -> new VFileCreateEvent(this, temp, i + ".txt", false, null, null, false, false))
       .peek(event -> {
         if (fs.findModelChild(temp, event.getChildName()) == null) {
           fs.createChildFile(this, temp, event.getChildName());
         }
       })
       .forEach(events::add);
-    List<CharSequence> names = events.stream().map(e -> ((VFileCreateEvent)e).getChildName()).collect(Collectors.toList());
+    List<CharSequence> names = ContainerUtil.map(events, e -> ((VFileCreateEvent)e).getChildName());
     temp.removeChildren(new TIntHashSet(), names);
   }
 

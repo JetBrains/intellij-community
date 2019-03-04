@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.scopeView;
 
@@ -38,6 +38,11 @@ public final class EditScopesAction extends AnAction implements DumbAware {
     super.update(event);
     Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     ProjectView view = project == null ? null : ProjectView.getInstance(project);
-    event.getPresentation().setEnabledAndVisible(view != null && view.getProjectViewPaneById(ScopeViewPane.ID) != null);
+    if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace())) {
+      event.getPresentation().setEnabledAndVisible(view != null && view.getCurrentViewId().equals(ScopeViewPane.ID));
+    }
+    else {
+      event.getPresentation().setEnabledAndVisible(view != null && view.getProjectViewPaneById(ScopeViewPane.ID) != null);
+    }
   }
 }

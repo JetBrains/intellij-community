@@ -128,11 +128,9 @@ public class CodeDocumentationUtil {
 
     boolean docStart = commenter.getDocumentationCommentPrefix() != null
                        && CharArrayUtil.regionMatches(chars, commentStartOffset, commenter.getDocumentationCommentPrefix());
-    boolean cStyleStart = commenter.getBlockCommentPrefix() != null
-                          && CharArrayUtil.regionMatches(chars, commentStartOffset, commenter.getBlockCommentPrefix());
     boolean docAsterisk = commenter.getDocumentationCommentLinePrefix() != null
                           && CharArrayUtil.regionMatches(chars, commentStartOffset, commenter.getDocumentationCommentLinePrefix());
-    return new CommentContext(commenter, docStart, cStyleStart, docAsterisk, commentStartOffset);
+    return new CommentContext(commenter, docStart, docAsterisk, commentStartOffset);
   }
   
   /**
@@ -146,9 +144,6 @@ public class CodeDocumentationUtil {
     /** Indicates position at the line that starts from {@code '/**'} (in java language). */
     public boolean docStart;
 
-    /** Indicates position at the line that starts from {@code '/*'} (in java language). */
-    public boolean cStyleStart;
-
     /** Indicates position at the line that starts from {@code '*'} (non-first and non-last javadoc line in java language). */
     public boolean docAsterisk;
 
@@ -159,11 +154,9 @@ public class CodeDocumentationUtil {
 
     public CommentContext(CodeDocumentationAwareCommenter commenter,
                           boolean docStart,
-                          boolean cStyleStart,
                           boolean docAsterisk,
                           int lineStart) {
       this.docStart = docStart;
-      this.cStyleStart = cStyleStart;
       this.docAsterisk = docAsterisk;
       this.commenter = commenter;
       this.lineStart = lineStart;

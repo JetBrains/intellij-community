@@ -72,10 +72,10 @@
     <projectConfigurable groupId="build.tools" groupWeight="110" id="reference.settingsdialog.project.gradle"
                          instance="org.jetbrains.plugins.gradle.service.settings.GradleConfigurable"
                          key="gradle.name" bundle="i18n.GradleBundle">
-      <configurable instance="org.jetbrains.plugins.gradle.settings.GradleRunnerConfigurable"
-                    id="reference.settings.project.gradle.running" key="gradle.runner" bundle="i18n.GradleBundle"
-                    nonDefaultProject="true"/>
     </projectConfigurable>
+    <projectConfigurable parentId="reference.settingsdialog.project.gradle"
+                         instance="org.jetbrains.plugins.gradle.settings.GradleRunnerConfigurable"
+                         id="reference.settings.project.gradle.running" key="gradle.runner" bundle="i18n.GradleBundle"/>
     <editorTabTitleProvider implementation="org.jetbrains.plugins.gradle.util.GradleEditorTabTitleProvider"/>
     <configurationType implementation="org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType"/>
 
@@ -93,8 +93,10 @@
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
 
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.settings.GradleSettingsService"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSystemSettings"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.DefaultGradleProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.GradleNotification"/>
@@ -115,7 +117,7 @@
     <runAnything.helpGroup implementation="org.jetbrains.plugins.gradle.execution.GradleRunAnythingHelpGroup"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.gradle.statistics.GradleSettingsCollector"/>
-    <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector"/>
+    <statistics.counterUsagesCollector groupId="build.gradle.actions" version="1"/>
   </extensions>
 
   <actions>

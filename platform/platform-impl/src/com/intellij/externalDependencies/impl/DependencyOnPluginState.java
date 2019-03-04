@@ -23,7 +23,7 @@ import com.intellij.util.xmlb.annotations.Tag;
  * @author nik
  */
 @Tag("plugin")
-class DependencyOnPluginState {
+public class DependencyOnPluginState {
   DependencyOnPluginState() {
   }
 

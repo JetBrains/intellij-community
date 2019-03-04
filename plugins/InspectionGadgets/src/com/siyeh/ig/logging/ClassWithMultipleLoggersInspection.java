@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package com.siyeh.ig.logging;
 
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.JavaLoggingUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -39,19 +39,16 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
    * @noinspection PublicField
    */
   @NonNls
-  public String loggerNamesString = "java.util.logging.Logger" + ',' +
-                                    "org.slf4j.Logger" + ',' +
-                                    "org.apache.commons.logging.Log" + ',' +
-                                    "org.apache.log4j.Logger";
+  public String loggerNamesString = StringUtil.join(JavaLoggingUtils.DEFAULT_LOGGERS, ",");
 
   public ClassWithMultipleLoggersInspection() {
-    parseString(this.loggerNamesString, this.loggerNames);
+    parseString(loggerNamesString, loggerNames);
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    final ListTable table = new ListTable(new ListWrappingTableModel(loggerNames, InspectionGadgetsBundle.message("logger.class.name")));
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.logger.class"));
+    return UiUtils.createTreeClassChooserList(loggerNames, InspectionGadgetsBundle.message("logger.class.name"),
+                                              InspectionGadgetsBundle.message("choose.logger.class"));
   }
 
   @Override
@@ -89,9 +86,7 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      //no recursion to avoid drilldown
-      if (aClass.isInterface() || aClass.isEnum() ||
-          aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
         return;
       }
       if (aClass instanceof PsiTypeParameter) {
@@ -101,8 +96,7 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
         return;
       }
       int numLoggers = 0;
-      final PsiField[] fields = aClass.getFields();
-      for (PsiField field : fields) {
+      for (PsiField field : aClass.getFields()) {
         if (isLogger(field)) {
           numLoggers++;
         }

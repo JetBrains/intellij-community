@@ -5,9 +5,12 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -20,6 +23,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.DocumentCommitProcessor;
+import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -30,6 +35,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.PeekableIterator;
 import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.Equality;
@@ -52,6 +59,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * @author peter
@@ -98,6 +107,35 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  /**
+   * Pass here the exception you want to be thrown first
+   * E.g.<pre>
+   * {@code
+   *   void tearDown() {
+   *     try {
+   *       doTearDowns();
+   *     }
+   *     catch(Exception e) {
+   *       addSuppressedException(e);
+   *     }
+   *     finally {
+   *       super.tearDown();
+   *     }
+   *   }
+   * }
+   * </pre>
+   *
+   */
+  protected void addSuppressedException(@NotNull Throwable e) {
+    List<Throwable> list = mySuppressedExceptions;
+    if (list == null) {
+      mySuppressedExceptions = list = new SmartList<>();
+    }
+    list.add(e);
+  }
+  private List<Throwable> mySuppressedExceptions;
+
+
   public UsefulTestCase() {
   }
 
@@ -137,38 +175,34 @@ public abstract class UsefulTestCase extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      // don't use method references here to make stack trace reading easier
-      //noinspection Convert2MethodRef
-      new RunAll(
-        () -> disposeRootDisposable(),
-        () -> cleanupSwingDataStructures(),
-        () -> cleanupDeleteOnExitHookList(),
-        () -> Disposer.setDebugMode(true),
-        () -> {
-          if (shouldContainTempFiles()) {
-            FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-            if (hasTmpFilesToKeep()) {
-              File[] files = new File(myTempDir).listFiles();
-              if (files != null) {
-                for (File file : files) {
-                  if (!shouldKeepTmpFile(file)) {
-                    FileUtil.delete(file);
-                  }
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
+    new RunAll(
+      () -> disposeRootDisposable(),
+      () -> cleanupSwingDataStructures(),
+      () -> cleanupDeleteOnExitHookList(),
+      () -> Disposer.setDebugMode(true),
+      () -> {
+        if (shouldContainTempFiles()) {
+          FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
+          if (hasTmpFilesToKeep()) {
+            File[] files = new File(myTempDir).listFiles();
+            if (files != null) {
+              for (File file : files) {
+                if (!shouldKeepTmpFile(file)) {
+                  FileUtil.delete(file);
                 }
               }
             }
-            else {
-              FileUtil.delete(new File(myTempDir));
-            }
           }
-        },
-        () -> UIUtil.removeLeakingAppleListeners()
-      ).run();
-    }
-    finally {
-      super.tearDown();
-    }
+          else {
+            FileUtil.delete(new File(myTempDir));
+          }
+        }
+      },
+      () -> UIUtil.removeLeakingAppleListeners(),
+      () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS)
+    ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
   }
 
   protected final void disposeRootDisposable() {
@@ -416,6 +450,7 @@ public abstract class UsefulTestCase extends TestCase {
     EdtTestUtil.runInEdtAndWait(runnable);
   }
 
+  @NotNull
   public static String toString(@NotNull Iterable<?> collection) {
     if (!collection.iterator().hasNext()) {
       return "<empty>";
@@ -441,7 +476,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   @SafeVarargs
   public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull T... expected) {
-    assertOrderedEquals(null, actual, expected);
+    assertOrderedEquals("", actual, expected);
   }
 
   public static void assertOrderedEquals(@NotNull byte[] actual, @NotNull byte[] expected) {
@@ -465,22 +500,22 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedEquals(String errorMsg, @NotNull Iterable<? extends T> actual, @NotNull T... expected) {
+  public static <T> void assertOrderedEquals(@NotNull String errorMsg, @NotNull Iterable<? extends T> actual, @NotNull T... expected) {
     assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
   }
 
   public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull Iterable<? extends T> expected) {
-    assertOrderedEquals(null, actual, expected);
+    assertOrderedEquals("", actual, expected);
   }
 
-  public static <T> void assertOrderedEquals(String errorMsg,
+  public static <T> void assertOrderedEquals(@NotNull String errorMsg,
                                              @NotNull Iterable<? extends T> actual,
                                              @NotNull Iterable<? extends T> expected) {
     //noinspection unchecked
     assertOrderedEquals(errorMsg, actual, expected, Equality.CANONICAL);
   }
 
-  public static <T> void assertOrderedEquals(String errorMsg,
+  public static <T> void assertOrderedEquals(@NotNull String errorMsg,
                                              @NotNull Iterable<? extends T> actual,
                                              @NotNull Iterable<? extends T> expected,
                                              @NotNull Equality<? super T> comparator) {
@@ -529,13 +564,13 @@ public abstract class UsefulTestCase extends TestCase {
    * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
    */
   public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
-    assertSameElements(null, actual, expected);
+    assertSameElements("", actual, expected);
   }
 
   /**
    * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
    */
-  public static <T> void assertSameElements(String message, @NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
+  public static <T> void assertSameElements(@NotNull String message, @NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
     if (actual.size() != expected.size() || !new HashSet<>(expected).equals(new HashSet<T>(actual))) {
       Assert.assertEquals(message, new HashSet<>(expected), new HashSet<T>(actual));
     }
@@ -714,7 +749,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void assertNotEmpty(final Collection<?> collection) {
     assertNotNull(collection);
-    assertTrue(!collection.isEmpty());
+    assertFalse(collection.isEmpty());
   }
 
   public static void assertEmpty(@NotNull Collection<?> collection) {
@@ -723,23 +758,27 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void assertNullOrEmpty(@Nullable Collection<?> collection) {
     if (collection == null) return;
-    assertEmpty(null, collection);
+    assertEmpty("", collection);
   }
 
   public static void assertEmpty(final String s) {
     assertTrue(s, StringUtil.isEmpty(s));
   }
 
-  public static <T> void assertEmpty(@Nullable String errorMsg, @NotNull Collection<? extends T> collection) {
+  public static <T> void assertEmpty(@NotNull String errorMsg, @NotNull Collection<? extends T> collection) {
     assertOrderedEquals(errorMsg, collection, Collections.emptyList());
   }
 
   public static void assertSize(int expectedSize, @NotNull Object[] array) {
-    assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
+    if (array.length != expectedSize) {
+      assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
+    }
   }
 
   public static void assertSize(int expectedSize, @NotNull Collection<?> c) {
-    assertEquals(toString(c), expectedSize, c.size());
+    if (c.size() != expectedSize) {
+      assertEquals(toString(c), expectedSize, c.size());
+    }
   }
 
   @NotNull
@@ -749,9 +788,13 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertSameLines(@NotNull String expected, @NotNull String actual) {
+    assertSameLines(null, expected, actual);
+  }
+
+  public static void assertSameLines(@Nullable String message, @NotNull String expected, @NotNull String actual) {
     String expectedText = StringUtil.convertLineSeparators(expected.trim());
     String actualText = StringUtil.convertLineSeparators(actual.trim());
-    Assert.assertEquals(expectedText, actualText);
+    Assert.assertEquals(message, expectedText, actualText);
   }
 
   public static void assertExists(@NotNull File file){
@@ -784,7 +827,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void assertSameLinesWithFile(@NotNull String filePath,
                                              @NotNull String actualText,
-                                             @NotNull Producer<String> messageProducer) {
+                                             @NotNull Supplier<String> messageProducer) {
     assertSameLinesWithFile(filePath, actualText, true, messageProducer);
   }
 
@@ -795,7 +838,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static void assertSameLinesWithFile(@NotNull String filePath,
                                              @NotNull String actualText,
                                              boolean trimBeforeComparing,
-                                             @Nullable Producer<String> messageProducer) {
+                                             @Nullable Supplier<String> messageProducer) {
     String fileText;
     try {
       if (OVERWRITE_TESTDATA) {
@@ -815,7 +858,7 @@ public abstract class UsefulTestCase extends TestCase {
     String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
     String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
     if (!Comparing.equal(expected, actual)) {
-      throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.produce(), expected, actual, filePath);
+      throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
     }
   }
 
@@ -1046,6 +1089,21 @@ public abstract class UsefulTestCase extends TestCase {
   @Nullable
   public static VirtualFile refreshAndFindFile(@NotNull final File file) {
     return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+  }
+
+  public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      Application application = ApplicationManager.getApplication();
+      if (application != null && !application.isDisposed()) {
+        FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+        if (index != null) index.waitForVfsEventsExecuted(timeout, timeUnit);
+
+        DocumentCommitThread commitThread = (DocumentCommitThread)ServiceManager.getService(DocumentCommitProcessor.class);
+        if (commitThread != null) {
+          commitThread.waitForAllCommits(timeout, timeUnit);
+        }
+      }
+    });
   }
 
   protected class TestDisposable implements Disposable {

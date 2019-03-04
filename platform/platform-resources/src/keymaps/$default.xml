@@ -123,6 +123,10 @@
   <action id="EditorAddRectangularSelectionOnMouseDrag">
     <mouse-shortcut keystroke="ctrl alt shift button1"/>
   </action>
+  <action id="EditorCreateRectangularSelectionOnMouseDrag">
+    <mouse-shortcut keystroke="alt button1"/>
+    <mouse-shortcut keystroke="button2"/>
+  </action>
   <action id="EditorCreateRectangularSelection">
     <mouse-shortcut keystroke="alt shift button2"/>
   </action>
@@ -294,7 +298,8 @@
   <action id="RecentFiles">
     <keyboard-shortcut first-keystroke="control E"/>
   </action>
-  <action id="RecentChangedFiles">
+  <action id="RecentChangedFiles"/>
+  <action id="RecentLocations">
     <keyboard-shortcut first-keystroke="control shift E"/>
   </action>
   <action id="QuickChangeScheme">
@@ -574,6 +579,12 @@
   <action id="Diff.FocusOppositePaneAndScroll">
     <keyboard-shortcut first-keystroke="control shift TAB"/>
   </action>
+  <action id="Diff.ApplyLeftSide">
+    <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
+  </action>
+  <action id="Diff.ApplyRightSide">
+    <keyboard-shortcut first-keystroke="alt shift LEFT"/>
+  </action>
   <action id="Move">
     <keyboard-shortcut first-keystroke="F6"/>
   </action>
@@ -589,6 +600,9 @@
   </action>
   <action id="CopyReference">
     <keyboard-shortcut first-keystroke="control alt shift C"/>
+  </action>
+  <action id="CopyTBXReference">
+    <keyboard-shortcut first-keystroke="control alt shift R"/>
   </action>
   <action id="EditorPasteFromX11">
     <mouse-shortcut keystroke="button2"/>
@@ -1117,6 +1131,9 @@
   </action>
   <action id="ShowFilterPopup">
     <keyboard-shortcut first-keystroke="control alt F"/>
+  </action>
+  <action id="ShowSearchHistory">
+    <keyboard-shortcut first-keystroke="alt down"/>
   </action>
 
   <action id="SearchEverywhere.NextTab">

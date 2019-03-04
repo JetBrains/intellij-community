@@ -3,6 +3,7 @@ package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -114,25 +115,27 @@ public class RunAnythingManager {
         return;
       }
 
-      Dimension minSize = myRunAnythingUI.getMinimumSize();
-      JBInsets.addTo(minSize, myBalloon.getContent().getInsets());
-      myBalloon.setMinimumSize(minSize);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Dimension minSize = view.getMinimumSize();
+        JBInsets.addTo(minSize, myBalloon.getContent().getInsets());
+        myBalloon.setMinimumSize(minSize);
 
-      if (viewType == BigPopupUI.ViewType.SHORT) {
-        myBalloonFullSize = myBalloon.getSize();
-        JBInsets.removeFrom(myBalloonFullSize, myBalloon.getContent().getInsets());
-        myBalloon.pack(false, true);
-      }
-      else {
-        if (myBalloonFullSize == null) {
-          myBalloonFullSize = myRunAnythingUI.getPreferredSize();
-          JBInsets.addTo(myBalloonFullSize, myBalloon.getContent().getInsets());
+        if (viewType == BigPopupUI.ViewType.SHORT) {
+          myBalloonFullSize = myBalloon.getSize();
+          JBInsets.removeFrom(myBalloonFullSize, myBalloon.getContent().getInsets());
+          myBalloon.pack(false, true);
         }
-        myBalloonFullSize.height = Integer.max(myBalloonFullSize.height, minSize.height);
-        myBalloonFullSize.width = Integer.max(myBalloonFullSize.width, minSize.width);
+        else {
+          if (myBalloonFullSize == null) {
+            myBalloonFullSize = view.getPreferredSize();
+            JBInsets.addTo(myBalloonFullSize, myBalloon.getContent().getInsets());
+          }
+          myBalloonFullSize.height = Integer.max(myBalloonFullSize.height, minSize.height);
+          myBalloonFullSize.width = Integer.max(myBalloonFullSize.width, minSize.width);
 
-        myBalloon.setSize(myBalloonFullSize);
-      }
+          myBalloon.setSize(myBalloonFullSize);
+        }
+      });
     });
 
     return view;

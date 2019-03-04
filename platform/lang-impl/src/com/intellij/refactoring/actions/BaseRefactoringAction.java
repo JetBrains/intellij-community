@@ -47,7 +47,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class BaseRefactoringAction extends AnAction {
+public abstract class BaseRefactoringAction extends AnAction implements UpdateInBackground {
   private final Condition<Language> myLanguageCondition = this::isAvailableForLanguage;
 
   protected abstract boolean isAvailableInEditorOnly();
@@ -154,7 +154,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (file != null) {
-      if (file instanceof PsiCompiledElement || !isAvailableForFile(file)) {
+      if (file instanceof PsiCompiledElement && disableOnCompiledElement() || !isAvailableForFile(file)) {
         hideAction(e);
         return;
       }
@@ -198,6 +198,10 @@ public abstract class BaseRefactoringAction extends AnAction {
         hideAction(e);
       }
     }
+  }
+
+  protected boolean disableOnCompiledElement() {
+    return true;
   }
 
   private static void hideAction(@NotNull AnActionEvent e) {

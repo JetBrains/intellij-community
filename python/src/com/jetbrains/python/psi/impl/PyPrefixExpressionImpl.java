@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,14 +84,16 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
         }
       }
     }
-    final PsiReference ref = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
-    final PsiElement resolved = ref.resolve();
-    if (resolved instanceof PyCallable) {
-      // TODO: Make PyPrefixExpression a PyCallSiteExpression, use getCallType() here and analyze it in PyTypeChecker.analyzeCallSite()
-      final PyType returnType = ((PyCallable)resolved).getReturnType(context, key);
-      return isAwait ? Ref.deref(getGeneratorReturnType(returnType)) : returnType;
-    }
-    return null;
+
+    return Ref.deref(
+      StreamEx
+      .of(PyCallExpressionHelper.mapArguments(this, PyResolveContext.noImplicits().withTypeEvalContext(context)))
+      .map(PyCallExpression.PyArgumentsMapping::getMarkedCallee)
+      .nonNull()
+      .map(callee -> callee.getCallableType().getCallType(context, this))
+      .map(callType -> isAwait ? Ref.deref(getGeneratorReturnType(callType)) : callType)
+      .collect(PyTypeUtil.toUnion())
+    );
   }
 
   @Override

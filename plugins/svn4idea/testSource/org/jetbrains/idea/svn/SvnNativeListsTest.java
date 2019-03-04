@@ -53,7 +53,7 @@ public class SvnNativeListsTest extends SvnTestCase {
 
   private void ensureAddedToNativeList() {
     refreshChanges();  // first time new changes are detected and added to _IDEA_ changeslist
-    changeListManager.ensureUpToDate(false);  // and on the same thread a request is put for files addition;
+    changeListManager.ensureUpToDate();  // and on the same thread a request is put for files addition;
     // so stay here for 2nd cycle and wait for native addition completion
   }
 

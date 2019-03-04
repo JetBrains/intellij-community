@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,18 @@ public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase
 
   @Override
   public void tearDown() throws Exception {
-    if (myHugeExpr != null) {
-      myHugeExpr.setLength(0);
-      myHugeExpr = null;
+    try {
+      if (myHugeExpr != null) {
+        myHugeExpr.setLength(0);
+        myHugeExpr = null;
+      }
     }
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testOnHugeBinaryExprInFile() {

@@ -3,8 +3,8 @@ package pkg;
 public class TestStaticNameClash {
    public static String property;
 
-   public static void setProperty(String var0) {
-      property = var0;// 8
+   public static void setProperty(String property) {
+      TestStaticNameClash.property = property;// 8
    }// 9
 }
 

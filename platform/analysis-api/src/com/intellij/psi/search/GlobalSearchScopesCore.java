@@ -287,6 +287,7 @@ public class GlobalSearchScopesCore {
       return super.uniteWith(scope);
     }
 
+    @NotNull
     private static Set<VirtualFile> union(boolean addDir1, @NotNull VirtualFile dir1, boolean addDir2, @NotNull VirtualFile dir2) {
       if (addDir1 && addDir2) return ContainerUtil.newHashSet(dir1, dir2);
       if (addDir1) return Collections.singleton(dir1);

@@ -29,9 +29,14 @@ public class PsiCachedValueImpl<T> extends PsiCachedValue<T> implements CachedVa
   private final CachedValueProvider<T> myProvider;
 
   public PsiCachedValueImpl(@NotNull PsiManager manager, @NotNull CachedValueProvider<T> provider) {
-    super(manager);
+    this(manager, provider, false);
+  }
+
+  PsiCachedValueImpl(@NotNull PsiManager manager, @NotNull CachedValueProvider<T> provider, boolean trackValue) {
+    super(manager, trackValue);
     myProvider = provider;
   }
+
   @Override
   @Nullable
   public T getValue() {

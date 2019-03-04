@@ -26,7 +26,7 @@ public interface PersistentSet<T> {
 
   void put(@NotNull T element) throws IOException;
 
-  void process(@NotNull Processor<T> processor) throws IOException;
+  void process(@NotNull Processor<? super T> processor) throws IOException;
 
   void flush();
 

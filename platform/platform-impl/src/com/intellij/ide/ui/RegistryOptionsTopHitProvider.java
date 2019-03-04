@@ -1,15 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ExperimentalFeature;
 import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,18 +17,20 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class RegistryOptionsTopHitProvider extends OptionsTopHitProvider {
+final class RegistryOptionsTopHitProvider implements OptionsTopHitProvider.ApplicationLevelProvider {
+  RegistryOptionsTopHitProvider() {
+    if (!ApplicationManager.getApplication().isInternal()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+  }
+
   @NotNull
   @Override
-  public Collection<OptionDescription> getOptions(@Nullable Project project) {
+  public Collection<OptionDescription> getOptions() {
     return Holder.ourValues;
   }
 
-  @Override
-  public boolean isEnabled(@Nullable Project project) {
-    return ApplicationManager.getApplication().isInternal();
-  }
-
+  @NotNull
   @Override
   public String getId() {
     return "registry";

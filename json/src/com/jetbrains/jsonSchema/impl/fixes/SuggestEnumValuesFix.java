@@ -18,7 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
+import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,9 +26,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class SuggestEnumValuesFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
-  private final JsonLikePsiWalker.QuickFixAdapter myQuickFixAdapter;
+  private final JsonLikeSyntaxAdapter myQuickFixAdapter;
 
-  public SuggestEnumValuesFix(JsonLikePsiWalker.QuickFixAdapter quickFixAdapter) {
+  public SuggestEnumValuesFix(JsonLikeSyntaxAdapter quickFixAdapter) {
     myQuickFixAdapter = quickFixAdapter;
   }
 

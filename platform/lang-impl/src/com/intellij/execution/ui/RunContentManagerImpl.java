@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.process.ProcessAdapter;
@@ -11,19 +14,13 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.VetoableProjectManagerListener;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -34,7 +31,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.*;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -44,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class RunContentManagerImpl implements RunContentManager, Disposable {
   public static final Key<Boolean> ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = Key.create("ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY");
@@ -53,7 +50,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private final Project myProject;
   private final Map<String, ContentManager> myToolwindowIdToContentManagerMap = new THashMap<>();
   private final Map<String, Icon> myToolwindowIdToBaseIconMap = new THashMap<>();
-  private final LinkedList<String> myToolwindowIdZBuffer = new LinkedList<>();
+  private final ConcurrentLinkedDeque<String> myToolwindowIdZBuffer = new ConcurrentLinkedDeque<>();
 
   public RunContentManagerImpl(@NotNull Project project, @NotNull DockManager dockManager) {
     myProject = project;
@@ -605,30 +602,16 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     return null;
   }
 
-  private class CloseListener extends ContentManagerAdapter implements VetoableProjectManagerListener, Disposable {
-    private Content myContent;
+  private class CloseListener extends BaseContentCloseListener {
     private final Executor myExecutor;
 
-    private CloseListener(@NotNull final Content content, @NotNull Executor executor) {
-      myContent = content;
-      content.getManager().addContentManagerListener(this);
-      ProjectManager.getInstance().addProjectManagerListener(myProject, this);
+    private CloseListener(@NotNull final Content content, @NotNull final Executor executor) {
+      super(content, myProject);
       myExecutor = executor;
     }
 
     @Override
-    public void contentRemoved(@NotNull final ContentManagerEvent event) {
-      final Content content = event.getContent();
-      if (content == myContent) {
-        Disposer.dispose(this);
-      }
-    }
-
-    @Override
-    public void dispose() {
-      if (myContent == null) return;
-
-      final Content content = myContent;
+    protected void disposeContent(@NotNull Content content) {
       try {
         RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
         getSyncPublisher().contentRemoved(descriptor, myExecutor);
@@ -637,48 +620,13 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         }
       }
       finally {
-        content.getManager().removeContentManagerListener(this);
-        ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
-        content.release(); // don't invoke myContent.release() because myContent becomes null after destroyProcess()
-        myContent = null;
+        content.release();
       }
     }
 
     @Override
-    public void contentRemoveQuery(@NotNull final ContentManagerEvent event) {
-      if (event.getContent() == myContent) {
-        final boolean canClose = closeQuery(false);
-        if (!canClose) {
-          event.consume();
-        }
-      }
-    }
-
-    @Override
-    public void projectClosed(@NotNull final Project project) {
-      if (myContent != null && project == myProject) {
-        myContent.getManager().removeContent(myContent, true);
-        Disposer.dispose(this); // Dispose content even if content manager refused to.
-      }
-    }
-
-    @Override
-    public boolean canClose(@NotNull Project project) {
-      if (project != myProject) return true;
-
-      if (myContent == null) return true;
-
-      final boolean canClose = closeQuery(true);
-      // Content could be removed during close query
-      if (canClose && myContent != null) {
-        myContent.getManager().removeContent(myContent, true);
-        myContent = null;
-      }
-      return canClose;
-    }
-
-    private boolean closeQuery(boolean modal) {
-      final RunContentDescriptor descriptor = getRunContentDescriptorByContent(myContent);
+    protected boolean closeQuery(@NotNull Content content, boolean modal) {
+      final RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
       if (descriptor == null) {
         return true;
       }
@@ -687,96 +635,27 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) {
         return true;
       }
-      GeneralSettings.ProcessCloseConfirmation rc = TerminateRemoteProcessDialog.show(
-        myProject, descriptor.getDisplayName(), processHandler);
-      if (rc == null) { // cancel
-        return false;
-      }
-      boolean destroyProcess = rc == GeneralSettings.ProcessCloseConfirmation.TERMINATE;
-      if (destroyProcess) {
-        processHandler.destroyProcess();
-      }
-      else {
-        processHandler.detachProcess();
-      }
-      waitForProcess(descriptor, modal);
-      return true;
+      final String sessionName = descriptor.getDisplayName();
+      final WaitForProcessTask task = new WaitForProcessTask(processHandler, sessionName, modal, myProject) {
+        final boolean killable =
+          !modal && (processHandler instanceof KillableProcess) && ((KillableProcess)processHandler).canKillProcess();
+
+        {
+          if (killable) {
+            String cancelText = ExecutionBundle.message("terminating.process.progress.kill");
+            setCancelText(cancelText);
+            setCancelTooltipText(cancelText);
+          }
+        }
+
+        @Override
+        public void onCancel() {
+          if (killable && !processHandler.isProcessTerminated()) {
+            ((KillableProcess)processHandler).killProcess();
+          }
+        }
+      };
+      return askUserAndWait(processHandler, sessionName, task);
     }
-  }
-
-  private void waitForProcess(final RunContentDescriptor descriptor, final boolean modal) {
-    final ProcessHandler processHandler = descriptor.getProcessHandler();
-    final boolean killable = !modal && (processHandler instanceof KillableProcess) && ((KillableProcess)processHandler).canKillProcess();
-
-    String title = ExecutionBundle.message("terminating.process.progress.title", descriptor.getDisplayName());
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, title, true) {
-
-      {
-        if (killable) {
-          String cancelText= ExecutionBundle.message("terminating.process.progress.kill");
-          setCancelText(cancelText);
-          setCancelTooltipText(cancelText);
-        }
-      }
-
-      @Override
-      public boolean isConditionalModal() {
-        return modal;
-      }
-
-      @Override
-      public boolean shouldStartInBackground() {
-        return !modal;
-      }
-
-      @Override
-      public void run(@NotNull final ProgressIndicator progressIndicator) {
-        final Semaphore semaphore = new Semaphore();
-        semaphore.down();
-
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          final ProcessHandler processHandler1 = descriptor.getProcessHandler();
-          try {
-            if (processHandler1 != null) {
-              processHandler1.waitFor();
-            }
-          }
-          finally {
-            semaphore.up();
-          }
-        });
-
-        progressIndicator.setText(ExecutionBundle.message("waiting.for.vm.detach.progress.text"));
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            while (true) {
-              if (progressIndicator.isCanceled() || !progressIndicator.isRunning()) {
-                semaphore.up();
-                break;
-              }
-              try {
-                //noinspection SynchronizeOnThis
-                synchronized (this) {
-                  //noinspection SynchronizeOnThis
-                  wait(2000L);
-                }
-              }
-              catch (InterruptedException ignore) {
-              }
-            }
-          }
-        });
-
-        semaphore.waitFor();
-      }
-
-      @Override
-      public void onCancel() {
-        if (killable && !processHandler.isProcessTerminated()) {
-          ((KillableProcess)processHandler).killProcess();
-        }
-      }
-    });
   }
 }

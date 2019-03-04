@@ -873,7 +873,7 @@ public class GenericsHighlightUtil {
     final PsiType javaLangString = PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
     final MethodSignature valueOfMethod = MethodSignatureUtil.createMethodSignature("valueOf", new PsiType[]{javaLangString}, PsiTypeParameter.EMPTY_ARRAY,
                                                                                     PsiSubstitutor.EMPTY);
-    return valueOfMethod.equals(methodSignature);
+    return MethodSignatureUtil.areSignaturesErasureEqual(valueOfMethod, methodSignature);
   }
 
   @Nullable

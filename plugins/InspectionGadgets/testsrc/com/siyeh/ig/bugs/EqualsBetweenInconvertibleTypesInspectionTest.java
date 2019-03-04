@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings({"EqualsBetweenInconvertibleTypes", "ResultOfMethodCallIgnored", "StringEqualsCharSequence"})
+@SuppressWarnings("ALL")
 public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {
@@ -125,6 +125,19 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
            "}");
   }
 
+  public void testSameClassInDeepComparison() {
+    doTest("import java.util.ArrayList;\n" +
+           "class Numbers {\n" +
+           "    private static <K extends Number, T extends Class<K>> void foo(T categoryClass, ArrayList<Number> numbers) {\n" +
+           "        for (Number number : numbers) {\n" +
+           "            if (number.getClass() == categoryClass) {\n" +
+           "                System.out.println(number);\n" +
+           "            }\n" +
+           "        }\n" +
+           "    }\n" +
+           "}");
+  }
+
   public void testDifferentSets() {
     doTest("import java.util.*;\n" +
            "\n" +
@@ -158,13 +171,21 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
            "  }");
   }
 
-  public void testWilcards() {
+  public void testWildcards() {
     doTest("import java.util.*;" +
            "class X {" +
            "  boolean x(Class<? extends Date> a, Class<? extends Map<String, String>> b) {" +
            "    return b./*No class found which is a subtype of both 'Map<String, String>' and 'Date'*/equals/**/(a);" +
            "  }" +
            "}");
+  }
+
+  public void testAnonymousClasses() {
+    doTest("import java.util.*;" +
+           "class X {{" +
+           "    boolean equals = new HashSet<String>() {\n" +
+           "        }./*'equals()' between objects of inconvertible types 'HashSet<String>' and 'TreeSet<Integer>'*/equals/**/(new TreeSet<Integer>());" +
+           "}}");
   }
 
   public void testFBounds() {

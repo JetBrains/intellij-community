@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class DebuggerUtilsEx
@@ -15,6 +15,7 @@ import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -26,7 +27,6 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,8 +54,6 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
@@ -83,9 +81,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    */
   public static List<CodeFragmentFactory> getCodeFragmentFactories(@Nullable PsiElement context) {
     final DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
-    final CodeFragmentFactory[] providers = ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME);
-    final List<CodeFragmentFactory> suitableFactories = new ArrayList<>(providers.length);
-    if (providers.length > 0) {
+    final List<CodeFragmentFactory> providers = CodeFragmentFactory.EXTENSION_POINT_NAME.getExtensionList();
+    final List<CodeFragmentFactory> suitableFactories = new ArrayList<>(providers.size());
+    if (providers.size() > 0) {
       for (CodeFragmentFactory factory : providers) {
         if (factory != defaultFactory && factory.isContextAccepted(context)) {
           suitableFactories.add(factory);
@@ -456,7 +454,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         fileType = file != null ? file.getFileType() : null;
       }
     }
-    for (CodeFragmentFactory factory : ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME)) {
+    for (CodeFragmentFactory factory : CodeFragmentFactory.EXTENSION_POINT_NAME.getExtensionList()) {
       if (factory != defaultFactory && (fileType == null || factory.getFileType().equals(fileType)) && factory.isContextAccepted(context)) {
         return factory;
       }
@@ -638,6 +636,23 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       LOG.info(e);
     }
     return null;
+  }
+
+  public static List<Value> getArgumentValues(@NotNull StackFrame frame) {
+    try {
+      return frame.getArgumentValues();
+    }
+    catch (InternalException e) {
+      // From Oracle's forums:
+      // This could be a JPDA bug. Unexpected JDWP Error: 32 means that an 'opaque' frame was detected at the lower JPDA levels,
+      // typically a native frame.
+      if (e.errorCode() == JvmtiError.OPAQUE_FRAME /*opaque frame JDI bug*/ ) {
+        return Collections.emptyList();
+      }
+      else {
+        throw e;
+      }
+    }
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, double value) {
@@ -910,6 +925,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return method != null && isLambdaName(method.name());
   }
 
+  public static boolean isProxyClassName(@Nullable String name) {
+    return !StringUtil.isEmpty(name) && StringUtil.getShortName(name).startsWith("$Proxy");
+  }
+
+  public static boolean isProxyClass(@Nullable ReferenceType type) {
+    // it may be better to call java.lang.reflect.Proxy#isProxyClass but it is much slower
+    return type instanceof ClassType && isProxyClassName(type.name());
+  }
+
   public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR = Comparator.comparingInt(m -> getLambdaOrdinal(m.name()));
 
   public static int getLambdaOrdinal(@NotNull String name) {
@@ -1051,14 +1075,22 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
                                       DebugProcessImpl process) {
     PsiClass containingClass = psiMethod.getContainingClass();
     try {
-      return containingClass != null && Objects.equals(JVMNameUtil.getClassVMName(containingClass), className) &&
-             JVMNameUtil.getJVMMethodName(psiMethod).equals(name) &&
-             JVMNameUtil.getJVMSignature(psiMethod).getName(process).equals(signature);
+      if (containingClass != null &&
+          JVMNameUtil.getJVMMethodName(psiMethod).equals(name) &&
+          JVMNameUtil.getJVMSignature(psiMethod).getName(process).equals(signature)) {
+        String methodClassName = JVMNameUtil.getClassVMName(containingClass);
+        if (Objects.equals(methodClassName, className)) {
+          return true;
+        }
+        if (methodClassName != null) {
+          return process.getVirtualMachineProxy().classesByName(className).stream().anyMatch(t -> instanceOf(t, methodClassName));
+        }
+      }
     }
     catch (EvaluateException e) {
       LOG.debug(e);
-      return false;
     }
+    return false;
   }
 
   @Nullable
@@ -1118,19 +1150,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
       else {
         ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-        return projectFileIndex.isInLibraryClasses(file) || projectFileIndex.isInLibrarySource(file);
+        return projectFileIndex.isInLibrary(file);
       }
     });
-  }
-
-  public static boolean isInJavaSession(AnActionEvent e) {
-    XDebugSession session = e.getData(XDebugSession.DATA_KEY);
-    if (session == null) {
-      Project project = e.getProject();
-      if (project != null) {
-        session = XDebuggerManager.getInstance(project).getCurrentSession();
-      }
-    }
-    return session != null && session.getDebugProcess() instanceof JavaDebugProcess;
   }
 }

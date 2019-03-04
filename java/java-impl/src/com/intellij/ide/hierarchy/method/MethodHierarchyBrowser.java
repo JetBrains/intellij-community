@@ -67,7 +67,7 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
       LOG.error("unexpected type: " + typeName);
       return null;
     }
-    return new MethodHierarchyTreeStructure(myProject, (PsiMethod)psiElement);
+    return new MethodHierarchyTreeStructure(myProject, (PsiMethod)psiElement, getCurrentScopeType());
   }
 
   @Override

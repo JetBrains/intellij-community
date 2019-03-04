@@ -56,9 +56,9 @@ public class DebugAssertions {
   public static <Key> boolean equals(Collection<? extends Key> keys, Collection<? extends Key> keys2, KeyDescriptor<Key> keyDescriptor) {
     if (keys == null && keys2 == null) return true;
     if (keys == null || keys2 == null || keys.size() != keys2.size()) return false;
-    LinkedHashMap<Key, Boolean> map = new LinkedHashMap<Key, Boolean>(keys.size(), 0.8f, keyDescriptor);
+    LinkedHashMap<Key, Boolean> map = new LinkedHashMap<>(keys.size(), 0.8f, keyDescriptor);
     for(Key key:keys) map.put(key, Boolean.TRUE);
-    LinkedHashMap<Key, Boolean> map2 = new LinkedHashMap<Key, Boolean>(keys.size(), 0.8f, keyDescriptor);
+    LinkedHashMap<Key, Boolean> map2 = new LinkedHashMap<>(keys.size(), 0.8f, keyDescriptor);
     for(Key key:keys2) map2.put(key, Boolean.TRUE);
     return map.equals(map2);
   }

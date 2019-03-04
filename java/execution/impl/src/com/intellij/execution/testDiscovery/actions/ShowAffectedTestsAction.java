@@ -379,7 +379,6 @@ public class ShowAffectedTestsAction extends AnAction {
                                     @NotNull PsiMethod[] methods,
                                     @NotNull List<String> filePaths,
                                     @NotNull TestDiscoveryProducer.PsiTestProcessor processor) {
-    if (DumbService.isDumb(project)) return;
     List<Couple<String>> classesAndMethods =
       ReadAction.compute(() -> Arrays.stream(methods)
       .map(method -> getMethodKey(method)).filter(Objects::nonNull).collect(Collectors.toList()));
@@ -390,6 +389,7 @@ public class ShowAffectedTestsAction extends AnAction {
                                            @NotNull TestDiscoveryProducer.PsiTestProcessor processor,
                                            @NotNull List<Couple<String>> classesAndMethods,
                                            @NotNull List<String> filePaths) {
+    if (DumbService.isDumb(project)) return;
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
       byte frameworkId =
@@ -483,8 +483,9 @@ public class ShowAffectedTestsAction extends AnAction {
   }
 
   @Nullable
-  private static Couple<String> getMethodKey(@NotNull PsiMethod method) {
-    PsiClass c = method.getContainingClass();
+  public static Couple<String> getMethodKey(@NotNull PsiMethod method) {
+    if (DumbService.isDumb(method.getProject())) return null;
+    PsiClass c = method.isValid() ? method.getContainingClass() : null;
     String fqn = c != null ? DiscoveredTestsTreeModel.getClassName(c) : null;
     return fqn == null ? null : Couple.of(fqn, methodSignature(method));
   }

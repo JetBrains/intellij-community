@@ -122,6 +122,7 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
     StructureViewComponent svc2 = (StructureViewComponent)fileEditor.getStructureViewBuilder().createStructureView(fileEditor, myProject);
     Disposer.register(getTestRootDisposable(), svc2);
     svc2.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
+    PlatformTestUtil.waitWhileBusy(svc2.getTree());
     PlatformTestUtil.assertTreeEqual(svc2.getTree(), expected);
   }
 }

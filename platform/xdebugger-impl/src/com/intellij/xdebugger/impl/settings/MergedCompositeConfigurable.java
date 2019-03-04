@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.settings;
 
+import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,8 +16,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
 
-class MergedCompositeConfigurable implements SearchableConfigurable {
+class MergedCompositeConfigurable extends CompositeConfigurable<Configurable> implements SearchableConfigurable {
   static final EmptyBorder BOTTOM_INSETS = new EmptyBorder(0, 0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET, 0);
 
   private static final Insets FIRST_COMPONENT_INSETS = new Insets(0, 0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET, 0);
@@ -130,37 +132,14 @@ class MergedCompositeConfigurable implements SearchableConfigurable {
   }
 
   @Override
-  public boolean isModified() {
-    for (Configurable child : children) {
-      if (child.isModified()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public void apply() throws ConfigurationException {
-    for (Configurable child : children) {
-      if (child.isModified()) {
-        child.apply();
-      }
-    }
-  }
-
-  @Override
-  public void reset() {
-    for (Configurable child : children) {
-      child.reset();
-    }
-  }
-
-  @Override
   public void disposeUIResources() {
     rootComponent = null;
+    super.disposeUIResources();
+  }
 
-    for (Configurable child : children) {
-      child.disposeUIResources();
-    }
+  @NotNull
+  @Override
+  protected List<Configurable> createConfigurables() {
+    return Arrays.asList(children);
   }
 }

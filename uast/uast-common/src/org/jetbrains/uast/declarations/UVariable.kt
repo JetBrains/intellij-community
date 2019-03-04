@@ -65,9 +65,6 @@ interface UVariable : UDeclaration, PsiVariable {
   }
 }
 
-/**
- * @since 2018.2
- */
 interface UVariableEx : UVariable, UDeclarationEx {
   override val javaPsi: PsiVariable
 }
@@ -91,9 +88,6 @@ interface UParameter : UVariable, PsiParameter {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitParameter(this, data)
 }
 
-/**
- * @since 2018.2
- */
 interface UParameterEx : UParameter, UDeclarationEx {
   override val javaPsi: PsiParameter
 }
@@ -112,9 +106,6 @@ interface UField : UVariable, PsiField {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitField(this, data)
 }
 
-/**
- * @since 2018.2
- */
 interface UFieldEx : UField, UDeclarationEx {
   override val javaPsi: PsiField
 }
@@ -133,9 +124,6 @@ interface ULocalVariable : UVariable, PsiLocalVariable {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitLocalVariable(this, data)
 }
 
-/**
- * @since 2018.2
- */
 interface ULocalVariableEx : ULocalVariable, UDeclarationEx {
   override val javaPsi: PsiLocalVariable
 }
@@ -178,9 +166,6 @@ interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
   }
 }
 
-/**
- * @since 2018.2
- */
 interface UEnumConstantEx : UEnumConstant, UDeclarationEx {
   override val javaPsi: PsiEnumConstant
 }

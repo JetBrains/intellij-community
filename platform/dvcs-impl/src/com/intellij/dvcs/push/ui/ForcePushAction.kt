@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui
 
-import com.intellij.CommonBundle
 import com.intellij.dvcs.push.PushSupport
 import com.intellij.dvcs.push.PushTarget
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.xml.util.XmlStringUtil
 
 class ForcePushAction : PushActionBase() {
@@ -51,9 +51,10 @@ class ForcePushAction : PushActionBase() {
     val to = if (commonTarget != null) " to <b>${commonTarget.presentation}</b>" else ""
     val message = "You're going to force push${to}. It may overwrite commits at the remote. Are you sure you want to proceed?"
     val myDoNotAskOption = if (commonTarget != null) MyDoNotAskOptionForPush(aSupport!!, commonTarget) else null
-    val decision = Messages.showOkCancelDialog(project, XmlStringUtil.wrapInHtml(message), "Force Push",
-                                               "&Force Push", CommonBundle.getCancelButtonText(),
-                                               Messages.getWarningIcon(), myDoNotAskOption)
+    val decision = showOkCancelDialog(title = "Force Push", message = XmlStringUtil.wrapInHtml(message),
+                                      okText = "&Force Push",
+                                      icon = Messages.getWarningIcon(), doNotAskOption = myDoNotAskOption,
+                                      project = project)
     return decision == Messages.OK
   }
 }

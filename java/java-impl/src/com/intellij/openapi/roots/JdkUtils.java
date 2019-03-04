@@ -19,13 +19,14 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class JdkUtils {
   @Nullable
-  public static Sdk getJdkForElement(PsiElement element) {
+  public static Sdk getJdkForElement(@NotNull PsiElement element) {
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     if (virtualFile == null) return null;
     final List<OrderEntry> entries = ProjectRootManager.getInstance(element.getProject()).getFileIndex().getOrderEntriesForFile(virtualFile);
@@ -36,7 +37,6 @@ public class JdkUtils {
         if (jdk != null) break;
       }
     }
-    if (jdk == null) return null;
     return jdk;
   }
 }

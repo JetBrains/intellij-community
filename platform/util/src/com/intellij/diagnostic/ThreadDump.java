@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents thread dump of the IDE captured by its performance diagnostic tool.
  */
-class ThreadDump {
+public class ThreadDump {
   private final String myRawDump;
   private final StackTraceElement[] myEdtStack;
 

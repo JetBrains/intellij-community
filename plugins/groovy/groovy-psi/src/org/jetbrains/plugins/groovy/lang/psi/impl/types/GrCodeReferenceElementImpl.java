@@ -15,10 +15,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -26,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.GrCodeReferenceResolver;
 
 import java.util.Collection;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.doGetKind;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.getAccessorName;
 
 /**
@@ -54,8 +52,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = PsiImplUtil.getTextSkipWhiteSpaceAndComments(getNode());
     }
     return whiteSpaceAndComments;
-  }  
-  
+  }
+
   @Override
   public PsiReference getReference() {
     return this;
@@ -227,32 +225,18 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   @NotNull
   @Override
   public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
-    return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, GrCodeReferenceResolver.INSTANCE);
+    return TypeInferenceHelper.getTopContext().resolve(this, incomplete, GrCodeReferenceResolver.INSTANCE);
   }
 
   @NotNull
   @Override
   public PsiType[] getTypeArguments() {
-    GrTypeArgumentList typeArgumentList = getTypeArgumentList();
-    if (typeArgumentList != null && typeArgumentList.isDiamond()) {
-      return inferDiamondTypeArguments();
+    if (shouldInferTypeArguments(this)) {
+      return getDiamondTypes(this);
     }
     else {
       return super.getTypeArguments();
     }
-  }
-
-  private PsiType[] inferDiamondTypeArguments() {
-    PsiElement parent = getParent();
-    if (!(parent instanceof GrNewExpression)) return PsiType.EMPTY_ARRAY;
-
-    PsiType lType = PsiImplUtil.inferExpectedTypeForDiamond((GrNewExpression)parent);
-
-    if (lType instanceof PsiClassType) {
-      return ((PsiClassType)lType).getParameters();
-    }
-
-    return PsiType.EMPTY_ARRAY;
   }
 
   @NotNull

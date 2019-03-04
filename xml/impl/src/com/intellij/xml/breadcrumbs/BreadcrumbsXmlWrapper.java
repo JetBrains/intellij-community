@@ -1,10 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
+import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -17,8 +22,6 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -29,6 +32,8 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Gray;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -36,6 +41,7 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,6 +52,8 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import static com.intellij.ui.RelativeFont.SMALL;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
@@ -55,6 +63,7 @@ import static com.intellij.util.ui.UIUtil.getLabelFont;
  * @author spleaner
  */
 public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
+  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Editor Breadcrumb Updater", 1);
   final PsiBreadcrumbs breadcrumbs = new PsiBreadcrumbs();
 
   private final Project myProject;
@@ -63,6 +72,8 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private final VirtualFile myFile;
   private boolean myUserCaretChange = true;
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Breadcrumbs.Queue", 200, true, breadcrumbs);
+
+  private final List<BreadcrumbListener> myBreadcrumbListeners = new ArrayList<>();
 
   private final Update myUpdate = new Update(this) {
     @Override
@@ -76,10 +87,11 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     }
   };
 
-  private ProgressIndicator myAsyncUpdateProgress = null;
+  private CancellablePromise<?> myAsyncUpdateProgress = null;
   private final FileBreadcrumbsCollector myBreadcrumbsCollector;
 
   public static final Key<BreadcrumbsXmlWrapper> BREADCRUMBS_COMPONENT_KEY = new Key<>("BREADCRUMBS_KEY");
+  private static final Iterable<? extends Crumb> EMPTY_BREADCRUMBS = ContainerUtil.emptyIterable();
 
   public BreadcrumbsXmlWrapper(@NotNull final Editor editor) {
     myEditor = editor;
@@ -115,9 +127,9 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
     editor.getCaretModel().addCaretListener(caretListener, this);
 
-    myBreadcrumbsCollector = findBreadcrumbsCollector();
+    myBreadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myFile);
     if (myFile != null) {
-      myBreadcrumbsCollector.watchForChanges(myFile, this, () -> queueUpdate());
+      myBreadcrumbsCollector.watchForChanges(myFile, editor, this, () -> queueUpdate());
     }
 
     breadcrumbs.onHover(this::itemHovered);
@@ -164,18 +176,11 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     Disposer.register(this, new UiNotifyConnector(breadcrumbs, myQueue));
     Disposer.register(this, myQueue);
 
-    queueUpdate();
-  }
-
-  private FileBreadcrumbsCollector findBreadcrumbsCollector() {
-    if (myFile != null) {
-      for (FileBreadcrumbsCollector extension : FileBreadcrumbsCollector.EP_NAME.getExtensions(myProject)) {
-        if (extension.handlesFile(myFile)) {
-          return extension;
-        }
-      }
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      myQueue.setPassThrough(true);
     }
-    return new PsiFileBreadcrumbsCollector(myProject);
+
+    queueUpdate();
   }
 
   private void updateCrumbs() {
@@ -185,24 +190,37 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       myAsyncUpdateProgress.cancel();
     }
 
-    ProgressIndicator progress = new ProgressIndicatorBase();
-    myAsyncUpdateProgress = progress;
-
-    myBreadcrumbsCollector.updateCrumbs(myFile, myEditor, myAsyncUpdateProgress, (crumbs) -> {
-      if (!progress.isCanceled() && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
+    Document document = myEditor.getDocument();
+    int offset = myEditor.getCaretModel().getOffset();
+    Boolean forcedShown = BreadcrumbsForceShownSettings.getForcedShown(myEditor);
+    myAsyncUpdateProgress = ReadAction
+      .nonBlocking(() -> myBreadcrumbsCollector.computeCrumbs(myFile, document, offset, forcedShown))
+      .withDocumentsCommitted(myProject)
+      .expireWith(this)
+      .finishOnUiThread(ModalityState.any(), (_crumbs) -> {
+        Iterable<? extends Crumb> crumbs =
+          breadcrumbs.isShowing() || ApplicationManager.getApplication().isHeadlessEnvironment() ? _crumbs : EMPTY_BREADCRUMBS;
         breadcrumbs.setFont(getNewFont(myEditor));
-        if (!breadcrumbs.isShowing()) {
-          breadcrumbs.setCrumbs(null);
-          return;
-        }
         breadcrumbs.setCrumbs(crumbs);
-      }
-    });
+        notifyListeners(crumbs);
+      }).submit(ourExecutor);
+    myAsyncUpdateProgress.onProcessed(__ -> myAsyncUpdateProgress = null);
   }
 
   public void queueUpdate() {
     myQueue.cancelAllUpdates();
     myQueue.queue(myUpdate);
+  }
+
+  public void addBreadcrumbListener(BreadcrumbListener listener, Disposable parentDisposable) {
+    myBreadcrumbListeners.add(listener);
+    Disposer.register(parentDisposable, () -> myBreadcrumbListeners.remove(listener));
+  }
+
+  private void notifyListeners(@NotNull Iterable<? extends Crumb> breadcrumbs) {
+    for (BreadcrumbListener listener : myBreadcrumbListeners) {
+      listener.breadcrumbsChanged(breadcrumbs);
+    }
   }
 
   @Deprecated
@@ -212,9 +230,13 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   private void itemSelected(Crumb crumb, InputEvent event) {
     if (event == null || !(crumb instanceof NavigatableCrumb)) return;
-    NavigatableCrumb navigatableCrumb = (NavigatableCrumb) crumb;
+    NavigatableCrumb navigatableCrumb = (NavigatableCrumb)crumb;
+    navigate(navigatableCrumb, event.isShiftDown() || event.isMetaDown());
+  }
+
+  public void navigate(NavigatableCrumb crumb, boolean withSelection) {
     myUserCaretChange = false;
-    navigatableCrumb.navigate(myEditor, event.isShiftDown() || event.isMetaDown());
+    crumb.navigate(myEditor, withSelection);
   }
 
   private void itemHovered(Crumb crumb, @SuppressWarnings("unused") InputEvent event) {
@@ -230,7 +252,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       myHighlighed = null;
     }
     if (crumb instanceof NavigatableCrumb) {
-      final TextRange range = ((NavigatableCrumb) crumb).getHighlightRange();
+      final TextRange range = ((NavigatableCrumb)crumb).getHighlightRange();
       if (range == null) return;
       final TextAttributes attributes = new TextAttributes();
       final CrumbPresentation p = PsiCrumb.getPresentation(crumb);
@@ -256,7 +278,8 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, null);
     }
     myEditor = null;
-    breadcrumbs.setCrumbs(null);
+    breadcrumbs.setCrumbs(EMPTY_BREADCRUMBS);
+    notifyListeners(EMPTY_BREADCRUMBS);
   }
 
   private void updateEditorFont(PropertyChangeEvent event) {

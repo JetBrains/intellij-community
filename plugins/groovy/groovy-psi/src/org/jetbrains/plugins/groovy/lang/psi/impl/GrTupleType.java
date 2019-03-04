@@ -3,10 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -33,6 +30,10 @@ public abstract class GrTupleType extends GrLiteralClassType {
                      @NotNull JavaPsiFacade facade,
                      @NotNull LanguageLevel level) {
     super(level, scope, facade);
+  }
+
+  protected GrTupleType(@NotNull PsiElement context) {
+    super(LanguageLevel.JDK_1_5, context);
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   protected boolean mySoft;
 
   /**
-   * @param element PSI element
-   * @param rangeInElement range relatively to the element's start offset
-   * @param soft soft
+   * @param element        Underlying element.
+   * @param rangeInElement Reference range {@link PsiReference#getRangeInElement() relative to given element}.
+   * @param soft           Whether reference {@link PsiReference#isSoft() may fail to resolve}.
    */
   public PsiReferenceBase(@NotNull T element, TextRange rangeInElement, boolean soft) {
     myElement = element;
@@ -43,8 +43,8 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   /**
-   * @param element PSI element
-   * @param rangeInElement range relatively to the element's start offset
+   * @param element        Underlying element.
+   * @param rangeInElement Reference range {@link PsiReference#getRangeInElement() relative to given element}.
    */
   public PsiReferenceBase(@NotNull T element, TextRange rangeInElement) {
     this(element);
@@ -52,9 +52,10 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   /**
-   * The range is obtained from {@link ElementManipulators}
-   * @param element PSI element
-   * @param soft soft
+   * Reference range is obtained from {@link ElementManipulator#getRangeInElement(PsiElement)}.
+   *
+   * @param element Underlying element.
+   * @param soft    Whether reference {@link PsiReference#isSoft() may fail to resolve}.
    */
   public PsiReferenceBase(@NotNull T element, boolean soft) {
     myElement = element;
@@ -62,8 +63,9 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   /**
-   * The range is obtained from {@link ElementManipulators}
-   * @param element PSI element
+   * Reference range is obtained from {@link ElementManipulator#getRangeInElement(PsiElement)}.
+   *
+   * @param element Underlying element.
    */
   public PsiReferenceBase(@NotNull T element) {
     myElement = element;
@@ -131,7 +133,9 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     return new Immediate<>(element, true, resolveTo);
   }
 
-  public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, TextRange rangeInElement, final PsiElement resolveTo) {
+  public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element,
+                                                                               TextRange rangeInElement,
+                                                                               final PsiElement resolveTo) {
     return new Immediate<>(element, rangeInElement, resolveTo);
   }
 

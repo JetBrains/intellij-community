@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,34 +26,31 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-public class FileChangedNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
+public final class FileChangedNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Logger LOG = Logger.getInstance(FileChangedNotificationProvider.class);
   private static final Key<EditorNotificationPanel> KEY = Key.create("file.changed.notification.panel");
 
-  private final Project myProject;
+  public FileChangedNotificationProvider(@NotNull Project project) {
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(project);
 
-  public FileChangedNotificationProvider(@NotNull Project project, @NotNull FrameStateManager frameStateManager) {
-    myProject = project;
-
-    frameStateManager.addListener(new FrameStateListener() {
+    connection.subscribe(FrameStateListener.TOPIC, new FrameStateListener() {
       @Override
       public void onFrameActivated() {
-        if (!myProject.isDisposed() && !GeneralSettings.getInstance().isSyncOnFrameActivation()) {
-          EditorNotifications notifications = EditorNotifications.getInstance(myProject);
-          for (VirtualFile file : FileEditorManager.getInstance(myProject).getSelectedFiles()) {
+        if (!project.isDisposed() && !GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+          EditorNotifications notifications = EditorNotifications.getInstance(project);
+          for (VirtualFile file : FileEditorManager.getInstance(project).getSelectedFiles()) {
             notifications.updateNotifications(file);
           }
         }
       }
-    }, project);
+    });
 
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(myProject);
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        if (!myProject.isDisposed() && !GeneralSettings.getInstance().isSyncOnFrameActivation()) {
-          Set<VirtualFile> openFiles = ContainerUtil.newHashSet(FileEditorManager.getInstance(myProject).getSelectedFiles());
-          EditorNotifications notifications = EditorNotifications.getInstance(myProject);
+        if (!project.isDisposed() && !GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+          Set<VirtualFile> openFiles = ContainerUtil.newHashSet(FileEditorManager.getInstance(project).getSelectedFiles());
+          EditorNotifications notifications = EditorNotifications.getInstance(project);
           for (VFileEvent event : events) {
             VirtualFile file = event.getFile();
             if (file != null && openFiles.contains(file)) {
@@ -73,14 +70,14 @@ public class FileChangedNotificationProvider extends EditorNotifications.Provide
 
   @Nullable
   @Override
-  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
-    if (!myProject.isDisposed() && !GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
+    if (!project.isDisposed() && !GeneralSettings.getInstance().isSyncOnFrameActivation()) {
       VirtualFileSystem fs = file.getFileSystem();
       if (fs instanceof LocalFileSystem) {
         FileAttributes attributes = ((LocalFileSystem)fs).getAttributes(file);
         if (attributes == null || file.getTimeStamp() != attributes.lastModified || file.getLength() != attributes.length) {
           LogUtil.debug(LOG, "%s: (%s,%s) -> %s", file, file.getTimeStamp(), file.getLength(), attributes);
-          return createPanel(file);
+          return createPanel(file, project);
         }
       }
     }
@@ -88,13 +85,13 @@ public class FileChangedNotificationProvider extends EditorNotifications.Provide
     return null;
   }
 
-  private EditorNotificationPanel createPanel(@NotNull final VirtualFile file) {
+  private static EditorNotificationPanel createPanel(@NotNull final VirtualFile file, @NotNull Project project) {
     EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(IdeBundle.message("file.changed.externally.message"));
     panel.createActionLabel(IdeBundle.message("file.changed.externally.reload"), () -> {
-      if (!myProject.isDisposed()) {
+      if (!project.isDisposed()) {
         file.refresh(false, false);
-        EditorNotifications.getInstance(myProject).updateNotifications(file);
+        EditorNotifications.getInstance(project).updateNotifications(file);
       }
     });
     return panel;

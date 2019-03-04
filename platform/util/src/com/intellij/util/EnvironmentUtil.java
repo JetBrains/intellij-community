@@ -19,10 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.InputStream;
@@ -34,7 +31,7 @@ import java.util.concurrent.Future;
 import static java.util.Collections.unmodifiableMap;
 
 public class EnvironmentUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.EnvironmentUtil");
+  private static final Logger LOG = Logger.getInstance(EnvironmentUtil.class);
 
   private static final int SHELL_ENV_READING_TIMEOUT = 20000;
 
@@ -42,21 +39,22 @@ public class EnvironmentUtil {
   private static final String LC_ALL = "LC_ALL";
   private static final String LC_CTYPE = "LC_CTYPE";
 
+  public static final String BASH_EXECUTABLE_NAME = "bash";
+  public static final String SHELL_VARIABLE_NAME = "SHELL";
+  private static final String SHELL_INTERACTIVE_ARGUMENT = "-i";
+  private static final String SHELL_LOGIN_ARGUMENT = "-l";
+  public static final String SHELL_COMMAND_ARGUMENT = "-c";
+
   private static final Future<Map<String, String>> ourEnvGetter;
 
   static {
     if (SystemInfo.isMac &&
         "unlocked".equals(System.getProperty("__idea.mac.env.lock")) &&
         SystemProperties.getBooleanProperty("idea.fix.mac.env", true)) {
-      ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(new Callable<Map<String, String>>() {
-        @Override
-        public Map<String, String> call() throws Exception {
-          return unmodifiableMap(setCharsetVar(getShellEnv()));
-        }
-      });
+      ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(() -> unmodifiableMap(setCharsetVar(getShellEnv())));
     }
     else {
-      ourEnvGetter = new FixedFuture<Map<String, String>>(getSystemEnv());
+      ourEnvGetter = new FixedFuture<>(getSystemEnv());
     }
   }
 
@@ -76,7 +74,7 @@ public class EnvironmentUtil {
 
   private static Map<String, String> getSystemEnv() {
     if (SystemInfo.isWindows) {
-      return unmodifiableMap(new THashMap<String, String>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
+      return unmodifiableMap(new THashMap<>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
     }
     else {
       return System.getenv();
@@ -172,7 +170,6 @@ public class EnvironmentUtil {
     return new ShellEnvReader().readShellEnv();
   }
 
-
   public static class ShellEnvReader {
     public Map<String, String> readShellEnv() throws Exception {
       return readShellEnv(null);
@@ -185,12 +182,12 @@ public class EnvironmentUtil {
       try {
         List<String> command = getShellProcessCommand();
 
-        int idx = command.indexOf("-c");
+        int idx = command.indexOf(SHELL_COMMAND_ARGUMENT);
         if (idx>=0) {
           // if there is already a command append command to the end
           command.set(idx + 1, command.get(idx+1) + ";" + "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'");
         } else {
-          command.add("-c");
+          command.add(SHELL_COMMAND_ARGUMENT);
           command.add("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'");
         }
 
@@ -212,7 +209,7 @@ public class EnvironmentUtil {
     protected Pair<String, Map<String, String>> readBatOutputAndEnv(@NotNull File batchFile, List<String> args) throws Exception {
       File envFile = FileUtil.createTempFile("intellij-cmd-env.", ".tmp", false);
       try {
-        List<String> cl = new ArrayList<String>();
+        List<String> cl = new ArrayList<>();
         cl.add(CommandLineUtil.getWinShellName());
         cl.add("/c");
         cl.add("call");
@@ -264,31 +261,54 @@ public class EnvironmentUtil {
 
     @NotNull
     protected List<String> getShellProcessCommand() throws Exception {
-      String shell = getShell();
-      if (shell == null || !new File(shell).canExecute()) {
-        throw new Exception("shell:" + shell);
+      String shellScript = getShell();
+      if (shellScript == null || !new File(shellScript).canExecute()) {
+        throw new Exception("shell:" + shellScript);
       }
-      List<String> commands = ContainerUtil.newArrayList(shell);
-      if (!shell.endsWith("/tcsh") && !shell.endsWith("/csh")) {
-        // Act as a login shell
-        // tsch does allow to use -l with any other options
-        commands.add("-l");
-      }
-      commands.add("-i"); // enable interactive shell
-      return commands;
+      return buildShellProcessCommand(shellScript, true, true, false);
     }
 
     @Nullable
     protected String getShell() {
-      return System.getenv("SHELL");
+      return System.getenv(SHELL_VARIABLE_NAME);
     }
+  }
+
+  /**
+   * Builds a login shell command list from the {@code shellScript} path.
+   *
+   * @param shellScript   path to the shell script, probably taken from envrionment variable {@code SHELL}
+   * @param isLogin       true iff it should be login shell, usually {@code -l} parameter
+   * @param isInteractive true iff it should be interactive shell, usually {@code -i} parameter
+   * @param isCommand     true iff command should accept a command, instead of script name, usually {@code -c} parameter
+   * @return list of commands for starting a process, e.g. {@code /bin/bash -l -i -c}
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public static List<String> buildShellProcessCommand(@NotNull String shellScript,
+                                                      boolean isLogin,
+                                                      boolean isInteractive,
+                                                      boolean isCommand) {
+    List<String> commands = ContainerUtil.newArrayList(shellScript);
+    if (isLogin && !shellScript.endsWith("/tcsh") && !shellScript.endsWith("/csh")) {
+      // Act as a login shell
+      // tsch does allow to use -l with any other options
+      commands.add(SHELL_LOGIN_ARGUMENT);
+    }
+    if (isInteractive) {
+      commands.add(SHELL_INTERACTIVE_ARGUMENT); // enable interactive shell
+    }
+    if (isCommand) {
+      commands.add(SHELL_COMMAND_ARGUMENT);
+    }
+    return commands;
   }
 
   @NotNull
   public static Map<String, String> parseEnv(String... lines) throws Exception {
-    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
+    Set<String> toIgnore = new HashSet<>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
     Map<String, String> env = System.getenv();
-    Map<String, String> newEnv = new HashMap<String, String>();
+    Map<String, String> newEnv = new HashMap<>();
 
     for (String line : lines) {
       int pos = line.indexOf('=');

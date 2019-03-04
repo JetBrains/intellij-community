@@ -210,7 +210,9 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       default:
         repeat = "";
     }
-    return myData.getGeneratedName(getConfigurationModule()) + repeat;
+    String generatedName = myData.getGeneratedName(getConfigurationModule());
+    if (generatedName == null) return null;
+    return generatedName + repeat;
   }
 
   @Override

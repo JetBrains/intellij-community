@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
@@ -14,7 +14,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDirectory
@@ -24,6 +23,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.quickfix.PluginDescriptorChooser
+import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.util.*
@@ -46,7 +46,7 @@ class NewThemeAction: AnAction() {
     dialog.show()
 
     if (dialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
-      val file = createThemeJson(dialog.name.text, dialog.isDark.isSelected, project, dir)
+      val file = createThemeJson(dialog.name.text, dialog.isDark.isSelected, project, dir, module)
       view.selectElement(file)
       FileEditorManager.getInstance(project).openFile(file.virtualFile, true)
       registerTheme(dir, file, module)
@@ -55,15 +55,26 @@ class NewThemeAction: AnAction() {
 
   override fun update(e: AnActionEvent) {
     val module = e.getData(LangDataKeys.MODULE)
-    e.presentation.isEnabled = module != null && PsiUtil.isPluginModule(module)
+    e.presentation.isEnabled = module != null && (PsiUtil.isPluginModule(module) || PluginModuleType.get(module) is PluginModuleType)
   }
 
-  private fun createThemeJson(themeName: String, isDark: Boolean, project: Project, dir: PsiDirectory): PsiFile {
+  private fun createThemeJson(themeName: String,
+                              isDark: Boolean,
+                              project: Project,
+                              dir: PsiDirectory,
+                              module: Module): PsiFile {
     val fileName = getThemeJsonFileName(themeName)
+    val colorSchemeFilename = getThemeColorSchemeFileName(themeName)
     val template = FileTemplateManager.getInstance(project).getJ2eeTemplate(THEME_JSON_TEMPLATE)
+    val editorSchemeProps = Properties()
+    editorSchemeProps.setProperty("NAME", themeName)
+    editorSchemeProps.setProperty("PARENT_SCHEME", if (isDark)  "Darcula" else "Default")
+    val editorSchemeTemplate = FileTemplateManager.getInstance(project).getJ2eeTemplate("ThemeEditorColorScheme.xml")
+    val colorScheme = FileTemplateUtil.createFromTemplate(editorSchemeTemplate, colorSchemeFilename, editorSchemeProps, dir)
     val props = Properties()
-    props.setProperty("NAME", JsonElementGenerator(project).createStringLiteral(themeName).text)
+    props.setProperty("NAME", themeName)
     props.setProperty("IS_DARK", isDark.toString())
+    props.setProperty("COLOR_SCHEME_NAME", getRootRelativeLocation(module, colorScheme as PsiFile))
 
     val created = FileTemplateUtil.createFromTemplate(template, fileName, props, dir)
     assert(created is PsiFile)
@@ -72,6 +83,10 @@ class NewThemeAction: AnAction() {
 
   private fun getThemeJsonFileName(themeName: String): String {
     return FileUtil.sanitizeFileName(themeName) + ".theme.json"
+  }
+
+  private fun getThemeColorSchemeFileName(themeName: String): String {
+    return FileUtil.sanitizeFileName(themeName) + ".xml"
   }
 
   private fun registerTheme(dir: PsiDirectory, file: PsiFile, module: Module) {
@@ -119,22 +134,17 @@ class NewThemeAction: AnAction() {
     override fun createCenterPanel(): JComponent? {
       return panel {
         row(DevKitBundle.message("new.theme.dialog.name.text.field.text")) {
-          cell {name(growPolicy = GrowPolicy.MEDIUM_TEXT)}
+          cell {
+            name(growPolicy = GrowPolicy.MEDIUM_TEXT)
+              .focused()
+              //TODO max name length, maybe some other restrictions?
+              .withErrorIf(DevKitBundle.message("new.theme.dialog.name.empty")) { it.text.isBlank() }
+          }
         }
         row("") {
           cell { isDark() }
         }
       }
-    }
-
-    override fun getPreferredFocusedComponent(): JComponent? {
-      return name
-    }
-
-    override fun doValidate(): ValidationInfo? {
-      if (name.text.isBlank()) return ValidationInfo(DevKitBundle.message("new.theme.dialog.name.empty"), name)
-      //TODO max name length, maybe some other restrictions?
-      return null
     }
   }
 }

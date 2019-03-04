@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.util.SystemInfo
@@ -29,6 +15,7 @@ import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.Repository
 import java.io.File
 import java.io.FileInputStream
+import java.nio.charset.StandardCharsets
 import java.text.MessageFormat
 import java.util.*
 
@@ -110,7 +97,7 @@ class DirCacheEditor(edits: List<PathEdit>, private val repository: Repository, 
       }
       else {
         // apply to all entries of the current path (different stages)
-        for (i in entryIndex..lastIndex - 1) {
+        for (i in entryIndex until lastIndex) {
           val entry = cache.getEntry(i)
           edit.apply(entry, repository)
           fastAdd(entry)
@@ -134,9 +121,9 @@ interface PathEdit {
 abstract class PathEditBase(final override val path: ByteArray) : PathEdit
 
 private fun encodePath(path: String): ByteArray {
-  val bytes = Constants.CHARSET.encode(path).toByteArray()
+  val bytes = StandardCharsets.UTF_8.encode(path).toByteArray()
   if (SystemInfo.isWindows) {
-    for (i in 0..bytes.size - 1) {
+    for (i in 0 until bytes.size) {
       if (bytes[i].toChar() == '\\') {
         bytes[i] = '/'.toByte()
       }
@@ -174,25 +161,23 @@ class AddLoadedFile(path: String, private val content: ByteArray, private val si
     entry.lastModified = lastModified
 
     val inserter = repository.newObjectInserter()
-    try {
-      entry.setObjectId(inserter.insert(Constants.OBJ_BLOB, content, 0, size))
-      inserter.flush()
-    }
-    finally {
-      inserter.close()
+    inserter.use {
+      entry.setObjectId(it.insert(Constants.OBJ_BLOB, content, 0, size))
+      it.flush()
     }
   }
 }
 
+@Suppress("FunctionName")
 fun DeleteFile(path: String): DeleteFile = DeleteFile(encodePath(path))
 
 class DeleteFile(path: ByteArray) : PathEditBase(path) {
-  override fun apply(entry: DirCacheEntry, repository: Repository): Nothing = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
+  override fun apply(entry: DirCacheEntry, repository: Repository) = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
 }
 
 class DeleteDirectory(entryPath: String) : PathEditBase(
     encodePath(if (entryPath.endsWith('/') || entryPath.isEmpty()) entryPath else "$entryPath/")) {
-  override fun apply(entry: DirCacheEntry, repository: Repository): Nothing = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
+  override fun apply(entry: DirCacheEntry, repository: Repository) = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
 }
 
 fun Repository.edit(edit: PathEdit) {
@@ -223,7 +208,7 @@ fun Repository.deleteAllFiles(deletedSet: MutableSet<String>? = null, fromWorkin
   val dirCache = lockDirCache()
   try {
     if (deletedSet != null) {
-      for (i in 0..dirCache.entryCount - 1) {
+      for (i in 0 until dirCache.entryCount) {
         val entry = dirCache.getEntry(i)
         if (entry.fileMode == FileMode.REGULAR_FILE) {
           deletedSet.add(entry.pathString)

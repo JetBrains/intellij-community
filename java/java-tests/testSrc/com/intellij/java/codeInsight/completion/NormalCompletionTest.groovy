@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -36,8 +22,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
+@CompileStatic
 class NormalCompletionTest extends NormalCompletionTestCase {
 
   @NotNull
@@ -476,12 +464,12 @@ public class Outer {
 
   void testLocalClassTwice() throws Throwable {
     configure()
-    assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo'
+    assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo', 'ZipOutputStream'
   }
 
   void testLocalTopLevelConflict() throws Throwable {
     configure()
-    assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo'
+    assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo', 'ZipOutputStream'
   }
 
   void testFinalBeforeMethodCall() throws Throwable {
@@ -546,7 +534,35 @@ public class Outer {
     checkResult()
   }
 
-  void testContinueLabel() throws Throwable { doTest() }
+  void testBreakLabel() {
+    myFixture.configureByText("a.java", """
+      class a {{
+        foo: while (true) break <caret>
+      }}""".stripIndent())
+    complete()
+    assert myFixture.lookupElementStrings == ['foo']
+  }
+
+  void testContinueLabel() {
+    myFixture.configureByText("a.java", """
+      class a {{
+        foo: while (true) continue <caret>
+      }}""".stripIndent())
+    complete()
+    assert myFixture.lookupElementStrings == ['foo']
+  }
+
+  void testContinueLabelTail() {
+    myFixture.configureByText("a.java", """
+      class a {{
+        foo: while (true) con<caret>
+      }}""".stripIndent())
+    complete()
+    myFixture.checkResult("""
+      class a {{
+        foo: while (true) continue <caret>
+      }}""".stripIndent())
+  }
 
   void testAnonymousProcess() {
     myFixture.addClass 'package java.lang; public class Process {}'
@@ -1218,7 +1234,7 @@ public class ListUtils {
   void testInstanceMagicMethod() throws Exception { doTest() }
 
   void testNoDotOverwrite() throws Exception { doTest('.') }
-  
+
   void testNoModifierListOverwrite() { doTest('\t') }
 
   void testStaticInnerExtendingOuter() throws Exception { doTest() }
@@ -1661,6 +1677,11 @@ class Bar {
     assert 'Door' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
   }
 
+  void testNoOverrideWithMiddleMatchedName() {
+    configure()
+    assert !('public void removeTemporaryEditorNode' in myFixture.lookupElementStrings)
+  }
+
   void testShowVarInitializers() {
     configure()
     assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText == '( "x")'
@@ -1722,7 +1743,7 @@ class Bar {
     myFixture.addClass("package pkg; public class PathUtil { public static String toSystemDependentName() {} }")
     doTest('\n')
   }
-  
+
   void testPairAngleBracketDisabled() {
     CodeInsightSettings.instance.AUTOINSERT_PAIR_BRACKET = false
     doTest('<')
@@ -1735,9 +1756,9 @@ class Bar {
 
   void testDuplicateEnumValueOf() {
     configure()
-    assert myFixture.lookupElements.collect { LookupElementPresentation.renderElement(it).itemText } == ['Bar.valueOf', 'Foo.valueOf', 'Enum.valueOf']
+    assert myFixture.lookupElements.collect { LookupElementPresentation.renderElement((LookupElement)it).itemText } == ['Bar.valueOf', 'Foo.valueOf', 'Enum.valueOf']
   }
-  
+
   void testTypeArgumentInCast() {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'String'
@@ -1871,4 +1892,19 @@ class Abc {
 
   void testNoSuggestionsAfterEnumConstant() { doAntiTest() }
 
+  void testPutCaretInsideParensInFixedPlusVarargOverloads() { doTest('\n') }
+
+  void "test after new editing prefix back and forth when sometimes there are expected type suggestions and sometimes not"() {
+    myFixture.addClass("class Super {}")
+    myFixture.addClass("class Sub extends Super {}")
+    myFixture.addClass("package foo; public class SubOther {}")
+    myFixture.configureByText('a.java', "class C { Super s = new SubO<caret>x }")
+
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'SubOther'
+    myFixture.type('\b')
+    myFixture.assertPreferredCompletionItems 0, 'Sub'
+    myFixture.type('O')
+    myFixture.assertPreferredCompletionItems 0, 'SubOther'
+  }
 }

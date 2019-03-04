@@ -1,6 +1,8 @@
 package com.intellij.json;
 
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,12 +14,10 @@ import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.util.ThreeState;
-import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver;
-import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -52,7 +52,8 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     final VirtualFile file = PsiUtilCore.getVirtualFile(element);
     if (file == null) return false;
 
-    final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
+    Project project = element.getProject();
+    final JsonSchemaService service = JsonSchemaService.Impl.get(project);
     if (!service.isApplicableToFile(file)) return false;
     final JsonSchemaObject rootSchema = service.getSchemaObject(file);
     if (rootSchema == null) return false;
@@ -60,14 +61,14 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     String value = element.getValue();
     if (StringUtil.isEmpty(value)) return false;
 
-    JsonOriginalPsiWalker walker = JsonLikePsiWalker.JSON_ORIGINAL_PSI_WALKER;
-    final PsiElement checkable = walker.goUpToCheckable(element);
+    JsonOriginalPsiWalker walker = JsonOriginalPsiWalker.INSTANCE;
+    final PsiElement checkable = walker.findElementToCheck(element);
     if (checkable == null) return false;
     final ThreeState isName = walker.isName(checkable);
-    final List<JsonSchemaVariantsTreeBuilder.Step> position = walker.findPosition(checkable, isName == ThreeState.NO);
+    final JsonPointerPosition position = walker.findPosition(checkable, isName == ThreeState.NO);
     if (position == null || position.isEmpty() && isName == ThreeState.NO) return false;
 
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, false, position).resolve();
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, rootSchema, false, position).resolve();
     if (schemas.isEmpty()) return false;
 
     return schemas.stream().anyMatch(s -> s.getProperties().keySet().contains(value)

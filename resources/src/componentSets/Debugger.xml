@@ -28,14 +28,4 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.xdebugger.memory.component.MemoryViewManager"/>
   </extensions>
-
-  <!--
-  <actions>
-    <group id="CommonViews">
-      <add-to-group group-id="Debugger.Representation" anchor="after" relative-to-action="Debugger.AutoRenderer"/>
-      <action id="Debugger.ShowAllAsHex"     class="com.intellij.debugger.ui.tree.actions.ShowAllAsHex"     text="Hex Array"/>
-      <action id="Debugger.ShowAllAsDecimal" class="com.intellij.debugger.ui.tree.actions.ShowAllAsDecimal" text="Decimal Array"/>
-    </group>
-  </actions>
-  -->
 </idea-plugin>

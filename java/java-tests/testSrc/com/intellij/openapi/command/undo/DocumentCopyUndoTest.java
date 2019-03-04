@@ -36,6 +36,9 @@ public class DocumentCopyUndoTest extends UndoTestCase {
       getEditorFactory().releaseEditor(myEditorCopy1);
       getEditorFactory().releaseEditor(myEditorCopy2);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myEditor = null;
       myEditorCopy1 = null;

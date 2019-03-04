@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
@@ -15,7 +15,6 @@ import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectMacrosUtil;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -58,11 +57,6 @@ public class ExistingModuleLoader extends ModuleBuilder {
     LOG.assertTrue(new File(moduleFilePath).exists());
 
     return moduleModel.loadModule(moduleFilePath);
-  }
-
-  @Override
-  public void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException {
-    // empty
   }
 
   @Override

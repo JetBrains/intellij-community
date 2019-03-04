@@ -1,6 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="org.intellij.groovy">
     <membersContributor implementation="org.jetbrains.plugins.groovy.ext.spock.SpockMemberContributor"/>
+    <expressionFilter implementation="org.jetbrains.plugins.groovy.ext.spock.SpockExpressionFilter"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

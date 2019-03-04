@@ -13,9 +13,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.jsonSchema.impl.JsonBySchemaHeavyCompletionTest;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletionTest {
+  @NotNull
   @Override
   public String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data/completion";
@@ -83,5 +85,13 @@ public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyComple
   @Override
   public void testWhitespaceAfterColon() throws Exception {
     // do nothing
+  }
+
+  public void testInsertArrayItemNested() throws Exception {
+    baseInsertTest("insertArrayItemNested", "test");
+  }
+
+  public void testInsertColonAfterPropName() throws Exception {
+    baseInsertTest("insertColonAfterPropName", "test");
   }
 }

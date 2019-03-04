@@ -45,6 +45,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
     return myFixes;
   }
 
+  @Override
   public String toString() {
     return myDescriptionTemplate;
   }

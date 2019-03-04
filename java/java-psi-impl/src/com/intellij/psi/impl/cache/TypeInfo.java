@@ -84,7 +84,7 @@ public class TypeInfo {
 
   @NotNull
   public TypeInfo applyAnnotations(@NotNull StubBase<?> owner) {
-    PsiModifierListStub modifierList = (PsiModifierListStub)owner.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    PsiModifierListStub modifierList = owner.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
     if (modifierList == null) return this;
 
     List<PsiAnnotationStub> annotationStubs = null;

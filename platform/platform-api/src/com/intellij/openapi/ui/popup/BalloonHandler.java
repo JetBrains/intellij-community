@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui.popup;
 
+@FunctionalInterface
 public interface BalloonHandler {
   void hide();
 }

@@ -22,99 +22,67 @@ import com.intellij.lexer.XmlHighlightingLexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
+import static com.intellij.psi.xml.XmlTokenType.*;
 
 public class XmlFileHighlighter extends SyntaxHighlighterBase {
-  private static final Map<IElementType, TextAttributesKey> keys1;
-  private static final Map<IElementType, TextAttributesKey> keys2;
+  static final ExtensionPointName<EmbeddedTokenHighlighter> EMBEDDED_HIGHLIGHTERS = ExtensionPointName.create("com.intellij.embeddedTokenHighlighter");
+  private static final MultiMap<IElementType, TextAttributesKey> ourMap = MultiMap.create();
 
   static {
-    keys1 = new HashMap<>();
-    keys2 = new HashMap<>();
+    ourMap.putValue(XML_DATA_CHARACTERS, XmlHighlighterColors.XML_TAG_DATA);
 
-    keys1.put(XmlTokenType.XML_DATA_CHARACTERS, XmlHighlighterColors.XML_TAG_DATA);
+    for (IElementType type : ContainerUtil.ar(XML_COMMENT_START, XML_COMMENT_END, XML_COMMENT_CHARACTERS,
+                                              XML_CONDITIONAL_COMMENT_END, XML_CONDITIONAL_COMMENT_END_START,
+                                              XML_CONDITIONAL_COMMENT_START, XML_CONDITIONAL_COMMENT_START_END)) {
+      ourMap.putValue(type, XmlHighlighterColors.XML_COMMENT);
+    }
 
-    keys1.put(XmlTokenType.XML_COMMENT_START, XmlHighlighterColors.XML_COMMENT);
-    keys1.put(XmlTokenType.XML_COMMENT_END, XmlHighlighterColors.XML_COMMENT);
-    keys1.put(XmlTokenType.XML_COMMENT_CHARACTERS, XmlHighlighterColors.XML_COMMENT);
-    keys1.put(XmlTokenType.XML_CONDITIONAL_COMMENT_END, XmlHighlighterColors.XML_COMMENT);
-    keys1.put(XmlTokenType.XML_CONDITIONAL_COMMENT_END_START, XmlHighlighterColors.XML_COMMENT);
-    keys1.put(XmlTokenType.XML_CONDITIONAL_COMMENT_START, XmlHighlighterColors.XML_COMMENT);
-    keys1.put(XmlTokenType.XML_CONDITIONAL_COMMENT_START_END, XmlHighlighterColors.XML_COMMENT);
+    for (IElementType type : ContainerUtil.ar(XML_START_TAG_START, XML_END_TAG_START, XML_TAG_END, XML_EMPTY_ELEMENT_END, TAG_WHITE_SPACE)) {
+      ourMap.putValue(type, XmlHighlighterColors.XML_TAG);
+    }
+    for (IElementType type : ContainerUtil.ar(XML_TAG_NAME, XML_CONDITIONAL_IGNORE, XML_CONDITIONAL_INCLUDE)) {
+      ourMap.putValues(type, Arrays.asList(XmlHighlighterColors.XML_TAG, XmlHighlighterColors.XML_TAG_NAME));
+    }
+    ourMap.putValues(XML_NAME, Arrays.asList(XmlHighlighterColors.XML_TAG, XmlHighlighterColors.XML_ATTRIBUTE_NAME));
+    for (IElementType type : ContainerUtil.ar(XML_EQ, XML_TAG_CHARACTERS,
+                                              XML_ATTRIBUTE_VALUE_TOKEN, XML_ATTRIBUTE_VALUE_START_DELIMITER, XML_ATTRIBUTE_VALUE_END_DELIMITER)) {
+      ourMap.putValues(type, Arrays.asList(XmlHighlighterColors.XML_TAG, XmlHighlighterColors.XML_ATTRIBUTE_VALUE));
+    }
 
-    keys1.put(XmlTokenType.XML_START_TAG_START, XmlHighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_END_TAG_START, XmlHighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_TAG_END, XmlHighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_EMPTY_ELEMENT_END, XmlHighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_TAG_NAME, XmlHighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.TAG_WHITE_SPACE, XmlHighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_NAME, XmlHighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_CONDITIONAL_IGNORE, XmlHighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_CONDITIONAL_INCLUDE, XmlHighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, XmlHighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, XmlHighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER, XmlHighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_EQ, XmlHighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_TAG_CHARACTERS, XmlHighlighterColors.XML_TAG);
+    for (IElementType type : ContainerUtil.ar(XML_DECL_START, XML_DOCTYPE_START, XML_DOCTYPE_SYSTEM, XML_DOCTYPE_PUBLIC,
+                                              XML_ATTLIST_DECL_START, XML_ELEMENT_DECL_START, XML_ENTITY_DECL_START)) {
+      ourMap.putValues(type, Arrays.asList(XmlHighlighterColors.XML_TAG, XmlHighlighterColors.XML_TAG_NAME));
+    }
 
-    keys2.put(XmlTokenType.XML_TAG_NAME, XmlHighlighterColors.XML_TAG_NAME);
-    keys2.put(XmlTokenType.XML_CONDITIONAL_IGNORE, XmlHighlighterColors.XML_TAG_NAME);
-    keys2.put(XmlTokenType.XML_CONDITIONAL_INCLUDE, XmlHighlighterColors.XML_TAG_NAME);
-    keys2.put(XmlTokenType.XML_NAME, XmlHighlighterColors.XML_ATTRIBUTE_NAME);
-    keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, XmlHighlighterColors.XML_ATTRIBUTE_VALUE);
-    keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, XmlHighlighterColors.XML_ATTRIBUTE_VALUE);
-    keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER, XmlHighlighterColors.XML_ATTRIBUTE_VALUE);
-    keys2.put(XmlTokenType.XML_EQ, XmlHighlighterColors.XML_ATTRIBUTE_NAME);
-    keys2.put(XmlTokenType.XML_TAG_CHARACTERS, XmlHighlighterColors.XML_ATTRIBUTE_VALUE);
+    for (IElementType type : ContainerUtil.ar(XML_CONDITIONAL_SECTION_START, XML_CONDITIONAL_SECTION_END, XML_DECL_END, XML_DOCTYPE_END)) {
+      ourMap.putValues(type, Arrays.asList(XmlHighlighterColors.XML_PROLOGUE, XmlHighlighterColors.XML_TAG_NAME));
+    }
 
-    keys1.put(XmlTokenType.XML_BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
+    ourMap.putValue(XML_PI_START, XmlHighlighterColors.XML_PROLOGUE);
+    ourMap.putValue(XML_PI_END, XmlHighlighterColors.XML_PROLOGUE);
 
-    keys1.put(XmlTokenType.XML_DECL_START, XmlHighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_DECL_START, XmlHighlighterColors.XML_TAG_NAME);
+    ourMap.putValue(XML_CHAR_ENTITY_REF, XmlHighlighterColors.XML_ENTITY_REFERENCE);
+    ourMap.putValue(XML_ENTITY_REF_TOKEN, XmlHighlighterColors.XML_ENTITY_REFERENCE);
 
-    keys1.put(XmlTokenType.XML_CONDITIONAL_SECTION_START, XmlHighlighterColors.XML_PROLOGUE);
-    keys2.put(XmlTokenType.XML_CONDITIONAL_SECTION_START, XmlHighlighterColors.XML_TAG_NAME);
+    ourMap.putValue(XML_BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
 
-    keys1.put(XmlTokenType.XML_CONDITIONAL_SECTION_END, XmlHighlighterColors.XML_PROLOGUE);
-    keys2.put(XmlTokenType.XML_CONDITIONAL_SECTION_END, XmlHighlighterColors.XML_TAG_NAME);
-
-    keys1.put(XmlTokenType.XML_DECL_END, XmlHighlighterColors.XML_PROLOGUE);
-    keys2.put(XmlTokenType.XML_DECL_END, XmlHighlighterColors.XML_TAG_NAME);
-
-    keys1.put(XmlTokenType.XML_PI_START, XmlHighlighterColors.XML_PROLOGUE);
-    keys1.put(XmlTokenType.XML_PI_END, XmlHighlighterColors.XML_PROLOGUE); 
-    keys1.put(XmlTokenType.XML_DOCTYPE_END, XmlHighlighterColors.XML_PROLOGUE);
-    keys2.put(XmlTokenType.XML_DOCTYPE_END, XmlHighlighterColors.XML_TAG_NAME);
-
-    keys1.put(XmlTokenType.XML_DOCTYPE_START, XmlHighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_DOCTYPE_START, XmlHighlighterColors.XML_TAG_NAME);
-
-    keys1.put(XmlTokenType.XML_DOCTYPE_SYSTEM, XmlHighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_DOCTYPE_SYSTEM, XmlHighlighterColors.XML_TAG_NAME);
-
-    keys1.put(XmlTokenType.XML_DOCTYPE_PUBLIC, XmlHighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_DOCTYPE_PUBLIC, XmlHighlighterColors.XML_TAG_NAME);
-
-    keys1.put(XmlTokenType.XML_DOCTYPE_PUBLIC, XmlHighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_DOCTYPE_PUBLIC, XmlHighlighterColors.XML_TAG_NAME);
-
-    keys1.put(XmlTokenType.XML_ATTLIST_DECL_START, XmlHighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_ATTLIST_DECL_START, XmlHighlighterColors.XML_TAG_NAME);
-
-    keys1.put(XmlTokenType.XML_ELEMENT_DECL_START, XmlHighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_ELEMENT_DECL_START, XmlHighlighterColors.XML_TAG_NAME);
-
-    keys1.put(XmlTokenType.XML_ENTITY_DECL_START, XmlHighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_ENTITY_DECL_START, XmlHighlighterColors.XML_TAG_NAME);
-
-    keys2.put(XmlTokenType.XML_CHAR_ENTITY_REF, XmlHighlighterColors.XML_ENTITY_REFERENCE);
-    keys2.put(XmlTokenType.XML_ENTITY_REF_TOKEN, XmlHighlighterColors.XML_ENTITY_REFERENCE);
+    for (EmbeddedTokenHighlighter highlighter : EMBEDDED_HIGHLIGHTERS.getExtensionList()) {
+      MultiMap<IElementType, TextAttributesKey> attributes = highlighter.getEmbeddedTokenAttributes();
+      for (Map.Entry<IElementType, Collection<TextAttributesKey>> entry : attributes.entrySet()) {
+        if (!ourMap.containsKey(entry.getKey())) {
+          ourMap.putValues(entry.getKey(), entry.getValue());
+        }
+      }
+    }
   }
 
   private final boolean myIsDtd;
@@ -148,17 +116,30 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
   @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-    return pack(keys1.get(tokenType), keys2.get(tokenType));
+    //noinspection SynchronizationOnGetClass,SynchronizeOnThis
+    synchronized (getClass()) {
+      return ourMap.get(tokenType).toArray(EMPTY);
+    }
   }
 
-  public static void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
-                                                           Map<IElementType, TextAttributesKey> _keys2) {
-    if (_keys1 != null) {
-      keys1.putAll(_keys1);
-    }
+  /**
+   * @deprecated use {@link EmbeddedTokenHighlighter} extension
+   */
+  @Deprecated
+  public static synchronized void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
+                                                     Map<IElementType, TextAttributesKey> _keys2) {
+    HashSet<IElementType> existingKeys = new HashSet<>(ourMap.keySet());
+    addMissing(_keys1, existingKeys, ourMap);
+    addMissing(_keys2, existingKeys, ourMap);
+  }
 
-    if (_keys2 != null) {
-      keys2.putAll(_keys2);
+  static void addMissing(Map<IElementType, TextAttributesKey> from, Set<IElementType> existingKeys, MultiMap<IElementType, TextAttributesKey> to) {
+    if (from != null) {
+      for (Map.Entry<IElementType, TextAttributesKey> entry : from.entrySet()) {
+        if (!existingKeys.contains(entry.getKey())) {
+          to.putValue(entry.getKey(), entry.getValue());
+        }
+      }
     }
   }
 }

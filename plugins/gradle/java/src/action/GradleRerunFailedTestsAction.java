@@ -15,31 +15,33 @@
  */
 package org.jetbrains.plugins.gradle.action;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+
+import static com.intellij.util.containers.ContainerUtil.filterIsInstance;
+import static org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun;
+import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.*;
+import static org.jetbrains.plugins.gradle.util.GradleRerunFailedTasksActionUtilsKt.containsSubSequenceInSequence;
+import static org.jetbrains.plugins.gradle.util.GradleRerunFailedTasksActionUtilsKt.containsTasksInScriptParameters;
 
 /**
  * @author Vladislav.Soroka
@@ -57,52 +59,43 @@ public class GradleRerunFailedTestsAction extends JavaRerunFailedTestsAction {
     return new MyRunProfile(configuration) {
       @Nullable
       @Override
-      public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment)
-        throws ExecutionException {
+      public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
         ExternalSystemRunConfiguration runProfile = ((ExternalSystemRunConfiguration)getPeer()).clone();
         Project project = runProfile.getProject();
-
-        Set<String> scriptParameters = ContainerUtil.newLinkedHashSet();
-        Set<String> tasksToRun = ContainerUtil.newLinkedHashSet();
-        boolean useResolvedTasks = true;
-        for (AbstractTestProxy test : failedTests) {
-          if (test instanceof GradleSMTestProxy) {
-            String testName = test.getName();
-            String className = ((GradleSMTestProxy)test).getClassName();
-            scriptParameters.add(TestMethodGradleConfigurationProducer.createTestFilter(className, testName));
-
-            if(!useResolvedTasks) continue;
-
-            if(className == null) {
-              useResolvedTasks = false;
-              continue;
+        final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+        final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+        ExternalSystemTaskExecutionSettings settings = runProfile.getSettings().clone();
+        List<GradleSMTestProxy> tests = filterIsInstance(failedTests, GradleSMTestProxy.class);
+        Function1<GradleSMTestProxy, VirtualFile> findTestSource = test -> {
+          String className = test.getClassName();
+          if (className == null) return null;
+          return getSourceFile(javaPsiFacade.findClass(className, projectScope));
+        };
+        Function1<GradleSMTestProxy, String> createFilter = (test) -> {
+          String testName = test.getName();
+          String className = test.getClassName();
+          return TestMethodGradleConfigurationProducer.createTestFilter(className, testName)  ;
+        };
+        Function1<VirtualFile, List<List<String>>> getTestsTaskToRun = source -> {
+          List<? extends List<String>> foundTasksToRun = findAllTestsTaskToRun(source, project);
+          List<List<String>> tasksToRun = new ArrayList<>();
+          boolean isSpecificTask = false;
+          for (List<String> tasks : foundTasksToRun) {
+            List<String> escapedTasks = ContainerUtil.map(tasks, it -> escapeIfNeeded(it));
+            if (containsSubSequenceInSequence(runProfile.getSettings().getTaskNames(), escapedTasks) ||
+                containsTasksInScriptParameters(runProfile.getSettings().getScriptParameters(), escapedTasks)) {
+              ContainerUtil.addAllNotNull(tasksToRun, tasks);
+              isSpecificTask = true;
             }
-
-            final PsiClass psiClass =
-              JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.projectScope(project));
-
-            if (psiClass == null)  {
-              useResolvedTasks = false;
-              continue;
-            }
-            final PsiFile psiFile = psiClass.getContainingFile();
-            if (psiFile == null)  {
-              useResolvedTasks = false;
-              continue;
-            }
-
-            final Module moduleForFile = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(psiFile.getVirtualFile());
-            if(moduleForFile == null){
-              useResolvedTasks = false;
-              continue;
-            }
-            ContainerUtil.addAllNotNull(tasksToRun, GradleTestRunConfigurationProducer.getTasksToRun(moduleForFile));
           }
-        }
-        runProfile.getSettings().setScriptParameters(StringUtil.join(scriptParameters, " "));
-
-        if(useResolvedTasks && !tasksToRun.isEmpty()) {
-          runProfile.getSettings().setTaskNames(ContainerUtil.newArrayList(tasksToRun));
+          if (!isSpecificTask && !foundTasksToRun.isEmpty()) {
+            ContainerUtil.addAllNotNull(tasksToRun, foundTasksToRun.iterator().next());
+          }
+          return tasksToRun;
+        };
+        String projectPath = settings.getExternalProjectPath();
+        if (applyTestConfiguration(settings, projectPath, tests, findTestSource, createFilter, getTestsTaskToRun)) {
+          runProfile.getSettings().setFrom(settings);
         }
         return runProfile.getState(executor, environment);
       }

@@ -7,7 +7,7 @@ public class PrivateFieldVsParam {
     new Cls() {
       @Override
       void foo() {
-        System.out.println(<ref>field);
+        System.out.println(<caret>field);
       }
     }.foo();
   }

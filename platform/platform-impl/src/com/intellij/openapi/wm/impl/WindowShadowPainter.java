@@ -26,14 +26,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.icons.AllIcons.Ide.Shadow.Popup.*;
+import static com.intellij.icons.AllIcons.Ide.Shadow.*;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
  * @author Sergey.Malenkov
  */
 final class WindowShadowPainter extends AbstractPainter {
-  private static final ShadowPainter PAINTER = new ShadowPainter(Top, Top_right, Right, Bottom_right, Bottom, Bottom_left, Left, Top_left);
+  private static final ShadowPainter PAINTER = new ShadowPainter(Top, TopRight, Right, BottomRight, Bottom, BottomLeft, Left, TopLeft);
   private static final long MASK = AWTEvent.WINDOW_EVENT_MASK | AWTEvent.WINDOW_STATE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK;
   private static final AtomicReference<AWTEventListener> WINDOW_LISTENER = new AtomicReference<>(new AWTEventListener() {
     @Override

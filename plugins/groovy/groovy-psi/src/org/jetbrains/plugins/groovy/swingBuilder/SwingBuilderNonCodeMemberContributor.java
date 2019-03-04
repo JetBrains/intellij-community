@@ -52,7 +52,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
       MANY_OBJECTS = new PsiEllipsisType(type(CommonClassNames.JAVA_LANG_OBJECT));
     }
 
-    public class MyMethodBuilder extends GrLightMethodBuilder {
+    public static class MyMethodBuilder extends GrLightMethodBuilder {
       private String myNavigationClass;
 
       public MyMethodBuilder(PsiManager manager, String name) {
@@ -76,19 +76,8 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
         return methods[0];
       }
 
-      //@Override
-      //public MyMethodBuilder addParameter(@NotNull String name, @NotNull String type, boolean isOptional) {
-      //  return (MyMethodBuilder)addParameter(name, type(type), isOptional);
-      //}
-
-      //public MyMethodBuilder addClosureParam() {
-      //  addParameter("closure", GroovyCommonClassNames.GROOVY_LANG_CLOSURE, true);
-      //  return this;
-      //}
-
-      public MyMethodBuilder setNavigationClass(String navigationClass) {
+      public void setNavigationClass(String navigationClass) {
         myNavigationClass = navigationClass;
-        return this;
       }
     }
 

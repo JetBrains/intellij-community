@@ -185,17 +185,22 @@ public final class MacroManager {
       String name = "$" + macro.getName() + "$";
       String macroNameWithParamStart = "$" + macro.getName() + "(";
       if (str.contains(name)) {
-        String expanded = macro.expand(dataContext);
-        //if (dataContext instanceof DataManagerImpl.MyDataContext) {
-        //  // hack: macro.expand() can cause UI events such as showing dialogs ('Prompt' macro) which may 'invalidate' the datacontext
-        //  // since we know exactly that context is valid, we need to update its event count
-        //  ((DataManagerImpl.MyDataContext)dataContext).setEventCount(IdeEventQueue.getInstance().getEventCount());
-        //}
-        expanded = expanded == null ? defaultExpandValue : expanded;
-        if (expanded == null) {
-          return null;
+        for (int index = str.indexOf(name);
+             index != -1 && index <= str.length() - name.length();
+             index = str.indexOf(name, index)) {
+          String expanded = macro.expand(dataContext);
+          //if (dataContext instanceof DataManagerImpl.MyDataContext) {
+          //  // hack: macro.expand() can cause UI events such as showing dialogs ('Prompt' macro) which may 'invalidate' the datacontext
+          //  // since we know exactly that context is valid, we need to update its event count
+          //  ((DataManagerImpl.MyDataContext)dataContext).setEventCount(IdeEventQueue.getInstance().getEventCount());
+          //}
+          expanded = expanded == null ? defaultExpandValue : expanded;
+          if (expanded == null) {
+            return null;
+          }
+          str = str.substring(0, index) + expanded + str.substring(index + name.length());
+          index += expanded.length();
         }
-        str = StringUtil.replace(str, name, expanded);
       }
       else if(str.contains(macroNameWithParamStart)) {
         String macroNameWithParamEnd = ")$";

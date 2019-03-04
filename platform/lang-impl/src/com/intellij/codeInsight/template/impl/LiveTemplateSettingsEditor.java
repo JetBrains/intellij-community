@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -23,12 +23,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.labels.DropDownLink;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TreeTraversal;
+import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -41,7 +45,10 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.*;
 
@@ -72,7 +79,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   public LiveTemplateSettingsEditor(TemplateImpl template,
                                     final String defaultShortcut,
                                     Map<TemplateOptionalProcessor, Boolean> options,
-                                    TemplateContext context, final Runnable nodeChanged, boolean allowNoContext) {
+                                    TemplateContext context, final Runnable nodeChanged) {
     super(new BorderLayout());
     myOptions = options;
     myContext = context;
@@ -86,7 +93,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myTemplateEditor = TemplateEditorUtil.createEditor(false, myTemplate.getString(), context);
     myTemplate.setId(null);
 
-    createComponents(allowNoContext);
+    createComponents();
 
     myKeyField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -120,7 +127,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     TemplateEditorUtil.disposeTemplateEditor(myTemplateEditor);
   }
 
-  private void createComponents(boolean allowNoContexts) {
+  private void createComponents() {
     JPanel panel = new JPanel(new GridBagLayout());
 
     GridBag gb = new GridBag().setDefaultInsets(4, 4, 4, 4).setDefaultWeightY(1).setDefaultFill(GridBagConstraints.BOTH);
@@ -144,7 +151,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myTemplateOptionsPanel.add(createTemplateOptionsPanel());
     panel.add(myTemplateOptionsPanel, gb.nextLine().next().next().coverColumn(2).weighty(1));
 
-    panel.add(createShortContextPanel(allowNoContexts), gb.nextLine().next().weighty(0).fillCellNone().anchor(GridBagConstraints.WEST));
+    panel.add(createShortContextPanel(), gb.nextLine().next().weighty(0).fillCellNone().anchor(GridBagConstraints.WEST));
 
     myTemplateEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
@@ -201,8 +208,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
   private JPanel createTemplateOptionsPanel() {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.options.title"),
-                                                        true));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.options.title"), true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -277,15 +283,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return result;
   }
 
-  private JPanel createShortContextPanel(final boolean allowNoContexts) {
-    JPanel panel = new JPanel(new BorderLayout());
-
-    final JLabel ctxLabel = new JLabel();
-    final JLabel change = new JLabel();
-    change.setForeground(PlatformColors.BLUE);
-    change.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    panel.add(ctxLabel, BorderLayout.CENTER);
-    panel.add(change, BorderLayout.EAST);
+  private JPanel createShortContextPanel() {
+    JLabel ctxLabel = new JBLabel();
+    LinkLabel<Object> change = new DropDownLink<>("Change", () -> {});
 
     final Runnable updateLabel = () -> {
       myExpandByCombo.setEnabled(isExpandableFromEditor());
@@ -319,10 +319,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
       final boolean noContexts = sb.length() == 0;
       if (noContexts) {
-        if (!allowNoContexts) {
-          ctxLabel.setForeground(JBColor.RED);
-        }
-        contexts = "No applicable contexts" + (allowNoContexts ? "" : " yet");
+        contexts = "No applicable contexts";
         ctxLabel.setIcon(AllIcons.General.BalloonWarning);
         change.setText("Define");
       }
@@ -336,11 +333,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
       myTemplateOptionsPanel.add(createTemplateOptionsPanel());
     };
 
-    new ClickListener() {
+    change.setListener(new LinkListener<Object>() {
       @Override
-      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        if (disposeContextPopup()) return false;
-
+      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        if (disposeContextPopup()) return;
         Pair<JPanel, CheckboxTree> pair = createPopupContextPanel(updateLabel, myContext);
         final JPanel content = pair.first;
         Dimension prefSize = content.getPreferredSize();
@@ -350,20 +346,18 @@ public class LiveTemplateSettingsEditor extends JPanel {
         myContextPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, pair.second)
           .setRequestFocus(true)
           .setResizable(true).createPopup();
-        myContextPopup.show(new RelativePoint(change, new Point(change.getWidth() , -content.getPreferredSize().height - 10)));
+        myContextPopup.show(new RelativePoint(change, new Point(change.getWidth() , -content.getPreferredSize().height - JBUI.scale(4))));
         myContextPopup.addListener(new JBPopupAdapter() {
           @Override
           public void onClosed(@NotNull LightweightWindowEvent event) {
             myLastSize = content.getSize();
           }
         });
-        return true;
       }
-    }.installOn(change);
+    }, null);
 
     updateLabel.run();
-
-    return panel;
+    return new FormBuilder().addLabeledComponent(ctxLabel, change).getPanel();
   }
 
   @NotNull
@@ -502,7 +496,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
       myExpandByCombo.setSelectedItem(SPACE);
     }
     else {
-      myExpandByCombo.setSelectedItem(TemplateSettings.NONE_CHAR);
+      myExpandByCombo.setSelectedItem(NONE);
     }
 
     CommandProcessor.getInstance().executeCommand(

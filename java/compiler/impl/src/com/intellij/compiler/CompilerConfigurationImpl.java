@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
@@ -912,12 +912,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
       myModuleProcessorProfiles.add(profile);
     }
-  }
-
-  @Override
-  @NotNull @NonNls
-  public String getComponentName() {
-    return "CompilerConfiguration";
   }
 
   public BackendCompiler getDefaultCompiler() {

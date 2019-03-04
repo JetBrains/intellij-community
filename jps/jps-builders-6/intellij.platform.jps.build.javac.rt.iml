@@ -11,16 +11,8 @@
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
-    <orderEntry type="module-library" scope="RUNTIME">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/optimizedFileManager.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
+    <orderEntry type="library" name="javax.annotation-api" level="project" />
   </component>
 </module>

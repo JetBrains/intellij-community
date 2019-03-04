@@ -18,6 +18,7 @@ package com.jetbrains.python;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyMethodOverridingInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -87,6 +88,26 @@ public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
   // PY-23513
   public void testOverriddingAbstractStaticMethodWithExpandedArguments() {
     doTest();
+  }
+
+  // PY-32556
+  public void testOverriddingWithDecorator() {
+    doTestByText("class BaseClass():\n" +
+                 "    def method(self, arg1):\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "def my_decorator(func):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "class Child(BaseClass):\n" +
+                 "    @my_decorator\n" +
+                 "    def method(self, arg1, arg2):\n" +
+                 "        pass\n");
+  }
+
+  // PY-28506
+  public void testDunderPostInitInDataclassHierarchy() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
   }
 
   @NotNull

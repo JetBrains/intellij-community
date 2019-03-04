@@ -162,7 +162,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
         xs.add(x);
         ys.add(y);
 
-        final Element componentElement = (Element)e.getChildren().get(0);
+        final Element componentElement = e.getChildren().get(0);
         final LwComponent lwComponent = LwContainer.createComponentFromTag(componentElement);
 
         container.addComponent(lwComponent);

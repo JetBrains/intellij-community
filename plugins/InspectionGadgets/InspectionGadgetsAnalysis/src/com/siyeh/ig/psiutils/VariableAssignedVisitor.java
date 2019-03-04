@@ -68,7 +68,7 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
     super.visitAssignmentExpression(assignment);
     final PsiExpression lhs = assignment.getLExpression();
     for (PsiVariable variable : variables) {
-      if (VariableAccessUtils.evaluatesToVariable(lhs, variable)) {
+      if (ExpressionUtils.isReferenceTo(lhs, variable)) {
         assigned = true;
         break;
       }
@@ -98,7 +98,7 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
     }
     final PsiExpression operand = prefixExpression.getOperand();
     for (PsiVariable variable : variables) {
-      if (VariableAccessUtils.evaluatesToVariable(operand, variable)) {
+      if (ExpressionUtils.isReferenceTo(operand, variable)) {
         assigned = true;
         break;
       }

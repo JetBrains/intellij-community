@@ -36,6 +36,7 @@ import java.nio.charset.Charset;
 public class LocalFilePath implements FilePath {
   @NotNull private final String myPath;
   private final boolean myIsDirectory;
+  private VirtualFile myCachedFile;
 
   public LocalFilePath(@NotNull String path, boolean isDirectory) {
     myPath = FileUtil.toCanonicalPath(path);
@@ -97,7 +98,11 @@ public class LocalFilePath implements FilePath {
   @Override
   @Nullable
   public VirtualFile getVirtualFile() {
-    return LocalFileSystem.getInstance().findFileByPath(myPath);
+    VirtualFile cachedFile = myCachedFile;
+    if (cachedFile == null || !cachedFile.isValid() || !FileUtil.PATH_HASHING_STRATEGY.equals(cachedFile.getPath(), myPath)) {
+      myCachedFile = cachedFile = LocalFileSystem.getInstance().findFileByPath(myPath);
+    }
+    return cachedFile;
   }
 
   @Override

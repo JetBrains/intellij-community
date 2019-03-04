@@ -29,7 +29,7 @@ class CheckerFrameworkNullityUtil {
             return new NullabilityAnnotationInfo(anno, Nullability.NULLABLE, true);
           }
           if (instance.getNotNulls().contains(valueClass.getQualifiedName())) {
-            return new NullabilityAnnotationInfo(anno, Nullability.NULLABLE, true);
+            return new NullabilityAnnotationInfo(anno, Nullability.NOT_NULL, true);
           }
         }
       }

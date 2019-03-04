@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
@@ -13,10 +13,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorChooser;
 import com.intellij.ui.ColorLineMarkerProvider;
 import com.intellij.ui.ColorUtil;
@@ -32,16 +32,16 @@ import java.awt.*;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-public class ThemeColorAnnotator implements Annotator, DumbAware {
+public class ThemeColorAnnotator implements Annotator {
+
   private static final Pattern COLOR_HEX_PATTERN_RGB = Pattern.compile("^#([A-Fa-f0-9]{6})$");
   private static final Pattern COLOR_HEX_PATTERN_RGBA = Pattern.compile("^#([A-Fa-f0-9]{8})$");
   private static final int HEX_COLOR_LENGTH_RGB = 7;
   private static final int HEX_COLOR_LENGTH_RGBA = 9;
 
-
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (!isColorLineMarkerProviderEnabled() || !isTargetElement(element)) return;
+    if (!isColorLineMarkerProviderEnabled() || !isTargetElement(element, holder.getCurrentAnnotationSession().getFile())) return;
 
     Annotation annotation = holder.createInfoAnnotation(element, null);
     JsonStringLiteral literal = (JsonStringLiteral)element;
@@ -52,9 +52,13 @@ public class ThemeColorAnnotator implements Annotator, DumbAware {
     return LineMarkerSettings.getSettings().isEnabled(ColorLineMarkerProvider.INSTANCE);
   }
 
-  private static boolean isTargetElement(@NotNull PsiElement element) {
+  static boolean isTargetElement(@NotNull PsiElement element) {
+    return isTargetElement(element, element.getContainingFile());
+  }
+
+  private static boolean isTargetElement(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
     if (!(element instanceof JsonStringLiteral)) return false;
-    if (!ThemeJsonSchemaProviderFactory.isAllowedFileName(element.getContainingFile().getName())) return false;
+    if (!ThemeJsonUtil.isThemeFilename(containingFile.getName())) return false;
 
     String text = ((JsonStringLiteral)element).getValue();
     return isColorCode(text);
@@ -69,7 +73,7 @@ public class ThemeColorAnnotator implements Annotator, DumbAware {
 
 
   private static class MyRenderer extends GutterIconRenderer {
-    private static final int ICON_SIZE = 8;
+    private static final int ICON_SIZE = 12;
 
     private final String myColorHex;
     private final JsonStringLiteral myLiteral;
@@ -90,10 +94,21 @@ public class ThemeColorAnnotator implements Annotator, DumbAware {
       return JBUI.scale(EmptyIcon.create(ICON_SIZE));
     }
 
+    @Override
+    public boolean isNavigateAction() {
+      return true;
+    }
+
+    @Nullable
+    @Override
+    public String getTooltipText() {
+      return "Choose Color";
+    }
+
     @Nullable
     @Override
     public AnAction getClickAction() {
-      return new AnAction() {
+      return new AnAction("Choose Color...") {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());

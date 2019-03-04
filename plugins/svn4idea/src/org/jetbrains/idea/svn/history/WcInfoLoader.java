@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.Comparator.comparing;
 
 public class WcInfoLoader {
@@ -49,7 +50,7 @@ public class WcInfoLoader {
   @Nullable
   public WCInfoWithBranches reloadInfo(@NotNull WCInfoWithBranches info) {
     File file = info.getRootInfo().getIoFile();
-    RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(file);
+    RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(info.getRootInfo().getVirtualFile()));
 
     return rootInfo != null ? createInfo(new WCInfo(rootInfo, SvnUtil.isWorkingCopyRoot(file), SvnUtil.getDepth(myVcs, file))) : null;
   }

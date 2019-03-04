@@ -17,8 +17,8 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PsiTestCase;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 @PlatformTestCase.WrapInCommand
-public class PsiDocumentManager2Test extends PsiTestCase {
+public class PsiDocumentManager2Test extends LightPlatformTestCase {
   public void testUnregisteredFileType() {
     class MyFileType extends XmlLikeFileType {
       private MyFileType() {
@@ -61,8 +61,8 @@ public class PsiDocumentManager2Test extends PsiTestCase {
         return null;
       }
     }
-    PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("DummyFile.my", new MyFileType(), "<gggg></gggg>", LocalTimeCounter.currentTime(), true);
-    Document document = ObjectUtils.assertNotNull(PsiDocumentManager.getInstance(myProject).getDocument(file));
+    PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("DummyFile.my", new MyFileType(), "<gggg></gggg>", LocalTimeCounter.currentTime(), true);
+    Document document = ObjectUtils.assertNotNull(PsiDocumentManager.getInstance(getProject()).getDocument(file));
 
     assertTrue(document.isWritable());
     assertTrue(file.getVirtualFile().getFileType() instanceof MyFileType);
@@ -70,7 +70,8 @@ public class PsiDocumentManager2Test extends PsiTestCase {
   }
 
   public void testPsiToDocSyncInNonPhysicalFile() {
-    PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(myProject).createFileFromText("a.java", JavaLanguage.INSTANCE, "class Foo {}", false, false);
+    PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject())
+      .createFileFromText("a.java", JavaLanguage.INSTANCE, "class Foo {}", false, false);
 
     Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
     assertNotNull(document);
@@ -78,7 +79,7 @@ public class PsiDocumentManager2Test extends PsiTestCase {
     file.getClasses()[0].getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
 
     assertEquals("public class Foo {}", document.getText());
-    assertFalse(PsiDocumentManager.getInstance(myProject).isUncommited(document));
+    assertFalse(PsiDocumentManager.getInstance(getProject()).isUncommited(document));
   }
 
   public void testDocumentCanSuddenlyBecomeUncommittedIfLightAndTextEditorBackgroundHighlighterDoesntFreakOutAtThatMoment() throws Exception {
@@ -106,25 +107,29 @@ public class PsiDocumentManager2Test extends PsiTestCase {
     }));
     PsiFile toHighlight = createFile("x.txt", "text");
     FileEditor fileEditor = TextEditorProvider.getInstance().createEditor(getProject(), toHighlight.getVirtualFile());
-    Disposer.register(getTestRootDisposable(), fileEditor);
-    CompletableFuture<?> passesCreated = new CompletableFuture<>();
-    AsyncEditorLoader.performWhenLoaded(((TextEditor)fileEditor).getEditor(), () -> {
-      try {
-        BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();
-        highlighter.createPassesForEditor(); // check didn't crash in TextEditorBackgroundHighlighter.getPasses() isCommitted() check
-        passesCreated.complete(null);
-      }
-      catch (Throwable e) {
-        passesCreated.completeExceptionally(e);
-      }
-    });
+    try {
+      CompletableFuture<?> passesCreated = new CompletableFuture<>();
+      AsyncEditorLoader.performWhenLoaded(((TextEditor)fileEditor).getEditor(), () -> {
+        try {
+          BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();
+          highlighter.createPassesForEditor(); // check didn't crash in TextEditorBackgroundHighlighter.getPasses() isCommitted() check
+          passesCreated.complete(null);
+        }
+        catch (Throwable e) {
+          passesCreated.completeExceptionally(e);
+        }
+      });
 
-    long start = System.currentTimeMillis();
-    while (!PsiDocumentManager.getInstance(getProject()).isCommitted(document) || !modification.isDone() || !passesCreated.isDone()) {
-      UIUtil.dispatchAllInvocationEvents();
-      assertTrue(System.currentTimeMillis() < start + 100 * 1000);
+      long start = System.currentTimeMillis();
+      while (!PsiDocumentManager.getInstance(getProject()).isCommitted(document) || !modification.isDone() || !passesCreated.isDone()) {
+        UIUtil.dispatchAllInvocationEvents();
+        assertTrue(System.currentTimeMillis() < start + 100 * 1000);
+      }
+      modification.get();
+      passesCreated.get();
     }
-    modification.get();
-    passesCreated.get();
+    finally {
+      Disposer.dispose(fileEditor);
+    }
   }
 }

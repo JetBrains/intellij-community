@@ -3,12 +3,11 @@ package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
   @Override
@@ -37,7 +36,18 @@ public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
 
   @NotNull
   @Override
-  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns, byte frameworkId) {
+  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<Couple<String>> testFqns, byte frameworkId) {
+    TestDiscoveryIndex instance = TestDiscoveryIndex.getInstance(project);
+    Set<String> result = new HashSet<>();
+    for (Couple<String> test : testFqns) {
+      result.addAll(instance.getAffectedFiles(test, frameworkId));
+    }
+    return ContainerUtil.newArrayList(result);
+  }
+
+  @NotNull
+  @Override
+  public List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassName, byte frameworkId) {
     return Collections.emptyList();
   }
 

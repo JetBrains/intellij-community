@@ -45,7 +45,6 @@ public abstract class FileChooserFactory {
    * @param descriptor dialog descriptor
    * @param project    chooser options
    * @return Save File dialog
-   * @since 9.0
    */
   @NotNull
   public abstract FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @Nullable Project project);

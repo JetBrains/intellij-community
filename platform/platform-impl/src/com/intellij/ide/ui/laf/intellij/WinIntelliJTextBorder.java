@@ -35,7 +35,9 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(isTableCellEditor(c) || isCompact(c) ? 0 : 1).asUIResource();
+    return isTableCellEditor(c) || isCompact(c) ?
+           JBUI.insets(1, 1, 1, 4).asUIResource() :
+           JBUI.insets(1).asUIResource();
   }
 
   @Override

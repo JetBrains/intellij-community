@@ -28,6 +28,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.nio.charset.StandardCharsets;
+
 import static org.easymock.EasyMock.*;
 
 public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
@@ -40,9 +42,9 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
     super.setUpInWriteAction();
 
     f = createChildData(myRoot, "f.txt");
-    setBinaryContent(f,"a\nb\nc\n".getBytes(), -1, 123,this);
-    setBinaryContent(f,"a\nbc\nc\nd\n".getBytes(), -1, 456,this);
-    setBinaryContent(f,"a\nbcd\nc\ne\n".getBytes(), -1, 789,this);
+    setBinaryContent(f, "a\nb\nc\n".getBytes(StandardCharsets.UTF_8), -1, 123, this);
+    setBinaryContent(f,"a\nbc\nc\nd\n".getBytes(StandardCharsets.UTF_8), -1, 456,this);
+    setBinaryContent(f,"a\nbcd\nc\ne\n".getBytes(StandardCharsets.UTF_8), -1, 789,this);
   }
 
   public void testDialogWorks() {

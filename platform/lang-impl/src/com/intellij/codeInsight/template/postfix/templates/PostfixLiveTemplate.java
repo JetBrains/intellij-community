@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.google.common.collect.Sets;
@@ -9,6 +9,10 @@ import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLooku
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,6 +42,7 @@ import java.util.Set;
 
 public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public static final String POSTFIX_TEMPLATE_ID = "POSTFIX_TEMPLATE_ID";
+  private static final String USAGE_GROUP = "completion.postfix";
   private static final Logger LOG = Logger.getInstance(PostfixLiveTemplate.class);
 
   @NotNull
@@ -222,9 +227,21 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return result;
   }
 
+  private static final String THIRD_PARTY_PLUGIN_POSTFIX_TEMPLATE_ID = "third.party.plugin.postfix.template";
+
   private static void expandTemplate(@NotNull final PostfixTemplate template,
                                      @NotNull final Editor editor,
                                      @NotNull final PsiElement context) {
+    if (template.isBuiltin()) {
+      PostfixTemplateProvider provider = template.getProvider();
+      PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(provider != null ? provider.getClass() : template.getClass());
+      if (pluginInfo.getType().isSafeToReport()) {
+        String templateId = provider != null ? provider.getId() + "/" + template.getId() : template.getId();
+        String id = pluginInfo.getType().isDevelopedByJetBrains() ? templateId : THIRD_PARTY_PLUGIN_POSTFIX_TEMPLATE_ID;
+        FeatureUsageData data = new FeatureUsageData().addPluginInfo(pluginInfo);
+        FUCounterUsageLogger.getInstance().logEvent(context.getProject(), USAGE_GROUP, id, data);
+      }
+    }
     if (template.startInWriteAction()) {
       ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance()
                                                                                .executeCommand(context.getProject(),

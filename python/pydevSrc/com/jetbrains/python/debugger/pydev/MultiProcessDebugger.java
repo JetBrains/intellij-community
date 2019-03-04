@@ -64,31 +64,25 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
   @Override
   public void waitForConnect() throws Exception {
-    try {
-      //noinspection SocketOpenedButNotSafelyClosed
-      final Socket socket = myServerSocket.accept();
+    //noinspection SocketOpenedButNotSafelyClosed
+    final Socket socket = myServerSocket.accept();
 
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        try {
-          //do we need any synchronization here with myMainDebugger.waitForConnect() ??? TODO
-          sendDebuggerPort(socket, myDebugServerSocket, myDebugProcess);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      });
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        //do we need any synchronization here with myMainDebugger.waitForConnect() ??? TODO
+        sendDebuggerPort(socket, myDebugServerSocket, myDebugProcess);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
 
-      myMainDebugger.waitForConnect();
+    myMainDebugger.waitForConnect();
 
+    disposeAcceptor();
 
-      disposeAcceptor();
-
-      myDebugProcessAcceptor = new DebuggerProcessAcceptor(this, myServerSocket);
-      ApplicationManager.getApplication().executeOnPooledThread(myDebugProcessAcceptor);
-    }
-    finally {
-
-    }
+    myDebugProcessAcceptor = new DebuggerProcessAcceptor(this, myServerSocket);
+    ApplicationManager.getApplication().executeOnPooledThread(myDebugProcessAcceptor);
   }
 
   private static void sendDebuggerPort(Socket socket, ServerSocket serverSocket, IPyDebugProcess processHandler) throws IOException {

@@ -30,7 +30,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
@@ -92,23 +94,29 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     myProject = project;
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
-    setModalityProgress(shouldShowBackground ? null : this);
 
-    Component parent = parentComponent;
-    if (parent == null && project == null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      parent = JOptionPane.getRootFrame();
-    }
-
-    myDialog = new ProgressDialog(this, shouldShowBackground, parent, myProject, myCancelText);
-
-    Disposer.register(this, myDialog);
-
-    addStateDelegate(new MyDelegate());
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
+    Window parentWindow = calcParentWindow(parentComponent);
 
     if (myProject != null) {
       Disposer.register(myProject, this);
     }
+    myDialog = new ProgressDialog(this, shouldShowBackground, myCancelText, parentWindow);
+    Disposer.register(this, myDialog);
+
+    setModalityProgress(shouldShowBackground ? null : this);
+    addStateDelegate(new MyDelegate());
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
+  }
+
+  private Window calcParentWindow(@Nullable Component parent) {
+    if (parent == null && myProject == null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      parent = JOptionPane.getRootFrame();
+    }
+    if (parent != null) {
+      return UIUtil.getWindow(parent);
+    }
+    Window parentWindow = WindowManager.getInstance().suggestParentWindow(myProject);
+    return parentWindow != null ? parentWindow : WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
   }
 
   @Override

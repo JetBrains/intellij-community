@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -34,7 +35,7 @@ import java.util.Set;
  */
 public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
 
-  private static final Condition<IdeaPlugin> NON_CORE_PLUGINS = plugin -> !"com.intellij".equals(plugin.getPluginId());
+  private static final Condition<IdeaPlugin> NON_CORE_PLUGINS = plugin -> !PluginManagerCore.CORE_PLUGIN_ID.equals(plugin.getPluginId());
 
   @Override
   @NotNull
@@ -93,7 +94,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project).
         union(ProjectScope.getLibrariesScope(project));
-      return CachedValueProvider.Result.create(getPlugins(project, scope), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(getPlugins(project, scope), PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 

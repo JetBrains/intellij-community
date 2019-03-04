@@ -33,13 +33,14 @@ public interface InspectionProfile extends Comparable {
   @NotNull
   String getName();
 
+  @NotNull
   HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element);
 
   /**
    * If you need to modify tool's settings, please use {@link #modifyToolSettings}
    *
-   * @return {@link com.intellij.codeInspection.ex.InspectionToolWrapper}
-   * @see #getUnwrappedTool(String, com.intellij.psi.PsiElement)
+   * @return {@link InspectionToolWrapper}
+   * @see #getUnwrappedTool(String, PsiElement)
    */
   InspectionToolWrapper getInspectionTool(@NotNull String shortName, @Nullable PsiElement element);
 
@@ -59,7 +60,6 @@ public interface InspectionProfile extends Comparable {
    * @param shortNameKey the ID of the tool to change.
    * @param psiElement the element for which the settings should be changed.
    * @param toolConsumer the callback that receives the tool.
-   * @since 12.1
    */
   <T extends InspectionProfileEntry>
   void modifyToolSettings(@NotNull Key<T> shortNameKey, @NotNull PsiElement psiElement, @NotNull Consumer<T> toolConsumer);

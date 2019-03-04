@@ -17,6 +17,7 @@ package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,7 @@ public class PyNames {
   /**
    * Any string type
    */
-  public static final List<String> TYPE_STRING_TYPES = Collections.unmodifiableList(Arrays.asList(TYPE_UNICODE, TYPE_STR));
+  public static final List<String> TYPE_STRING_TYPES = ContainerUtil.immutableList(TYPE_UNICODE, TYPE_STR);
   /**
    * date type
    */
@@ -621,6 +622,7 @@ public class PyNames {
   }
 
   public static boolean isRightOperatorName(@Nullable String name) {
+    if ("__rshift__".equals(name)) return false;
     return name != null && (name.matches("__r[a-z]+__") || CONTAINS.equals(name));
   }
 

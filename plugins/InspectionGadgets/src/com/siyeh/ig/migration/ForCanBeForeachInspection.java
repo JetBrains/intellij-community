@@ -4,17 +4,13 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -29,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ForCanBeForeachInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
@@ -317,26 +315,21 @@ public class ForCanBeForeachInspection extends BaseInspection {
   private static PsiReferenceExpression getVariableReferenceFromCondition(PsiExpression condition,
                                                                           PsiVariable variable,
                                                                           PsiElement secondDeclaredElement) {
-    condition = ParenthesesUtils.stripParentheses(condition);
-    if (!(condition instanceof PsiBinaryExpression)) {
-      return null;
-    }
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
+    final PsiBinaryExpression binaryExpression = tryCast(ParenthesesUtils.stripParentheses(condition), PsiBinaryExpression.class);
+    if (binaryExpression == null) return null;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     final PsiExpression lhs = ParenthesesUtils.stripParentheses(binaryExpression.getLOperand());
     final PsiExpression rhs = ParenthesesUtils.stripParentheses(binaryExpression.getROperand());
-    if (rhs == null) {
-      return null;
-    }
+    if (lhs == null || rhs == null) return null;
     PsiReferenceExpression referenceExpression;
     if (tokenType.equals(JavaTokenType.LT)) {
-      if (!VariableAccessUtils.evaluatesToVariable(lhs, variable) || !(rhs instanceof PsiReferenceExpression)) {
+      if (!ExpressionUtils.isReferenceTo(lhs, variable) || !(rhs instanceof PsiReferenceExpression)) {
         return null;
       }
       referenceExpression = (PsiReferenceExpression)rhs;
     }
     else if (tokenType.equals(JavaTokenType.GT)) {
-      if (!VariableAccessUtils.evaluatesToVariable(rhs, variable) || !(lhs instanceof PsiReferenceExpression)) {
+      if (!ExpressionUtils.isReferenceTo(rhs, variable) || !(lhs instanceof PsiReferenceExpression)) {
         return null;
       }
       referenceExpression = (PsiReferenceExpression)lhs;
@@ -346,22 +339,13 @@ public class ForCanBeForeachInspection extends BaseInspection {
     }
     if (ExpressionUtils.getArrayFromLengthExpression(referenceExpression) == null) {
       final PsiElement target = referenceExpression.resolve();
-      if (secondDeclaredElement != null && !secondDeclaredElement.equals(target)) {
-        return null;
-      }
+      if (secondDeclaredElement != null && !secondDeclaredElement.equals(target)) return null;
       if (target instanceof PsiVariable) {
         final PsiVariable maxVariable = (PsiVariable)target;
         final PsiCodeBlock context = PsiTreeUtil.getParentOfType(maxVariable, PsiCodeBlock.class);
-        if (context == null) {
-          return null;
-        }
-        if (VariableAccessUtils.variableIsAssigned(maxVariable, context)) {
-          return null;
-        }
+        if (context == null || VariableAccessUtils.variableIsAssigned(maxVariable, context)) return null;
         final PsiExpression expression = ParenthesesUtils.stripParentheses(maxVariable.getInitializer());
-        if (!(expression instanceof PsiReferenceExpression)) {
-          return null;
-        }
+        if (!(expression instanceof PsiReferenceExpression)) return null;
         referenceExpression = (PsiReferenceExpression)expression;
         if (ExpressionUtils.getArrayFromLengthExpression(referenceExpression) == null) {
           return null;
@@ -369,9 +353,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
       }
     }
     else {
-      if (secondDeclaredElement != null) {
-        return null;
-      }
+      if (secondDeclaredElement != null) return null;
     }
     final PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
     if (qualifierExpression instanceof PsiReferenceExpression) {
@@ -398,13 +380,13 @@ public class ForCanBeForeachInspection extends BaseInspection {
     final PsiExpression rhs = binaryExpression.getROperand();
     final PsiExpression lhs = binaryExpression.getLOperand();
     if (tokenType.equals(JavaTokenType.LT)) {
-      if (!VariableAccessUtils.evaluatesToVariable(lhs, variable)) {
+      if (!ExpressionUtils.isReferenceTo(lhs, variable)) {
         return null;
       }
       return getCollectionFromListMethodCall(rhs, HardcodedMethodConstants.SIZE, secondDeclaredElement);
     }
     if (tokenType.equals(JavaTokenType.GT)) {
-      if (!VariableAccessUtils.evaluatesToVariable(rhs, variable)) {
+      if (!ExpressionUtils.isReferenceTo(rhs, variable)) {
         return null;
       }
       return getCollectionFromListMethodCall(lhs, HardcodedMethodConstants.SIZE, secondDeclaredElement);
@@ -644,13 +626,8 @@ public class ForCanBeForeachInspection extends BaseInspection {
   }
 
   static  String createNewVariableName(@NotNull PsiElement scope, PsiType type, @Nullable String containerName) {
-    final Project project = scope.getProject();
-    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    final PsiExpression expr =
-      containerName != null ? JavaPsiFacade.getElementFactory(project).createExpressionFromText(containerName + "[0]", scope) : null;
-    final SuggestedNameInfo suggestions = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expr, type, true);
-    @NonNls String baseName = ArrayUtil.getFirstElement(suggestions.names);
-    return codeStyleManager.suggestUniqueVariableName(StringUtil.defaultIfEmpty(baseName, "value"), scope, true);
+    return new VariableNameGenerator(scope, VariableKind.PARAMETER).byCollectionName(containerName).byType(type)
+      .byName("value", "item", "element").generate(true);
   }
 
   @Nullable

@@ -12,6 +12,6 @@ class A {
 
 class C extends A {
   {
-    b1.<ref>f();
+    b1.<caret>f();
   }
   }

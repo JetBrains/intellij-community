@@ -50,10 +50,7 @@ abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> ext
   @Override
   public PsiElement getTargetElement() {
     VirtualFile file = getVirtualFileForValue();
-    if (file == null) {
-      return null;
-    }
-    return file.isDirectory() ? PsiManager.getInstance(getProject()).findDirectory(file) : PsiManager.getInstance(getProject()).findFile(file);
+    return PsiUtilCore.findFileSystemItem(getProject(), file);
   }
 
   private VirtualFile getVirtualFileForValue() {

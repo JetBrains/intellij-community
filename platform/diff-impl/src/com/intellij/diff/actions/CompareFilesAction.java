@@ -15,7 +15,8 @@
  */
 package com.intellij.diff.actions;
 
-import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -95,12 +96,17 @@ public class CompareFilesAction extends BaseShowDiffAction {
   }
 
   @Nullable
-  @Override
   protected DiffRequest getDiffRequest(@NotNull AnActionEvent e) {
+    return e.getData(DIFF_REQUEST);
+  }
+
+  @Nullable
+  @Override
+  protected DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    DiffRequest diffRequest = e.getData(DIFF_REQUEST);
+    DiffRequest diffRequest = getDiffRequest(e);
     if (diffRequest != null) {
-      return diffRequest;
+      return new SimpleDiffRequestChain(diffRequest);
     }
 
     VirtualFile file1;
@@ -124,7 +130,7 @@ public class CompareFilesAction extends BaseShowDiffAction {
     if (type1 == Type.DIRECTORY || type2 == Type.DIRECTORY) FeatureUsageTracker.getInstance().triggerFeatureUsed("dir.diff");
     if (type1 == Type.ARCHIVE || type2 == Type.ARCHIVE) FeatureUsageTracker.getInstance().triggerFeatureUsed("jar.diff");
 
-    return DiffRequestFactory.getInstance().createFromFiles(project, file1, file2);
+    return createMutableChainFromFiles(project, file1, file2);
   }
 
   @Nullable

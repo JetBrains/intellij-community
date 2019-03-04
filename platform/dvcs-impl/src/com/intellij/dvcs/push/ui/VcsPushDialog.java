@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import net.miginfocom.swing.MigLayout;
@@ -289,7 +288,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     @NotNull
     @Override
     public Action[] getOptions() {
-      return ArrayUtil.toObjectArray(myAdditionalActions, ActionWrapper.class);
+      return myAdditionalActions.toArray(new ActionWrapper[0]);
     }
   }
 

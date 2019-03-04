@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -19,7 +18,6 @@ import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -122,11 +120,10 @@ public class NewMappings {
       }
     }
 
-    final Ref<Boolean> switched = new Ref<>(Boolean.FALSE);
     keepActiveVcs(() -> {
       // sorted -> map. sorted mappings are NOT changed;
-      switched.set(trySwitchVcs(path, activeVcsName));
-      if (!switched.get().booleanValue()) {
+      boolean switched = trySwitchVcs(path, activeVcsName);
+      if (!switched) {
         myVcsToPaths.putValue(newMapping.getVcs(), newMapping);
         sortedMappingsByMap();
       }
@@ -184,10 +181,10 @@ public class NewMappings {
     }
   }
 
-  public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
+  public void setDirectoryMappings(final List<? extends VcsDirectoryMapping> items) {
     LOG.debug("setDirectoryMappings, size: " + items.size());
 
-    final List<VcsDirectoryMapping> itemsCopy;
+    final List<? extends VcsDirectoryMapping> itemsCopy;
     if (items.isEmpty()) {
       itemsCopy = singletonList(new VcsDirectoryMapping("", ""));
     }
@@ -416,7 +413,7 @@ public class NewMappings {
   }
 
   private void sortedMappingsByMap() {
-    mySortedMappings = ArrayUtil.toObjectArray(myVcsToPaths.values(), VcsDirectoryMapping.class);
+    mySortedMappings = myVcsToPaths.values().toArray(VcsDirectoryMapping.EMPTY_ARRAY);
     Arrays.sort(mySortedMappings, MAPPINGS_COMPARATOR);
   }
 

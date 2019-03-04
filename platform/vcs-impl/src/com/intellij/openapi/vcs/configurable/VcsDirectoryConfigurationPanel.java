@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -16,7 +15,10 @@ import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.TableView;
@@ -33,8 +35,6 @@ import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.List;
 import java.util.*;
@@ -316,12 +316,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     initializeModel();
 
     myVcsComboBox.setModel(buildVcsWrappersModel(myProject));
-    myVcsComboBox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(final ItemEvent e) {
-        if (myDirectoryMappingTable.isEditing()) {
-          myDirectoryMappingTable.stopEditing();
-        }
+    myVcsComboBox.addItemListener(e -> {
+      if (myDirectoryMappingTable.isEditing()) {
+        myDirectoryMappingTable.stopEditing();
       }
     });
 
@@ -509,45 +506,23 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   private JComponent createMappingsTable() {
     JPanel panelForTable = ToolbarDecorator.createDecorator(myDirectoryMappingTable, null)
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          if (onlyRegisteredRootsInSelection()) {
-            addMapping();
-          }
-          else {
-            addSelectedUnregisteredMappings(getSelectedUnregisteredRoots());
-          }
-          updateRootCheckers();
+      .setAddAction(button -> {
+        if (onlyRegisteredRootsInSelection()) {
+          addMapping();
         }
-      }).setEditAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          editMapping();
-          updateRootCheckers();
+        else {
+          addSelectedUnregisteredMappings(getSelectedUnregisteredRoots());
         }
-      }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          removeMapping();
-          updateRootCheckers();
-        }
-      }).setAddActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          return !myIsDisabled && rootsOfOneKindInSelection();
-        }
-      }).setEditActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          return !myIsDisabled && onlyRegisteredRootsInSelection();
-        }
-      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          return !myIsDisabled && onlyRegisteredRootsInSelection();
-        }
-      }).disableUpDownActions().createPanel();
+        updateRootCheckers();
+      }).setEditAction(button -> {
+        editMapping();
+        updateRootCheckers();
+      }).setRemoveAction(button -> {
+        removeMapping();
+        updateRootCheckers();
+      }).setAddActionUpdater(e -> !myIsDisabled && rootsOfOneKindInSelection()).setEditActionUpdater(
+        e -> !myIsDisabled && onlyRegisteredRootsInSelection()).setRemoveActionUpdater(
+        e -> !myIsDisabled && onlyRegisteredRootsInSelection()).disableUpDownActions().createPanel();
     panelForTable.setPreferredSize(new JBDimension(-1, 200));
     return panelForTable;
   }

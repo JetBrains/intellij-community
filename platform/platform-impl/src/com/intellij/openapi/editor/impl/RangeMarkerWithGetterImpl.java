@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  */
 class RangeMarkerWithGetterImpl extends RangeMarkerImpl implements Getter<RangeMarkerWithGetterImpl> {
   RangeMarkerWithGetterImpl(@NotNull DocumentEx document, int start, int end, boolean register) {
-    super(document, start, end, register);
+    super(document, start, end, register, true);
   }
 
   @Override

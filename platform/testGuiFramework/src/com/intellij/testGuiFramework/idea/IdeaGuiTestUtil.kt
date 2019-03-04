@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.idea
 
 import com.intellij.openapi.application.ApplicationManager
@@ -65,8 +65,7 @@ object IdeaGuiTestUtil{
 
           //in case of running different from IntelliJ or Android Studio IDE (PyCharm for example)
 
-          val jdk_name = "JDK"
-          val newJdk = javaSdk.createJdk(jdk_name, path.toString(), false)
+          val newJdk = javaSdk.createJdk("JDK", path.toString(), false)
           val foundJdk = ProjectJdkTable.getInstance().findJdk(newJdk.name, newJdk.sdkType.name)
           if (foundJdk == null) {
             ApplicationManager.getApplication().runWriteAction { ProjectJdkTable.getInstance().addJdk(newJdk) }

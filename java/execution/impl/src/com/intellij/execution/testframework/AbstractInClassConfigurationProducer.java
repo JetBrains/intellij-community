@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.JavaTestConfigurationBase;
@@ -12,7 +11,6 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -27,10 +25,16 @@ import java.util.List;
 public abstract class AbstractInClassConfigurationProducer<T extends JavaTestConfigurationBase> extends AbstractJavaTestConfigurationProducer<T> {
   private static final Logger LOG = Logger.getInstance(AbstractInClassConfigurationProducer.class);
 
+  /**
+   * @deprecated Override {@link #getConfigurationFactory()}.
+   */
+  @Deprecated
   protected AbstractInClassConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }
 
+  protected AbstractInClassConfigurationProducer() {
+  }
 
   @Override
   public void onFirstRun(@NotNull final ConfigurationFromContext configuration,
@@ -139,14 +143,16 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     Module module = configuration.getConfigurationModule().getModule();
     if (module == null && psiClass.getManager().isInProject(psiClass)) {
       PsiFile containingFile = psiClass.getContainingFile();
-      LOG.error("No module found", new Attachment("context.txt",
-                                                  "generated name:" + configuration.getName() +
-                                                  "; valid: " + psiClass.isValid() +
-                                                  "; physical: " + psiClass.isPhysical() +
-                                                  "; className: " + psiClass.getQualifiedName() +
-                                                  "; file: " + containingFile +
-                                                  "; module: " + ModuleUtilCore.findModuleForPsiElement(psiClass.getContainingFile()) +
-                                                  "; original module: " + originalModule));
+      if (LOG.isDebugEnabled()) {
+        LOG.info("No module found: " +
+                 "generated name:" + configuration.getName() +
+                 "; valid: " + psiClass.isValid() +
+                 "; physical: " + psiClass.isPhysical() +
+                 "; className: " + psiClass.getQualifiedName() +
+                 "; file: " + containingFile +
+                 "; module: " + ModuleUtilCore.findModuleForPsiElement(psiClass.getContainingFile()) +
+                 "; original module: " + originalModule);
+      }
       return false;
     }
     settings.setName(configuration.getName());

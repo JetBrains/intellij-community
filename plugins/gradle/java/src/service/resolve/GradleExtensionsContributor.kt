@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
@@ -12,14 +12,12 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
-import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.util.ProcessingContext
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
-import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleProp
-import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleTask
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.*
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder.DOCUMENTATION
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.COMPOSITE_LSHIFT_SIGN
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -39,10 +37,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_STRATEGY_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
+import org.jetbrains.plugins.groovy.lang.resolve.getName
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
 
 /**
  * @author Vladislav.Soroka
- * @since 11/16/2016
  */
 class GradleExtensionsContributor : GradleMethodContextContributor {
 
@@ -86,7 +86,7 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
     val groovyPsiManager = GroovyPsiManager.getInstance(place.project)
     val resolveScope = place.resolveScope
     val projectClass = JavaPsiFacade.getInstance(place.project).findClass(GRADLE_API_PROJECT, resolveScope) ?: return true
-    val name = processor.getHint(NameHint.KEY)?.getName(state)
+    val name = processor.getName(state)
 
     if (psiElement().inside(closureInLeftShiftMethod).accepts(place)) {
       if (!GradleResolverUtil.processDeclarations(processor, state, place, GRADLE_API_DEFAULT_TASK)) {
@@ -102,13 +102,16 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
           containingClass = taskContainerClass
           returnType = returnClass
         }
-        methodBuilder.addParameter("task", GRADLE_API_TASK, true)
+        methodBuilder.addOptionalParameter("task", GRADLE_API_TASK)
         place.putUserData(RESOLVED_CODE, true)
         if (!processor.execute(methodBuilder, state)) return false
       }
     }
 
     for (extension in extensionsData.extensions) {
+      if (name == extension.name) {
+        if (!processExtensionMethodProperty(processor, state, place, extension)) return false
+      }
       if (!processExtension(processor, state, place, extension)) return false
       if (name == extension.name) break
     }
@@ -138,9 +141,9 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
             containingClass = projectClass
             returnType = returnClass
             if (parent is GrMethodCallExpressionImpl && parent.argumentList.namedArguments.isNotEmpty()) {
-              addParameter("args", JAVA_UTIL_MAP, true)
+              addOptionalParameter("args", JAVA_UTIL_MAP)
             }
-            val closureParam = addAndGetParameter("configuration", GROOVY_LANG_CLOSURE, true)
+            val closureParam = addAndGetOptionalParameter("configuration", GROOVY_LANG_CLOSURE)
             closureParam.putUserData(DELEGATES_TO_KEY, gradleTask.typeFqn)
             closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.OWNER_FIRST)
           }
@@ -201,7 +204,7 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
             val returnClass = groovyPsiManager.createTypeByFQClassName(GROOVY_LANG_CLOSURE, resolveScope) ?: return true
             val methodBuilder = GrLightMethodBuilder(place.manager, name).apply {
               returnType = returnClass
-              addParameter("args", JAVA_LANG_OBJECT, true)
+              addOptionalParameter("args", JAVA_LANG_OBJECT)
             }
             return processor.execute(methodBuilder, state)
           }
@@ -282,32 +285,47 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
   }
 }
 
+private fun processExtensionMethodProperty(processor: PsiScopeProcessor,
+                                           state: ResolveState,
+                                           place: PsiElement,
+                                           extension: GradleExtension): Boolean {
+  val processMethods = processor.shouldProcessMethods()
+  val processProperties = processor.shouldProcessProperties()
+  if (!processMethods && !processProperties) {
+    return true
+  }
+
+  place.putUserData(RESOLVED_CODE, true)
+
+  val resolveScope = place.resolveScope
+  val javaPsiFacade = JavaPsiFacade.getInstance(place.project)
+  val type = javaPsiFacade.elementFactory.createTypeByFQClassName(extension.rootTypeFqn, resolveScope)
+
+  if (processMethods) {
+    val extensionMethod = GrLightMethodBuilder(place.manager, extension.name).apply {
+      containingClass = javaPsiFacade.findClass(GRADLE_API_PROJECT, resolveScope)
+      returnType = type
+      addParameter("configuration", GROOVY_LANG_CLOSURE)
+    }
+    if (!processor.execute(extensionMethod, state)) {
+      return false
+    }
+  }
+  if (processProperties) {
+    val extensionProperty = GradleExtensionProperty(extension.name, type, place)
+    if (!processor.execute(extensionProperty, state)) {
+      return false
+    }
+  }
+  return true
+}
+
 fun processExtension(processor: PsiScopeProcessor,
                      state: ResolveState,
                      place: PsiElement,
-                     extension: GradleExtensionsSettings.GradleExtension): Boolean {
+                     extension: GradleExtension): Boolean {
   val classHint = processor.getHint(ElementClassHint.KEY)
   val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
-  val groovyPsiManager = GroovyPsiManager.getInstance(place.project)
-  val resolveScope = place.resolveScope
-  val projectClass = JavaPsiFacade.getInstance(place.project).findClass(GRADLE_API_PROJECT, resolveScope) ?: return true
-  val name = processor.getHint(NameHint.KEY)?.getName(state)
-
-  if (name == extension.name) {
-
-    val returnClass = groovyPsiManager.createTypeByFQClassName(extension.rootTypeFqn, resolveScope) ?: return true
-    val methodName = if (shouldProcessMethods) extension.name else "get" + extension.name.capitalize()
-    val methodBuilder = GrLightMethodBuilder(place.manager, methodName).apply {
-      containingClass = projectClass
-      returnType = returnClass
-    }
-    if (shouldProcessMethods) {
-      methodBuilder.addParameter("configuration", GROOVY_LANG_CLOSURE, true)
-    }
-    place.putUserData(RESOLVED_CODE, true)
-    if (!processor.execute(methodBuilder, state)) return false
-  }
-
   val extensionClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, extension.name))
   val placeText = place.text
   val psiElement = psiElement()
@@ -317,7 +335,7 @@ fun processExtension(processor: PsiScopeProcessor,
     }
 
     val objectTypeFqn = extension.namedObjectTypeFqn?.let { if (it.isNotBlank()) it else null } ?: return true
-    if (place.parent is GrMethodCallExpression) {
+    if (shouldProcessMethods && place.parent is GrMethodCallExpression) {
       val methodBuilder = GradleResolverUtil.createMethodWithClosure(placeText, objectTypeFqn, null, place)
       if (methodBuilder != null) {
         place.putUserData(RESOLVED_CODE, true)

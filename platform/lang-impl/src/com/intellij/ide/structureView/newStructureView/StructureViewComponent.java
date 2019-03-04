@@ -205,8 +205,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myTree.setShowsRootHandles(true);
     registerPsiListener(myProject, this, this::queueUpdate);
 
-    myAutoScrollToSourceHandler.install(myTree);
-    myAutoScrollFromSourceHandler.install();
+    if (showScrollToFromSourceActions()) {
+      myAutoScrollToSourceHandler.install(myTree);
+      myAutoScrollFromSourceHandler.install();
+    }
 
     TreeUtil.installActions(getTree());
 
@@ -295,7 +297,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   @Override
   public void storeState() {
-    if (isDisposed()) return;
+    if (isDisposed() || !myProject.isOpen()) return;
     Object root = myTree.getModel().getRoot();
     if (root == null) return;
     TreeState state = TreeState.createOn(myTree, new TreePath(root));
@@ -310,7 +312,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     TreeState state = myFileEditor == null ? null : myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
     if (state == null) {
       if (!Boolean.TRUE.equals(UIUtil.getClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY))) {
-        TreeUtil.expand(getTree(), 2);
+        TreeUtil.expand(getTree(), getMinimumExpandDepth(myTreeModel));
       }
     }
     else {
@@ -347,9 +349,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         result.add(new TreeActionWrapper(provider, this));
       }
     }
-
-    result.add(new ExpandAllAction(getTree()));
-    result.add(new CollapseAllAction(getTree()));
 
     if (showScrollToFromSourceActions()) {
       result.addSeparator();
@@ -509,7 +508,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
     else {
       rebuild();
-      TreeUtil.expand(getTree(), 2);
+      TreeUtil.expand(getTree(), getMinimumExpandDepth(myTreeModel));
     }
   }
 
@@ -517,7 +516,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private void waitForRebuildAndExpand() {
     wait(rebuildAndUpdate());
     UIUtil.dispatchAllInvocationEvents();
-    wait(TreeUtil.promiseExpand(getTree(), 2));
+    wait(TreeUtil.promiseExpand(getTree(), getMinimumExpandDepth(myTreeModel)));
   }
 
   private static void wait(Promise<?> originPromise) {
@@ -588,7 +587,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     public void dispose() {
       super.dispose();
-      myTreeModel.removeEditorPositionListener(myFileEditorPositionListener);
+      if (myFileEditorPositionListener != null) {
+        myTreeModel.removeEditorPositionListener(myFileEditorPositionListener);
+      }
     }
 
     private void addEditorCaretListener() {
@@ -710,6 +711,13 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   //  tree.revalidate();
   //  tree.repaint();
   //}
+
+  private static int getMinimumExpandDepth(@NotNull StructureViewModel structureViewModel) {
+    final StructureViewModel.ExpandInfoProvider provider =
+      ObjectUtils.tryCast(structureViewModel, StructureViewModel.ExpandInfoProvider.class);
+
+    return provider == null ? 2 : provider.getMinimumAutoExpandDepth();
+  }
 
   private static class MyNodeWrapper extends TreeElementWrapper
     implements NodeDescriptorProvidingKey, ValidateableNode {

@@ -35,11 +35,16 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
       //WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
       final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
       instance.setState(Collections.emptyMap());
-    } finally {
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
       super.tearDown();
     }
   }
 
+  @NotNull
   @Override
   public String getTestDataPath() {
     PathManagerEx.TestDataLookupStrategy strategy = PathManagerEx.guessTestDataLookupStrategy();
@@ -56,6 +61,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
     callback.registerSchemes();
     JsonSchemaMappingsProjectConfiguration.getInstance(getProject()).setState(mySchemas);
     JsonSchemaService.Impl.get(getProject()).reset();
+    getPsiManager().dropPsiCaches();
     doHighlighting();
     if (myDoCompletion) complete();
     callback.doCheck();

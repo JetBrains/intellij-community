@@ -16,11 +16,14 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +39,8 @@ class ChangeListManagerSerialization {
   @NonNls private static final String ATT_VALUE_TRUE = "true";
   @NonNls private static final String ATT_CHANGE_BEFORE_PATH = "beforePath";
   @NonNls private static final String ATT_CHANGE_AFTER_PATH = "afterPath";
+  @NonNls private static final String ATT_CHANGE_BEFORE_PATH_ESCAPED = "beforePathEscaped";
+  @NonNls private static final String ATT_CHANGE_AFTER_PATH_ESCAPED = "afterPathEscaped";
   @NonNls private static final String ATT_CHANGE_BEFORE_PATH_IS_DIR = "beforeDir";
   @NonNls private static final String ATT_CHANGE_AFTER_PATH_IS_DIR = "afterDir";
   @NonNls private static final String ATT_PATH = "path";
@@ -229,13 +234,22 @@ class ChangeListManagerSerialization {
   private static void writeContentRevision(@NotNull Element changeNode, @Nullable ContentRevision rev, @NotNull RevisionSide side) {
     if (rev == null) return;
     FilePath filePath = rev.getFile();
-    changeNode.setAttribute(side.getPathKey(), filePath.getPath());
+    String path = filePath.getPath();
+    if (hasIllegalXmlChars(path)) {
+      changeNode.setAttribute(side.getPathKey(), JDOMUtil.removeControlChars(path));
+      changeNode.setAttribute(side.getEscapedPathKey(), XmlStringUtil.escapeIllegalXmlChars(path));
+    }
+    else {
+      changeNode.setAttribute(side.getPathKey(), path);
+    }
     changeNode.setAttribute(side.getIsDirKey(), String.valueOf(filePath.isDirectory()));
   }
 
   @Nullable
   private static FakeRevision readContentRevision(@NotNull Element changeNode, @NotNull RevisionSide side) {
-    String path = changeNode.getAttributeValue(side.getPathKey());
+    String plainPath = changeNode.getAttributeValue(side.getPathKey());
+    String escapedPath = changeNode.getAttributeValue(side.getEscapedPathKey());
+    String path = escapedPath != null ? XmlStringUtil.unescapeIllegalXmlChars(escapedPath) : plainPath;
     if (StringUtil.isEmpty(path)) return null;
 
     String value = changeNode.getAttributeValue(side.getIsDirKey());
@@ -250,14 +264,16 @@ class ChangeListManagerSerialization {
   }
 
   private enum RevisionSide {
-    BEFORE(ATT_CHANGE_BEFORE_PATH, ATT_CHANGE_BEFORE_PATH_IS_DIR),
-    AFTER(ATT_CHANGE_AFTER_PATH, ATT_CHANGE_AFTER_PATH_IS_DIR);
+    BEFORE(ATT_CHANGE_BEFORE_PATH, ATT_CHANGE_BEFORE_PATH_ESCAPED, ATT_CHANGE_BEFORE_PATH_IS_DIR),
+    AFTER(ATT_CHANGE_AFTER_PATH, ATT_CHANGE_AFTER_PATH_ESCAPED, ATT_CHANGE_AFTER_PATH_IS_DIR);
 
     @NotNull private final String myPathKey;
+    @NotNull private final String myEscapedPathKey;
     @NotNull private final String myIsDirKey;
 
-    RevisionSide(@NotNull String pathKey, @NotNull String isDirKey) {
+    RevisionSide(@NotNull String pathKey, @NotNull String escapedPathKey, @NotNull String isDirKey) {
       myPathKey = pathKey;
+      myEscapedPathKey = escapedPathKey;
       myIsDirKey = isDirKey;
     }
 
@@ -267,8 +283,17 @@ class ChangeListManagerSerialization {
     }
 
     @NotNull
+    String getEscapedPathKey() {
+      return myEscapedPathKey;
+    }
+
+    @NotNull
     public String getIsDirKey() {
       return myIsDirKey;
     }
+  }
+
+  private static boolean hasIllegalXmlChars(@NotNull String text) {
+    return text.chars().anyMatch(c -> !Verifier.isXMLCharacter(c));
   }
 }

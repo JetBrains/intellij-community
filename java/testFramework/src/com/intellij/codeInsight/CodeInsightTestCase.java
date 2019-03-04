@@ -80,12 +80,16 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         }
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myEditor = null;
       super.tearDown();
     }
   }
 
+  @NotNull
   @Override
   protected PsiTestData createData() {
     return new CodeInsightTestData();
@@ -118,11 +122,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
   }
 
-  private void allowRootAccess(final String filePath) {
-    VfsRootAccess.allowRootAccess(getTestRootDisposable(), filePath);
-  }
-
-  protected VirtualFile configureByFile(String filePath, @Nullable String projectRoot) throws Exception {
+  protected VirtualFile configureByFile(@NotNull String filePath, @Nullable String projectRoot) throws Exception {
     VirtualFile vFile = findVirtualFile(filePath);
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
 
@@ -141,9 +141,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       final File tempFile = FileUtil.createTempFile(dir, "tempFile", "." + extension, true);
       final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
       if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
-        WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-          fileTypeManager.associateExtension(fileType, extension);
-        });
+        WriteCommandAction.writeCommandAction(getProject()).run(() -> fileTypeManager.associateExtension(fileType, extension));
       }
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
       assert vFile != null;
@@ -500,7 +498,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   @NotNull
   protected VirtualFile findVirtualFile(@NotNull String filePath) {
     String absolutePath = getTestDataPath() + filePath;
-    allowRootAccess(absolutePath);
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), absolutePath);
     return VfsTestUtil.findFileByCaseSensitivePath(absolutePath);
   }
 
@@ -583,7 +581,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return aPackage;
   }
 
-  protected void setLanguageLevel(LanguageLevel level) {
+  protected void setLanguageLevel(@NotNull LanguageLevel level) {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
   }
 }

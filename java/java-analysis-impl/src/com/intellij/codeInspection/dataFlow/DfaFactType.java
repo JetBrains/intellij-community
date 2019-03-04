@@ -15,9 +15,11 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
@@ -68,7 +70,13 @@ public abstract class DfaFactType<T> extends Key<T> {
     @NotNull
     @Override
     DfaNullability uniteFacts(@NotNull DfaNullability left, @NotNull DfaNullability right) {
-      return left == right ? left : DfaNullability.FLUSHED;
+      if (left == right) {
+        return left;
+      }
+      if (left == DfaNullability.NULL || right == DfaNullability.NULL) {
+        return DfaNullability.UNKNOWN;
+      }
+      return DfaNullability.FLUSHED;
     }
 
     @Nullable
@@ -77,8 +85,8 @@ public abstract class DfaFactType<T> extends Key<T> {
       if (left == DfaNullability.NOT_NULL || right == DfaNullability.NOT_NULL) {
         return DfaNullability.NOT_NULL;
       }
-      if (left == DfaNullability.FLUSHED && right == DfaNullability.NULLABLE ||
-          left == DfaNullability.NULLABLE && right == DfaNullability.FLUSHED) {
+      if (left == DfaNullability.FLUSHED && DfaNullability.toNullability(right) == Nullability.NULLABLE ||
+          right == DfaNullability.FLUSHED && DfaNullability.toNullability(left) == Nullability.NULLABLE) {
         return DfaNullability.NULLABLE;
       }
       return super.intersectFacts(left, right);
@@ -86,15 +94,12 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @Nullable
     @Override
-    DfaNullability fromDfaValue(DfaValue value) {
+    public DfaNullability fromDfaValue(DfaValue value) {
       if (value instanceof DfaConstValue) {
-        return ((DfaConstValue)value).getValue() == null ? DfaNullability.NULLABLE : DfaNullability.NOT_NULL;
+        return ((DfaConstValue)value).getValue() == null ? DfaNullability.NULL : DfaNullability.NOT_NULL;
       }
       if (value instanceof DfaBoxedValue) return DfaNullability.NOT_NULL;
-      if (value instanceof DfaFactMapValue) {
-        DfaFactMapValue factValue = (DfaFactMapValue)value;
-        if (factValue.get(OPTIONAL_PRESENCE) != null || factValue.get(RANGE) != null) return DfaNullability.NOT_NULL;
-      }
+      if (value instanceof DfaFactMapValue && ((DfaFactMapValue)value).get(RANGE) != null) return DfaNullability.NOT_NULL;
       return super.fromDfaValue(value);
     }
 
@@ -126,20 +131,6 @@ public abstract class DfaFactType<T> extends Key<T> {
   };
 
   /**
-   * This fact is applied to the Optional values (like {@link java.util.Optional} or Guava Optional).
-   * When its value is true, then optional is known to be present.
-   * When its value is false, then optional is known to be empty (absent).
-   */
-  public static final DfaFactType<Boolean> OPTIONAL_PRESENCE = new DfaFactType<Boolean>("Optional") {
-
-    @NotNull
-    @Override
-    public String toString(@NotNull Boolean fact) {
-      return fact ? "present Optional" : "absent Optional";
-    }
-  };
-
-  /**
    * This fact is applied to the integral values (of types byte, char, short, int, long).
    * Its value represents a range of possible values.
    */
@@ -156,9 +147,17 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @Nullable
     @Override
-    LongRangeSet fromDfaValue(DfaValue value) {
+    public LongRangeSet fromDfaValue(DfaValue value) {
       if(value instanceof DfaVariableValue) {
         return calcFromVariable((DfaVariableValue)value);
+      }
+      if(value instanceof DfaBinOpValue) {
+        DfaBinOpValue binOp = (DfaBinOpValue)value;
+        LongRangeSet left = fromDfaValue(binOp.getLeft());
+        LongRangeSet right = fromDfaValue(binOp.getRight());
+        if (left != null && right != null) {
+          return left.binOpFromToken(binOp.getTokenType(), right, PsiType.LONG.equals(binOp.getType()));
+        }
       }
       return LongRangeSet.fromDfaValue(value);
     }
@@ -166,9 +165,10 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Nullable
     @Override
     LongRangeSet calcFromVariable(@NotNull DfaVariableValue var) {
-      DfaVariableSource source = var.getSource();
-      if(source instanceof SpecialField) {
-        LongRangeSet fromSpecialField = ((SpecialField)source).getRange();
+      VariableDescriptor descriptor = var.getDescriptor();
+      if(descriptor instanceof SpecialField) {
+        DfaValue defaultValue = ((SpecialField)descriptor).getDefaultValue(var.getFactory(), false);
+        LongRangeSet fromSpecialField = LongRangeSet.fromDfaValue(defaultValue);
         if (fromSpecialField != null) {
           return fromSpecialField;
         }
@@ -211,7 +211,8 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Nullable
     @Override
     TypeConstraint calcFromVariable(@NotNull DfaVariableValue value) {
-      DfaPsiType type = value.getDfaType();
+      PsiType psiType = value.getType();
+      DfaPsiType type = psiType == null ? null : value.getFactory().createDfaType(psiType);
       return type == null ? null : TypeConstraint.empty().withInstanceofValue(type);
     }
 
@@ -251,6 +252,26 @@ public abstract class DfaFactType<T> extends Key<T> {
       return fact ? "local object" : "";
     }
   };
+  
+  public static final DfaFactType<SpecialFieldValue> SPECIAL_FIELD_VALUE = new DfaFactType<SpecialFieldValue>("Special field value") {
+    @NotNull
+    @Override
+    public String getName(SpecialFieldValue fact) {
+      return fact == null ? super.getName(null) : StringUtil.wordsToBeginFromUpperCase(fact.getField().toString());
+    }
+
+    @Nullable
+    @Override
+    SpecialFieldValue uniteFacts(@NotNull SpecialFieldValue left, @NotNull SpecialFieldValue right) {
+      return left.unite(right);
+    }
+
+    @NotNull
+    @Override
+    public String getPresentationText(@NotNull SpecialFieldValue fact, @Nullable PsiType type) {
+      return fact.getPresentationText(type);
+    }
+  };
 
   @NotNull
   private final String myName;
@@ -263,12 +284,12 @@ public abstract class DfaFactType<T> extends Key<T> {
   }
 
   @NotNull
-  public String getName() {
+  public String getName(T fact) {
     return myName;
   }
 
   @Nullable
-  T fromDfaValue(DfaValue value) {
+  public T fromDfaValue(DfaValue value) {
     return value instanceof DfaFactMapValue ? ((DfaFactMapValue)value).get(this) : null;
   }
 

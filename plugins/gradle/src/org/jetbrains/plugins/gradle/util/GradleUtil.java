@@ -22,9 +22,9 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import org.gradle.tooling.model.GradleProject;
@@ -47,6 +47,10 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Properties;
 
+import static com.intellij.openapi.util.text.StringUtil.*;
+import static org.jetbrains.plugins.gradle.util.GradleConstants.EXTENSION;
+import static org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION;
+
 /**
  * Holds miscellaneous utility methods.
  *
@@ -67,7 +71,10 @@ public class GradleUtil {
    */
   @NotNull
   public static FileChooserDescriptor getGradleProjectFileChooserDescriptor() {
-    return FileChooserDescriptorFactory.createSingleFileDescriptor(GradleConstants.EXTENSION);
+    return new FileChooserDescriptor(true, false, false, false, false, false)
+      .withFileFilter(file -> SystemInfo.isFileSystemCaseSensitive
+                              ? endsWith(file.getName(), "." + EXTENSION) || endsWith(file.getName(), "." + KOTLIN_DSL_SCRIPT_EXTENSION)
+                              : endsWithIgnoreCase(file.getName(), "." + EXTENSION) || endsWithIgnoreCase(file.getName(), "." + KOTLIN_DSL_SCRIPT_EXTENSION));
   }
 
   @NotNull
@@ -98,17 +105,17 @@ public class GradleUtil {
       reader = new BufferedReader(new FileReader(wrapperPropertiesFile));
       props.load(reader);
       String distributionUrl = props.getProperty(WrapperExecutor.DISTRIBUTION_URL_PROPERTY);
-      if(StringUtil.isEmpty(distributionUrl)) {
+      if(isEmpty(distributionUrl)) {
         throw new ExternalSystemException("Wrapper 'distributionUrl' property does not exist!");
       } else {
         wrapperConfiguration.setDistribution(prepareDistributionUri(distributionUrl, wrapperPropertiesFile));
       }
       String distributionPath = props.getProperty(WrapperExecutor.DISTRIBUTION_PATH_PROPERTY);
-      if(!StringUtil.isEmpty(distributionPath)) {
+      if(!isEmpty(distributionPath)) {
         wrapperConfiguration.setDistributionPath(distributionPath);
       }
       String distPathBase = props.getProperty(WrapperExecutor.DISTRIBUTION_BASE_PROPERTY);
-      if(!StringUtil.isEmpty(distPathBase)) {
+      if(!isEmpty(distPathBase)) {
         wrapperConfiguration.setDistributionBase(distPathBase);
       }
       return wrapperConfiguration;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -92,27 +92,15 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     return (T)myExtensions.get(key);
   }
 
+  @NotNull
   public InspectionProfileImpl getCurrentProfile() {
     if (myExternalProfile != null) {
       return myExternalProfile;
     }
 
     String currentProfile = ((InspectionManagerBase)InspectionManager.getInstance(myProject)).getCurrentProfile();
-    ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstance(myProject);
-    InspectionProfileImpl profile = profileManager.getProfile(currentProfile, false);
-    if (profile == null) {
-      profile = InspectionProfileManager.getInstance().getProfile(currentProfile);
-      if (profile != null) {
-        return profile;
-      }
-
-      final String[] availableProfileNames = profileManager.getAvailableProfileNames();
-      if (availableProfileNames.length == 0) {
-        throw new IllegalStateException("There should be at least one inspection profile");
-      }
-      profile = profileManager.getProfile(availableProfileNames[0], true);
-    }
-    return profile;
+    InspectionProfileImpl profile = ProjectInspectionProfileManager.getInstance(myProject).getProfile(currentProfile, false);
+    return profile == null ? InspectionProfileManager.getInstance().getProfile(currentProfile) : profile;
   }
 
   @Override
@@ -230,12 +218,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   @NotNull
   protected PerformInBackgroundOption createOption() {
-    return new PerformInBackgroundOption(){
-      @Override
-      public boolean shouldStartInBackground() {
-        return true;
-      }
-    };
+    return () -> true;
   }
 
   protected void notifyInspectionsFinished(@NotNull AnalysisScope scope) {
@@ -300,7 +283,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   @NotNull
-  protected List<Tools> getUsedTools() {
+  public List<Tools> getUsedTools() {
     InspectionProfileImpl profile = getCurrentProfile();
     List<Tools> tools = profile.getAllEnabledInspectionTools(myProject);
     Set<InspectionToolWrapper<?, ?>> dependentTools = new LinkedHashSet<>();
@@ -357,7 +340,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                           @Nullable String commandName,
                           @Nullable Runnable postRunnable,
                           final boolean modal,
-                          Predicate<ProblemDescriptor> shouldApplyFix) {}
+                          @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {}
 
   public void codeCleanup(@NotNull AnalysisScope scope,
                           @NotNull InspectionProfile profile,
@@ -368,7 +351,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   public static void modalCodeCleanup(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable Runnable runnable) {
-    GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
+    GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext();
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     globalContext.codeCleanup(scope, profile, null, runnable, true, descriptor -> true);
   }
@@ -377,7 +360,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     cleanupElements(project, runnable, descriptor -> true, scope);
   }
 
-  public static void cleanupElements(@NotNull final Project project, @Nullable final Runnable runnable, Predicate<ProblemDescriptor> shouldApplyFix, @NotNull PsiElement... scope) {
+  public static void cleanupElements(@NotNull final Project project, @Nullable final Runnable runnable, Predicate<? super ProblemDescriptor> shouldApplyFix, @NotNull PsiElement... scope) {
     final List<SmartPsiElementPointer<PsiElement>> elements = new ArrayList<>();
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
     for (PsiElement element : scope) {
@@ -393,10 +376,10 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     cleanupElements(project, runnable, elements, descriptor -> true);
   }
 
-  public static void cleanupElements(@NotNull final Project project,
-                                     @Nullable final Runnable runnable,
-                                     final List<? extends SmartPsiElementPointer<PsiElement>> elements,
-                                     Predicate<ProblemDescriptor> shouldApplyFix) {
+  private static void cleanupElements(@NotNull final Project project,
+                                      @Nullable final Runnable runnable,
+                                      final List<? extends SmartPsiElementPointer<PsiElement>> elements,
+                                      @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
     Runnable cleanupRunnable = () -> {
       final List<PsiElement> psiElements = new ArrayList<>();
       for (SmartPsiElementPointer<PsiElement> element : elements) {
@@ -408,7 +391,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       if (psiElements.isEmpty()) {
         return;
       }
-      GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
+      GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext();
       final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
       AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(PsiElement.EMPTY_ARRAY)), project);
       globalContext.codeCleanup(analysisScope, profile, null, runnable, true, shouldApplyFix);

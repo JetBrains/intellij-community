@@ -1,4 +1,4 @@
-// "Convert to local" "true"
+// "Convert field to local variable in method 'setEditable1'" "true"
 class MyClassTest {
 
   private boolean editable = false;

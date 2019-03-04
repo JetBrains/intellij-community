@@ -234,7 +234,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
     SortableEntry copy() {
       List<PsiComment> afterSeparator = ContainerUtil.map(myAfterSeparator, el -> (PsiComment)el.copy());
-      List<PsiComment> beforeSeparator = myBeforeSeparator.stream().map(el -> (PsiComment)el.copy()).collect(Collectors.toList());
+      List<PsiComment> beforeSeparator = ContainerUtil.map(myBeforeSeparator, el -> (PsiComment)el.copy());
       return new SortableEntry(myElement.copy(), beforeSeparator, afterSeparator);
     }
   }

@@ -14,11 +14,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Map;
 import java.util.Set;
 
 public class JsonSchemaInfo {
   @Nullable private final JsonSchemaFileProvider myProvider;
   @Nullable private final String myUrl;
+  @Nullable private String myName = null;
+  @Nullable private String myDocumentation = null;
   @NotNull  private final static Set<String> myDumbNames = ContainerUtil.set(
     "schema",
     "lib",
@@ -28,6 +31,14 @@ public class JsonSchemaInfo {
     "format",
     "angular", // the only angular-related schema is the 'angular-cli', so we skip the repo name
     "config");
+
+  // weird cases such as meaningless 'config' as a name, etc.
+  @NotNull private final static Map<String, String> myWeirdNames = ContainerUtil.stringMap(
+    "http://json.schemastore.org/config", "asp.net config",
+    "https://schemastore.azurewebsites.net/schemas/json/config.json", "asp.net config",
+    "http://json.schemastore.org/2.0.0-csd.2.beta.2018-10-10.json", "sarif-2.0.0-csd.2.beta.2018-10-10",
+    "https://schemastore.azurewebsites.net/schemas/json/2.0.0-csd.2.beta.2018-10-10.json", "sarif-2.0.0-csd.2.beta.2018-10-10"
+  );
 
   public JsonSchemaInfo(@NotNull JsonSchemaFileProvider provider) {
     myProvider = provider;
@@ -76,10 +87,8 @@ public class JsonSchemaInfo {
 
     assert myUrl != null;
 
-    // the only weird case
-    if ("http://json.schemastore.org/config".equals(myUrl)
-        || "https://schemastore.azurewebsites.net/schemas/json/config.json".equals(myUrl)) {
-      return "asp.net config";
+    if (myWeirdNames.containsKey(myUrl)) {
+      return myWeirdNames.get(myUrl);
     }
 
     String url = myUrl.replace('\\', '/');
@@ -89,6 +98,24 @@ public class JsonSchemaInfo {
       .map(p -> sanitizeName(p))
       .filter(p -> !isVeryDumbName(p))
       .findFirst().orElse(sanitizeName(myUrl));
+  }
+
+  @Nullable
+  public String getDocumentation() {
+    return myDocumentation;
+  }
+
+  public void setDocumentation(@Nullable String documentation) {
+    myDocumentation = documentation;
+  }
+
+  @Nullable
+  public String getName() {
+    return myName;
+  }
+
+  public void setName(@Nullable String name) {
+    myName = name;
   }
 
   public static boolean isVeryDumbName(@Nullable String possibleName) {

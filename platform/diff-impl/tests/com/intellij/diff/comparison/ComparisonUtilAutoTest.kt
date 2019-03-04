@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.createRanges
+import java.util.*
 
 class ComparisonUtilAutoTest : HeavyDiffTestCase() {
   val RUNS = 30
@@ -130,7 +131,7 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
   }
 
   private fun doTestChar(seed: Long, runs: Int, maxLength: Int) {
-    val ignorePolicies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.IGNORE_WHITESPACES)
+    val ignorePolicies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
 
     doTest(seed, runs, maxLength, ignorePolicies) { text1, text2, ignorePolicy, debugData ->
       val sequence1 = text1.charsSequence
@@ -258,13 +259,17 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
     doAutoTest(seed, runs) { debugData ->
       debugData.put("MaxLength", maxLength)
 
-      val text1 = DocumentImpl(generateText(maxLength))
-      val text2 = DocumentImpl(generateText(maxLength))
+      for (useHighSurrogates in listOf(true, false)) {
+        debugData.put("High Surrogates", useHighSurrogates)
 
-      debugData.put("Text1", textToReadableFormat(text1.charsSequence))
-      debugData.put("Text2", textToReadableFormat(text2.charsSequence))
+        val text1 = DocumentImpl(generateText(maxLength, useHighSurrogates))
+        val text2 = DocumentImpl(generateText(maxLength, useHighSurrogates))
 
-      test(text1, text2, debugData)
+        debugData.put("Text1", textToReadableFormat(text1.charsSequence))
+        debugData.put("Text2", textToReadableFormat(text2.charsSequence))
+
+        test(text1, text2, debugData)
+      }
     }
   }
 
@@ -273,17 +278,21 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
     doAutoTest(seed, runs) { debugData ->
       debugData.put("MaxLength", maxLength)
 
-      val text1 = DocumentImpl(generateText(maxLength))
-      val text2 = DocumentImpl(generateText(maxLength))
-      val text3 = DocumentImpl(generateText(maxLength))
+      for (useHighSurrogates in listOf(true, false)) {
+        debugData.put("High Surrogates", useHighSurrogates)
 
-      debugData.put("Text1", textToReadableFormat(text1.charsSequence))
-      debugData.put("Text2", textToReadableFormat(text2.charsSequence))
-      debugData.put("Text3", textToReadableFormat(text3.charsSequence))
+        val text1 = DocumentImpl(generateText(maxLength, useHighSurrogates))
+        val text2 = DocumentImpl(generateText(maxLength, useHighSurrogates))
+        val text3 = DocumentImpl(generateText(maxLength, useHighSurrogates))
 
-      for (comparisonPolicy in policies) {
-        debugData.put("Policy", comparisonPolicy)
-        test(text1, text2, text2, comparisonPolicy, debugData)
+        debugData.put("Text1", textToReadableFormat(text1.charsSequence))
+        debugData.put("Text2", textToReadableFormat(text2.charsSequence))
+        debugData.put("Text3", textToReadableFormat(text3.charsSequence))
+
+        for (comparisonPolicy in policies) {
+          debugData.put("Policy", comparisonPolicy)
+          test(text1, text2, text2, comparisonPolicy, debugData)
+        }
       }
     }
   }
@@ -488,6 +497,9 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
     val ignoreSpacesUnchanged = policy != ComparisonPolicy.DEFAULT
     val ignoreSpacesChanged = policy == ComparisonPolicy.IGNORE_WHITESPACES
 
+    val changesSet1 = BitSet()
+    val changesSet2 = BitSet()
+
     var last1 = 0
     var last2 = 0
     for (fragment in fragments) {
@@ -506,12 +518,18 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
         assertNotEqualsCharSequences(chunkContent1, chunkContent2, ignoreSpacesChanged, skipNewline)
       }
 
+      changesSet1.set(start1, end1)
+      changesSet2.set(start2, end2)
+
       last1 = fragment.endOffset1
       last2 = fragment.endOffset2
     }
     val chunk1 = text1.subSequence(last1, text1.length)
     val chunk2 = text2.subSequence(last2, text2.length)
     assertEqualsCharSequences(chunk1, chunk2, ignoreSpacesUnchanged, skipNewline)
+
+    checkCodePoints(text1, changesSet1)
+    checkCodePoints(text2, changesSet2)
   }
 
   private fun checkValidRanges3(text1: Document, text2: Document, text3: Document, fragments: List<MergeLineFragment>, policy: ComparisonPolicy) {
@@ -549,6 +567,10 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
     val ignoreSpacesUnchanged = policy != ComparisonPolicy.DEFAULT
     val ignoreSpacesChanged = policy == ComparisonPolicy.IGNORE_WHITESPACES
 
+    val changesSet1 = BitSet()
+    val changesSet2 = BitSet()
+    val changesSet3 = BitSet()
+
     var last1 = 0
     var last2 = 0
     var last3 = 0
@@ -572,6 +594,10 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
       assertFalse(isEqualsCharSequences(chunkContent2, chunkContent1, ignoreSpacesChanged) &&
                   isEqualsCharSequences(chunkContent2, chunkContent3, ignoreSpacesChanged))
 
+      changesSet1.set(start1, end1)
+      changesSet2.set(start2, end2)
+      changesSet3.set(start3, end3)
+
       last1 = fragment.endOffset1
       last2 = fragment.endOffset2
       last3 = fragment.endOffset3
@@ -583,6 +609,28 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
 
     assertEqualsCharSequences(content2, content1, ignoreSpacesUnchanged, false)
     assertEqualsCharSequences(content2, content3, ignoreSpacesUnchanged, false)
+
+    checkCodePoints(text1, changesSet1)
+    checkCodePoints(text2, changesSet2)
+    checkCodePoints(text3, changesSet3)
+  }
+
+  private fun checkCodePoints(text: CharSequence, changesSet: BitSet) {
+    val len = text.length
+    var offset = 0
+
+    while (offset < len) {
+      val ch = Character.codePointAt(text, offset)
+      val charCount = Character.charCount(ch)
+
+      if (charCount == 2) {
+        val state1 = changesSet[offset]
+        val state2 = changesSet[offset + 1]
+        assertEquals(state1, state2)
+      }
+
+      offset += charCount
+    }
   }
 
   private fun checkCantTrimLines(text1: Document, text2: Document, fragments: List<LineFragment>, policy: ComparisonPolicy, allowNonSquashed: Boolean) {

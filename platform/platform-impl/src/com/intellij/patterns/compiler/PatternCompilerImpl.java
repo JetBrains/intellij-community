@@ -317,8 +317,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
           final Class<?>[] parameterTypes = method.getParameterTypes();
           newArgs = new Object[parameterTypes.length];
           System.arraycopy(arguments, 0, newArgs, 0, parameterTypes.length - 1);
-          final Object[] varArgs = (Object[])Array
-            .newInstance(parameterTypes[parameterTypes.length - 1].getComponentType(), arguments.length - parameterTypes.length + 1);
+          final Object[] varArgs = ArrayUtil.newArray(parameterTypes[parameterTypes.length - 1].getComponentType(), arguments.length - parameterTypes.length + 1);
           System.arraycopy(arguments, parameterTypes.length - 1, varArgs, 0, varArgs.length);
           newArgs[parameterTypes.length - 1] = varArgs;
         }

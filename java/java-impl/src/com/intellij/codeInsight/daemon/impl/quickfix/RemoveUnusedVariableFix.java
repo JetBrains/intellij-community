@@ -19,7 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -64,7 +64,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     return
       myVariable != null
       && myVariable.isValid()
-      && ScratchFileService.isInProjectOrScratch(myVariable)
+      && BaseIntentionAction.canModify(myVariable)
       ;
   }
 

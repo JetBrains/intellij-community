@@ -38,10 +38,9 @@ import java.awt.*;
  * @author Denis Zhdanov
  */
 public abstract class AbstractExternalProjectSettingsControl<S extends ExternalProjectSettings>
+  extends AbstractSettingsControl
   implements ExternalSystemSettingsControl<S>
 {
-
-  @Nullable private Project myProject;
 
   @NotNull private final S myInitialSettings;
 
@@ -66,7 +65,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   protected AbstractExternalProjectSettingsControl(@Nullable Project project,
                                                    @NotNull S initialSettings,
                                                    @Nullable ExternalSystemSettingsControlCustomizer controlCustomizer) {
-    myProject = project;
+    super(project);
     myInitialSettings = initialSettings;
     myCustomizer = controlCustomizer == null ? new ExternalSystemSettingsControlCustomizer() : controlCustomizer;
   }
@@ -124,19 +123,25 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
 
   @Override
   public void reset() {
-    reset(false);
+    reset(false, null);
+  }
+
+  @Override
+  public void reset(@Nullable Project project) {
+    reset(false, project);
   }
 
   @Override
   public void reset(@Nullable WizardContext wizardContext) {
-    reset(false, wizardContext);
+    reset(false, wizardContext, null);
   }
 
-  public void reset(boolean isDefaultModuleCreation) {
-    reset(isDefaultModuleCreation, null);
+  public void reset(boolean isDefaultModuleCreation, @Nullable Project project) {
+    reset(isDefaultModuleCreation, null, project);
   }
 
-  public void reset(boolean isDefaultModuleCreation, @Nullable WizardContext wizardContext) {
+  public void reset(boolean isDefaultModuleCreation, @Nullable WizardContext wizardContext, @Nullable Project project) {
+    super.reset(wizardContext, project);
     if (!myCustomizer.isUseAutoImportBoxHidden() && myUseAutoImportBox != null) {
       myUseAutoImportBox.setSelected(getInitialSettings().isUseAutoImport());
     }
@@ -217,11 +222,12 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
    * see {@linkplain AbstractImportFromExternalSystemControl#setCurrentProject(Project)}
    */
   public void setCurrentProject(@Nullable Project project) {
-    myProject = project;
+    setProject(project);
   }
 
   @Nullable
+  @Override
   public Project getProject() {
-    return myProject;
+    return super.getProject();
   }
 }

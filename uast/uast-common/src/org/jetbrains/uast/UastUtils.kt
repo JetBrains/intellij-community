@@ -85,15 +85,18 @@ fun <T : UElement> UElement.getParentOfType(
   }
 }
 
-fun UElement?.getUCallExpression(): UCallExpression? = this?.withContainingElements?.mapNotNull {
-  when (it) {
-    is UCallExpression -> it
-    is UQualifiedReferenceExpression -> it.selector as? UCallExpression
-    else -> null
-  }
-}?.firstOrNull()
+@JvmOverloads
+fun UElement?.getUCallExpression(searchLimit: Int = Int.MAX_VALUE): UCallExpression? =
+  this?.withContainingElements?.take(searchLimit)?.mapNotNull {
+    when (it) {
+      is UCallExpression -> it
+      is UQualifiedReferenceExpression -> it.selector as? UCallExpression
+      else -> null
+    }
+  }?.firstOrNull()
 
-@Deprecated(message = "This function is deprecated, use getContainingUFile", replaceWith = ReplaceWith("getContainingUFile()"))
+@Deprecated(message = "This function is deprecated, use getContainingUFile, will be removed in IDEA 2019.2",
+            replaceWith = ReplaceWith("getContainingUFile()"))
 fun UElement.getContainingFile(): UFile? = getContainingUFile()
 
 fun UElement.getContainingUFile(): UFile? = getParentOfType(UFile::class.java)
@@ -107,9 +110,6 @@ fun UElement.getContainingMethod(): PsiMethod? = getContainingUMethod()?.psi
 
 @Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingUClass()?.javaPsi"))
 fun UElement.getContainingClass(): PsiClass? = getContainingUClass()?.psi
-
-@Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingUVariable()?.javaPsi"))
-fun UElement.getContainingVariable(): PsiVariable? = getContainingUVariable()?.psi
 
 @Deprecated(message = "Useless function, will be removed in IDEA 2019.1",
             replaceWith = ReplaceWith("PsiTreeUtil.getParentOfType(this, PsiClass::class.java)"))
@@ -137,7 +137,8 @@ fun UElement.isUastChildOf(probablyParent: UElement?, strict: Boolean = false): 
   return isChildOf(if (strict) uastParent else this, probablyParent)
 }
 
-@Deprecated("contains a bug in negation of `strict` parameter", replaceWith = ReplaceWith("isUastChildOf(probablyElement, strict)"))
+@Deprecated("contains a bug in negation of `strict` parameter, will be removed in IDEA 2019.2",
+            replaceWith = ReplaceWith("isUastChildOf(probablyElement, strict)"))
 fun UElement.isChildOf(probablyParent: UElement?, strict: Boolean = false) = isUastChildOf(probablyParent, !strict)
 
 /**

@@ -16,7 +16,7 @@ public class KeyboardUtils {
     return keyCode == KeyEvent.VK_BACK_SPACE;
   }
 
-  public static boolean isCharacter(KeyEvent event) {
-    return event.getKeyChar() != KeyEvent.CHAR_UNDEFINED;
+  public static boolean isPartOfJavaClassName(char ch) {
+    return Character.isLetterOrDigit(ch) || ch == '.' || ch == '$' || ch == '[' || ch == ']';
   }
 }

@@ -39,6 +39,8 @@ public abstract class LoggingHandlerBase implements Disposable {
 
   public abstract boolean isClosed();
 
+  public abstract void close();
+
   @Override
   public void dispose() {
 

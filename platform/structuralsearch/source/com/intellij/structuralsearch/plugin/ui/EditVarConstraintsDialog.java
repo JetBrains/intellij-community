@@ -305,7 +305,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   private static ReplacementVariableDefinition getOrAddReplacementVariableDefinition(String varName, Configuration configuration) {
-    final ReplaceOptions replaceOptions = ((ReplaceConfiguration)configuration).getReplaceOptions();
+    final ReplaceOptions replaceOptions = configuration.getReplaceOptions();
     final String realVariableName = stripReplacementVarDecoration(varName);
     ReplacementVariableDefinition variableDefinition = replaceOptions.getVariableDefinition(realVariableName);
 
@@ -325,7 +325,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     if (varName == null) return;
     if (isReplacementVariable(varName)) {
       final ReplacementVariableDefinition definition =
-        ((ReplaceConfiguration)myConfiguration).getReplaceOptions().getVariableDefinition(stripReplacementVarDecoration(varName));
+        myConfiguration.getReplaceOptions().getVariableDefinition(stripReplacementVarDecoration(varName));
 
       restoreScriptCode(definition);
       textConstraintsPanel.setVisible(false);

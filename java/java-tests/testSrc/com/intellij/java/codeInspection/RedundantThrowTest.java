@@ -58,4 +58,8 @@ public class RedundantThrowTest extends InspectionTestCase {
   public void testThrownClausesInMethodReference() {
     doTest();
   }
+
+  public void testNativeMethod() {
+    doTest();
+  }
 }

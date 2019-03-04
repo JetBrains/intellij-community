@@ -6,6 +6,6 @@ class T {
             throw new RuntimeException("When true");
         <caret>else {
             System.out.println("Otherwise");
-        }
+        }//c1
     }
 }

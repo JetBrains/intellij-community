@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ConfigurationException;
@@ -92,7 +93,8 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable {
 
   private void init() {
     mySeverityChooser = new MySeverityChooser(myProfile.getProfileManager().getSeverityRegistrar());
-    mySeverityChooserPanel.add(mySeverityChooser.createCustomComponent(mySeverityChooser.getTemplatePresentation()), BorderLayout.CENTER);
+    mySeverityChooserPanel.add(mySeverityChooser.createCustomComponent(
+      mySeverityChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN), BorderLayout.CENTER);
 
     InspectionProfileEntry tool = myToolState.getTool().getTool();
     if (tool instanceof BaseCommitMessageInspection) {
@@ -134,7 +136,7 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable {
 
     @NotNull
     @Override
-    public JComponent createCustomComponent(@NotNull Presentation presentation) {
+    public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
       return createComboBoxButton(presentation);
     }
   }

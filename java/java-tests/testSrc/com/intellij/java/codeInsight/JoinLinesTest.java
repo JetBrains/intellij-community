@@ -38,10 +38,16 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   public void testNormal() { doTest(); }
 
   public void testStringLiteral() { doTest(); }
+  public void testStringLiteralTrim() { doTest(); }
   public void testLiteralSCR4989() { doTest(); }
 
   public void testCallChain() { doTest(); }
   public void testCallChain2() { doTest(); }
+  public void testCallChainLineBreak() {
+    CommonCodeStyleSettings settings = getJavaSettings();
+    settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doTest(); 
+  }
   public void testCallChainWrong() { doTest(); }
   public void testCallChainWrong2() { doTest(); }
   public void testDeclarationAndCall() { doTest(); }
@@ -55,6 +61,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   public void testIfChainPolyadic() { doTest(); }
   public void testIfChainNoBraces() { doTest(); }
   public void testIfChainElse() { doTest(); }
+  public void testIfChainSelection() { doTest(); }
 
   public void testSCR3493() {
     CommonCodeStyleSettings settings = getJavaSettings();
@@ -142,6 +149,8 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   }
 
   public void testLocalVar() { doTest(); }
+  public void testLocalVarAnnotated() { doTest(); }
+  public void testLocalVarImplicit() { doTest(); }
 
   public void testSlashComment() { doTest(); }
   public void testDocComment() { doTest(); }

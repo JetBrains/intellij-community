@@ -15,6 +15,7 @@
  */
 package com.intellij.task.impl;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -23,9 +24,11 @@ import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.*;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import static com.intellij.util.containers.ContainerUtil.list;
 import static com.intellij.util.containers.ContainerUtil.map;
@@ -48,9 +51,11 @@ import static java.util.stream.Collectors.groupingBy;
 public class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   private final ProjectTaskRunner myDummyTaskRunner = new DummyTaskRunner();
+  private final ProjectTaskListener myEventPublisher;
 
   public ProjectTaskManagerImpl(@NotNull Project project) {
     super(project);
+    myEventPublisher = project.getMessageBus().syncPublisher(ProjectTaskListener.TOPIC);
   }
 
   @Override
@@ -149,38 +154,23 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     };
     visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
 
+    myEventPublisher.started(context);
     if (toRun.isEmpty()) {
-      sendSuccessNotify(callback);
+      sendSuccessNotify(new ListenerNotificator(context, callback));
       return;
     }
 
-    AtomicInteger inProgressCounter = new AtomicInteger(toRun.size());
-    AtomicInteger errorsCounter = new AtomicInteger();
-    AtomicInteger warningsCounter = new AtomicInteger();
-    AtomicBoolean abortedFlag = new AtomicBoolean(false);
-    ProjectTaskNotification chunkStatusNotification = callback == null ? null : new ProjectTaskNotification() {
-      @Override
-      public void finished(@NotNull ProjectTaskResult executionResult) {
-        int inProgress = inProgressCounter.decrementAndGet();
-        int allErrors = errorsCounter.addAndGet(executionResult.getErrors());
-        int allWarnings = warningsCounter.addAndGet(executionResult.getWarnings());
-        if (executionResult.isAborted()) {
-          abortedFlag.set(true);
-        }
-        if (inProgress == 0) {
-          callback.finished(new ProjectTaskResult(abortedFlag.get(), allErrors, allWarnings));
-        }
-      }
-    };
-
-    toRun.forEach(pair -> {
+    ProjectTaskResultsAggregator callbacksCollector =
+      new ProjectTaskResultsAggregator(new ListenerNotificator(context, callback), toRun.size());
+    for (Pair<ProjectTaskRunner, Collection<? extends ProjectTask>> pair : toRun) {
+      callback = new ProjectTaskRunnerNotification(pair.second, callbacksCollector);
       if (pair.second.isEmpty()) {
-        sendSuccessNotify(chunkStatusNotification);
+        sendSuccessNotify(callback);
       }
       else {
-        pair.first.run(myProject, context, chunkStatusNotification, pair.second);
+        pair.first.run(myProject, context, callback, pair.second);
       }
-    });
+    }
   }
 
   private static void sendSuccessNotify(@Nullable ProjectTaskNotification notification) {
@@ -225,12 +215,98 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
                     @NotNull ProjectTaskContext context,
                     @Nullable ProjectTaskNotification callback,
                     @NotNull Collection<? extends ProjectTask> tasks) {
-
+      sendSuccessNotify(callback);
     }
 
     @Override
     public boolean canRun(@NotNull ProjectTask projectTask) {
-      return false;
+      return true;
+    }
+  }
+
+  private class ListenerNotificator implements ProjectTaskNotification {
+    @Nullable private final ProjectTaskNotification myDelegate;
+    @NotNull private final ProjectTaskContext myContext;
+
+    private ListenerNotificator(@NotNull ProjectTaskContext context, @Nullable ProjectTaskNotification delegate) {
+      myContext = context;
+      myDelegate = delegate;
+    }
+
+    @Override
+    public void finished(@NotNull ProjectTaskResult executionResult) {
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        if (!myProject.isDisposed()) {
+          myEventPublisher.finished(myContext, executionResult);
+        }
+        if (myDelegate != null) {
+          myDelegate.finished(executionResult);
+        }
+      }, ModalityState.defaultModalityState());
+    }
+  }
+
+  private static class ProjectTaskRunnerNotification implements ProjectTaskNotification {
+    private final ProjectTaskResultsAggregator myAggregator;
+    private final Collection<? extends ProjectTask> myTasks;
+
+    private ProjectTaskRunnerNotification(@NotNull Collection<? extends ProjectTask> tasks,
+                                          @NotNull ProjectTaskResultsAggregator aggregator) {
+      myTasks = tasks;
+      myAggregator = aggregator;
+    }
+
+    @Override
+    public void finished(@NotNull ProjectTaskResult result) {
+      if (result.getTasksState().isEmpty()) {
+        final boolean aborted = result.isAborted();
+        final int errors = result.getErrors();
+        ProjectTaskState state = new ProjectTaskState() {
+          @Override
+          public boolean isSkipped() {
+            return aborted;
+          }
+
+          @Override
+          public boolean isFailed() {
+            return errors > 0;
+          }
+        };
+        Map<ProjectTask, ProjectTaskState> tasksState = StreamEx.of(myTasks).toMap(Function.identity(), task -> state);
+        result = new ProjectTaskResult(aborted, errors, result.getWarnings(), tasksState);
+      }
+      myAggregator.add(result);
+    }
+  }
+
+  private static class ProjectTaskResultsAggregator {
+    private final ProjectTaskNotification myDelegate;
+    private final AtomicInteger myProgressCounter;
+    private final AtomicInteger myErrorsCounter;
+    private final AtomicInteger myWarningsCounter;
+    private final AtomicBoolean myAbortedFlag;
+    private final Map<ProjectTask, ProjectTaskState> myTasksState = ContainerUtil.newConcurrentMap();
+
+    private ProjectTaskResultsAggregator(@NotNull ProjectTaskNotification delegate, int expectedResults) {
+      myDelegate = delegate;
+      myProgressCounter = new AtomicInteger(expectedResults);
+      myErrorsCounter = new AtomicInteger();
+      myWarningsCounter = new AtomicInteger();
+      myAbortedFlag = new AtomicBoolean(false);
+    }
+
+    public void add(@NotNull ProjectTaskResult executionResult) {
+      int inProgress = myProgressCounter.decrementAndGet();
+      int allErrors = myErrorsCounter.addAndGet(executionResult.getErrors());
+      int allWarnings = myWarningsCounter.addAndGet(executionResult.getWarnings());
+      myTasksState.putAll(executionResult.getTasksState());
+      if (executionResult.isAborted()) {
+        myAbortedFlag.set(true);
+      }
+      if (inProgress <= 0) {
+        ProjectTaskResult result = new ProjectTaskResult(myAbortedFlag.get(), allErrors, allWarnings, myTasksState);
+        myDelegate.finished(result);
+      }
     }
   }
 }

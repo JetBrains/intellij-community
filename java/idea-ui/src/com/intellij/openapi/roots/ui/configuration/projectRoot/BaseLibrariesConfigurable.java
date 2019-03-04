@@ -44,6 +44,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurable  {
+  @NotNull
   protected final String myLevel;
 
   protected BaseLibrariesConfigurable(final @NotNull Project project, @NotNull String libraryTableLevel) {
@@ -145,6 +146,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     });
   }
 
+  @NotNull
   public String getLevel() {
     return myLevel;
   }

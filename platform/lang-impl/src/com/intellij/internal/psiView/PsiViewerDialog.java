@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.psiView;
 
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -9,7 +9,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,9 +50,10 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.tabs.JBEditorTabsBase;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.impl.JBEditorTabs;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -128,7 +128,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private final boolean myExternalDocument;
 
   @NotNull
-  private final JBTabsImpl myTabs;
+  private final JBTabs myTabs;
 
   private void createUIComponents() {
     myPsiTree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode()));
@@ -219,23 +219,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   }
 
   @NotNull
-  private static JBEditorTabs createTabPanel(@NotNull Project project) {
-    return new JBEditorTabs(project, ActionManager.getInstance(), IdeFocusManager.getInstance(project), project) {
-      @Override
-      public boolean isAlphabeticalMode() {
-        return false;
-      }
-
-      @Override
-      public boolean supportsCompression() {
-        return false;
-      }
-
-      @Override
-      protected Color getEmptySpaceColor() {
-        return UIUtil.getBgFillColor(getParent());
-      }
-    };
+  private JBTabs createTabPanel(@NotNull Project project) {
+    JBEditorTabsBase tabs = JBTabsFactory.createEditorTabs(project, this);
+    tabs.getPresentation().setAlphabeticalMode(false).setSupportsCompression(false);
+    return tabs;
   }
 
 
@@ -854,7 +841,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   @Override
   public void dispose() {
     Disposer.dispose(myPsiTreeBuilder);
-    Disposer.dispose(myTabs);
 
     if (!myEditor.isDisposed()) {
       EditorFactory.getInstance().releaseEditor(myEditor);

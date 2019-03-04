@@ -5,6 +5,7 @@ import com.intellij.ide.projectWizard.kotlin.model.KotlinGuiTestCase
 import com.intellij.ide.projectWizard.kotlin.model.KOTLIN_PLUGIN_NAME
 import com.intellij.ide.projectWizard.kotlin.model.KotlinTestProperties
 import com.intellij.testGuiFramework.util.scenarios.*
+import com.intellij.testGuiFramework.util.step
 import org.junit.Ignore
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
@@ -13,30 +14,34 @@ import org.junit.Test
 class InstallPluginGuiTest : KotlinGuiTestCase() {
   @Test
   fun installKotlinPlugin() {
-//    TODO: uncomment when IDEA-198938, IDEA-198785 fixing
-//    if (pluginsDialogScenarios.isPluginRequiredVersionInstalled(
-//        KOTLIN_PLUGIN_NAME, KotlinTestProperties.kotlin_plugin_version_full
-//      ).not()) {
+    step("install Kotlin plugin, version '${KotlinTestProperties.kotlin_plugin_version_main}'") {
+      //    TODO: uncomment when IDEA-198938, IDEA-198785 fixing
+      //    if (pluginsDialogScenarios.isPluginRequiredVersionInstalled(
+      //        KOTLIN_PLUGIN_NAME, KotlinTestProperties.kotlin_plugin_version_full
+      //      ).not()) {
       pluginsDialogScenarios.actionAndRestart {
         pluginsDialogScenarios.installPluginFromDisk(KotlinTestProperties.kotlin_plugin_install_path)
       }
-//      assertTrue(
-//        actual = pluginsDialogScenarios.isPluginRequiredVersionInstalled(
-//          KOTLIN_PLUGIN_NAME, KotlinTestProperties.kotlin_plugin_version_full),
-//        message = "Kotlin plugin `${KotlinTestProperties.kotlin_plugin_version_full}` is not installed")
-//    }
+      //      assertTrue(
+      //        actual = pluginsDialogScenarios.isPluginRequiredVersionInstalled(
+      //          KOTLIN_PLUGIN_NAME, KotlinTestProperties.kotlin_plugin_version_full),
+      //        message = "Kotlin plugin `${KotlinTestProperties.kotlin_plugin_version_full}` is not installed")
+      //    }
+    }
   }
 
   @Test
   @Ignore
   fun uninstallKotlinPlugin() {
-    pluginsDialogScenarios.actionAndRestart {
-      pluginsDialogScenarios.uninstallPlugin(KOTLIN_PLUGIN_NAME)
+    step("uninstall Kotlin plugin") {
+      pluginsDialogScenarios.actionAndRestart {
+        pluginsDialogScenarios.uninstallPlugin(KOTLIN_PLUGIN_NAME)
+      }
+      assertFalse(
+        actual = pluginsDialogScenarios
+          .isPluginRequiredVersionInstalled(KOTLIN_PLUGIN_NAME, KotlinTestProperties.kotlin_plugin_version_full),
+        message = "Kotlin plugin `${KotlinTestProperties.kotlin_plugin_version_full}` is not uninstalled")
     }
-    assertFalse(
-      actual = pluginsDialogScenarios
-        .isPluginRequiredVersionInstalled(KOTLIN_PLUGIN_NAME, KotlinTestProperties.kotlin_plugin_version_full),
-      message = "Kotlin plugin `${KotlinTestProperties.kotlin_plugin_version_full}` is not uninstalled")
   }
 
   override fun isIdeFrameRun(): Boolean = false

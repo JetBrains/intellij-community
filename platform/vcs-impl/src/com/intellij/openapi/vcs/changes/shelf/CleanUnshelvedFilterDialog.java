@@ -64,7 +64,7 @@ public class CleanUnshelvedFilterDialog extends DialogWrapper {
   public CleanUnshelvedFilterDialog(@Nullable Project project) {
     super(project);
     setTitle("Clean Unshelved Changelists");
-    myUnshelvedWithFilterButton = new JRadioButton("older than one", false);
+    myUnshelvedWithFilterButton = new JRadioButton("older than one", true);
     myAllUnshelvedButton = new JRadioButton("all", false);
     myTimePeriodComboBox = new ComboBox(new EnumComboBoxModel<>(TimePeriod.class));
     myTimePeriodComboBox.setEnabled(myUnshelvedWithFilterButton.isSelected());

@@ -175,8 +175,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     if (anAction instanceof ExternalSystemTaskAction && action.equals(anAction)) {
       return (ExternalSystemAction)anAction;
     }
-    manager.unregisterAction(action.getId());
-    manager.registerAction(action.getId(), action);
+    manager.replaceAction(action.getId(), action);
     return action;
   }
 
@@ -200,9 +199,11 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
         if (moduleData == null || moduleData.isIgnored()) continue;
         TaskData taskData = each.getData();
         ExternalSystemTaskAction eachAction = new ExternalSystemTaskAction(project, moduleData.getData().getInternalName(), taskData);
-        actionManager.unregisterAction(eachAction.getId());
         if (shortcutsManager.hasShortcuts(taskData.getLinkedExternalProjectPath(), taskData.getName())) {
-          actionManager.registerAction(eachAction.getId(), eachAction);
+          actionManager.replaceAction(eachAction.getId(), eachAction);
+        }
+        else {
+          actionManager.unregisterAction(eachAction.getId());
         }
       }
     }
@@ -260,9 +261,11 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       ExternalSystemRunConfigurationAction runConfigurationAction =
         new ExternalSystemRunConfigurationAction(project, configurationSettings);
       String id = runConfigurationAction.getId();
-      actionManager.unregisterAction(id);
       if (shortcutsManager.hasShortcuts(id)) {
-        actionManager.registerAction(id, runConfigurationAction);
+        actionManager.replaceAction(id, runConfigurationAction);
+      }
+      else {
+        actionManager.unregisterAction(id);
       }
     }
   }
@@ -272,8 +275,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     ExternalSystemRunConfigurationAction runConfigurationAction =
       new ExternalSystemRunConfigurationAction(project, configurationSettings);
     String id = runConfigurationAction.getId();
-    manager.unregisterAction(id);
-    manager.registerAction(id, runConfigurationAction);
+    manager.replaceAction(id, runConfigurationAction);
     return runConfigurationAction;
   }
 

@@ -32,6 +32,14 @@ public class TextComponentInlayModel implements InlayModel {
     return null;
   }
 
+  @Nullable
+  @Override
+  public <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
+                                                                                 boolean relatesToPrecedingText,
+                                                                                 @NotNull T renderer) {
+    return null;
+  }
+
   @NotNull
   @Override
   public List<Inlay> getInlineElementsInRange(int startOffset, int endOffset) {
@@ -66,6 +74,21 @@ public class TextComponentInlayModel implements InlayModel {
   public Inlay getElementAt(@NotNull Point point) {
     return null;
   }
+
+  @NotNull
+  @Override
+  public List<Inlay> getAfterLineEndElementsInRange(int startOffset, int endOffset) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getAfterLineEndElementsForLogicalLine(int logicalLine) {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public void setConsiderCaretPositionOnDocumentUpdates(boolean enabled) {}
 
   @Override
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {

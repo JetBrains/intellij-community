@@ -24,7 +24,7 @@ public class AddTestProcessActionIndefinite extends AnAction implements DumbAwar
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          Thread.currentThread().sleep(6000);
+          Thread.sleep(6000);
 
           countTo(900, new AddTestProcessActionIndefinite.Count() {
             @Override
@@ -33,7 +33,7 @@ public class AddTestProcessActionIndefinite extends AnAction implements DumbAwar
               if (each / 10.0 == Math.round(each / 10.0)) {
                 indicator.setText("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
               }
-              Thread.currentThread().sleep(10);
+              Thread.sleep(10);
               indicator.checkCanceled();
               indicator.setText2("bla bla bla");
             }
@@ -42,19 +42,18 @@ public class AddTestProcessActionIndefinite extends AnAction implements DumbAwar
         }
         catch (Exception e1) {
           indicator.stop();
-          return;
         }
       }
     }.queue();
   }
 
-  private void countTo(int top, AddTestProcessActionIndefinite.Count count) throws Exception {
+  private static void countTo(int top, AddTestProcessActionIndefinite.Count count) throws Exception {
     for (int i = 0; i < top; i++) {
       count.onCount(i);
     }
   }
 
-  private static interface Count {
+  private interface Count {
     void onCount(int each) throws InterruptedException;
   }
 }

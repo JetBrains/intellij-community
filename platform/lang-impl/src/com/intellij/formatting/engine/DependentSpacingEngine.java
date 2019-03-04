@@ -51,7 +51,7 @@ import java.util.TreeMap;
  * {@link DependantSpacingImpl#setDependentRegionLinefeedStatusChanged() mark} the dependent spacing as changed and schedule one more
  * formatting iteration.
  */
-public class DependentSpacingEngine {
+class DependentSpacingEngine {
   private final BlockRangesMap myBlockRangesMap;
   
   private final SortedMap<TextRange, DependantSpacingImpl> myPreviousDependencies =
@@ -64,11 +64,11 @@ public class DependentSpacingEngine {
       return offsetsDelta;
     });
 
-  public DependentSpacingEngine(BlockRangesMap helper) {
+  DependentSpacingEngine(BlockRangesMap helper) {
     myBlockRangesMap = helper;
   }
 
-  public boolean shouldReformatPreviouslyLocatedDependentSpacing(WhiteSpace space) {
+  boolean shouldReformatPreviouslyLocatedDependentSpacing(WhiteSpace space) {
     final TextRange changed = space.getTextRange();
     final SortedMap<TextRange, DependantSpacingImpl> sortedHeadMap = myPreviousDependencies.tailMap(changed);
 
@@ -94,7 +94,7 @@ public class DependentSpacingEngine {
     return false;
   }
   
-  public void registerUnresolvedDependentSpacingRanges(final SpacingImpl spaceProperty, List<TextRange> unprocessedRanges) {
+  void registerUnresolvedDependentSpacingRanges(final SpacingImpl spaceProperty, List<TextRange> unprocessedRanges) {
     final DependantSpacingImpl dependantSpaceProperty = (DependantSpacingImpl)spaceProperty;
     if (dependantSpaceProperty.isDependentRegionLinefeedStatusChanged()) return;
 
@@ -103,7 +103,7 @@ public class DependentSpacingEngine {
     }
   }
   
-  public void clear() {
+  void clear() {
     myPreviousDependencies.clear();
   }
 }

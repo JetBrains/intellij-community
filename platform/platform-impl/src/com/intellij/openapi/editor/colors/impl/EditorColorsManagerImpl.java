@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -33,21 +33,26 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.ComponentTreeEventDispatcher;
-import com.intellij.util.JdomKt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
+import java.io.File;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -145,24 +150,10 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     loadSchemesFromThemes();
     mySchemeManager.loadSchemes();
 
-    String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
-    EditorColorsScheme scheme = null;
-    if (wizardEditorScheme != null) {
-      scheme = getScheme(wizardEditorScheme);
-      LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
-    }
-
     initEditableDefaultSchemesCopies();
     initEditableBundledSchemesCopies();
     resolveLinksToBundledSchemes();
-    if (scheme == null) {
-      scheme = UIUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme();
-      if (scheme == null) {
-        LOG.warn("Editor scheme 'Darcula' not found");
-        scheme = getDefaultScheme();
-      }
-    }
-    setGlobalSchemeInner(scheme);
+    initScheme();
   }
 
   private void initDefaultSchemes() {
@@ -178,6 +169,33 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
         createEditableCopy(defaultScheme, defaultScheme.getEditableCopyName());
       }
     }
+  }
+
+  private void initScheme() {
+    String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
+    EditorColorsScheme scheme = null;
+
+    if (wizardEditorScheme != null) {
+      scheme = getScheme(wizardEditorScheme);
+      LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
+    }
+
+    if (scheme == null) {
+      LafManager lm = LafManager.getInstance();
+      UIManager.LookAndFeelInfo laf = lm.getCurrentLookAndFeel();
+
+      if (laf instanceof UIThemeBasedLookAndFeelInfo) {
+        String schemeName = ((UIThemeBasedLookAndFeelInfo)laf).getTheme().getEditorSchemeName();
+        if (schemeName != null) {
+          scheme = getScheme(schemeName);
+        }
+      }
+    }
+
+    if (scheme == null) {
+      scheme = UIUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme();
+    }
+    setGlobalSchemeInner(scheme);
   }
 
   private void loadBundledSchemes() {
@@ -301,7 +319,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
         continue;
       }
       try {
-        ((AbstractColorsScheme)editorColorsScheme).readAttributes(JdomKt.loadElement(URLUtil.openStream(resource)));
+        Element root = JDOMUtil.load(URLUtil.openStream(resource));
+        Element attrs = ObjectUtils.notNull(root.getChild("attributes"), root);
+        Element colors = root.getChild("colors");
+        AbstractColorsScheme scheme = (AbstractColorsScheme)editorColorsScheme;
+        scheme.readAttributes(attrs);
+        if (colors != null) {
+          scheme.readColors(colors);
+        }
       }
       catch (Exception e) {
         LOG.error(e);
@@ -408,7 +433,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @Override
   public State getState() {
     String currentSchemeName = mySchemeManager.getCurrentSchemeName();
-    if (currentSchemeName != null) {
+    if (currentSchemeName != null && !isTempScheme(mySchemeManager.getActiveScheme())) {
       myState.colorScheme = ("Default".equals(currentSchemeName) || (SchemeManager.EDITABLE_COPY_PREFIX + "Default").equals(
         currentSchemeName)) ? null : currentSchemeName;
     }
@@ -430,15 +455,16 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @Override
   public EditorColorsScheme getSchemeForCurrentUITheme() {
     LookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentLookAndFeel();
-    EditorColorsScheme scheme;
+    EditorColorsScheme scheme = null;
     if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
       UITheme theme = ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).getTheme();
-      String schemeName= theme.getEditorSchemeName();
-      scheme = getScheme(schemeName);
-      assert scheme != null :
-        "Theme " + theme.getName() + " refers to unknown color scheme " + schemeName;
+      String schemeName = theme.getEditorSchemeName();
+      if (schemeName != null) {
+        scheme = getScheme(schemeName);
+        assert scheme != null : "Theme " + theme.getName() + " refers to unknown color scheme " + schemeName;
+      }
     }
-    else {
+    if (scheme == null) {
       String schemeName = UIUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
       scheme = myDefaultColorSchemeManager.getScheme(schemeName);
       assert scheme != null :
@@ -452,5 +478,32 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @NotNull
   public SchemeManager<EditorColorsScheme> getSchemeManager() {
     return mySchemeManager;
+  }
+
+  private static final String TEMP_SCHEME_KEY = "TEMP_SCHEME_KEY";
+  private static final String TEMP_SCHEME_FILE_KEY = "TEMP_SCHEME_FILE_KEY";
+  public static boolean isTempScheme(EditorColorsScheme scheme) {
+    if (scheme == null) return false;
+
+    return StringUtil.equals(scheme.getMetaProperties().getProperty(TEMP_SCHEME_KEY), Boolean.TRUE.toString());
+  }
+
+  @Nullable
+  public static Path getTempSchemeOriginalFilePath(EditorColorsScheme scheme) {
+    if (isTempScheme(scheme)) {
+      String path = scheme.getMetaProperties().getProperty(TEMP_SCHEME_FILE_KEY);
+      if (path != null) {
+        return new File(path).toPath();
+      }
+    }
+    return null;
+  }
+
+  public static void setTempScheme(EditorColorsScheme scheme, @Nullable VirtualFile originalSchemeFile) {
+    if (scheme == null) return;
+    scheme.getMetaProperties().setProperty(TEMP_SCHEME_KEY, Boolean.TRUE.toString());
+    if (originalSchemeFile != null) {
+      scheme.getMetaProperties().setProperty(TEMP_SCHEME_FILE_KEY, originalSchemeFile.getPath());
+    }
   }
 }

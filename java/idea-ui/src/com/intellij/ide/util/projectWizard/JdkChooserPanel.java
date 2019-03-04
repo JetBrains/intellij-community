@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -96,7 +96,6 @@ public class JdkChooserPanel extends JPanel {
    * Sets the JDK types which may be shown in the panel.
    *
    * @param allowedJdkTypes the array of JDK types which may be shown, or null if all JDK types are allowed.
-   * @since 7.0.3
    */
   public void setAllowedJdkTypes(@Nullable final SdkType[] allowedJdkTypes) {
     myAllowedJdkTypes = allowedJdkTypes;
@@ -188,12 +187,7 @@ public class JdkChooserPanel extends JPanel {
             if (virtualFile != null) {
               JavaSdk sdkType = JavaSdk.getInstance();
               JavaVersion version = JavaVersion.tryParse(sdkType.getVersionString(homePath));
-              String suggestedName;
-              if (version != null) {
-                suggestedName = version.toString();
-              } else {
-                suggestedName = SimpleJavaSdkType.suggestJavaSdkName(sdkType, "", homePath);
-              }
+              String suggestedName = version != null ? version.toString() : "";
               Sdk jdk = sdkType.createJdk(suggestedName, homePath, false);
               if (jdk instanceof ProjectJdkImpl) {
                 ProjectJdkImpl tmp = SdkConfigurationUtil.createSdk(allJdks.toArray(new Sdk[0]), virtualFile, sdkType, null, suggestedName);

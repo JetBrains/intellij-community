@@ -29,8 +29,8 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
   public static final int SNAPSHOT_VALUE = Integer.MAX_VALUE;
 
-  private final @NotNull String myProductCode;
-  private final @NotNull int[] myComponents;
+  @NotNull private final String myProductCode;
+  @NotNull private final int[] myComponents;
 
   public BuildNumber(@NotNull String productCode, int baselineVersion, int buildNumber) {
     this(productCode, new int[]{baselineVersion, buildNumber});
@@ -41,7 +41,8 @@ public class BuildNumber implements Comparable<BuildNumber> {
     myComponents = components;
   }
 
-  public @NotNull String getProductCode() {
+  @NotNull
+  public String getProductCode() {
     return myProductCode;
   }
 
@@ -49,7 +50,8 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return myComponents[0];
   }
 
-  public @NotNull int[] getComponents() {
+  @NotNull
+  public int[] getComponents() {
     return myComponents.clone();
   }
 
@@ -57,23 +59,28 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return ArrayUtil.indexOf(myComponents, SNAPSHOT_VALUE) >= 0;
   }
 
+  @NotNull
   @Contract(pure = true)
-  public @NotNull BuildNumber withoutProductCode() {
+  public BuildNumber withoutProductCode() {
     return myProductCode.isEmpty() ? this : new BuildNumber("", myComponents);
   }
 
+  @NotNull
   public String asString() {
     return asString(true, true);
   }
 
+  @NotNull
   public String asStringWithoutProductCode() {
     return asString(false, true);
   }
 
+  @NotNull
   public String asStringWithoutProductCodeAndSnapshot() {
     return asString(false, false);
   }
 
+  @NotNull
   private String asString(boolean includeProductCode, boolean withSnapshotMarker) {
     StringBuilder builder = new StringBuilder();
 
@@ -95,11 +102,24 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return builder.toString();
   }
 
+  /**
+   * Attempts to parse build number from the specified string.
+   * Returns {@code null} if the string is not a valid build number.
+   */
+  @Nullable
+  public static BuildNumber fromStringOrNull(@NotNull String version) {
+    try {
+      return fromString(version);
+    } catch (RuntimeException ignored) {
+      return null;
+    }
+  }
+
   public static BuildNumber fromString(String version) {
     return fromString(version, null, null);
   }
 
-  public static BuildNumber fromStringWithProductCode(String version, String productCode) {
+  public static BuildNumber fromStringWithProductCode(String version, @NotNull String productCode) {
     return fromString(version, null, productCode);
   }
 
@@ -122,8 +142,6 @@ public class BuildNumber implements Comparable<BuildNumber> {
     }
 
     int baselineVersionSeparator = code.indexOf('.');
-    int baselineVersion;
-    int buildNumber;
 
     if (baselineVersionSeparator > 0) {
       String baselineVersionString = code.substring(0, baselineVersionSeparator);
@@ -142,18 +160,18 @@ public class BuildNumber implements Comparable<BuildNumber> {
       return new BuildNumber(productCode, intComponents);
     }
     else {
-      buildNumber = parseBuildNumber(version, code, pluginName);
+      int buildNumber = parseBuildNumber(version, code, pluginName);
       if (buildNumber <= 2000) {
         // it's probably a baseline, not a build number
         return new BuildNumber(productCode, buildNumber, 0);
       }
 
-      baselineVersion = getBaseLineForHistoricBuilds(buildNumber);
+      int baselineVersion = getBaseLineForHistoricBuilds(buildNumber);
       return new BuildNumber(productCode, baselineVersion, buildNumber);
     }
   }
 
-  private static int parseBuildNumber(String version, String code, String pluginName) {
+  private static int parseBuildNumber(String version, @NotNull String code, String pluginName) {
     if (SNAPSHOT.equals(code) || BUILD_NUMBER_PLACEHOLDERS.contains(code) || STAR.equals(code)) {
       return SNAPSHOT_VALUE;
     }
@@ -190,9 +208,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     BuildNumber that = (BuildNumber)o;
 
     if (!myProductCode.equals(that.myProductCode)) return false;
-    if (!Arrays.equals(myComponents, that.myComponents)) return false;
-
-    return true;
+    return Arrays.equals(myComponents, that.myComponents);
   }
 
   @Override

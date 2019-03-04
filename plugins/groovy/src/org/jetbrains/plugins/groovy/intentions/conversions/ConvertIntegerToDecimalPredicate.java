@@ -40,10 +40,7 @@ class ConvertIntegerToDecimalPredicate implements PsiElementPredicate {
       return false;
     }
     @NonNls final String text = expression.getText().replaceAll("_", "");
-    if (text == null || text.length() < 2) {
-      return false;
-    }
-    if ("0".equals(text) || "0L".equals(text) || "0l".equals(text)) {
+    if (text.length() < 2 || "0L".equals(text) || "0l".equals(text)) {
       return false;
     }
     return text.charAt(0) == '0';

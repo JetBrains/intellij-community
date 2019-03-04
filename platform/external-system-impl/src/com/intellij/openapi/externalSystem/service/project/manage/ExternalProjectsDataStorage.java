@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -21,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,7 +53,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
  * @author Vladislav.Soroka
  */
 @State(name = "ExternalProjectsData", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class ExternalProjectsDataStorage implements SettingsSavingComponent, PersistentStateComponent<ExternalProjectsDataStorage.State> {
+public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaAdapter, PersistentStateComponent<ExternalProjectsDataStorage.State> {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsDataStorage.class);
 
   private static final String STORAGE_VERSION = ExternalProjectsDataStorage.class.getSimpleName() + ".2";
@@ -144,8 +147,10 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   }
 
   @Override
-  public synchronized void save() {
-    if (!changed.compareAndSet(true, false)) return;
+  public synchronized void doSave() {
+    if (!changed.compareAndSet(true, false)) {
+      return;
+    }
 
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new MySaveTask(myProject, myExternalRootProjects.values()), 0);
@@ -154,7 +159,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   @TestOnly
   public synchronized void saveAndWait() throws Exception {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode(), "This method is available for tests only");
-    save();
+    doSave();
     myAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
   }
 
@@ -340,22 +345,14 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
       });
     }
 
-    DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(projectConfigurationFile)));
-    try {
+    try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(projectConfigurationFile)))) {
       out.writeUTF(STORAGE_VERSION);
       out.writeInt(externalProjects.size());
-      ObjectOutputStream os = new ObjectOutputStream(out);
-      try {
+      try (ObjectOutputStream os = new ObjectOutputStream(out)) {
         for (InternalExternalProjectInfo externalProject : externalProjects) {
           os.writeObject(externalProject);
         }
       }
-      finally {
-        os.close();
-      }
-    }
-    finally {
-      out.close();
     }
   }
 
@@ -378,15 +375,16 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     final Path configurationFile = getProjectConfigurationFile(project);
     if (!configurationFile.toFile().isFile()) return projects;
 
-    DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(configurationFile)));
+    if (isInvalidated(configurationFile)) {
+      throw new IOException("External projects data storage was invalidated");
+    }
 
-    try {
+    try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(configurationFile)))) {
       final String storage_version = in.readUTF();
       if (!STORAGE_VERSION.equals(storage_version)) return projects;
       final int size = in.readInt();
 
-      ObjectInputStream os = new ObjectInputStream(in);
-      try {
+      try (ObjectInputStream os = new ObjectInputStream(in)) {
         for (int i = 0; i < size; i++) {
           InternalExternalProjectInfo projectDataDataNode = (InternalExternalProjectInfo)os.readObject();
           projects.add(projectDataDataNode);
@@ -395,14 +393,23 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
       catch (Exception e) {
         throw new IOException(e);
       }
-      finally {
-        os.close();
-      }
-    }
-    finally {
-      in.close();
     }
     return projects;
+  }
+
+  private static boolean isInvalidated(@NotNull Path configurationFile) {
+    if (!Registry.is("external.system.invalidate.storage", true)) return false;
+
+    long lastModified = configurationFile.toFile().lastModified();
+    if (lastModified == 0) return true;
+    File brokenMarkerFile = getBrokenMarkerFile();
+    if (brokenMarkerFile.exists() && lastModified < brokenMarkerFile.lastModified()) {
+      if (!FileUtil.delete(configurationFile.toFile())) {
+        LOG.warn("Cannot delete invalidated external project cache file");
+      }
+      return true;
+    }
+    return false;
   }
 
   @NotNull
@@ -449,6 +456,23 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   private static boolean isIgnored(@NotNull ProjectState projectState, @Nullable ModuleState moduleState, @NotNull Key<?> key) {
     return projectState.isInclusion ^ (moduleState != null && moduleState.set.contains(key.getDataType()));
+  }
+
+  public static synchronized void invalidateCaches() {
+    if (!Registry.is("external.system.invalidate.storage", true)) return;
+
+    File markerFile = getBrokenMarkerFile();
+    try {
+      FileUtil.writeToFile(markerFile, String.valueOf(System.currentTimeMillis()));
+    }
+    catch (IOException e) {
+      LOG.warn("Cannot update the invalidation marker file", e);
+    }
+  }
+
+  @NotNull
+  private static File getBrokenMarkerFile() {
+    return PathManagerEx.getAppSystemDir().resolve("external_build_system").resolve(".broken").toFile();
   }
 
   static class State {

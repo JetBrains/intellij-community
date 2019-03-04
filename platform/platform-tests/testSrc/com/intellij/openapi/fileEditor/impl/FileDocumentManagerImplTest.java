@@ -25,7 +25,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.MemoryDumpHelper;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -225,8 +227,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     //noinspection UnusedAssignment
     document = null;
 
-    System.gc();
-    System.gc();
+    GCUtil.tryGcSoftlyReachableObjects();
 
     document = myDocumentManager.getDocument(file);
     assertEquals(idCode, System.identityHashCode(document));
@@ -238,17 +239,14 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     assertNotNull(file.toString(), document);
     WriteCommandAction.runWriteCommandAction(myProject, () -> ObjectUtils.assertNotNull(myDocumentManager.getDocument(file)).insertString(0, "xxx"));
 
-    int idCode = System.identityHashCode(document);
     //noinspection UnusedAssignment
     document = null;
 
     myDocumentManager.saveAllDocuments();
 
-    System.gc();
-    System.gc();
+    GCWatcher.tracking(myDocumentManager.getDocument(file)).tryGc();
 
-    document = myDocumentManager.getDocument(file);
-    assertTrue(idCode != System.identityHashCode(document));
+    assertNull(myDocumentManager.getCachedDocument(file));
   }
 
   public void testSaveDocument_DocumentWasNotChanged() throws Exception {
@@ -318,7 +316,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
   private VirtualFile createFile(String name, String content) throws IOException {
     File file = createTempFile(name, content);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(virtualFile);
     return virtualFile;
   }
@@ -450,7 +448,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     assertEquals(0, myDocumentManager.getUnsavedDocuments().length);
   }
 
-  public void testContentChanged_doNotReloadChangedDocumentOnSave() throws Exception {
+  public void testContentChanged_doNotReloadChangedDocumentOnSave() {
     final MockVirtualFile file =
     new MockVirtualFile("test.txt", "test") {
       @Override
@@ -534,7 +532,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
     renameFile(file, "test.wtf");
     Document afterRename = documentManager.getDocument(file);
-    assertTrue(afterRename + " != " + original, afterRename == original);
+    assertSame(afterRename + " != " + original, afterRename, original);
   }
 
   public void testFileTypeChangeDocumentDetach() throws Exception {
@@ -636,7 +634,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     }
 
     for (int iteration = 0; iteration < 10; iteration++) {
-      GCUtil.tryGcSoftlyReachableObjects();
+      GCWatcher.tracking(ContainerUtil.mapNotNull(physicalFiles, f -> FileDocumentManager.getInstance().getCachedDocument(f))).tryGc();
 
       checkDocumentFiles(physicalFiles);
       checkDocumentFiles(createNonPhysicalFiles());

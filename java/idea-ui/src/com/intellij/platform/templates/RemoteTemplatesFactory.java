@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.ide.plugins.PluginManager;
@@ -9,10 +9,10 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.JdomKt;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -41,7 +41,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
       return HttpRequests.request(URL + ApplicationInfo.getInstance().getBuild().getProductCode() + "_templates.xml")
         .connect(request -> {
           try {
-            return create(JdomKt.loadElement(request.getReader()));
+            return create(JDOMUtil.load(request.getReader()));
           }
           catch (JDOMException e) {
             LOG.error(e);
@@ -75,7 +75,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   @NotNull
   @TestOnly
   public static MultiMap<String, ArchivedProjectTemplate> createFromText(@NotNull String value) throws IOException, JDOMException {
-    return create(JdomKt.loadElement(value));
+    return create(JDOMUtil.load(value));
   }
 
   @NotNull

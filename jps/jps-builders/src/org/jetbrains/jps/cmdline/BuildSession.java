@@ -507,6 +507,13 @@ final class BuildSession implements Runnable, CanceledStatus {
   }
 
   private static void saveOnDisk(BufferExposingByteArrayOutputStream bytes, final File file) throws IOException {
+    try (FileOutputStream fos = writeOrCreate(file)) {
+      fos.write(bytes.getInternalBuffer(), 0, bytes.size());
+    }
+  }
+
+  @NotNull
+  private static FileOutputStream writeOrCreate(@NotNull File file) throws FileNotFoundException {
     FileOutputStream fos = null;
     try {
       //noinspection IOResourceOpenedButNotSafelyClosed
@@ -519,12 +526,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     if (fos == null) {
       fos = new FileOutputStream(file);
     }
-    try {
-      fos.write(bytes.getInternalBuffer(), 0, bytes.size());
-    }
-    finally {
-      fos.close();
-    }
+    return fos;
   }
 
   @Nullable

@@ -46,7 +46,7 @@ public class CoreSdkType implements SdkTypeId {
   }
 
   @Override
-  public SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, @NotNull Element additional) {
     return null;
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -104,6 +106,11 @@ class VariableExtractor {
       highlight(var);
 
       PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
+      if (mySettings.isDeclareVarType()) {
+        PsiTypeElement typeElement = var.getTypeElement();
+        LOG.assertTrue(typeElement != null);
+        IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElement, var);
+      }
       myFieldConflictsResolver.fix();
       return SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(var);
     }
@@ -199,6 +206,13 @@ class VariableExtractor {
         }
       }
     }
+    if (anchor instanceof PsiResourceListElement) {
+      PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)declaration;
+      PsiLocalVariable localVariable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
+      PsiResourceVariable resourceVariable = JavaPsiFacade.getElementFactory(anchor.getProject())
+        .createResourceVariable(Objects.requireNonNull(localVariable.getName()), localVariable.getType(), initializer, anchor);
+      return anchor.replace(resourceVariable);
+    }
     return anchor.getParent().addBefore(declaration, anchor);
   }
 
@@ -244,20 +258,29 @@ class VariableExtractor {
         }
       }
     }
-    if (firstOccurrence != null && ControlFlowUtils.canExtractStatement(firstOccurrence)) {
-      PsiExpression ancestorCandidate = anchor instanceof PsiIfStatement ? ((PsiIfStatement)anchor).getCondition() :
-                                        anchor instanceof PsiReturnStatement ? ((PsiReturnStatement)anchor).getReturnValue():
-                                        anchor instanceof PsiExpression ? (PsiExpression)anchor :
-                                        null;
-      if (PsiTreeUtil.isAncestor(ancestorCandidate, firstOccurrence, false) &&
+    if (firstOccurrence != null && ControlFlowUtils.canExtractStatement(firstOccurrence) && 
+        !PsiUtil.isAccessedForWriting(firstOccurrence)) {
+      PsiExpression ancestorCandidate = ExpressionUtils.getTopLevelExpression(firstOccurrence);
+      if (PsiTreeUtil.isAncestor(anchor, ancestorCandidate, false) &&
           ReorderingUtils.canExtract(ancestorCandidate, firstOccurrence) == ThreeState.NO) {
         return firstOccurrence;
       }
     }
+    if (anchor instanceof PsiTryStatement && firstOccurrence != null) {
+      PsiResourceList resourceList = ((PsiTryStatement)anchor).getResourceList();
+      PsiElement parent = firstOccurrence.getParent();
+      if (resourceList != null && parent instanceof PsiResourceExpression && parent.getParent() == resourceList
+          && InheritanceUtil.isInheritor(firstOccurrence.getType(), CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE)) {
+        return parent;
+      }
+    }
+    if (anchor.getParent() instanceof PsiSwitchLabeledRuleStatement) {
+      return ExpressionUtils.getTopLevelExpression(expr);
+    }
     if (anchor instanceof PsiSwitchLabelStatement) {
-      PsiSwitchStatement statement = ((PsiSwitchLabelStatement)anchor).getEnclosingSwitchStatement();
-      if (statement != null) {
-        return statement;
+      PsiSwitchBlock block = ((PsiSwitchLabelStatement)anchor).getEnclosingSwitchBlock();
+      if (block instanceof PsiSwitchStatement) {
+        return block;
       }
     }
     if (RefactoringUtil.isLoopOrIf(anchor.getParent())) return anchor;

@@ -29,7 +29,10 @@ public abstract class ReflectionAccessorBase<T extends ItemToReplaceDescriptor> 
   @Override
   public void accessThroughReflection(@NotNull PsiElement element) {
     List<T> toReplace = findItemsToReplace(element);
-    log.info("Found " + toReplace.size() + " items to replace");
+    if (!toReplace.isEmpty()) {
+      log.info("Found " + toReplace.size() + " items to replace");
+    }
+
     for (T item : toReplace) {
       grantAccess(item);
     }

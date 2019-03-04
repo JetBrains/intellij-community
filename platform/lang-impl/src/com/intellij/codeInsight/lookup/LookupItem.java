@@ -117,7 +117,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   }
 
   public void setLookupString(@NotNull String lookupString) {
-    if (myAllLookupStrings.contains("")) myAllLookupStrings.remove("");
+    myAllLookupStrings.remove("");
     myLookupString = lookupString;
     myAllLookupStrings.add(lookupString);
   }
@@ -136,7 +136,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
       //noinspection unchecked
       return (T)myAttributes.get(key);
     }
-    else{
+    else {
       return null;
     }
   }

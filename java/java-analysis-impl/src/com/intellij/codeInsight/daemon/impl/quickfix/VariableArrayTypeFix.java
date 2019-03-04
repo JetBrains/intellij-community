@@ -17,9 +17,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.ide.TypePresentationService;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -156,7 +156,7 @@ public class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
 
     return myVariable != null
            && myVariable.isValid()
-           && ScratchFileService.isInProjectOrScratch(myVariable)
+           && BaseIntentionAction.canModify(myVariable)
            && myTargetType.isValid();
   }
 

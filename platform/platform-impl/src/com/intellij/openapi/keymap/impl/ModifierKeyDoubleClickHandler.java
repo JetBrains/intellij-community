@@ -3,7 +3,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
+import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -249,7 +249,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
         myActionManagerEx.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         action.actionPerformed(anActionEvent);
         myActionManagerEx.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
-        ShortcutsCollector.recordDoubleShortcut(anActionEvent);
+        ActionsCollector.getInstance().record("DoubleShortcut", anActionEvent.getInputEvent(), action.getClass());
         return true;
       }
       finally {
@@ -262,7 +262,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
     }
 
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
       if (!myIsRunningAction) resetState();
     }
 

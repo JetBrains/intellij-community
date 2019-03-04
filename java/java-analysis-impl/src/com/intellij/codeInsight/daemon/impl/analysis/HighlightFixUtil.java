@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceAssignmentFromVoidWithStatementIntentionAction;
@@ -9,14 +10,22 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityActionWrapper;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.JvmModifiersOwner;
+import com.intellij.lang.jvm.actions.JvmElementActionFactories;
+import com.intellij.lang.jvm.actions.MemberRequestsKt;
+import com.intellij.lang.jvm.util.JvmUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.SwitchUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,9 +95,9 @@ public class HighlightFixUtil {
 
     PsiClass packageLocalClassInTheMiddle = getPackageLocalClassInTheMiddle(place);
     if (packageLocalClassInTheMiddle != null) {
-      IntentionAction fix =
-        QUICK_FIX_FACTORY.createModifierListFix(packageLocalClassInTheMiddle, PsiModifier.PUBLIC, true, true);
-      QuickFixAction.registerQuickFixAction(errorResult, fix);
+      List<IntentionAction> fix =
+        JvmElementActionFactories.createModifierActions(packageLocalClassInTheMiddle, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
+      QuickFixAction.registerQuickFixActions(errorResult, null, fix);
       return;
     }
 
@@ -98,29 +107,31 @@ public class HighlightFixUtil {
       PsiModifierList modifierListCopy = facade.getElementFactory().createFieldFromText("int a;", null).getModifierList();
       assert modifierListCopy != null;
       modifierListCopy.setModifierProperty(PsiModifier.STATIC, modifierList.hasModifierProperty(PsiModifier.STATIC));
-      String minModifier = PsiModifier.PACKAGE_LOCAL;
+      int minAccessLevel = PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
       if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-        minModifier = PsiModifier.PROTECTED;
+        minAccessLevel = PsiUtil.ACCESS_LEVEL_PROTECTED;
       }
       if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
-        minModifier = PsiModifier.PUBLIC;
+        minAccessLevel = PsiUtil.ACCESS_LEVEL_PUBLIC;
       }
       PsiClass containingClass = refElement.getContainingClass();
       if (containingClass != null && containingClass.isInterface()) {
-        minModifier = PsiModifier.PUBLIC;
+        minAccessLevel = PsiUtil.ACCESS_LEVEL_PUBLIC;
       }
-      String[] modifiers = {PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC,};
-      for (int i = ArrayUtil.indexOf(modifiers, minModifier); i < modifiers.length; i++) {
-        @PsiModifier.ModifierConstant String modifier = modifiers[i];
-        modifierListCopy.setModifierProperty(modifier, true);
+      int[] accessLevels = {PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, PsiUtil.ACCESS_LEVEL_PROTECTED, PsiUtil.ACCESS_LEVEL_PUBLIC,};
+      for (int i = ArrayUtil.indexOf(accessLevels, minAccessLevel); i < accessLevels.length; i++) {
+        @PsiUtil.AccessLevel
+        int level = accessLevels[i];
+        modifierListCopy.setModifierProperty(PsiUtil.getAccessModifier(level), true);
         if (facade.getResolveHelper().isAccessible(refElement, modifierListCopy, place, accessObjectClass, fileResolveScope)) {
-          IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(refElement, modifier, true, true);
+          List<IntentionAction> fixes = JvmElementActionFactories
+            .createModifierActions(refElement, MemberRequestsKt.modifierRequest(JvmUtil.getAccessModifier(level), true));
           TextRange fixRange = new TextRange(errorResult.startOffset, errorResult.endOffset);
           PsiElement ref = place.getReferenceNameElement();
           if (ref != null) {
             fixRange = fixRange.union(ref.getTextRange());
           }
-          QuickFixAction.registerQuickFixAction(errorResult, fixRange, fix);
+          QuickFixAction.registerQuickFixActions(errorResult, fixRange, fixes);
         }
       }
     }
@@ -188,12 +199,12 @@ public class HighlightFixUtil {
 
   static void registerStaticProblemQuickFixAction(@NotNull PsiElement refElement, HighlightInfo errorResult, @NotNull PsiJavaCodeReferenceElement place) {
     if (refElement instanceof PsiModifierListOwner) {
-      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix((PsiModifierListOwner)refElement, PsiModifier.STATIC, true, false));
+      QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions((JvmModifiersOwner)refElement, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true)));
     }
     // make context non static
     PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, null);
     if (staticParent != null && isInstanceReference(place)) {
-      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(staticParent, PsiModifier.STATIC, false, false));
+      QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(staticParent, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
     }
     if (place instanceof PsiReferenceExpression && refElement instanceof PsiField) {
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createCreateFieldFromUsageFix((PsiReferenceExpression)place));
@@ -217,14 +228,14 @@ public class HighlightFixUtil {
   static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter,
                                               PsiType itemType,
                                               @Nullable PsiExpression expr,
-                                              @NotNull HighlightInfo highlightInfo) {
+                                              @Nullable HighlightInfo highlightInfo) {
     for (IntentionAction action : getChangeVariableTypeFixes(parameter, itemType)) {
       QuickFixAction.registerQuickFixAction(highlightInfo, action);
     }
     registerChangeReturnTypeFix(highlightInfo, expr, parameter.getType());
   }
 
-  static void registerChangeReturnTypeFix(@NotNull HighlightInfo highlightInfo, @Nullable PsiExpression expr, @NotNull PsiType toType) {
+  static void registerChangeReturnTypeFix(@Nullable HighlightInfo highlightInfo, @Nullable PsiExpression expr, @NotNull PsiType toType) {
     if (expr instanceof PsiMethodCallExpression) {
       final PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
       if (method != null) {
@@ -324,5 +335,56 @@ public class HighlightFixUtil {
 
   static void registerChangeParameterClassFix(PsiType lType, PsiType rType, HighlightInfo info) {
     QuickFixAction.registerQuickFixAction(info, getChangeParameterClassFix(lType, rType));
+  }
+
+  static PsiSwitchStatement findInitializingSwitch(@NotNull PsiVariable variable,
+                                                   @NotNull PsiElement topBlock,
+                                                   @NotNull PsiElement readPoint) {
+    PsiSwitchStatement switchForAll = null;
+    for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable, topBlock)) {
+      if (PsiUtil.isAccessedForWriting(reference)) {
+        PsiSwitchStatement switchStatement = PsiTreeUtil.getParentOfType(reference, PsiSwitchStatement.class);
+        if (switchStatement == null || !PsiTreeUtil.isAncestor(topBlock, switchStatement, true)) return null;
+        if (switchForAll != null) {
+          if (switchForAll != switchStatement) return null;
+        }
+        else {
+          switchForAll = switchStatement;
+        }
+      }
+    }
+    if (switchForAll == null) return null;
+    if (SwitchUtils.calculateBranchCount(switchForAll) < 0) return null;
+    List<PsiSwitchLabelStatementBase> labels =
+      PsiTreeUtil.getChildrenOfTypeAsList(switchForAll.getBody(), PsiSwitchLabelStatementBase.class);
+    LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
+    ControlFlow controlFlow;
+    try {
+      controlFlow = ControlFlowFactory.getInstance(topBlock.getProject()).getControlFlow(topBlock, policy);
+    }
+    catch (AnalysisCanceledException e) {
+      return null;
+    }
+    int switchOffset = controlFlow.getStartOffset(switchForAll);
+    int readOffset = controlFlow.getStartOffset(readPoint);
+    if (switchOffset == -1 || readOffset == -1 || !ControlFlowUtil.isDominator(controlFlow, switchOffset, readOffset)) return null;
+    boolean[] offsets = ControlFlowUtil.getVariablePossiblyUnassignedOffsets(variable, controlFlow);
+    for (PsiSwitchLabelStatementBase label : labels) {
+      int offset = controlFlow.getStartOffset(label);
+      if (offset == -1 || offsets[offset]) return null;
+    }
+    return switchForAll;
+  }
+
+  @Nullable
+  static IntentionAction createInsertSwitchDefaultFix(@NotNull PsiVariable variable,
+                                                      @NotNull PsiElement topBlock,
+                                                      @NotNull PsiElement readPoint) {
+    PsiSwitchStatement switchStatement = findInitializingSwitch(variable, topBlock, readPoint);
+    if (switchStatement != null) {
+      String message = QuickFixBundle.message("add.default.branch.to.variable.initializing.switch.fix.name", variable.getName());
+      return QUICK_FIX_FACTORY.createAddSwitchDefaultFix(switchStatement, message);
+    }
+    return null;
   }
 }

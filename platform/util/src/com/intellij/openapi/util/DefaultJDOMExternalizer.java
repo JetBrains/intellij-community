@@ -170,7 +170,7 @@ public class DefaultJDOMExternalizer {
         if (BitUtil.isSet(modifiers, Modifier.FINAL)) {
           // read external contents of final field
           Object value = field.get(data);
-          if (JDOMExternalizable.class.isInstance(value)) {
+          if (value instanceof JDOMExternalizable) {
             final List children = e.getChildren("value");
             for (Object child : children) {
               Element valueTag = (Element)child;
@@ -282,14 +282,11 @@ public class DefaultJDOMExternalizer {
       }
       catch (NoSuchFieldException ignore) {
       }
-      catch (SecurityException ex) {
+      catch (SecurityException | InstantiationException ex) {
         throw new InvalidDataException();
       }
       catch (IllegalAccessException ex) {
         throw new InvalidDataException(ex);
-      }
-      catch (InstantiationException ex) {
-        throw new InvalidDataException();
       }
     }
   }

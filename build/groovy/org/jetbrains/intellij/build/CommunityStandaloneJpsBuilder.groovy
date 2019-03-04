@@ -21,6 +21,7 @@ class CommunityStandaloneJpsBuilder {
         jar("util.jar") {
           module("intellij.platform.util.rt")
           module("intellij.platform.util")
+          module("intellij.platform.util.classLoader")
         }
 
         jar("jps-launcher.jar") {
@@ -74,7 +75,7 @@ class CommunityStandaloneJpsBuilder {
         [
           "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
           "netty-codec-http", "netty-handler", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
-          "jetbrains-annotations-java5"
+          "jetbrains-annotations-java5", "maven-model"
         ].each {
           projectLibrary(it)
         }
@@ -82,7 +83,6 @@ class CommunityStandaloneJpsBuilder {
           jpsLibrary(it)
         }
 
-        moduleLibrary("intellij.platform.jps.build.javac.rt", "optimizedFileManager.jar")
         jar("ant-jps-plugin.jar") { module("intellij.ant.jps") }
         include(additionalJars)
       }

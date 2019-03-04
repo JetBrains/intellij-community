@@ -59,7 +59,9 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="netty-codec-http" level="project" />
+    <orderEntry type="library" name="jaxb-api" level="project" />
+    <orderEntry type="library" name="javax.activation" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
   </component>
   <component name="copyright">
     <Base>

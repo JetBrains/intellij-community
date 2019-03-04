@@ -29,7 +29,7 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
   implements StubBasedPsiElement<GrReferenceListStub>, GrReferenceList, PsiListLikeElement {
 
   private static final Logger LOG = Logger.getInstance(GrReferenceListImpl.class);
-  
+
   private PsiClassType[] myCachedTypes;
 
   public GrReferenceListImpl(@NotNull ASTNode node) {
@@ -83,7 +83,7 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
       final String[] baseClasses = stub.getBaseClasses();
       final GrCodeReferenceElement[] result = new GrCodeReferenceElement[baseClasses.length];
       for (int i = 0; i < baseClasses.length; i++) {
-        result[i] = GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(baseClasses[i], this);
+        result[i] = GroovyPsiElementFactory.getInstance(getProject()).createCodeReference(baseClasses[i], this);
       }
       return result;
     }

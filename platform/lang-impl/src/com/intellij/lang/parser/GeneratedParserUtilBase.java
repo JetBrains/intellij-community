@@ -569,18 +569,6 @@ public class GeneratedParserUtilBase {
       PsiBuilderImpl.ProductionMarker latestDoneMarker =
         (pinned || result) && (state.altMode || elementType != null) &&
         eatMoreFlagOnce ? (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker() : null;
-      PsiBuilder.Marker extensionMarker = null;
-      IElementType extensionTokenType = null;
-      String errorMessage = null;
-      // whitespace prefix makes the very first frame offset bigger than marker start offset which is always 0
-      if (latestDoneMarker != null &&
-          frame.position >= latestDoneMarker.getStartIndex() &&
-          frame.position <= latestDoneMarker.getEndIndex()) {
-        extensionMarker = ((PsiBuilder.Marker)latestDoneMarker).precede();
-        extensionTokenType = latestDoneMarker.getTokenType();
-        errorMessage = PsiBuilderImpl.getErrorMessage(latestDoneMarker);
-        ((PsiBuilder.Marker)latestDoneMarker).drop();
-      }
       // advance to the last error pos
       // skip tokens until lastErrorPos. parseAsTree might look better here...
       int parenCount = 0;
@@ -612,13 +600,11 @@ public class GeneratedParserUtilBase {
       else if (!result && pinned && frame.errorReportedAt < 0) {
         errorReported = reportError(builder, state, frame, elementType != null, false, false);
       }
-      if (extensionMarker != null) {
-        if (extensionTokenType == TokenType.ERROR_ELEMENT && errorMessage != null) {
-          extensionMarker.error(errorMessage);
-        }
-        else {
-          extensionMarker.done(extensionTokenType);
-        }
+      // whitespace prefix makes the very first frame offset bigger than marker start offset which is always 0
+      if (latestDoneMarker != null &&
+          frame.position >= latestDoneMarker.getStartIndex() &&
+          frame.position <= latestDoneMarker.getEndIndex()) {
+        extend_marker_impl((PsiBuilder.Marker)latestDoneMarker);
       }
       state.suppressErrors = false;
       if (errorReported || result) {
@@ -687,8 +673,7 @@ public class GeneratedParserUtilBase {
         }
         else if ((frame.modifiers & _LEFT_INNER_) != 0 && frame.leftMarker != null) {
           marker.done(elementType);
-          frame.leftMarker.precede().done(((LighterASTNode)frame.leftMarker).getTokenType());
-          frame.leftMarker.drop();
+          extend_marker_impl(frame.leftMarker);
         }
         else if ((frame.modifiers & _LEFT_) != 0 && frame.leftMarker != null) {
           marker.drop();
@@ -706,13 +691,24 @@ public class GeneratedParserUtilBase {
     else if (result || pinned) {
       if (marker != null) marker.drop();
       if ((frame.modifiers & _LEFT_INNER_) != 0 && frame.leftMarker != null) {
-        frame.leftMarker.precede().done(((LighterASTNode)frame.leftMarker).getTokenType());
-        frame.leftMarker.drop();
+        extend_marker_impl(frame.leftMarker);
       }
     }
     else {
       close_marker_impl_(frame, marker, null, false);
     }
+  }
+
+  private static void extend_marker_impl(PsiBuilder.Marker marker) {
+    PsiBuilder.Marker precede = marker.precede();
+    IElementType elementType = ((LighterASTNode)marker).getTokenType();
+    if (elementType == TokenType.ERROR_ELEMENT) {
+      precede.error(notNullize(PsiBuilderImpl.getErrorMessage((LighterASTNode)marker)));
+    }
+    else {
+      precede.done(elementType);
+    }
+    marker.drop();
   }
 
   private static void close_marker_impl_(Frame frame, PsiBuilder.Marker marker, IElementType elementType, boolean result) {
@@ -796,18 +792,13 @@ public class GeneratedParserUtilBase {
       mark.error(message);
     }
     else if (inner) {
-      PsiBuilder.Marker extensionMarker = null;
-      IElementType extensionTokenType = null;
       PsiBuilderImpl.ProductionMarker latestDoneMarker = (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker();
+      builder.error(message);
       if (latestDoneMarker != null &&
           frame.position >= latestDoneMarker.getStartIndex() &&
           frame.position <= latestDoneMarker.getEndIndex()) {
-        extensionMarker = ((PsiBuilder.Marker)latestDoneMarker).precede();
-        extensionTokenType = latestDoneMarker.getTokenType();
-        ((PsiBuilder.Marker)latestDoneMarker).drop();
+        extend_marker_impl((PsiBuilder.Marker)latestDoneMarker);
       }
-      builder.error(message);
-      if (extensionMarker != null) extensionMarker.done(extensionTokenType);
     }
     else {
       builder.error(message);

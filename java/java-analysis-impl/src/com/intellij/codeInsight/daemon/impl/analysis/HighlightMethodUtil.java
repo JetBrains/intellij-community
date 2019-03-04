@@ -11,7 +11,10 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
+import com.intellij.lang.jvm.actions.MemberRequestsKt;
+import com.intellij.lang.jvm.util.JvmUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -115,7 +118,7 @@ public class HighlightMethodUtil {
         }
       }
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(method, PsiUtil.getAccessModifier(superAccessLevel), true, false));
+      QuickFixAction.registerQuickFixActions(info, null, JvmElementActionFactories.createModifierActions(method, MemberRequestsKt.modifierRequest(JvmUtil.getAccessModifier(superAccessLevel), true)));
       return info;
     }
 
@@ -248,8 +251,7 @@ public class HighlightMethodUtil {
                                                      superClass != null ? HighlightUtil.formatClass(superClass) : "<unknown>");
       TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
       HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixAction(errorResult,
-                                            QUICK_FIX_FACTORY.createModifierListFix(superMethod, PsiModifier.FINAL, false, true));
+      QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(superMethod, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
       return errorResult;
     }
     return null;
@@ -562,7 +564,7 @@ public class HighlightMethodUtil {
 
     if (qualifierExpression instanceof PsiReferenceExpression) {
       PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
-      if (resolve == containingClass) {
+      if (containingClass.getManager().areElementsEquivalent(resolve, containingClass)) {
         return null;
       }
 
@@ -846,8 +848,7 @@ public class HighlightMethodUtil {
       if (resolve instanceof PsiClass &&
           ((PsiClass)resolve).getContainingClass() != null &&
           !((PsiClass)resolve).hasModifierProperty(PsiModifier.STATIC)) {
-        QuickFixAction.registerQuickFixAction(highlightInfo,
-                                              QUICK_FIX_FACTORY.createModifierListFix((PsiClass)resolve, PsiModifier.STATIC, true, false));
+        QuickFixAction.registerQuickFixActions(highlightInfo, null, JvmElementActionFactories.createModifierActions((PsiClass)resolve, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true)));
       }
     }
     else if (qualifierExpression instanceof PsiSuperExpression && ((PsiSuperExpression)qualifierExpression).getQualifier() == null) {
@@ -858,13 +859,14 @@ public class HighlightMethodUtil {
     registerThisSuperFixes(methodCall, highlightInfo, fixRange);
     CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, false);
     CastMethodArgumentFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
-    PermuteArgumentsFix.registerFix(highlightInfo, methodCall, methodCandidates, fixRange);
     AddTypeArgumentsFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     MethodReturnFixFactory.INSTANCE.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     WrapWithAdapterMethodCallFix.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     registerMethodAccessLevelIntentions(methodCandidates, methodCall, list, highlightInfo);
-    registerChangeMethodSignatureFromUsageIntentions(methodCandidates, list, highlightInfo, fixRange);
+    if (!PermuteArgumentsFix.registerFix(highlightInfo, methodCall, methodCandidates, fixRange)) {
+      registerChangeMethodSignatureFromUsageIntentions(methodCandidates, list, highlightInfo, fixRange);
+    }
     RemoveRedundantArgumentsFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
     ConvertDoubleToFloatFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
     WrapExpressionFix.registerWrapAction(methodCandidates, list.getExpressions(), highlightInfo);
@@ -1172,7 +1174,7 @@ public class HighlightMethodUtil {
       String description = JavaErrorMessages.message("missing.method.body");
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(start, end).descriptionAndTooltip(description).create();
       if (HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, method.getModifierList()) == null && !(aClass instanceof PsiAnonymousClass)) {
-        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.ABSTRACT, true, false));
+        QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(method, MemberRequestsKt.modifierRequest(JvmModifier.ABSTRACT, true)));
       }
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createAddMethodBodyFix(method));
     }
@@ -1434,8 +1436,7 @@ public class HighlightMethodUtil {
       }
       if (manager.isInProject(superMethod) &&
           (!isMethodStatic || HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, superModifierList) == null)) {
-        QuickFixAction.registerQuickFixAction(info,
-                                              QUICK_FIX_FACTORY.createModifierListFix(superMethod, PsiModifier.STATIC, isMethodStatic, true));
+        QuickFixAction.registerQuickFixActions(info, null, JvmElementActionFactories.createModifierActions(superMethod, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, isMethodStatic)));
       }
       return info;
     }
@@ -1813,8 +1814,9 @@ public class HighlightMethodUtil {
       ChangeTypeArgumentsFix.registerIntentions(results, list, info, aClass);
       ConvertDoubleToFloatFix.registerIntentions(results, list, info, null);
     }
-    registerChangeMethodSignatureFromUsageIntentions(results, list, info, null);
-    PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
+    if (!PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list))) {
+      registerChangeMethodSignatureFromUsageIntentions(results, list, info, null);
+    }
     registerChangeParameterClassFix(constructorCall, list, info);
     QuickFixAction.registerQuickFixAction(info, getFixRange(list), QUICK_FIX_FACTORY.createSurroundWithArrayFix(constructorCall,null));
     ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, info);

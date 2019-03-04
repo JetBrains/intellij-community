@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
@@ -74,7 +75,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
           PsiElement prev = p.getPrevSibling();
           while (prev instanceof PsiWhiteSpace) prev = prev.getPrevSibling();
           if (prev == null) return true; // there was only whitespace before us
-          if (prev instanceof PyStatement || prev instanceof PsiComment) { // a non-stmt would be something strange
+          if (prev instanceof PyStatement || prev instanceof PsiComment || prev instanceof OuterLanguageElement) { // a non-stmt would be something strange
             if (prev.getLastChild() instanceof PsiErrorElement) {
               // prev stmt ends with an error. are we on the same line?
               PsiDocumentManager docMgr = PsiDocumentManager.getInstance(p.getProject());

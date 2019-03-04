@@ -101,24 +101,6 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     return region instanceof FoldRegionImpl && ((FoldRegionImpl)region).hasDocumentRegionChanged();
   }
 
-  @NotNull
-  FoldRegion getFirstRegion(@NotNull FoldingGroup group, @NotNull FoldRegion child) {
-    final List<FoldRegion> regions = getGroupedRegions(group);
-    if (regions.isEmpty()) {
-      final boolean inAll = Arrays.asList(getAllFoldRegions()).contains(child);
-      throw new AssertionError("Folding group without children; the known child is in all: " + inAll);
-    }
-
-    FoldRegion main = regions.get(0);
-    for (int i = 1; i < regions.size(); i++) {
-      FoldRegion region = regions.get(i);
-      if (main.getStartOffset() > region.getStartOffset()) {
-        main = region;
-      }
-    }
-    return main;
-  }
-
   public int getEndOffset(@NotNull FoldingGroup group) {
     final List<FoldRegion> regions = getGroupedRegions(group);
     int endOffset = 0;
@@ -349,12 +331,12 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
 
     List<Caret> carets = myEditor.getCaretModel().getAllCarets();
-    for (Caret caret : carets) {
-      LogicalPosition caretPosition = caret.getLogicalPosition();
-      int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
+    if (myDoNotCollapseCaret) {
+      for (Caret caret : carets) {
+        LogicalPosition caretPosition = caret.getLogicalPosition();
+        int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
 
-      if (FoldRegionsTree.containsStrict(region, caretOffset)) {
-        if (myDoNotCollapseCaret) return;
+        if (FoldRegionsTree.containsStrict(region, caretOffset)) return;
       }
     }
     for (Caret caret : carets) {
@@ -385,59 +367,60 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     myEditor.getGutterComponentEx().repaint();
     myEditor.invokeDelayedErrorStripeRepaint();
 
-    for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-      // There is a possible case that caret position is already visual position aware. But visual position depends on number of folded
-      // logical lines as well, hence, we can't be sure that target logical position defines correct visual position because fold
-      // regions have just changed. Hence, we use 'raw' logical position instead.
-      LogicalPosition caretPosition = caret.getLogicalPosition();
-      int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
-      int selectionStart = caret.getSelectionStart();
-      int selectionEnd = caret.getSelectionEnd();
+    myEditor.getCaretModel().runBatchCaretOperation(() -> {
+      for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
+        // There is a possible case that caret position is already visual position aware. But visual position depends on number of folded
+        // logical lines as well, hence, we can't be sure that target logical position defines correct visual position because fold
+        // regions have just changed. Hence, we use 'raw' logical position instead.
+        LogicalPosition caretPosition = caret.getLogicalPosition();
+        int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
+        int selectionStart = caret.getSelectionStart();
+        int selectionEnd = caret.getSelectionEnd();
 
-      LogicalPosition positionToUse = null;
-      int offsetToUse = -1;
+        LogicalPosition positionToUse = null;
+        int offsetToUse = -1;
 
-      FoldRegion collapsed = myFoldTree.fetchOutermost(caretOffset);
-      SavedCaretPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
-      boolean markedForUpdate = caret.getUserData(MARK_FOR_UPDATE) != null;
+        FoldRegion collapsed = myFoldTree.fetchOutermost(caretOffset);
+        SavedCaretPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
+        boolean markedForUpdate = caret.getUserData(MARK_FOR_UPDATE) != null;
 
-      if (savedPosition != null && savedPosition.isUpToDate(myEditor)) {
-        int savedOffset = myEditor.logicalPositionToOffset(savedPosition.position);
-        FoldRegion collapsedAtSaved = myFoldTree.fetchOutermost(savedOffset);
-        if (collapsedAtSaved == null) {
-          positionToUse = savedPosition.position;
+        if (savedPosition != null && savedPosition.isUpToDate(myEditor)) {
+          int savedOffset = myEditor.logicalPositionToOffset(savedPosition.position);
+          FoldRegion collapsedAtSaved = myFoldTree.fetchOutermost(savedOffset);
+          if (collapsedAtSaved == null) {
+            positionToUse = savedPosition.position;
+          }
+          else {
+            offsetToUse = collapsedAtSaved.getStartOffset();
+          }
         }
-        else {
-          offsetToUse = collapsedAtSaved.getStartOffset();
+
+        if (collapsed != null && positionToUse == null) {
+          positionToUse = myEditor.offsetToLogicalPosition(collapsed.getStartOffset());
+        }
+
+        if ((markedForUpdate || moveCaretFromCollapsedRegion) && caret.isUpToDate()) {
+          if (offsetToUse >= 0) {
+            caret.moveToOffset(offsetToUse);
+          }
+          else if (positionToUse != null) {
+            caret.moveToLogicalPosition(positionToUse);
+          }
+          else {
+            ((CaretImpl)caret).updateVisualPosition();
+          }
+        }
+
+        caret.putUserData(SAVED_CARET_POSITION, savedPosition);
+        caret.putUserData(MARK_FOR_UPDATE, null);
+
+        if (isOffsetInsideCollapsedRegion(selectionStart) || isOffsetInsideCollapsedRegion(selectionEnd)) {
+          caret.removeSelection();
+        } else if (selectionStart < myEditor.getDocument().getTextLength()) {
+          caret.setSelection(selectionStart, selectionEnd);
         }
       }
-
-      if (collapsed != null && positionToUse == null) {
-        positionToUse = myEditor.offsetToLogicalPosition(collapsed.getStartOffset());
-      }
-
-      if ((markedForUpdate || moveCaretFromCollapsedRegion) && caret.isUpToDate()) {
-        if (offsetToUse >= 0) {
-          caret.moveToOffset(offsetToUse);
-        }
-        else if (positionToUse != null) {
-          caret.moveToLogicalPosition(positionToUse);
-        }
-        else {
-          ((CaretImpl)caret).updateVisualPosition();
-        }
-      }
-
-      caret.putUserData(SAVED_CARET_POSITION, savedPosition);
-      caret.putUserData(MARK_FOR_UPDATE, null);
-
-      if (isOffsetInsideCollapsedRegion(selectionStart) || isOffsetInsideCollapsedRegion(selectionEnd)) {
-        caret.removeSelection();
-      } else if (selectionStart < myEditor.getDocument().getTextLength()) {
-        caret.setSelection(selectionStart, selectionEnd);
-      }
-    }
-
+    });
     if (mySavedCaretShift > 0) {
       final ScrollingModel scrollingModel = myEditor.getScrollingModel();
       scrollingModel.disableAnimation();
@@ -566,7 +549,8 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public void onUpdated(@NotNull Inlay inlay) {
-    if (inlay.getVerticalAlignment() != Inlay.VerticalAlignment.INLINE) myFoldTree.clearCachedInlayValues();
+    Inlay.Placement placement = inlay.getPlacement();
+    if (placement == Inlay.Placement.ABOVE_LINE || placement == Inlay.Placement.BELOW_LINE) myFoldTree.clearCachedInlayValues();
   }
 
   @Nullable
@@ -740,6 +724,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
           FoldRegionImpl otherRegion = getRegion(otherNode);
           if (otherRegion.mySizeBeforeUpdate > region.mySizeBeforeUpdate) {
             setNode(region, null);
+            removeRegionFromGroup(region);
             removeIntervalInternal(0);
             super.addIntervalsFrom(otherNode);
           }

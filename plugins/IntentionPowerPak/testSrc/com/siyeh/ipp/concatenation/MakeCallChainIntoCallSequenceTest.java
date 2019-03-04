@@ -24,6 +24,16 @@ public class MakeCallChainIntoCallSequenceTest extends IPPTestCase {
   public void testBuilderIntoFinal() { doTest(); }
   public void testBuilderStatic() { doTest(); }
   public void testBuilderStaticUnqualified() { doTest(); }
+  public void testBuilderField() { doTest(); }
+  public void testBuilderFieldString() { doTest(); }
+  public void testBuilderLambda() { doTest(); }
+  public void testBuilderLambdaVoid() { doTest(); }
+  public void testBuilderReturn() { doTest(); }
+  public void testBuilderReturnString() { doTest(); }
+  public void testBuilderCompoundAssignment() { doTest(); }
+  public void testBuilderInIf() { doTest(); }
+  public void testBuilderSwitchRuleExpression() { doTest(); }
+  public void testBuilderNewExpression() { doTest(); }
   public void testTransformation() { assertIntentionNotAvailable();}
   //should be probably possible?
   public void testThisCollapse() { assertIntentionNotAvailable();}

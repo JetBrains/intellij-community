@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
+import kotlin.Lazy;
+import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -25,18 +25,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.references.GrConstructorReference;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrNewExpressionReference;
 
 /**
  * @author ilyas
  */
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
 
-  private final GroovyReference myConstructorReference = new GrConstructorReference(this);
+  private final Lazy<GroovyCallReference> myConstructorReference = LazyKt.lazy(
+    () -> getArrayCount() > 0 || getReferenceElement() == null ? null : new GrNewExpressionReference(this)
+  );
 
   public GrNewExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -139,18 +138,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   @Override
   @NotNull
   public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
-    final GrCodeReferenceElement referenceElement = getReferenceElement();
-    if (referenceElement == null) return GroovyResolveResult.EMPTY_ARRAY;
-
-    List<GroovyResolveResult> result = new ArrayList<>();
-    for (GroovyResolveResult classResult : referenceElement.multiResolve(false)) {
-      final PsiElement element = classResult.getElement();
-      if (element instanceof PsiClass) {
-        ContainerUtil.addAll(result, ResolveUtil.getAllClassConstructors((PsiClass)element, classResult.getSubstitutor(), null, this));
-      }
-    }
-
-    return result.toArray(GroovyResolveResult.EMPTY_ARRAY);
+    return multiResolve(true);
   }
 
   @Override
@@ -161,9 +149,13 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    if (getArrayCount() > 0 || getReferenceElement() == null) {
-      return GroovyResolveResult.EMPTY_ARRAY;
-    }
-    return myConstructorReference.multiResolve(incompleteCode);
+    GroovyReference reference = getConstructorReference();
+    return reference == null ? GroovyResolveResult.EMPTY_ARRAY : reference.multiResolve(incompleteCode);
+  }
+
+  @Nullable
+  @Override
+  public GroovyCallReference getConstructorReference() {
+    return myConstructorReference.getValue();
   }
 }

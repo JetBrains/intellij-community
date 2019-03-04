@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
@@ -250,11 +250,22 @@ public final class CompletionServiceImpl extends CompletionService {
     if (oldIndicator != null && !(phase instanceof CompletionPhase.BgCalculation)) {
       LOG.assertTrue(!oldIndicator.isRunning() || oldIndicator.isCanceled(), "don't change phase during running completion: oldPhase=" + oldPhase);
     }
+    boolean wasCompletionRunning = isRunningPhase(oldPhase);
+    boolean isCompletionRunning = isRunningPhase(phase);
+    if (isCompletionRunning != wasCompletionRunning) {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(CompletionPhaseListener.TOPIC).completionPhaseChanged(isCompletionRunning);
+    }
 
     Disposer.dispose(oldPhase);
     ourPhase = phase;
     ourPhaseTrace = new Throwable();
   }
+
+  private static boolean isRunningPhase(@NotNull CompletionPhase phase) {
+    return phase != CompletionPhase.NoCompletion && !(phase instanceof CompletionPhase.ZombiePhase) &&
+           !(phase instanceof CompletionPhase.ItemsCalculated);
+  }
+
 
   public static CompletionPhase getCompletionPhase() {
     return ourPhase;

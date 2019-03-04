@@ -55,41 +55,34 @@ class ShowSettingsWithAddedPattern : AnAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
-    val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
-
-    val fileLanguage = file.language.baseLanguage ?: file.language
-    InlayParameterHintsExtension.forLanguage(fileLanguage) ?: return
-    
-    val offset = editor.caretModel.offset
-    val info = getHintInfoFromProvider(offset, file, editor) ?: return
-    
-    val newPreselectedPattern = when (info) {
-      is HintInfo.OptionInfo -> null
-      is HintInfo.MethodInfo -> info.toPattern()
-    }
-
-    val selectedLanguage = (info as? HintInfo.MethodInfo)?.language ?: fileLanguage
-    val dialog = ParameterNameHintsConfigurable(selectedLanguage, newPreselectedPattern)
-    dialog.show()
+    showParameterHintsDialog(e) {
+      when (it) {
+        is HintInfo.OptionInfo -> null
+        is HintInfo.MethodInfo -> it.toPattern()
+      }}
   }
 }
 
 class ShowParameterHintsSettings : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
-    val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
-
-    val fileLanguage = file.language.baseLanguage ?: file.language
-    InlayParameterHintsExtension.forLanguage(fileLanguage) ?: return
-
-    val offset = editor.caretModel.offset
-    val info = getHintInfoFromProvider(offset, file, editor) ?: return
-
-    val selectedLanguage = (info as? HintInfo.MethodInfo)?.language ?: fileLanguage
-    val dialog = ParameterNameHintsConfigurable(selectedLanguage, null)
-    dialog.show()
+    showParameterHintsDialog(e) {null}
   }
+}
+
+fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo) -> String?) {
+  val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+  val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
+
+  val fileLanguage = file.language
+  InlayParameterHintsExtension.forLanguage(fileLanguage) ?: return
+
+  val offset = editor.caretModel.offset
+  val info = getHintInfoFromProvider(offset, file, editor) ?: return
+
+  val selectedLanguage = (info as? HintInfo.MethodInfo)?.language ?: fileLanguage
+
+  val dialog = ParameterNameHintsConfigurable(selectedLanguage, getPattern(info))
+  dialog.show()
 }
 
 class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {

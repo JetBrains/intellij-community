@@ -32,6 +32,9 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
       settings.setPostfixTemplatesEnabled(true);
       settings.setTemplatesCompletionEnabled(true);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

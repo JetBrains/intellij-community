@@ -13,14 +13,13 @@
       ]]>
   </description>
   <category>VCS Integration</category>
-  <version>10.0</version>
   <vendor email="victor.iacoban@gmail.com, willem.verstraeten@gmail.com" url="http://www.bitbucket.org/willemv/hg4idea">Victor Iacoban and
     Willem Verstraeten, JetBrains
   </vendor>
   <depends>com.intellij.modules.vcs</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <search.topHitProvider implementation="org.zmlx.hg4idea.HgOptionsTopHitProvider"/>
+    <search.projectOptionsTopHitProvider implementation="org.zmlx.hg4idea.HgOptionsTopHitProvider"/>
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs" displayName="Mercurial" administrativeAreaName=".hg"/>
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
     <vcsRootChecker implementation="org.zmlx.hg4idea.roots.HgRootChecker"/>
@@ -125,7 +124,7 @@
         <keyboard-shortcut first-keystroke="alt shift G" keymap="$default"/>
       </action>
       <action class="org.zmlx.hg4idea.action.mq.HgQPushActionFromPatches" id="hg4idea.QPushAction" text="Move and Push"
-              description="Apply only selected patch" icon="AllIcons.Actions.MoveToAnotherChangelist">
+              description="Apply only selected patch" icon="AllIcons.Actions.MoveTo2">
         <keyboard-shortcut first-keystroke="alt shift P" keymap="$default"/>
       </action>
       <action class="org.zmlx.hg4idea.action.mq.HgQFoldActionFromPatches" id="hg4idea.QFold" text="Fold"

@@ -23,10 +23,18 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
  * @author nik
  */
 public class JavaSourceRootType extends JpsElementTypeBase<JavaSourceRootProperties> implements JpsModuleSourceRootType<JavaSourceRootProperties> {
-  public static final JavaSourceRootType SOURCE = new JavaSourceRootType();
-  public static final JavaSourceRootType TEST_SOURCE = new JavaSourceRootType();
+  public static final JavaSourceRootType SOURCE = new JavaSourceRootType(false);
+  public static final JavaSourceRootType TEST_SOURCE = new JavaSourceRootType(true);
 
-  private JavaSourceRootType() {
+  private final boolean myForTests;
+
+  private JavaSourceRootType(boolean isForTests) {
+    myForTests = isForTests;
+  }
+
+  @Override
+  public boolean isForTests() {
+    return myForTests;
   }
 
   @NotNull

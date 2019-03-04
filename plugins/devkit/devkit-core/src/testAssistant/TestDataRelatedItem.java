@@ -4,20 +4,19 @@ package org.jetbrains.idea.devkit.testAssistant;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.psi.PsiMethod;
-import com.intellij.util.PathUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 public class TestDataRelatedItem extends GotoRelatedItem {
-  private final List<String> myTestDataFiles;
+  private final List<TestDataFile> myTestDataFiles;
   private final Editor myEditor;
-  private final PsiMethod myMethod;
 
-  public TestDataRelatedItem(@NotNull PsiMethod method, @NotNull Editor editor, @NotNull List<String> testDataFiles) {
-    super(method, "Test Data");
-    myMethod = method;
+  public TestDataRelatedItem(@NotNull PsiElement location, @NotNull Editor editor, @NotNull List<TestDataFile> testDataFiles) {
+    super(location, "Test Data");
     myEditor = editor;
     myTestDataFiles = testDataFiles;
   }
@@ -26,13 +25,12 @@ public class TestDataRelatedItem extends GotoRelatedItem {
   public String getCustomName() {
     return myTestDataFiles.size() != 1
            ? "Test Data"
-           : PathUtil.getFileName(myTestDataFiles.get(0));
+           : myTestDataFiles.get(0).getName();
   }
 
   @Override
   public void navigate() {
-    TestDataNavigationHandler.navigate(
-      JBPopupFactory.getInstance().guessBestPopupLocation(myEditor), myTestDataFiles, myMethod.getProject()
-    );
+    RelativePoint location = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
+    TestDataNavigationHandler.navigate(location, myTestDataFiles, Objects.requireNonNull(getElement()).getProject());
   }
 }

@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -19,11 +18,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrCallImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrConstructorInvocationReference;
 
 public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstructorInvocation {
 
-  private final GroovyReference myConstructorReference = new GrConstructorInvocationReference(this);
+  private final GroovyCallReference myConstructorReference = new GrConstructorInvocationReference(this);
 
   public GrConstructorInvocationImpl(@NotNull ASTNode node) {
     super(node);
@@ -41,7 +41,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
 
   @NotNull
   @Override
-  public GroovyReference getConstructorReference() {
+  public GroovyCallReference getConstructorReference() {
     return myConstructorReference;
   }
 

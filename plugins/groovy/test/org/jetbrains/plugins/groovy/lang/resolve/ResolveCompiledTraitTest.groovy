@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.JarFileSystem
@@ -13,7 +12,8 @@ import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyFileType
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor
+import org.jetbrains.plugins.groovy.TestLibrary
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -22,17 +22,17 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
 import org.jetbrains.plugins.groovy.util.ThrowingDecompiler
 
-import static org.jetbrains.plugins.groovy.config.GroovyFacetUtil.getBundledGroovyJar
+import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.LIB_GROOVY_LATEST
 
 @CompileStatic
 class ResolveCompiledTraitTest extends GroovyResolveTestCase {
 
   final String basePath = "resolve/"
 
-  final LightProjectDescriptor projectDescriptor = new GroovyLightProjectDescriptor(bundledGroovyJar as String) {
+  private static final TestLibrary SOME_LIBRARY = new TestLibrary() {
+
     @Override
-    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      super.configureModule(module, model, contentEntry)
+    void addTo(@NotNull Module module, @NotNull ModifiableRootModel model) {
       model.moduleLibraryTable.createLibrary("some-library").modifiableModel.with {
         def fs = JarFileSystem.instance
         def root = "${TestUtils.absoluteTestDataPath}/lib"
@@ -42,6 +42,10 @@ class ResolveCompiledTraitTest extends GroovyResolveTestCase {
       }
     }
   }
+
+  private static final LightProjectDescriptor DESCRIPTOR = new LibraryLightProjectDescriptor(LIB_GROOVY_LATEST + SOME_LIBRARY)
+
+  final LightProjectDescriptor projectDescriptor = DESCRIPTOR
 
   void 'test resolve trait'() {
     resolveByText '''\
@@ -319,6 +323,28 @@ def usage(ExternalConcrete ec) {
     def method = resolveByText '''\
 def usage(ExternalConcrete ec) {
   ec.closureParams { it.<caret>toUpperCase() }
+}
+''', PsiMethod
+    assert method.name == 'toUpperCase'
+    assert method.containingClass.qualifiedName == 'java.lang.String'
+  }
+
+  void 'test static trait method with @DelegatesTo(type) on lambda'() {
+    configureTraitInheritor()
+    def method = resolveByText '''\
+def usage(ExternalConcrete ec) {
+  ec.delegatesTo () -> <caret>toUpperCase()
+}
+''', PsiMethod
+    assert method.name == 'toUpperCase'
+    assert method.containingClass.qualifiedName == 'java.lang.String'
+  }
+
+  void 'test static trait method with @ClosureParams(FromString) on lambda'() {
+    configureTraitInheritor()
+    def method = resolveByText '''\
+def usage(ExternalConcrete ec) {
+  ec.closureParams (it) -> it.<caret>toUpperCase() 
 }
 ''', PsiMethod
     assert method.name == 'toUpperCase'

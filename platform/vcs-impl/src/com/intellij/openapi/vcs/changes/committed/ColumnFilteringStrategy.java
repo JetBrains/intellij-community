@@ -161,7 +161,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
       myValues = ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    public <T> void addNext(final Collection<T> values, final Convertor<T, String> convertor) {
+    public <T> void addNext(final Collection<? extends T> values, final Convertor<? super T, String> convertor) {
       final TreeSet<String> set = new TreeSet<>(Arrays.asList(myValues));
       for (T value : values) {
         final String converted = convertor.convert(value);

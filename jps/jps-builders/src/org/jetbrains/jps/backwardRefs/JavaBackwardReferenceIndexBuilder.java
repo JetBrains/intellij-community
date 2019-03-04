@@ -23,7 +23,6 @@ public class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
   public static final String BUILDER_ID = "compiler.ref.index";
   private static final String MESSAGE_TYPE = "processed module";
   private final Set<ModuleBuildTarget> myCompiledTargets = ContainerUtil.newConcurrentSet();
-  private int myAttempt = 0;
 
   public JavaBackwardReferenceIndexBuilder() {
     super(BuilderCategory.CLASS_POST_PROCESSOR);
@@ -37,7 +36,7 @@ public class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
 
   @Override
   public void buildStarted(CompileContext context) {
-    JavaBackwardReferenceIndexWriter.initialize(context, myAttempt++);
+    JavaBackwardReferenceIndexWriter.initialize(context);
   }
 
   @Override

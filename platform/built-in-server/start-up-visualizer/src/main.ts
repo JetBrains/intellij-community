@@ -1,0 +1,17 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+import Vue from "vue"
+import App from "./App.vue"
+import ElementUI from "element-ui"
+import router from "./router"
+import {store} from "./state"
+import locale from "element-ui/lib/locale/lang/en"
+
+Vue.use(ElementUI, {locale})
+
+Vue.config.productionTip = false
+
+new Vue({
+  render: h => h(App),
+  store,
+  router,
+}).$mount("#app")

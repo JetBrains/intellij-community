@@ -264,15 +264,19 @@ public final class NavigationUtil {
    */
   @NotNull
   public static JBPopup getRelatedItemsPopup(final List<? extends GotoRelatedItem> items, String title, boolean showContainingModules) {
-    Object[] elements = new Object[items.size()];
+    List<Object> elements = new ArrayList<>(items.size());
     //todo[nik] move presentation logic to GotoRelatedItem class
     final Map<PsiElement, GotoRelatedItem> itemsMap = new HashMap<>();
-    for (int i = 0; i < items.size(); i++) {
-      GotoRelatedItem item = items.get(i);
-      elements[i] = item.getElement() != null ? item.getElement() : item;
-      itemsMap.put(item.getElement(), item);
+    for (GotoRelatedItem item : items) {
+      if (item.getElement() != null) {
+        if (itemsMap.putIfAbsent(item.getElement(), item) == null) {
+          elements.add(item.getElement());
+        }
+      }
+      else {
+        elements.add(item);
+      }
     }
-
     return getPsiElementPopup(elements, itemsMap, title, showContainingModules, element -> {
       if (element instanceof PsiElement) {
         itemsMap.get(element).navigate();
@@ -285,7 +289,7 @@ public final class NavigationUtil {
     );
   }
 
-  private static JBPopup getPsiElementPopup(final Object[] elements, final Map<PsiElement, GotoRelatedItem> itemsMap,
+  private static JBPopup getPsiElementPopup(final List<Object> elements, final Map<PsiElement, GotoRelatedItem> itemsMap,
                                            final String title, final boolean showContainingModules, final Processor<Object> processor) {
 
     final Ref<Boolean> hasMnemonic = Ref.create(false);
@@ -366,7 +370,7 @@ public final class NavigationUtil {
         return component;
       }
     };
-    final ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<Object>(title, Arrays.asList(elements)) {
+    final ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<Object>(title, elements) {
       @Override
       public boolean isSpeedSearchEnabled() {
         return true;
@@ -390,7 +394,7 @@ public final class NavigationUtil {
     }) {
     };
     popup.getList().setCellRenderer(new PopupListElementRenderer(popup) {
-      Map<Object, String> separators = new HashMap<>();
+      final Map<Object, String> separators = new HashMap<>();
       {
         final ListModel model = popup.getList().getModel();
         String current = null;
@@ -400,7 +404,7 @@ public final class NavigationUtil {
           final GotoRelatedItem item = itemsMap.get(element);
           if (item != null && !StringUtil.equals(current, item.getGroup())) {
             current = item.getGroup();
-            separators.put(element, current);
+            separators.put(element, hasTitle && StringUtil.isEmpty(current) ? "Other" : current);
             if (!hasTitle && !StringUtil.isEmpty(current)) {
               hasTitle = true;
             }

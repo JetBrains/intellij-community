@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,8 +58,6 @@ public class ExpectedTypeUtils {
 
   private static class ExpectedTypeVisitor extends JavaElementVisitor {
 
-    /**
-     */
     private static final Set<IElementType> arithmeticOps = new THashSet<>(5);
 
     private static final Set<IElementType> booleanOps = new THashSet<>(5);
@@ -247,8 +245,17 @@ public class ExpectedTypeUtils {
     }
 
     @Override
+    public void visitSwitchExpression(PsiSwitchExpression expression) {
+      visitSwitchBlock(expression);
+    }
+
+    @Override
     public void visitSwitchStatement(PsiSwitchStatement statement) {
-      final PsiExpression expression = statement.getExpression();
+      visitSwitchBlock(statement);
+    }
+
+    private void visitSwitchBlock(PsiSwitchBlock switchBlock) {
+      final PsiExpression expression = switchBlock.getExpression();
       if (expression == null) {
         return;
       }
@@ -259,6 +266,30 @@ public class ExpectedTypeUtils {
       }
       else {
         expectedType = type;
+      }
+    }
+
+    @Override
+    public void visitExpressionStatement(PsiExpressionStatement statement) {
+      final PsiElement parent = statement.getParent();
+      if (!(parent instanceof PsiSwitchLabeledRuleStatement)) {
+        return;
+      }
+      final PsiSwitchLabeledRuleStatement switchLabeledRuleStatement = (PsiSwitchLabeledRuleStatement)parent;
+      final PsiSwitchBlock block = switchLabeledRuleStatement.getEnclosingSwitchBlock();
+      if (!(block instanceof PsiSwitchExpression)) {
+        return;
+      }
+      final PsiSwitchExpression switchExpression = (PsiSwitchExpression)block;
+      expectedType = switchExpression.getType();
+    }
+
+    @Override
+    public void visitBreakStatement(PsiBreakStatement statement) {
+      final PsiElement element = statement.findExitedElement();
+      if (element instanceof PsiSwitchExpression) {
+        final PsiSwitchExpression switchExpression = (PsiSwitchExpression)element;
+        expectedType = switchExpression.getType();
       }
     }
 
@@ -323,7 +354,7 @@ public class ExpectedTypeUtils {
       final IElementType tokenType = assignment.getOperationTokenType();
       final PsiExpression lExpression = assignment.getLExpression();
       final PsiType lType = lExpression.getType();
-      if (rExpression != null && wrappedExpression.equals(rExpression)) {
+      if (wrappedExpression.equals(rExpression)) {
         if (lType == null) {
           expectedType = null;
         }
@@ -476,6 +507,10 @@ public class ExpectedTypeUtils {
             returnType = null;
           }
           final PsiMethod method = (PsiMethod)element;
+          final PsiClass methodContainingClass = method.getContainingClass();
+          if (methodContainingClass == null) {
+            return;
+          }
           final PsiMethod superMethod = findDeepestVisibleSuperMethod(method, returnType, referenceExpression);
           final PsiClass aClass;
           if (superMethod != null) {
@@ -483,13 +518,10 @@ public class ExpectedTypeUtils {
             if (aClass == null) {
               return;
             }
-            substitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, method.getContainingClass(), substitutor);
+            substitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, methodContainingClass, substitutor);
           }
           else {
-            aClass = method.getContainingClass();
-            if (aClass == null) {
-              return;
-            }
+            aClass = methodContainingClass;
           }
           final PsiElementFactory factory = psiFacade.getElementFactory();
           expectedType = factory.createType(aClass, substitutor);

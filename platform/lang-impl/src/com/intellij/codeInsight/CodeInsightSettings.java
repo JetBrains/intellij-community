@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -10,6 +11,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DifferenceFilter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
@@ -25,7 +27,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @State(
   name = "CodeInsightSettings",
@@ -33,6 +39,7 @@ import java.lang.reflect.Field;
 )
 public class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.CodeInsightSettings");
+  private final List<PropertyChangeListener> myListeners = new CopyOnWriteArrayList<>();
 
   public static CodeInsightSettings getInstance() {
     return ServiceManager.getService(CodeInsightSettings.class);
@@ -46,6 +53,11 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
       Registry.get("java.completion.argument.hints").setValue(false);
       Registry.get("java.completion.argument.hints.internal").setValue(false);
     }
+  }
+
+  public void addPropertyChangeListener(PropertyChangeListener listener, Disposable parentDisposable) {
+    myListeners.add(listener);
+    Disposer.register(parentDisposable, () -> myListeners.remove(listener));
   }
 
   @Override
@@ -78,7 +90,25 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public static final int NONE = 2;
   public static final int FIRST_LETTER = 3;
 
+  /**
+   * @deprecated use accessors instead
+   */
   public boolean SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS;
+
+  public boolean isSelectAutopopupSuggestionsByChars() {
+    return SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS;
+  }
+
+  public void setSelectAutopopupSuggestionsByChars(boolean value) {
+    boolean oldValue = SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS;
+    if (oldValue != value) {
+      SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = value;
+      for (PropertyChangeListener listener : myListeners) {
+        listener.propertyChange(new PropertyChangeEvent(this, "SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS", oldValue, value));
+      }
+    }
+  }
+
   public boolean AUTOCOMPLETE_ON_CODE_COMPLETION = true;
   public boolean AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = true;
 

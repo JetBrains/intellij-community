@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -106,12 +106,12 @@ public class GitUtil {
    */
   @Nullable
   public static VirtualFile findGitDir(@NotNull VirtualFile rootDir) {
-    VirtualFile dotGit = rootDir.findChild(DOT_GIT);
+    VirtualFile dotGit = VfsUtil.refreshAndFindChild(rootDir, DOT_GIT);
     if (dotGit == null) {
       return null;
     }
     if (dotGit.isDirectory()) {
-      boolean headExists = dotGit.findChild(HEAD_FILE) != null;
+      boolean headExists = VfsUtil.refreshAndFindChild(dotGit, HEAD_FILE) != null;
       return headExists ? dotGit : null;
     }
 
@@ -809,6 +809,7 @@ public class GitUtil {
   public static boolean hasLocalChanges(boolean staged, Project project, VirtualFile root) throws VcsException {
     GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
     diff.addParameters("--name-only");
+    diff.addParameters("--no-renames");
     if (staged) {
       diff.addParameters("--cached");
     }
@@ -1051,5 +1052,9 @@ public class GitUtil {
 
   public static void generateGitignoreFileIfNeeded(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
     VcsImplUtil.generateIgnoreFileIfNeeded(project, GitVcs.getInstance(project), ignoreFileRoot);
+  }
+
+  public static void proposeUpdateGitignore(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
+    VcsImplUtil.proposeUpdateIgnoreFile(project, GitVcs.getInstance(project), ignoreFileRoot);
   }
 }

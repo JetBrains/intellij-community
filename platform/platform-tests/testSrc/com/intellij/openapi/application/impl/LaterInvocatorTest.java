@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.*;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +86,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
   }
 
   @Override
-  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
+  protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
     runnable.run();
   }
 
@@ -203,7 +203,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
         LaterInvocator.invokeLater(new Runnable() {
           @Override
           public void run() {
-            TestCase.assertTrue(!LaterInvocator.isInModalContext());
+            assertFalse(LaterInvocator.isInModalContext());
           }
 
           public String toString() {
@@ -229,10 +229,9 @@ public class LaterInvocatorTest extends PlatformTestCase {
 
         SwingUtilities.invokeLater(LEAVE_MODAL);
         flushSwingQueue();
-        TestCase.assertTrue(!LaterInvocator.isInModalContext());
+        assertFalse(LaterInvocator.isInModalContext());
 
         checkOrder(1);
-
 
         LaterInvocator.leaveAllModals();
         myOrder.clear();
@@ -579,12 +578,18 @@ public class LaterInvocatorTest extends PlatformTestCase {
 
   }
 
+  @SuppressWarnings("StringOperationCanBeSimplified")
   public void testDifferentStatesAreNotEqualAfterGc() {
-    ModalityStateEx state1 = new ModalityStateEx("common", new String("foo"));
-    ModalityStateEx state2 = new ModalityStateEx("common", new String("bar"));
+    String s1 = new String("foo");
+    String s2 = new String("bar");
+    ModalityStateEx state1 = new ModalityStateEx("common", s1);
+    ModalityStateEx state2 = new ModalityStateEx("common", s2);
     assertNotEquals(state1, state2);
 
-    GCUtil.tryGcSoftlyReachableObjects();
+    GCWatcher watcher = GCWatcher.tracking(s1, s2);
+    //noinspection UnusedAssignment
+    s1 = s2 = null;
+    watcher.tryGc();
     assertNotEquals(state1, state2);
   }
 
@@ -605,7 +610,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
   }
 
   public void testProgressModality() {
-    ApplicationManager.getApplication().invokeAndWait(() -> ProgressManager.getInstance().run(new Task.Modal(myProject, "", false) {
+    ApplicationManager.getApplication().invokeAndWait(() -> ProgressManager.getInstance().run(new Task.Modal(getProject(), "", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         ModalityState state = indicator.getModalityState();

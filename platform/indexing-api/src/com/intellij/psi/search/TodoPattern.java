@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Comparing;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
@@ -76,6 +77,7 @@ public class TodoPattern implements Cloneable {
     myIndexPattern.setCaseSensitive(caseSensitive);
   }
 
+  @Nullable
   public Pattern getPattern(){
     return myIndexPattern.getPattern();
   }

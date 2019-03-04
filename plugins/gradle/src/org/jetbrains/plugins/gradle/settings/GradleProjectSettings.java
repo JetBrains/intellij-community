@@ -4,20 +4,31 @@ package org.jetbrains.plugins.gradle.settings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.*;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
+ * {@link GradleProjectSettings} holds settings for the linked gradle project.
+ * These settings might have IDE project level defaults - {@link DefaultGradleProjectSettings}.
+ * Consider to use effective settings with {@link GradleSettingsService}.
+ *
+ * @see GradleSettingsService
+ * @see DefaultGradleProjectSettings
+ *
  * @author Denis Zhdanov
  */
 public class GradleProjectSettings extends ExternalProjectSettings {
@@ -30,6 +41,11 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   @Nullable private CompositeBuild myCompositeBuild;
 
   private ThreeState storeProjectFilesExternally = ThreeState.NO;
+
+  @NotNull
+  private ThreeState delegatedBuild = ThreeState.UNSURE;
+  @Nullable
+  private TestRunner testRunner;
 
   @Nullable
   public String getGradleHome() {
@@ -116,6 +132,41 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     storeProjectFilesExternally = value;
   }
 
+  /**
+   * Build/run mode for the gradle project.
+   * Consider to use effective settings using {@link GradleSettingsService#isDelegatedBuildEnabled(Module)}
+   * @return build/run mode, {@link ThreeState#UNSURE} means using IDE project level configuration, see {@link DefaultGradleProjectSettings#isDelegatedBuild()}
+   */
+  @OptionTag(value = "delegatedBuild", converter = ThreeStateConverter.class)
+  @NotNull
+  public ThreeState getDelegatedBuild() {
+    return delegatedBuild;
+  }
+
+  /**
+   * @param state {@link ThreeState#UNSURE} means using IDE project level configuration, see {@link DefaultGradleProjectSettings#isDelegatedBuild()}
+   */
+  public void setDelegatedBuild(@NotNull ThreeState state) {
+    this.delegatedBuild = state;
+  }
+
+  /**
+   * Test runner option.
+   * Consider to use effective settings using {@link GradleSettingsService#getTestRunner(Module)}
+   * @return test runner option, "null" means using IDE project level configuration, see {@link DefaultGradleProjectSettings#getTestRunner()}
+   */
+  @Nullable
+  public TestRunner getTestRunner() {
+    return testRunner;
+  }
+
+  /**
+   * @param testRunner null means using IDE project level configuration, see {@link DefaultGradleProjectSettings#getTestRunner()}
+   */
+  public void setTestRunner(@Nullable TestRunner testRunner) {
+    this.testRunner = testRunner;
+  }
+
   @NotNull
   public GradleVersion resolveGradleVersion() {
     GradleVersion version = GradleInstallationManager.getGradleVersion(this);
@@ -161,6 +212,22 @@ public class GradleProjectSettings extends ExternalProjectSettings {
       }
       result.myCompositeDefinitionSource = myCompositeDefinitionSource;
       return result;
+    }
+  }
+
+  private static final class ThreeStateConverter extends Converter<ThreeState> {
+    @Nullable
+    @Override
+    public ThreeState fromString(@NotNull String value) {
+      if (StringUtil.isEmpty(value)) return ThreeState.UNSURE;
+      return ThreeState.fromBoolean(Boolean.valueOf(value));
+    }
+
+    @Nullable
+    @Override
+    public String toString(@NotNull ThreeState value) {
+      if (value == ThreeState.UNSURE) return null;
+      return String.valueOf(value.toBoolean());
     }
   }
 }

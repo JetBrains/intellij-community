@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
@@ -430,11 +429,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     }
   }
 
-  static boolean isFrameDecorated() {
-    return SystemInfo.isWindows && Registry.is("ide.win.frame.decoration");
-  }
-
   private boolean isDecoratedMenu() {
-    return getUI() instanceof DarculaRootPaneUI && isFrameDecorated();
+    return getUI() instanceof DarculaRootPaneUI && IdeFrameDecorator.isCustomDecoration();
   }
 }

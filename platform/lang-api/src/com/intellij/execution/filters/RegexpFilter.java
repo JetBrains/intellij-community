@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -119,7 +120,7 @@ public class RegexpFilter implements Filter, DumbAware {
   }
 
   @Override
-  public Result applyFilter(String line, int entireLength) {
+  public Result applyFilter(@NotNull String line, int entireLength) {
     Matcher matcher = myPattern.matcher(StringUtil.newBombedCharSequence(line, 100));
     if (!matcher.find()) {
       return null;

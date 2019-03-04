@@ -19,21 +19,18 @@ public class IncrementalCacheUpdateEvent {
   private final int myStartOffset;
   private final int myMandatoryEndOffset;
   private int myActualEndOffset = -1;
-  
+
   private final int myLengthDiff;
-  
+
   @NotNull
   private final LogicalPosition myStartLogicalPosition;
-  private final int myOldEndLogicalLine;
-  private int myNewEndLogicalLine = -1;
 
   /**
    * Creates new {@code IncrementalCacheUpdateEvent} object on the basis on the given event object that describes
    * document change that caused cache update.
    * <p/>
-   * This constructor is assumed to be used <b>before</b> the document change, {@link #updateAfterDocumentChange(Document)}
-   * should be called <b>'after'</b> document change to complete object creation.
-   * 
+   * This constructor is assumed to be used <b>before</b> the document change.
+   *
    * @param event   object that describes document change that caused cache update
    */
   IncrementalCacheUpdateEvent(@NotNull DocumentEvent event, @NotNull EditorImpl editor) {
@@ -46,13 +43,12 @@ public class IncrementalCacheUpdateEvent {
    */
   IncrementalCacheUpdateEvent(int startOffset, int endOffset, @NotNull EditorImpl editor) {
     this(startOffset, endOffset, endOffset, editor);
-    myNewEndLogicalLine = myOldEndLogicalLine;
   }
 
   /**
    * Creates new {@code IncrementalCacheUpdateEvent} object that is configured to perform whole reparse of the given
    * document.
-   * 
+   *
    * @param document    target document to reparse
    */
   IncrementalCacheUpdateEvent(@NotNull Document document) {
@@ -60,9 +56,8 @@ public class IncrementalCacheUpdateEvent {
     myMandatoryEndOffset = document.getTextLength();
     myLengthDiff = 0;
     myStartLogicalPosition = new LogicalPosition(0, 0);
-    myOldEndLogicalLine = myNewEndLogicalLine = Math.max(0, document.getLineCount() - 1);
   }
-  
+
   private IncrementalCacheUpdateEvent(int startOffset, int oldEndOffset, int newEndOffset, @NotNull EditorImpl editor) {
     VisualLineInfo info = getVisualLineInfo(editor, startOffset, false);
     if (info.startsWithSoftWrap) {
@@ -72,7 +67,6 @@ public class IncrementalCacheUpdateEvent {
     myStartLogicalPosition = editor.offsetToLogicalPosition(myStartOffset);
     myMandatoryEndOffset = newEndOffset;
     myLengthDiff = newEndOffset - oldEndOffset;
-    myOldEndLogicalLine = editor.getDocument().getLineNumber(oldEndOffset);
   }
 
 
@@ -88,11 +82,11 @@ public class IncrementalCacheUpdateEvent {
     int wrapIndex = softWrapModel.getSoftWrapIndex(offset);
     int prevSoftWrapIndex = wrapIndex < 0 ? - wrapIndex - 2 : wrapIndex - (beforeSoftWrap ? 1 : 0);
     SoftWrap prevSoftWrap = prevSoftWrapIndex < 0 ? null : softWrapModel.getRegisteredSoftWraps().get(prevSoftWrapIndex);
-    
+
     int visualLineStartOffset = prevSoftWrap == null ? startOffset : Math.max(startOffset, prevSoftWrap.getStart());
     return new VisualLineInfo(visualLineStartOffset, prevSoftWrap != null && prevSoftWrap.getStart() == visualLineStartOffset);
   }
-  
+
   private static class VisualLineInfo {
     private final int startOffset;
     private final boolean startsWithSoftWrap;
@@ -101,10 +95,6 @@ public class IncrementalCacheUpdateEvent {
       this.startOffset = startOffset;
       startsWithSoftWrap = wrap;
     }
-  }
-
-  void updateAfterDocumentChange(@NotNull Document document) {
-    myNewEndLogicalLine = document.getLineNumber(myMandatoryEndOffset);
   }
 
   /**
@@ -154,8 +144,6 @@ public class IncrementalCacheUpdateEvent {
            ", mandatoryEndOffset=" + myMandatoryEndOffset +
            ", actualEndOffset=" + myActualEndOffset +
            ", lengthDiff=" + myLengthDiff +
-           ", startLogicalPosition=" + myStartLogicalPosition +
-           ", oldEndLogicalLine=" + myOldEndLogicalLine +
-           ", newEndLogicalLine=" + myNewEndLogicalLine;
+           ", startLogicalPosition=" + myStartLogicalPosition;
   }
 }

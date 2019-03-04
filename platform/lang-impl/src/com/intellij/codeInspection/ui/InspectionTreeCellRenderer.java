@@ -20,6 +20,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.LoadingNode;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +30,6 @@ import javax.swing.*;
  * @author Dmitry Batkovich
  */
 class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
-  private final InspectionResultsView myView;
   private final InspectionTreeTailRenderer myTailRenderer;
 
   InspectionTreeCellRenderer(InspectionResultsView view) {
@@ -44,7 +44,6 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
         append(text);
       }
     };
-    myView = view;
   }
 
   @Override
@@ -55,9 +54,16 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
                                     boolean leaf,
                                     int row,
                                     boolean hasFocus) {
+    if (value instanceof InspectionRootNode) {
+      return;
+    }
+    if (value instanceof LoadingNode) {
+      append(LoadingNode.getText());
+      return;
+    }
     InspectionTreeNode node = (InspectionTreeNode)value;
 
-    append(node.toString(),
+    append(node.getPresentableText(),
            patchMainTextAttrs(node, node.appearsBold()
                                     ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
                                     : getMainForegroundAttributes(node)));
@@ -65,7 +71,7 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
     setIcon(node.getIcon(expanded));
   }
 
-  private SimpleTextAttributes patchMainTextAttrs(InspectionTreeNode node, SimpleTextAttributes attributes) {
+  private static SimpleTextAttributes patchMainTextAttrs(InspectionTreeNode node, SimpleTextAttributes attributes) {
     if (node.isExcluded()) {
       return attributes.derive(attributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT, null, null, null);
     }

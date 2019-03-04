@@ -35,8 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
@@ -154,12 +152,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
 
     contribution.setupTree(myProject, myTree, myBuilder);
 
-    myTree.addTreeSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(TreeSelectionEvent e) {
-        onSelectionChanged();
-      }
-    });
+    myTree.addTreeSelectionListener(e -> onSelectionChanged());
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
@@ -354,18 +347,17 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, group, false);
 
 
-    myTree.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
-
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        if (KEY.getName().equals(dataId)) {
-          return ServersToolWindowContent.this;
-        }
-        else if (PlatformDataKeys.HELP_ID.is(dataId)) {
-          return myContribution.getContextHelpId();
-        }
-        return myContribution.getData(dataId, ServersToolWindowContent.this);
+    myTree.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, (DataProvider)dataId -> {
+      if (KEY.getName().equals(dataId)) {
+        return this;
       }
+      else if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
+        return myBuilder.getSelectedElements().toArray();
+      }
+      else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+        return myContribution.getContextHelpId();
+      }
+      return myContribution.getData(dataId, this);
     });
     actionToolBar.setTargetComponent(myTree);
     return actionToolBar.getComponent();
@@ -408,12 +400,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
 
   @Override
   public void select(@NotNull final ServerConnection<?> connection) {
-    myBuilder.select(ServersTreeStructure.RemoteServerNode.class, new TreeVisitor<ServersTreeStructure.RemoteServerNode>() {
-      @Override
-      public boolean visit(@NotNull ServersTreeStructure.RemoteServerNode node) {
-        return isServerNodeMatch(node, connection);
-      }
-    }, null, false);
+    myBuilder.select(ServersTreeStructure.RemoteServerNode.class,
+                     (TreeVisitor<ServersTreeStructure.RemoteServerNode>)node -> isServerNodeMatch(node, connection), null, false);
   }
 
   @Override
@@ -444,6 +432,10 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     ServersTreeStructure.RemoteServerNode serverNode = node.getServerNode();
     return isServerNodeMatch(serverNode, connection)
            && node.getDeployment().getName().equals(deploymentName);
+  }
+
+  public static MessagePanel createMessagePanel() {
+    return new ServersToolWindowMessagePanel();
   }
 
   public interface MessagePanel {

@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           final PsiType type = myExpression.getType();
           session.registerIncompatibleErrorMessage((type != null ? type.getPresentableText() : myExpression.getText()) + " is not compatible with " + session.getPresentableText(myT));
         }
-        else if (TypeCompatibilityConstraint.isUncheckedConversion(myT, exprType) && !JavaGenericsUtil.isReifiableType(myT)) {
+        else if (TypeCompatibilityConstraint.isUncheckedConversion(myT, exprType, session) && !JavaGenericsUtil.isReifiableType(myT)) {
           session.setErased();
         }
         return assignmentCompatible;
@@ -79,6 +80,11 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       if (elseExpression != null) {
         constraints.add(new ExpressionCompatibilityConstraint(elseExpression, myT));
       }
+      return true;
+    }
+
+    if (myExpression instanceof PsiSwitchExpression) {
+      PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)myExpression).forEach(expression -> constraints.add(new ExpressionCompatibilityConstraint(expression,myT)));
       return true;
     }
 

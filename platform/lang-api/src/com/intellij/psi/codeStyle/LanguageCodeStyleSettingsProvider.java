@@ -1,8 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.application.options.CodeStyleBean;
 import com.intellij.application.options.IndentOptionsEditor;
+import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
+import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -15,9 +18,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.lang.reflect.Field;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -59,6 +61,14 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   @Nullable
   public String getLanguageName() {
     return null;
+  }
+
+  /**
+   * @return Language ID to be used in external formats like Json and .editorconfig. Must consist only of low case 'a'..'z' characters.
+   */
+  @NotNull
+  public String getExternalLanguageId() {
+    return getLanguage().getID().toLowerCase(Locale.ENGLISH);
   }
 
   /**
@@ -317,12 +327,6 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return DocCommentSettings.DEFAULTS;
   }
 
-  @Nullable
-  @ApiStatus.Experimental
-  public CodeStyleBean createBean() {
-    return null;
-  }
-
   /**
    * Create a code style configurable for the given base settings and model settings.
    *
@@ -361,5 +365,21 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
       }
     }
     return settingsPagesProviders;
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public final AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull CodeStyleSettings settings) {
+    return new LanguageCodeStylePropertyMapper(settings, getLanguage(), getExternalLanguageId());
+  }
+
+  @ApiStatus.Experimental
+  @Nullable
+  public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+    return null;
+  }
+
+  public List<CodeStylePropertyAccessor> getAdditionalAccessors(@NotNull Object codeStyleObject) {
+    return Collections.emptyList();
   }
 }

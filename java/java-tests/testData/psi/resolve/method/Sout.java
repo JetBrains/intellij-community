@@ -1,5 +1,5 @@
 class Sout {
     static {
-        System.out.<ref>println();
+        System.out.<caret>println();
     }
 }

@@ -17,4 +17,8 @@ public class UseOfObsoleteDateTimeApi {
     return null;
   }
 }
-class MyDate extends <warning descr="Obsolete date-time type 'Date' used">Date</warning> {}
+class MyDate extends <warning descr="Obsolete date-time type 'Date' used">Date</warning> {
+  {
+    System.out.println(new <warning descr="Obsolete date-time type 'Date' used">Date</warning>());  
+  }
+}

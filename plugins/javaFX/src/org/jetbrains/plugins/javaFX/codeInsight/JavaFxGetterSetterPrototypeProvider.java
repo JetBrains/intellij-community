@@ -33,7 +33,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
 
   @Override
   public boolean canGeneratePrototypeFor(PsiField field) {
-    return InheritanceUtil.isInheritor(field.getType(), JavaFxCommonNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE) &&
+    return field.isValid() && InheritanceUtil.isInheritor(field.getType(), JavaFxCommonNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE) &&
            JavaFxPsiUtil.getWrappedPropertyType(field, field.getProject(), JavaFxCommonNames.ourReadOnlyMap) != null;
   }
 

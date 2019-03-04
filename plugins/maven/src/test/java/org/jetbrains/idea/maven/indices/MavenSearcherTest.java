@@ -35,6 +35,9 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     try {
       myIndicesFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

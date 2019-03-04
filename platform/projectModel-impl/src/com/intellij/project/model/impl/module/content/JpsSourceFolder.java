@@ -19,7 +19,6 @@ import com.intellij.openapi.roots.SourceFolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsSimpleElement;
-import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
@@ -42,8 +41,7 @@ public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolde
 
   @Override
   public boolean isTestSource() {
-    return mySourceRoot.getRootType() == JavaSourceRootType.TEST_SOURCE ||
-           mySourceRoot.getRootType() == JavaResourceRootType.TEST_RESOURCE;
+    return mySourceRoot.getRootType().isForTests();
   }
 
   @NotNull

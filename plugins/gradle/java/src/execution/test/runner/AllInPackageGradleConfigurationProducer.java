@@ -1,99 +1,194 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.TasksToRun;
 
 import java.util.List;
+
+import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
+import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.getSourceFile;
+import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom;
 
 /**
  * @author Vladislav.Soroka
  */
-public class AllInPackageGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
-
-  public AllInPackageGradleConfigurationProducer() {
-    super(GradleExternalTaskConfigurationType.getInstance());
+public final class AllInPackageGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return GradleExternalTaskConfigurationType.getInstance().getFactory();
   }
 
   @Override
   protected boolean doSetupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
                                                     ConfigurationContext context,
                                                     Ref<PsiElement> sourceElement) {
-    final PsiPackage psiPackage = JavaRuntimeConfigurationProducerBase.checkPackage(context.getPsiLocation());
-    if (psiPackage == null) return false;
-    sourceElement.set(psiPackage);
+    ConfigurationData configurationData = extractConfigurationData(context);
+    if (configurationData == null) return false;
+    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, configurationData.module)) return false;
 
-    final Module module = context.getModule();
-    if (module == null) return false;
+    TasksToRun tasksToRun = findTestsTaskToRun(configurationData.source, context.getProject());
 
-    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return false;
+    sourceElement.set(configurationData.sourceElement);
 
-    final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
-    if (projectPath == null) return false;
-
-    List<String> tasksToRun = getTasksToRun(module);
-    if (tasksToRun.isEmpty()) return false;
-
-    configuration.getSettings().setExternalProjectPath(projectPath);
+    configuration.getSettings().setExternalProjectPath(configurationData.projectPath);
     configuration.getSettings().setTaskNames(tasksToRun);
-    if (psiPackage.getQualifiedName().isEmpty()) {
-      configuration.getSettings().setScriptParameters("--tests *");
-    }
-    else {
-      configuration.getSettings().setScriptParameters(String.format("--tests %s.*", psiPackage.getQualifiedName()));
-    }
-    configuration.setName(suggestName(psiPackage, module));
+    String filter = createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/false);
+    configuration.getSettings().setScriptParameters(filter);
+    configuration.setName(suggestName(configurationData.psiPackage, configurationData.module));
     return true;
   }
 
   @Override
   protected boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
-    final PsiPackage psiPackage = JavaRuntimeConfigurationProducerBase.checkPackage(context.getPsiLocation());
-    if (psiPackage == null) return false;
-
-    if (context.getModule() == null) return false;
+    ConfigurationData configurationData = extractConfigurationData(context);
+    if (configurationData == null) return false;
+    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, configurationData.module)) return false;
 
     if (!StringUtil.equals(
-      ExternalSystemApiUtil.getExternalProjectPath(context.getModule()),
+      configurationData.projectPath,
       configuration.getSettings().getExternalProjectPath())) {
       return false;
     }
-    if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(context.getModule()))) return false;
+    if (!hasTasksInConfiguration(configurationData.source, context.getProject(), configuration.getSettings())) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
-    return psiPackage.getQualifiedName().isEmpty()
-           ? scriptParameters.contains("--tests * ")
-           : scriptParameters.contains(String.format("--tests %s.* ", psiPackage.getQualifiedName()));
+    final String filter = createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/true);
+    return scriptParameters.contains(filter);
+  }
+
+  @Override
+  public void onFirstRun(@NotNull ConfigurationFromContext fromContext,
+                         @NotNull ConfigurationContext context,
+                         @NotNull Runnable performRunnable) {
+    ConfigurationData configurationData = extractConfigurationData(context);
+    if (configurationData == null) {
+      LOG.warn("Cannot extract configuration data from context, uses raw run configuration");
+      performRunnable.run();
+      return;
+    }
+    String locationName = String.format("'%s'", extractLocationName(configurationData.psiPackage, configurationData.module));
+    DataContext dataContext = TestTasksChooser.contextWithLocationName(context.getDataContext(), locationName);
+    PsiElement[] sourceElements = ArrayUtil.toObjectArray(PsiElement.class, configurationData.sourceElement);
+    getTestTasksChooser().chooseTestTasks(context.getProject(), dataContext, sourceElements, tasks -> {
+        ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
+        ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
+        Function1<PsiElement, String> createFilter = (e) -> createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/false);
+        if (!applyTestConfiguration(settings, context.getModule(), tasks, sourceElements, createFilter)) {
+          LOG.warn("Cannot apply package test configuration, uses raw run configuration");
+          performRunnable.run();
+          return;
+        }
+        configuration.setName(suggestName(configurationData.psiPackage, configurationData.module));
+        performRunnable.run();
+    });
+  }
+
+  @Nullable
+  private ConfigurationData extractConfigurationData(ConfigurationContext context) {
+    Module module = context.getModule();
+    if (module == null) return null;
+    PsiElement contextLocation = context.getPsiLocation();
+    if (contextLocation == null) return null;
+    PsiPackage psiPackage = extractPackage(module, contextLocation);
+    if (psiPackage == null) return null;
+    String projectPath = resolveProjectPath(module);
+    if (projectPath == null) return null;
+    PsiElement sourceElement = getSourceElement(module, contextLocation);
+    if (sourceElement == null) return null;
+    VirtualFile source = getSourceFile(sourceElement);
+    if (source == null) return null;
+    return new ConfigurationData(module, psiPackage, sourceElement, source, projectPath);
+  }
+
+  @Nullable
+  private static PsiElement getSourceElement(@NotNull Module module, @NotNull PsiElement element) {
+    if (element instanceof PsiFileSystemItem) {
+      return element;
+    }
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile != null) {
+      return element;
+    }
+    if (element instanceof PsiPackage) {
+      return getPackageDirectory(module, (PsiPackage)element);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiDirectory getPackageDirectory(@NotNull Module module, @NotNull PsiPackage element) {
+    PsiDirectory[] sourceDirs = element.getDirectories(GlobalSearchScope.moduleScope(module));
+    if (sourceDirs.length == 0) return null;
+    return sourceDirs[0];
+  }
+
+  @Nullable
+  private static PsiPackage extractPackage(@NotNull Module module, @NotNull PsiElement location) {
+    PsiPackage psiPackage = JavaRuntimeConfigurationProducerBase.checkPackage(location);
+    if (psiPackage == null) return null;
+    if (!isTruePackage(module, location, psiPackage)) return null;
+    return psiPackage;
+  }
+
+  private static boolean isTruePackage(@NotNull Module module, @NotNull PsiElement location, @NotNull PsiPackage psiPackage) {
+    VirtualFile locationFile = getSourceFile(location);
+    if (locationFile == null) return true;
+    String locationPath = locationFile.getPath();
+    GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(module);
+    PsiDirectory[] packageDirs = psiPackage.getDirectories(moduleScope);
+    List<VirtualFile> packageFiles = ContainerUtil.mapNotNull(packageDirs, it -> getSourceFile(it));
+    List<String> packagePaths = ContainerUtil.map(packageFiles, it -> it.getPath());
+    return packagePaths.stream().anyMatch(locationPath::equals);
+  }
+
+  private static String extractLocationName(@NotNull PsiPackage aPackage, @NotNull Module module) {
+    return aPackage.getQualifiedName().isEmpty() ? module.getName() : aPackage.getQualifiedName();
   }
 
   private static String suggestName(@NotNull PsiPackage aPackage, @NotNull Module module) {
-    return aPackage.getQualifiedName().isEmpty()
-           ? ExecutionBundle.message("test.in.scope.presentable.text", module.getName())
-           : ExecutionBundle.message("test.in.scope.presentable.text", aPackage.getQualifiedName());
+    return ExecutionBundle.message("test.in.scope.presentable.text", extractLocationName(aPackage, module));
+  }
+
+  private static class ConfigurationData {
+    public final @NotNull Module module;
+    public final @NotNull PsiPackage psiPackage;
+    public final @NotNull PsiElement sourceElement;
+    public final @NotNull VirtualFile source;
+    public final @NotNull String projectPath;
+
+    private ConfigurationData(@NotNull Module module,
+                              @NotNull PsiPackage psiPackage,
+                              @NotNull PsiElement sourceElement,
+                              @NotNull VirtualFile source,
+                              @NotNull String projectPath) {
+      this.module = module;
+      this.psiPackage = psiPackage;
+      this.sourceElement = sourceElement;
+      this.source = source;
+      this.projectPath = projectPath;
+    }
   }
 }

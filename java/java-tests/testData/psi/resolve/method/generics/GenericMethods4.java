@@ -6,6 +6,6 @@ public class AAA {
     }
 
     {
-        <ref>g("");
+        <caret>g("");
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.idea.devkit.codeInsight
 
@@ -31,12 +31,14 @@ import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.PathUtil
 import com.intellij.util.xmlb.annotations.XCollection
+import groovy.transform.CompileStatic
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection
 import org.jetbrains.idea.devkit.util.PsiUtil
 
 @TestDataPath("\$CONTENT_ROOT/testData/codeInsight")
+@CompileStatic
 class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   private TempDirTestFixture myTempDirFixture
@@ -45,7 +47,22 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   protected void setUp() throws Exception {
     super.setUp()
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
+    myTempDirFixture.setUp()
     myFixture.enableInspections(new PluginXmlDomInspection())
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      myTempDirFixture.tearDown()
+    }
+    catch (Throwable e) {
+      addSuppressedException(e)
+    }
+    finally {
+      myTempDirFixture = null
+      super.tearDown()
+    }
   }
 
   @Override
@@ -565,5 +582,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
 
   void testPluginIconNotFound() {
     myFixture.testHighlighting(true, true, true, "pluginIconNotFound.xml")
+  }
+
+  void testRedundantComponentInterfaceClass() {
+    doHighlightingTest("redundantComponentInterfaceClass.xml")
+    //TODO test fix
   }
 }

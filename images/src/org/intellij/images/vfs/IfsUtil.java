@@ -116,7 +116,7 @@ public final class IfsUtil {
 
           file.putUserData(FORMAT_KEY, SVG_FORMAT);
           file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(new ImageDocument.CachedScaledImageProvider() {
-            ScaleContext.Cache<BufferedImage> cache = new ScaleContext.Cache<>((ctx) -> {
+            final ScaleContext.Cache<BufferedImage> cache = new ScaleContext.Cache<>((ctx) -> {
               try {
                 return SVGLoader.loadHiDPI(url.get(), new ByteArrayInputStream(content), ctx);
               }

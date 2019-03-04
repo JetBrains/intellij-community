@@ -20,19 +20,25 @@
  */
 package com.intellij.execution.ui.layout.actions;
 
+import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RestoreLayoutAction extends DumbAwareAction {
+  @Nullable
+  public static RunnerContentUi getRunnerUi(@NotNull AnActionEvent e) {
+    return RunnerContentUi.KEY.getData(e.getDataContext());
+  }
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    ToggleToolbarLayoutAction.getRunnerUi(e).restoreLayout();
+    getRunnerUi(e).restoreLayout();
   }
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    e.getPresentation().setEnabled(ToggleToolbarLayoutAction.getRunnerUi(e) != null);
+    e.getPresentation().setEnabled(getRunnerUi(e) != null);
   }
 }

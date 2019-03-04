@@ -20,15 +20,13 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.StubFileElementType;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class SerializationManager {
-
-  protected final List<ObjectStubSerializer> myAllSerializers = new ArrayList<>();
   private volatile boolean mySerializersLoaded;
 
   public static SerializationManager getInstance() {
@@ -36,25 +34,28 @@ public abstract class SerializationManager {
   }
 
   public void registerSerializer(ObjectStubSerializer serializer) {
-    myAllSerializers.add(serializer);
+    registerSerializer(serializer.getExternalId(), new Computable.PredefinedValueComputable<>(serializer));
   }
+
+  protected abstract void registerSerializer(String externalId, Computable<ObjectStubSerializer> lazySerializer);
 
   protected void initSerializers() {
     if (mySerializersLoaded) return;
+    //noinspection SynchronizeOnThis
     synchronized (this) {
       if (mySerializersLoaded) return;
-      IStubElementType.loadRegisteredStubElementTypes();
+      List<StubFieldAccessor> lazySerializers = IStubElementType.loadRegisteredStubElementTypes();
       final IElementType[] stubElementTypes = IElementType.enumerate(type -> type instanceof StubSerializer);
       for (IElementType type : stubElementTypes) {
         if (type instanceof StubFileElementType &&
             StubFileElementType.DEFAULT_EXTERNAL_ID.equals(((StubFileElementType)type).getExternalId())) {
           continue;
         }
-        StubSerializer stubSerializer = (StubSerializer)type;
 
-        if (!myAllSerializers.contains(stubSerializer)) {
-          registerSerializer(stubSerializer);
-        }
+        registerSerializer((StubSerializer)type);
+      }
+      for (StubFieldAccessor lazySerializer : lazySerializers) {
+        registerSerializer(lazySerializer.externalId, lazySerializer);
       }
       mySerializersLoaded = true;
     }

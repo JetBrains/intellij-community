@@ -14,8 +14,8 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider"/>
 
-    <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.terminal.TerminalUsageTriggerCollector"/>
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager"/>
+    <statistics.counterUsagesCollector groupId="terminalShell" version="1"/>
   </extensions>
 
   <project-components>

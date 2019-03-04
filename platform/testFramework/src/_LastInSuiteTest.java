@@ -22,12 +22,10 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import junit.framework.TestCase;
 
 import java.util.concurrent.TimeUnit;
-
-import static com.intellij.testFramework.PlatformTestUtil.captureMemorySnapshot;
-import static com.intellij.testFramework.PlatformTestUtil.disposeApplicationAndCheckForProjectLeaks;
 
 /**
  * This must be the last test.
@@ -60,13 +58,13 @@ public class _LastInSuiteTest extends TestCase {
       return;
     }
 
-    disposeApplicationAndCheckForProjectLeaks();
+    PlatformTestUtil.disposeApplicationAndCheckForProjectLeaks();
 
     try {
       Disposer.assertIsEmpty(true);
     }
     catch (AssertionError | Exception e) {
-      captureMemorySnapshot();
+      PlatformTestUtil.captureMemorySnapshot();
       throw e;
     }
   }

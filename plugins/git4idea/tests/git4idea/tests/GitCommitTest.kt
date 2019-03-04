@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.tests
 
 import com.intellij.openapi.extensions.Extensions
@@ -22,10 +8,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.util.containers.ContainerUtil
-import git4idea.GitUtil
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.checkin.GitCheckinExplicitMovementProvider
 import git4idea.config.GitVersion
@@ -46,7 +29,7 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     super.setUp()
 
     val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
-    point.registerExtension(myMovementProvider)
+    point.registerExtension(myMovementProvider, testRootDisposable)
     Registry.get("git.allow.explicit.commit.renames").setValue(true)
     Registry.get("git.force.commit.using.staging.area").setValue(useStagingArea)
 
@@ -56,7 +39,6 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
   override fun tearDown() {
     try {
       val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
-      point.unregisterExtension(myMovementProvider)
       Registry.get("git.allow.explicit.commit.renames").resetToDefault()
       Registry.get("git.force.commit.using.staging.area").resetToDefault()
 
@@ -621,6 +603,39 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     }
   }
 
+  fun `test commit with excluded added-deleted and added files`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac("a.txt", "file content")
+
+    overwrite("a.txt", "new content")
+
+    touch("b.txt", "new content")
+    touch("c.txt", "new content")
+    git("add -A b.txt c.txt")
+    rm("b.txt")
+
+    val changes = assertChanges {
+      modified("a.txt")
+      added("c.txt")
+    }
+
+    commit(listOf(changes[0]))
+
+    assertChanges {
+      added("c.txt")
+    }
+    if (Registry.`is`("git.force.commit.using.staging.area")) { // known bug in "--only" implementation
+      repo.assertStagedChanges {
+        added("c.txt")
+      }
+    }
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      modified("a.txt")
+    }
+  }
+
   fun `test commit with deleted-added file`() {
     `assume version where git reset returns 0 exit code on success `()
 
@@ -826,6 +841,69 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     }
   }
 
+  fun `test file to directory renames`() {
+    assumeTrue(Registry.`is`("git.force.commit.using.staging.area")) // known bug in "--only" implementation
+
+    tac("a_path", "file content 1")
+    tac("b_path", "file content 2")
+
+    rm("a_path")
+    rm("b_path")
+    touch("a_path/file1.txt", "file content 1")
+    touch("b_path/file2.txt", "file content 2")
+    git("add -A .")
+
+    val changes = assertChanges {
+      rename("a_path", "a_path/file1.txt")
+      rename("b_path", "b_path/file2.txt")
+    }
+
+    commit(listOf(changes[0]))
+
+    assertChanges {
+      rename("b_path", "b_path/file2.txt")
+    }
+    repo.assertStagedChanges {
+      rename("b_path", "b_path/file2.txt")
+    }
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      rename("a_path", "a_path/file1.txt")
+    }
+  }
+
+  fun `test directory to file renames`() {
+    tac("a_path/file1.txt", "file content 1")
+    tac("b_path/file2.txt", "file content 2")
+
+    rm("a_path/file1.txt")
+    rm("b_path/file2.txt")
+    rm("a_path")
+    rm("b_path")
+    touch("a_path", "file content 1")
+    touch("b_path", "file content 2")
+    git("add -A .")
+
+    val changes = assertChanges {
+      rename("a_path/file1.txt", "a_path")
+      rename("b_path/file2.txt", "b_path")
+    }
+
+    commit(listOf(changes[0]))
+
+    assertChanges {
+      rename("b_path/file2.txt", "b_path")
+    }
+    repo.assertStagedChanges {
+      rename("b_path/file2.txt", "b_path")
+    }
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      rename("a_path/file1.txt", "a_path")
+    }
+  }
+
+
   private fun `assume version where git reset returns 0 exit code on success `() {
     assumeTrue("Not testing: git reset returns 1 and fails the commit process in ${vcs.version}",
                vcs.version.isLaterOrEqual(GitVersion(1, 8, 2, 0)))
@@ -836,42 +914,12 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     git("mv -f $from $to")
   }
 
-  private fun commit(changes: Collection<Change>) {
-    val exceptions = vcs.checkinEnvironment!!.commit(ArrayList(changes), "comment")
-    assertNoExceptions(exceptions)
-    updateChangeListManager()
-  }
-
   private fun assertNoChanges() {
-    val changes = changeListManager.getChangesIn(projectRoot)
-    assertTrue("We expected no changes but found these: " + GitUtil.getLogString(projectPath, changes), changes.isEmpty())
+    changeListManager.assertNoChanges()
   }
 
-  private fun assertNoExceptions(exceptions: List<VcsException>?) {
-    val ex = ContainerUtil.getFirstItem(exceptions)
-    if (ex != null) {
-      LOG.error(ex)
-      fail("Exception during executing the commit: " + ex.message)
-    }
-  }
-
-  private fun assertChanges(changes: ChangesBuilder.() -> Unit) : List<Change> {
-    val cb = ChangesBuilder()
-    cb.changes()
-
-    updateChangeListManager()
-    val vcsChanges = changeListManager.allChanges
-    val allChanges = mutableListOf<Change>()
-    val actualChanges = HashSet(vcsChanges)
-
-    for (change in cb.changes) {
-      val found = actualChanges.find(change.matcher)
-      assertNotNull("The change [$change] not found\n$vcsChanges", found)
-      actualChanges.remove(found)
-      allChanges.add(found!!)
-    }
-    assertTrue(actualChanges.isEmpty())
-    return allChanges
+  private fun assertChanges(changes: ChangesBuilder.() -> Unit): List<Change> {
+    return changeListManager.assertChanges(changes)
   }
 
   private class MyExplicitMovementProvider : GitCheckinExplicitMovementProvider() {

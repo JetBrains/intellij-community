@@ -15,8 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 
 import java.util.*;
@@ -90,5 +91,43 @@ class SwitchStatementBranch {
 
   public Set<PsiElement> getPendingDeclarations() {
     return Collections.unmodifiableSet(myPendingDeclarations);
+  }
+
+  void addCaseValues(PsiSwitchLabelStatementBase label, boolean defaultAlwaysExecuted, CommentTracker commentTracker) {
+    if (label.isDefaultCase()) {
+      setDefault();
+      setAlwaysExecuted(defaultAlwaysExecuted);
+    }
+    else {
+      PsiExpressionList values = label.getCaseValues();
+      if (values != null) {
+        for (PsiExpression value : values.getExpressions()) {
+          final String valueText = getCaseValueText(value, commentTracker);
+          addCaseValue(valueText);
+        }
+      }
+    }
+  }
+
+  private static String getCaseValueText(PsiExpression value, CommentTracker commentTracker) {
+    value = PsiUtil.skipParenthesizedExprDown(value);
+    if (value == null) {
+      return "";
+    }
+    if (!(value instanceof PsiReferenceExpression)) {
+      return commentTracker.text(value);
+    }
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)value;
+    final PsiElement target = referenceExpression.resolve();
+
+    if (!(target instanceof PsiEnumConstant)) {
+      return commentTracker.text(value);
+    }
+    final PsiEnumConstant enumConstant = (PsiEnumConstant)target;
+    final PsiClass aClass = enumConstant.getContainingClass();
+    if (aClass == null) {
+      return commentTracker.text(value);
+    }
+    return aClass.getQualifiedName() + '.' + commentTracker.text(referenceExpression);
   }
 }

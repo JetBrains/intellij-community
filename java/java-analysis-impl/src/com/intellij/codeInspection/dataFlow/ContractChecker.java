@@ -58,9 +58,10 @@ class ContractChecker {
     public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction,
                                                  DataFlowRunner runner,
                                                  DfaMemoryState memState) {
-      if (!memState.isEphemeral() && instruction.getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL) {
+      PsiCall call = instruction.getCallExpression();
+      if (!memState.isEphemeral() && call != null) {
         if (myContract.getReturnValue().isFail()) {
-          ContainerUtil.addIfNotNull(myFailures, instruction.getCallExpression());
+          myFailures.add(call);
           return DfaInstructionState.EMPTY_ARRAY;
         }
         if (weCannotInferAnythingAboutMethodReturnValue(instruction)) {

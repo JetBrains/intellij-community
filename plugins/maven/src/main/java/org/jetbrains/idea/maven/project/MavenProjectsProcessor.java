@@ -115,7 +115,8 @@ public class MavenProjectsProcessor {
     });
   }
 
-  private void doProcessPendingTasks(MavenProgressIndicator indicator, MavenProjectsProcessorTask task)
+  private void doProcessPendingTasks(MavenProgressIndicator indicator,
+                                     MavenProjectsProcessorTask task)
     throws MavenProcessCanceledException {
     int counter = 0;
     try {

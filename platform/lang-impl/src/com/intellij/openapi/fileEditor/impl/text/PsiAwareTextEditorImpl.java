@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -22,21 +8,28 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
+import com.intellij.codeInsight.daemon.impl.focusMode.FocusModePassFactory;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class PsiAwareTextEditorImpl extends TextEditorImpl {
   private TextEditorBackgroundHighlighter myBackgroundHighlighter;
@@ -48,7 +41,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
   @NotNull
   @Override
   protected Runnable loadEditorInBackground() {
-    Runnable baseAction = super.loadEditorInBackground();
+    Runnable baseResult = super.loadEditorInBackground();
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
     Document document = FileDocumentManager.getInstance().getDocument(myFile);
     boolean shouldBuildInitialFoldings =
@@ -56,15 +49,27 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     CodeFoldingState foldingState = shouldBuildInitialFoldings
                                     ? CodeFoldingManager.getInstance(myProject).buildInitialFoldings(document)
                                     : null;
+
+    List<? extends Segment> focusZones = FocusModePassFactory.calcFocusZones(psiFile);
+
     return () -> {
-      baseAction.run();
+      baseResult.run();
+      Editor editor = getEditor();
+
       if (foldingState != null) {
-        foldingState.setToEditor(getEditor());
+        foldingState.setToEditor(editor);
       }
+
+      if (focusZones != null) {
+        FocusModePassFactory.setToEditor(focusZones, editor);
+        if (editor instanceof EditorImpl) {
+          ((EditorImpl)editor).applyFocusMode();
+        }
+      }
+
       if (psiFile != null && psiFile.isValid()) {
         DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
       }
-      EditorNotifications.getInstance(myProject).updateNotifications(myFile);
     };
   }
 
@@ -107,18 +112,24 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
       }
     }
 
+    @Nullable
     @Override
-    public Object getData(@NotNull final String dataId) {
-      if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
-        final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(myProject).getActiveLookup();
-        if (lookup != null && lookup.isVisible()) {
-          return lookup.getBounds();
+    public DataProvider createBackgroundDataProvider() {
+      DataProvider superProvider = super.createBackgroundDataProvider();
+      if (superProvider == null) return null;
+
+      return dataId -> {
+        if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
+          LookupImpl lookup = (LookupImpl)LookupManager.getInstance(myProject).getActiveLookup();
+          if (lookup != null && lookup.isVisible()) {
+            return lookup.getBounds();
+          }
         }
-      }
-      if (LangDataKeys.MODULE.is(dataId)) {
-        return ModuleUtilCore.findModuleForFile(myFile, myProject);
-      }
-      return super.getData(dataId);
+        if (LangDataKeys.MODULE.is(dataId)) {
+          return ModuleUtilCore.findModuleForFile(myFile, myProject);
+        }
+        return superProvider.getData(dataId);
+      };
     }
   }
 }

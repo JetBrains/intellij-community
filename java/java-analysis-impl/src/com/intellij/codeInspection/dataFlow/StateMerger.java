@@ -267,6 +267,7 @@ class StateMerger {
 
       DfaMemoryStateImpl getState() {
         if(myCommonEqualities != null) {
+          myFacts.remove(myState);
           myState.removeEquivalenceForVariableAndWrappers(var);
           myState.setVariableState(var, myState.getVariableState(var).withFact(RANGE, myRange));
           for (EqualityFact equality : myCommonEqualities) {
@@ -606,11 +607,11 @@ class StateMerger {
 
   static final class EqClassInfo {
     final List<DfaVariableValue> vars;
-    final DfaValue constant;
+    final DfaConstValue constant;
 
     EqClassInfo(EqClass eqClass) {
       vars = eqClass.getVariables(false);
-      constant = eqClass.findConstant(true);
+      constant = eqClass.findConstant();
     }
   }
 }

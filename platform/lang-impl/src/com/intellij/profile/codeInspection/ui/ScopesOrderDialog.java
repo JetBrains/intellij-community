@@ -29,13 +29,14 @@ import java.util.List;
 public class ScopesOrderDialog extends DialogWrapper {
   private final JList<String> myOptionsList = new JBList<>();
   private final InspectionProfileImpl myInspectionProfile;
+  @NotNull
   private final Project myProject;
   private final JPanel myPanel;
   private final MyModel myModel;
 
-  public ScopesOrderDialog(final @NotNull Component parent,
-                           final InspectionProfileImpl inspectionProfile,
-                           final Project project) {
+  ScopesOrderDialog(@NotNull final Component parent,
+                    @NotNull InspectionProfileImpl inspectionProfile,
+                    @NotNull Project project) {
     super(parent, true);
     myInspectionProfile = inspectionProfile;
     myProject = project;

@@ -20,6 +20,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.wm.impl.WindowDressing</implementation-class>
+      <headless-implementation-class/>
     </component>
   </project-components>
 

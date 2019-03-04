@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -70,7 +70,10 @@ public class SwitchHelper {
   private static boolean isEnumArray(Exprent exprent) {
     if (exprent instanceof ArrayExprent) {
       Exprent field = ((ArrayExprent)exprent).getArray();
-      return field instanceof FieldExprent && ((FieldExprent)field).getName().startsWith("$SwitchMap");
+      Exprent index = ((ArrayExprent)exprent).getIndex();
+      return field instanceof FieldExprent &&
+             (((FieldExprent)field).getName().startsWith("$SwitchMap") ||
+              (index instanceof InvocationExprent && ((InvocationExprent)index).getName().equals("ordinal")));
     }
     return false;
   }

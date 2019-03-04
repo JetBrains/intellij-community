@@ -15,11 +15,9 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
-import java.util.Arrays;
 
 /**
  * @author spleaner
@@ -134,7 +132,8 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
 
     private void paintFocusBorders(boolean clean) {
       if (myCurrent != null) {
-        Graphics2D currentFocusGraphics = (Graphics2D)(myCurrent.getGraphics() != null ? myCurrent.getGraphics().create() : null);
+        Graphics graphics = myCurrent.getGraphics();
+        Graphics2D currentFocusGraphics = (Graphics2D)(graphics != null ? graphics.create() : null);
         try {
           if (currentFocusGraphics != null) {
             if (clean) {
@@ -211,22 +210,6 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
           g.setColor(myApplicationState.getColor());
           g.fillOval(5,5, 10, 10);
         });
-        Arrays.stream(Window.getOwnerlessWindows()).
-          filter(window -> window instanceof RootPaneContainer).
-          map(window -> (RootPaneContainer)window).
-          filter(f -> f.getRootPane() != null).
-          filter(window -> window.getRootPane() != null).
-          map(window -> (window).getGlassPane()).
-          map(jGlassPane -> jGlassPane.getGraphics()).
-          filter(g -> g != null).
-          forEach(graphics -> {
-            Graphics2D glassPaneGraphics = ((Graphics2D)graphics.create());
-            try {
-
-            } finally {
-              glassPaneGraphics.dispose();
-            }
-          });
       }
     }
   }

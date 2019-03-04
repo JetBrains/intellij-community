@@ -85,6 +85,40 @@ public class PyAttributeOutsideInitInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-32585
+  public void testUpdatingInheritedProperty() {
+    doTestByText("class Foo:\n" +
+                 "    def __init__(self):\n" +
+                 "        self._test = None\n" +
+                 "\n" +
+                 "    @property\n" +
+                 "    def test(self):\n" +
+                 "        return self._test\n" +
+                 "\n" +
+                 "    @test.setter\n" +
+                 "    def test(self, value):\n" +
+                 "        self._test = value\n" +
+                 "\n" +
+                 "class Bar(Foo):\n" +
+                 "    @property\n" +
+                 "    def another_test(self):\n" +
+                 "        return self.test\n" +
+                 "\n" +
+                 "    @another_test.setter\n" +
+                 "    def another_test(self, value):\n" +
+                 "        self.test = value");
+  }
+
+  // PY-31049
+  public void testAttributesOfProperty() {
+    doTest();
+  }
+
+  // PY-31376
+  public void testLocalVarInProperty() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

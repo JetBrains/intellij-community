@@ -74,7 +74,7 @@ public class LocalChangesUnderRoots {
 
   private void addChangesToMap(Collection<VirtualFile> rootsToSave,
                                Map<VirtualFile, Collection<Change>> result,
-                               Collection<Change> allChanges) {
+                               Collection<? extends Change> allChanges) {
     for (Change change : allChanges) {
       if (change.getBeforeRevision() != null) {
         addChangeToMap(result, change, change.getBeforeRevision(), rootsToSave);

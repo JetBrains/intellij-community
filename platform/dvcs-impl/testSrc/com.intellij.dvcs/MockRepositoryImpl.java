@@ -48,6 +48,18 @@ public class MockRepositoryImpl extends RepositoryImpl {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
+  @Override
+  public State getState() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Nullable
+  @Override
+  public String getCurrentRevision() {
+    throw new UnsupportedOperationException();
+  }
+
   @Override
   public void update() {
   }

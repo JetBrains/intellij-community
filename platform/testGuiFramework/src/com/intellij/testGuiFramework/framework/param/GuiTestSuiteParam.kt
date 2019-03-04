@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.framework.param
 
-import com.intellij.testGuiFramework.framework.FirstStartWith
 import com.intellij.testGuiFramework.framework.getIdeFromAnnotation
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher
 import com.intellij.testGuiFramework.launcher.ide.Ide
@@ -16,23 +15,14 @@ import org.junit.runners.parameterized.TestWithParameters
 
 @RunWith(GuiTestSuiteParamRunner::class)
 @Parameterized.UseParametersRunnerFactory(GuiTestsParametersRunnerFactory::class)
-open class GuiTestSuiteParam(private val klass: Class<*>) : Parameterized(klass) {
+open class GuiTestSuiteParam(klass: Class<*>) : Parameterized(klass) {
 
   //IDE type to run suite tests with
   val myIde: Ide = getIdeFromAnnotation(klass)
-  var isFirstStart: Boolean = true
-  val UNDEFINED_FIRST_CLASS: String = "undefined"
-  val myFirstStartClassName: String by lazy {
-    val annotation = klass.getAnnotation(FirstStartWith::class.java)
-    val value = annotation?.value
-    if (value != null) value.java.canonicalName else UNDEFINED_FIRST_CLASS
-  }
   val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam")!!
 
   override fun runChild(runner: Runner, notifier: RunNotifier?) {
     try {
-      //let's start IDE to complete installation, import configs and etc before running tests
-      if (isFirstStart) firstStart()
       val runnerWithParameters = runner as BlockJUnit4ClassRunnerWithParameters
 
       val testNameField = BlockJUnit4ClassRunnerWithParameters::class.java.getDeclaredField("name")
@@ -53,10 +43,4 @@ open class GuiTestSuiteParam(private val klass: Class<*>) : Parameterized(klass)
     }
   }
 
-  private fun firstStart() {
-    if (myFirstStartClassName == UNDEFINED_FIRST_CLASS) return
-    LOG.info("IDE is configuring for the first time...")
-    GuiTestLocalLauncher.firstStartIdeLocally(myIde, myFirstStartClassName)
-    isFirstStart = false
-  }
 }

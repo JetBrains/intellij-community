@@ -105,7 +105,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     myClass = aClass;
     myManager = aClass.getManager();
     mySubstitutor = substitutor;
-    assert substitutor.isValid();
+    substitutor.ensureValid();
   }
 
   @Override

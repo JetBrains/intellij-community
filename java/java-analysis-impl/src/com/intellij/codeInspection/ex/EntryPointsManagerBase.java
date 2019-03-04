@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.ToolExtensionPoints;
@@ -8,15 +8,14 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -80,8 +79,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     myProject = project;
     myTemporaryEntryPoints = new HashSet<>();
     myPersistentEntryPoints = new LinkedHashMap<>(); // To keep the order between readExternal to writeExternal
-    final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
-    ((ExtensionPointImpl)point).addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
+    Extensions.getRootArea().<EntryPoint>getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL).addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
       @Override
       public void extensionAdded(@NotNull EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
         extensionRemoved(extension, pluginDescriptor);
@@ -199,7 +197,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       cleanup();
       validateEntryPoints();
 
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.run(() -> {
         for (SmartRefElementPointer entryPoint : myPersistentEntryPoints.values()) {
           if (entryPoint.resolve(manager)) {
             RefEntity refElement = entryPoint.getRefElement();
@@ -227,7 +225,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   private List<RefElementImpl> getPatternEntryPoints(RefManager manager) {
     List<RefElementImpl> entries = new ArrayList<>();
     for (ClassPattern pattern : myPatterns) {
-      final RefEntity refClass = manager.getReference(RefJavaManager.CLASS, pattern.pattern);
+      final RefEntity refClass = ReadAction.compute(() -> manager.getReference(RefJavaManager.CLASS, pattern.pattern));
       if (refClass != null) {
         if (pattern.method.isEmpty()) {
           for (RefMethod refMethod : ((RefClass)refClass).getConstructors()) {
@@ -383,7 +381,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       }
     }
     entries.addAll(myTemporaryEntryPoints);
-    
+
     entries.addAll(getPatternEntryPoints(refManager));
 
     return entries.toArray(new RefElement[0]);

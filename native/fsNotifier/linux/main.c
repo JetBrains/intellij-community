@@ -411,6 +411,9 @@ static bool is_watchable(const char* fs) {
 
 static array* unwatchable_mounts() {
   FILE* mtab = setmntent(_PATH_MOUNTED, "r");
+  if (mtab == NULL && errno == ENOENT) {
+    mtab = setmntent("/proc/mounts", "r");
+  }
   if (mtab == NULL) {
     userlog(LOG_ERR, "cannot open " _PATH_MOUNTED);
     return NULL;

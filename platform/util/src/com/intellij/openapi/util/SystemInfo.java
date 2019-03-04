@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.io.PathExecLazyValue;
@@ -6,12 +6,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Locale;
 
 import static com.intellij.openapi.util.text.StringUtil.containsIgnoreCase;
 import static com.intellij.util.ObjectUtils.notNull;
 
+/**
+ * Provides information about operating system, system-wide settings, and Java Runtime.
+ */
 @SuppressWarnings({"HardCodedStringLiteral", "UnusedDeclaration"})
 public class SystemInfo extends SystemInfoRt {
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
@@ -43,6 +49,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isOracleJvm = containsIgnoreCase(JAVA_VENDOR, "Oracle");
   public static final boolean isSunJvm = containsIgnoreCase(JAVA_VENDOR, "Sun") && containsIgnoreCase(JAVA_VENDOR, "Microsystems");
   public static final boolean isIbmJvm = containsIgnoreCase(JAVA_VENDOR, "IBM");
+  public static final boolean isAzulJvm = containsIgnoreCase(JAVA_VENDOR, "Azul");
   public static final boolean isJetBrainsJvm = containsIgnoreCase(JAVA_VENDOR, "JetBrains");
 
   public static final boolean IS_AT_LEAST_JAVA9 = isModularJava();
@@ -83,6 +90,28 @@ public class SystemInfo extends SystemInfoRt {
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
   public static final boolean areSymLinksSupported = isUnix || isWinVistaOrNewer;
+  public static final boolean isSymLinkCreationSupported = isUnix || isWinVistaOrNewer && holdsEnoughPrivilegesToCreateSymlinks();
+
+  private static boolean holdsEnoughPrivilegesToCreateSymlinks() {
+    try {
+      File src = File.createTempFile("tempSrc", ".txt");
+      src.delete();
+      File dest = File.createTempFile("tempDst", ".txt");
+      try {
+        Files.createSymbolicLink(src.toPath(), dest.toPath());
+      }
+      catch (IOException e) {
+        return false;
+      }
+      finally {
+        dest.delete();
+      }
+    }
+    catch (IOException e) {
+      return false;
+    }
+    return true;
+  }
 
   public static final boolean is32Bit = SystemInfoRt.is32Bit;
   public static final boolean is64Bit = SystemInfoRt.is64Bit;

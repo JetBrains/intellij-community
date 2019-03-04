@@ -1,0 +1,19 @@
+<html>
+<body>
+Reports loops which could be replaced with single <code>String.repeat()</code> method (available since Java 11). E.g.:
+<pre>
+  for(int i=0; i&lt;count; i++) {
+    sb.append('*');
+  }
+</pre>
+Such code could be replaced with <code>sb.append("*".repeat(count));</code>
+<!-- tooltip end -->
+<p>
+  By default the inspection may wrap count expression with <code>Math.max(0, count)</code> if it cannot prove statically that count is 
+  non-negative. This is done to prevent possible semantics change, as <code>String.repeat()</code> rejects negative numbers.
+  You may disable this behavior via option if you don't like it. Similarly a String to repeat could be wrapped with 
+  <code>String.valueOf</code> to prevent possible <code>NullPointerException</code> if it's unknown whether it could be <code>null</code>.
+</p>
+<p><small>New in 2019.1</small></p>
+</body>
+</html>

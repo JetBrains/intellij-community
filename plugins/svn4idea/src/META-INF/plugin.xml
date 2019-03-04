@@ -1,9 +1,14 @@
 <idea-plugin>
-  <name>Subversion Integration</name>
+  <name>Subversion</name>
   <id>Subversion</id>
-  <version>1.1</version>
   <category>VCS Integration</category>
-  <description>For Subversion 1.7 and older versions</description>
+  <description>
+    <![CDATA[
+      Provides integration with Subversion VCS.<br/>
+      Supports Subversion 1.7 and above.<br/>
+      Requires command line svn client.
+      ]]>
+  </description>
   <depends>com.intellij.modules.vcs</depends>
   <vendor>JetBrains</vendor>
   <resource-bundle>org.jetbrains.idea.svn.SvnBundle</resource-bundle>
@@ -28,16 +33,13 @@
 
 
     <action id="IntegrateChangeSetAction" class="org.jetbrains.idea.svn.actions.IntegrateChangeSetAction" popup="true"
-            icon="SvnIcons.IntegrateToBranch">
+            icon="AllIcons.Vcs.Merge">
       <add-to-group group-id="Vcs.RepositoryChangesBrowserToolbar" anchor="last"/>
     </action>
 
     <action id="Subversion.TogglePropertiesDiff" class="com.intellij.openapi.actionSystem.EmptyAction" popup="true"
             icon="AllIcons.Actions.Preview"/>
 
-    <action id="PropertiesDiff" class="org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction" popup="true" icon="SvnIcons.PropertiesDiff">
-      <add-to-group group-id="Vcs.RepositoryChangesBrowserToolbar" anchor="last"/>
-    </action>
     <action id="EditCommitMessage" class="org.jetbrains.idea.svn.history.SvnEditCommitMessageAction" popup="true"
             icon="AllIcons.Actions.Edit"
             text="Edit Revision Comment" description="Edit revision comment. Previous message is rewritten.">
@@ -80,10 +82,6 @@
       <separator/>
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
     </group>
-    <action id="Subversion.MarkLocallyDeletedTreeResolved"
-            class="org.jetbrains.idea.svn.actions.MarkLocallyDeletedTreeConflictResolvedAction">
-      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="Diff.ShowDiff"/>
-    </action>
     <reference id="Subversion.MarkTreeResolved">
       <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="Diff.ShowDiff"/>
     </reference>
@@ -105,7 +103,7 @@
     </action>
 
     <action id="Svn.Show.Working.Copies" class="org.jetbrains.idea.svn.actions.ShowSvnMapAction" text="Show Working Copies"
-            description="Shows working copies information: working copy formats and URLs" icon="SvnIcons.ShowWorkingCopies">
+            description="Shows working copies information: working copy formats and URLs">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
   </actions>
@@ -133,7 +131,7 @@
     <applicationService serviceInterface="org.jetbrains.idea.svn.dialogs.browserCache.Loader"
                         serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.CacheLoader"/>
 
-    <search.topHitProvider implementation="org.jetbrains.idea.svn.SvnOptionsTopHitProvider"/>
+    <search.projectOptionsTopHitProvider implementation="org.jetbrains.idea.svn.SvnOptionsTopHitProvider"/>
     <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn"/>
     <projectConfigurable id="vcs.Subversion" displayName="Subversion" instance="org.jetbrains.idea.svn.SvnConfigurable$General"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500">

@@ -27,7 +27,7 @@ public class EditName implements ChangeListCommand {
   }
 
   @Override
-  public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
+  public void doNotify(final EventDispatcher<? extends ChangeListListener> dispatcher) {
     if (myListCopy != null && myResult) {
       dispatcher.getMulticaster().changeListRenamed(myListCopy, myFromName);
     }

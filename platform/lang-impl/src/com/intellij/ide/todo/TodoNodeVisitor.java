@@ -11,8 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.tree.AbstractTreeNodeVisitor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.TreePath;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 
@@ -20,7 +18,7 @@ class TodoNodeVisitor extends AbstractTreeNodeVisitor<Object> {
   private final VirtualFile myFile;
 
   TodoNodeVisitor(@NotNull Supplier<Object> supplier, VirtualFile file) {
-    super(supplier, (Predicate<? super TreePath>)null);
+    super(supplier, null);
     myFile = file;
   }
 

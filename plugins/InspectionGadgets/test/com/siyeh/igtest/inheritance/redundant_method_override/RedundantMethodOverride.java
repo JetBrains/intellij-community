@@ -1,3 +1,4 @@
+import java.util.List;
 import java.util.ArrayList;
 
 public class RedundantMethodOverride extends S {
@@ -220,6 +221,9 @@ class P {
   void f(boolean b, int i) {
     String a = "" + (a = "");
     new Object() {
+      {
+        // class initializer
+      }
       void x(int i, int j) {
         i++;
         x(i, j);
@@ -234,6 +238,7 @@ class ABCD extends P {
   void <warning descr="Method 'f()' is identical to its super method">f</warning>(boolean b, int i) {
     String s = "" + (s = "");
     new Object() {
+      {}
 
       void x(int k, /**/ final  int l) {
         k++;
@@ -245,4 +250,120 @@ class ABCD extends P {
     z1++;
   }
 
+}
+//////////////////
+class X1 {
+
+  void x(Object o) {
+    System.out.println(o);
+    x(null);
+  }
+}
+class X2 extends X1{
+  void <warning descr="Method 'x()' is identical to its super method">x</warning>(Object o) {
+    System.out.println(o);
+    x(null);
+  }
+}
+///////////
+class X3 {
+  void x() {
+    List<Number> list = new ArrayList<>();
+  }
+}
+class X4 extends X3 {
+  @java.lang.Override
+  void <warning descr="Method 'x()' is identical to its super method">x</warning>() {
+    List<Number> list = new ArrayList<Number>();
+  }
+}
+///////////
+class X5 {
+  Object x() {
+    return new Object() {
+      void a() {
+        System.out.println(1);
+      }
+      void b() {
+        System.out.println(2);
+      }
+    };
+  }
+}
+class X6 extends X5 {
+  @java.lang.Override
+  Object <warning descr="Method 'x()' is identical to its super method">x</warning>() {
+    return new Object() {
+      void b(){ // whitespace difference
+
+        System.out.println(2);
+      }
+      void a() {
+        System.out.println(1);
+      }
+    };
+  }
+}
+////////////////
+class LocalModelGraphElementWrapper<T> {
+  public T getElement() {
+    return null;
+  }
+}
+class LocalModelWrapper<T extends LocalModel> extends LocalModelGraphElementWrapper<T> {
+  public T getElement()  { return super.getElement(); }
+}
+interface LocalModel {}
+///////////////
+class X7 {
+  Object x() {
+    return new Object() {
+      void a() {
+        b(); // used before declaration
+      }
+      void b() {
+        a();
+      }
+    };
+  }
+}
+class X8 extends X7 {
+  @java.lang.Override
+  Object <warning descr="Method 'x()' is identical to its super method">x</warning>() {
+    return new Object() {
+      void b(){
+        a();
+      }
+      void a() {
+        b();
+      }
+    };
+  }
+}
+////////////////
+class X9 {
+
+  void x(@NotNull Object o) {
+    x(null);
+  }
+
+  void x() {
+    System.out.println();
+    System.out.println();
+    System.out.println();
+  }
+}
+class X10 extends X9{
+  void x(@NotNull Object o) {
+    ((X2)o).x(null);
+  }
+
+  void <warning descr="Method 'x()' is identical to its super method">x</warning>() {
+    {
+      ;
+      System.out.println();
+      System.out.println();
+    }
+    System.out.println();
+  }
 }

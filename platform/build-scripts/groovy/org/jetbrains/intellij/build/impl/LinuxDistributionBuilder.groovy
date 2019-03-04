@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtil
@@ -40,6 +38,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
     }
+    BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
 
     buildContext.ant.copy(file: ideaProperties.path, todir: "$unixDistPath/bin")
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
@@ -59,15 +58,22 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   void buildArtifacts(String osSpecificDistPath) {
     buildContext.executeStep("Build Linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledJre) {
-        buildTarGz(null, osSpecificDistPath)
+        buildContext.executeStep("Build Linux .tar.gz without bundled JRE", BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP) {
+          buildTarGz(null, osSpecificDistPath, "-no-jbr")
+        }
       }
       def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
       if (jreDirectoryPath != null) {
-        buildTarGz(jreDirectoryPath, osSpecificDistPath)
+        buildTarGz(jreDirectoryPath, osSpecificDistPath, buildContext.bundledJreManager.jreSuffix())
         buildSnapPackage(jreDirectoryPath, osSpecificDistPath)
       }
       else {
         buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
+      }
+      def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
+      if (secondJreBuild != null) {
+        def secondJreDirectoryPath = buildContext.bundledJreManager.extractSecondJre("linux", secondJreBuild)
+        buildTarGz(secondJreDirectoryPath, osSpecificDistPath, "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}")
       }
     }
   }
@@ -121,35 +127,36 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateReadme(String unixDistPath) {
     String fullName = buildContext.applicationInfo.productName
-    BuildUtils.copyAndPatchFile("$buildContext.paths.communityHome/platform/build-scripts/resources/linux/Install-Linux-tar.txt", "$unixDistPath/Install-Linux-tar.txt",
-                     ["product_full"   : fullName,
-                      "product"        : buildContext.productProperties.baseFileName,
-                      "system_selector": buildContext.systemSelector], "@@")
+    BuildUtils.copyAndPatchFile(
+      "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/Install-Linux-tar.txt",
+      "$unixDistPath/Install-Linux-tar.txt",
+      ["product_full"   : fullName,
+       "product"        : buildContext.productProperties.baseFileName,
+       "system_selector": buildContext.systemSelector], "@@")
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/Install-Linux-tar.txt", eol: "unix")
   }
 
-  private void buildTarGz(String jreDirectoryPath, String unixDistPath) {
+  private void buildTarGz(String jreDirectoryPath, String unixDistPath, String suffix) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-    def suffix = jreDirectoryPath != null ? buildContext.bundledJreManager.jreSuffix() : "-no-jdk"
-    def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
+    def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+    def tarPath = "${buildContext.paths.artifacts}/${baseName}${suffix}.tar.gz"
     def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
-    String javaExecutablePath
+
+    String javaExecutablePath = null
     if (jreDirectoryPath != null) {
       paths += jreDirectoryPath
       extraBins += "jre64/bin/*"
       javaExecutablePath = "jre64/bin/java"
     }
-    else {
-      javaExecutablePath = null
-    }
     def productJsonDir = new File(buildContext.paths.temp, "linux.dist.product-info.json$suffix").absolutePath
     generateProductJson(productJsonDir, javaExecutablePath)
     paths += productJsonDir
+
     def description = "archive${jreDirectoryPath != null ? "" : " (without JRE)"}"
     buildContext.messages.block("Build Linux tar.gz $description") {
-      buildContext.messages.progress("Building Linux tar $description")
-      buildContext.ant.tar(tarfile: tarPath, longfile: "gnu") {
+      buildContext.messages.progress("Building Linux tar.gz $description")
+      buildContext.ant.tar(tarfile: tarPath, longfile: "gnu", compression: "gzip") {
         paths.each {
           tarfileset(dir: it, prefix: tarRoot) {
             exclude(name: "bin/*.sh")
@@ -175,19 +182,15 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
-      String gzPath = "${tarPath}.gz"
-      buildContext.messages.progress("Building Linux tar.gz $description")
-      buildContext.ant.gzip(src: tarPath, zipfile: gzPath)
-      buildContext.ant.delete(file: tarPath)
-      new ProductInfoValidator(buildContext).checkInArchive(gzPath, tarRoot)
-      buildContext.notifyArtifactBuilt(gzPath)
+      new ProductInfoValidator(buildContext).checkInArchive(tarPath, tarRoot)
+      buildContext.notifyArtifactBuilt(tarPath)
     }
   }
 
   private void generateProductJson(String targetDir, String javaExecutablePath) {
     def scriptName = buildContext.productProperties.baseFileName
-    new ProductInfoGenerator(buildContext)
-      .generateProductJson(targetDir, "bin", getFrameClass(buildContext), "bin/${scriptName}.sh", javaExecutablePath, "bin/${scriptName}64.vmoptions", OsFamily.LINUX)
+    new ProductInfoGenerator(buildContext).generateProductJson(
+      targetDir, "bin", getFrameClass(buildContext), "bin/${scriptName}.sh", javaExecutablePath, "bin/${scriptName}64.vmoptions", OsFamily.LINUX)
   }
 
   private void buildSnapPackage(String jreDirectoryPath, String unixDistPath) {
@@ -244,10 +247,14 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           include(name: "bin/fsnotifier*")
           customizer.extraExecutables.each { include(name: it) }
         }
+        fileset(dir: buildContext.paths.distAll){
+          customizer.extraExecutables.each { include(name: it) }
+        }
         fileset(dir: jreDirectoryPath) {
           include(name: "jre64/bin/*")
         }
       }
+
       generateProductJson(unixSnapDistPath, "jre64/bin/java")
       new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistPath, "", [unixSnapDistPath, jreDirectoryPath], [])
 

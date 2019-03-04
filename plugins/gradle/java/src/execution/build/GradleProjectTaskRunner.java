@@ -33,10 +33,13 @@ import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.task.*;
 import com.intellij.task.impl.JpsProjectTaskRunner;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,9 +50,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleBuildSrcProjectsResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
@@ -90,7 +93,8 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
     Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(tasks);
 
-    List<Module> modules = addModulesBuildTasks(taskMap.get(ModuleBuildTask.class), buildTasksMap, initScripts);
+    List<Module> modulesToBuild = addModulesBuildTasks(taskMap.get(ModuleBuildTask.class), buildTasksMap, initScripts);
+    List<Module> modulesOfResourcesToBuild = addModulesBuildTasks(taskMap.get(ModuleResourcesBuildTask.class), buildTasksMap, initScripts);
     // TODO there should be 'gradle' way to build files instead of related modules entirely
     List<Module> modulesOfFiles = addModulesBuildTasks(taskMap.get(ModuleFilesBuildTask.class), buildTasksMap, initScripts);
     addArtifactsBuildTasks(taskMap.get(ProjectModelBuildTask.class), cleanTasksMap, buildTasksMap);
@@ -117,7 +121,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         if (successes + errors == rootPaths.size()) {
           if (!project.isDisposed()) {
             // refresh on output roots is required in order for the order enumerator to see all roots via VFS
-            final List<Module> affectedModules = ContainerUtil.concat(modules, modulesOfFiles);
+            final List<Module> affectedModules = ContainerUtil.concat(modulesToBuild, modulesOfResourcesToBuild, modulesOfFiles);
             // have to refresh in case of errors too, because run configuration may be set to ignore errors
             Collection<String> affectedRoots = ContainerUtil.newHashSet(
               CompilerPathsEx.getOutputPaths(affectedModules.toArray(Module.EMPTY_ARRAY)));
@@ -177,9 +181,10 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
   @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
-    if (!GradleSystemRunningSettings.getInstance().isUseGradleAwareMake()) return false;
     if (projectTask instanceof ModuleBuildTask) {
-      return isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, ((ModuleBuildTask)projectTask).getModule());
+      Module module = ((ModuleBuildTask)projectTask).getModule();
+      if (!GradleSettingsService.isDelegatedBuildEnabled(module)) return false;
+      return isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
     }
     if (projectTask instanceof ProjectModelBuildTask) {
       ProjectModelBuildTask buildTask = (ProjectModelBuildTask)projectTask;
@@ -194,7 +199,8 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       RunProfile runProfile = ((ExecuteRunConfigurationTask)projectTask).getRunProfile();
       if (runProfile instanceof ModuleBasedConfiguration) {
         RunConfigurationModule module = ((ModuleBasedConfiguration)runProfile).getConfigurationModule();
-        if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module.getModule())) {
+        if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module.getModule()) ||
+            !GradleSettingsService.isDelegatedBuildEnabled(module.getModule())) {
           return false;
         }
       }
@@ -232,9 +238,9 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       if (!(projectTask instanceof ModuleBuildTask)) continue;
 
       ModuleBuildTask moduleBuildTask = (ModuleBuildTask)projectTask;
-      Module module = moduleBuildTask.getModule();
-      affectedModules.add(module);
+      collectAffectedModules(affectedModules, moduleBuildTask);
 
+      Module module = moduleBuildTask.getModule();
       final String rootProjectPath = rootPathsMap.get(module);
       if (isEmpty(rootProjectPath)) continue;
 
@@ -253,41 +259,75 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
       String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
       if (gradlePath == null) continue;
-      String taskPrefix = endsWithChar(gradlePath, ':') ? gradlePath : (gradlePath + ':');
+      String taskPathPrefix = endsWithChar(gradlePath, ':') ? gradlePath : (gradlePath + ':');
 
-      List<String> gradleTasks = ContainerUtil.mapNotNull(
+      List<String> gradleModuleTasks = ContainerUtil.mapNotNull(
         findAll(moduleDataNode, ProjectKeys.TASK), node ->
-          node.getData().isInherited() ? null : trimStart(node.getData().getName(), taskPrefix));
+          node.getData().isInherited() ? null : trimStart(node.getData().getName(), taskPathPrefix));
 
       Collection<String> projectInitScripts = initScripts.getModifiable(rootProjectPath);
       Collection<String> buildRootTasks = buildTasksMap.getModifiable(rootProjectPath);
       final String moduleType = getExternalModuleType(module);
 
-      if (!moduleBuildTask.isIncrementalBuild()) {
+      if (!moduleBuildTask.isIncrementalBuild() && !(moduleBuildTask instanceof ModuleFilesBuildTask)) {
         projectInitScripts.add(String.format(FORCE_COMPILE_TASKS_INIT_SCRIPT_TEMPLATE, gradlePath));
       }
       String assembleTask = "assemble";
+      boolean buildOnlyResources = projectTask instanceof ModuleResourcesBuildTask;
+      String buildTaskPrefix = buildOnlyResources ? "process" : "";
+      String buildTaskSuffix = buildOnlyResources ? "resources" : "classes";
       if (GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(moduleType)) {
         String sourceSetName = GradleProjectResolverUtil.getSourceSetName(module);
-        String gradleTask = isEmpty(sourceSetName) || "main".equals(sourceSetName) ? "classes" : sourceSetName + "Classes";
-        if (gradleTasks.contains(gradleTask)) {
-          buildRootTasks.add(taskPrefix + gradleTask);
-        }
-        else if ("main".equals(sourceSetName) || "test".equals(sourceSetName)) {
-          buildRootTasks.add(taskPrefix + assembleTask);
+        String gradleTask = getTaskName(buildTaskPrefix, buildTaskSuffix, sourceSetName);
+        if (!addIfContains(taskPathPrefix, gradleTask, gradleModuleTasks, buildRootTasks) &&
+            ("main".equals(sourceSetName) || "test".equals(sourceSetName))) {
+          buildRootTasks.add(taskPathPrefix + assembleTask);
         }
       }
       else {
-        if (gradleTasks.contains("classes")) {
-          buildRootTasks.add(taskPrefix + "classes");
-          buildRootTasks.add(taskPrefix + "testClasses");
+        String gradleTask = getTaskName(buildTaskPrefix, buildTaskSuffix, null);
+        if (addIfContains(taskPathPrefix, gradleTask, gradleModuleTasks, buildRootTasks)) {
+          String gradleTestTask = getTaskName(buildTaskPrefix, buildTaskSuffix, "test");
+          addIfContains(taskPathPrefix, gradleTestTask, gradleModuleTasks, buildRootTasks);
         }
-        else if (gradleTasks.contains(assembleTask)) {
-          buildRootTasks.add(taskPrefix + assembleTask);
+        else if (gradleModuleTasks.contains(assembleTask)) {
+          buildRootTasks.add(taskPathPrefix + assembleTask);
         }
       }
     }
     return affectedModules;
+  }
+
+  private static void collectAffectedModules(@NotNull List<Module> affectedModules, @NotNull ModuleBuildTask moduleBuildTask) {
+    Module module = moduleBuildTask.getModule();
+    if (moduleBuildTask.isIncludeDependentModules()) {
+      OrderEnumerator enumerator = ModuleRootManager.getInstance(module).orderEntries().recursively();
+      if (!moduleBuildTask.isIncludeRuntimeDependencies()) {
+        enumerator = enumerator.compileOnly();
+      }
+      enumerator.forEachModule(new CommonProcessors.CollectProcessor<>(affectedModules));
+    }
+    else {
+      affectedModules.add(module);
+    }
+  }
+
+  @NotNull
+  private static String getTaskName(@NotNull String taskPrefix, @NotNull String taskSuffix, @Nullable String sourceSetName) {
+    return isEmpty(sourceSetName) || "main".equals(sourceSetName) ?
+           taskPrefix + (taskPrefix.isEmpty() ? taskSuffix : capitalize(taskSuffix)) :
+           taskPrefix + (taskPrefix.isEmpty() ? sourceSetName : capitalize(sourceSetName)) + capitalize(taskSuffix);
+  }
+
+  private static boolean addIfContains(@NotNull String taskPathPrefix,
+                                       @NotNull String gradleTask,
+                                       @NotNull List<String> moduleTasks,
+                                       @NotNull Collection<String> buildRootTasks) {
+    if (moduleTasks.contains(gradleTask)) {
+      buildRootTasks.add(taskPathPrefix + gradleTask);
+      return true;
+    }
+    return false;
   }
 
   private static void addArtifactsBuildTasks(@Nullable Collection<? extends ProjectTask> tasks,

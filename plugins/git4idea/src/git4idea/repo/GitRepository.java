@@ -15,6 +15,7 @@
  */
 package git4idea.repo;
 
+import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
@@ -123,4 +124,7 @@ public interface GitRepository extends Repository {
    */
   @NotNull
   Collection<GitSubmoduleInfo> getSubmodules();
+
+  @NotNull
+  VcsRepositoryIgnoredFilesHolder getIgnoredFilesHolder();
 }

@@ -2,14 +2,39 @@
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.resolveKinds
+import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunner
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCachingReference
-import org.jetbrains.plugins.groovy.lang.resolve.resolveReferenceExpression
+import org.jetbrains.plugins.groovy.lang.resolve.impl.filterByArgumentsCount
+import org.jetbrains.plugins.groovy.lang.resolve.impl.filterBySignature
+import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyRValueProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodProcessor
 
 class GrExplicitMethodCallReference(ref: GrReferenceExpressionImpl) : GroovyCachingReference<GrReferenceExpressionImpl>(ref) {
 
   override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
-    element.referenceName ?: return emptyList()
-    return element.resolveReferenceExpression(incomplete)
+    require(!incomplete)
+    val ref = element
+    val name = ref.referenceName ?: return emptyList()
+    val methodCall = ref.parent as GrMethodCall
+    val arguments = methodCall.getArguments()
+
+    val methodProcessor = MethodProcessor(name, ref, arguments, ref.typeArguments)
+    GrReferenceResolveRunner(ref, methodProcessor).resolveReferenceExpression()
+    methodProcessor.applicableCandidates?.let {
+      return it
+    }
+
+    val propertyProcessor = GroovyRValueProcessor(name, ref, ref.resolveKinds())
+    GrReferenceResolveRunner(ref, propertyProcessor).resolveReferenceExpression()
+    val properties = propertyProcessor.results
+    if (properties.size == 1) {
+      return properties
+    }
+    val methods = filterBySignature(filterByArgumentsCount(methodProcessor.allCandidates, arguments))
+    return methods + properties
   }
 }

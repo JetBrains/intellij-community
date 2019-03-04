@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.exception;
 
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -24,13 +23,6 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 
 public class GroovyThrowFromFinallyBlockInspection extends BaseInspection {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "'throw' inside 'finally' block";
-  }
 
   @Override
   @Nullable

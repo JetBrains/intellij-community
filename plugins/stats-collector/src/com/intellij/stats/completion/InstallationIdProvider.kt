@@ -16,12 +16,13 @@
 
 package com.intellij.stats.completion
 
-import com.intellij.openapi.application.PermanentInstallationID
+import com.intellij.internal.statistic.DeviceIdManager
+
 
 interface InstallationIdProvider {
     fun installationId(): String
 }
 
 class PermanentInstallationIdProvider: InstallationIdProvider {
-    override fun installationId(): String = PermanentInstallationID.get()
+    override fun installationId(): String = DeviceIdManager.getOrGenerateId()
 }

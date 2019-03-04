@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -104,27 +104,28 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   private Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(OpenFileDescriptor openFileDescriptor, boolean focusEditor) {
     VirtualFile file = openFileDescriptor.getFile();
+    boolean isNewEditor = !myVirtualFile2Editor.containsKey(file);
 
     // for non-text editors. uml, etc
     final FileEditorProvider provider = file.getUserData(FileEditorProvider.KEY);
+    Pair<FileEditor[], FileEditorProvider[]> result;
     if (provider != null && provider.accept(getProject(), file)) {
-      return Pair.create(new FileEditor[]{provider.createEditor(getProject(), file)}, new FileEditorProvider[]{provider});
+      result = Pair.create(new FileEditor[]{provider.createEditor(getProject(), file)}, new FileEditorProvider[]{provider});
+    }
+    else {
+      //text editor
+      Editor editor = doOpenTextEditor(openFileDescriptor);
+      final FileEditor fileEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+      final FileEditorProvider fileEditorProvider = getProvider();
+      result = Pair.create(new FileEditor[]{fileEditor}, new FileEditorProvider[]{fileEditorProvider});
     }
 
-    //text editor
-    boolean isNewEditor = !myVirtualFile2Editor.containsKey(openFileDescriptor.getFile());
-    Editor editor = doOpenTextEditor(openFileDescriptor);
-    final FileEditor fileEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-    final FileEditorProvider fileEditorProvider = getProvider();
-    Pair<FileEditor[], FileEditorProvider[]> result = Pair.create(new FileEditor[]{fileEditor}, new FileEditorProvider[]{fileEditorProvider});
-
     modifyTabWell(() -> {
-      myTestEditorSplitter.openAndFocusTab(file, fileEditor, fileEditorProvider);
+      myTestEditorSplitter.openAndFocusTab(file, result.first[0], result.second[0]);
       if (isNewEditor) {
         eventPublisher().fileOpened(this, file);
       }
     });
-
 
     return result;
   }
@@ -343,7 +344,16 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   public FileEditor getSelectedEditor(@NotNull VirtualFile file) {
     final Editor editor = getEditor(file);
-    return editor == null ? null : TextEditorProvider.getInstance().getTextEditor(editor);
+    if (editor != null) {
+      return TextEditorProvider.getInstance().getTextEditor(editor);
+    }
+
+    Pair<FileEditor, FileEditorProvider> editorAndProvider = myTestEditorSplitter.getEditorAndProvider(file);
+    if (editorAndProvider != null) {
+      return editorAndProvider.first;
+    }
+
+    return null;
   }
 
   @Override
@@ -478,6 +488,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
       myVirtualFile2Editor.put(file, editor);
     }
 
+    editor.getSelectionModel().removeSelection();
     descriptor.navigateIn(editor);
     myActiveFile = file;
 

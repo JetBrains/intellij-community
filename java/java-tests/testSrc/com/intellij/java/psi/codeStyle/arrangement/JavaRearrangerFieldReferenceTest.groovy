@@ -16,10 +16,12 @@
 package com.intellij.java.psi.codeStyle.arrangement
 
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
+import groovy.transform.CompileStatic
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*
 
+@CompileStatic
 class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest {
 
   private List<StdArrangementMatchRule> defaultFieldsArrangement = [

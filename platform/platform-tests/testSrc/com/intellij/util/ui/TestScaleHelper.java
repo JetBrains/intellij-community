@@ -36,17 +36,20 @@ public class TestScaleHelper {
   private static final Map<String, String> originalRegProps = new HashMap<>();
 
   private static float originalUserScale;
+  private static float originalSysScale;
   private static boolean originalJreHiDPIEnabled;
 
   @BeforeClass
   public static void setState() {
     originalUserScale = JBUI.scale(1f);
+    originalSysScale = JBUI.sysScale();
     originalJreHiDPIEnabled = UIUtil.isJreHiDPIEnabled();
   }
 
   @AfterClass
   public static void restoreState() {
     JBUI.setUserScaleFactor(originalUserScale);
+    JBUI.setSystemScaleFactor(originalSysScale);
     overrideJreHiDPIEnabled(originalJreHiDPIEnabled);
     restoreRegistryProperties();
     restoreSystemProperties();

@@ -16,20 +16,37 @@
 package org.jetbrains.jps.gant;
 
 import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.BuildListener;
+import org.apache.tools.ant.DefaultLogger;
 import org.codehaus.gant.ant.Gant;
 
+import java.io.PrintStream;
 import java.lang.reflect.Field;
 
 /**
  * @author nik
  */
 public class GantWithClasspathTask extends Gant {
+  public static PrintStream out = null;
+
   @Override
   public void execute() throws BuildException {
     ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
     try {
       ClassLoader loader = getClass().getClassLoader();
       Thread.currentThread().setContextClassLoader(loader);
+      for (BuildListener listener : this.getProject().getBuildListeners()) {
+        if (listener instanceof DefaultLogger) {
+          try {
+            Field field = DefaultLogger.class.getDeclaredField("out");
+            field.setAccessible(true);
+            out = (PrintStream)field.get(listener);
+            break;
+          }
+          catch (Exception ignored) {
+          }
+        }
+      }
       try {
         Field field = Gant.class.getDeclaredField("file");
         field.setAccessible(true);

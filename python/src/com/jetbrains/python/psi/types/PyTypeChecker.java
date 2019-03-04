@@ -862,7 +862,11 @@ public class PyTypeChecker {
       return true;
     }
     if (type instanceof PyGenericType) {
-      return ((PyGenericType)type).isDefinition();
+      if (((PyGenericType)type).isDefinition()) {
+        return true;
+      }
+
+      return isCallable(((PyGenericType)type).getBound());
     }
     return false;
   }

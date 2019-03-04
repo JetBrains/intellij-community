@@ -32,11 +32,13 @@ public class ExternalSystemEditTaskDialog extends DialogWrapper {
   @NotNull private final ExternalSystemTaskExecutionSettings myTaskExecutionSettings;
   @NotNull private final ExternalSystemTaskSettingsControl myControl;
   @Nullable private JComponent contentPane;
+  @NotNull private final Project myProject;
 
   public ExternalSystemEditTaskDialog(@NotNull Project project,
                                       @NotNull ExternalSystemTaskExecutionSettings taskExecutionSettings,
                                       @NotNull ProjectSystemId externalSystemId) {
     super(project, true);
+    myProject = project;
     myTaskExecutionSettings = taskExecutionSettings;
 
     setTitle(ExternalSystemBundle.message("tasks.edit.task.title", externalSystemId.getReadableName()));
@@ -51,7 +53,7 @@ public class ExternalSystemEditTaskDialog extends DialogWrapper {
     if (contentPane == null) {
       contentPane = new PaintAwarePanel(new GridBagLayout());
       myControl.fillUi((PaintAwarePanel)contentPane, 0);
-      myControl.reset();
+      myControl.reset(myProject);
     }
     return contentPane;
   }

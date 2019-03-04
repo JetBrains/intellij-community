@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
@@ -14,7 +14,10 @@ import org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
+import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureDescriptor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
+
+import java.util.function.Consumer;
 
 /**
  * @author Maxim.Medvedev
@@ -56,6 +59,9 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
         }
         return true;
       }
+
+      @Override
+      public void consumeClosureDescriptors(GroovyClassDescriptor descriptor, Consumer<? super ClosureDescriptor> consumer) {}
     });
   }
 }

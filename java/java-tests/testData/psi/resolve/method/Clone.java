@@ -10,7 +10,7 @@ class Z{
     Object clone() {
       C c = new C();
       ((A) c).clone();
-      ((B) c).<ref>clone();
+      ((B) c).<caret>clone();
       return c.clone();
     }
   }

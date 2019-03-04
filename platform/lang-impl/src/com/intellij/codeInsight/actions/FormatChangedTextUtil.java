@@ -22,7 +22,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,9 +149,9 @@ public class FormatChangedTextUtil {
   @NotNull
   public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
                                                            @NotNull Change[] changes,
-                                                           @NotNull Convertor<? super VirtualFile, ? extends List<T>> elementsConvertor) {
+                                                           @NotNull java.util.function.Function<? super VirtualFile, ? extends List<T>> elementsConvertor) {
     return Arrays.stream(changes).map(Change::getVirtualFile).filter(Objects::nonNull)
-                 .flatMap(file -> elementsConvertor.convert(file).stream()).filter(Objects::nonNull)
+                 .flatMap(file -> elementsConvertor.apply(file).stream()).filter(Objects::nonNull)
                  .collect(Collectors.toList());
   }
 

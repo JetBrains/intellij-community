@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors
 
 import com.intellij.psi.PsiElement
@@ -9,10 +9,7 @@ import com.intellij.psi.scope.ProcessorWithHints
 import com.intellij.util.enumMapOf
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
-import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.resolve.getName
-import org.jetbrains.plugins.groovy.lang.resolve.getResolveKind
-import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
+import org.jetbrains.plugins.groovy.lang.resolve.*
 
 open class KindsResolverProcessor(
   protected val name: String,
@@ -42,27 +39,18 @@ open class KindsResolverProcessor(
     val elementName = getName(state, element)
     if (name != elementName) return true
 
-    val kind = requireNotNull(getResolveKind(element)) {
-      "Unknown kind. ${elementInfo(element)}"
+    val kind = getResolveKind(element)
+    if (kind == null) {
+      log.warn("Unknown kind. ${elementInfo(element)}")
     }
-
-    if (state[sorryCannotKnowElementKind] == true) {
-      if (kind !in kinds) {
-        // return without exception
-        return true
+    else if (kind !in kinds) {
+      if (state[sorryCannotKnowElementKind] != true) {
+        log.error("Unneeded kind: $kind. ${elementInfo(element)}")
       }
     }
-    else {
-      require(kind in kinds) {
-        "Unneeded kind: $kind. ${elementInfo(element)}"
-      }
+    else if (kind !in candidates) {
+      candidates[kind] = BaseGroovyResolveResult(element, place, state)
     }
-
-    if (kind in candidates) {
-      return true
-    }
-
-    candidates[kind] = BaseGroovyResolveResult(element, place, state)
     return true
   }
 

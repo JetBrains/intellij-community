@@ -39,6 +39,7 @@ class Test {
   final String myFoo13 = null;
   final Runnable myFoo14 = new Runnable() {
     {foo();}
+    @Nullable
     Object foo() {
       return null;
     }

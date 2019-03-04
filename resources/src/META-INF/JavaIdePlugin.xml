@@ -18,10 +18,111 @@
   <name>IDEA CORE</name>
 
   <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/idea/RichPlatformPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <module value="com.intellij.modules.java"/>
   <module value="com.intellij.modules.all"/>
+  <module value="com.intellij.modules.platform"/>
+  <module value="com.intellij.modules.lang"/>
+  <module value="com.intellij.modules.vcs"/>
+  <module value="com.intellij.modules.xdebugger"/>
+  <module value="com.intellij.modules.xml"/>
+  <module value="com.intellij.modules.externalSystem"/>
+
+  <xi:include href="/componentSets/IdeaComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <extensionPoints>
+    <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+    <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+    <xi:include href="/META-INF/LangExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+    <xi:include href="/META-INF/ExternalSystemExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <xi:include href="/META-INF/PlatformExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+    <xi:include href="/META-INF/LangExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+    <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+    <xi:include href="/META-INF/ExternalSystemExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+  </extensions>
+
+  <actions>
+    <group id="LookupActions">
+      <!-- these must be declared before standard EnterAction and TabAction -->
+      <action id="EditorChooseLookupItem" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$FocusedOnly"/>
+      <action id="EditorChooseLookupItemReplace" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$Replacing"/>
+      <action id="EditorChooseLookupItemCompleteStatement"
+              class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$CompletingStatement"
+              use-shortcut-of="EditorCompleteStatement"/>
+      <action id="EditorChooseLookupItemDot" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$ChooseWithDot"/>
+
+      <action id="ExpandLiveTemplateByTab" class="com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateByTabAction"/>
+      <action id="ExpandLiveTemplateCustom" class="com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateCustomAction"/>
+
+      <action id="NextTemplateVariable" class="com.intellij.codeInsight.template.impl.actions.NextVariableAction"/>
+      <action id="PreviousTemplateVariable" class="com.intellij.codeInsight.template.impl.actions.PreviousVariableAction"/>
+
+      <action id="NextParameter" class="com.intellij.codeInsight.hint.actions.NextParameterAction"/>
+      <action id="PrevParameter" class="com.intellij.codeInsight.hint.actions.PrevParameterAction"/>
+    </group>
+
+    <action id="EditorIndentSelection" class="com.intellij.openapi.editor.actions.LangIndentSelectionAction"/>
+
+    <action id="EditorLookupUp" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpAction"/>
+    <action id="EditorLookupDown" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownAction"/>
+  </actions>
+  <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/idea/VcsActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/idea/ExternalSystemActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <xi:include href="/META-INF/xdebugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/RemoteServers.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/RemoteServersJava.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/vcs-log.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/vcs-log-graph.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/DesignerCorePlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/dvcs.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+
+  <xi:include href="/META-INF/XmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/JsonPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/RegExpPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/ImagesPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/SpellCheckerPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+
+  <xi:include href="/META-INF/built-in-server.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <actions>
+    <group id="InspectCodeGroup" text="Inspect Code Actions">
+      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
+      <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
+      <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction"/>
+      <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction"/>
+      <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
+      <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
+    </group>
+    <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction"/>
+  </actions>
+
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
   <xi:include href="/META-INF/JavaAnalysisPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JvmAnalysisPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaIndexingPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -57,6 +158,13 @@
   </application-components>
 
   <project-components>
+    <component>
+      <implementation-class>com.intellij.framework.detection.impl.FrameworkDetectionManager</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.ide.impl.convert.ProjectFileVersion</interface-class>
+      <implementation-class>com.intellij.ide.impl.convert.ProjectFileVersionImpl</implementation-class>
+    </component>
 
     <component>
       <implementation-class>com.intellij.execution.testDiscovery.TestDiscoveryIndex</implementation-class>
@@ -76,6 +184,72 @@
   </project-components>
 
   <extensionPoints>
+
+    <extensionPoint name="antBuildGen"
+                    interface="com.intellij.compiler.ant.ChunkBuildExtension"/>
+
+    <extensionPoint name="antCustomCompiler"
+                    interface="com.intellij.compiler.ant.ChunkCustomCompilerExtension"/>
+
+    <extensionPoint name="compiler.buildTargetScopeProvider"
+                    interface="com.intellij.compiler.impl.BuildTargetScopeProvider"/>
+
+    <extensionPoint name="compiler.optionsManager"
+                    interface="com.intellij.compiler.options.CompilerOptionsFilter"/>
+
+    <extensionPoint name="java.programPatcher"
+                    interface="com.intellij.execution.runners.JavaProgramPatcher"/>
+
+    <extensionPoint name="OrderRootTypeUI"
+                    beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean">
+      <with attribute="implementationClass" implements="com.intellij.openapi.roots.ui.OrderRootTypeUIFactory"/>
+    </extensionPoint>
+
+    <extensionPoint name="packaging.elementType" interface="com.intellij.packaging.elements.PackagingElementType"/>
+    <extensionPoint name="packaging.artifactPropertiesProvider" interface="com.intellij.packaging.artifacts.ArtifactPropertiesProvider"/>
+    <extensionPoint name="packaging.sourceItemProvider" interface="com.intellij.packaging.ui.PackagingSourceItemsProvider"/>
+    <extensionPoint name="packaging.sourceItemFilter" interface="com.intellij.packaging.ui.PackagingSourceItemFilter"/>
+    <extensionPoint name="packaging.artifactType" interface="com.intellij.packaging.artifacts.ArtifactType"/>
+
+    <extensionPoint name="frameworkSupport" interface="com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider"/>
+    <extensionPoint name="frameworkSupportCommunicator"
+                    interface="com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator"/>
+
+    <!--new project wizard-->
+    <extensionPoint name="projectWizard.projectCategory" interface="com.intellij.ide.projectWizard.ProjectCategory"/>
+    <extensionPoint name="projectImportProvider" interface="com.intellij.projectImport.ProjectImportProvider"/>
+    <extensionPoint name="projectImportBuilder" interface="com.intellij.projectImport.ProjectImportBuilder"/>
+    <extensionPoint name="projectStructureDetector" interface="com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector"/>
+
+    <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.lang.WordCompletionElementFilter"/>
+    </extensionPoint>
+
+    <extensionPoint name="projectStructureConfigurableFilter"
+                    interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter"/>
+    <extensionPoint name="projectStructureConfigurableAdder"
+                    interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableContributor"/>
+
+    <extensionPoint name="compiler" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.Compiler"/>
+    <extensionPoint name="compilerFactory" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.CompilerFactory"/>
+    <extensionPoint name="compiler.task" area="IDEA_PROJECT" beanClass="com.intellij.compiler.CompileTaskBean"/>
+    <extensionPoint name="compilerSettingsFactory" area="IDEA_PROJECT" interface="com.intellij.compiler.CompilerSettingsFactory"/>
+    <extensionPoint name="compileServer.plugin" beanClass="com.intellij.compiler.server.CompileServerPlugin"/>
+    <extensionPoint name="buildProcess.parametersProvider" area="IDEA_PROJECT"
+                    interface="com.intellij.compiler.server.BuildProcessParametersProvider"/>
+
+    <extensionPoint name="attachSourcesProvider" interface="com.intellij.codeInsight.AttachSourcesProvider"/>
+
+    <extensionPoint name="java.compiler" area="IDEA_PROJECT"
+                    interface="com.intellij.compiler.impl.javaCompiler.BackendCompiler"/>
+
+    <extensionPoint name="configuration.ModuleStructureExtension"
+                    interface="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureExtension"/>
+
+    <extensionPoint name="projectStructureValidator"
+                    interface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator"/>
+
+    <extensionPoint name="compiler.updateResourcesBuildContributor" interface="com.intellij.compiler.impl.UpdateResourcesBuildContributor"/>
 
     <extensionPoint name="junitPatcher"
                     interface="com.intellij.execution.JUnitPatcher"/>
@@ -145,13 +319,286 @@
 
     <!--<extensionPoint name="expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
 
-    <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
-
     <extensionPoint name="library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector"/>
 
   </extensionPoints>
 
+  <extensions defaultExtensionNs="org.jetbrains">
+    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.ArtifactWebServerRootsProvider" order="last"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij">
+
+    <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
+
+    <appStarter implementation="com.intellij.compiler.ant.GenerateAntMain"/>
+
+    <renameHandler implementation="com.intellij.ide.projectView.impl.RenameModuleHandler"/>
+    <renameHandler implementation="com.intellij.openapi.roots.impl.libraries.RenameLibraryHandler"/>
+
+    <packaging.sourceItemProvider
+        implementation="com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ModulesAndLibrariesSourceItemsProvider"/>
+    <packaging.sourceItemProvider
+        implementation="com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ArtifactsSourceItemsProvider"/>
+    <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.JarArtifactType" order="first"/>
+    <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.PlainArtifactType" order="last"/>
+    <compiler.buildTargetScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactBuildTargetScopeProvider"/>
+    <compiler implementation="com.intellij.packaging.impl.compiler.ArtifactsCompiler" id="artifactsCompiler"/>
+
+    <projectTaskRunner implementation="com.intellij.task.impl.JpsProjectTaskRunner" id="jps" order="last"/>
+
+    <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
+
+    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
+                        serviceImplementation="com.intellij.ide.RecentProjectsManagerBase"/>
+
+    <applicationService serviceInterface="com.intellij.util.descriptors.ConfigFileFactory"
+                        serviceImplementation="com.intellij.util.descriptors.impl.ConfigFileFactoryImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory"
+                        serviceImplementation="com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.ide.util.projectWizard.ProjectWizardStepFactory"
+                        serviceImplementation="com.intellij.ide.util.projectWizard.ProjectWizardStepFactoryImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.deployment.DeploymentUtil"
+                        serviceImplementation="com.intellij.openapi.deployment.DeploymentUtilImpl"/>
+    <applicationService serviceInterface="com.intellij.compiler.ant.BuildTargetsFactory"
+                        serviceImplementation="com.intellij.compiler.ant.BuildTargetsFactoryImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibrariesHelper"
+                        serviceImplementation="com.intellij.openapi.roots.libraries.LibrariesHelperImpl"/>
+
+    <projectService serviceInterface="com.intellij.facet.impl.ui.FacetEditorsStateManager"
+                    serviceImplementation="com.intellij.facet.impl.ui.FacetEditorsStateManagerImpl"/>
+
+    <applicationService serviceInterface="com.intellij.facet.ui.FacetEditorsFactory"
+                        serviceImplementation="com.intellij.facet.impl.ui.FacetEditorsFactoryImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
+                        serviceImplementation="com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl"/>
+    <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
+
+
+    <applicationService serviceInterface="com.intellij.execution.runners.ProcessProxyFactory"
+                        serviceImplementation="com.intellij.execution.runners.ProcessProxyFactoryImpl"/>
+
+    <applicationService serviceImplementation="com.intellij.debugger.settings.NodeRendererSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.ViewsGeneralSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
+    <projectService serviceImplementation="com.intellij.debugger.settings.DebuggerProjectSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.TraceSettings"/>
+
+    <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
+                        serviceImplementation="com.intellij.packaging.impl.elements.PackagingElementFactoryImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.ui.OrderEntryAppearanceService"
+                        serviceImplementation="com.intellij.openapi.roots.ui.OrderEntryAppearanceServiceImpl"/>
+
+    <projectService serviceInterface="com.intellij.packaging.artifacts.ArtifactPointerManager"
+                    serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl"/>
+    <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder"
+                    serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinderImpl"/>
+    <applicationService serviceImplementation="com.intellij.packaging.impl.artifacts.InvalidArtifactType"/>
+
+    <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
+                    serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.openapi.compiler.CompilerManager"
+                    serviceImplementation="com.intellij.compiler.CompilerManagerImpl"/>
+    <projectService serviceInterface="com.intellij.compiler.options.ValidationConfiguration"
+                    serviceImplementation="com.intellij.compiler.options.ValidationConfiguration"/>
+    <projectService serviceInterface="com.intellij.compiler.options.ValidationConfiguration$ExcludedFromValidationConfiguration"
+                    serviceImplementation="com.intellij.compiler.options.ValidationConfiguration$ExcludedFromValidationConfiguration"/>
+    <projectService serviceInterface="com.intellij.compiler.CompilerEncodingService"
+                    serviceImplementation="com.intellij.compiler.impl.CompilerEncodingServiceImpl"/>
+
+    <projectService serviceInterface="com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings"
+                    serviceImplementation="com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings"/>
+
+    <projectService serviceInterface="com.intellij.compiler.CompilerWorkspaceConfiguration"
+                    serviceImplementation="com.intellij.compiler.CompilerWorkspaceConfiguration"/>
+
+    <changesGroupingPolicy key="module" id="module"
+                           implementationClass="com.intellij.openapi.vcs.changes.ui.ModuleChangesGroupingPolicy$Factory"/>
+
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
+                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexFacade"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsPathPresenter"/>
+
+    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"
+                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"/>
+    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"
+                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"/>
+    <projectService serviceInterface="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"
+                    serviceImplementation="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"/>
+    <pathMacroFilter implementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfigurationMacroFilter"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager"
+                        serviceImplementation="com.intellij.openapi.roots.ui.configuration.libraries.impl.LibraryPresentationManagerImpl"/>
+    <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
+
+    <daemon.highlightInfoFilter implementation="com.intellij.debugger.engine.evaluation.DebuggerHighlightFilter"/>
+    <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>
+
+    <!-- Project Configurables -->
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable"/>
+
+    <!-- Errors -->
+    <!-- Show full error options configurable only in full IDEA - platform supports only default IDE profile for now -->
+    <projectConfigurable groupId="editor" groupWeight="160" displayName="Inspections" id="Errors"
+                         provider="com.intellij.profile.codeInspection.ui.ErrorsConfigurableProviderImpl"/>
+
+    <!-- Compiler -->
+    <projectConfigurable groupId="build" groupWeight="130" instance="com.intellij.compiler.options.CompilerConfigurable"
+                         id="project.propCompiler" order="after project"
+                         key="compiler.configurable.display.name" bundle="messages.CompilerBundle"
+                         childrenEPName="com.intellij.compilerSettingsFactory">
+      <configurable instance="com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable"
+                    id="reference.projectsettings.compiler.excludes"
+                    displayName="Excludes"/>
+      <configurable instance="com.intellij.compiler.options.JavaCompilersTab" id="reference.projectsettings.compiler.javacompiler"
+                    key="java.compiler.description" bundle="messages.CompilerBundle"/>
+      <configurable instance="com.intellij.compiler.options.AnnotationProcessorsConfigurable"
+                    id="reference.projectsettings.compiler.annotationProcessors" displayName="Annotation Processors"/>
+      <configurable instance="com.intellij.compiler.options.ValidationConfigurable" id="project.validation" key="validation.display.name"
+                    bundle="messages.CompilerBundle"/>
+      <configurable instance="com.intellij.compiler.options.RmicConfigurable" id="reference.projectsettings.compiler.rmicompiler"
+                    key="rmi.compiler.description" bundle="messages.CompilerBundle"/>
+    </projectConfigurable>
+
+    <projectConfigurable groupId="language" instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable"
+                         id="Template Data Languages" key="template.data.language.configurable" bundle="messages.LangBundle"
+                         nonDefaultProject="true"/>
+
+    <!-- Scopes -->
+    <projectConfigurable groupId="appearance" groupWeight="111" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable"
+                         id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle"/>
+
+    <!-- Application Configurables -->
+
+    <!-- Path Variables -->
+    <!-- the implementation of this configurable is in intellij.platform.ide.impl but it's not registered in platform because
+         it's only required in full IDEA -->
+    <applicationConfigurable groupId="appearance" groupWeight="-10"
+                             instance="com.intellij.application.options.pathMacros.PathMacroConfigurable" id="preferences.pathVariables"
+                             key="title.path.variables" bundle="messages.ApplicationBundle"/>
+
+    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
+    <editorNotificationProviderApp implementation="com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider"/>
+    <editorNotificationProviderApp implementation="com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider"/>
+    <projectSdkSetupValidator id="javaSdk" implementation="com.intellij.codeInsight.daemon.impl.JavaProjectSdkSetupValidator"/>
+    <editorNotificationProviderApp implementation="com.intellij.debugger.ui.AlternativeSourceNotificationProvider"/>
+
+    <attachSourcesProvider implementation="com.intellij.jarFinder.InternetAttachSourceProvider"/>
+    <attachSourcesProvider implementation="com.intellij.jarFinder.IvyAttachSourceProvider"/>
+
+    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.NewProjectCheckoutListener" order="last"/>
+    <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.RegisterMappingCheckoutListener"/>
+
+    <!-- new project wizard -->
+    <projectImportProvider implementation="com.intellij.ide.util.projectWizard.ModuleImportProvider"/>
+    <projectImportProvider implementation="com.intellij.ide.util.projectWizard.ImportFromSourcesProvider"/>
+
+    <projectStructureDetector implementation="com.intellij.ide.util.projectWizard.importSources.DefaultProjectStructureDetector"
+                              order="last"/>
+
+    <projectTemplatesFactory implementation="com.intellij.platform.templates.ArchivedTemplatesFactory"/>
+    <!--
+    <projectTemplatesFactory implementation="com.intellij.platform.templates.RemoteTemplatesFactory"/>
+    -->
+    <applicationService serviceInterface="com.intellij.platform.templates.ProjectTemplateExportable"
+                        serviceImplementation="com.intellij.platform.templates.ProjectTemplateExportable"/>
+    <exportable serviceInterface="com.intellij.platform.templates.ProjectTemplateExportable"/>
+    <projectTemplateFileProcessor implementation="com.intellij.platform.templates.SystemFileProcessor"/>
+
+    <applicationService serviceImplementation="com.intellij.ide.util.newProjectWizard.SelectTemplateSettings"/>
+
+    <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.ProjectBaseDirNavigationContributor"/>
+
+    <consoleFilterProvider implementation="com.intellij.execution.filters.DefaultConsoleFiltersProvider"/>
+
+    <selectInTarget implementation="com.intellij.ide.impl.ProjectStructureSelectInTarget"/>
+
+    <OrderRootTypeUI key="JAVADOC"
+                     implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.JavadocOrderRootTypeUIFactory"/>
+    <OrderRootTypeUI key="ANNOTATIONS"
+                     implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.AnnotationsOrderRootTypeUIFactory"/>
+    <OrderRootTypeUI key="NATIVE"
+                     implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.NativeLibraryOrderRootTypeUIFactory"/>
+    <OrderRootTypeUI key="CLASSES"
+                     implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.ClassesOrderRootTypeUIFactory"/>
+    <OrderRootTypeUI key="SOURCES"
+                     implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.SourcesOrderRootTypeUIFactory"/>
+    <OrderRootTypeUI key="DOCUMENTATION"
+                     implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.DocumentationOrderRootTypeUIFactory"/>
+
+    <moduleConfigurationEditorProvider implementation="com.intellij.openapi.roots.ui.configuration.DefaultModuleEditorsProvider"
+                                       order="first"/>
+
+    <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
+
+    <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
+
+    <moduleExtension implementation="com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl"/>
+
+    <orderRootType implementation="com.intellij.openapi.roots.NativeLibraryOrderRootType"/>
+
+    <codeUsageScopeOptimizer implementation="com.intellij.compiler.JavaCompilerReferencesCodeUsageScopeOptimizer"/>
+
+
+    <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRun" id="compileBeforeRun"/>
+    <stepsBeforeRunProvider implementation="com.intellij.compiler.options.MakeProjectStepBeforeRun" id="makeProjectBeforeRun"/>
+    <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck"
+                            id="compileBeforeRunNoErrorCheck" order="after compileBeforeRun"/>
+    <stepsBeforeRunProvider implementation="com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider"
+                            order="after compileBeforeRunNoErrorCheck"/>
+    <externalSystem.beforeRunTaskImporter implementation="com.intellij.compiler.options.CompileStepBeforeRunImporter"/>
+    <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
+    <programRunner implementation="com.intellij.execution.runners.DefaultRunProgramRunner" order="last"/>
+
+    <checkinHandlerFactory implementation="com.intellij.compiler.impl.vcs.UnloadedModulesCompilationCheckinHandler$Factory"/>
+
+    <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.impl.ImportPopupHectorComponentProvider"/>
+
+
+    <usageFilteringRuleProvider implementation="com.intellij.usages.impl.ImportUsageFilteringRuleProvider"/>
+    <applicationService serviceImplementation="com.intellij.usages.impl.ImportFilteringUsageViewSetting"/>
+
+    <!-- this depends on TemplateLanguageConfigurable which isn't registered in LangExtensions, so it should go here as well -->
+    <errorQuickFixProvider implementation="com.intellij.psi.templateLanguages.TemplateLanguageErrorQuickFixProvider"/>
+
+    <fileTypeFactory implementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory"/>
+    <applicationService serviceInterface="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"
+                        serviceImplementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"/>
+    <projectService serviceInterface="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager"
+                    serviceImplementation="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
+                        serviceImplementation="com.intellij.openapi.roots.IdeaModifiableModelsProvider"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettings"
+                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettingsImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettings"
+                        serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.GlobalProjectStructureProblemsSettings"/>
+    <moduleRendererFactory implementation="com.intellij.ide.util.DefaultModuleRendererFactory" order="last"/>
+    <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaResourceRootEditHandler"/>
+    <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaTestResourceRootEditHandler"/>
+
+    <buildProcess.parametersProvider implementation="com.intellij.compiler.CompilerReferenceIndexBuildParametersProvider"/>
+
+    <editorActionHandler action="EditorChooseLookupItemReplace"
+                         implementationClass="com.intellij.codeInsight.hint.NextParameterAfterCompletionHandler"/>
+
+    <compiler.updateResourcesBuildContributor implementation="com.intellij.compiler.impl.JavaResourcesBuildContributor"/>
+
     <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
                         serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
                         overrides="true"/>
@@ -161,7 +608,7 @@
 
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
 
-    <editorNotificationProvider implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
+    <editorNotificationProviderApp implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
 
     <applicationService serviceInterface="com.intellij.debugger.engine.DebuggerUtils"
                         serviceImplementation="com.intellij.debugger.impl.DebuggerUtilsImpl"/>
@@ -223,8 +670,9 @@
     <stacktrace.fold substring="at java.util.stream.AbstractPipeline.wrapAndCopyInto("/>
     <stacktrace.fold substring="at java.util.stream.ReduceOps$"/>
 
-    <stacktrace.fold substring="at java.lang.reflect.Method.invoke("/>
-    <stacktrace.fold substring="at java.lang.reflect.Constructor.newInstance("/>
+    <stacktrace.fold substring="java.lang.reflect.Method.invoke("/>
+    <stacktrace.fold substring="java.lang.reflect.Constructor.newInstance("/>
+    <stacktrace.fold substring="at java.base/jdk.internal"/>
     <stacktrace.fold substring="at sun.reflect."/>
     <stacktrace.fold substring="at java.rmi."/>
     <stacktrace.fold substring="at sun.rmi."/>
@@ -271,7 +719,7 @@
     <internalFileTemplate name="package-info"/>
     <internalFileTemplate name="module-info"/>
 
-    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyJavaFilesOrPackages"/>
+    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyFilesOrDirectories"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtil"
                         serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
@@ -383,7 +831,8 @@
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaIndentHelper"
                         overrides="true"/>
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
-                        serviceImplementation="com.intellij.openapi.module.impl.JavaAwareModuleTypeManagerImpl"/>
+                        serviceImplementation="com.intellij.openapi.module.impl.JavaAwareModuleTypeManagerImpl"
+                        overrides="true"/>
     <projectService serviceInterface="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"
                     serviceImplementation="com.intellij.ide.projectView.impl.JavaProjectViewDirectoryHelper"/>
     <projectService serviceInterface="com.intellij.usages.impl.rules.DirectoryGroupingRule"
@@ -397,6 +846,46 @@
   </extensions>
 
   <actions>
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
+
+    <group id="OpenProjectGroup">
+      <group id="NewElementInMenuGroup" class="com.intellij.ide.actions.NewActionGroup" text="New" popup="true"/>
+      <add-to-group group-id="FileOpenGroup" anchor="first"/>
+    </group>
+
+    <group>
+      <group id="MarkSourceRootGroup" class="com.intellij.ide.projectView.actions.MarkSourceRootActionGroup"/>
+      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
+      <action id="MarkAsContentRoot" class="com.intellij.ide.projectView.actions.MarkAsContentRootAction"/>
+      <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
+      <add-to-group group-id="MarkRootGroup"/>
+    </group>
+
+    <group id="MarkGeneratedSourceRootGroup">
+      <action id="MarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.MarkGeneratedSourceRootAction"/>
+      <action id="UnmarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.UnmarkGeneratedSourceRootAction"/>
+      <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRootGroup"/>
+    </group>
+
+    <group id="WelcomeScreen.QuickStart.IDEA">
+      <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"
+              icon="AllIcons.Welcome.CreateNewProject"/>
+      <action id="WelcomeScreen.ImportProject" class="com.intellij.ide.actions.ImportProjectAction"
+              icon="AllIcons.ToolbarDecorator.Import"/>
+      <action id="WelcomeScreen.OpenProject" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.Menu_open"/>
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+    </group>
+
+    <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
+            icon="AllIcons.RunConfigurations.RerunFailedTests"/>
+
+    <group>
+      <action class="com.intellij.platform.templates.SaveProjectAsTemplateAction" text="Save Project as Template..."/>
+      <action id="ManageProjectTemplates" class="com.intellij.platform.templates.ManageProjectTemplatesAction"
+              text="Manage Project Templates..."/>
+      <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
+    </group>
+
     <action id="ShowProjectStructureSettings" class="com.intellij.ide.actions.ShowStructureSettingsAction"
             icon="AllIcons.General.ProjectStructure">
       <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>

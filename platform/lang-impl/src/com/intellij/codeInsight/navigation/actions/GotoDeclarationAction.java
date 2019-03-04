@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
@@ -86,13 +87,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
           }
 
           //disable 'no declaration found' notification for keywords
-          final PsiElement elementAtCaret = file.findElementAt(offset);
-          if (elementAtCaret != null) {
-            final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(elementAtCaret.getLanguage());
-            if (namesValidator != null && namesValidator.isKeyword(elementAtCaret.getText(), project)) {
-              return;
-            }
-          }
+          if (isKeywordUnderCaret(project, file, offset)) return;
         }
         chooseAmbiguousTarget(editor, offset, elements, file);
         return;
@@ -269,7 +264,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   @Nullable
-  public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
+  static PsiElement[] findTargetElementsFromProviders(@NotNull Project project, @NotNull Editor editor, int offset) {
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
@@ -278,14 +273,18 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     for (GotoDeclarationHandler handler : GotoDeclarationHandler.EP_NAME.getExtensionList()) {
       PsiElement[] result = handler.getGotoDeclarationTargets(elementAt, offset, editor);
       if (result != null && result.length > 0) {
-        for (PsiElement element : result) {
-          if (element == null) {
-            LOG.error("Null target element is returned by " + handler.getClass().getName());
-            return null;
-          }
-        }
-        return result;
+        return assertNotNullElements(result, handler.getClass()) ? result : null;
       }
+    }
+
+    return PsiElement.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
+    PsiElement[] fromProviders = findTargetElementsFromProviders(project, editor, offset);
+    if (fromProviders == null || fromProviders.length > 0) {
+      return fromProviders;
     }
 
     int flags = TargetElementUtil.getInstance().getAllAccepted() & ~TargetElementUtil.ELEMENT_NAME_ACCEPTED;
@@ -333,5 +332,24 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
 
     super.update(event);
+  }
+
+  static boolean isKeywordUnderCaret(@NotNull Project project, @NotNull PsiFile file, int offset) {
+    final PsiElement elementAtCaret = file.findElementAt(offset);
+    if (elementAtCaret == null) return false;
+    final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(elementAtCaret.getLanguage());
+    return namesValidator != null && namesValidator.isKeyword(elementAtCaret.getText(), project);
+  }
+
+  private static boolean assertNotNullElements(@NotNull PsiElement[] result, Class<?> clazz) {
+    for (PsiElement element : result) {
+      if (element == null) {
+        PluginException.logPluginError(LOG,
+          "Null target element is returned by 'getGotoDeclarationTargets' in " + clazz.getName(), null, clazz
+        );
+        return false;
+      }
+    }
+    return true;
   }
 }

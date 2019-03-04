@@ -66,7 +66,8 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
     myFilePointer = VirtualFilePointerManager.getInstance().duplicate(filePointer,this, getRootModel().getRootsChangedListener());
   }
 
-  private static String getUrlFrom(Element element) throws InvalidDataException {
+  @NotNull
+  private static String getUrlFrom(@NotNull Element element) throws InvalidDataException {
     String url = element.getAttributeValue(URL_ATTRIBUTE);
     if (url == null) throw new InvalidDataException();
     return url;
@@ -86,7 +87,7 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
     return myContentEntry;
   }
 
-  protected void writeFolder(Element element, String elementName) {
+  protected void writeFolder(@NotNull Element element, @NotNull String elementName) {
     LOG.assertTrue(element.getName().equals(elementName));
     element.setAttribute(URL_ATTRIBUTE, myFilePointer.getUrl());
   }

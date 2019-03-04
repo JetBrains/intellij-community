@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.treeStructure.Tree;
@@ -32,10 +31,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.dnd.DnDConstants;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.ChangesViewManager.getDropRootNode;
+import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshelveSilentlyWithDnd;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.IGNORED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getChanges;
@@ -132,7 +133,7 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
   public void drop(DnDEvent aEvent) {
     Object attached = aEvent.getAttachedObject();
     if (attached instanceof ShelvedChangeListDragBean) {
-      ShelveChangesManager.unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attached, getDropRootNode(myTree, aEvent));
+      unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attached, getDropRootNode(myTree, aEvent), !isCopyAction(aEvent));
     }
     else if (attached instanceof ChangeListDragBean) {
       final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
@@ -142,6 +143,12 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
       }
     }
   }
+
+  public static boolean isCopyAction(@NotNull DnDEvent aEvent) {
+    DnDAction eventAction = aEvent.getAction();
+    return eventAction != null && eventAction.getActionId() == DnDConstants.ACTION_COPY;
+  }
+
 
   private boolean fitsInBounds(final Rectangle rect) {
     final Container container = myTree.getParent();

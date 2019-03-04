@@ -6,20 +6,21 @@ package com.intellij.slicer;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
+import com.intellij.analysis.dialog.ModelScopeItem;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
+
+import java.util.List;
 
 /**
  * @author cdr
@@ -76,18 +77,18 @@ public class SliceHandler implements CodeInsightActionHandler {
 
     Project myProject = element.getProject();
     AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
-    analysisUIOptions.save(storedSettingsBean.analysisUIOptions);
+    analysisUIOptions.loadState(storedSettingsBean.analysisUIOptions);
 
+    List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(myProject, analysisScope,
+                                                                        module, element);
     BaseAnalysisActionDialog dialog =
-      new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, BaseAnalysisActionDialog.standardItems(myProject, analysisScope,
-                                                                                                                   module, element),
-                                   analysisUIOptions, true, ModuleUtil.isSupportedRootType(myProject, JavaSourceRootType.TEST_SOURCE));
+      new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, items, analysisUIOptions, true);
     if (!dialog.showAndGet()) {
       return null;
     }
 
     AnalysisScope scope = dialog.getScope(analysisUIOptions, analysisScope, myProject, module);
-    storedSettingsBean.analysisUIOptions.save(analysisUIOptions);
+    storedSettingsBean.analysisUIOptions.loadState(analysisUIOptions);
 
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.scope = scope;

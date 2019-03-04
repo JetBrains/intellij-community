@@ -303,16 +303,16 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   public static boolean isExcludedOrUnderExcludedDirectory(@Nullable Project project,
                                                            @NotNull ContentEntry entry,
                                                            @NotNull VirtualFile file) {
-    Set<VirtualFile> excludedFiles = ContainerUtil.newHashSet(entry.getExcludeFolderFiles());
+    Set<String> excludedUrls = ContainerUtil.newHashSet(entry.getExcludeFolderUrls());
     if (project != null) {
       for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.getExtensions(project)) {
-        ContainerUtil.addAllNotNull(excludedFiles, policy.getExcludeRootsForProject());
+        ContainerUtil.addAll(excludedUrls, policy.getExcludeUrlsForProject());
       }
     }
     Set<VirtualFile> sourceRoots = ContainerUtil.set(entry.getSourceFolderFiles());
     VirtualFile parent = file;
     while (parent != null) {
-      if (excludedFiles.contains(parent)) return true;
+      if (excludedUrls.contains(parent.getUrl())) return true;
       if (sourceRoots.contains(parent)) return false;
       parent = parent.getParent();
     }

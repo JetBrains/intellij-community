@@ -492,8 +492,9 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     }
   }
 
+  @Override
   @Nullable
-  String getDisplayName(@Nullable DataNode node) {
+  public String getDisplayName(@Nullable DataNode node) {
     if (node == null) return null;
     return myViewContributors.stream()
                              .map(contributor -> contributor.getDisplayName(node))

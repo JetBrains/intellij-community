@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class DefaultDomAnnotator implements Annotator {
     DomElementAnnotationsManagerImpl annotationsManager = getAnnotationsManager(fileElement);
     if (DomElementAnnotationsManagerImpl.isHolderUpToDate(fileElement) && annotationsManager.getProblemHolder(fileElement).isInspectionCompleted(inspection)) return;
 
-    final DomElementAnnotationHolderImpl annotationHolder = new DomElementAnnotationHolderImpl(true);
+    DomElementAnnotationHolderImpl annotationHolder = new DomElementAnnotationHolderImpl(true, fileElement);
     inspection.checkFileElement(fileElement, annotationHolder);
     annotationsManager.appendProblems(fileElement, annotationHolder, inspection.getClass());
     for (final DomElementProblemDescriptor descriptor : annotationHolder) {
@@ -66,6 +66,11 @@ public class DefaultDomAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull final PsiElement psiElement, @NotNull AnnotationHolder holder) {
+    if (!(psiElement instanceof XmlTag) &&
+        !(psiElement instanceof XmlAttribute)) {
+      return;
+    }
+
     PsiFile file = holder.getCurrentAnnotationSession().getFile();
     final DomManagerImpl domManager = DomManagerImpl.getDomManager(file.getProject());
     final DomFileDescription description = domManager.getDomFileDescription(file);

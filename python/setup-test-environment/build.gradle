@@ -1,10 +1,10 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import org.apache.tools.ant.taskdefs.condition.Os
-
 import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.25"
+  id "com.jetbrains.python.envs" version "0.0.30"
 }
 
 /**
@@ -17,18 +17,23 @@ plugins {
  * PYCHARM_USE_CONDA -- use conda (cPython will be used if not set)
  *
  * PYCHARM_ZIP_REPOSITORY -- to download unpacked pythons for Windows (default cpython does not support unattended installation)
- * Recommended value: http://repo.labs.intellij.net/pycharm/python-archives-windows/
+ * Recommended value: https://repo.labs.intellij.net/pycharm/python-archives-windows/
  *
  * Pitfall: TMP var on windows points to very long path inside of user local dir and may lead to errors.
  * It is recommended to create "c:\temp\" with full write access and set TMP="c:\temp\" on Windows.
  *
+ * When -DdjangoTrunkOnly passed, only install django_latest for Django Trunk tests
+ *
  * ``PyEnvTestSettings`` class uses these vars also.
+ *
  *
  */
 
 envs {
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
+
+  def djangoTrunkOnly  = System.getProperty("djangoTrunkOnly") ?: false
 
   if (System.getenv().containsKey("PYCHARM_ZIP_REPOSITORY")) {
     zipRepository = new URL(System.getenv().get("PYCHARM_ZIP_REPOSITORY"))
@@ -77,6 +82,12 @@ envs {
     }
   }
 
+
+  createPython("django_latest", "3.5.4", ["django", "behave-django", "behave"], "python3.5\ndjango\ndjango20\nbehave\nbehave-django\ndjango20", true)
+   if (djangoTrunkOnly) {
+     return
+   }
+
   createPython("py2_django11_full",
                "2.7.15",
                ["django==1.11", "tox", "nose", "pytest", "Twisted", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages", "django-nose"]
@@ -99,26 +110,25 @@ envs {
                true)
 
   createPython("py36_django2_1",
-               "3.6.6",
+               "3.6.8",
                ["django==2.1", "jinja2", "pandas"],
                "python3.6\npython3\ndjango\njinja2\npython34\npython36\npandas",
                true)
 
   createPython("py37",
-               "3.7.0",
+               "3.7.2",
                [],
                "python3.7",
                true)
 
   if (Os.isFamily(Os.FAMILY_UNIX)) {
-    createPython("pyqt_env", "3.5.4", ["pyqt5==5.10.1"], "pyqt5", true)
+    createPython("qt_env", "3.7.2", ["pyqt5==5.12", "PySide2==5.12.1"], "qt", true)
   }
 
-  createPython("django_latest", "3.5.4", ["django", "behave-django", "behave"], "python3.5\ndjango\ndjango20\nbehave\nbehave-django\ndjango20", true)
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) { // Only windows needs ironPython
 
-    ironpython "ironpython", "32" // For some reason x64 is buggy and leads to StackOverflow when called with ensurepip
+    ironpython "ironpython"
 
     project.tasks.create("Misc for ironpython") { //"Misc" will be launched by "build"
       shouldRunAfter 'build_envs'

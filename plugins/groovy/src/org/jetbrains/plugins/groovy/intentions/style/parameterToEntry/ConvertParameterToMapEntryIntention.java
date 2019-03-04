@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -46,7 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -56,6 +54,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createTypeByFQClassName;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP;
 
 /**
  * @author ilyas
@@ -362,9 +363,9 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   private static boolean firstOwnerParameterMustBeMap(final GrParameterListOwner owner) {
     final GrParameter first = getFirstParameter(owner);
     final PsiType type = first.getTypeGroovy();
-    final PsiClassType mapType = GrMapType.create(GlobalSearchScope.allScope(owner.getProject()));
+    if (type == null) return true;
     // First parameter may be used as map
-    return type == null || type.isConvertibleFrom(mapType);
+    return type.isConvertibleFrom(createTypeByFQClassName(JAVA_UTIL_LINKED_HASH_MAP, owner));
   }
 
   @NotNull

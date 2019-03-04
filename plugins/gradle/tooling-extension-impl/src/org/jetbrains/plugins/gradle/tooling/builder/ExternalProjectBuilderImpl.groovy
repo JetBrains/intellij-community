@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.google.gson.GsonBuilder
@@ -23,12 +9,14 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.ContentFilterable
+import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.gradle.util.GUtil
@@ -43,7 +31,6 @@ import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 /**
  * @author Vladislav.Soroka
- * @since 12/20/13
  */
 class ExternalProjectBuilderImpl implements ModelBuilderService {
 
@@ -92,7 +79,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     def ideaPluginModule = ideaPlugin?.model?.module
     def parentBuildRootProject = project.gradle.parent?.rootProject
     def compositePrefix = parentBuildRootProject && !project.rootProject.is(parentBuildRootProject) && ":" != project.path ?
-                          (ideaPlugin?.model?.project?.name ?: project.rootProject.name) : "";
+                          (ideaPlugin?.model?.project?.name ?: project.rootProject.name) : ""
     def ideaModuleName = ideaPluginModule?.name ?: project.name
     defaultExternalProject.id = compositePrefix + (":" == project.path ? ideaModuleName : qName)
     defaultExternalProject.version = wrap(project.version)
@@ -127,7 +114,14 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     for (Task task : project.getTasks()) {
       if (task instanceof Jar) {
         Jar jar = (Jar)task
-        artifacts.add(jar.getArchivePath())
+        try {
+          // TODO use getArchiveFile method since Gradle 5.1
+          artifacts.add(jar.getArchivePath())
+        }
+        catch (e) {
+          // TODO add reporting for such issues
+          project.getLogger().error("warning: [task $jar.path] $e.message")
+        }
       }
     }
     externalProject.setArtifacts(artifacts)
@@ -163,6 +157,8 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         externalTask.QName = task.name
         externalTask.description = task.description
         externalTask.group = task.group ?: "other"
+        def ext = task.getExtensions()?.extraProperties
+        externalTask.test = (task instanceof Test) || (ext?.has("idea.internal.test") && Boolean.valueOf(ext.get("idea.internal.test")))
         externalTask.type = ProjectExtensionsDataBuilderImpl.getType(task)
         result.put(externalTask.name, externalTask)
       }
@@ -181,13 +177,14 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
     def ideaPluginOutDir = ideaPluginModule?.outputDir
     def ideaPluginTestOutDir = ideaPluginModule?.testOutputDir
-    def generatedSourceDirs
-    def ideaSourceDirs
-    def ideaResourceDirs
-    def ideaTestSourceDirs
-    def ideaTestResourceDirs
+    def generatedSourceDirs = null
+    def ideaSourceDirs = null
+    def ideaResourceDirs = null
+    def ideaTestSourceDirs = null
+    def ideaTestResourceDirs = null
     def downloadJavadoc = false
     def downloadSources = true
+
     if (ideaPluginModule) {
       generatedSourceDirs = ideaPluginModule.hasProperty("generatedSourceDirs") ? new LinkedHashSet<>(ideaPluginModule.generatedSourceDirs) : null
       ideaSourceDirs = new LinkedHashSet<>(ideaPluginModule.sourceDirs)
@@ -196,12 +193,6 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ideaTestResourceDirs = ideaPluginModule.hasProperty("testResourceDirs") ? new LinkedHashSet<>(ideaPluginModule.testResourceDirs) : []
       downloadJavadoc = ideaPluginModule.downloadJavadoc
       downloadSources = ideaPluginModule.downloadSources
-    } else {
-      generatedSourceDirs = null
-      ideaSourceDirs = null
-      ideaResourceDirs = null
-      ideaTestSourceDirs = null
-      ideaTestResourceDirs = null
     }
 
     def projectSourceCompatibility
@@ -264,7 +255,12 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
       resourcesDirectorySet.name = sourceSet.resources.name
       resourcesDirectorySet.srcDirs = sourceSet.resources.srcDirs
-
+      if(ideaPluginOutDir && SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name) {
+        resourcesDirectorySet.addGradleOutputDir(ideaPluginOutDir)
+      }
+      if (ideaPluginTestOutDir && SourceSet.TEST_SOURCE_SET_NAME == sourceSet.name) {
+        resourcesDirectorySet.addGradleOutputDir(ideaPluginTestOutDir)
+      }
       if (is4OrBetter) {
         if (sourceSet.output.resourcesDir) {
           resourcesDirectorySet.addGradleOutputDir(sourceSet.output.resourcesDir)
@@ -292,6 +288,12 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ExternalSourceDirectorySet javaDirectorySet = new DefaultExternalSourceDirectorySet()
       javaDirectorySet.name = sourceSet.allJava.name
       javaDirectorySet.srcDirs = sourceSet.allJava.srcDirs
+      if(ideaPluginOutDir && SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name) {
+        javaDirectorySet.addGradleOutputDir(ideaPluginOutDir)
+      }
+      if (ideaPluginTestOutDir && SourceSet.TEST_SOURCE_SET_NAME == sourceSet.name) {
+        javaDirectorySet.addGradleOutputDir(ideaPluginTestOutDir)
+      }
       if (is4OrBetter) {
         for (File outDir : sourceSet.output.classesDirs.files) {
           javaDirectorySet.addGradleOutputDir(outDir)
@@ -310,19 +312,29 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
 
       ExternalSourceDirectorySet generatedDirectorySet = null
-      if(generatedSourceDirs && !generatedSourceDirs.isEmpty()) {
+      def hasExplicitlyDefinedGeneratedSources = generatedSourceDirs && !generatedSourceDirs.isEmpty()
+      FileCollection generatedSourcesOutput = sourceSet.output.hasProperty("generatedSourcesDirs") ? sourceSet.output.generatedSourcesDirs : null
+      def hasAnnotationProcessorClasspath = sourceSet.hasProperty("annotationProcessorPath") && !sourceSet.annotationProcessorPath.isEmpty()
+      if (hasExplicitlyDefinedGeneratedSources || hasAnnotationProcessorClasspath) {
+
         def files = new HashSet<File>()
+        if (hasAnnotationProcessorClasspath && generatedSourcesOutput != null) {
+          files.addAll(generatedSourcesOutput.files)
+        }
         for(File file : generatedSourceDirs) {
           if(javaDirectorySet.srcDirs.contains(file)) {
             files.add(file)
           }
         }
-        if(!files.isEmpty()) {
+
+        if (!files.isEmpty()) {
           javaDirectorySet.srcDirs.removeAll(files)
           generatedDirectorySet = new DefaultExternalSourceDirectorySet()
           generatedDirectorySet.name = "generated " + javaDirectorySet.name
           generatedDirectorySet.srcDirs = files
-          generatedDirectorySet.addGradleOutputDir(javaDirectorySet.outputDir)
+          for (file in javaDirectorySet.gradleOutputDirs) {
+            generatedDirectorySet.addGradleOutputDir(file)
+          }
           generatedDirectorySet.outputDir = javaDirectorySet.outputDir
           generatedDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
         }
@@ -339,7 +351,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         resourcesDirectorySet.filters = testFilterReaders
         sources.put(ExternalSystemSourceType.TEST, javaDirectorySet)
         sources.put(ExternalSystemSourceType.TEST_RESOURCE, resourcesDirectorySet)
-        if(generatedDirectorySet) {
+        if (generatedDirectorySet) {
           sources.put(ExternalSystemSourceType.TEST_GENERATED, generatedDirectorySet)
         }
       }

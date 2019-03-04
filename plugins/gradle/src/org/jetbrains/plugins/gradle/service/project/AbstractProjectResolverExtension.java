@@ -28,8 +28,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.ClassSetProjectImportExtraModelProvider;
+import org.jetbrains.plugins.gradle.model.ProjectImportExtraModelProvider;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -125,6 +128,12 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
 
   @NotNull
   @Override
+  public ProjectImportExtraModelProvider getExtraModelProvider() {
+    return new ClassSetProjectImportExtraModelProvider(getExtraProjectModelClasses());
+  }
+
+  @NotNull
+  @Override
   public Set<Class> getToolingExtensionsClasses() {
     return Collections.emptySet();
   }
@@ -162,4 +171,7 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
                                     @Nullable String jvmAgentSetup,
                                     @NotNull Consumer<String> initScriptConsumer) {
   }
+
+  @ApiStatus.Experimental
+  public void onResolveEnd(@NotNull DataNode<ProjectData> projectDataNode) {}
 }

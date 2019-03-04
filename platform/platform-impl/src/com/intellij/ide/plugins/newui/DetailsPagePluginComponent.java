@@ -70,7 +70,9 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     myCenterPanel = createCenterPanel(update);
     header.add(myCenterPanel);
 
-    createTagPanel();
+    if (!update) {
+      createTagPanel();
+    }
     createMetricsPanel();
     createErrorPanel();
     createProgressPanel(!update);
@@ -105,7 +107,6 @@ public class DetailsPagePluginComponent extends OpaquePanel {
         Insets insets = target.getInsets();
         int left = insets.left;
         int right = myButtonsPanel.getX() - offset;
-        int parentWidth = right - left;
         int versionWidth = myVersion == null ? 0 : myVersion.getPreferredSize().width;
         int nameWidth = myNameComponent.getPreferredSize().width;
         int nameWithVersionWidth = nameWidth + versionWidth;
@@ -113,6 +114,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
           nameWithVersionWidth += offset;
         }
 
+        int parentWidth = right - left;
         if (nameWithVersionWidth <= parentWidth) {
           myNameComponent.setToolTipText(null);
           return;
@@ -198,7 +200,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
     PluginId id = myPlugin.getPluginId();
 
-    if ((myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) ||
+    if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted() ||
         pluginsState.wasInstalled(id) || pluginsState.wasUpdated(id)) {
       buttons.add(myRestartButton = new RestartButton(myPluginsModel));
     }
@@ -258,8 +260,8 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     boolean jb = PluginManagerConfigurableNew.isJBPlugin(myPlugin);
     boolean errors = myPluginsModel.hasErrors(myPlugin);
 
-    myIconLabel.setIcon(PluginLogoInfo.getIcon(true, jb, errors, false));
-    myIconLabel.setDisabledIcon(PluginLogoInfo.getIcon(true, jb, errors, true));
+    myIconLabel.setIcon(PluginLogo.getIcon(myPlugin, true, jb, errors, false));
+    myIconLabel.setDisabledIcon(PluginLogo.getIcon(myPlugin, true, jb, errors, true));
   }
 
   private void createTagPanel() {
@@ -408,7 +410,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     myButtonsPanel.doLayout();
     myCenterPanel.add(myIndicator.getComponent());
 
-    myPluginsModel.addProgress(myPlugin, myIndicator);
+    MyPluginModel.addProgress(myPlugin, myIndicator);
 
     if (repaint) {
       doLayout();
@@ -442,7 +444,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
 
   public void close() {
     if (myIndicator != null) {
-      myPluginsModel.removeProgress(myPlugin, myIndicator);
+      MyPluginModel.removeProgress(myPlugin, myIndicator);
       myIndicator = null;
     }
   }
@@ -574,7 +576,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
   }
 
   private void doUninstall() {
-    if (myPluginsModel.showUninstallDialog(myPlugin.getName(), 1)) {
+    if (MyPluginModel.showUninstallDialog(myPlugin.getName(), 1)) {
       myPluginsModel.doUninstall(this, myPlugin, this::changeInstallOrUpdateToRestart);
     }
   }

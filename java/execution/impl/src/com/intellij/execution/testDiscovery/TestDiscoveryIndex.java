@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.PathKt;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class TestDiscoveryIndex implements Disposable {
   static final Logger LOG = Logger.getInstance(TestDiscoveryIndex.class);
@@ -24,6 +26,7 @@ public class TestDiscoveryIndex implements Disposable {
   private volatile DiscoveredTestDataHolder myHolder;
   private final Object myLock = new Object();
   private final Path myBasePath;
+
 
   public static TestDiscoveryIndex getInstance(Project project) {
     return project.getComponent(TestDiscoveryIndex.class);
@@ -80,6 +83,12 @@ public class TestDiscoveryIndex implements Disposable {
     return modules == null ? Collections.emptySet() : modules;
   }
 
+  @NotNull
+  public Collection<String> getAffectedFiles(Couple<String> testQName, byte frameworkId) {
+    Collection<String> files = executeUnderLock(holder -> holder.getAffectedFiles(testQName, frameworkId));
+    return files == null ? Collections.emptySet() : files;
+  }
+
   @Override
   public void dispose() {
     synchronized (myLock) {
@@ -94,7 +103,7 @@ public class TestDiscoveryIndex implements Disposable {
   public void updateTestData(@NotNull String testClassName,
                              @NotNull String testMethodName,
                              @NotNull MultiMap<String, String> usedMethods,
-                             @NotNull String[] usedFiles,
+                             @NotNull List<String> usedFiles,
                              @Nullable String moduleName,
                              byte frameworkId) {
     executeUnderLock(holder -> {

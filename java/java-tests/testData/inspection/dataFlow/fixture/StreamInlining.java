@@ -257,4 +257,41 @@ public class StreamInlining {
       System.out.println("found");
     }
   }
+  
+  void testImmediateCollection() {
+    String result = Collections.singleton(" foo ").stream().map(String::trim).findFirst().orElse(null);
+    if (<warning descr="Condition 'result == null' is always 'false'">result == null</warning>) {
+      System.out.println("impossible");
+    }
+  }
+
+  void testCountNarrowing(String[] arr, List<String> list) {
+    long count1 = list.stream().filter(String::isEmpty).distinct().sorted().parallel().unordered().map(String::trim).count();
+    if (<warning descr="Condition 'count1 > Integer.MAX_VALUE || count1 < 0' is always 'false'"><warning descr="Condition 'count1 > Integer.MAX_VALUE' is always 'false'">count1 > Integer.MAX_VALUE</warning> || <warning descr="Condition 'count1 < 0' is always 'false' when reached">count1 < 0</warning></warning>) {}
+    long count2 = Arrays.stream(arr).map(String::trim).count();
+    if (<warning descr="Condition 'count2 > Integer.MAX_VALUE || count2 < 0' is always 'false'"><warning descr="Condition 'count2 > Integer.MAX_VALUE' is always 'false'">count2 > Integer.MAX_VALUE</warning> || <warning descr="Condition 'count2 < 0' is always 'false' when reached">count2 < 0</warning></warning>) {}
+    long count3 = Stream.of(arr).map(String::trim).count();
+    if (<warning descr="Condition 'count3 > Integer.MAX_VALUE || count3 < 0' is always 'false'"><warning descr="Condition 'count3 > Integer.MAX_VALUE' is always 'false'">count3 > Integer.MAX_VALUE</warning> || <warning descr="Condition 'count3 < 0' is always 'false' when reached">count3 < 0</warning></warning>) {}
+    if (count3 == 1) {}
+    long count4 = Stream.of(arr[0]).map(String::trim).count();
+    if (<warning descr="Condition 'count4 == 1' is always 'true'">count4 == 1</warning>) {}
+    long count5 = Stream.of("foo", "bar", "baz", "qux").filter(s -> s.length() > 1).count();
+    if (count5 == 4) {}
+    if (<warning descr="Condition 'count5 < 0' is always 'false'">count5 < 0</warning>) {}
+    if (<warning descr="Condition 'count5 > 4' is always 'false'">count5 > 4</warning>) {}
+    long count6 = Stream.of("foo", "bar", "baz", "qux").flatMap(s -> Stream.of(s, s)).count();
+    if (<warning descr="Condition 'count6 < 0' is always 'false'">count6 < 0</warning>) {}
+    if (count6 > 4) {}
+    
+    long count7 = Stream.of("foo", "bar").filter(x -> <warning descr="Condition '!x.isEmpty()' is always 'true'">!<warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning></warning>).count();
+    if (<warning descr="Condition 'count7 == 0' is always 'false'">count7 == 0</warning>) {}
+    if (<warning descr="Condition 'count7 == 1 || count7 == 2' is always 'true'">count7 == 1 || <warning descr="Condition 'count7 == 2' is always 'true' when reached">count7 == 2</warning></warning>) {}
+    long count8 = Stream.of("foo", "bar").filter(x -> <warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning>).count();
+    if (<warning descr="Condition 'count8 == 0' is always 'true'">count8 == 0</warning>) {}
+    long count9 = list.stream().map(String::trim).count();
+    if (count9 == 0) {}
+    if (list.isEmpty()) return;
+    long count10 = list.stream().map(String::trim).count();
+    if (<warning descr="Condition 'count10 == 0' is always 'false'">count10 == 0</warning>) {}
+  }
 }

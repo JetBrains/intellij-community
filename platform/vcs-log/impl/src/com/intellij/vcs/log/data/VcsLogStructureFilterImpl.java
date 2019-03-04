@@ -26,19 +26,17 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Set;
 
 public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStructureFilter {
   @NotNull private final Collection<FilePath> myFiles;
 
-  public VcsLogStructureFilterImpl(@NotNull Set<? extends VirtualFile> files) {
-    this(ContainerUtil.map(files, file -> VcsUtil.getFilePath(file)));
-  }
-
+  /**
+   * @deprecated use {@link com.intellij.vcs.log.visible.filters.VcsLogFilterObject#fromPaths(Collection)}
+   */
+  @Deprecated
   public VcsLogStructureFilterImpl(@NotNull Collection<FilePath> files) {
     myFiles = files;
   }

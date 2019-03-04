@@ -19,7 +19,7 @@
   <option name="Unresolved reference access">
     <value>
       <option name="FOREGROUND" value="000000"/>
-      <option name="EFFECT_TYPE" value="1"/>
+      <option name="EFFECT_TYPE" value="5"/>
       <option name="EFFECT_COLOR" value="808080"/>
     </value>
   </option>

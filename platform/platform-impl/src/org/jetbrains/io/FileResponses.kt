@@ -1,6 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io
 
+import com.intellij.util.PathUtilRt
+import gnu.trove.THashMap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.DefaultFileRegion
@@ -12,9 +14,6 @@ import java.io.RandomAccessFile
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import javax.activation.MimetypesFileTypeMap
-
-private val FILE_MIMETYPE_MAP = MimetypesFileTypeMap()
 
 fun flushChunkedResponse(channel: Channel, isKeepAlive: Boolean) {
   val future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
@@ -23,9 +22,25 @@ fun flushChunkedResponse(channel: Channel, isKeepAlive: Boolean) {
   }
 }
 
+private val fileExtToMimeType by lazy {
+  val map = THashMap<String, String>(1100)
+  FileResponses.javaClass.getResourceAsStream("/mime-types.csv").bufferedReader().useLines {
+    for (line in it) {
+      if (line.isBlank()) {
+        continue
+      }
+
+      val commaIndex = line.indexOf(',')
+      // don't check negative commaIndex - resource expected to contain only valid data as it is not user supplied
+      map.put(line.substring(0, commaIndex), line.substring(commaIndex + 1))
+    }
+  }
+  map
+}
+
 object FileResponses {
   fun getContentType(path: String): String {
-    return FILE_MIMETYPE_MAP.getContentType(path)
+    return PathUtilRt.getFileExtension(path)?.let { fileExtToMimeType.get(it) } ?: "application/octet-stream"
   }
 
   @JvmOverloads

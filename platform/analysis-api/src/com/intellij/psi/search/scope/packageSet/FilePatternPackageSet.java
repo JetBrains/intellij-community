@@ -26,10 +26,14 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class FilePatternPackageSet extends PatternBasedPackageSet {
@@ -61,13 +65,14 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     if (virtualFile instanceof VirtualFileWindow) {
       virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
     }
-    final String relativePath = getRelativePath(virtualFile, fileIndex, true, projectBaseDir);
+    String relativePath = getRelativePath(virtualFile, fileIndex, true, projectBaseDir);
     if (relativePath == null) {
       LOG.error("vFile: " + virtualFile + "; projectBaseDir: " + projectBaseDir + "; content File: "+fileIndex.getContentRootForFile(virtualFile));
     }
     if (StringUtil.isEmptyOrSpaces(relativePath) && !virtualFile.equals(projectBaseDir)) {
       return false;
     }
+    if (virtualFile.isDirectory()) relativePath += '/';
     return myFilePattern.matcher(relativePath).matches();
   }
 
@@ -196,13 +201,14 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   }
 
   public static String getLibRelativePath(final VirtualFile virtualFile, final ProjectFileIndex index) {
-    StringBuilder relativePath = new StringBuilder(100);
+    List<String> path = new ArrayList<>();
     VirtualFile directory = virtualFile;
-    while (directory != null && index.isInLibraryClasses(directory)) {
-      relativePath.insert(0, '/');
-      relativePath.insert(0, directory.getName());
+    while (directory != null && index.isInLibrary(directory)) {
+      path.add(directory.getName());
       directory = directory.getParent();
     }
-    return relativePath.toString();
+    if (path.isEmpty()) return "";
+    Collections.reverse(path);
+    return StringUtil.join(ArrayUtil.toStringArray(path), 1, path.size(), "/");
   }
 }

@@ -3,7 +3,10 @@ package com.intellij.codeInspection.testOnly;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,8 +14,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
@@ -84,9 +91,7 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
     if (anno != null) {
       String modifier = getAccessModifierWithoutTesting(anno);
       if (modifier == null) {
-        modifier = member.hasModifierProperty(PsiModifier.PUBLIC) ? PsiModifier.PROTECTED :
-                   member.hasModifierProperty(PsiModifier.PROTECTED) ? PsiModifier.PACKAGE_LOCAL :
-                   PsiModifier.PRIVATE;
+        modifier = getNextLowerAccessLevel(member);
       }
 
       LightModifierList modList = new LightModifierList(member.getManager(), JavaLanguage.INSTANCE, modifier);
@@ -96,6 +101,20 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
     }
 
     reportProblem(reference, member, h);
+  }
+
+  private static final List<String> ourModifiersDescending =
+    Arrays.asList(PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE);
+
+  private static String getNextLowerAccessLevel(@NotNull PsiMember member) {
+    int methodModifier = ContainerUtil.indexOf(ourModifiersDescending, member::hasModifierProperty);
+    int minModifier = ourModifiersDescending.size() - 1;
+    if (member instanceof PsiMethod) {
+      for (PsiMethod superMethod : ((PsiMethod)member).findSuperMethods()) {
+        minModifier = Math.min(minModifier, ContainerUtil.indexOf(ourModifiersDescending, superMethod::hasModifierProperty));
+      }
+    }
+    return ourModifiersDescending.get(Math.min(minModifier, methodModifier + 1));
   }
 
   @Nullable

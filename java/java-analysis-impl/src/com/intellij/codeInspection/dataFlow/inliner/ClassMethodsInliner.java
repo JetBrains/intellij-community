@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.dataFlow.inliner;
 
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
-import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiUtil;
@@ -35,17 +34,14 @@ public class ClassMethodsInliner implements CallInliner {
         OBJECT_GET_CLASS.matches(nestedCall) ? nestedCall.getMethodExpression().getQualifierExpression() : null;
       if (getClassQualifier != null) {
         builder.pushExpression(qualifier)
-               .pushExpression(getClassQualifier)
-               .checkNotNull(nestedCall, NullabilityProblemKind.callNPE);
+               .pushExpression(getClassQualifier);
       }
       else {
         builder.pushExpression(qualifier)
                .pushExpression(arg)
-               .checkNotNull(arg, NullabilityProblemKind.passingNullableToNotNullParameter)
                .objectOf();
       }
       builder.swap()
-             .checkNotNull(call, NullabilityProblemKind.callNPE)
              .isInstance(call);
       return true;
     }
@@ -53,7 +49,6 @@ public class ClassMethodsInliner implements CallInliner {
       builder.pushExpression(qualifier)
              .pushExpression(call.getArgumentList().getExpressions()[0])
              .swap()
-             .checkNotNull(call, NullabilityProblemKind.callNPE)
              .isInstance(call);
       return true;
     }

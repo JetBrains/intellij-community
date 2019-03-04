@@ -14,7 +14,7 @@ public class InterfaceConflict9{
   public static class D
   implements A, B, C{
     void foo(){
-      System.out.println("" + <ref>a);
+      System.out.println("" + <caret>a);
     }
   }
 }

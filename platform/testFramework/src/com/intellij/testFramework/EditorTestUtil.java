@@ -40,10 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.LockSupport;
 
 import static org.junit.Assert.*;
@@ -437,9 +435,13 @@ public class EditorTestUtil {
   }
 
   public static Inlay addInlay(@NotNull Editor editor, int offset, boolean relatesToPrecedingText) {
+    return addInlay(editor, offset, relatesToPrecedingText, 1);
+  }
+
+  public static Inlay addInlay(@NotNull Editor editor, int offset, boolean relatesToPrecedingText, int widthInPixels) {
     return editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, new EditorCustomElementRenderer() {
       @Override
-      public int calcWidthInPixels(@NotNull Inlay inlay) { return 1; }
+      public int calcWidthInPixels(@NotNull Inlay inlay) { return widthInPixels; }
 
       @Override
       public void paint(@NotNull Inlay inlay,
@@ -464,14 +466,13 @@ public class EditorTestUtil {
 
   public static void waitForLoading(Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (editor == null) return;
-    if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
+    if (EditorUtil.isRealFileEditor(editor)) {
       UIUtil.dispatchAllInvocationEvents(); // if editor is loaded synchronously,
                                             // background loading thread stays blocked in 'invokeAndWait' call
-    }
-    while (!AsyncEditorLoader.isEditorLoaded(editor)) {
-      LockSupport.parkNanos(100_000_000);
-      UIUtil.dispatchAllInvocationEvents();
+      while (!AsyncEditorLoader.isEditorLoaded(editor)) {
+        LockSupport.parkNanos(100_000_000);
+        UIUtil.dispatchAllInvocationEvents();
+      }
     }
   }
 
@@ -489,6 +490,50 @@ public class EditorTestUtil {
       undoManager.setEditorProvider(savedProvider);
     }
   }
+
+  /**
+   * @see #getTextWithCaretsAndSelections(Editor, boolean, boolean)
+   */
+  @NotNull
+  public static String getTextWithCaretsAndSelections(@NotNull Editor editor) {
+    return getTextWithCaretsAndSelections(editor, true, true);
+  }
+
+  /**
+   * @return a text from the {@code editor} with optional carets and selections markers.
+   */
+  @NotNull
+  public static String getTextWithCaretsAndSelections(@NotNull Editor editor, boolean addCarets, boolean addSelections) {
+    StringBuilder sb = new StringBuilder(editor.getDocument().getCharsSequence());
+    ContainerUtil.reverse(editor.getCaretModel().getAllCarets()).forEach(
+      caret -> ContainerUtil.reverse(getCaretMacros(caret, addCarets, addSelections)).forEach(
+        pair -> sb.insert(pair.first, pair.second)));
+    return sb.toString();
+  }
+
+  /**
+   * Return macros describing a {@code caret}
+   */
+  @NotNull
+  public static List<Pair<Integer, String>> getCaretMacros(@NotNull Caret caret, boolean position, boolean selection) {
+    if (!position && !selection) {
+      return Collections.emptyList();
+    }
+
+    boolean addSelection = selection && caret.hasSelection();
+    List<Pair<Integer, String>> result = new ArrayList<>();
+    if (addSelection) {
+      result.add(Pair.create(caret.getSelectionStart(), SELECTION_START_TAG));
+    }
+    if (position) {
+      result.add(Pair.create(caret.getOffset(), CARET_TAG));
+    }
+    if (addSelection) {
+      result.add(Pair.create(caret.getSelectionEnd(), SELECTION_END_TAG));
+    }
+    return result;
+  }
+
 
   public static class CaretAndSelectionState {
     public final List<CaretInfo> carets;
@@ -530,3 +575,4 @@ public class EditorTestUtil {
     }
   }
 }
+

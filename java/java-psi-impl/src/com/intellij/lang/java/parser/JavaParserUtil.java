@@ -190,7 +190,7 @@ public class JavaParserUtil {
     final PsiBuilder.Marker root = builder.mark();
     wrapper.parse(builder);
     if (!builder.eof()) {
-      if (!eatAll) throw new AssertionError("Unexpected tokens");
+      if (!eatAll) throw new AssertionError("Unexpected token: '" + builder.getTokenText() + "'");
       final PsiBuilder.Marker extras = builder.mark();
       while (!builder.eof()) builder.advanceLexer();
       extras.error(JavaErrorMessages.message("unexpected.tokens"));

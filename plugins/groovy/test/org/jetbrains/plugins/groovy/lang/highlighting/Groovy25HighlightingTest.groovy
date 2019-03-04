@@ -81,7 +81,7 @@ class Foo { int a; String b }
 
 @groovy.transform.CompileStatic
 def m() {
-  new Foo()
+//  new Foo() // TODO
   new Foo<error descr="Constructor 'Foo' in 'Foo' cannot be applied to '(java.lang.Integer)'">(2)</error>
   new Foo(2, "3")
   new Foo<error descr="Constructor 'Foo' in 'Foo' cannot be applied to '(java.lang.Integer, java.lang.String, java.lang.Integer)'">(2, "3", 9)</error>

@@ -4,15 +4,12 @@ package com.jetbrains.python.packaging.pipenv
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.util.CatchingConsumer
-import com.intellij.webcore.packaging.InstalledPackage
 import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.pipenv.pipFileLockSources
-import java.lang.Exception
 
 /**
  * @author vlan
@@ -58,13 +55,4 @@ class PyPipEnvPackageManagementService(project: Project, sdk: Sdk) : PyPackageMa
     ui.install(listOf(requirement), extraArgs)
   }
 
-  override fun fetchPackageVersions(packageName: String?, consumer: CatchingConsumer<MutableList<String>, Exception>?) {
-    // TODO: Override it for pipenv indices
-    super.fetchPackageVersions(packageName, consumer)
-  }
-
-  override fun fetchLatestVersion(pkg: InstalledPackage, consumer: CatchingConsumer<String, Exception>) {
-    // TODO: Override it for pipenv indices
-    super.fetchLatestVersion(pkg, consumer)
-  }
 }

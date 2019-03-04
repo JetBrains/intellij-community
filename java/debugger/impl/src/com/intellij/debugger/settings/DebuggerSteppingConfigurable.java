@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -18,6 +18,7 @@ import java.awt.event.ActionListener;
 import static java.awt.GridBagConstraints.*;
 
 class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
+  private JCheckBox myCbAlwaysSmartStep;
   private JCheckBox myCbStepInfoFiltersEnabled;
   private JCheckBox myCbSkipSyntheticMethods;
   private JCheckBox myCbSkipConstructors;
@@ -31,6 +32,8 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
 
   @Override
   public void reset(@NotNull DebuggerSettings settings) {
+    myCbAlwaysSmartStep.setSelected(settings.ALWAYS_SMART_STEP_INTO);
+
     myCbSkipSimpleGetters.setSelected(settings.SKIP_GETTERS);
     myCbSkipSyntheticMethods.setSelected(settings.SKIP_SYNTHETIC_METHODS);
     myCbSkipConstructors.setSelected(settings.SKIP_CONSTRUCTORS);
@@ -60,6 +63,7 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
   }
 
   private void getSettingsTo(DebuggerSettings settings) {
+    settings.ALWAYS_SMART_STEP_INTO = myCbAlwaysSmartStep.isSelected();
     settings.SKIP_GETTERS = myCbSkipSimpleGetters.isSelected();
     settings.SKIP_SYNTHETIC_METHODS = myCbSkipSyntheticMethods.isSelected();
     settings.SKIP_CONSTRUCTORS = myCbSkipConstructors.isSelected();
@@ -91,12 +95,14 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
   @NotNull
   public JComponent getComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
+    myCbAlwaysSmartStep = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.always.smart.step.into"));
     myCbSkipSyntheticMethods = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.synthetic.methods"));
     myCbSkipConstructors = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.constructors"));
     myCbSkipClassLoaders = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.classLoaders"));
     myCbSkipSimpleGetters = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.simple.getters"));
     myCbStepInfoFiltersEnabled = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.step.filters.list.header"));
-    panel.add(myCbSkipSyntheticMethods, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(myCbAlwaysSmartStep, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(myCbSkipSyntheticMethods, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.insetsTop(8), 0, 0));
     panel.add(myCbSkipConstructors, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
     panel.add(myCbSkipClassLoaders, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
     panel.add(myCbSkipSimpleGetters, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));

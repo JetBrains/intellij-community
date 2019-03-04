@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
@@ -20,11 +18,11 @@ public abstract class ActionManagerEx extends ActionManager {
   }
 
   @NotNull
-  public abstract ActionToolbar createActionToolbar(String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons);
+  public abstract ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons);
 
   public abstract void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event);
 
-  public abstract void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event);
+  public abstract void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event);
 
 
   public abstract void fireBeforeEditorTyping(char c, @NotNull DataContext dataContext);
@@ -54,7 +52,7 @@ public abstract class ActionManagerEx extends ActionManager {
    * @return null if string cannot be parsed.
    */
   @Nullable
-  public static KeyStroke getKeyStroke(String s) {
+  public static KeyStroke getKeyStroke(@NotNull String s) {
     KeyStroke result = null;
     try {
       result = KeyStroke.getKeyStroke(s);
@@ -62,7 +60,7 @@ public abstract class ActionManagerEx extends ActionManager {
     catch (Exception ex) {
       //ok
     }
-    if (result == null && s != null && s.length() >= 2 && s.charAt(s.length() - 2) == ' ') {
+    if (result == null && s.length() >= 2 && s.charAt(s.length() - 2) == ' ') {
       try {
         String s1 = s.substring(0, s.length() - 1) + Character.toUpperCase(s.charAt(s.length() - 1));
         result = KeyStroke.getKeyStroke(s1);
@@ -83,7 +81,7 @@ public abstract class ActionManagerEx extends ActionManager {
 
   public abstract boolean isTransparentOnlyActionsUpdateNow();
 
-  public void fireBeforeActionPerformed(String actionId, InputEvent event) {
+  public void fireBeforeActionPerformed(@NotNull String actionId, @NotNull InputEvent event) {
     final AnAction action = getAction(actionId);
     if (action != null) {
       AnActionEvent e = AnActionEvent.createFromAnAction(action, event, ActionPlaces.UNKNOWN, DataManager.getInstance().getDataContext());
@@ -94,6 +92,7 @@ public abstract class ActionManagerEx extends ActionManager {
   /**
    * Allows to receive notifications when popup menus created from action groups are shown and hidden.
    */
-  public abstract void addActionPopupMenuListener(ActionPopupMenuListener listener, Disposable parentDisposable);
+  @SuppressWarnings("unused")  // used in Rider
+  public abstract void addActionPopupMenuListener(@NotNull ActionPopupMenuListener listener, @NotNull Disposable parentDisposable);
 }
 

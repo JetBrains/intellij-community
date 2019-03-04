@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.Pair;
@@ -10,6 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.TypeMapper;
 import com.sun.jna.platform.FileUtils;
 import gnu.trove.THashSet;
@@ -37,8 +38,12 @@ public class PathManager {
   public static final String PROPERTY_SCRATCH_PATH = "idea.scratch.path";
   public static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
   public static final String PROPERTY_LOG_PATH = "idea.log.path";
+  public static final String PROPERTY_GUI_TEST_LOG_FILE = "idea.gui.tests.log.file";
   public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
-  public static final String DEFAULT_OPTIONS_FILE_NAME = "other";
+
+  public static final String OPTIONS_DIRECTORY = "options";
+  public static final String DEFAULT_EXT = ".xml";
+  public static final String DEFAULT_OPTIONS_FILE = "other" + DEFAULT_EXT;
 
   private static final String PROPERTY_HOME = "idea.home";  // reduced variant of PROPERTY_HOME_PATH, now deprecated
 
@@ -47,7 +52,6 @@ public class PathManager {
   private static final String BIN_FOLDER = "bin";
   private static final String LOG_DIRECTORY = "log";
   private static final String CONFIG_FOLDER = "config";
-  private static final String OPTIONS_FOLDER = "options";
   private static final String SYSTEM_FOLDER = "system";
   private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
 
@@ -69,8 +73,7 @@ public class PathManager {
   }
 
   /**
-   * @param insideIde {@code true} if the calling code is working inside IDE and {@code false} if it isn't (e.g. if it's running in a build
-   *                              process or a script)
+   * @param insideIde {@code true} if the calling code works inside IDE; {@code false} otherwise (e.g. in a build process or a script)
    */
   @Contract("true -> !null")
   public static String getHomePath(boolean insideIde) {
@@ -121,15 +124,6 @@ public class PathManager {
       }
     }
     return false;
-  }
-
-  /**
-   * Check whether IDE is installed via snap packages (https://snapcraft.io/) or not
-   */
-  public static boolean isSnap() {
-    // On Ubuntu snaps are located in /snap/ directory, but for other distros path is /var/lib/snapd/snap/
-    return SystemInfo.isLinux &&
-           (getHomePath().startsWith("/snap/") || getHomePath().startsWith("/var/lib/snapd/snap/"));
   }
 
   private static String[] getBinDirectories(File root) {
@@ -250,7 +244,7 @@ public class PathManager {
 
   @NotNull
   public static String getOptionsPath() {
-    return getConfigPath() + File.separator + OPTIONS_FOLDER;
+    return getConfigPath() + File.separator + OPTIONS_DIRECTORY;
   }
 
   @NotNull
@@ -414,7 +408,7 @@ public class PathManager {
   public static void loadProperties() {
     getHomePath();
 
-    Set<String> paths = new LinkedHashSet<String>();
+    Set<String> paths = new LinkedHashSet<>();
     paths.add(System.getProperty(PROPERTIES_FILE));
     paths.add(getCustomPropertiesFile());
     paths.add(SystemProperties.getUserHome() + '/' + PROPERTIES_FILE_NAME);
@@ -426,8 +420,7 @@ public class PathManager {
     for (String path : paths) {
       if (path != null && new File(path).exists()) {
         try {
-          Reader fis = new BufferedReader(new FileReader(path));
-          try {
+          try (Reader fis = new BufferedReader(new FileReader(path))) {
             Map<String, String> properties = FileUtil.loadProperties(fis);
             for (Map.Entry<String, String> entry : properties.entrySet()) {
               String key = entry.getKey();
@@ -438,9 +431,6 @@ public class PathManager {
                 sysProperties.setProperty(key, substituteVars(entry.getValue()));
               }
             }
-          }
-          finally {
-            fis.close();
           }
         }
         catch (IOException e) {
@@ -530,6 +520,7 @@ public class PathManager {
       PathManager.class,            // module 'intellij.platform.util'
       Flow.class,                   // jetbrains-annotations-java5
       SystemInfoRt.class,           // module 'intellij.platform.util.rt'
+      UrlClassLoader.class,         // module 'intellij.platform.util.classLoader'
       Document.class,               // jDOM
       Appender.class,               // log4j
       THashSet.class,               // trove4j
@@ -539,7 +530,7 @@ public class PathManager {
       LZ4Factory.class,             // lz4-java
     };
 
-    final Set<String> classPath = new HashSet<String>();
+    final Set<String> classPath = new HashSet<>();
     for (Class<?> aClass : classes) {
       final String path = getJarPathForClass(aClass);
       if (path != null) {
@@ -617,5 +608,17 @@ public class PathManager {
     catch (IOException e) {
       return path;
     }
+  }
+
+  public static File getLogFile() throws FileNotFoundException {
+    String logXmlPath = System.getProperty(PROPERTY_GUI_TEST_LOG_FILE);
+    if (logXmlPath != null) {
+      File logXmlFile = new File(logXmlPath);
+      if (logXmlFile.exists()) return logXmlFile;
+      else {
+        throw new FileNotFoundException(String.format("'%s' not found.", logXmlPath));
+      }
+    }
+    return findBinFileWithException("log.xml");
   }
 }

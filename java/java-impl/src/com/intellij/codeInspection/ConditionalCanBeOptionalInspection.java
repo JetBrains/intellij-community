@@ -1,27 +1,28 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -41,8 +42,12 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
         if (!ExpressionUtils.isSafelyRecomputableExpression(nullBranch) && !LambdaGenerationUtil.canBeUncheckedLambda(nullBranch, variable::equals)) {
           return;
         }
-        if (!VariableAccessUtils.variableIsUsed(variable, notNullBranch) ||
-            !LambdaGenerationUtil.canBeUncheckedLambda(notNullBranch, variable::equals)) {
+        List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable, notNullBranch);
+        if (references.isEmpty() ||
+            variable instanceof PsiField && references.stream().noneMatch(ExpressionUtil::isEffectivelyUnqualified)) {
+          return;
+        }
+        if (!LambdaGenerationUtil.canBeUncheckedLambda(notNullBranch, variable::equals)) {
           return;
         }
         if (!areTypesCompatible(nullBranch, notNullBranch)) return;
@@ -96,32 +101,41 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
       PsiVariable variable = ternaryNullCheck.myVariable;
       String name = variable.getName();
       if (name == null) return;
-      String inLambdaName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(name, ternary, true);
+      String inLambdaName =
+        new VariableNameGenerator(ternary, VariableKind.PARAMETER).byName(name).byType(variable.getType()).generate(true);
       PsiExpression nullBranch = ternaryNullCheck.myNullBranch;
       PsiExpression notNullBranch = ternaryNullCheck.myNotNullBranch;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(nullBranch)).findAll()) {
-        if (reference instanceof PsiReferenceExpression) {
-          PsiElement result = ((PsiReferenceExpression)reference).replace(factory.createExpressionFromText("null", ternary));
+      CommentTracker ct = new CommentTracker();
+      for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable, nullBranch)) {
+        if (ExpressionUtil.isEffectivelyUnqualified(reference)) {
+          PsiElement result = ct.replace(reference, "null");
           if (nullBranch == reference) {
             nullBranch = (PsiExpression)result;
           }
         }
       }
-      for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(notNullBranch)).findAll()) {
-        if (reference instanceof PsiReferenceExpression) {
-          ExpressionUtils.bindReferenceTo((PsiReferenceExpression)reference, inLambdaName);
+      String origExpression = null;
+      for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable, notNullBranch)) {
+        PsiExpression qualifier = reference.getQualifierExpression();
+        if (qualifier != null) {
+          if (!ExpressionUtil.isEffectivelyUnqualified(reference)) continue;
+          if (origExpression == null) {
+            origExpression = ct.text(reference);
+          }
+          ct.delete(qualifier);
         }
+        ExpressionUtils.bindReferenceTo(reference, inLambdaName);
       }
-      CommentTracker ct = new CommentTracker();
       PsiLambdaExpression trueLambda =
         (PsiLambdaExpression)factory.createExpressionFromText("(" + variable.getType().getCanonicalText() + " " +
                                                               inLambdaName + ")->" + ct.text(notNullBranch), ternary);
       PsiParameter lambdaParameter = trueLambda.getParameterList().getParameters()[0];
       PsiExpression trueBody = Objects.requireNonNull((PsiExpression)trueLambda.getBody());
-      String replacement = OptionalUtil.generateOptionalUnwrap(CommonClassNames.JAVA_UTIL_OPTIONAL + ".ofNullable(" + name + ")",
-                                                               lambdaParameter, trueBody, ct.markUnchanged(nullBranch), ternary.getType(),
-                                                               !ExpressionUtils.isSafelyRecomputableExpression(nullBranch));
+      String ofNullableText = CommonClassNames.JAVA_UTIL_OPTIONAL + ".ofNullable(" + (origExpression == null ? name : origExpression) + ")";
+      String replacement = OptionalRefactoringUtil.generateOptionalUnwrap(ofNullableText,
+                                                                          lambdaParameter, trueBody, ct.markUnchanged(nullBranch), ternary.getType(),
+                                                                          !ExpressionUtils.isSafelyRecomputableExpression(nullBranch));
       PsiElement result = ct.replaceAndRestoreComments(ternary, replacement);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
@@ -145,12 +159,14 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
       if (ternary == null) return null;
       PsiExpression condition = ternary.getCondition();
       boolean isNull = true;
-      PsiVariable variable = ExpressionUtils.getVariableFromNullComparison(condition, true);
-      if (variable == null) {
+      PsiReferenceExpression ref = ExpressionUtils.getReferenceExpressionFromNullComparison(condition, true);
+      if (ref == null) {
         isNull = false;
-        variable = ExpressionUtils.getVariableFromNullComparison(condition, false);
+        ref = ExpressionUtils.getReferenceExpressionFromNullComparison(condition, false);
       }
-      if (variable == null || variable instanceof PsiField) return null;
+      if (ref == null) return null;
+      PsiVariable variable = tryCast(ref.resolve(), PsiVariable.class);
+      if (variable == null || (variable instanceof PsiField && !ExpressionUtil.isEffectivelyUnqualified(ref))) return null;
       PsiExpression nullBranch = isNull ? ternary.getThenExpression() : ternary.getElseExpression();
       PsiExpression notNullBranch = isNull ? ternary.getElseExpression() : ternary.getThenExpression();
       if (nullBranch == null || notNullBranch == null) {

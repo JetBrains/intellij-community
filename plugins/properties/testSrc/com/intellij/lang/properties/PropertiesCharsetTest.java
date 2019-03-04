@@ -46,6 +46,9 @@ public class PropertiesCharsetTest extends CodeInsightTestCase {
         EncodingManager.getInstance().setDefaultCharsetName(myOldCharset.name());
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

@@ -31,7 +31,7 @@ public class ExternalProjectSystemRegistryImpl implements ExternalProjectSystemR
 
   @Override
   @NotNull
-  public ProjectModelExternalSource getSourceById(String id) {
+  public ProjectModelExternalSource getSourceById(@NotNull String id) {
     throw new IllegalStateException();
   }
 }

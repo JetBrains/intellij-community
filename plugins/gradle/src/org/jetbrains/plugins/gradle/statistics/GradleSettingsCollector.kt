@@ -6,12 +6,15 @@ import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getEnumUsage
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.SdkType
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings
 
 class GradleSettingsCollector : ProjectUsagesCollector() {
-  override fun getGroupId() = "statistics.build.gradle.state"
+  override fun getGroupId() = "build.gradle.state"
 
   override fun getUsages(project: Project): Set<UsageDescriptor> {
     val gradleSettings = GradleSettings.getInstance(project)
@@ -25,22 +28,35 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
     usages.add(getBooleanUsage("offlineWork", gradleSettings.isOfflineWork))
     usages.add(getBooleanUsage("showSelectiveImportDialogOnInitialImport", gradleSettings.showSelectiveImportDialogOnInitialImport()))
 
+    val settingsService = GradleSettingsService.getInstance(project)
     // project settings
     for (setting in gradleSettings.linkedProjectsSettings) {
+      val projectPath = setting.externalProjectPath
       usages.add(getYesNoUsage("isCompositeBuilds", setting.compositeBuild != null))
       usages.add(getEnumUsage("distributionType", setting.distributionType))
       usages.add(getEnumUsage("storeProjectFilesExternally", setting.storeProjectFilesExternally))
       usages.add(getBooleanUsage("disableWrapperSourceDistributionNotification", setting.isDisableWrapperSourceDistributionNotification))
       usages.add(getBooleanUsage("createModulePerSourceSet", setting.isResolveModulePerSourceSet))
-      usages.add(UsageDescriptor("gradleJvm." + ConvertUsagesUtil.escapeDescriptorName(setting.gradleJvm ?: "empty"), 1))
-      usages.add(UsageDescriptor("gradleVersion." + setting.resolveGradleVersion().version, 1))
+      usages.add(UsageDescriptor("gradleJvm." + ConvertUsagesUtil.escapeDescriptorName(getGradleJvmName(setting, project) ?: "empty"), 1))
+      val gradleVersion = setting.resolveGradleVersion()
+      if(gradleVersion.isSnapshot) {
+        usages.add(UsageDescriptor("gradleVersion." + gradleVersion.baseVersion.version + ".SNAPSHOT", 1))
+      } else {
+        usages.add(UsageDescriptor("gradleVersion." + gradleVersion.version, 1))
+      }
+      usages.add(getBooleanUsage("delegateBuildRun", settingsService.isDelegatedBuildEnabled(projectPath)))
+      usages.add(getEnumUsage("preferredTestRunner", settingsService.getTestRunner(projectPath)))
     }
-
-    // running settings
-    val runningSettings = GradleSystemRunningSettings.getInstance()
-    usages.add(getBooleanUsage("delegateBuildRun", runningSettings.isUseGradleAwareMake))
-    usages.add(getEnumUsage("preferredTestRunner", runningSettings.preferredTestRunner))
     return usages
+  }
+
+  private fun getGradleJvmName(setting: GradleProjectSettings, project: Project): String? {
+    val jdk = ExternalSystemJdkUtil.getJdk(project, setting.gradleJvm)
+    val sdkType = jdk?.sdkType
+    return if (sdkType is SdkType) {
+      sdkType.suggestSdkName(null, jdk.homePath)
+    }
+    else setting.gradleJvm
   }
 
   private fun getYesNoUsage(key: String, value: Boolean): UsageDescriptor {

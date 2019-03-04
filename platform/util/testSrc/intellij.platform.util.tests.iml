@@ -10,7 +10,7 @@
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JDOM" level="project" />
-    <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="picocontainer" level="project" />
@@ -22,5 +22,6 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="bouncy-castle-provider" level="project" />
   </component>
 </module>

@@ -72,6 +72,9 @@ public class AntMultiFileCompletionTest extends UsefulTestCase {
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
       super.tearDown();

@@ -6,9 +6,6 @@
 
   <application-components>
     <component>
-      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.util.registry.RegistryState</implementation-class>
     </component>
     <component>
@@ -19,12 +16,6 @@
       <implementation-class>com.intellij.configurationStore.PlatformLangProjectStoreClassProvider</implementation-class>
     </component>
   </application-components>
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-  </project-components>
 
   <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/UICore.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -32,7 +23,7 @@
   <xi:include href="/componentSets/Lang.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/ProjectView.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/Editor.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="Misc.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/ExternalSystemComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="Compiler.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/Execution.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/VCS.xml" xpointer="xpointer(/idea-plugin/*)"/>

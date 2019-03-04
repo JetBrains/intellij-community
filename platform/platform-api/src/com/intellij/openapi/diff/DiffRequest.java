@@ -60,11 +60,6 @@ public abstract class DiffRequest {
   @NotNull
   public abstract DiffContent[] getContents();
 
-  public DiffViewerType getType() {
-    if (getContentTitles().length == 3) return DiffViewerType.merge;
-    return DiffViewerType.contents;
-  }
-
   /**
    * @return contents names. Should have same length as {@link #getContents()}
    */
@@ -97,13 +92,6 @@ public abstract class DiffRequest {
    */
   public void removeHint(Object hint) {
     myHints.remove(hint);
-  }
-
-  /**
-   * <B>Work in progress. Don't rely on this functionality</B><br>
-   */
-  public interface ToolbarAddons {
-    void customize(DiffToolbar toolbar);
   }
 
   public Runnable getOnOkRunnable() {

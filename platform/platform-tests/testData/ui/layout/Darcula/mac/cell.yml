@@ -32,10 +32,10 @@ columnConstraints:
   - {}
   count: 2
 componentConstrains:
-  'Repository:': {}
+  Repository [label]: {}
   'ComboBox #1': {split: 2}
   Delete: {spanX: 2097051, wrap: true}
-  Use File -> Settings Repository... to configure:
+  Use File -> Settings Repository... to configure [label]:
     horizontal:
       gapBefore:
         min: &id006 {horizontal: true, value: 4.0}
@@ -56,8 +56,8 @@ cellBounds:
 - [76, 30, 404, 13]
 - [0, 53, 480, 257]
 componentBounds:
-  'Repository:': [0, 5, 70, 15]
+  Repository [label]: [0, 5, 70, 15]
   'ComboBox #1': [73, -3, 98, 30]
   Delete: [173, -3, 78, 30]
-  Use File -> Settings Repository... to configure: [80, 30, 234, 13]
+  Use File -> Settings Repository... to configure [label]: [80, 30, 234, 13]
   'JBScrollPane #4': [0, 53, 480, 257]

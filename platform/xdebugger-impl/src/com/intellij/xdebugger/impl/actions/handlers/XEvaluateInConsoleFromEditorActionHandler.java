@@ -20,6 +20,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.util.List;
 
@@ -57,7 +58,7 @@ public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFrom
     Promise<Pair<TextRange, String>> rangeAndText;
     if (selectionStart != selectionEnd) {
       TextRange textRange = new TextRange(selectionStart, selectionEnd);
-      rangeAndText = Promise.resolve(Pair.create(textRange, editor.getDocument().getText(textRange)));
+      rangeAndText = Promises.resolvedPromise(Pair.create(textRange, editor.getDocument().getText(textRange)));
     } else {
       XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
       if (evaluator != null) {
@@ -76,17 +77,15 @@ public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFrom
       }
     }
 
-    rangeAndText.onSuccess(textRangeStringPair -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        TextRange range = textRangeStringPair.getFirst();
-        String text = textRangeStringPair.getSecond();
-        if (text == null)
-          return;
-        ConsoleExecuteAction action = getConsoleExecuteAction(session);
-        if (action != null) {
-          action.execute(range, text, (EditorEx) editor);
-        }
-      });
-    });
+    rangeAndText.onSuccess(textRangeStringPair -> ApplicationManager.getApplication().invokeLater(() -> {
+      TextRange range = textRangeStringPair.getFirst();
+      String text = textRangeStringPair.getSecond();
+      if (text == null)
+        return;
+      ConsoleExecuteAction action = getConsoleExecuteAction(session);
+      if (action != null) {
+        action.execute(range, text, (EditorEx) editor);
+      }
+    }));
   }
 }

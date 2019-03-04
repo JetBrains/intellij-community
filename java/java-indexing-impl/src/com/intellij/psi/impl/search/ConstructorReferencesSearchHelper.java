@@ -114,7 +114,7 @@ class ConstructorReferencesSearchHelper {
       return true;
     };
 
-    return ClassInheritorsSearch.search(containingClass, searchScope, false).forEach(processor2);
+    return ClassInheritorsSearch.search(containingClass, searchScope, false).allowParallelProcessing().forEach(processor2);
   }
 
   private static boolean processEnumReferences(@NotNull final Processor<? super PsiReference> processor,

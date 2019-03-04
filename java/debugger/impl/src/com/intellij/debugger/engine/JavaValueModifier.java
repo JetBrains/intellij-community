@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -43,7 +43,7 @@ public abstract class JavaValueModifier extends XValueModifier {
   public void calculateInitialValueEditorText(final XInitialValueCallback callback) {
     final Value value = myJavaValue.getDescriptor().getValue();
     if (value == null || value instanceof PrimitiveValue) {
-      String valueString = myJavaValue.getValueString();
+      String valueString = myJavaValue.getValueText();
       int pos = valueString.lastIndexOf('('); //skip hex presentation if any
       if (pos > 1) {
         valueString = valueString.substring(0, pos).trim();
@@ -118,7 +118,7 @@ public abstract class JavaValueModifier extends XValueModifier {
       }
       else if (varType instanceof ReferenceType) {
         if (value instanceof PrimitiveValue) {
-          value = (Value)new BoxingEvaluator(new IdentityEvaluator(value)).evaluate(context);
+          value = (Value)BoxingEvaluator.box(value, context);
         }
       }
     }

@@ -42,4 +42,11 @@ class JavaUCompositeQualifiedExpression(
 
   override val accessType: UastQualifiedExpressionAccessType
     get() = UastQualifiedExpressionAccessType.SIMPLE
+
+  override val referenceNameElement: UElement?
+    get() =
+      when (val selector = selector) {
+        is UCallExpression -> selector.methodIdentifier
+        else -> unwrapReferenceNameElement(selector)
+      }
 }

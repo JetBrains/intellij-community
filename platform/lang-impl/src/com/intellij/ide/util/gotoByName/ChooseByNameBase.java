@@ -134,7 +134,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   private final int myRebuildDelay;
 
   private final Alarm myHideAlarm = new Alarm();
-  private boolean myShowListAfterCompletionKeyStroke = false;
+  private static final boolean myShowListAfterCompletionKeyStroke = false;
   protected JBPopup myTextPopup;
   protected JBPopup myDropdownPopup;
 

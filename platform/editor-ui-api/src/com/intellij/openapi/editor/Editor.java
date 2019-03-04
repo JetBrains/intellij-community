@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -21,7 +21,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 
 /**
- * Represents an instance of the IDEA text editor.
+ * Represents an instance of a text editor.
  *
  * @see EditorFactory#createEditor(Document)
  * @see EditorFactory#createViewer(Document)
@@ -41,7 +41,7 @@ public interface Editor extends UserDataHolder {
    * Returns the value indicating whether the editor operates in viewer mode, with
    * all modification actions disabled.
    *
-   * @return true if the editor works as a viewer, false otherwise
+   * @return {@code true} if the editor works as a viewer, {@code false} otherwise.
    */
   boolean isViewer();
 
@@ -58,7 +58,7 @@ public interface Editor extends UserDataHolder {
   /**
    * Returns the component for the content area of the editor (the area displaying the document text).
    * The component can be used, for example, for converting logical to screen coordinates.
-   * The instance is implementing {@link DataProvider}
+   * The instance is implementing {@link DataProvider}.
    *
    * @return the component instance.
    */
@@ -75,9 +75,8 @@ public interface Editor extends UserDataHolder {
    * <p>
    * To query or change selections for specific carets, {@link CaretModel} interface should be used.
    *
-   * @see #getCaretModel()
-   * 
    * @return the selection model instance.
+   * @see #getCaretModel()
    */
   @NotNull
   SelectionModel getSelectionModel();
@@ -88,7 +87,7 @@ public interface Editor extends UserDataHolder {
    * to the highlighters contained in the markup model for the document.
    * <p>
    * See also {@link com.intellij.openapi.editor.impl.DocumentMarkupModel.forDocument(Document, Project, boolean)}
-   *          {@link com.intellij.openapi.editor.ex.EditorEx#getFilteredDocumentMarkupModel()}.
+   * {@link com.intellij.openapi.editor.ex.EditorEx#getFilteredDocumentMarkupModel()}.
    *
    * @return the markup model instance.
    */
@@ -114,7 +113,7 @@ public interface Editor extends UserDataHolder {
   ScrollingModel getScrollingModel();
 
   /**
-   * Returns the caret model for the document, which can be used to add and remove carets to the editor, as well as to query and update 
+   * Returns the caret model for the document, which can be used to add and remove carets to the editor, as well as to query and update
    * carets' and corresponding selections' positions.
    *
    * @return the caret model instance.
@@ -126,7 +125,7 @@ public interface Editor extends UserDataHolder {
    * Returns the soft wrap model for the document, which can be used to get information about soft wraps registered
    * for the editor document at the moment and provides basic management functions for them.
    *
-   * @return the soft wrap model instance
+   * @return the soft wrap model instance.
    */
   @NotNull
   SoftWrapModel getSoftWrapModel();
@@ -211,7 +210,7 @@ public interface Editor extends UserDataHolder {
   /**
    * Maps an offset in the document to a logical position.
    * <p>
-   * It's assumed that original position is associated with character immediately preceding given offset, so target logical position will 
+   * It's assumed that original position is associated with character immediately preceding given offset, so target logical position will
    * have {@link LogicalPosition#leansForward leansForward} value set to {@code false}.
    *
    * @param offset the offset in the document.
@@ -221,12 +220,12 @@ public interface Editor extends UserDataHolder {
   LogicalPosition offsetToLogicalPosition(int offset);
 
   /**
-   * Maps an offset in the document to a visual position.
+   * Maps an offset in the document to visual position.
    * <p>
-   * It's assumed that original position is associated with character immediately preceding given offset, 
+   * It's assumed that original position is associated with the character immediately preceding given offset,
    * {@link VisualPosition#leansRight leansRight} value for visual position will be determined correspondingly.
    * <p>
-   * If there's a soft wrap at given offset, visual position on a line following the wrap will be returned.
+   * If there's a soft wrap at the given offset, visual position on a line following the wrap will be returned.
    *
    * @param offset the offset in the document.
    * @return the corresponding visual position.
@@ -235,12 +234,12 @@ public interface Editor extends UserDataHolder {
   VisualPosition offsetToVisualPosition(int offset);
 
   /**
-   * Maps an offset in the document to a visual position.
+   * Maps an offset in the document to visual position.
    *
-   * @param offset the offset in the document.
-   * @param leanForward if {@code true}, original position is associated with character after given offset, if {@code false} -
-   *                    with character before given offset. This can make a difference in bidirectional text (see {@link LogicalPosition},
-   *                    {@link VisualPosition})
+   * @param offset         the offset in the document.
+   * @param leanForward    if {@code true}, original position is associated with character after given offset, if {@code false} -
+   *                       with character before given offset. This can make a difference in bidirectional text (see {@link LogicalPosition},
+   *                       {@link VisualPosition})
    * @param beforeSoftWrap if {@code true}, visual position at line preceeding the wrap will be returned, otherwise - visual position
    *                       at line following the wrap.
    * @return the corresponding visual position.
@@ -272,9 +271,6 @@ public interface Editor extends UserDataHolder {
   @NotNull
   VisualPosition xyToVisualPosition(@NotNull Point2D p);
 
-  /**
-   * @since 2017.2
-   */
   @NotNull
   default Point offsetToXY(int offset) {
     return offsetToXY(offset, false, false);
@@ -282,7 +278,6 @@ public interface Editor extends UserDataHolder {
 
   /**
    * @see #offsetToVisualPosition(int, boolean, boolean)
-   * @since 2017.2
    */
   @NotNull
   default Point offsetToXY(int offset, boolean leanForward, boolean beforeSoftWrap) {
@@ -290,9 +285,6 @@ public interface Editor extends UserDataHolder {
     return visualPositionToXY(visualPosition);
   }
 
-  /**
-   * @since 2017.2
-   */
   @NotNull
   default Point2D offsetToPoint2D(int offset) {
     return offsetToPoint2D(offset, false, false);
@@ -300,7 +292,6 @@ public interface Editor extends UserDataHolder {
 
   /**
    * @see #offsetToVisualPosition(int, boolean, boolean)
-   * @since 2017.2
    */
   @NotNull
   default Point2D offsetToPoint2D(int offset, boolean leanForward, boolean beforeSoftWrap) {
@@ -308,16 +299,10 @@ public interface Editor extends UserDataHolder {
     return visualPositionToPoint2D(visualPosition);
   }
 
-  /**
-   * @since 2018.3
-   */
   default int visualLineToY(int visualLine) {
     return visualPositionToXY(new VisualPosition(visualLine, 0)).y;
   }
 
-  /**
-   * @since 2018.3
-   */
   default int yToVisualLine(int y) {
     return xyToVisualPosition(new Point(0, y)).line;
   }
@@ -335,7 +320,8 @@ public interface Editor extends UserDataHolder {
    * the mouse entering/exiting the editor.
    * The listener is removed when the given parent disposable is disposed.
    *
-   * @param listener the listener instance.
+   * @param listener         the listener instance.
+   * @param parentDisposable the parent Disposable instance.
    */
   default void addEditorMouseListener(@NotNull EditorMouseListener listener, @NotNull Disposable parentDisposable) {
     addEditorMouseListener(listener);
@@ -361,7 +347,8 @@ public interface Editor extends UserDataHolder {
    * Adds a listener for receiving notifications about mouse movement in the editor.
    * The listener is removed when the given parent disposable is disposed.
    *
-   * @param listener the listener instance.
+   * @param listener         the listener instance.
+   * @param parentDisposable the parent Disposable instance.
    */
   default void addEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener, @NotNull Disposable parentDisposable) {
     addEditorMouseMotionListener(listener);
@@ -378,14 +365,14 @@ public interface Editor extends UserDataHolder {
   /**
    * Checks if this editor instance has been disposed.
    *
-   * @return true if the editor has been disposed, false otherwise.
+   * @return {@code true} if the editor has been disposed, {@code false} otherwise.
    */
   boolean isDisposed();
 
   /**
    * Returns the project to which the editor is related.
    *
-   * @return the project instance, or null if the editor is not related to any project.
+   * @return the project instance, or {@code null} if the editor is not related to any project.
    */
   @Nullable
   Project getProject();
@@ -393,21 +380,21 @@ public interface Editor extends UserDataHolder {
   /**
    * Returns the insert/overwrite mode for the editor.
    *
-   * @return true if the editor is in insert mode, false otherwise.
+   * @return {@code true} if the editor is in insert mode, {@code false} otherwise.
    */
   boolean isInsertMode();
 
   /**
    * Returns the block selection mode for the editor.
    *
-   * @return true if the editor uses column selection, false if it uses regular selection.
+   * @return {@code true} if the editor uses column selection, {@code false} if it uses regular selection.
    */
   boolean isColumnMode();
 
   /**
    * Checks if the current editor instance is a one-line editor (used in a dialog control, for example).
    *
-   * @return true if the editor is one-line, false otherwise.
+   * @return {@code true} if the editor is one-line, {@code false} otherwise.
    */
   boolean isOneLineMode();
 
@@ -425,7 +412,7 @@ public interface Editor extends UserDataHolder {
    * mouse event occurred.
    *
    * @param e the mouse event for which the area is requested.
-   * @return the editor area, or null if the event occurred over an unknown area.
+   * @return the editor area, or {@code null} if the event occurred over an unknown area.
    */
   @Nullable
   EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e);
@@ -434,7 +421,7 @@ public interface Editor extends UserDataHolder {
    * Set up a header component for this text editor. Please note this is used for textual find feature so your component will most
    * probably will be reset once the user presses Ctrl+F.
    *
-   * @param header a component to setup as header for this text editor or {@code null} to remove one.
+   * @param header a component to setup as header for this text editor or {@code null} to remove existing one.
    */
   void setHeaderComponent(@Nullable JComponent header);
 

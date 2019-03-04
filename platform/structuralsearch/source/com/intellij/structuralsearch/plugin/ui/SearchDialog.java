@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -7,6 +7,8 @@ import com.intellij.find.FindSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -16,7 +18,6 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -28,7 +29,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -39,7 +39,6 @@ import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -169,10 +168,10 @@ public class SearchDialog extends DialogWrapper {
       try {
         final boolean valid = isValid();
         final boolean compiled = isCompiled();
-        EdtInvocationManager.getInstance().invokeLater(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           myEditVariablesButton.setEnabled(compiled);
           getOKAction().setEnabled(valid);
-        });
+        }, ModalityState.stateForComponent(getRootPane()));
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -215,8 +214,7 @@ public class SearchDialog extends DialogWrapper {
     searchOptions.add(UIUtil.createOptionLine(jLabel, fileTypes));
     jLabel.setLabelFor(fileTypes);
 
-    detectFileTypeAndDialect();
-
+    ourFtSearchVariant = UIUtil.detectFileType(searchContext);
     fileTypes.setSelectedItem(ourFtSearchVariant, ourDialect, ourContext);
     fileTypes.addItemListener(new ItemListener() {
       @Override
@@ -239,46 +237,6 @@ public class SearchDialog extends DialogWrapper {
       myContentPanel.add(myEditorPanel, BorderLayout.CENTER);
       myContentPanel.revalidate();
       searchCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
-    }
-  }
-
-  private void detectFileTypeAndDialect() {
-    final PsiFile file = searchContext.getFile();
-    if (file != null) {
-      PsiElement context = null;
-
-      if (searchContext.getEditor() != null) {
-        context = file.findElementAt(searchContext.getEditor().getCaretModel().getOffset());
-        if (context != null) {
-          context = context.getParent();
-        }
-      }
-      if (context == null) {
-        context = file;
-      }
-
-      FileType detectedFileType = null;
-
-      StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(context);
-      if (profile != null) {
-        FileType fileType = profile.detectFileType(context);
-        if (fileType != null) {
-          detectedFileType = fileType;
-        }
-      }
-
-      if (detectedFileType == null) {
-        for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
-          if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage().equals(context.getLanguage())) {
-            detectedFileType = fileType;
-            break;
-          }
-        }
-      }
-
-      ourFtSearchVariant = detectedFileType != null ?
-                           detectedFileType :
-                           StructuralSearchUtil.getDefaultFileType();
     }
   }
 
@@ -322,9 +280,7 @@ public class SearchDialog extends DialogWrapper {
     final PsiFile file = documentManager.getPsiFile(document);
     if (file == null) return;
 
-    WriteCommandAction.writeCommandAction(project, file).run(() -> {
-      CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength()));
-    });
+    WriteCommandAction.writeCommandAction(project, file).run(() -> CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength())));
   }
 
   protected void startSearching() {
@@ -612,7 +568,7 @@ public class SearchDialog extends DialogWrapper {
     findSettings.setShowResultsInSeparateView(openInNewTab.isSelected());
 
     try {
-      removeUnusedVariableConstraints(myConfiguration);
+      myConfiguration.removeUnusedVariables();
       ConfigurationManager.getInstance(getProject()).addHistoryConfiguration(myConfiguration);
 
       startSearching();
@@ -622,14 +578,7 @@ public class SearchDialog extends DialogWrapper {
     }
   }
 
-  private void removeUnusedVariableConstraints(Configuration configuration) {
-    final List<String> variableNames = getVariablesFromListeners();
-    variableNames.add(Configuration.CONTEXT_VAR_NAME);
-    configuration.getMatchOptions().retainVariableConstraints(variableNames);
-  }
-
   public Configuration getConfiguration() {
-    removeUnusedVariableConstraints(myConfiguration);
     setValuesToConfig(myConfiguration);
     return myConfiguration;
   }

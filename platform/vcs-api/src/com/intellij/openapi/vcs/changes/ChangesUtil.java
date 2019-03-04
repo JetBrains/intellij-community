@@ -270,14 +270,6 @@ public class ChangesUtil {
     return fileName.toString();
   }
 
-  public static boolean isBinaryContentRevision(@Nullable ContentRevision revision) {
-    return revision instanceof BinaryContentRevision && !revision.getFile().isDirectory();
-  }
-
-  public static boolean isBinaryChange(@NotNull Change change) {
-    return isBinaryContentRevision(change.getBeforeRevision()) || isBinaryContentRevision(change.getAfterRevision());
-  }
-
   public static boolean isTextConflictingChange(@NotNull Change change) {
     FileStatus status = change.getFileStatus();
     return FileStatus.MERGED_WITH_CONFLICTS.equals(status) || FileStatus.MERGED_WITH_BOTH_CONFLICTS.equals(status);
@@ -327,9 +319,7 @@ public class ChangesUtil {
 
   @NotNull
   public static List<File> filePathsToFiles(@NotNull Collection<? extends FilePath> filePaths) {
-    return filePaths.stream()
-      .map(FilePath::getIOFile)
-      .collect(toList());
+    return ContainerUtil.map(filePaths, FilePath::getIOFile);
   }
 
   public static boolean hasFileChanges(@NotNull Collection<? extends Change> changes) {

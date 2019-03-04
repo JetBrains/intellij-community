@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -39,6 +40,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -189,7 +191,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   public List<PsiElement> getElements() {
-    return Collections.unmodifiableList(Arrays.asList(myElementsToMove));
+    return ContainerUtil.immutableList(myElementsToMove);
   }
 
   public PackageWrapper getTargetPackage() {
@@ -261,9 +263,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       if (usage instanceof MoveRenameUsageInfo && !(usage instanceof NonCodeUsageInfo) &&
           ((MoveRenameUsageInfo)usage).getReferencedElement() instanceof PsiClass) {
         PsiClass aClass = (PsiClass)((MoveRenameUsageInfo)usage).getReferencedElement();
-        if (!movedClasses.contains(aClass)) {
-          movedClasses.add(aClass);
-        }
+        movedClasses.add(aClass);
         if (aClass != null && aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
           if (PsiTreeUtil.getParentOfType(element, PsiImportStatement.class) != null) continue;
           PsiElement container = ConflictsUtil.getContainer(element);
@@ -525,6 +525,9 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           MoveFilesOrDirectoriesUtil.doMoveFile((PsiClassOwner)element, directory);
           PsiFile newElement = directory.findFile(((PsiClassOwner)element).getName());
           LOG.assertTrue(newElement != null);
+
+          DumbService.getInstance(myProject).completeJustSubmittedTasks();
+
           final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(directory);
           if (newPackage != null) {
             String qualifiedName = newPackage.getQualifiedName();
@@ -542,6 +545,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         elementListener.elementMoved(element);
         myElementsToMove[idx] = element;
       }
+
+      DumbService.getInstance(myProject).completeJustSubmittedTasks();
 
       myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
 

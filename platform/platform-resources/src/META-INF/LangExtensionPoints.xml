@@ -323,10 +323,12 @@
 
     <extensionPoint name="smartPointer.anchorProvider" interface="com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider"/>
     <extensionPoint name="elementSignatureProvider" interface="com.intellij.codeInsight.folding.impl.ElementSignatureProvider"/>
+    <extensionPoint name="externalFormatProcessor" interface="com.intellij.psi.codeStyle.ExternalFormatProcessor"/>
     <extensionPoint name="preFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PreFormatProcessor"/>
     <extensionPoint name="postFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PostFormatProcessor"/>
     <extensionPoint name="disabledIndentRangesProvider" interface="com.intellij.psi.impl.source.DisabledIndentRangesProvider"/>
     <extensionPoint name="lineIndentProvider" interface="com.intellij.psi.codeStyle.lineIndent.LineIndentProvider"/>
+    <extensionPoint name="codeStyleSettingsModifier" interface="com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier"/>
 
     <extensionPoint name="declarationRangeHandler" beanClass="com.intellij.util.MixinEP">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hint.DeclarationRangeHandler"/>
@@ -449,7 +451,9 @@
     </extensionPoint>
 
     <extensionPoint name="macro" interface="com.intellij.ide.macro.Macro"/>
+    <extensionPoint name="macroFilter" interface="com.intellij.ide.macro.MacroFilter"/>
     <extensionPoint name="printOption" interface="com.intellij.codeEditor.printing.PrintOption"/>
+    <extensionPoint name="printHandler" interface="com.intellij.ide.actions.PrintActionHandler"/>
 
     <extensionPoint name="indexPatternBuilder" interface="com.intellij.psi.impl.search.IndexPatternBuilder"/>
     <extensionPoint name="commentTokenSetProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -473,9 +477,6 @@
 
     <extensionPoint name="executionTargetProvider"
                     interface="com.intellij.execution.ExecutionTargetProvider"/>
-
-    <extensionPoint name="runConfigurationExtension"
-                    interface="com.intellij.execution.RunConfigurationExtension"/>
 
     <extensionPoint name="jreProvider"
                     interface="com.intellij.execution.ui.JreProvider"/>
@@ -505,6 +506,8 @@
                     interface="com.intellij.execution.dashboard.RunDashboardContributor"/>
     <extensionPoint name="runDashboardGroupingRule"
                     interface="com.intellij.execution.dashboard.RunDashboardGroupingRule"/>
+    <extensionPoint name="serviceViewContributor"
+                    interface="com.intellij.execution.services.ServiceViewContributor"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"
                     area="IDEA_PROJECT"/>
@@ -597,6 +600,8 @@
                     interface="com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider"/>
     <extensionPoint name="gotoTargetRendererProvider"
                     interface="com.intellij.codeInsight.navigation.GotoTargetRendererProvider"/>
+    <extensionPoint name="gotoDeclaration"
+                    interface="com.intellij.codeInsight.navigation.GotoDeclarationProvider"/>
 
     <extensionPoint name="navbar" interface="com.intellij.ide.navigationToolbar.NavBarModelExtension"/>
 
@@ -662,7 +667,7 @@
 
     <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider"/>
     <extensionPoint name="virtualFileQualifiedNameProvider"
-                    interface="com.intellij.ide.actions.CopyReferenceAction$VirtualFileQualifiedNameProvider"/>
+                    interface="com.intellij.ide.actions.VirtualFileQualifiedNameProvider"/>
 
     <extensionPoint name="completionData"
                     beanClass="com.intellij.codeInsight.completion.CompletionDataEP"/>
@@ -755,8 +760,6 @@
 
     <extensionPoint name="framework.detector"
                     interface="com.intellij.framework.detection.FrameworkDetector"/>
-    <extensionPoint name="framework.type"
-                    interface="com.intellij.framework.FrameworkTypeEx"/>
 
     <extensionPoint name="methodNavigationOffsetProvider"
                     interface="com.intellij.codeInsight.navigation.MethodNavigationOffsetProvider"/>
@@ -885,8 +888,7 @@
 
     <extensionPoint name="predefinedCodeStyle" interface="com.intellij.psi.codeStyle.PredefinedCodeStyle"/>
 
-    <extensionPoint name="semContributor"
-                    beanClass="com.intellij.semantic.SemContributorEP" area="IDEA_PROJECT">
+    <extensionPoint name="semContributor" beanClass="com.intellij.semantic.SemContributorEP">
       <with attribute="implementation" implements="com.intellij.semantic.SemContributor"/>
     </extensionPoint>
 
@@ -989,13 +991,11 @@
     <extensionPoint name="runningApplicationUpdaterProvider"
                     interface="com.intellij.execution.update.RunningApplicationUpdaterProvider"/>
 
-    <extensionPoint name="languageCompilerRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter"/>
-
     <extensionPoint name="retypeFileAssistant" interface="com.intellij.internal.retype.RetypeFileAssistant"/>
 
     <extensionPoint name="trafficLightRendererContributor" interface="com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor"/>
 
-    <extensionPoint name="fileBreadcrumbsCollector" interface="com.intellij.xml.breadcrumbs.FileBreadcrumbsCollector" area="IDEA_PROJECT"/>
+    <extensionPoint name="implementationViewSessionFactory" interface="com.intellij.codeInsight.hint.ImplementationViewSessionFactory"/>
   </extensionPoints>
 </idea-plugin>
 

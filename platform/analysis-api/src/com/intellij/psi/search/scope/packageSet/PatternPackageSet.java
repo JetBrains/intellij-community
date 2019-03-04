@@ -79,7 +79,7 @@ public class PatternPackageSet extends PatternBasedPackageSet {
       return isSource && !TestSourcesFilter.isTestSources(file, project) && matchesModule(file, fileIndex);
     }
     if (myScope == SCOPE_LIBRARY) {
-      return (fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file)) && matchesLibrary(myModulePattern, file, fileIndex);
+      return fileIndex.isInLibrary(file) && matchesLibrary(myModulePattern, file, fileIndex);
     }
     if (myScope == SCOPE_TEST) {
       return isSource && TestSourcesFilter.isTestSources(file, project) && matchesModule(file, fileIndex);

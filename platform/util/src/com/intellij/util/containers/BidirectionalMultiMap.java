@@ -30,7 +30,7 @@ public class BidirectionalMultiMap<K, V> {
   private final Map<V, Set<K>> myValue2Keys;
 
   public BidirectionalMultiMap() {
-    this(new java.util.HashMap<K, Set<V>>(), new HashMap<V, Set<K>>());
+    this(new java.util.HashMap<>(), new HashMap<>());
   }
 
   public BidirectionalMultiMap(final Map<K, Set<V>> key2Values, final Map<V, Set<K>> value2Keys) {
@@ -41,13 +41,13 @@ public class BidirectionalMultiMap<K, V> {
   @NotNull
   public Set<V> getValues(K key) {
     Set<V> set = myKey2Values.get(key);
-    return set != null ? set : Collections.<V>emptySet();
+    return set != null ? set : Collections.emptySet();
   }
 
   @NotNull
   public Set<K> getKeys(V value) {
     Set<K> set = myValue2Keys.get(value);
-    return set != null ? set : Collections.<K>emptySet();
+    return set != null ? set : Collections.emptySet();
   }
 
   public boolean containsKey(K key) {
@@ -76,12 +76,12 @@ public class BidirectionalMultiMap<K, V> {
 
   @NotNull
   protected Set<V> createValuesSet() {
-    return new HashSet<V>();
+    return new HashSet<>();
   }
 
   @NotNull
   protected Set<K> createKeysSet() {
-    return new java.util.HashSet<K>();
+    return new java.util.HashSet<>();
   }
 
   public boolean removeKey(K key) {

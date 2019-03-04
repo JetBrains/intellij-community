@@ -1,4 +1,5 @@
 {
-  "startTime": <warning descr="Type is not allowed. Expected: string.">null</warning>
+  "startTime": <warning descr="Incompatible types.
+ Required: string. Actual: null.">null</warning>
 }
 

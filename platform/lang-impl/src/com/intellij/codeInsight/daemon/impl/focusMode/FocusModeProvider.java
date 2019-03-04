@@ -4,10 +4,19 @@ package com.intellij.codeInsight.daemon.impl.focusMode;
 import com.intellij.openapi.util.Segment;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 @ApiStatus.Experimental
 public interface FocusModeProvider {
-  @Nullable
-  Segment calcFocusRange(int primaryCaretOffset, PsiFile file);
+  /**
+   * Please return ranges in a order from the top to the bottom.
+   * <br>
+   * For example:
+   * <pre>(() ()) (() () ()) </pre>
+   * @see FocusModePassFactory#calcFocusZones
+   */
+  @NotNull
+  List<? extends Segment> calcFocusZones(@NotNull PsiFile file);
 }

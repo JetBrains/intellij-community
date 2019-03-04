@@ -49,10 +49,10 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
 
     DiffRequest request = e.getData(DiffDataKeys.DIFF_REQUEST);
     DiffContext context = e.getData(DiffDataKeys.DIFF_CONTEXT);
-
     if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, request, context)) {
       e.getPresentation().setVisible(false);
       e.getPresentation().setEnabled(false);
+      return;
     }
 
     if (e.getProject() == null) {
@@ -73,6 +73,10 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    DiffRequest request = e.getData(DiffDataKeys.DIFF_REQUEST);
+    DiffContext context = e.getData(DiffDataKeys.DIFF_CONTEXT);
+    if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, request, context)) return;
+
     Project project = e.getProject();
     if (project == null) return;
 

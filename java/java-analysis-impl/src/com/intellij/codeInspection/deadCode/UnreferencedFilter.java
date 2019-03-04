@@ -45,7 +45,7 @@ public class UnreferencedFilter extends RefUnreachableFilter {
     return -1;
   }
 
-  protected static boolean isExternallyReferenced(RefElement element) {
+  public static boolean isExternallyReferenced(RefElement element) {
     return element.getInReferences().stream().anyMatch(reference -> reference instanceof RefFile);
   }
 }

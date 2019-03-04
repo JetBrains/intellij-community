@@ -42,7 +42,7 @@ public class ShowPopupMenuAction extends DumbAwareAction implements PopupAction 
 
     MouseEvent event = new MouseEvent(
       focusOwner, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(),
-      0, point2.x, coord, 1, true);
+      0, point2.x, coord, 1, true, MouseEvent.BUTTON3);
     for (Component cur = deepest; cur != null; cur = cur.getParent()) {
       cur.dispatchEvent(event);
       if (event.isConsumed()) break;

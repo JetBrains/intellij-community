@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -110,7 +95,7 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public final IdeFrameImpl allocateFrame(@NotNull Project project) {
-    return new IdeFrameImpl(ActionManagerEx.getInstanceEx(), DataManager.getInstance(), ApplicationManager.getApplication());
+    return new IdeFrameImpl(ActionManagerEx.getInstanceEx(), DataManager.getInstance());
   }
 
   @Override
@@ -335,11 +320,7 @@ public final class TestWindowManager extends WindowManagerEx {
 
     @Override
     public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody) {
-      return new BalloonHandler() {
-        @Override
-        public void hide() {
-        }
-      };
+      return () -> { };
     }
 
     @Override
@@ -347,11 +328,7 @@ public final class TestWindowManager extends WindowManagerEx {
                                                   @NotNull String htmlBody,
                                                   @Nullable Icon icon,
                                                   @Nullable HyperlinkListener listener) {
-      return new BalloonHandler() {
-        @Override
-        public void hide() {
-        }
-      };
+      return () -> { };
     }
   }
 }

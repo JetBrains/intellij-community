@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class WordCompletionTest extends CompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/word/";
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

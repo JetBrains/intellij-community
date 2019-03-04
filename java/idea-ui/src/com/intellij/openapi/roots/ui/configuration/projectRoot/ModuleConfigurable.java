@@ -30,7 +30,7 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
   private final ModuleProjectStructureElement myProjectStructureElement;
   private final StructureConfigurableContext myContext;
 
-  public ModuleConfigurable(ModulesConfigurator modulesConfigurator, Module module, Runnable updateTree, ModuleGrouper moduleGrouper) {
+  public ModuleConfigurable(ModulesConfigurator modulesConfigurator, @NotNull Module module, Runnable updateTree, ModuleGrouper moduleGrouper) {
     super(true, updateTree);
     myModule = module;
     myModuleGrouper = moduleGrouper;
@@ -79,6 +79,7 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
   }
 
   @Override
+  @NotNull
   public Module getEditableObject() {
     return myModule;
   }
@@ -98,6 +99,7 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     return myModule.isDisposed() ? null : ModuleType.get(myModule).getIcon();
   }
 
+  @NotNull
   public Module getModule() {
     return myModule;
   }

@@ -19,7 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -63,7 +63,7 @@ public class SuperMethodReturnFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return mySuperMethod.isValid() && ScratchFileService.isInProjectOrScratch(mySuperMethod) && mySuperMethodType.isValid();
+    return mySuperMethod.isValid() && BaseIntentionAction.canModify(mySuperMethod) && mySuperMethodType.isValid();
   }
 
   @Override

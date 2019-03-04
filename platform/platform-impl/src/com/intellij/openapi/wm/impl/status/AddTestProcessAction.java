@@ -12,9 +12,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings({"HardCodedStringLiteral", "CallToPrintStackTrace"})
 public class AddTestProcessAction extends AnAction implements DumbAware {
   public AddTestProcessAction() {
     super("Add Test Process");
@@ -29,16 +27,11 @@ public class AddTestProcessAction extends AnAction implements DumbAware {
         try {
           indicator.setText("welcome!");
 
-          Thread.currentThread().sleep(6000);
+          Thread.sleep(6000);
 
           countTo(1000, new Count() {
             @Override
             public void onCount(int each) {
-
-//              if (each == 5) {
-//                createAnotherProgress(project);
-//              }
-
               indicator.setText("Found: " + each / 20 + 1);
               if (each / 10.0 == Math.round(each / 10.0)) {
                 indicator.setText(null);
@@ -46,7 +39,7 @@ public class AddTestProcessAction extends AnAction implements DumbAware {
               indicator.setFraction(each / 1000.0);
 
               try {
-                Thread.currentThread().sleep(100);
+                Thread.sleep(100);
               }
               catch (InterruptedException e1) {
                 e1.printStackTrace();
@@ -60,13 +53,12 @@ public class AddTestProcessAction extends AnAction implements DumbAware {
         }
         catch (ProcessCanceledException e1) {
           try {
-            Thread.currentThread().sleep(2000);
+            Thread.sleep(2000);
             indicator.stop();
           }
           catch (InterruptedException e2) {
             e2.printStackTrace();
           }
-          return;
         }
         catch (InterruptedException e1) {
           e1.printStackTrace();
@@ -75,59 +67,13 @@ public class AddTestProcessAction extends AnAction implements DumbAware {
     }.queue();
   }
 
-  private void createAnotherProgress(final Project project) {
-    final Task.Modal task = new Task.Modal(project, "Test2", true/*, PerformInBackgroundOption.DEAF*/) {
-      @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
-        try {
-          countTo(1000, new Count() {
-            @Override
-            public void onCount(int each) {
-              indicator.setText("Found: " + each / 20 + 1);
-              if (each / 10.0 == Math.round(each / 10.0)) {
-                indicator.setText(null);
-              }
-              indicator.setFraction(each / 1000.0);
-
-              try {
-                Thread.currentThread().sleep(100);
-              }
-              catch (InterruptedException e1) {
-                e1.printStackTrace();
-              }
-
-              indicator.checkCanceled();
-              indicator.setText2("bla bla bla");
-            }
-          });
-          indicator.stop();
-        }
-        catch (ProcessCanceledException e1) {
-          try {
-            Thread.currentThread().sleep(2000);
-            indicator.stop();
-          }
-          catch (InterruptedException e2) {
-            e2.printStackTrace();
-          }
-          return;
-        }
-      }
-    };
-
-//    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-//    task.run(indicator != null ? indicator : new EmptyProgressIndicator());
-
-    SwingUtilities.invokeLater(() -> task.queue());
-  }
-
-  private void countTo(int top, Count count) {
+  private static void countTo(int top, Count count) {
     for (int i = 0; i < top; i++) {
       count.onCount(i);
     }
   }
 
-  private static interface Count {
+  private interface Count {
     void onCount(int each);
   }
 }

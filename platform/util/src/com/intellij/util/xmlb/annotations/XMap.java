@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.TYPE, ElementType.METHOD})
 public @interface XMap {
   /**
-   * The property element name.
+   * The property element name. Defaults to property name.
    */
   String propertyElementName() default "";
 

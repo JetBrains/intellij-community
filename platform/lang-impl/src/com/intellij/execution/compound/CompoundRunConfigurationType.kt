@@ -7,12 +7,11 @@ import com.intellij.execution.configurations.SimpleConfigurationType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NotNullLazyValue
-import com.intellij.ui.LayeredIcon
 
 class CompoundRunConfigurationType : SimpleConfigurationType("CompoundRunConfigurationType", "Compound",
                                                              "It runs batch of run configurations at once",
                                                              NotNullLazyValue.createValue {
-                                                               LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark)
+                                                               AllIcons.RunConfigurations.Compound
                                                              }) {
   override fun createTemplateConfiguration(project: Project): RunConfiguration {
     return CompoundRunConfiguration("Compound", project, this)

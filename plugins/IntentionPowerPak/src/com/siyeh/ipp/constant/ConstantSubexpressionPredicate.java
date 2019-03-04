@@ -16,6 +16,7 @@
 package com.siyeh.ipp.constant;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -71,6 +72,11 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
     final PsiExpression[] operands = expression.getOperands();
     if (operands.length == 2) {
       return expression;
+    }
+    IElementType type = token.getTokenType();
+    if (!type.equals(JavaTokenType.PLUS) && !type.equals(JavaTokenType.ASTERISK) && !type.equals(JavaTokenType.OR) &&
+        !type.equals(JavaTokenType.AND) && !type.equals(JavaTokenType.XOR)) {
+      return null;
     }
     for (int i = 1; i < operands.length; i++) {
       final PsiExpression operand = operands[i];

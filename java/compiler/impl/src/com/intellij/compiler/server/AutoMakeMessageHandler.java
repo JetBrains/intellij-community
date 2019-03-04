@@ -35,7 +35,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   private volatile boolean myUnprocessedFSChangesDetected = false;
   private final AutomakeCompileContext myContext;
 
-  AutoMakeMessageHandler(Project project) {
+  AutoMakeMessageHandler(@NotNull Project project) {
     super(project);
     myProject = project;
     myBuildStatus = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.SUCCESS;

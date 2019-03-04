@@ -43,7 +43,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   private final AbstractFileViewProvider myViewProvider;
   private volatile boolean myPossiblyInvalidated;
 
-  public PsiBinaryFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
+  public PsiBinaryFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider) {
     myViewProvider = (AbstractFileViewProvider)viewProvider;
     myManager = manager;
   }
@@ -59,7 +59,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return true;
   }
 
-  public byte[] getStoredContents() {
+  byte[] getStoredContents() {
     return myContents;
   }
 
@@ -191,10 +191,10 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   public PsiElement copy() {
     PsiBinaryFileImpl clone = (PsiBinaryFileImpl)clone();
     clone.myName = getName();
-    try{
+    try {
       clone.myContents = !isCopy() ? getVirtualFile().contentsToByteArray() : myContents;
     }
-    catch(IOException e){
+    catch (IOException ignored) {
     }
     return clone;
   }

@@ -9,6 +9,6 @@ public class TokenStreamRewriteEngine {
 
     protected void addToSortedRewriteList(String programName, String op, Comparator comparator) {
         List rewrites = new ArrayList();
-        <ref>binarySearch(rewrites, op, comparator);
+        <caret>binarySearch(rewrites, op, comparator);
     }
 }

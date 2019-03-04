@@ -60,11 +60,11 @@ public class TriggerAdditionOrDeletion {
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
   }
 
-  public void addExisting(final Collection<FilePath> files) {
+  public void addExisting(final Collection<? extends FilePath> files) {
     myExisting.addAll(files);
   }
 
-  public void addDeleted(final Collection<FilePath> files) {
+  public void addDeleted(final Collection<? extends FilePath> files) {
     myDeleted.addAll(files);
   }
 
@@ -211,7 +211,7 @@ public class TriggerAdditionOrDeletion {
     }
   }
 
-  private void askUserIfNeeded(final AbstractVcs vcs, @NotNull  final List<FilePath> filePaths, @NotNull VcsConfiguration.StandardConfirmation type) {
+  private void askUserIfNeeded(final AbstractVcs vcs, @NotNull  final List<? extends FilePath> filePaths, @NotNull VcsConfiguration.StandardConfirmation type) {
     if (mySilentAddDelete) return;
     final VcsShowConfirmationOption confirmationOption = myVcsManager.getStandardConfirmation(type, vcs);
     if (VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY.equals(confirmationOption.getValue())) {

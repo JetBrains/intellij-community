@@ -83,8 +83,10 @@ public class JUnit4TestListener extends RunListener {
     }
     finally {
       for (int i = myStartedSuites.size() - 1; i>= 0; i--) {
-        String parent = JUnit4ReflectionUtil.getClassName((Description)myStartedSuites.get(i));
-        myPrintStream.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(parent)) + "\']");
+        String className = JUnit4ReflectionUtil.getClassName((Description)myStartedSuites.get(i));
+        if (!className.equals(myRootName)) {
+          myPrintStream.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(className)) + "\']");
+        }
       }
       myStartedSuites.clear();
     }
@@ -108,8 +110,14 @@ public class JUnit4TestListener extends RunListener {
     final String classFQN = JUnit4ReflectionUtil.getClassName(description);
 
 
-    List parentsHierarchy = parents != null && !parents.isEmpty() ? (List)parents.remove(0) 
-                                                                  : Collections.singletonList(Description.createSuiteDescription(classFQN, new Annotation[0]));
+    List parentsHierarchy = new ArrayList();
+    if (parents != null && !parents.isEmpty()) {
+      parentsHierarchy = (List)parents.remove(0);
+    }
+
+    if (parentsHierarchy.isEmpty()) {
+      parentsHierarchy = Collections.singletonList(Description.createSuiteDescription(classFQN, new Annotation[0]));
+    }
 
     if (methodName == null) {
       methodName = getFullMethodName(description, parentsHierarchy.isEmpty() ? null
@@ -140,8 +148,8 @@ public class JUnit4TestListener extends RunListener {
       final String className = getShortName(fqName);
       if (!className.equals(myRootName)) {
         myPrintStream.println("\n##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\'" + getSuiteLocation(descriptionFromHistory, description, fqName) + "]");
-        myStartedSuites.add(descriptionFromHistory);
       }
+      myStartedSuites.add(descriptionFromHistory);
     }
 
     myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(methodName.replaceFirst("/", ".")) + "\' " + 

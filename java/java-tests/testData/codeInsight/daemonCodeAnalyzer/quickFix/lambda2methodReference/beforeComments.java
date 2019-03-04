@@ -6,7 +6,10 @@ class Example {
   {
     Runnable r = () -> {
       //my comments here
-      m<caret>();
+      m<caret>()
+      //1
+      //2
+      ;
     }
   }
 }

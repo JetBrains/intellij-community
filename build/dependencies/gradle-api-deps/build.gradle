@@ -1,9 +1,10 @@
 import org.gradle.tooling.GradleConnector
+import org.gradle.util.GradleVersion
 
 plugins {
   id "base"
   id "maven-publish"
-  id "com.jfrog.bintray" version "1.7.3"
+  id "com.jfrog.bintray" version "1.8.4"
 }
 
 def intelliJDepsGroupId = 'org.jetbrains.intellij.deps'

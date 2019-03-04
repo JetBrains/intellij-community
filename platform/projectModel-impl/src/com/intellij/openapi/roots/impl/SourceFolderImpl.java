@@ -54,7 +54,7 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
 
   @Override
   public boolean isTestSource() {
-    return getRootType().equals(JavaSourceRootType.TEST_SOURCE) || getRootType().equals(JavaResourceRootType.TEST_RESOURCE);
+    return getRootType().isForTests();
   }
 
   @NotNull
@@ -95,8 +95,9 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     return myJpsElement.getRootType();
   }
 
+  @NotNull
   @Override
-  public ContentFolder cloneFolder(ContentEntry contentEntry) {
+  public ContentFolder cloneFolder(@NotNull ContentEntry contentEntry) {
     assert !((ContentEntryImpl)contentEntry).isDisposed() : "target entry already disposed: " + contentEntry;
     assert !isDisposed() : "Already disposed: " + this;
     return new SourceFolderImpl(this, (ContentEntryImpl)contentEntry);

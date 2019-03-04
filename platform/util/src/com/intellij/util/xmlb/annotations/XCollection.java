@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 public @interface XCollection {
   /**
    * The property element name. Defaults to property name if {@link #style} is set to {@link Style#v2}.
-   * If not specified and {@link #style} is not specified — property serialized using option tag.
+   * If not specified and {@link #style} is not specified - property serialized using option tag.
    */
   String propertyElementName() default "";
 

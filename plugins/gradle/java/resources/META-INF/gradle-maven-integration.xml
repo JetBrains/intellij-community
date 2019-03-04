@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <idea-plugin>
-
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.integrations.maven.MavenRepositoriesHolder</implementation-class>
-    </component>
-  </project-components>
-
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
     <repositoryProvider implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleMavenRepositoryProvider"/>
   </extensions>
@@ -18,6 +11,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.integrations.maven.MavenRepositoriesHolder"/>
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleProjectStartupActivity"/>
     <externalSystemTaskNotificationListener
         implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleMavenProjectImportNotificationListener"/>

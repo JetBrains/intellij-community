@@ -525,8 +525,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (boxingHappened[0] && !boxingHappened[1]) return Specifics.SECOND;
 
     if (sameBoxing) {
-      final PsiSubstitutor siteSubstitutor1 = info1.getSiteSubstitutor();
-      final PsiSubstitutor siteSubstitutor2 = info2.getSiteSubstitutor();
+      final PsiSubstitutor siteSubstitutor1 = getSiteSubstitutor(info1);
+      final PsiSubstitutor siteSubstitutor2 = getSiteSubstitutor(info2);
 
       final PsiType[] types2AtSite = typesAtSite(types2, siteSubstitutor2);
       final PsiType[] types1AtSite = typesAtSite(types1, siteSubstitutor1);
@@ -609,6 +609,21 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
 
     return Specifics.NEITHER;
+  }
+
+  private PsiSubstitutor getSiteSubstitutor(@NotNull MethodCandidateInfo info) {
+    PsiSubstitutor siteSubstitutor = info.getSiteSubstitutor();
+    if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+      return siteSubstitutor;
+    }
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    PsiClass containingClass = info.getElement().getContainingClass();
+    if (containingClass != null) {
+      for (PsiTypeParameter param : PsiUtil.typeParametersIterable(containingClass)) {
+        substitutor = substitutor.put(param, siteSubstitutor.substitute(param));
+      }
+    }
+    return substitutor;
   }
 
   private static boolean isBoxingUsed(PsiType parameterType, @Nullable PsiType argType, PsiExpression arg) {
@@ -747,6 +762,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (expr instanceof PsiConditionalExpression) {
       return isFunctionalTypeMoreSpecific(((PsiConditionalExpression)expr).getThenExpression(), sType, tType) &&
              isFunctionalTypeMoreSpecific(((PsiConditionalExpression)expr).getElseExpression(), sType, tType);
+    }
+
+    if (expr instanceof PsiSwitchExpression) {
+      return PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)expr).stream().allMatch(resultExpr -> isFunctionalTypeMoreSpecific(resultExpr, sType, tType));
     }
 
     if (expr instanceof PsiFunctionalExpression) {

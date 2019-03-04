@@ -65,7 +65,7 @@ public class JavaNavBarExtension extends AbstractNavBarModelExtension {
     if (containingFile != null) {
       final VirtualFile file = containingFile.getVirtualFile();
       if (file != null &&
-          (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibraryClasses(file) || index.isInLibrarySource(file))) {
+          (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibrary(file))) {
         if (psiElement instanceof PsiJavaFile) {
           final PsiJavaFile psiJavaFile = (PsiJavaFile)psiElement;
           if (psiJavaFile.getViewProvider().getBaseLanguage() == JavaLanguage.INSTANCE) {

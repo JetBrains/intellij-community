@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 
 class ReplaceUsageViewContext extends UsageViewContext {
   private final HashMap<Usage,ReplacementInfo> usage2ReplacementInfo = new HashMap<>();
-  private final Replacer replacer = new Replacer(mySearchContext.getProject(), ((ReplaceConfiguration)myConfiguration).getReplaceOptions());
+  private final Replacer replacer = new Replacer(mySearchContext.getProject(), myConfiguration.getReplaceOptions());
   private UsageView myUsageView;
 
   ReplaceUsageViewContext(SearchContext context, Configuration configuration, Runnable searchStarter) {

@@ -23,13 +23,6 @@ class ArrayInitializerLength {
     }
   }
 
-  void testIterate() {
-    int[] arr = new int[0];
-    for (int i : <warning descr="Array 'arr' is always empty">arr</warning>) {
-      System.out.println("never");
-    }
-  }
-
   void testConditional() {
     int[] arr = Math.random() > 0.5 ? new int[2] : new int[4];
     if(<warning descr="Condition 'arr.length == 3' is always 'false'">arr.length == 3</warning>) {
@@ -59,5 +52,16 @@ class ArrayInitializerLength {
       obj = new String[] {(String)obj};
     }
     System.out.println(obj);
+  }
+
+  void test2DArray() {
+    int[][] md = {{1, 2, 3}, {3, 4}};
+    if(Math.random() > 0.5) {
+      int elem = md[1][<warning descr="Array index is out of bounds">2</warning>];
+    }
+    int[] subArray = md[0];
+    if (<warning descr="Condition 'subArray.length == 3' is always 'true'">subArray.length == 3</warning>) {
+      System.out.println("Always");
+    }
   }
 }

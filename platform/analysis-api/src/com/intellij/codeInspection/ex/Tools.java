@@ -35,7 +35,7 @@ public interface Tools {
   @NotNull
   List<ScopeToolState> getTools();
 
-  void collectTools(@NotNull List<ScopeToolState> result);
+  void collectTools(@NotNull List<? super ScopeToolState> result);
 
   @NotNull
   ScopeToolState getDefaultState();

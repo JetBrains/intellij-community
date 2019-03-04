@@ -7,12 +7,12 @@ import org.junit.Test;
 import java.io.File;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeFalse;
 
 public class SymlinkPatchTest extends PatchTestCase {
   @Override
   public void setUp() throws Exception {
-    assumeTrue(!UtilsTest.IS_WINDOWS);
+    assumeFalse(Utils.IS_WINDOWS);
 
     super.setUp();
 

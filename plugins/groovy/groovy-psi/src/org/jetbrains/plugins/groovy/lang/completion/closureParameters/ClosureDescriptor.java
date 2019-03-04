@@ -1,15 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion.closureParameters;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
-import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
@@ -22,13 +20,10 @@ import java.util.Map;
 /**
  * @author Max Medvedev
  */
-public class ClosureDescriptor extends LightElement implements PsiElement {
+public class ClosureDescriptor {
+
   private final List<ClosureParameterInfo> myParams = new ArrayList<>();
   private Map myMethod;
-
-  public ClosureDescriptor(PsiManager manager) {
-    super(manager, GroovyLanguage.INSTANCE);
-  }
 
   public List<ClosureParameterInfo> getParameters() {
     return Collections.unmodifiableList(myParams);
@@ -36,12 +31,6 @@ public class ClosureDescriptor extends LightElement implements PsiElement {
 
   public void addParameter(@Nullable String type, String name) {
     myParams.add(new ClosureParameterInfo(type, name));
-  }
-
-
-  @Override
-  public String toString() {
-    return "closure descriptor";
   }
 
   public void setMethod(Map method) {

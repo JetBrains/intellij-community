@@ -22,10 +22,10 @@ import com.intellij.openapi.wm.ToolWindowId;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.fest.swing.edt.GuiActionRunner.execute;
@@ -47,10 +47,10 @@ public class InspectionsFixture extends ToolWindowFixture {
 
     return execute(new GuiQuery<String>() {
       @Override
-      @Nullable
-      protected String executeInEDT() throws Throwable {
+      @NotNull
+      protected String executeInEDT() {
         StringBuilder sb = new StringBuilder();
-        InspectionsFixture.describe(myTree.getRoot(), sb, 0);
+        describe(myTree.getInspectionTreeModel().getRoot(), sb, 0);
         return sb.toString();
       }
     });
@@ -65,11 +65,8 @@ public class InspectionsFixture extends ToolWindowFixture {
 
     // The exact order of the results sometimes varies so sort the children alphabetically
     // instead to ensure stable test output
-    List<InspectionTreeNode> children = new ArrayList<>(node.getChildCount());
-    for (int i = 0, n = node.getChildCount(); i < n; i++) {
-      children.add((InspectionTreeNode)node.getChildAt(i));
-    }
-    Collections.sort(children, (node1, node2) -> node1.toString().compareTo(node2.toString()));
+    List<InspectionTreeNode> children = new ArrayList<>(node.getChildren());
+    Collections.sort(children, Comparator.comparing(Object::toString));
     for (InspectionTreeNode child : children) {
       describe(child, sb, depth + 1);
     }

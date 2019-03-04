@@ -90,6 +90,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
           && context.myNullExpr.getTextLength() + method.length() + name.length() < context.myTernary.getTextLength() + MINIMAL_WARN_DELTA_SIZE;
         boolean isInfoLevel = noWarningReplacementBigger && replacementShorter;
         ProblemHighlightType highlightType = isInfoLevel ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+        if (!isOnTheFly && highlightType == ProblemHighlightType.INFORMATION) return;
         holder.registerProblem(ternary, InspectionsBundle.message("inspection.require.non.null.message", method),
                                highlightType, new ReplaceWithRequireNonNullFix(method, true));
       }
@@ -146,7 +147,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         CommentTracker tracker = new CommentTracker();
         PsiExpression requireCall =
           createRequireExpression(tracker, context.myNullExpr, project, context.myReferenceExpression, context.myNullExpr);
-        result = tracker.replace(context.myTernary, requireCall);
+        result = tracker.replaceAndRestoreComments(context.myTernary, requireCall);
       } else return;
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));

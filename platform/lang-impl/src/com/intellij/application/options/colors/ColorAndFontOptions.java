@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -23,8 +23,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusFactory;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.psi.codeStyle.DisplayPriority;
@@ -32,13 +35,14 @@ import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.ui.ColorUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jdom.Attribute;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -313,8 +318,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
       }
 
-      final boolean isEditorThemeDark = ColorUtil.isDark(activeOriginalScheme.getDefaultBackground());
-      changeLafIfNecessary(isEditorThemeDark);
+      changeLafIfNecessary(activeOriginalScheme);
 
       reset();
     }
@@ -418,6 +422,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
           }
           return DisplayPriority.LANGUAGE_SETTINGS;
         }
+
+        @NotNull
+        @Override
+        public Class<?> getOriginalClass() {
+          return page.getClass();
+        }
       });
     }
     extensions.addAll(ColorAndFontPanelFactory.EP_NAME.getExtensionList());
@@ -506,9 +516,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       initScheme(schemeDelegate);
       mySchemes.put(schemeDelegate.getName(), schemeDelegate);
     }
+    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    if (EditorColorsManagerImpl.isTempScheme(globalScheme)) {
+      MyColorScheme schemeDelegate = new MyTempColorScheme((AbstractColorsScheme)globalScheme);
+      initScheme(schemeDelegate);
+      mySchemes.put(schemeDelegate.getName(), schemeDelegate);
+    }
+    mySelectedScheme = mySchemes.get(globalScheme.getName());
 
-    mySelectedScheme = mySchemes.get(EditorColorsManager.getInstance().getGlobalScheme().getName());
-    assert mySelectedScheme != null : EditorColorsManager.getInstance().getGlobalScheme().getName() + "; myschemes=" + mySchemes;
+    assert mySelectedScheme != null : globalScheme.getName() + "; myschemes=" + mySchemes;
   }
 
   private static void initScheme(@NotNull MyColorScheme scheme) {
@@ -1032,7 +1048,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       return !areDelegatingOrEqual(getConsoleFontPreferences(), myParentScheme.getConsoleFontPreferences());
     }
 
-    private boolean apply() {
+    protected boolean apply() {
       if (!(myParentScheme instanceof ReadOnlyColorsScheme)) {
         return apply(myParentScheme);
       }
@@ -1144,6 +1160,88 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         target.setColor(key, fileStatusColors.get(key));
       }
       target.setSaveNeeded(true);
+    }
+  }
+
+  private static class MyTempColorScheme extends MyColorScheme {
+    private MyTempColorScheme(@NotNull AbstractColorsScheme parentScheme) {
+      super(parentScheme);
+    }
+
+    @Override
+    public boolean isReadOnly() {
+      return false;
+    }
+
+    @Override
+    protected boolean apply() {
+      Element scheme = new Element("scheme");
+      ((AbstractColorsScheme)getParentScheme()).writeExternal(scheme);
+      Element changes = new Element("scheme");
+      writeExternal(changes);
+      deepMerge(scheme, changes);
+      Path path = EditorColorsManagerImpl.getTempSchemeOriginalFilePath(getParentScheme());
+      if (path != null) {
+        try {
+          Element originalFile = JDOMUtil.load(path.toFile());
+          scheme.setName(originalFile.getName());
+          for (Attribute attribute : originalFile.getAttributes()) {
+            scheme.setAttribute(attribute.getName(), attribute.getValue());
+          }
+          getParentScheme().readExternal(scheme);
+
+          scheme.removeChild("metaInfo");
+          //save original metaInfo and don't add generated
+          Element metaInfo = originalFile.getChild("metaInfo");
+          if (metaInfo != null) {
+            metaInfo = JDOMUtil.load(JDOMUtil.writeElement(metaInfo));
+            scheme.addContent(0, metaInfo);
+          }
+          JDOMUtil.write(scheme, path.toFile());
+          VirtualFileManager.getInstance().syncRefresh();
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+      }
+      return true;
+    }
+
+    private static void deepMerge(Element to, Element from) {
+      List<Element> children = from.getChildren();
+      Map<Pair<String, String>, Element> index = createNamedIndex(to);
+      if (children.isEmpty()) {
+        Pair<String, String> key = indexKey(from);
+        Element el = index.get(key);
+        if (el == null) {
+          if (!"".equals(from.getAttributeValue("value"))) {
+            to.getParent().addContent(from.clone());
+          }
+          to.getParent().removeContent(to);
+        }
+      } else {
+        for (Element child : children) {
+          Element el = index.get(indexKey(child));
+          if (el != null) {
+            deepMerge(el, child);
+          } else {
+            to.addContent(child.clone());
+          }
+        }
+      }
+    }
+
+    private static Map<Pair<String, String>, Element> createNamedIndex(Element e) {
+      HashMap<Pair<String, String>, Element> index = new HashMap<Pair<String, String>, Element>();
+      for (Element child : e.getChildren()) {
+        index.put(indexKey(child), child);
+      }
+      return index;
+    }
+
+    @NotNull
+    private static Pair<String, String> indexKey(Element e) {
+      return Pair.create(e.getName(), e.getAttributeValue("name"));
     }
   }
 
@@ -1307,6 +1405,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     public Set<String> processListOptions() {
       return createPanel().processListOptions();
+    }
+
+    @NotNull
+    @Override
+    public Class<?> getOriginalClass() {
+      return myFactory.getOriginalClass();
     }
 
     @NotNull

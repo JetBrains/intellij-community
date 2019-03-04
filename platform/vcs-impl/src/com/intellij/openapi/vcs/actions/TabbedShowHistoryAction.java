@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 
-public class TabbedShowHistoryAction extends AbstractVcsAction {
+public class TabbedShowHistoryAction extends AbstractVcsAction implements UpdateInBackground {
   @Override
   protected void update(@NotNull VcsContext context, @NotNull Presentation presentation) {
     Project project = context.getProject();

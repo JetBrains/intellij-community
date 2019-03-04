@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
 import com.intellij.ExtensionPoints;
-import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -56,6 +55,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
@@ -138,9 +138,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
               }
             });
           }
-          catch (IOException e) {
-            LOG.warn(e);
-          }
+          catch (UnknownHostException e) { LOG.debug(e); }
+          catch (IOException e) { LOG.warn(e); }
         }
       }.queue();
     }
@@ -288,7 +287,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myCredentialsLabel = new HyperlinkLabel();
     myCredentialsLabel.addHyperlinkListener(e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        JetBrainsAccountDialogKt.showJetBrainsAccountDialog(getRootPane()).show();
+        JetBrainsAccountDialogKt.askJBAccountCredentials(getRootPane(), null);
         updateControls();
       }
     });
@@ -346,7 +345,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   protected Action[] createActions() {
     List<Action> actions = new ArrayList<>();
     if (myInternalMode && myProject != null && !myProject.isDefault()) {
-      AnAction action = ActionManager.getInstance().getAction("AnalyzeStacktraceOnError");
+      AnAction action = ActionManager.getInstance().getAction("Unscramble");
       if (action != null) {
         actions.add(new AnalyzeAction(action));
       }
@@ -396,10 +395,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void updateMessages() {
-    List<AbstractMessage> rawMessages = myMessagePool.getFatalErrors(true, true);
+    List<AbstractMessage> messages = myMessagePool.getFatalErrors(true, true);
     Map<Long, MessageCluster> clusters = new LinkedHashMap<>();
-    for (AbstractMessage raw : rawMessages) {
-      AbstractMessage message = raw instanceof GroupedLogMessage ? ((GroupedLogMessage)raw).getProxyMessage() : raw;
+    for (AbstractMessage message : messages) {
       CRC32 digest = new CRC32();
       digest.update(ExceptionUtil.getThrowableText(message.getThrowable()).getBytes(StandardCharsets.UTF_8));
       clusters.computeIfAbsent(digest.getValue(), k -> new MessageCluster(message)).messages.add(message);
@@ -444,9 +442,16 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     IdeaPluginDescriptor plugin = cluster.plugin;
 
     StringBuilder info = new StringBuilder();
+    String url = null;
 
     if (pluginId != null) {
-      info.append(DiagnosticBundle.message("error.list.message.blame.plugin", plugin != null ? plugin.getName() : pluginId));
+      String name = plugin != null ? plugin.getName() : pluginId.toString();
+      if (plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())) {
+        info.append(DiagnosticBundle.message("error.list.message.blame.plugin.version", name, plugin.getVersion()));
+      }
+      else {
+        info.append(DiagnosticBundle.message("error.list.message.blame.plugin", name));
+      }
     }
     else if (t instanceof AbstractMethodError) {
       info.append(DiagnosticBundle.message("error.list.message.blame.unknown.plugin"));
@@ -459,7 +464,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     String date = DateFormatUtil.formatPrettyDateTime(cluster.messages.get(count - 1).getDate());
     info.append(' ').append(DiagnosticBundle.message("error.list.message.info", date, count));
 
-    String url = null;
     if (message.isSubmitted()) {
       SubmittedReportInfo submissionInfo = message.getSubmissionInfo();
       appendSubmissionInformation(submissionInfo, info);
@@ -560,7 +564,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (submitter instanceof ITNReporter) {
       myCredentialsLabel.setVisible(true);
       Credentials credentials = ErrorReportConfigurable.getCredentials();
-      if (CredentialAttributesKt.isFulfilled(credentials)) {
+      if (credentials != null && credentials.getUserName() != null) {
         myCredentialsLabel.setHtmlText(DiagnosticBundle.message("error.dialog.submit.named", credentials.getUserName()));
       }
       else {
@@ -596,11 +600,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       parentComponent = frame != null ? frame.getComponent() : WindowManager.getInstance().findVisibleFrame();
     }
 
-    return submitter.submit(events, message.getAdditionalInfo(), parentComponent, reportInfo -> {
-      message.setSubmitting(false);
+    boolean accepted = submitter.submit(events, message.getAdditionalInfo(), parentComponent, reportInfo -> {
       message.setSubmitted(reportInfo);
       UIUtil.invokeLaterIfNeeded(() -> updateOnSubmit());
     });
+    if (!accepted) {
+      message.setSubmitting(false);
+    }
+    return accepted;
   }
 
   private void disablePlugin() {
@@ -628,8 +635,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       String disable = DiagnosticBundle.message("error.dialog.disable.plugin.action.disable");
       String cancel = IdeBundle.message("button.cancel");
 
-      boolean doDisable;
-      boolean doRestart;
+      boolean doDisable, doRestart;
       if (canRestart) {
         String restart = DiagnosticBundle.message("error.dialog.disable.plugin.action.disableAndRestart");
         int result = Messages.showYesNoCancelDialog(myProject, message, title, disable, restart, cancel, Messages.getQuestionIcon());
@@ -799,9 +805,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private static class MessageCluster {
     private final AbstractMessage first;
-    @Nullable private final PluginId pluginId;
-    @Nullable private final IdeaPluginDescriptor plugin;
-    @Nullable private final ErrorReportSubmitter submitter;
+    private final @Nullable PluginId pluginId;
+    private final @Nullable IdeaPluginDescriptor plugin;
+    private final @Nullable ErrorReportSubmitter submitter;
     private String detailsText;
     private final List<AbstractMessage> messages = new ArrayList<>();
 
@@ -814,18 +820,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     private String detailsText() {
-      AbstractMessage message = first;
-      if (message instanceof GroupedLogMessage) {
-        message = ((GroupedLogMessage)message).getMessages().get(0);
-      }
-
-      Throwable t = message.getThrowable();
+      Throwable t = first.getThrowable();
       if (t instanceof MessagePool.TooManyErrorsException) {
         return t.getMessage();
       }
 
-      String userMessage = message.getMessage();
-      String stacktrace = message.getThrowableText();
+      String userMessage = first.getMessage();
+      String stacktrace = first.getThrowableText();
       return StringUtil.isEmptyOrSpaces(userMessage) ? stacktrace : userMessage + "\n\n" + stacktrace;
     }
 
@@ -852,11 +853,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  /**
-   * @return (plugin name, version)
-   */
-  @Nullable
-  public static Pair<String, String> getPluginInfo(@NotNull IdeaLoggingEvent event) {
+  /** @deprecated use {@link #getPlugin(IdeaLoggingEvent)} instead and take the plugin name and version from the returned instance */
+  @Deprecated
+  public static @Nullable Pair<String, String> getPluginInfo(@NotNull IdeaLoggingEvent event) {
+    IdeaPluginDescriptor plugin = getPlugin(event);
+    return plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate()) ? pair(plugin.getName(), plugin.getVersion()) : null;
+  }
+
+  public static @Nullable IdeaPluginDescriptor getPlugin(@NotNull IdeaLoggingEvent event) {
     IdeaPluginDescriptor plugin = null;
     if (event instanceof IdeaReportingEvent) {
       plugin = ((IdeaReportingEvent)event).getPlugin();
@@ -867,11 +871,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         plugin = PluginManager.getPlugin(findPluginId(t));
       }
     }
-    return plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate()) ? pair(plugin.getName(), plugin.getVersion()) : null;
+    return plugin;
   }
 
-  @Nullable
-  public static PluginId findPluginId(@NotNull Throwable t) {
+  public static @Nullable PluginId findPluginId(@NotNull Throwable t) {
     if (t instanceof PluginException) {
       return ((PluginException)t).getPluginId();
     }
@@ -962,8 +965,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  @Nullable
-  static ErrorReportSubmitter getSubmitter(@NotNull Throwable t, PluginId pluginId) {
+  static @Nullable ErrorReportSubmitter getSubmitter(@NotNull Throwable t, PluginId pluginId) {
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     return getSubmitter(t, pluginId, plugin);
   }

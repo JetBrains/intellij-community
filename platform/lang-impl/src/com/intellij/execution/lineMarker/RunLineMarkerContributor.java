@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.lineMarker;
 
 import com.intellij.execution.TestStateStorage;
@@ -24,6 +10,7 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +22,11 @@ public abstract class RunLineMarkerContributor {
   public static final Function<PsiElement, String> RUN_TEST_TOOLTIP_PROVIDER = it -> "Run Test";
 
   static final LanguageExtension<RunLineMarkerContributor> EXTENSION = new LanguageExtension<>("com.intellij.runLineMarkerContributor");
+
+  @NotNull
+  public static Info withExecutorActions(@NotNull Icon icon) {
+    return new Info(icon, ExecutorAction.getActions(1), RUN_TEST_TOOLTIP_PROVIDER);
+  }
 
   public static class Info {
     public final Icon icon;
@@ -73,14 +65,25 @@ public abstract class RunLineMarkerContributor {
   protected static String getText(@NotNull AnAction action, @NotNull PsiElement element) {
     DataContext parent = DataManager.getInstance().getDataContext();
     DataContext dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.getName(), element, parent);
-    return action instanceof ExecutorAction ? ((ExecutorAction)action).getActionName(dataContext) : null;
+    if (!(action instanceof ExecutorAction)) {
+      return null;
+    }
+//    return ((ExecutorAction)action).getActionName(dataContext);
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
+    action.update(event);
+    if (!event.getPresentation().isEnabledAndVisible()) {
+      return null;
+    }
+    String name = ((ExecutorAction)action).getActionName(dataContext);
+    return name == null ? null : TextWithMnemonic.parse(name).getText();
   }
 
-  protected static Icon getTestStateIcon(String url, Project project, boolean isClass) {
-    TestStateStorage.Record state = TestStateStorage.getInstance(project).getState(url);
-    return getTestStateIcon(state, isClass);
+  @NotNull
+  protected static Icon getTestStateIcon(String url, @NotNull Project project, boolean isClass) {
+    return getTestStateIcon(TestStateStorage.getInstance(project).getState(url), isClass);
   }
 
+  @NotNull
   protected static Icon getTestStateIcon(@Nullable TestStateStorage.Record state, boolean isClass) {
     if (state != null) {
       TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);

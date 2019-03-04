@@ -44,6 +44,9 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
     try {
       myModulesToDispose.clear();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

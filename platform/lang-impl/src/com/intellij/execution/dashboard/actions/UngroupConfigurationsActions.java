@@ -15,60 +15,46 @@
  */
 package com.intellij.execution.dashboard.actions;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.dashboard.RunDashboardContent;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule;
 import com.intellij.execution.dashboard.tree.GroupingNode;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.intellij.execution.services.ServiceViewActionUtils.getTargets;
+
 /**
  * @author Konstantin Aleev
  */
-public class UngroupConfigurationsActions extends RunDashboardTreeActionImpl<GroupingNode> {
-  protected UngroupConfigurationsActions() {
-    super(ExecutionBundle.message("run.dashboard.ungroup.configurations.action.name"), null, AllIcons.General.Remove);
+public class UngroupConfigurationsActions extends AnAction {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    JBIterable<GroupingNode> targets = getTargets(e, GroupingNode.class);
+    boolean enabled = targets.isNotEmpty() &&
+                      targets.filter(node -> !(node.getGroup() instanceof FolderDashboardGroupingRule.FolderDashboardGroup)).isEmpty();
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 
   @Override
-  protected boolean isVisible4(GroupingNode node) {
-    return isEnabled4(node);
-  }
-
-  @Override
-  protected boolean isEnabled4(GroupingNode node) {
-    return node.getGroup() instanceof FolderDashboardGroupingRule.FolderDashboardGroup;
-  }
-
-  @Override
-  protected boolean isVisibleForAnySelection(@NotNull AnActionEvent e) {
-    return false;
-  }
-
-  @Override
-  protected boolean isMultiSelectionAllowed() {
-    return true;
-  }
-
-  @Override
-  protected Class<GroupingNode> getTargetNodeClass() {
-    return GroupingNode.class;
-  }
-
-  @Override
-  protected void doActionPerformed(@NotNull RunDashboardContent content, @NotNull AnActionEvent e, GroupingNode node) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
 
+    for (GroupingNode node : getTargets(e, GroupingNode.class)) {
+      doActionPerformed(project, node);
+    }
+  }
+
+  private static void doActionPerformed(Project project, GroupingNode node) {
     String groupName = node.getGroup().getName();
     List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> dashboardConfigurations =
       RunDashboardManager.getInstance(project).getRunConfigurations();

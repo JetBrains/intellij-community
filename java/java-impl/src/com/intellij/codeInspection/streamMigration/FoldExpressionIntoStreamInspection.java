@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -208,11 +207,8 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
       PsiExpression operandCopy = (PsiExpression)ct.markUnchanged(operands[0]).copy();
       PsiElement expressionCopy = PsiTreeUtil.releaseMark(operandCopy, marker);
       if (expressionCopy == null) return;
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       PsiType elementType = firstExpression.getType();
-      SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, elementType, true);
-      String name = info.names.length > 0 ? info.names[0] : "v";
-      name = codeStyleManager.suggestUniqueVariableName(name, expression, true);
+      String name = new VariableNameGenerator(expression, VariableKind.PARAMETER).byType(elementType).byName("v").generate(true);
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiExpression expressionCopyReplaced = (PsiExpression)expressionCopy.replace(factory.createExpressionFromText(name, expressionCopy));
       if (operandCopy == expressionCopy) {

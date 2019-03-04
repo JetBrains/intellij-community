@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 
 public abstract class XmlLikeFileType extends LanguageFileType {
-  public XmlLikeFileType(Language language) {
+  protected XmlLikeFileType(Language language) {
     super(language);
   }
   @Override
@@ -46,9 +46,5 @@ public abstract class XmlLikeFileType extends LanguageFileType {
     String name = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     Charset charset = CharsetToolkit.forName(name);
     return charset == null ? CharsetToolkit.UTF8_CHARSET : charset;
-  }
-
-  public boolean isCaseSensitive() {
-    return false;
   }
 }

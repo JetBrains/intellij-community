@@ -96,7 +96,7 @@ public class TypeMigrationLabeler {
   }
 
   public boolean hasFailedConversions() {
-    return myFailedConversions.size() > 0;
+    return !myFailedConversions.isEmpty();
   }
 
   public Function<PsiElement, PsiType> getMigrationRootTypeFunction() {
@@ -217,7 +217,7 @@ public class TypeMigrationLabeler {
         public Iterator<TypeMigrationUsageInfo> getIn(TypeMigrationUsageInfo n) {
           final HashSet<Pair<TypeMigrationUsageInfo, PsiType>> rawNodes = myRootsTree.get(n);
           if (rawNodes == null) {
-            return Collections.<TypeMigrationUsageInfo>emptyList().iterator();
+            return Collections.emptyIterator();
           }
           final List<TypeMigrationUsageInfo> in =
             ContainerUtil.map(rawNodes, pair -> pair.getFirst());
@@ -257,7 +257,7 @@ public class TypeMigrationLabeler {
       if (res != 0) {
         return res;
       }
-      return range2.getStartOffset() - range1.getStartOffset();
+      return Integer.compare(range2.getStartOffset(), range1.getStartOffset());
     });
 
     return infos;
@@ -897,27 +897,25 @@ public class TypeMigrationLabeler {
     for (PsiReference ref1 : refs) {
       final PsiElement ref = ref1.getElement();
 
-      if (ref != null) {
-        if (element instanceof PsiMethod) {
-          final PsiElement parent = Util.getEssentialParent(ref);
+      if (element instanceof PsiMethod) {
+        final PsiElement parent = Util.getEssentialParent(ref);
 
-          if (!(parent instanceof PsiMethodCallExpression)) {
-            continue;
-          }
-
-          getTypeEvaluator().setType(new TypeMigrationUsageInfo(parent), migrationType);
-        }
-        else if (element instanceof PsiVariable) {
-          if (ref instanceof PsiReferenceExpression) {
-            getTypeEvaluator().setType(new TypeMigrationUsageInfo(ref), PsiUtil.captureToplevelWildcards(migrationType, ref));
-          }
-        }
-        else {
-          LOG.error("Method call expression or reference expression expected but found " + element.getClass().getName());
+        if (!(parent instanceof PsiMethodCallExpression)) {
           continue;
         }
-        validReferences.add(ref1);
+
+        getTypeEvaluator().setType(new TypeMigrationUsageInfo(parent), migrationType);
       }
+      else if (element instanceof PsiVariable) {
+        if (ref instanceof PsiReferenceExpression) {
+          getTypeEvaluator().setType(new TypeMigrationUsageInfo(ref), PsiUtil.captureToplevelWildcards(migrationType, ref));
+        }
+      }
+      else {
+        LOG.error("Method call expression or reference expression expected but found " + element.getClass().getName());
+        continue;
+      }
+      validReferences.add(ref1);
     }
 
     Collections.sort(validReferences, Comparator.comparingInt(o -> o.getElement().getTextOffset()));
@@ -983,7 +981,7 @@ public class TypeMigrationLabeler {
 
   void migrateRootUsageExpression(final PsiReference usage, final Set<? super PsiElement> processed) {
     final PsiElement ref = usage.getElement();
-    if (ref != null && ref.getLanguage() == JavaLanguage.INSTANCE) {
+    if (ref.getLanguage() == JavaLanguage.INSTANCE) {
       final PsiElement element = getContainingStatement(ref);
       if (element != null && !processed.contains(element)) {
         processed.add(element);
@@ -1086,7 +1084,7 @@ public class TypeMigrationLabeler {
     }
 
     if (autoMigrate) {
-      while (myMigrationRoots.size() > 0) {
+      while (!myMigrationRoots.isEmpty()) {
         iterate();
       }
     }

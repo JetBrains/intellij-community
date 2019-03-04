@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -7,7 +7,6 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.junit.Assert;
 
 /**
@@ -27,6 +26,9 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
     try {
       Disposer.dispose(myHistory);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myHistory = null;
       super.tearDown();
@@ -34,7 +36,8 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
   }
 
   public void testBackNavigationBetweenEditors() {
-    PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new FileEditorManagerTest.MyFileEditorProvider(), myFixture.getTestRootDisposable());
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER
+      .getPoint(null).registerExtension(new FileEditorManagerTest.MyFileEditorProvider(), myFixture.getTestRootDisposable());
     VirtualFile file = getFile("/src/1.txt");
     assertNotNull(file);
     FileEditor[] editors = myManager.openFile(file, true);

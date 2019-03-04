@@ -194,9 +194,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         if (node != null) {
           TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
           if (requestFocus) {
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
           }
         }
       }

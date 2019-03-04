@@ -1,12 +1,11 @@
 <idea-plugin>
   <name>Ant Support</name>
   <id>AntSupport</id>
-  <version>1.0</version>
-  <idea-version since-build="6.0"/>
   <description>Editing, maintaining and running Ant build scripts inside IntelliJ IDEA.</description>
   <vendor>JetBrains</vendor>
 
   <resource-bundle>com.intellij.lang.ant.resources.AntActionsBundle</resource-bundle>
+  <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.properties</depends>
 
   <extensionPoints>
@@ -46,8 +45,8 @@
                      groupKey="ant.inspections.display.name"
                      enabledByDefault="true" level="ERROR" implementationClass="com.intellij.lang.ant.dom.AntResolveInspection"/>
 
-    <dom.fileDescription implementation="com.intellij.lang.ant.dom.AntDomFileDescription"/>
-    <dom.fileDescription implementation="com.intellij.lang.ant.dom.AntlibDomFileDescription"/>
+    <dom.fileMetaData implementation="com.intellij.lang.ant.dom.AntDomFileDescription" rootTagName="project"/>
+    <dom.fileMetaData implementation="com.intellij.lang.ant.dom.AntlibDomFileDescription" rootTagName="antlib"/>
     <dom.extender domClass="com.intellij.lang.ant.dom.AntDomElement" extenderClass="com.intellij.lang.ant.dom.AntDomExtender"/>
     <pom.declarationSearcher implementation="com.intellij.lang.ant.dom.AntDomDeclarationSearcher"/>
     
@@ -81,6 +80,7 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.lang.ant.config.impl.AntToolwindowRegistrar</implementation-class>
+      <headless-implementation-class/>
     </component>
   </project-components>
 

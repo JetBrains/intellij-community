@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeBlock;
@@ -51,7 +51,7 @@ public class DeleteMethodBodyFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myMethod.isValid() && ScratchFileService.isInProjectOrScratch(myMethod) && myMethod.getBody() != null;
+    return myMethod.isValid() && BaseIntentionAction.canModify(myMethod) && myMethod.getBody() != null;
   }
 
   @NotNull

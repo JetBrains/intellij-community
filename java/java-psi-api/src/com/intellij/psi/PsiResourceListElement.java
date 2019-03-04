@@ -19,8 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Common interface for {@link PsiResourceVariable} and {@link PsiResourceExpression}.
- *
- * @since 15
  */
 public interface PsiResourceListElement extends PsiElement {
   @Nullable

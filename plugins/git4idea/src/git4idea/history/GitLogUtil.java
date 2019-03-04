@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.application.ReadAction;
@@ -29,7 +29,10 @@ import git4idea.log.GitRefManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -42,7 +45,7 @@ public class GitLogUtil {
   /**
    * A parameter to {@code git log} which is equivalent to {@code --all}, but doesn't show the stuff from index or stash.
    */
-  public static final List<String> LOG_ALL = Arrays.asList(GitUtil.HEAD, "--branches", "--remotes", "--tags");
+  public static final List<String> LOG_ALL = ContainerUtil.immutableList(GitUtil.HEAD, "--branches", "--remotes", "--tags");
   public static final String STDIN = "--stdin";
 
   @NotNull
@@ -104,8 +107,7 @@ public class GitLogUtil {
       options.add(REF_NAMES);
     }
 
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE,
-                                           ArrayUtil.toObjectArray(options, GitLogParser.GitLogOption.class));
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, options.toArray(new GitLogParser.GitLogOption[0]));
     handler.setStdoutSuppressed(true);
     handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
     handler.addParameters("--decorate=full");
@@ -177,9 +179,8 @@ public class GitLogUtil {
     List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
 
     try {
-      GitLineHandler handler =
-        createGitHandler(project, root, createConfigParameters(false, false, DiffRenameLimit.GIT_CONFIG), lowPriorityProcess);
-      readRecordsFromHandler(project, root, true, false, record -> commits.add(converter.fun(record)), handler, parameters);
+      GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), lowPriorityProcess);
+      readRecordsFromHandler(project, root, true, false, false, false, record -> commits.add(converter.fun(record)), handler, parameters);
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -246,14 +247,25 @@ public class GitLogUtil {
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
                                      boolean includeRootChanges,
-                                     boolean preserverOrder,
+                                     boolean preserveOrder,
                                      boolean lowPriorityProcess,
                                      @NotNull String... parameters) throws VcsException {
-    DiffRenameLimit renameLimit = DiffRenameLimit.REGISTRY;
+    readFullDetails(project, root, commitConsumer, includeRootChanges, preserveOrder, lowPriorityProcess, true, true, parameters);
+  }
 
-    GitLineHandler handler =
-      createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit), lowPriorityProcess);
-    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, preserverOrder, parameters);
+  public static void readFullDetails(@NotNull Project project,
+                                     @NotNull VirtualFile root,
+                                     @NotNull Consumer<? super GitCommit> commitConsumer,
+                                     boolean includeRootChanges,
+                                     boolean preserveOrder,
+                                     boolean lowPriorityProcess,
+                                     boolean withRenames,
+                                     boolean withFullMergeDiff,
+                                     @NotNull String... parameters) throws VcsException {
+    DiffRenameLimit renameLimit = withRenames ? DiffRenameLimit.REGISTRY : DiffRenameLimit.NO_RENAMES;
+    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(includeRootChanges, renameLimit), lowPriorityProcess);
+    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, preserveOrder, withFullMergeDiff,
+                               parameters);
   }
 
   private static void readFullDetailsFromHandler(@NotNull Project project,
@@ -261,43 +273,75 @@ public class GitLogUtil {
                                                  @NotNull Consumer<? super GitCommit> commitConsumer,
                                                  @NotNull DiffRenameLimit renameLimit,
                                                  @NotNull GitLineHandler handler,
-                                                 boolean preserverOrder,
+                                                 boolean preserveOrder,
+                                                 boolean withFullMergeDiff,
                                                  @NotNull String... parameters) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return;
     }
+    boolean withRenames = renameLimit != DiffRenameLimit.NO_RENAMES;
 
-    Consumer<List<GitLogRecord>> consumer = records -> {
-      GitLogRecord firstRecord = notNull(getFirstItem(records));
-      String[] parents = firstRecord.getParentsHashes();
+    if (withFullMergeDiff) {
+      Consumer<List<GitLogRecord>> consumer = records -> {
+        GitLogRecord firstRecord = notNull(getFirstItem(records));
+        String[] parents = firstRecord.getParentsHashes();
 
-      LOG.assertTrue(parents.length == 0 || parents.length == records.size(), "Not enough records for commit " +
-                                                                              firstRecord.getHash() +
-                                                                              " expected " +
-                                                                              parents.length +
-                                                                              " records, but got " +
-                                                                              records.size());
+        LOG.assertTrue(parents.length == 0 || parents.length == records.size(), "Not enough records for commit " +
+                                                                                firstRecord.getHash() +
+                                                                                " expected " +
+                                                                                parents.length +
+                                                                                " records, but got " +
+                                                                                records.size());
 
-      commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
-    };
+        commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
+      };
+      GitLogRecordCollector recordCollector = preserveOrder ? new GitLogRecordCollector(project, root, consumer)
+                                                            : new GitLogUnorderedRecordCollector(project, root, consumer);
 
-    GitLogRecordCollector recordCollector = preserverOrder ? new GitLogRecordCollector(project, root, consumer)
-                                                           : new GitLogUnorderedRecordCollector(project, root, consumer);
+      readRecordsFromHandler(project, root, false, true, withRenames, true, recordCollector, handler, parameters);
+      recordCollector.finish();
+    }
+    else {
+      Consumer<GitLogRecord> consumer =
+        record -> commitConsumer.consume(createCommit(project, root, ContainerUtil.newArrayList(record), factory, renameLimit));
 
-    readRecordsFromHandler(project, root, false, true, recordCollector, handler, parameters);
-    recordCollector.finish();
+      readRecordsFromHandler(project, root, false, true, withRenames, false, consumer, handler, parameters);
+    }
   }
 
   private static void readRecordsFromHandler(@NotNull Project project,
                                              @NotNull VirtualFile root,
                                              boolean withRefs,
                                              boolean withChanges,
+                                             boolean withRenames,
+                                             boolean withFullMergeDiff,
                                              @NotNull Consumer<GitLogRecord> converter,
                                              @NotNull GitLineHandler handler,
                                              @NotNull String... parameters)
     throws VcsException {
-    GitLogParser parser = createParserForDetails(handler, project, withRefs, withChanges, parameters);
+    GitLogParser.GitLogOption[] options = {HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
+      PARENTS, SUBJECT, BODY, RAW_BODY};
+    if (withRefs) {
+      options = ArrayUtil.append(options, REF_NAMES);
+    }
+    GitLogParser parser = new GitLogParser(project, withChanges ? GitLogParser.NameStatus.STATUS : GitLogParser.NameStatus.NONE, options);
+    handler.setStdoutSuppressed(true);
+    handler.addParameters(parameters);
+    handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
+    if (withRefs) {
+      handler.addParameters("--decorate=full");
+    }
+    if (withChanges) {
+      handler.addParameters("--name-status");
+    }
+    if (withRenames) {
+      handler.addParameters("-M");
+    }
+    if (withFullMergeDiff) {
+      handler.addParameters("-m");
+    }
+    handler.endOptions();
 
     StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
 
@@ -308,33 +352,15 @@ public class GitLogUtil {
     sw.report();
   }
 
-  @NotNull
-  private static GitLogParser createParserForDetails(@NotNull GitTextHandler h,
-                                                     @NotNull Project project,
-                                                     boolean withRefs,
-                                                     boolean withChanges,
-                                                     String... parameters) {
-    GitLogParser.NameStatus status = withChanges ? GitLogParser.NameStatus.STATUS : GitLogParser.NameStatus.NONE;
-    GitLogParser.GitLogOption[] options = {HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
-      PARENTS, SUBJECT, BODY, RAW_BODY};
-    if (withRefs) {
-      options = ArrayUtil.append(options, REF_NAMES);
-    }
-    GitLogParser parser = new GitLogParser(project, status, options);
-    h.setStdoutSuppressed(true);
-    h.addParameters(parameters);
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    if (withRefs) {
-      h.addParameters("--decorate=full");
-    }
-    if (withChanges) {
-      h.addParameters("-M", /*find and report renames*/
-                      "--name-status",
-                      "-m" /*merge commits show diff with all parents (ie for merge with 3 parents we are going to have 3 separate entries, one for each parent)*/);
-    }
-    h.endOptions();
-
-    return parser;
+  public static void readFullDetailsForHashes(@NotNull Project project,
+                                              @NotNull VirtualFile root,
+                                              @NotNull GitVcs vcs,
+                                              @NotNull Consumer<? super GitCommit> commitConsumer,
+                                              @NotNull List<String> hashes,
+                                              boolean includeRootChanges,
+                                              boolean lowPriorityProcess,
+                                              @NotNull DiffRenameLimit renameLimit) throws VcsException {
+    readFullDetailsForHashes(project, root, vcs, commitConsumer, hashes, includeRootChanges, lowPriorityProcess, true, false, renameLimit);
   }
 
   public static void readFullDetailsForHashes(@NotNull Project project,
@@ -344,12 +370,14 @@ public class GitLogUtil {
                                               @NotNull List<String> hashes,
                                               boolean includeRootChanges,
                                               boolean lowPriorityProcess,
+                                              boolean withFullMergeDiff,
+                                              boolean preserveOrder,
                                               @NotNull DiffRenameLimit renameLimit) throws VcsException {
-    GitLineHandler handler =
-      createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit), lowPriorityProcess);
+    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(includeRootChanges, renameLimit), lowPriorityProcess);
     sendHashesToStdin(vcs, hashes, handler);
 
-    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, false, getNoWalkParameter(vcs), STDIN);
+    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, preserveOrder, withFullMergeDiff,
+                               getNoWalkParameter(vcs), STDIN);
   }
 
   public static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
@@ -378,17 +406,13 @@ public class GitLogUtil {
                                                  @NotNull List<String> configParameters,
                                                  boolean lowPriorityProcess) {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
-    handler.setWithLowPriority(lowPriorityProcess);
+    if (lowPriorityProcess) handler.withLowPriority();
     handler.setWithMediator(false);
     return handler;
   }
 
   @NotNull
-  private static List<String> createConfigParameters(boolean withChanges,
-                                                     boolean includeRootChanges,
-                                                     @NotNull DiffRenameLimit renameLimit) {
-    if (!withChanges) return Collections.emptyList();
-
+  private static List<String> createConfigParameters(boolean includeRootChanges, @NotNull DiffRenameLimit renameLimit) {
     List<String> result = ContainerUtil.newArrayList();
     switch (renameLimit) {
       case INFINITY:
@@ -396,6 +420,9 @@ public class GitLogUtil {
         break;
       case REGISTRY:
         result.add(renameLimit(Registry.intValue("git.diff.renameLimit")));
+        break;
+      case NO_RENAMES:
+        result.add("diff.renames=false");
         break;
       case GIT_CONFIG:
     }
@@ -423,6 +450,10 @@ public class GitLogUtil {
     /**
      * Use value set in users git.config
      */
-    GIT_CONFIG
+    GIT_CONFIG,
+    /**
+     * Disable renames detection
+     */
+    NO_RENAMES
   }
 }

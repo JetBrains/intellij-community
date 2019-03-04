@@ -1,0 +1,15 @@
+a -> a
+-----
+Groovy script
+  Lambda expression
+    Parameter list
+      Parameter
+        Modifiers
+          <empty list>
+        PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(->)('->')
+    PsiWhiteSpace(' ')
+    Lambda body
+      Reference expression
+        PsiElement(identifier)('a')

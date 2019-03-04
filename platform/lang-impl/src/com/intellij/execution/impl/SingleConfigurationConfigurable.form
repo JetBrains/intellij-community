@@ -113,7 +113,7 @@
         </properties>
         <border type="none"/>
         <children>
-          <xy id="49cf" binding="myComponentPlace" layout-manager="XYLayout" hgap="-1" vgap="-1">
+          <xy id="49cf" binding="myComponentPlace" custom-create="true" layout-manager="XYLayout" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints/>
             <properties/>

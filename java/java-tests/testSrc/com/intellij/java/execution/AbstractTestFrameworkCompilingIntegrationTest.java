@@ -54,6 +54,9 @@ public abstract class AbstractTestFrameworkCompilingIntegrationTest extends Abst
     try {
       myCompilerTester.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

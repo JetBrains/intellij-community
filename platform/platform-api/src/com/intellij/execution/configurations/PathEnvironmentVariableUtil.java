@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,7 +129,13 @@ public class PathEnvironmentVariableUtil {
     return Collections.emptyList();
   }
 
+  @NotNull
   public static String findExecutableInWindowsPath(@NotNull String exePath) {
+    return findExecutableInWindowsPath(exePath, exePath);
+  }
+
+  @Contract("_, !null -> !null")
+  public static String findExecutableInWindowsPath(@NotNull String exePath, @Nullable String defaultPath) {
     if (SystemInfo.isWindows) {
       if (!StringUtil.containsChar(exePath, '/') && !StringUtil.containsChar(exePath, '\\')) {
         List<String> executableFileExtensions = getWindowsExecutableFileExtensions();
@@ -141,7 +148,7 @@ public class PathEnvironmentVariableUtil {
         }
       }
     }
-    return exePath;
+    return defaultPath;
   }
 
   /**

@@ -20,11 +20,11 @@ public class JsonNamesValidator implements NamesValidator {
   }
   @Override
   public synchronized boolean isIdentifier(@NotNull String name, final Project project) {
-    if (!StringUtil.startsWithChar(name,'\'') && !StringUtil.startsWithChar(name,'\"')) {
+    if (!StringUtil.startsWithChar(name,'\'') && !StringUtil.startsWithChar(name,'"')) {
       name = "\"" + name;
     }
 
-    if (!StringUtil.endsWithChar(name,'"') && !StringUtil.endsWithChar(name,'\"')) {
+    if (!StringUtil.endsWithChar(name,'"') && !StringUtil.endsWithChar(name,'\'')) {
       name += "\"";
     }
 

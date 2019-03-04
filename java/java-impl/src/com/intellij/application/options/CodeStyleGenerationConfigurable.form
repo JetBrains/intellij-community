@@ -166,7 +166,7 @@
                       </component>
                       <component id="551b5" class="javax.swing.JLabel">
                         <constraints>
-                          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
                           <text value="Test class:"/>
@@ -190,7 +190,7 @@
                       </component>
                       <component id="49afe" class="javax.swing.JLabel">
                         <constraints>
-                          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
                           <text value="Subclass:"/>
@@ -335,7 +335,7 @@
                 <children>
                   <vspacer id="6e28c">
                     <constraints>
-                      <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                     </constraints>
                   </vspacer>
                   <component id="b3adb" class="com.intellij.ui.components.JBCheckBox" binding="myReplaceInstanceOfCb">
@@ -343,23 +343,23 @@
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Replace instanceof with MyClass.class::isInstance"/>
-                    </properties>
-                  </component>
-                  <component id="129cc" class="com.intellij.ui.components.JBCheckBox" binding="myReplaceCastCb">
-                    <constraints>
-                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <text value="Replace cast with MyClass.class::cast"/>
+                      <text value="Use Class::isInstance and Class::cast when possible"/>
                     </properties>
                   </component>
                   <component id="f4ef0" class="com.intellij.ui.components.JBCheckBox" binding="myReplaceNullCheckCb">
                     <constraints>
-                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <text value="Replace null-check with Objects::nonNull or Objects::isNull"/>
+                    </properties>
+                  </component>
+                  <component id="de0d0" class="com.intellij.ui.components.JBCheckBox" binding="myReplaceSumCb">
+                    <constraints>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Use Integer::sum, etc. when possible"/>
                     </properties>
                   </component>
                 </children>

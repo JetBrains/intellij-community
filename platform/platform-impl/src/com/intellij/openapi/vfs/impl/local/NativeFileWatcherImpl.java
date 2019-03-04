@@ -255,15 +255,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private static final Charset CHARSET;
-  static {
-    Charset cs = null;
-    try {
-      cs = SystemInfo.isWindows || SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : Charset.forName(System.getProperty("sun.jnu.encoding"));
-    }
-    catch (IllegalArgumentException ignored) { }
-    CHARSET = cs;
-  }
+  private static final Charset CHARSET =
+    SystemInfo.isWindows || SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : CharsetToolkit.getPlatformCharset();
 
   private static final BaseOutputReader.Options READER_OPTIONS = new BaseOutputReader.Options() {
     @Override public BaseDataReader.SleepingPolicy policy() { return BaseDataReader.SleepingPolicy.BLOCKING; }
@@ -392,7 +385,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       myNotificationSink.notifyManualWatchRoots(myLines);
     }
 
-    private void processChange(String path, WatcherOp op) {
+    private void processChange(@NotNull String path, @NotNull WatcherOp op) {
       if (SystemInfo.isWindows && op == WatcherOp.RECDIRTY) {
         myNotificationSink.notifyReset(path);
         return;

@@ -43,7 +43,7 @@ public abstract class GradleReRunBuildFilter implements Filter {
   }
 
   @Override
-  public Result applyFilter(String line, int entireLength) {
+  public Result applyFilter(@NotNull String line, int entireLength) {
     if (line == null) {
       return null;
     }

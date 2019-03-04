@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ProjectTopics;
@@ -35,10 +21,13 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -145,12 +134,12 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
   @NotNull
   @Override
-  public ActionCallback select(Object element, VirtualFile file, boolean requestFocus) {
+  public Promise<Object> selectAsync(Object element, VirtualFile file, boolean requestFocus) {
     final DefaultMutableTreeNode node = findSmartFirstLevelNodeByElement(element);
     if (node != null) {
-      return TreeUtil.selectInTree(node, requestFocus, getTree());
+      return Promises.toPromise(TreeUtil.selectInTree(node, requestFocus, getTree()));
     }
-    return super.select(element, file, requestFocus);
+    return super.selectAsync(element, file, requestFocus);
   }
 
   @Nullable
@@ -218,16 +207,8 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
     @Override
     public void fileStatusChanged(@NotNull VirtualFile vFile) {
-      PsiElement element;
-      PsiManager psiManager = PsiManager.getInstance(myProject);
-      if (vFile.isDirectory()) {
-        element = psiManager.findDirectory(vFile);
-      }
-      else {
-        element = psiManager.findFile(vFile);
-      }
-
-      if (!addSubtreeToUpdateByElement(element) &&
+      PsiElement element = PsiUtilCore.findFileSystemItem(myProject, vFile);
+      if (element != null && !addSubtreeToUpdateByElement(element) &&
           element instanceof PsiFile &&
           ((PsiFile)element).getFileType() == StdFileTypes.JAVA) {
         addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());

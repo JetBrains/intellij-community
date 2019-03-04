@@ -1,11 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
+import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -14,35 +17,47 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.io.ZipUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.io.Decompressor;
+import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.util.List;
-import java.util.PropertyResourceBundle;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
 
+import static com.intellij.ide.GeneralSettings.IDE_GENERAL_XML;
+import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
 
 /**
  * @author max
+ * @noinspection SSBasedInspection
  */
 public class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
 
-  private static final String CONFIG = "config";
-  private static final String OPTIONS_XML = "options/options.xml";
+  public static final String CONFIG = "config";
+  private static final String[] OPTIONS = {
+    OPTIONS_DIRECTORY + '/' + StoragePathMacros.NOT_ROAMABLE_FILE,
+    OPTIONS_DIRECTORY + '/' + IDE_GENERAL_XML,
+    OPTIONS_DIRECTORY + "/options.xml"};
   private static final String BIN = "bin";
   private static final String CONTENTS = "Contents";
   private static final String PLIST = "Info.plist";
@@ -50,21 +65,21 @@ public class ConfigImportHelper {
 
   private ConfigImportHelper() { }
 
-  public static void importConfigsTo(@NotNull String newConfigPath) {
+  public static void importConfigsTo(@NotNull String newConfigPath, @NotNull Logger log) {
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
     ConfigImportSettings settings = getConfigImportSettings();
-    File newConfigDir = new File(newConfigPath);
-    File guessedOldConfigDir = findRecentConfigDirectory(newConfigDir);
+    Path newConfigDir = Paths.get(newConfigPath);
+    List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir, SystemInfo.isMac, true);
 
-    ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDir, f -> findConfigDirectoryByPath(f));
+    ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
     AppUIUtil.updateWindowIcon(dialog);
     dialog.setVisible(true);
 
-    Pair<File, File> result = dialog.getSelectedFile();
+    Pair<Path, Path> result = dialog.getSelectedFile();
     if (result != null) {
-      doImport(result.first, newConfigDir, result.second);
+      doImport(result.first, newConfigDir, result.second, log);
       settings.importFinished(newConfigPath);
       System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
     }
@@ -90,21 +105,12 @@ public class ConfigImportHelper {
   }
 
   public static boolean isValidSettingsFile(@NotNull File file) {
-    try (ZipInputStream zipStream = new ZipInputStream(new FileInputStream(file))) {
-      while (true) {
-        ZipEntry entry = zipStream.getNextEntry();
-        if (entry == null) {
-          break;
-        }
-
-        if (entry.getName().equals(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)) {
-          return true;
-        }
-      }
+    try (ZipFile zip = new ZipFile(file)) {
+      return zip.getEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER) != null;
     }
-    catch (IOException ignore) {
+    catch (IOException ignored) {
+      return false;
     }
-    return false;
   }
 
   /**
@@ -112,6 +118,13 @@ public class ConfigImportHelper {
    */
   public static boolean isConfigImported() {
     return Boolean.getBoolean(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
+  }
+
+  public static boolean isConfigDirectory(@NotNull Path candidate) {
+    for (String name : OPTIONS) {
+      if (Files.exists(candidate.resolve(name))) return true;
+    }
+    return false;
   }
 
   private static ConfigImportSettings getConfigImportSettings() {
@@ -126,66 +139,101 @@ public class ConfigImportHelper {
     return new ConfigImportSettings();
   }
 
-  @Nullable
-  private static File findRecentConfigDirectory(File newConfigDir) {
+  @NotNull
+  public static List<Path> findConfigDirectories(@NotNull Path newConfigDir, boolean isMacOs, boolean checkDefaultLocation) {
     // looks for the most recent existing config directory in the vicinity of the new one, assuming standard layout
     // ("~/Library/<selector_prefix><selector_version>" on macOS, "~/.<selector_prefix><selector_version>/config" on other OSes)
 
-    File configsHome = (SystemInfo.isMac ? newConfigDir : newConfigDir.getParentFile()).getParentFile();
-    if (configsHome == null || !configsHome.isDirectory()) {
-      return null;
+    List<Path> homes = ContainerUtilRt.newArrayListWithCapacity(2);
+    homes.add((isMacOs ? newConfigDir : newConfigDir.getParent()).getParent());
+    String nameWithSelector = StringUtil.notNullize(
+      PathManager.getPathsSelector(),
+      (isMacOs ? newConfigDir : newConfigDir.getParent()).getFileName().toString());
+    String prefix = getPrefixFromSelector(nameWithSelector, isMacOs);
+
+    String defaultPrefix = StringUtil.replace(StringUtil.notNullize(
+      ApplicationNamesInfo.getInstance().getFullProductName(), PlatformUtils.getPlatformPrefix()), " ", "");
+    if (checkDefaultLocation) {
+      Path configDir = Paths.get(PathManager.getDefaultConfigPathFor(defaultPrefix));
+      Path configHome = (isMacOs ? configDir : configDir.getParent()).getParent();
+      if (!homes.contains(configHome)) homes.add(configHome);
     }
 
-    String nameWithSelector = PathManager.getPathsSelector();
-    if (nameWithSelector == null) {
-      nameWithSelector = (SystemInfo.isMac ? newConfigDir : newConfigDir.getParentFile()).getName();
-    }
-    String prefix = getPrefixFromSelector(nameWithSelector);
-    if (prefix == null) {
-      return null;
-    }
+    List<Path> candidates = ContainerUtil.newArrayList();
+    for (Path dir : homes) {
+      if (dir == null || !Files.isDirectory(dir)) continue;
 
-    File[] candidates = configsHome.listFiles((file, name) -> StringUtil.startsWithIgnoreCase(name, prefix));
-
-    File result = null;
-    if (candidates != null && candidates.length > 0) {
-      long lastModified = 0;
-      for (File child : candidates) {
-        File candidate = SystemInfo.isMac ? child : new File(child, CONFIG);
-        long modified = new File(candidate, OPTIONS_XML).lastModified();
-        if (modified > lastModified) {
-          lastModified = modified;
-          result = candidate;
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, it -> {
+        String fileName = it.getFileName().toString();
+        if ((prefix == null || !startsWithIgnoreCase(fileName, prefix)) &&
+            !startsWithIgnoreCase(fileName, defaultPrefix)) return false;
+        if (!Files.isDirectory(it)) return false;
+        return !it.equals(isMacOs ? newConfigDir : newConfigDir.getParent());
+      })) {
+        for (Path path : stream) {
+          candidates.add(path);
         }
       }
+      catch (IOException ignore) {
+      }
     }
+
+    if (candidates.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    HashMap<Path, FileTime> lastModified = new HashMap<>();
+    for (Path child : candidates) {
+      Path candidate = isMacOs ? child : child.resolve(CONFIG);
+      FileTime max = null;
+      for (String name : OPTIONS) {
+        try {
+          FileTime cur = Files.getLastModifiedTime(candidate.resolve(name));
+          if (max == null || cur.compareTo(max) > 0) {
+            max = cur;
+          }
+        }
+        catch (IOException ignore) {
+        }
+      }
+      lastModified.put(candidate, max != null ? max : FileTime.fromMillis(0));
+    }
+
+    List<Path> result = new ArrayList<>(lastModified.keySet());
+    result.sort((o1, o2) -> {
+      int diff = lastModified.get(o2).compareTo(lastModified.get(o1));
+      if (diff == 0) {
+        diff = StringUtil.naturalCompare(o2.toString(), o1.toString());
+      }
+      return diff;
+    });
     return result;
   }
 
   @Nullable
-  private static String getPrefixFromSelector(String nameWithSelector) {
+  private static String getPrefixFromSelector(@NotNull String nameWithSelector, boolean isMacOs) {
     Matcher m = Pattern.compile("\\.?([^\\d]+)\\d+(\\.\\d+)?").matcher(nameWithSelector);
     String selector = m.matches() ? m.group(1) : null;
-    return StringUtil.isEmpty(selector) ? null : SystemInfo.isMac ? selector : '.' + selector;
+    return StringUtil.isEmpty(selector) ? null : isMacOs ? selector : '.' + selector;
   }
 
   @Nullable
-  private static Pair<File, File> findConfigDirectoryByPath(@NotNull File selectedDir) {
+  private static Pair<Path, Path> findConfigDirectoryByPath(@NotNull Path selectedDir) {
     // tries to map a user selection into a valid config directory
     // returns a pair of a config directory and an IDE home (when a user pointed to it; null otherwise)
 
-    if (isValidConfigDir(selectedDir)) {
+    if (isConfigDirectory(selectedDir)) {
       return pair(selectedDir, null);
     }
 
-    File config = new File(selectedDir, CONFIG);
-    if (isValidConfigDir(config)) {
+    Path config = selectedDir.resolve(CONFIG);
+    if (isConfigDirectory(config)) {
       return pair(config, null);
     }
 
-    if (new File(selectedDir, SystemInfo.isMac ? CONTENTS : BIN).isDirectory()) {
-      File configDir = getSettingsPath(selectedDir, PathManager.PROPERTY_CONFIG_PATH, PathManager::getDefaultConfigPathFor);
-      if (isValidConfigDir(configDir)) {
+    if (Files.isDirectory(selectedDir.resolve(SystemInfo.isMac ? CONTENTS : BIN))) {
+      Path configDir = getSettingsPath(selectedDir, PathManager.PROPERTY_CONFIG_PATH, PathManager::getDefaultConfigPathFor);
+      if (configDir != null && isConfigDirectory(configDir)) {
         return pair(configDir, selectedDir);
       }
     }
@@ -193,44 +241,40 @@ public class ConfigImportHelper {
     return null;
   }
 
-  private static boolean isValidConfigDir(File candidate) {
-    return new File(candidate, OPTIONS_XML).isFile();
-  }
-
   @Nullable
-  private static File getSettingsPath(File ideHome, String propertyName, Function<? super String, String> pathBySelector) {
-    List<File> files = new ArrayList<>();
+  private static Path getSettingsPath(@NotNull Path ideHome, String propertyName, Function<? super String, String> pathBySelector) {
+    List<Path> files = new ArrayList<>();
     if (SystemInfo.isMac) {
-      files.add(new File(ideHome, CONTENTS + '/' + BIN + '/' + PathManager.PROPERTIES_FILE_NAME));
-      files.add(new File(ideHome, CONTENTS + '/' + PLIST));
+      files.add(ideHome.resolve(CONTENTS + '/' + BIN + '/' + PathManager.PROPERTIES_FILE_NAME));
+      files.add(ideHome.resolve(CONTENTS + '/' + PLIST));
     }
     else {
-      files.add(new File(ideHome, BIN + '/' + PathManager.PROPERTIES_FILE_NAME));
+      files.add(ideHome.resolve(BIN + '/' + PathManager.PROPERTIES_FILE_NAME));
       String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
-      files.add(new File(ideHome, BIN + '/' + scriptName + ".bat"));
-      files.add(new File(ideHome, BIN + '/' + scriptName + ".sh"));
+      files.add(ideHome.resolve(BIN + '/' + scriptName + ".bat"));
+      files.add(ideHome.resolve(BIN + '/' + scriptName + ".sh"));
     }
 
     // explicitly specified directory
-    for (File file : files) {
-      if (file.isFile()) {
-        String candidatePath = PathManager.substituteVars(getPropertyFromFile(file, propertyName), ideHome.getPath());
+    for (Path file : files) {
+      if (Files.isRegularFile(file)) {
+        String candidatePath = PathManager.substituteVars(getPropertyFromFile(file, propertyName), ideHome.toString());
         if (candidatePath != null) {
-          File candidate = new File(candidatePath);
-          if (candidate.isDirectory()) {
-            return candidate.getAbsoluteFile();
+          Path candidate = Paths.get(candidatePath);
+          if (Files.isDirectory(candidate)) {
+            return candidate.toAbsolutePath();
           }
         }
       }
     }
 
     // default directory
-    for (File file : files) {
-      if (file.isFile()) {
+    for (Path file : files) {
+      if (Files.isRegularFile(file)) {
         String selector = getPropertyFromFile(file, PathManager.PROPERTY_PATHS_SELECTOR);
         if (selector != null) {
-          File candidate = new File(pathBySelector.apply(selector));
-          if (candidate.isDirectory()) {
+          Path candidate = Paths.get(pathBySelector.apply(selector));
+          if (Files.isDirectory(candidate)) {
             return candidate;
           }
         }
@@ -241,16 +285,17 @@ public class ConfigImportHelper {
   }
 
   @Nullable
-  private static String getPropertyFromFile(File file, String propertyName) {
+  private static String getPropertyFromFile(@NotNull Path file, String propertyName) {
     try {
-      String fileContent = FileUtil.loadFile(file);
+      String fileContent = PathKt.readText(file);
 
-      if (file.getName().endsWith(".properties")) {
+      final String fileName = file.getFileName().toString();
+      if (fileName.endsWith(".properties")) {
         PropertyResourceBundle bundle = new PropertyResourceBundle(new StringReader(fileContent));
         return bundle.containsKey(propertyName) ? bundle.getString(propertyName) : null;
       }
 
-      if (file.getName().endsWith(".plist")) {
+      if (fileName.endsWith(".plist")) {
         String propertyValue = findPListKey(propertyName, fileContent);
         if (!StringUtil.isEmpty(propertyValue)) {
           return propertyValue;
@@ -314,60 +359,84 @@ public class ConfigImportHelper {
     return FileUtil.expandUserHome(StringUtil.unquoteString(dir, '"'));
   }
 
-  private static void doImport(File oldConfigDir, File newConfigDir, @Nullable File oldIdeHome) {
-    if (FileUtil.filesEqual(oldConfigDir, newConfigDir)) {
+  private static void doImport(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @Nullable Path oldIdeHome, @NotNull Logger log) {
+    if (oldConfigDir.equals(newConfigDir)) {
       return;
     }
 
     try {
-      if (oldConfigDir.isFile()) {
-        ZipUtil.extract(oldConfigDir, newConfigDir, null);
+      if (Files.isRegularFile(oldConfigDir)) {
+        new Decompressor.Zip(oldConfigDir.toFile()).extract(newConfigDir.toFile());
         return;
       }
 
       // copy everything including plugins (the plugin manager will sort out incompatible ones)
-      FileUtil.copyDir(oldConfigDir, newConfigDir);
-
-      // tokens must not be reused
-      FileUtil.delete(new File(newConfigDir, "user.token"));
-      FileUtil.delete(new File(newConfigDir, "user.web.token"));
+      // the filter prevents web token reuse and accidental overwrite of files already created by this instance (port/lock/tokens etc.)
+      FileUtil.copyDir(oldConfigDir.toFile(), newConfigDir.toFile(), path -> !blockImport(path.toPath(), oldConfigDir, newConfigDir));
 
       // on macOS, plugins are normally not under the config directory
-      File oldPluginsDir = new File(oldConfigDir, PLUGINS);
-      if (SystemInfo.isMac && !oldPluginsDir.isDirectory()) {
+      Path oldPluginsDir = oldConfigDir.resolve(PLUGINS);
+      if (SystemInfo.isMac && !Files.isDirectory(oldPluginsDir)) {
         oldPluginsDir = null;
         if (oldIdeHome != null) {
           oldPluginsDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_PLUGINS_PATH, PathManager::getDefaultPluginPathFor);
         }
         if (oldPluginsDir == null) {
-          oldPluginsDir = new File(PathManager.getDefaultPluginPathFor(oldConfigDir.getName()));
+          oldPluginsDir = Paths.get(PathManager.getDefaultPluginPathFor(oldConfigDir.getFileName().toString()));
         }
-        if (oldPluginsDir.isDirectory()) {
-          File newPluginsDir = new File(PathManager.getPluginsPath());
-          FileUtil.copyDir(oldPluginsDir, newPluginsDir);
+        if (Files.isDirectory(oldPluginsDir)) {
+          Path newPluginsDir = Paths.get(PathManager.getPluginsPath());
+          FileUtil.copyDir(oldPluginsDir.toFile(), newPluginsDir.toFile());
         }
       }
 
       // apply stale plugin updates
-      if (oldPluginsDir.isDirectory()) {
-        File oldSystemDir = null;
+      if (Files.isDirectory(oldPluginsDir)) {
+        Path oldSystemDir = null;
         if (oldIdeHome != null) {
           oldSystemDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_SYSTEM_PATH, PathManager::getDefaultSystemPathFor);
         }
         if (oldSystemDir == null) {
-          String selector = SystemInfo.isMac ? oldConfigDir.getName() : StringUtil.trimLeading(oldConfigDir.getParentFile().getName(), '.');
-          oldSystemDir = new File(PathManager.getDefaultSystemPathFor(selector));
+          String selector = SystemInfo.isMac ? oldConfigDir.getFileName().toString() : StringUtil.trimLeading(oldConfigDir.getParent().getFileName().toString(), '.');
+          oldSystemDir = Paths.get(PathManager.getDefaultSystemPathFor(selector));
         }
-        File script = new File(oldSystemDir, PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
-        if (script.isFile()) {
+        Path script = oldSystemDir.resolve(PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
+        if (Files.isRegularFile(script)) {
           File newPluginsDir = new File(PathManager.getPluginsPath());
           StartupActionScriptManager.executeActionScript(script, oldPluginsDir, newPluginsDir);
         }
       }
+
+      updateVMOptions(newConfigDir, log);
     }
     catch (IOException e) {
+      log.warn(e);
       String message = ApplicationBundle.message("error.unable.to.import.settings", e.getMessage());
       Main.showMessage(ApplicationBundle.message("title.settings.import.failed"), message, false);
     }
+  }
+
+  /**
+   * Fix VM options in the custom *.vmoptions file which don't work with the current IDE version.
+   */
+  private static void updateVMOptions(@NotNull Path newConfigDir, Logger log) {
+    Path vmOptionsFile = newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName());
+    if (Files.exists(vmOptionsFile)) {
+      try {
+        List<String> lines = Files.readAllLines(vmOptionsFile);
+        List<String> updatedLines =
+          ContainerUtil.map(lines, line -> line.trim().equals("-XX:MaxJavaStackTraceDepth=-1") ? "-XX:MaxJavaStackTraceDepth=10000" : line);
+        if (!updatedLines.equals(lines)) {
+          PathKt.write(vmOptionsFile, StringUtil.join(updatedLines, "\n"));
+        }
+      }
+      catch (IOException e) {
+        log.warn("Failed to update custom VM options file " + vmOptionsFile, e);
+      }
+    }
+  }
+
+  private static boolean blockImport(@NotNull Path path, Path oldConfig, Path newConfig) {
+    return path.getParent() == oldConfig && ("user.web.token".equals(path.getFileName().toString()) || Files.exists(newConfig.resolve(path.getFileName())));
   }
 }

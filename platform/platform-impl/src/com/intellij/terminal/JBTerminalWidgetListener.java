@@ -4,4 +4,8 @@ package com.intellij.terminal;
 public interface JBTerminalWidgetListener {
   void onNewSession();
   void onTerminalStarted();
+  void onPreviousTabSelected();
+  void onNextTabSelected();
+  void onSessionClosed();
+  void showTabs();
 }

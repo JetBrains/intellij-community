@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.codeInspection.*;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +50,6 @@ import java.util.function.Function;
 public class ApplicationInspectionProfileManager extends BaseInspectionProfileManager implements InspectionProfileManager, PersistentStateComponent<Element> {
   private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = ExtensionPointName.create("com.intellij.bundledInspectionProfile");
 
-  private final InspectionToolRegistrar myRegistrar;
   private final SchemeManager<InspectionProfileImpl> mySchemeManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
 
@@ -59,10 +57,15 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     return (ApplicationInspectionProfileManager)ServiceManager.getService(InspectionProfileManager.class);
   }
 
-  public ApplicationInspectionProfileManager(@NotNull InspectionToolRegistrar registrar, @NotNull SchemeManagerFactory schemeManagerFactory, @NotNull MessageBus messageBus) {
-    super(messageBus);
+  public ApplicationInspectionProfileManager() {
+    //noinspection TestOnlyProblems
+    this(SchemeManagerFactory.getInstance());
+  }
 
-    myRegistrar = registrar;
+  @TestOnly
+  public ApplicationInspectionProfileManager(@NotNull SchemeManagerFactory schemeManagerFactory) {
+    super(ApplicationManager.getApplication().getMessageBus());
+
     registerProvidedSeverities();
 
     mySchemeManager = schemeManagerFactory.create(INSPECTION_DIR, new InspectionProfileProcessor() {
@@ -78,7 +81,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
                                                 @NotNull String name,
                                                 @NotNull Function<? super String, String> attributeProvider,
                                                 boolean isBundled) {
-        return new InspectionProfileImpl(name, myRegistrar, ApplicationInspectionProfileManager.this, dataHolder);
+        return new InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), ApplicationInspectionProfileManager.this, dataHolder);
       }
 
       @Override
@@ -155,7 +158,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     final Path file = Paths.get(path);
     if (Files.isRegularFile(file)) {
       try {
-        return InspectionProfileLoadUtil.load(file, myRegistrar, this);
+        return InspectionProfileLoadUtil.load(file, InspectionToolRegistrar.getInstance(), this);
       }
       catch (IOException | JDOMException e) {
         throw e;

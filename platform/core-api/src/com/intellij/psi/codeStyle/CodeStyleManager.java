@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,9 @@ import java.util.List;
 /**
  * Service for reformatting code fragments, getting names for elements
  * according to the user's code style and working with import statements and full-qualified names.
+ *
+ * @see com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
+ * @see com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
  */
 public abstract class CodeStyleManager  {
   /**
@@ -149,12 +152,12 @@ public abstract class CodeStyleManager  {
   public abstract void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException;
 
   public abstract void reformatTextWithContext(@NotNull PsiFile file, @NotNull ChangedRangesInfo info) throws IncorrectOperationException;
-  
+
   public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
     List<TextRange> rangesList = ContainerUtil.newArrayList(ranges);
     reformatTextWithContext(file, new ChangedRangesInfo(rangesList, null));
   }
-  
+
   /**
    * Re-formats the specified range of a file, modifying only line indents and leaving
    * all other whitespace intact.
@@ -309,7 +312,7 @@ public abstract class CodeStyleManager  {
 
   /**
    * Retrieves the current formatting mode.
-   * 
+   *
    * @param project The current project used to obtain {@code CodeStyleManager} instance.
    * @return The current formatting mode.
    * @see FormattingMode

@@ -5,43 +5,51 @@ package org.jetbrains.uast.test.common
 
 import com.intellij.psi.PsiCodeBlock
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
-import org.jetbrains.uast.UFile
-import org.jetbrains.uast.UIdentifier
-import org.jetbrains.uast.sourcePsiElement
-import org.jetbrains.uast.test.env.assertEqualsToFile
-import org.jetbrains.uast.toUElementOfType
-import java.io.File
+import junit.framework.TestCase
+import org.jetbrains.uast.*
+import kotlin.reflect.KClass
 
-interface IdentifiersTestBase {
-  fun getIdentifiersFile(testName: String): File
 
-  private fun UFile.asIdentifiers(): String {
-    val builder = StringBuilder()
-    var level = 0
-    (this.sourcePsi as PsiFile).accept(object : PsiElementVisitor() {
-      override fun visitElement(element: PsiElement) {
-        val uIdentifier = element.toUElementOfType<UIdentifier>()
-        if (uIdentifier != null) {
-          builder.append("    ".repeat(level))
-          builder.append(uIdentifier.sourcePsiElement!!.text)
-          builder.append(" -> ")
-          builder.append(uIdentifier.uastParent?.asLogString())
-          builder.appendln()
-        }
-        if (element is PsiCodeBlock) level++
-        element.acceptChildren(this)
-        if (element is PsiCodeBlock) level--
-      }
-    })
-    return builder.toString()
+fun UFile.asIdentifiers(): String = UElementToParentMap { it.toUElementOfType<UIdentifier>() }.alsoCheck {
+  //check uIdentifier is walkable to top (e.g. IDEA-200372)
+  TestCase.assertEquals("should be able to reach the file from identifier '${it.text}'",
+                        this@asIdentifiers,
+                        it.toUElementOfType<UIdentifier>()!!.getParentOfType<UFile>()
+  )
+}.visitUFileAndGetResult(this)
+
+fun UFile.asRefNames() = UElementToParentMap { it.toUElementOfType<UReferenceExpression>()?.referenceNameElement }
+  .visitUFileAndGetResult(this)
+
+open class UElementToParentMap(shouldIndent: (PsiElement) -> Boolean,
+                               val retriever: (PsiElement) -> UElement?) : IndentedPrintingVisitor(shouldIndent) {
+
+  constructor(kClass: KClass<*>, retriever: (PsiElement) -> UElement?) : this({ kClass.isInstance(it) }, retriever)
+
+  constructor(retriever: (PsiElement) -> UElement?) : this(PsiCodeBlock::class, retriever)
+
+  private val additionalChecks = mutableListOf<(PsiElement) -> Unit>()
+
+  override fun render(element: PsiElement): CharSequence? = retriever(element)?.let { uElement ->
+    StringBuilder().apply {
+      append(uElement.sourcePsiElement!!.text)
+      append(" -> ")
+      append(uElement.uastParent?.asLogString())
+      append(" from ")
+      append(renderSource(element))
+    }
   }
 
-  fun check(testName: String, file: UFile) {
-    val valuesFile = getIdentifiersFile(testName)
+  protected open fun renderSource(element: PsiElement): String = element.toString()
 
-    assertEqualsToFile("Identifiers", valuesFile, file.asIdentifiers())
+  fun alsoCheck(checker: (PsiElement) -> Unit): UElementToParentMap {
+    additionalChecks.add(checker)
+    return this
   }
+}
 
+fun IndentedPrintingVisitor.visitUFileAndGetResult(uFile: UFile): String {
+  (uFile.sourcePsi as PsiFile).accept(this)
+  return result
 }

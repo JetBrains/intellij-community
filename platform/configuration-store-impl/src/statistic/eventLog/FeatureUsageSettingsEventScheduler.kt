@@ -51,12 +51,12 @@ class FeatureUsageSettingsEventScheduler : FeatureUsageStateEventTracker {
       val components = stateStore.getComponents()
       for (name in ArrayUtilRt.toStringArray(components.keys)) {
         val info = components[name]
-        val component = info?.component
+        val component = info?.component ?: continue
         try {
           if (component is PersistentStateComponent<*>) {
-            info.stateSpec?.let {
-              logConfigurationState(name, it, component.state, componentManager as? Project)
-            }
+            val stateSpec = info.stateSpec ?: continue
+            val componentState = component.state ?: continue
+            logConfigurationState(name, stateSpec, componentState, componentManager as? Project)
           }
         }
         catch (e: Exception) {

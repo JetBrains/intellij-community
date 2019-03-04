@@ -32,7 +32,6 @@ import java.util.Collection;
  * A node in the reference graph corresponding to a Java method.
  *
  * @author anna
- * @since 6.0
  */
 public interface RefMethod extends RefJavaElement {
   /**

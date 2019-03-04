@@ -38,6 +38,7 @@ public class BackButton extends JButton {
 
     Dimension size = getPreferredSize();
     size.width -= JBUI.scale(15);
+    size.height = JBUI.scale(27);
     setPreferredSize(size);
   }
 

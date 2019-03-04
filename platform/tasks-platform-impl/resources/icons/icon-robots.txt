@@ -1,0 +1,3 @@
+deprecated: feature.png -> com.intellij.icons.AllIcons@/nodes/favorite.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Favorite
+deprecated: other.png -> com.intellij.icons.AllIcons@/fileTypes/any_type.svg; to be removed in IDEA 2020 - use AllIcons.FileTypes.Any_type
+deprecated: unknown.png -> com.intellij.icons.AllIcons@/fileTypes/unknown.svg; to be removed in IDEA 2020 - use AllIcons.FileTypes.Unknown

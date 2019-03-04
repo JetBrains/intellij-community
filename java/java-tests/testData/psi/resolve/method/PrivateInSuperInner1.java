@@ -3,7 +3,7 @@ class Outer {
 
     class Inner extends Outer {
         void bar() {
-            <ref>foo();
+            <caret>foo();
         }
     }
 

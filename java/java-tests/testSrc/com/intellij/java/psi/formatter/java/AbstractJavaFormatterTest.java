@@ -54,7 +54,6 @@ import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT;
  * @author Denis Zhdanov
  */
 public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
-  private JavaCodeStyleBean myCodeStyleBean;
 
   @NotNull
   public static String shiftIndentInside(@NotNull String initial, final int i, boolean shiftEmptyLines) {
@@ -85,14 +84,6 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     return result.toString();
   }
 
-  @NotNull
-  public JavaCodeStyleBean getCodeStyleBean() {
-    if (myCodeStyleBean == null) {
-      myCodeStyleBean = new JavaCodeStyleBean();
-      myCodeStyleBean.setRootSettings(CodeStyle.getSettings(getProject()));
-    }
-    return myCodeStyleBean;
-  }
 
   public static JavaCodeStyleSettings getJavaSettings() {
     return getSettings().getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);

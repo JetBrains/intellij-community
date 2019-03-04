@@ -91,10 +91,14 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     while (index < statements.length - 1) {
       PsiStatement current = statements[index];
       if (isNotZeroCheck(current, lastResult)) {
-        if (index + 1 >= statements.length) return null;
-        PsiStatement next = statements[index + 1];
+        int nextIndex = index + 1;
+        if (nextIndex >= statements.length) return null;
+        PsiStatement next = statements[nextIndex];
         ComparisonBlock block = ComparisonBlock.extractBlock(next, first, second, lastResult);
-        if (block == null) return null;
+        if (block == null) {
+          if (nextIndex == statements.length - 1) break;
+          return null;
+        }
         blocks.add(block);
         index += 2;
         continue;
@@ -118,6 +122,9 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
         return blocks;
       }
       ComparisonBlock lastBlock = extractTernaryComparison(first, second, lastResult, returnExpr);
+      if (lastBlock == null) {
+        lastBlock = ComparisonBlock.extractBlock(returnExpr, first, second, lastResult);
+      }
       if (lastBlock == null) return null;
       blocks.add(lastBlock);
       return blocks;

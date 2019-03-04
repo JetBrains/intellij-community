@@ -44,6 +44,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     "JetBrains Home Page: <hyperlink_f>http://www.jetbrains.com</hyperlink_f>\n" +
     "JetBrains Developer Community: <hyperlink>https://www.jetbrains.com/devnet</hyperlink>\n" +
     "<ref_hyperlink>ReferenceHyperlink</ref_hyperlink>\n" +
+    "Inactive hyperlink in code: \"<inactive_hyperlink>http://jetbrains.com</inactive_hyperlink>\"\n" +
     "\n" +
     "Search:\n" +
     "  <search_result_wr>result</search_result_wr> = \"<search_text>text</search_text>, <search_text>text</search_text>, <search_text>text</search_text>\";\n" +
@@ -87,6 +88,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.hyperlink.new"), CodeInsightColors.HYPERLINK_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.hyperlink.followed"), CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.reference.hyperlink"), EditorColors.REFERENCE_HYPERLINK_COLOR),
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.hyperlink.inactive"), CodeInsightColors.INACTIVE_HYPERLINK_ATTRIBUTES),
 
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.matched.brace"), CodeInsightColors.MATCHED_BRACE_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unmatched.brace"), CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES),
@@ -132,6 +134,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.information"), HintUtil.INFORMATION_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.question"), HintUtil.QUESTION_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.error"), HintUtil.ERROR_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.recent.locations.selection"), HintUtil.RECENT_LOCATIONS_SELECTION_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.tooltip"), IdeTooltipManager.TOOLTIP_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
 
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.visual.guides"), EditorColors.VISUAL_INDENT_GUIDE_COLOR, ColorDescriptor.Kind.FOREGROUND),
@@ -159,6 +162,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("hyperlink", CodeInsightColors.HYPERLINK_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("hyperlink_f", CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("ref_hyperlink", EditorColors.REFERENCE_HYPERLINK_COLOR);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("inactive_hyperlink", CodeInsightColors.INACTIVE_HYPERLINK_ATTRIBUTES);
 
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("wrong_ref", CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("deprecated", CodeInsightColors.DEPRECATED_ATTRIBUTES);

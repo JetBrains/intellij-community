@@ -52,7 +52,11 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
     VirtualFile contextFile = context.getFile().getVirtualFile();
     if (contextFile == null) return null;
 
-    VirtualFile f = contextFile.getParent().findFileByRelativePath(s);
+    VirtualFile parent = contextFile.getParent();
+    if (parent == null) {
+      return null;
+    }
+    VirtualFile f = parent.findFileByRelativePath(s);
     if (f == null) return null;
 
     if (f.isDirectory()) f = f.findChild(MavenConstants.POM_XML);

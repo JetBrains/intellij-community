@@ -37,7 +37,7 @@ import org.jetbrains.jps.model.module.JpsModule;
  * @author nik
  */
 public class JpsLibraryOrderEntry extends JpsExportableOrderEntry<JpsLibraryDependency> implements LibraryOrderEntry {
-  public JpsLibraryOrderEntry(JpsRootModel rootModel, JpsLibraryDependency dependencyElement) {
+  public JpsLibraryOrderEntry(@NotNull JpsRootModel rootModel, @NotNull JpsLibraryDependency dependencyElement) {
     super(rootModel, dependencyElement);
   }
 

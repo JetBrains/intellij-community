@@ -7,7 +7,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 class EditorConfigStatementUpDownMoverTest : LightCodeInsightFixtureTestCase() {
   override fun getBasePath() =
-    "/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/actions/moveUpDown/"
+    "/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/actions/moveUpDown/"
 
   fun testMoveFirstOption() = doTest()
   fun testMoveCentralOption() = doTest()

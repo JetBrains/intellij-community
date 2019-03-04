@@ -88,6 +88,21 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
  */
 public abstract class ExternalSystemImportingTestCase extends ExternalSystemTestCase {
 
+  protected void assertModulesContains(@NotNull Project project, String... expectedNames) {
+    Module[] actual = ModuleManager.getInstance(project).getModules();
+    List<String> actualNames = new ArrayList<>();
+
+    for (Module m : actual) {
+      actualNames.add(m.getName());
+    }
+
+    assertContain(actualNames, expectedNames);
+  }
+
+  protected void assertModulesContains(String... expectedNames) {
+    assertModulesContains(myProject, expectedNames);
+  }
+
   protected void assertModules(@NotNull Project project, String... expectedNames) {
     Module[] actual = ModuleManager.getInstance(project).getModules();
     List<String> actualNames = new ArrayList<>();
@@ -130,13 +145,27 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   private void assertGeneratedSources(String moduleName, JavaSourceRootType type, String... expectedSources) {
     final ContentEntry[] contentRoots = getContentRoots(moduleName);
-    final String rootUrl = contentRoots.length > 1 ? ExternalSystemApiUtil.getExternalProjectPath(getModule(moduleName)) : null;
-    List<SourceFolder> folders = doAssertContentFolders(rootUrl, contentRoots, type, expectedSources);
-    for (SourceFolder folder : folders) {
-      JavaSourceRootProperties properties = folder.getJpsElement().getProperties(type);
-      assertNotNull(properties);
-      assertTrue("Not a generated folder: " + folder, properties.isForGeneratedSources());
+    String rootUrl = contentRoots.length > 1 ? ExternalSystemApiUtil.getExternalProjectPath(getModule(moduleName)) : null;
+    List<String> actual = new ArrayList<>();
+
+    for (ContentEntry contentRoot : contentRoots) {
+      rootUrl = VirtualFileManager.extractPath(rootUrl == null ? contentRoot.getUrl() : rootUrl);
+      for (SourceFolder f : contentRoot.getSourceFolders(type)) {
+        String folderUrl = VirtualFileManager.extractPath(f.getUrl());
+
+        if (folderUrl.startsWith(rootUrl)) {
+          int length = rootUrl.length() + 1;
+          folderUrl = folderUrl.substring(Math.min(length, folderUrl.length()));
+        }
+
+        JavaSourceRootProperties properties = f.getJpsElement().getProperties(type);
+        if (properties != null && properties.isForGeneratedSources()) {
+          actual.add(folderUrl);
+        }
+      }
     }
+
+    assertOrderedElementsAreEqual(actual, Arrays.asList(expectedSources));
   }
 
   protected void assertResources(String moduleName, String... expectedSources) {
@@ -227,7 +256,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     assertTrue(e.isCompilerOutputPathInherited());
   }
 
-  private static String getAbsolutePath(String path) {
+  protected static String getAbsolutePath(String path) {
     path = VfsUtilCore.urlToPath(path);
     path = PathUtil.getCanonicalPath(path);
     return FileUtil.toSystemIndependentName(path);
@@ -251,7 +280,9 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void assertModuleLibDep(String moduleName, String depName, String classesPath, String sourcePath, String javadocPath) {
     LibraryOrderEntry lib = ContainerUtil.getFirstItem(getModuleLibDeps(moduleName, depName));
-
+    final String errorMessage = "Failed to find dependency with name [" + depName + "] in module [" + moduleName + "]\n" +
+                                "Available dependencies: " + collectModuleDepsNames(moduleName, LibraryOrderEntry.class);
+    assertNotNull(errorMessage, lib);
     assertModuleLibDepPath(lib, OrderRootType.CLASSES, classesPath == null ? null : Collections.singletonList(classesPath));
     assertModuleLibDepPath(lib, OrderRootType.SOURCES, sourcePath == null ? null : Collections.singletonList(sourcePath));
     assertModuleLibDepPath(lib, JavadocOrderRootType.getInstance(), javadocPath == null ? null : Collections.singletonList(javadocPath));
@@ -407,7 +438,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     return getRootManager(moduleName).getContentEntries();
   }
 
-  private ModuleRootManager getRootManager(String module) {
+  protected ModuleRootManager getRootManager(String module) {
     return ModuleRootManager.getInstance(getModule(module));
   }
 
@@ -565,6 +596,26 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
         });
       }
     });
+  }
+
+  @Nullable
+  protected SourceFolder findSource(@NotNull String moduleName, @NotNull String sourcePath) {
+    return findSource(getRootManager(moduleName), sourcePath);
+  }
+
+  @Nullable
+  protected SourceFolder findSource(@NotNull ModuleRootModel moduleRootManager, @NotNull String sourcePath) {
+    ContentEntry[] contentRoots = moduleRootManager.getContentEntries();
+    Module module = moduleRootManager.getModule();
+    String rootUrl = getAbsolutePath(ExternalSystemApiUtil.getExternalProjectPath(module));
+    for (ContentEntry contentRoot : contentRoots) {
+      for (SourceFolder f : contentRoot.getSourceFolders()) {
+        String folderPath = getAbsolutePath(f.getUrl());
+        String rootPath = getAbsolutePath(rootUrl + "/" + sourcePath);
+        if (folderPath.equals(rootPath)) return f;
+      }
+    }
+    return null;
   }
 
   //protected void assertProblems(String... expectedProblems) {

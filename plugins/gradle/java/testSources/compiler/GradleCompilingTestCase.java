@@ -1,16 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.compiler;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileTask;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import org.jetbrains.plugins.gradle.config.GradleResourceCompilerConfigurationGenerator;
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase;
 
 import java.io.File;
@@ -19,31 +14,18 @@ import java.io.File;
  * @author Vladislav.Soroka
  */
 public abstract class GradleCompilingTestCase extends GradleImportingTestCase {
-  @Override
-  protected void setUpInWriteAction() throws Exception {
-    super.setUpInWriteAction();
-
-    final GradleResourceCompilerConfigurationGenerator buildConfigurationGenerator = new GradleResourceCompilerConfigurationGenerator(myProject);
-    CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
-      @Override
-      public boolean execute(CompileContext context) {
-        ApplicationManager.getApplication().runReadAction(() -> buildConfigurationGenerator.generateBuildConfiguration(context));
-        return true;
-      }
-    });
-  }
 
   protected void assertCopied(String path) {
-    assertTrue(new File(myProjectConfig.getParent().getPath(), path).exists());
+    assertTrue(file(path).exists());
   }
 
   protected void assertCopied(String path, String content) {
     assertCopied(path);
-    assertSameLinesWithFile(new File(myProjectConfig.getParent().getPath(), path).getPath(), content);
+    assertSameLinesWithFile(path(path), content);
   }
 
   protected void assertNotCopied(String path) {
-    assertFalse(new File(myProjectConfig.getParent().getPath(), path).exists());
+    assertFalse(file(path).exists());
   }
 
   @Override

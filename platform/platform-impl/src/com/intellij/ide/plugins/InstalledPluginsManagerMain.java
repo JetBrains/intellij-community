@@ -83,16 +83,13 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
     JButton installFromDisk = new JButton(INSTALL_PLUGIN_FROM_DISK_BUTTON_LABEL);
     installFromDisk.setMnemonic('d');
-    installFromDisk.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final InstalledPluginsTableModel model = (InstalledPluginsTableModel)pluginsModel;
-        chooseAndInstall(model, pair -> {
-          model.appendOrUpdateDescriptor(pair.second);
-          setRequireShutdown(true);
-          select(pair.second);
-        }, myActionsPanel);
-      }
+    installFromDisk.addActionListener(e -> {
+      final InstalledPluginsTableModel model = (InstalledPluginsTableModel)pluginsModel;
+      chooseAndInstall(model, myActionsPanel, pair -> {
+        model.appendOrUpdateDescriptor(pair.second);
+        setRequireShutdown(true);
+        select(pair.second);
+      });
     });
     myActionsPanel.add(installFromDisk);
 
@@ -101,9 +98,8 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     emptyText.appendText("Search in repositories", SimpleTextAttributes.LINK_ATTRIBUTES, new BrowseRepoListener(null));
   }
 
-  public static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
-                                      @NotNull final Consumer<? super Pair<File, IdeaPluginDescriptor>> callback,
-                                      @Nullable final Component parent) {
+  static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
+                               @Nullable final Component parent, @NotNull final Consumer<? super Pair<File, IdeaPluginDescriptor>> callback) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
@@ -135,7 +131,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
       if (ourState.wasInstalled(pluginDescriptor.getPluginId())) {
         String message = "Plugin '" + pluginDescriptor.getName() + "' was already installed";
-        MessagesEx.showWarningDialog(parent, message, CommonBundle.getWarningTitle());
+        MessagesEx.showWarningDialog(parent, message, "Install Plugin");
         return false;
       }
 
@@ -182,9 +178,9 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
     }
     if (!notInstalled.isEmpty()) {
-      String deps = StringUtil.join(notInstalled, id -> id.toString(), ", ");
+      String deps = StringUtil.join(notInstalled, PluginId::toString, ", ");
       String message = "Plugin " + pluginDescriptor.getName() + " depends on unknown plugin" + (notInstalled.size() > 1 ? "s " : " ") + deps;
-      MessagesEx.showWarningDialog(parent, message, CommonBundle.getWarningTitle());
+      MessagesEx.showWarningDialog(parent, message, "Install Plugin");
     }
     if (!disabledIds.isEmpty()) {
       final Set<IdeaPluginDescriptor> dependencies = new HashSet<>();
@@ -194,9 +190,9 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         }
       }
       String part = "disabled plugin" + (dependencies.size() > 1 ? "s " : " ");
-      String deps = StringUtil.join(dependencies, descriptor -> descriptor.getName(), ", ");
+      String deps = StringUtil.join(dependencies, IdeaPluginDescriptor::getName, ", ");
       String message = "Plugin " + pluginDescriptor.getName() + " depends on " + part + deps + ". Enable " + part.trim() + "?";
-      if (MessagesEx.showOkCancelDialog(parent, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == Messages.OK) {
+      if (MessagesEx.showOkCancelDialog(parent, message, "Install Plugin", Messages.getWarningIcon()) == Messages.OK) {
         model.enableRows(dependencies.toArray(new IdeaPluginDescriptor[0]), Boolean.TRUE);
       }
     }
@@ -232,26 +228,23 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
     JScrollPane installedScrollPane = ScrollPaneFactory.createScrollPane(pluginTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                                          ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    pluginTable.registerKeyboardAction(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final int column = InstalledPluginsTableModel.getCheckboxColumn();
-        final int[] selectedRows = pluginTable.getSelectedRows();
-        boolean currentlyMarked = true;
-        for (final int selectedRow : selectedRows) {
-          if (selectedRow < 0 || !pluginTable.isCellEditable(selectedRow, column)) {
-            return;
-          }
-          final Boolean enabled = (Boolean)pluginTable.getValueAt(selectedRow, column);
-          currentlyMarked &= enabled == null || enabled.booleanValue();
+    pluginTable.registerKeyboardAction(e -> {
+      final int column = InstalledPluginsTableModel.getCheckboxColumn();
+      final int[] selectedRows = pluginTable.getSelectedRows();
+      boolean currentlyMarked = true;
+      for (final int selectedRow : selectedRows) {
+        if (selectedRow < 0 || !pluginTable.isCellEditable(selectedRow, column)) {
+          return;
         }
-        final IdeaPluginDescriptor[] selected = new IdeaPluginDescriptor[selectedRows.length];
-        for (int i = 0, selectedLength = selected.length; i < selectedLength; i++) {
-          selected[i] = pluginsModel.getObjectAt(pluginTable.convertRowIndexToModel(selectedRows[i]));
-        }
-        ((InstalledPluginsTableModel)pluginsModel).enableRows(selected, currentlyMarked ? Boolean.FALSE : Boolean.TRUE);
-        pluginTable.repaint();
+        final Boolean enabled = (Boolean)pluginTable.getValueAt(selectedRow, column);
+        currentlyMarked &= enabled == null || enabled.booleanValue();
       }
+      final IdeaPluginDescriptor[] selected = new IdeaPluginDescriptor[selectedRows.length];
+      for (int i = 0, selectedLength = selected.length; i < selectedLength; i++) {
+        selected[i] = pluginsModel.getObjectAt(pluginTable.convertRowIndexToModel(selectedRows[i]));
+      }
+      ((InstalledPluginsTableModel)pluginsModel).enableRows(selected, currentlyMarked ? Boolean.FALSE : Boolean.TRUE);
+      pluginTable.repaint();
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
     registerCopyProvider(pluginTable);
     pluginTable.setExpandableItemsEnabled(false);
@@ -280,15 +273,11 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
     };
 
-    DataManager.registerDataProvider(table, new DataProvider() {
-      @Nullable
-      @Override
-      public Object getData(@NotNull String dataId) {
-        if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-          return copyProvider;
-        }
-        return null;
+    DataManager.registerDataProvider(table, dataId -> {
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+        return copyProvider;
       }
+      return null;
     });
   }
 
@@ -302,6 +291,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     return this;
   }
 
+  @NotNull
   @Override
   protected ActionGroup getActionGroup(boolean inToolbar) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -446,8 +436,8 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
     @NotNull
     @Override
-    public JComponent createCustomComponent(@NotNull Presentation presentation) {
-      final JComponent component = super.createCustomComponent(presentation);
+    public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      final JComponent component = super.createCustomComponent(presentation, place);
       final JPanel panel = new JPanel(new BorderLayout());
       panel.setOpaque(false);
       panel.add(component, BorderLayout.CENTER);
@@ -503,7 +493,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      chooseAndInstall(new InstalledPluginsTableModel(), pair -> PluginManagerConfigurable.shutdownOrRestartApp(), null);
+      chooseAndInstall(new InstalledPluginsTableModel(), null, pair -> PluginManagerConfigurable.shutdownOrRestartApp());
     }
   }
 

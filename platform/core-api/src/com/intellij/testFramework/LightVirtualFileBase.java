@@ -102,7 +102,8 @@ public abstract class LightVirtualFileBase extends VirtualFile {
   @NotNull
   @Override
   public String getPath() {
-    return "/" + getName();
+    VirtualFile parent = getParent();
+    return (parent == null ? "" : parent.getPath()) + "/" + getName();
   }
 
   @Override

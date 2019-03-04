@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -22,13 +8,14 @@ import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import java.io.IOException;
 import java.io.Reader;
 
 public class AntTestContentHandler extends DefaultHandler {
@@ -36,17 +23,16 @@ public class AntTestContentHandler extends DefaultHandler {
 
     @Nullable
     @Override
-    public DefaultHandler createHandler(final Reader reader, GeneralTestEventsProcessor processor) throws IOException {
+    public DefaultHandler createHandler(@NotNull Reader reader, GeneralTestEventsProcessor processor) {
       final String[] rooName = new String[]{null};
-      NanoXmlUtil.parse(reader, new NanoXmlUtil.IXMLBuilderAdapter() {
+      NanoXmlUtil.parse(reader, new NanoXmlBuilder() {
         @Override
         public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
           throw NanoXmlUtil.ParserStoppedXmlException.INSTANCE;
         }
 
         @Override
-        public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr)
-          throws Exception {
+        public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) {
           rooName[0] = name;
         }
       });
@@ -116,12 +102,12 @@ public class AntTestContentHandler extends DefaultHandler {
   }
 
   @Override
-  public void characters(char[] ch, int start, int length) throws SAXException {
+  public void characters(char[] ch, int start, int length) {
     currentValue.append(ch, start, length);
   }
 
   @Override
-  public void endElement(String uri, String localName, String qName) throws SAXException {
+  public void endElement(String uri, String localName, String qName) {
     final String currentText = StringUtil.unescapeXmlEntities(currentValue.toString());
     currentValue.setLength(0);
     if (TESTSUITE.equals(qName)) {

@@ -60,7 +60,7 @@ public class PythonBaseProjectGenerator extends PythonProjectGenerator<PyNewProj
   @Nullable
   @Override
   public Icon getLogo() {
-    return PythonIcons.Python.Python_logo;
+    return PythonIcons.Python.Python;
   }
 
   @Override

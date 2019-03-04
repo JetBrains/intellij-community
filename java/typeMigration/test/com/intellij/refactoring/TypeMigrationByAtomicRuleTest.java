@@ -1,20 +1,18 @@
 package com.intellij.refactoring;
 
 import com.intellij.psi.PsiType;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
-  @NotNull
   @Override
-  protected String getTestRoot() {
-    return "/refactoring/typeMigrationByAtomic/";
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/refactoring/typeMigrationByAtomic/";
   }
 
   private void doTestDirectMigration() {
-    doTestFieldType("i", myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicInteger", null));
+    doTestFieldType("i", getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicInteger", null));
   }
 
 
@@ -27,38 +25,38 @@ public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
   }
 
   public void testDirectConditions() {
-    doTestFieldType("b", myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicBoolean", null));
+    doTestFieldType("b", getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicBoolean", null));
   }
 
   public void testDirectConditionalExpression() {
     doTestFieldType("s",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.String>", null));
+                    getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.String>", null));
   }
 
 
   public void testDirectByte() {
     doTestFieldType("b",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.Byte>", null));
+                    getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.Byte>", null));
   }
 
   public void testDirectString() {
     doTestFieldType("s",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.String>", null));
+                    getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.String>", null));
   }
 
   public void testDirectForeach() {
     doTestFieldType("lst",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.util.List<java.lang.String>>", null));
+                    getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.util.List<java.lang.String>>", null));
   }
 
   public void testDirectStringArray() {
     doTestFieldType("s",
-                    myJavaFacade.getElementFactory().createTypeFromText(AtomicReferenceArray.class.getName() + "<java.lang.String>", null));
+                    getElementFactory().createTypeFromText(AtomicReferenceArray.class.getName() + "<java.lang.String>", null));
   }
 
   public void testDirectIntArray() {
     doTestFieldType("a",
-                    myJavaFacade.getElementFactory().createTypeFromText(AtomicIntegerArray.class.getName(), null));
+                    getElementFactory().createTypeFromText(AtomicIntegerArray.class.getName(), null));
   }
 
   private void doTestReverseMigration() {
@@ -84,12 +82,12 @@ public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
 
    public void testReverseString() {
     doTestFieldType("s",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+                    getElementFactory().createTypeFromText("java.lang.String", null));
   }
 
    public void testReverseStringArray() {
     doTestFieldType("s",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType());
+                    getElementFactory().createTypeFromText("java.lang.String", null).createArrayType());
   }
 
   public void testReverseIntArray() {
@@ -98,10 +96,10 @@ public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
   }
 
   public void testChainedInitialization() {
-    doTestFieldType("a", myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicInteger", null));
+    doTestFieldType("a", getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicInteger", null));
   }
 
   public void testLiteralMigration() {
-    doTestFieldType("a", myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicLong", null));
+    doTestFieldType("a", getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicLong", null));
   }
 }

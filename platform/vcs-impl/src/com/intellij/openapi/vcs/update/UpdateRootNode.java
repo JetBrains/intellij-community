@@ -34,7 +34,7 @@ public class UpdateRootNode extends GroupTreeNode {
     addGroupsToNode(updatedFiles.getTopLevelGroups(), this, actionInfo);
   }
 
-  private void addGroupsToNode(List<FileGroup> groups, AbstractTreeNode owner, ActionInfo actionInfo) {
+  private void addGroupsToNode(List<? extends FileGroup> groups, AbstractTreeNode owner, ActionInfo actionInfo) {
     for (FileGroup fileGroup : groups) {
       GroupTreeNode node = addFileGroup(fileGroup, owner, actionInfo);
       if (node != null) {

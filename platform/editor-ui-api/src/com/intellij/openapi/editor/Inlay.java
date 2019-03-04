@@ -19,26 +19,20 @@ import java.awt.*;
  * WARNING! This is an experimental API, it can change at any time.
  *
  * @see InlayModel
- *
- * @since 2016.3
  */
 @ApiStatus.Experimental
 public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable, UserDataHolderEx {
   /**
    * Returns editor, this custom visual element belongs to.
-   *
-   * @since 2018.3
    */
   @NotNull
   Editor getEditor();
 
   /**
    * Defines relative position of inlay element with respect to the containing text.
-   *
-   * @since 2018.3
    */
   @NotNull
-  VerticalAlignment getVerticalAlignment();
+  Placement getPlacement();
 
   /**
    * Tells whether this element is valid. Inlay becomes invalid on explicit disposal,
@@ -60,24 +54,18 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
    * <p>
    * The value is determined at element's creation (see {@link InlayModel#addInlineElement(int, boolean, EditorCustomElementRenderer)
    * or {@link InlayModel#addBlockElement(int, boolean, boolean, EditorCustomElementRenderer)}}.
-   *
-   * @since 2017.3
    */
   boolean isRelatedToPrecedingText();
 
   /**
    * Returns current visual position of the inlay's left boundary. For 'block' elements, this is just a visual position associated with
    * inlay's offset.
-   *
-   * @since 2017.3
    */
   @NotNull
   VisualPosition getVisualPosition();
 
   /**
    * Returns inlay element's bounds in editor coordinate system if it's visible (not folded), or {@code null} otherwise
-   *
-   * @since 2018.3
    */
   @Nullable
   Rectangle getBounds();
@@ -97,8 +85,6 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
   /**
    * Returns current inlay's width. Width is defined at inlay's creation using information returned by inlay's renderer.
    * To change height (supported for 'block' elements only), {@link #updateSize()} method should be called.
-   *
-   * @since 2018.3
    */
   int getHeightInPixels();
 
@@ -113,15 +99,11 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
 
   /**
    * Causes repaint of inlay in editor.
-   *
-   * @since 2017.3
    */
   void repaint();
 
   /**
-   * @see #getVerticalAlignment()
-   *
-   * @since 2018.3
+   * @see #getPlacement()
    */
-  enum VerticalAlignment { INLINE, ABOVE_LINE, BELOW_LINE }
+  enum Placement { INLINE, ABOVE_LINE, BELOW_LINE, AFTER_LINE_END }
 }

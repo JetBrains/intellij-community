@@ -6,11 +6,13 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getEnumUsage
 import com.intellij.openapi.project.Project
+import org.jetbrains.idea.maven.execution.MavenExternalParameters.resolveMavenHome
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenSettingsCollector : ProjectUsagesCollector() {
-  override fun getGroupId() = "statistics.build.maven.state"
+  override fun getGroupId() = "build.maven.state"
 
   override fun getUsages(project: Project): Set<UsageDescriptor> {
     val manager = MavenProjectsManager.getInstance(project)
@@ -28,6 +30,13 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(getEnumUsage("outputLevel", generalSettings.outputLevel))
     usages.add(getEnumUsage("pluginUpdatePolicy", generalSettings.pluginUpdatePolicy))
     usages.add(getEnumUsage("loggingLevel", generalSettings.loggingLevel))
+    try {
+      val mavenVersion = MavenUtil.getMavenVersion(resolveMavenHome(generalSettings, project, null))
+      usages.add(UsageDescriptor("mavenVersion.$mavenVersion"))
+    }
+    catch (ignore: Exception) {
+      // ignore invalid maven home configuration
+    }
 
     val importingSettings = manager.importingSettings
     usages.add(getEnumUsage("generatedSourcesFolder", importingSettings.generatedSourcesFolder))

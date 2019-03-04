@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.DataManager;
@@ -33,7 +33,6 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private Project myProject;
   private boolean mySuggestSearchInLibs;
   private boolean myPrevSearchFiles;
-  private NamedScopesHolder.ScopeListener myScopeListener;
   private NamedScopeManager myNamedScopeManager;
   private DependencyValidationManager myValidationManager;
   private boolean myCurrentSelection = true;
@@ -72,16 +71,17 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     mySuggestSearchInLibs = suggestSearchInLibs;
     myPrevSearchFiles = prevSearchWholeFiles;
     myProject = project;
-    myScopeListener = () -> {
+
+    NamedScopesHolder.ScopeListener scopeListener = () -> {
       SearchScope selectedScope = getSelectedScope();
       rebuildModel();
       selectItem(selectedScope);
     };
     myScopeFilter = scopeFilter;
     myNamedScopeManager = NamedScopeManager.getInstance(project);
-    myNamedScopeManager.addScopeListener(myScopeListener);
+    myNamedScopeManager.addScopeListener(scopeListener, this);
     myValidationManager = DependencyValidationManager.getInstance(project);
-    myValidationManager.addScopeListener(myScopeListener);
+    myValidationManager.addScopeListener(scopeListener, this);
     addActionListener(createScopeChooserListener());
 
     final ComboBox<ScopeDescriptor> combo = (ComboBox<ScopeDescriptor>)getComboBox();
@@ -118,15 +118,6 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   @Override
   public void dispose() {
     super.dispose();
-    if (myValidationManager != null) {
-      myValidationManager.removeScopeListener(myScopeListener);
-      myValidationManager = null;
-    }
-    if (myNamedScopeManager != null) {
-      myNamedScopeManager.removeScopeListener(myScopeListener);
-      myNamedScopeManager = null;
-    }
-    myScopeListener = null;
   }
 
   private void selectItem(@Nullable Object selection) {

@@ -1,5 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.actions.ConfigurationContext;
@@ -16,11 +15,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-
-public abstract class AbstractAllInDirectoryConfigurationProducer extends JUnitConfigurationProducer {
-
+public class AbstractAllInDirectoryConfigurationProducer extends JUnitConfigurationProducer {
+  /**
+   * @deprecated Override {@link #getConfigurationFactory()}.
+   */
+  @Deprecated
   protected AbstractAllInDirectoryConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
+  }
+
+  public AbstractAllInDirectoryConfigurationProducer() {
   }
 
   @Override

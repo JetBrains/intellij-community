@@ -41,7 +41,7 @@ public class JavaSourceInference {
    */
   @NotNull
   public static Nullability inferNullability(PsiMethodImpl method) {
-    if (!InferenceFromSourceUtil.shouldInferFromSource(method)) {
+    if (!InferenceFromSourceUtil.shouldInferFromSource(method, false)) {
       return Nullability.UNKNOWN;
     }
 
@@ -71,7 +71,7 @@ public class JavaSourceInference {
     PsiParameterList parent = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);
     if (parent == null) return Nullability.UNKNOWN;
     PsiMethodImpl method = ObjectUtils.tryCast(parent.getParent(), PsiMethodImpl.class);
-    if (method == null || !InferenceFromSourceUtil.shouldInferFromSource(method)) return Nullability.UNKNOWN;
+    if (method == null || !InferenceFromSourceUtil.shouldInferFromSource(method, true)) return Nullability.UNKNOWN;
 
     return CachedValuesManager.getCachedValue(parameter, () -> {
       Nullability nullability = Nullability.UNKNOWN;
@@ -97,7 +97,7 @@ public class JavaSourceInference {
    */
   @NotNull
   public static Mutability inferMutability(PsiMethodImpl method) {
-    if (!InferenceFromSourceUtil.shouldInferFromSource(method)) {
+    if (!InferenceFromSourceUtil.shouldInferFromSource(method, false)) {
       return Mutability.UNKNOWN;
     }
 
@@ -124,7 +124,7 @@ public class JavaSourceInference {
    */
   @NotNull
   public static List<StandardMethodContract> inferContracts(@NotNull PsiMethodImpl method) {
-    if (!InferenceFromSourceUtil.shouldInferFromSource(method)) {
+    if (!InferenceFromSourceUtil.shouldInferFromSource(method, false)) {
       return Collections.emptyList();
     }
 
@@ -144,9 +144,7 @@ public class JavaSourceInference {
    * @return true if method was inferred to be pure; false if method is not pure or cannot be analyzed
    */
   public static boolean inferPurity(@NotNull PsiMethodImpl method) {
-    if (!InferenceFromSourceUtil.shouldInferFromSource(method) ||
-        PsiType.VOID.equals(method.getReturnType()) ||
-        method.isConstructor()) {
+    if (!InferenceFromSourceUtil.shouldInferFromSource(method, false) || PsiType.VOID.equals(method.getReturnType())) {
       return false;
     }
 
@@ -162,6 +160,12 @@ public class JavaSourceInference {
   private static List<StandardMethodContract> postProcessContracts(@NotNull PsiMethodImpl method, MethodData data, List<PreContract> rawContracts) {
     List<StandardMethodContract> contracts = ContainerUtil.concat(rawContracts, c -> c.toContracts(method, data.methodBody(method)));
     if (contracts.isEmpty()) return Collections.emptyList();
+    if (contracts.size() == 2) {
+      StandardMethodContract collapsed = contracts.get(0).tryCollapse(contracts.get(1));
+      if (collapsed != null) {
+        contracts = Collections.singletonList(collapsed);
+      }
+    }
 
     final PsiType returnType = method.getReturnType();
     if (returnType != null && !(returnType instanceof PsiPrimitiveType)) {

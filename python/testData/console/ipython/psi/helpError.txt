@@ -1,0 +1,7 @@
+PyFile:helpError.py
+  PyEmptyExpression
+    PsiElement(Py:IDENTIFIER)('int')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:QUESTION_MARK)('?')
+    PsiErrorElement:Help request must follow the name
+      <empty list>

@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UastContextKt;
@@ -25,12 +24,13 @@ public class TestDataAsRelatedFileProvider extends GotoRelatedProvider {
     PsiElement element = context.getData(CommonDataKeys.PSI_ELEMENT);
     if (editor == null || element == null || project == null) return Collections.emptyList();
 
-    PsiMethod method = UastContextKt.getUastParentOfType(element, UMethod.class);
-    if (method == null) return Collections.emptyList();
+    UMethod uMethod = UastContextKt.getUastParentOfType(element, UMethod.class);
+    PsiElement ctxElement = uMethod == null ? NavigateToTestDataAction.findParametrizedClass(context) : uMethod.getSourcePsi();
+    if (ctxElement == null) return Collections.emptyList();
 
-    List<String> testDataFiles = NavigateToTestDataAction.findTestDataFiles(context);
-    return testDataFiles == null || testDataFiles.isEmpty()
+    List<TestDataFile> testDataFiles = NavigateToTestDataAction.findTestDataFiles(context, project, false);
+    return testDataFiles.isEmpty()
            ? Collections.emptyList()
-           : Collections.singletonList(new TestDataRelatedItem(method, editor, testDataFiles));
+           : Collections.singletonList(new TestDataRelatedItem(ctxElement, editor, testDataFiles));
   }
 }

@@ -8,7 +8,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.ui.mac.foundation.NSDefaults;
+import com.intellij.util.loader.NativeLibraryLoader;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NotNull;
@@ -26,54 +27,69 @@ public class NST {
   private static final String ourRegistryKeyTouchbar = "ide.mac.touchbar.use";
   private static NSTLibrary ourNSTLibrary = null; // NOTE: JNA is stateless (doesn't have any limitations of multi-threaded use)
 
-  private static String MIN_OS_VERSION = "10.12.2";
+  private static final String MIN_OS_VERSION = "10.12.2";
   static boolean isSupportedOS() { return SystemInfo.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION); }
 
   private static final boolean ourHeadless = GraphicsEnvironment.isHeadless();
 
   static {
-    final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false) && !ourHeadless;
-    if (
-      isSupportedOS()
-      && isRegistryKeyEnabled
-      && Utils.isTouchBarServerRunning()
-    ) {
-      try {
-        loadLibrary();
-      } catch (Throwable e) {
-        LOG.error("Failed to load nst library for touchbar: ", e);
-      }
+    try {
+      final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false) && !ourHeadless;
+      if (
+        isSupportedOS()
+        && isRegistryKeyEnabled
+        && Utils.isTouchBarServerRunning()
+      ) {
+        try {
+          loadLibrary();
+        } catch (Throwable e) {
+          LOG.error("Failed to load nst library for touchbar: ", e);
+        }
+
+        if (ourNSTLibrary != null) {
+          // small check that loaded library works
+          try {
+            final ID test = ourNSTLibrary.createTouchBar("test", (uid) -> ID.NIL, null);
+            if (test == null || test == ID.NIL) {
+              LOG.error("Failed to create native touchbar object, result is null");
+              ourNSTLibrary = null;
+            } else {
+              ourNSTLibrary.releaseTouchBar(test);
+              LOG.info("nst library works properly, successfully created and released native touchbar object");
+            }
+          } catch (Throwable e) {
+            LOG.error("nst library was loaded, but can't be used: ", e);
+            ourNSTLibrary = null;
+          }
+        } else {
+          LOG.error("nst library wasn't loaded");
+        }
+      } else if (!isSupportedOS())
+        LOG.info("OS doesn't support touchbar, skip nst loading");
+      else if (ourHeadless)
+        LOG.info("The graphics environment is headless, skip nst loading");
+      else if (!isRegistryKeyEnabled)
+        LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
+      else
+        LOG.info("touchbar-server isn't running, skip nst loading");
+
 
       if (ourNSTLibrary != null) {
-        // small check that loaded library works
-        try {
-          final ID test = ourNSTLibrary.createTouchBar("test", (uid) -> { return ID.NIL; }, null);
-          if (test == null || test == ID.NIL) {
-            LOG.error("Failed to create native touchbar object, result is null");
-            ourNSTLibrary = null;
-          } else {
-            ourNSTLibrary.releaseTouchBar(test);
-            LOG.info("nst library works properly, successfully created and released native touchbar object");
-          }
-        } catch (Throwable e) {
-          LOG.error("nst library was loaded, but can't be used: ", e);
+        final String appId = Utils.getAppId();
+        if (appId == null || appId.isEmpty()) {
+          LOG.debug("can't obtain application id from NSBundle");
+        } else if (NSDefaults.isShowFnKeysEnabled(appId)) {
+          LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
           ourNSTLibrary = null;
         }
-      } else {
-        LOG.error("nst library wasn't loaded");
       }
-    } else if (!isSupportedOS())
-      LOG.info("OS doesn't support touchbar, skip nst loading");
-    else if (ourHeadless)
-      LOG.info("The graphics environment is headless, skip nst loading");
-    else if (!isRegistryKeyEnabled)
-      LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
-    else
-      LOG.info("touchbar-server isn't running, skip nst loading");
+    } catch (Throwable e) {
+      LOG.error(e);
+    }
   }
 
   static NSTLibrary loadLibrary() {
-    UrlClassLoader.loadPlatformLibrary("nst");
+    NativeLibraryLoader.loadPlatformLibrary("nst");
 
     // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
     // the way we tell CF to interpret our char*
@@ -241,7 +257,7 @@ public class NST {
     final int w = Math.round(icon.getIconWidth()*scale);
     final int h = Math.round(icon.getIconHeight()*scale);
     final WritableRaster
-      raster = Raster.createInterleavedRaster(new DataBufferByte(w * h * 4), w, h, 4 * w, 4, new int[]{0, 1, 2, 3}, (Point) null);
+      raster = Raster.createInterleavedRaster(new DataBufferByte(w * h * 4), w, h, 4 * w, 4, new int[]{0, 1, 2, 3}, null);
     final ColorModel
       colorModel = new ComponentColorModel(ColorModel.getRGBdefault().getColorSpace(), true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_BYTE);
     final BufferedImage image = new BufferedImage(colorModel, raster, false, null);
@@ -260,8 +276,8 @@ public class NST {
 
     // according to https://developer.apple.com/macos/human-interface-guidelines/touch-bar/touch-bar-icons-and-images/
     // icons generally should not exceed 44px in height (36px for circular icons)
-    // Ideal icon size	    36px × 36px (18pt × 18pt @2x)
-    // Maximum icon size    44px × 44px (22pt × 22pt @2x)
+    // Ideal icon size	    36px X 36px (18pt X 18pt @2x)
+    // Maximum icon size    44px X 44px (22pt X 22pt @2x)
 
     final Application app = ApplicationManager.getApplication();
     final float fMulX = app != null && UISettings.getInstance().getPresentationMode() ? 40.f/icon.getIconHeight() : (icon.getIconHeight() < 24 ? 40.f/16 : 44.f/icon.getIconHeight());

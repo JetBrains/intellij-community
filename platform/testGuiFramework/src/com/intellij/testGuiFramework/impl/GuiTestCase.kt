@@ -25,12 +25,15 @@ import org.fest.swing.fixture.JTableFixture
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
-import org.junit.ClassRule
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
-import org.junit.rules.TemporaryFolder
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import java.awt.Component
+import java.awt.Rectangle
 import java.io.File
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.swing.JDialog
@@ -64,22 +67,32 @@ import javax.swing.text.JTextComponent
 @RunWith(GuiTestLocalRunner::class)
 open class GuiTestCase {
 
-  companion object {
-    @ClassRule
-    @JvmField
-    val projectsFolder: TemporaryFolder = TemporaryFolder()
-  }
+  @Rule
+  @JvmField
+  val screenshotsDuringTest = ScreenshotsDuringTest(500) // 0.5 sec
 
   @Rule
   @JvmField
-  val guiTestRule = GuiTestRule(projectsFolder.apply{ create() }.root.canonicalFile)
+  val guiTestRule = GuiTestRule()
+
+  val projectsFolder: File = guiTestRule.projectsFolder
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   //  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
   val defaultSettingsTitle: String = if (isMac()) "Preferences for New Projects" else "Settings for New Projects"
   val slash: String = File.separator
 
-  private val screenshotTaker: ScreenshotTaker = ScreenshotTaker()
+  @Rule
+  @JvmField
+  val testMethod = TestName()
+
+  val projectFolder: String by lazy {
+    val dir = File(projectsFolder, testMethod.methodName)
+    if (!dir.mkdirs()) {
+      throw IOException("project dir '${dir.absolutePath}' creation failed")
+    }
+    dir.canonicalPath
+  }
 
   fun robot() = guiTestRule.robot()
 
@@ -90,7 +103,9 @@ open class GuiTestCase {
    * the receiver object (WelcomeFrameFixture instance).
    */
   open fun welcomeFrame(timeout: Timeout = Timeouts.minutes05, body: WelcomeFrameFixture.() -> Unit) {
-    body(guiTestRule.findWelcomeFrame(timeout))
+    step("at Welcome frame") {
+      body(guiTestRule.findWelcomeFrame(timeout))
+    }
   }
 
   /**
@@ -98,7 +113,7 @@ open class GuiTestCase {
    * receiver object (IdeFrameFixture instance).
    */
   fun ideFrame(timeout: Timeout = Timeouts.defaultTimeout, func: IdeFrameFixture.() -> Unit) {
-    func(guiTestRule.findIdeFrame(timeout))
+    step("at IDE frame") { func(guiTestRule.findIdeFrame(timeout)) }
   }
 
   /**
@@ -115,39 +130,55 @@ open class GuiTestCase {
              timeout: Timeout = Timeouts.defaultTimeout,
              needToKeepDialog: Boolean = false,
              func: JDialogFixture.() -> Unit) {
-    val dialog = dialog(
-      title = title,
-      ignoreCaseTitle = ignoreCaseTitle,
-      predicate = predicate,
-      timeout = timeout
-    )
-    func(dialog)
-    if (!needToKeepDialog) dialog.waitTillGone()
+    step("at '$title' dialog") {
+      val dialog = dialog(
+        title = title,
+        ignoreCaseTitle = ignoreCaseTitle,
+        predicate = predicate,
+        timeout = timeout
+      )
+      func(dialog)
+      if (!needToKeepDialog) dialog.waitTillGone()
+    }
   }
 
   fun dialogWithTextComponent(timeout: Timeout, predicate: (JTextComponent) -> Boolean, func: JDialogFixture.() -> Unit) {
-    val dialog: JDialog = waitUntilFound(null, JDialog::class.java, timeout) {
-      JDialogFixture(robot(), it).containsChildComponent(predicate)
+    step("at dialog with text component") {
+      val dialog: JDialog = waitUntilFound(null, JDialog::class.java, timeout) {
+        JDialogFixture(robot(), it).containsChildComponent(predicate)
+      }
+      val dialogFixture = JDialogFixture(robot(), dialog)
+      func(dialogFixture)
+      dialogFixture.waitTillGone()
     }
-    val dialogFixture = JDialogFixture(robot(), dialog)
-    func(dialogFixture)
-    dialogFixture.waitTillGone()
+  }
+
+  fun fileChooserDialog(title: String? = null,
+                        ignoreCaseTitle: Boolean = false,
+                        timeout: Timeout = Timeouts.defaultTimeout,
+                        func: FileChooserDialogFixture.() -> Unit) {
+    step("at '$title' file chooser") {
+      val dialog = findDialog(title, ignoreCaseTitle, timeout = timeout)
+      func(FileChooserDialogFixture(robot(), dialog))
+    }
   }
 
   fun settingsDialog(timeout: Timeout = Timeouts.defaultTimeout,
-                      needToKeepDialog: Boolean = false,
-                      func: JDialogFixture.() -> Unit) {
+                     needToKeepDialog: Boolean = false,
+                     func: JDialogFixture.() -> Unit) {
     if (isMac()) dialog(title = "Preferences", func = func)
     else dialog(title = "Settings", func = func)
   }
 
   fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout, needToKeepDialog: Boolean = false, func: PluginDialogFixture.() -> Unit) {
-    val pluginDialog = PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
-    func(pluginDialog)
-    if (!needToKeepDialog) pluginDialog.waitTillGone()
+    step("at 'Plugins' dialog") {
+      val pluginDialog = PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
+      func(pluginDialog)
+      if (!needToKeepDialog) pluginDialog.waitTillGone()
+    }
   }
 
-  fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout) : PluginDialogFixture{
+  fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout): PluginDialogFixture {
     return PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
   }
 
@@ -156,41 +187,43 @@ open class GuiTestCase {
    * is a Mac native.
    */
   fun chooseFileInFileChooser(path: String, timeout: Timeout = Timeouts.defaultTimeout, needToRefresh: Boolean = false) {
-    val macNativeFileChooser = SystemInfo.isMac() && (System.getProperty("ide.mac.file.chooser.native", "true").toLowerCase() == "false")
-    if (macNativeFileChooser) {
-      MacFileChooserDialogFixture(robot()).selectByPath(path)
-    }
-    else {
-      val fileChooserDialog: JDialog
-      try {
-        fileChooserDialog = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) {
-          robot().finder()
-            .findAll(GuiTestUtilKt.typeMatcher(JDialog::class.java) { true })
-            .firstOrNull {
-              GuiTestUtilKt.findAllWithBFS(it, JPanel::class.java).any {
-                it.javaClass.name.contains(FileChooserDialogImpl::class.java.simpleName)
+    step("choose '$path' file in File Chooser") {
+      val macNativeFileChooser = SystemInfo.isMac() && (System.getProperty("ide.mac.file.chooser.native", "true").toLowerCase() == "false")
+      if (macNativeFileChooser) {
+        MacFileChooserDialogFixture(robot()).selectByPath(path)
+      }
+      else {
+        val fileChooserDialog: JDialog
+        try {
+          fileChooserDialog = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) {
+            robot().finder()
+              .findAll(GuiTestUtilKt.typeMatcher(JDialog::class.java) { true })
+              .firstOrNull {
+                GuiTestUtilKt.findAllWithBFS(it, JPanel::class.java).any { panel ->
+                  panel.javaClass.name.contains(FileChooserDialogImpl::class.java.simpleName)
+                }
               }
-            }
-        }
-      }
-      catch (timeoutError: WaitTimedOutError) {
-        throw ComponentLookupException("Unable to find file chooser dialog in ${timeout.toPrintable()}")
-      }
-      val dialogFixture = JDialogFixture(robot(), fileChooserDialog)
-      with(dialogFixture) {
-        asyncProcessIcon().waitUntilStop(Timeouts.seconds30)
-        textfield("")
-        invokeAction("\$SelectAll")
-        typeText(path)
-        if (needToRefresh) {
-          tryWithPause(ComponentLookupException::class.java, "Path is located in the tree", Timeouts.seconds10) {
-            actionButton("Refresh").click()
-            textfield("").deleteText()
-            typeText(path)
           }
         }
-        button("OK").clickWhenEnabled()
-        waitTillGone()
+        catch (timeoutError: WaitTimedOutError) {
+          throw ComponentLookupException("Unable to find file chooser dialog in ${timeout.toPrintable()}")
+        }
+        val dialogFixture = JDialogFixture(robot(), fileChooserDialog)
+        with(dialogFixture) {
+          asyncProcessIcon().waitUntilStop(Timeouts.seconds30)
+          textfield("")
+          invokeAction("\$SelectAll")
+          typeText(path)
+          if (needToRefresh) {
+            tryWithPause(ComponentLookupException::class.java, "Path is located in the tree", Timeouts.seconds10) {
+              actionButton("Refresh").click()
+              textfield("").deleteText()
+              typeText(path)
+            }
+          }
+          button("OK").clickWhenEnabled()
+          waitTillGone()
+        }
       }
     }
   }
@@ -200,7 +233,9 @@ open class GuiTestCase {
    * is loaded. Code block after it call methods on the receiver object (IdeFrameFixture instance).
    */
   fun simpleProject(func: IdeFrameFixture.() -> Unit) {
-    func(guiTestRule.importSimpleProject())
+    step("at simple project") {
+      func(guiTestRule.importSimpleProject())
+    }
   }
 
   /**
@@ -208,7 +243,9 @@ open class GuiTestCase {
    * it call methods on the receiver object (NewProjectWizardFixture instance).
    */
   fun projectWizard(func: NewProjectWizardFixture.() -> Unit) {
-    func(guiTestRule.findNewProjectWizard())
+    step("at New Project wizard") {
+      func(guiTestRule.findNewProjectWizard())
+    }
   }
 
   /**
@@ -216,7 +253,9 @@ open class GuiTestCase {
    * it call methods on the receiver object (ProjectViewFixture instance).
    */
   fun IdeFrameFixture.projectView(func: ProjectViewFixture.() -> Unit) {
-    func(this.projectView)
+    step("at Project view") {
+      func(this.projectView)
+    }
   }
 
   /**
@@ -226,7 +265,9 @@ open class GuiTestCase {
    * @id - a toolwindow id.
    */
   fun IdeFrameFixture.toolwindow(id: String, func: CustomToolWindowFixture.() -> Unit) {
-    func(CustomToolWindowFixture(id, this))
+    step("at '$id' tool window") {
+      func(CustomToolWindowFixture(id, this))
+    }
   }
 
   //*********FIXTURES METHODS FOR IDEFRAME WITHOUT ROBOT and TARGET
@@ -236,7 +277,9 @@ open class GuiTestCase {
    * it call methods on the receiver object (EditorFixture instance).
    */
   fun IdeFrameFixture.editor(func: FileEditorFixture.() -> Unit) {
-    func(this.editor)
+    step("at editor") {
+      func(this.editor)
+    }
   }
 
   /**
@@ -244,8 +287,10 @@ open class GuiTestCase {
    * it call methods on the receiver object (EditorFixture instance).
    */
   fun IdeFrameFixture.editor(tabName: String, func: FileEditorFixture.() -> Unit) {
-    val editorFixture = this.editor.selectTab(tabName)
-    func(editorFixture)
+    step("at '$tabName' tab of editor") {
+      val editorFixture = this.editor.selectTab(tabName)
+      func(editorFixture)
+    }
   }
 
   /**
@@ -253,7 +298,9 @@ open class GuiTestCase {
    * it call methods on the receiver object (MainToolbarFixture instance).
    */
   fun IdeFrameFixture.toolbar(func: MainToolbarFixture.() -> Unit) {
-    func(this.toolbar)
+    step("at toolbar") {
+      func(this.toolbar)
+    }
   }
 
   /**
@@ -261,15 +308,21 @@ open class GuiTestCase {
    * it call methods on the receiver object (NavigationBarFixture instance).
    */
   fun IdeFrameFixture.navigationBar(func: NavigationBarFixture.() -> Unit) {
-    func(this.navigationBar)
+    step("at navigation bar") {
+      func(this.navigationBar)
+    }
   }
 
   fun IdeFrameFixture.configurationList(func: RunConfigurationListFixture.() -> Unit) {
-    func(this.runConfigurationList)
+    step("at configuration list") {
+      func(this.runConfigurationList)
+    }
   }
 
   fun IdeFrameFixture.gutter(func: GutterFixture.() -> Unit) {
-    func(this.gutter)
+    step("at gutter panel") {
+      func(this.gutter)
+    }
   }
 
   /**
@@ -324,30 +377,21 @@ open class GuiTestCase {
   fun invokeAction(actionId: String) = GuiTestUtil.invokeAction(actionId)
 
   /**
-   * Take a screenshot for a specific component. Screenshot remain scaling and represent it in name of file.
+   * Take a screenshot for a full screen and put a file with hierarchy nearby
+   * @param screenshotName name of create screenshot, added after timestamp
+   * if [screenshotName] is empty the screenshot is create with only timestamp as a name
    */
-  fun screenshot(component: Component, screenshotName: String) {
-
-    val extension = "${getScaleSuffix()}.jpg"
-    val pathWithTestFolder = testScreenshotDirPath.path + slash + this.guiTestRule.getTestName()
-    val fileWithTestFolder = File(pathWithTestFolder)
-    FileUtil.ensureExists(fileWithTestFolder)
-    var screenshotFilePath = File(fileWithTestFolder, screenshotName + extension)
-    if (screenshotFilePath.isFile) {
-      val format = SimpleDateFormat("MM-dd-yyyy.HH.mm.ss")
-      val now = format.format(GregorianCalendar().time)
-      screenshotFilePath = File(fileWithTestFolder, "$screenshotName.$now$extension")
-    }
-    screenshotTaker.safeTakeScreenshotAndSave(screenshotFilePath, component)
-    println(message = "Screenshot for a component \"$component\" taken and stored at ${screenshotFilePath.path}")
-
+  fun screenshot(screenshotName: String = ""){
+    ScreenshotTaker.takeScreenshotAndHierarchy(screenshotName)
   }
-
 
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one) and returns created JDialogFixture
    */
-  fun dialog(title: String? = null, ignoreCaseTitle: Boolean, predicate: FinderPredicate = Predicate.equality, timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
+  fun dialog(title: String? = null,
+             ignoreCaseTitle: Boolean,
+             predicate: FinderPredicate = Predicate.equality,
+             timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
     if (title == null) {
       val jDialog = waitUntilFound(null, JDialog::class.java, timeout) { true }
       return JDialogFixture(robot(), jDialog)
@@ -356,6 +400,7 @@ open class GuiTestCase {
       try {
         val dialog = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) {
           val allMatchedDialogs = robot().finder().findAll(typeMatcher(JDialog::class.java) {
+            it.isFocused &&
             if (ignoreCaseTitle) predicate(it.title.toLowerCase(), title.toLowerCase()) else predicate(it.title, title)
           }).filter { it.isShowing && it.isEnabled && it.isVisible }
           if (allMatchedDialogs.size > 1) throw Exception(
@@ -373,9 +418,12 @@ open class GuiTestCase {
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one)
    */
-  private fun findDialog(title: String?, ignoreCaseTitle: Boolean, timeout: Timeout): JDialog =
-    waitUntilFound(null, JDialog::class.java, timeout) {
-      title?.equals(it.title, ignoreCaseTitle)?.and(it.isShowing && it.isEnabled && it.isVisible) ?: true
+  fun findDialog(title: String?, ignoreCaseTitle: Boolean, timeout: Timeout, predicate: FinderPredicate = Predicate.equality): JDialog =
+    step("find dialog with title '$title'") {
+      waitUntilFound(null, JDialog::class.java, timeout) {
+        it.isShowing && it.isEnabled && it.isVisible
+        && if (title != null) predicate(it.title, title) else true
+      }
     }
 
   fun exists(fixture: () -> AbstractComponentFixture<*, *, *>): Boolean {
@@ -465,5 +513,17 @@ open class GuiTestCase {
     }, timeoutToDisappear)
 
   }
+
+  @Before
+  open fun setUp() {
+    logStartTest(testMethod.methodName)
+  }
+
+  @After
+  open fun tearDown() {
+    logEndTest(testMethod.methodName)
+  }
+
+  open fun isIdeFrameRun(): Boolean = true
 
 }

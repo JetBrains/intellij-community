@@ -1,16 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +20,7 @@ import java.util.regex.Pattern;
 /**
  * @author ilyas
  */
-public abstract class GroovyConfigUtils extends AbstractConfigUtils {
+public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   // to avoid java modules deps the same pattern was copied at org.jetbrains.plugins.gradle.service.GradleInstallationManager.GROOVY_ALL_JAR_PATTERN
   // please update it as well for further changes
@@ -42,19 +38,12 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   public static final String GROOVY2_5 = "2.5";
   public static final String GROOVY3_0 = "3.0";
 
-  private static GroovyConfigUtils myGroovyConfigUtils;
+  private static final GroovyConfigUtils ourGroovyConfigUtils = new GroovyConfigUtils();
 
-  private GroovyConfigUtils() {
-  }
+  private GroovyConfigUtils() {}
 
   public static GroovyConfigUtils getInstance() {
-    if (myGroovyConfigUtils == null) {
-      myGroovyConfigUtils = new GroovyConfigUtils() {
-        {
-          STARTER_SCRIPT_FILE_NAME = "groovy";
-        }};
-    }
-    return myGroovyConfigUtils;
+    return ourGroovyConfigUtils;
   }
 
   @NotNull
@@ -93,10 +82,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
 
   @Nullable
   public String getSDKVersion(@NotNull final Module module) {
-    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
-      final String path = LibrariesUtil.getGroovyHomePath(module);
-      return CachedValueProvider.Result.create(path == null ? null : getSDKVersion(path), ProjectRootManager.getInstance(module.getProject()));
-    });
+    return GroovyConfigUtilsKt.getSdkVersion(module);
   }
 
   public boolean isVersionAtLeast(PsiElement psiElement, String version) {

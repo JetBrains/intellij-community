@@ -1,12 +1,12 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.run
 
 import com.intellij.application.options.PathMacrosCollector
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.JdomKt
+import groovy.transform.CompileStatic
 
+@CompileStatic
 class JavaPathMacroCollectorTest extends LightCodeInsightFixtureTestCase {
   void testJunitConfiguration() {
     String text = '''
@@ -43,7 +43,7 @@ class JavaPathMacroCollectorTest extends LightCodeInsightFixtureTestCase {
     </recent_temporary>
   </component>
 '''
-    assert PathMacrosCollector.getMacroNames(JdomKt.loadElement(text)).empty
+    assert PathMacrosCollector.getMacroNames(JDOMUtil.load(text)).empty
   }
 
 }

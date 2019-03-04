@@ -429,23 +429,21 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                 RefClass ownerClass = refMethod.getOwnerClass();
                 LOG.assertTrue(ownerClass != null);
                 visitClass(ownerClass);
+                return;
               }
-              else if (refMethod.isConstructor()) {
+              if (refMethod.isConstructor()) {
                 RefClass ownerClass = refMethod.getOwnerClass();
                 LOG.assertTrue(ownerClass != null);
                 queryQualifiedNameUsages(ownerClass);
               }
-              else {
-                UMethod uMethod = (UMethod)refMethod.getUastElement();
-                if (uMethod != null && isSerializablePatternMethod(uMethod, refMethod.getOwnerClass())) {
-                  getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
-                }
-                else if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
-                  myProcessedSuspicious.addAll(refMethod.getDerivedMethods());
-
-                  enqueueMethodUsages(globalContext, refMethod);
-                  requestAdded[0] = true;
-                }
+              UMethod uMethod = (UMethod)refMethod.getUastElement();
+              if (uMethod != null && isSerializablePatternMethod(uMethod, refMethod.getOwnerClass())) {
+                getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
+              }
+              else if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
+                myProcessedSuspicious.addAll(refMethod.getDerivedMethods());
+                enqueueMethodUsages(globalContext, refMethod);
+                requestAdded[0] = true;
               }
             }
 
@@ -485,6 +483,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                     getEntryPointsManager(globalContext).addEntryPoint(refElement, false);
                   }
                 }
+                requestAdded[0] = true;
               }
             }
           });
@@ -571,12 +570,12 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     @Override public void visitMethod(@NotNull RefMethod method) {
       if (!myProcessedMethods.contains(method)) {
         // Process class's static initializers
-        if (method.isStatic() || method.isConstructor()) {
-          if (method.isConstructor()) {
-            addInstantiatedClass(method.getOwnerClass());
+        if (method.isStatic() || method.isConstructor() || method.isEntry()) {
+          if (method.isStatic()) {
+            ((RefElementImpl)method.getOwner()).setReachable(true);
           }
           else {
-            ((RefElementImpl)method.getOwner()).setReachable(true);
+            addInstantiatedClass(method.getOwnerClass());
           }
           myProcessedMethods.add(method);
           makeContentReachable((RefJavaElementImpl)method);

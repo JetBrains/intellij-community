@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import org.assertj.core.api.Assertions;
@@ -23,7 +24,13 @@ import java.util.Arrays;
 import java.util.Collections;
 
 public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
-  private EditorColorsSchemeImpl myScheme = new EditorColorsSchemeImpl(null);
+  private EditorColorsSchemeImpl myScheme;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myScheme = new EditorColorsSchemeImpl(null);
+  }
 
   @Override
   protected void tearDown() throws Exception {
@@ -235,7 +242,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       "<scheme name=\"test\" version=\"142\" parent_scheme=\"Default\">\n" +
       "  <option name=\"CONSOLE_FONT_NAME\" value=\"Test\" />\n" +
       "  <option name=\"CONSOLE_FONT_SIZE\" value=\"10\" />\n" +
-      "  <option name=\"CONSOLE_LINE_SPACING\" value=\"1.0\" />\n" +
+      "  <option name=\"CONSOLE_LINE_SPACING\" value=\"1.2\" />\n" +
       "</scheme>",
       serialize(editorColorsScheme));
   }
@@ -613,6 +620,28 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     // the explicitly defined colors from the base (default) scheme will be used which is not what we want here.
     //
     assertSame(AbstractColorsScheme.INHERITED_ATTRS_MARKER, editorColorsScheme.getDirectlyDefinedAttributes(staticFieldKey));
+  }
+
+  public void testInheritedElementWithoutFallback() throws Exception {
+    TextAttributesKey TEST_KEY = TextAttributesKey.createTextAttributesKey("TEST_ATTRIBUTE_KEY", DefaultLanguageHighlighterColors.KEYWORD);
+    try {
+      AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(
+        "<scheme name=\"Super Scheme\" parent_scheme=\"Darcula\" version=\"1\">\n" +
+        "  <attributes>\n" +
+        "    <option name=\"DEFAULT_KEYWORD\" baseAttributes=\"TEXT\" />\n" +
+        "    <option name=\"TEST_ATTRIBUTE_KEY\" baseAttributes=\"TEXT\" />\n" +
+        "  </attributes>" +
+        "</scheme>");
+      TextAttributes originalAttributes = editorColorsScheme.getAttributes(TEST_KEY);
+
+      Element dumpedDom = editorColorsScheme.writeScheme();
+      AbstractColorsScheme reloadedScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(JDOMUtil.writeElement(dumpedDom));
+
+      assertEquals(originalAttributes, reloadedScheme.getAttributes(TEST_KEY));
+    }
+    finally {
+      TextAttributesKey.removeTextAttributesKey("TEST_ATTRIBUTE_KEY");
+    }
   }
 
   public void testIdea188308() {

@@ -26,7 +26,9 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStream;
@@ -45,7 +47,12 @@ import javax.imageio.ImageReader;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.Element;
+import javax.swing.text.View;
+import javax.swing.text.ViewFactory;
+import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.ImageView;
 import java.awt.*;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
@@ -54,8 +61,10 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Iterator;
+import java.util.*;
+
+import static com.intellij.util.ui.UIUtil.drawImage;
+import static com.intellij.util.ui.UIUtil.isUnderDarcula;
 
 /**
  * @author dsl
@@ -77,7 +86,7 @@ public class TipUIUtil {
   }
 
   @Nullable
-  private static TipAndTrickBean getTip(String tipFileName) {
+  public static TipAndTrickBean getTip(String tipFileName) {
     TipAndTrickBean tip = TipAndTrickBean.findByFileName(tipFileName);
     if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
       tip = new TipAndTrickBean();
@@ -100,7 +109,7 @@ public class TipUIUtil {
       if (tipFile.isAbsolute() && tipFile.exists()) {
         text.append(FileUtil.loadFile(tipFile));
         updateImages(text, null, tipFile.getParentFile().getAbsolutePath(), component);
-        cssText = FileUtil.loadFile(new File(tipFile.getParentFile(), UIUtil.isUnderDarcula() ? "css/tips_darcula.css" : "css/tips.css"));
+        cssText = FileUtil.loadFile(new File(tipFile.getParentFile(), isUnderDarcula() ? "css/tips_darcula.css" : "css/tips.css"));
       }
       else {
         PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
@@ -113,7 +122,7 @@ public class TipUIUtil {
         }
         text.append(ResourceUtil.loadText(url));
         updateImages(text, tipLoader, "", component);
-        URL cssResource = ResourceUtil.getResource(tipLoader, "/tips/", UIUtil.isUnderDarcula() ? "css/tips_darcula.css" : "css/tips.css");
+        URL cssResource = ResourceUtil.getResource(tipLoader, "/tips/", isUnderDarcula() ? "css/tips_darcula.css" : "css/tips.css");
         cssText = cssResource != null ? new String(readBytes(cssResource), StandardCharsets.UTF_8) : "";
       }
 
@@ -135,11 +144,6 @@ public class TipUIUtil {
 
   }
 
-  @Deprecated
-  public static void openTipInBrowser(String tipFileName, TipUIUtil.Browser browser, Class providerClass) {
-    openTipInBrowser(getTip(tipFileName), browser);
-  }
-
   public static void openTipInBrowser(@Nullable TipAndTrickBean tip, TipUIUtil.Browser browser) {
     browser.setText(getTipText(tip, browser.getComponent()));
   }
@@ -154,7 +158,7 @@ public class TipUIUtil {
   }
 
   private static void updateImages(StringBuilder text, ClassLoader tipLoader, String tipPath, Component component) {
-    final boolean dark = UIUtil.isUnderDarcula();
+    final boolean dark = isUnderDarcula();
 
     int index = text.indexOf("<img", 0);
     while (index != -1) {
@@ -196,7 +200,9 @@ public class TipUIUtil {
                 trinity = read(actualURL);
               }
               catch (IOException e) {
-                LOG.warn("Cannot find icon with path [" + path + "]");
+                if (!path.endsWith(".svg")) {
+                  LOG.warn("Cannot find icon with path [" + path + "]");
+                }
                 fallbackUpscale = hidpi;
                 actualURL = url;
                 trinity = read(url);
@@ -230,7 +236,7 @@ public class TipUIUtil {
               }
               newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
             } catch (Exception ignore) {
-              newImgTag += "width=\"400\" height=\"200\"";
+              //newImgTag += "width=\"400\" height=\"200\"";
             }
             newImgTag += ">";
             text.replace(index, end + 1, newImgTag);
@@ -249,7 +255,9 @@ public class TipUIUtil {
       formatName = readers.next().getFormatName();
     }
 
-    return Trinity.create(formatName, ImageIO.read(new ByteArrayInputStream(bytes)), bytes);
+    BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
+    if (image == null) throw new IOException("Cannot read image with ImageIO: " + url.toExternalForm());
+    return Trinity.create(formatName, image, bytes);
   }
 
   private static byte[] readBytes(@NotNull URL url) throws IOException{
@@ -331,8 +339,120 @@ public class TipUIUtil {
           }
         }
       );
-      URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", UIUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
-      HTMLEditorKit kit = UIUtil.getHTMLEditorKit(false);
+      URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", isUnderDarcula() ? "tips_darcula.css" : "tips.css");
+      HTMLEditorKit kit = new UIUtil.JBHtmlEditorKit(false) {
+        private final ViewFactory myFactory = createViewFactory();
+        //SVG support
+        private ViewFactory createViewFactory() {
+          return new HTMLEditorKit.HTMLFactory() {
+            @Override
+            public View create(Element elem) {
+              View view = super.create(elem);
+              if (view instanceof ImageView) {
+                String src = (String)view.getElement().getAttributes().getAttribute(HTML.Attribute.SRC);
+                if (src != null /*&& src.endsWith(".svg")*/) {
+                  final Image image;
+                  try {
+                    final URL url = new URL(src);
+                    Dictionary cache = (Dictionary)elem.getDocument().getProperty("imageCache");
+                    if (cache == null) {
+                      elem.getDocument().putProperty("imageCache", cache = new Dictionary() {
+                        private final HashMap myMap = new HashMap();
+                        @Override
+                        public int size() {
+                          return myMap.size();
+                        }
+
+                        @Override
+                        public boolean isEmpty() {
+                          return size() ==0;
+                        }
+
+                        @Override
+                        public Enumeration keys() {
+                          return Collections.enumeration(myMap.keySet());
+                        }
+
+                        @Override
+                        public Enumeration elements() {
+                          return Collections.enumeration(myMap.values());
+                        }
+
+                        @Override
+                        public Object get(Object key) {
+                          return myMap.get(key);
+                        }
+
+                        @Override
+                        public Object put(Object key, Object value) {
+                          return myMap.put(key, value);
+                        }
+
+                        @Override
+                        public Object remove(Object key) {
+                          return myMap.remove(key);
+                        }
+                      });
+                    }
+                    image = src.endsWith(".svg")
+                            ? SVGLoader.load(url, JBUI.isPixHiDPI((Component)null) ? 2f : 1f)
+                            : Toolkit.getDefaultToolkit().createImage(url);
+                    cache.put(url, image);
+                    if (src.endsWith(".svg"))
+                      return new ImageView(elem) {
+                        @Override
+                        public Image getImage() {
+                          return image;
+                        }
+
+                        @Override
+                        public URL getImageURL() {
+                          return url;
+                        }
+
+                        @Override
+                        public void paint(Graphics g, Shape a) {
+                          Rectangle bounds = a.getBounds();
+                          int width = (int)getPreferredSpan(View.X_AXIS);
+                          int height = (int)getPreferredSpan(View.Y_AXIS);
+                          @SuppressWarnings("UndesirableClassUsage")
+                          BufferedImage buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                          Graphics2D graphics = buffer.createGraphics();
+                          super.paint(graphics, new Rectangle(buffer.getWidth(), buffer.getHeight()));
+                          drawImage(g, ImageUtil.ensureHiDPI(image, JBUI.ScaleContext.create((Component)null)), bounds.x, bounds.y, null);
+                        }
+
+                        @Override
+                        public float getMaximumSpan(int axis) {
+                          return getPreferredSpan(axis);
+                        }
+
+                        @Override
+                        public float getMinimumSpan(int axis) {
+                          return getPreferredSpan(axis);
+                        }
+
+                        @Override
+                        public float getPreferredSpan(int axis) {
+                          return (axis == View.X_AXIS ? image.getWidth(null) : image.getHeight(null))/ JBUI.sysScale();
+                        }
+                      };
+                  }
+                  catch (IOException e) {
+                    //ignore
+                  }
+                }
+              }
+              return view;
+            }
+          };
+        }
+
+        @Override
+        public ViewFactory getViewFactory() {
+          return myFactory;
+        }
+      };
       kit.getStyleSheet().addStyleSheet(UIUtil.loadStyleSheet(resource));
       setEditorKit(kit);
     }

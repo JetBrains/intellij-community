@@ -14,11 +14,16 @@ except ImportError:
     from io import StringIO
 import sys  # @Reimport
 
+try:
+    from collections import OrderedDict
+except:
+    OrderedDict = dict
+
 from _pydev_imps._pydev_saved_modules import threading
 import traceback
 from _pydevd_bundle import pydevd_save_locals
 from _pydev_bundle.pydev_imports import Exec, execfile
-from _pydevd_bundle.pydevd_utils import to_string
+from _pydevd_bundle.pydevd_utils import to_string, VariableWithOffset
 
 SENTINEL_VALUE = []
 
@@ -162,7 +167,7 @@ def getVariable(thread_id, frame_id, scope, attrs):
     BY_ID means we'll traverse the list of all objects alive to get the object.
 
     :attrs: after reaching the proper scope, we have to get the attributes until we find
-            the proper location (i.e.: obj\tattr1\tattr2)
+            the proper location (i.e.: obj\tattr1\tattr2).
 
     :note: when BY_ID is used, the frame_id is considered the id of the object to find and
            not the frame (as we don't care about the frame in this case).
@@ -229,6 +234,23 @@ def getVariable(thread_id, frame_id, scope, attrs):
     return var
 
 
+def get_offset(attrs):
+    """
+    Extract offset from the given attributes.
+
+    :param attrs: The string of a compound variable fields split by tabs.
+      If an offset is given, it must go the first element.
+    :return: The value of offset if given or 0.
+    """
+    offset = 0
+    if attrs is not None:
+        try:
+            offset = int(attrs.split('\t')[0])
+        except ValueError:
+            pass
+    return offset
+
+
 def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
     """
     Resolve compound variable in debugger scopes by its name and attributes
@@ -239,16 +261,24 @@ def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
     :param attrs: after reaching the proper scope, we have to get the attributes until we find
             the proper location (i.e.: obj\tattr1\tattr2)
     :return: a dictionary of variables's fields
+
+    :note: PyCharm supports progressive loading of large collections and uses the `attrs`
+           parameter to pass the offset, e.g. 300\t\obj\tattr1\tattr2 should return
+           the value of attr2 starting from the 300th element. This hack makes it possible
+           to add the support of progressive loading without extending of the protocol.
     """
+    offset = get_offset(attrs)
+
+    orig_attrs, attrs = attrs, attrs.split('\t', 1)[1] if offset else attrs
 
     var = getVariable(thread_id, frame_id, scope, attrs)
 
     try:
         _type, _typeName, resolver = get_type(var)
-        return _typeName, resolver.get_dictionary(var)
+        return _typeName, resolver.get_dictionary(VariableWithOffset(var, offset) if offset else var)
     except:
         sys.stderr.write('Error evaluating: thread_id: %s\nframe_id: %s\nscope: %s\nattrs: %s\n' % (
-            thread_id, frame_id, scope, attrs,))
+            thread_id, frame_id, scope, orig_attrs,))
         traceback.print_exc()
 
 
@@ -278,6 +308,10 @@ def resolve_compound_var_object_fields(var, attrs):
     :param attrs: a sequence of variable's attributes separated by \t (i.e.: obj\tattr1\tattr2)
     :return: a dictionary of variables's fields
     """
+    offset = get_offset(attrs)
+
+    attrs = attrs.split('\t', 1)[1] if offset else attrs
+
     attr_list = attrs.split('\t')
 
     for k in attr_list:
@@ -286,7 +320,7 @@ def resolve_compound_var_object_fields(var, attrs):
 
     try:
         type, _typeName, resolver = get_type(var)
-        return resolver.get_dictionary(var)
+        return resolver.get_dictionary(VariableWithOffset(var, offset) if offset else var)
     except:
         traceback.print_exc()
 
@@ -600,8 +634,10 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     def col_to_format(c):
         return format if dtypes[c] == 'f' and format else array_default_format(dtypes[c])
 
+    iat = df.iat if dim == 1 or len(df.columns.unique()) == len(df.columns) else df.iloc
+
     xml += header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
-    xml += array_data_to_xml(rows, cols, lambda r: (("%" + col_to_format(c)) % (df.iat[r, c] if dim > 1 else df.iat[r])
+    xml += array_data_to_xml(rows, cols, lambda r: (("%" + col_to_format(c)) % (iat[r, c] if dim > 1 else iat[r])
                                                     for c in range(cols)))
     return xml
 

@@ -13,18 +13,15 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * @author Alexander Lobas
@@ -42,6 +39,8 @@ public class ListPluginComponent extends CellPluginComponent {
   private RestartButton myRestartButton;
   private final BaselinePanel myBaselinePanel = new BaselinePanel();
   private ProgressIndicatorEx myIndicator;
+
+  private IdeaPluginDescriptor myUpdateDescriptor;
 
   public ListPluginComponent(@NotNull MyPluginModel pluginModel, @NotNull IdeaPluginDescriptor plugin, boolean pluginForUpdate) {
     super(plugin);
@@ -76,9 +75,7 @@ public class ListPluginComponent extends CellPluginComponent {
     addNameComponent(myBaselinePanel);
     myName.setVerticalAlignment(SwingConstants.TOP);
 
-    if (pluginForUpdate) {
-      createVersion();
-    }
+    createVersion(pluginForUpdate);
     updateErrors();
 
     if (!pluginForUpdate) {
@@ -133,7 +130,7 @@ public class ListPluginComponent extends CellPluginComponent {
     OneLineProgressIndicator indicator = new OneLineProgressIndicator();
     indicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false, false));
     myBaselinePanel.setProgressComponent(this, indicator.createBaselineWrapper());
-    myPluginModel.addProgress(myPlugin, indicator);
+    MyPluginModel.addProgress(myPlugin, indicator);
     myIndicator = indicator;
 
     if (repaint) {
@@ -152,14 +149,14 @@ public class ListPluginComponent extends CellPluginComponent {
     fullRepaint();
   }
 
-  public void clearProgress() {
+  void clearProgress() {
     myIndicator = null;
   }
 
   @NotNull
   private static AbstractLayoutManager createCheckboxIconLayout() {
     return new AbstractLayoutManager() {
-      JBValue offset = new JBValue.Float(12);
+      final JBValue offset = new JBValue.Float(12);
 
       @Override
       public Dimension preferredLayoutSize(Container parent) {
@@ -194,10 +191,24 @@ public class ListPluginComponent extends CellPluginComponent {
     };
   }
 
-  private void createVersion() {
+  private void createVersion(boolean pluginForUpdate) {
     String version = StringUtil.defaultIfEmpty(myPlugin.getVersion(), null);
-    if (version != null) {
-      myVersion = new JLabel("Version " + version);
+
+    if (version != null && (pluginForUpdate || !myPlugin.isBundled() || myPlugin.allowBundledUpdate())) {
+      String oldVersion = null;
+
+      if (pluginForUpdate) {
+        IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(myPlugin.getPluginId());
+        oldVersion = installedPlugin == null ? null : StringUtil.defaultIfEmpty(installedPlugin.getVersion(), null);
+      }
+      if (oldVersion == null) {
+        version = "v" + version;
+      }
+      else {
+        version = "Version " + oldVersion + " " + UIUtil.rightArrow() + " " + version;
+      }
+
+      myVersion = new JLabel(version);
       myVersion.setOpaque(false);
       myBaselinePanel.addVersionComponent(PluginManagerConfigurableNew.installTiny(myVersion));
     }
@@ -212,7 +223,43 @@ public class ListPluginComponent extends CellPluginComponent {
     }
   }
 
-  public void updateErrors() {
+  public void setUpdateDescriptor(@Nullable IdeaPluginDescriptor descriptor) {
+    if (myUpdateDescriptor == null && descriptor == null) {
+      return;
+    }
+
+    myUpdateDescriptor = descriptor;
+
+    if (descriptor == null) {
+      if (myVersion != null) {
+        myVersion.setText("v" + myPlugin.getVersion());
+      }
+      if (myUpdateButton != null) {
+        myUpdateButton.setVisible(false);
+      }
+    }
+    else {
+      if (myVersion == null) {
+        myVersion = new JLabel();
+        myVersion.setOpaque(false);
+        myBaselinePanel.addVersionComponent(PluginManagerConfigurableNew.installTiny(myVersion));
+      }
+      myVersion.setText("Version " + myPlugin.getVersion() + " " + UIUtil.rightArrow() + " " + descriptor.getVersion());
+
+      if (myUpdateButton == null) {
+        myUpdateButton = new UpdateButton();
+        myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myUpdateDescriptor, false));
+        myBaselinePanel.addButtonComponent(myUpdateButton);
+      }
+      else {
+        myUpdateButton.setVisible(true);
+      }
+    }
+
+    myBaselinePanel.doLayout();
+  }
+
+  void updateErrors() {
     boolean errors = myPluginModel.hasErrors(myPlugin);
     updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
 
@@ -227,7 +274,7 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void setListeners(@NotNull LinkListener<IdeaPluginDescriptor> listener,
+  public void setListeners(@NotNull LinkListener<? super IdeaPluginDescriptor> listener,
                            @NotNull LinkListener<String> searchListener,
                            @NotNull EventHandler eventHandler) {
     super.setListeners(listener, searchListener, eventHandler);
@@ -270,11 +317,11 @@ public class ListPluginComponent extends CellPluginComponent {
     }
   }
 
-  public boolean isEnabledState() {
+  private boolean isEnabledState() {
     return myPluginModel.isEnabled(myPlugin);
   }
 
-  public void updateAfterUninstall() {
+  void updateAfterUninstall() {
     myUninstalled = true;
     updateColors(mySelection);
 
@@ -285,7 +332,7 @@ public class ListPluginComponent extends CellPluginComponent {
     changeUpdateToRestart();
   }
 
-  public void changeUpdateToRestart() {
+  void changeUpdateToRestart() {
     boolean layout = false;
 
     if (myUpdateButton != null) {
@@ -303,7 +350,7 @@ public class ListPluginComponent extends CellPluginComponent {
     }
   }
 
-  public void updateEnabledState() {
+  void updateEnabledState() {
     if (!myUninstalled) {
       myEnableDisableButton.setSelected(isEnabledState());
     }
@@ -318,7 +365,7 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<CellPluginComponent> selection) {
+  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<? extends CellPluginComponent> selection) {
     for (CellPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -383,7 +430,7 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void handleKeyAction(int keyCode, @NotNull List<CellPluginComponent> selection) {
+  public void handleKeyAction(int keyCode, @NotNull List<? extends CellPluginComponent> selection) {
     for (CellPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -443,11 +490,11 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   @NotNull
-  private static Pair<Boolean, IdeaPluginDescriptor[]> getSelectionNewState(@NotNull List<CellPluginComponent> selection) {
+  private static Pair<Boolean, IdeaPluginDescriptor[]> getSelectionNewState(@NotNull List<? extends CellPluginComponent> selection) {
     boolean state = ((ListPluginComponent)selection.get(0)).isEnabledState();
     boolean setTrue = false;
 
-    for (Iterator<CellPluginComponent> I = selection.listIterator(1); I.hasNext(); ) {
+    for (ListIterator<? extends CellPluginComponent> I = selection.listIterator(1); I.hasNext(); ) {
       if (state != ((ListPluginComponent)I.next()).isEnabledState()) {
         setTrue = true;
         break;
@@ -466,7 +513,7 @@ public class ListPluginComponent extends CellPluginComponent {
   @Override
   public void close() {
     if (myIndicator != null) {
-      myPluginModel.removeProgress(myPlugin, myIndicator);
+      MyPluginModel.removeProgress(myPlugin, myIndicator);
       myIndicator = null;
     }
     myPluginModel.removeComponent(this);

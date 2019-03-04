@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -29,9 +15,9 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
-import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.common.BinaryOutputStream;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -78,7 +64,7 @@ public abstract class AppIcon {
 
   public abstract void setOkBadge(Project project, boolean visible);
 
-  public abstract void requestAttention(Project project, boolean critical);
+  public abstract void requestAttention(@Nullable Project project, boolean critical);
 
   public abstract void requestFocus(IdeFrame frame);
 
@@ -125,7 +111,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    public final void requestAttention(Project project, boolean critical) {
+    public final void requestAttention(@Nullable Project project, boolean critical) {
       if (!isAppActive() && Registry.is("ide.appIcon.requestAttention")) {
         _requestAttention(getIdeFrame(project), critical);
       }
@@ -141,7 +127,7 @@ public abstract class AppIcon {
 
     public abstract void _requestAttention(IdeFrame frame, boolean critical);
 
-    protected abstract IdeFrame getIdeFrame(Project project);
+    protected abstract IdeFrame getIdeFrame(@Nullable Project project);
 
     private boolean isAppActive() {
       Application app = ApplicationManager.getApplication();
@@ -230,7 +216,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    protected IdeFrame getIdeFrame(Project project) {
+    protected IdeFrame getIdeFrame(@Nullable Project project) {
       return null;
     }
 
@@ -426,7 +412,7 @@ public abstract class AppIcon {
     }
 
     private static byte[] writeTransparentIco(BufferedImage src)
-      throws ImageWriteException, IOException {
+      throws IOException {
 
       LOG.assertTrue(BufferedImage.TYPE_INT_ARGB == src.getType() || BufferedImage.TYPE_4BYTE_ABGR == src.getType());
 
@@ -628,7 +614,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    protected IdeFrame getIdeFrame(Project project) {
+    protected IdeFrame getIdeFrame(@Nullable Project project) {
       return WindowManager.getInstance().getIdeFrame(project);
     }
 
@@ -659,7 +645,7 @@ public abstract class AppIcon {
     public void setOkBadge(Project project, boolean visible) { }
 
     @Override
-    public void requestAttention(Project project, boolean critical) { }
+    public void requestAttention(@Nullable Project project, boolean critical) { }
 
     @Override
     public void requestFocus(IdeFrame frame) { }

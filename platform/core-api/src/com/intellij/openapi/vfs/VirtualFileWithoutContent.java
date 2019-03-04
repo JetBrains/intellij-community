@@ -20,6 +20,5 @@ package com.intellij.openapi.vfs;
  * operations do not make sense and would likely result in {@link UnsupportedOperationException}.
  *
  * @author Irina.Chernushina
- * @since 2016.3
  */
 public interface VirtualFileWithoutContent { }

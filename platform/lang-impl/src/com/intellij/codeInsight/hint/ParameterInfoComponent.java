@@ -53,14 +53,17 @@ public class ParameterInfoComponent extends JPanel {
 
   private static final Color BACKGROUND = JBColor.namedColor("ParameterInfo.background", HintUtil.getInformationColor());
   private static final Color FOREGROUND = JBColor.namedColor("ParameterInfo.foreground", new JBColor(0x1D1D1D, 0xBBBBBB));
-  private static final Color HIGHLIGHTED_COLOR = JBColor.namedColor("ParameterInfo.highlightedColor", new JBColor(0x1D1D1D, 0xE8E8E8));
-  private static final Color DISABLED_COLOR = JBColor.namedColor("ParameterInfo.disabledColor", new JBColor(0xA8A8A8, 0x777777));
-  private static final Color CONTEXT_HELP_FOREGROUND = JBColor.namedColor("ParameterInfo.ContextHelp.foreground", new JBColor(0x787878, 0x878787));
+  private static final Color HIGHLIGHTED_COLOR = JBColor.namedColor("ParameterInfo.currentParameterForeground", new JBColor(0x1D1D1D, 0xE8E8E8));
+  private static final Color DISABLED_COLOR = JBColor.namedColor("ParameterInfo.disabledForeground", new JBColor(0xA8A8A8, 0x777777));
+  private static final Color CONTEXT_HELP_FOREGROUND = JBColor.namedColor("ParameterInfo.infoForeground", new JBColor(0x787878, 0x878787));
   static final Color BORDER_COLOR = JBColor.namedColor("ParameterInfo.borderColor", HintUtil.INFORMATION_BORDER_COLOR);
+  private static final Color HIGHLIGHTED_BACKGROUND = JBColor.namedColor("ParameterInfo.currentOverloadBackground", BORDER_COLOR);
+  private static final Color SEPARATOR_COLOR = JBColor.namedColor("ParameterInfo.lineSeparatorColor", BORDER_COLOR);
   private static final Border EMPTY_BORDER = JBUI.Borders.empty(2, 10);
-  private static final Border BOTTOM_BORDER = new CompoundBorder(JBUI.Borders.customLine(BORDER_COLOR, 0, 0, 1, 0), EMPTY_BORDER);
+  private static final Border BOTTOM_BORDER = new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), EMPTY_BORDER);
 
   protected int myWidthLimit = 500;
+  private final int myMaxVisibleRows = Registry.intValue("parameter.info.max.visible.rows");
 
   private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = (o1, o2) -> {
     if (o1.getStartOffset() == o2.getStartOffset()) {
@@ -170,7 +173,7 @@ public class ParameterInfoComponent extends JPanel {
   public Dimension getPreferredSize() {
     long visibleRows = Stream.of(myPanels).filter(Component::isVisible).count();
     final Dimension preferredSize = super.getPreferredSize();
-    if (visibleRows <= 20) {
+    if (visibleRows <= myMaxVisibleRows) {
       return preferredSize;
     }
     else {
@@ -243,6 +246,11 @@ public class ParameterInfoComponent extends JPanel {
 
     @Override
     public void setupRawUIComponentPresentation(String htmlText) {
+      ParameterInfoController.RawSignatureItem item = new ParameterInfoController.RawSignatureItem(htmlText);
+
+      result.current = getCurrentParameterIndex();
+      result.signatures.add(item);
+
       myPanels[i].setup(htmlText, getDefaultParameterColor());
       myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
     }
@@ -299,7 +307,7 @@ public class ParameterInfoComponent extends JPanel {
 
     @Override
     public Color getDefaultParameterColor() {
-      return mySingleParameterInfo || !isHighlighted() ? BACKGROUND : BORDER_COLOR;
+      return mySingleParameterInfo || !isHighlighted() ? BACKGROUND : HIGHLIGHTED_BACKGROUND;
     }
   }
 
@@ -317,6 +325,11 @@ public class ParameterInfoComponent extends JPanel {
         setVisible(i, true);
         //noinspection unchecked
         myHandler.updateUI(o, context);
+
+        // ensure that highlighted element is visible
+        if (context.isHighlighted()) {
+          myMainPanel.scrollRectToVisible(myPanels[i].getBounds());
+        }
       }
     }
 

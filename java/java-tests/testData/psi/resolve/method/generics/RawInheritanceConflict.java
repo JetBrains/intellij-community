@@ -5,6 +5,6 @@ class XX {
 class UU {
   void bar() {
       Properties p = new Properties();
-      XX.fo<ref>o(p, "xxx", false);
+      XX.fo<caret>o(p, "xxx", false);
   }
 }

@@ -188,13 +188,11 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     LOG.assertTrue(extResources.mkdirs() || extResources.exists(), extResources);
 
     final PsiManager psiManager = PsiManager.getInstance(project);
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      WriteAction.run(() -> {
-        final String path = FileUtil.toSystemIndependentName(extResources.getAbsolutePath());
-        final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-        LOG.assertTrue(vFile != null, path);
-      });
-    });
+    ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(() -> {
+      final String path = FileUtil.toSystemIndependentName(extResources.getAbsolutePath());
+      final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      LOG.assertTrue(vFile != null, path);
+    }));
 
     final List<String> downloadedResources = new LinkedList<>();
     final List<String> resourceUrls = new LinkedList<>();
@@ -401,9 +399,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
                         ((XmlToken)e).getTokenType() == XmlTokenType.XML_DOCTYPE_SYSTEM
                        )
                 ) {
-                if (!result.contains(candidateName)) {
-                  result.add(candidateName);
-                }
+                result.add(candidateName);
                 break;
               }
             }

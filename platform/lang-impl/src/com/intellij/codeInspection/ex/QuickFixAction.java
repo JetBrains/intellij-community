@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -42,6 +41,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
@@ -110,10 +110,11 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     try {
       Ref<List<CommonProblemDescriptor[]>> descriptors = Ref.create();
       Set<VirtualFile> readOnlyFiles = new THashSet<>();
+      TreePath[] paths = tree.getSelectionPaths();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.setText("Checking problem descriptors...");
-        descriptors.set(tree.getSelectedDescriptorPacks(true, readOnlyFiles, false));
+        descriptors.set(tree.getSelectedDescriptorPacks(true, readOnlyFiles, false, paths));
       }), InspectionsBundle.message("preparing.for.apply.fix"), true, e.getProject())) {
         return;
       }
@@ -270,8 +271,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     Set<VirtualFile> readOnlyFiles = getReadOnlyFiles(refElements);
     if (!readOnlyFiles.isEmpty()) {
       final Project project = refElements[0].getRefManager().getProject();
-      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(
-        VfsUtilCore.toVirtualFileArray(readOnlyFiles));
+      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyFiles);
       if (operationStatus.hasReadonlyFiles()) return false;
     }
     return true;
@@ -279,7 +279,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     final JButton button = new JButton(presentation.getText());
     Icon icon = presentation.getIcon();
     if (icon == null) {
@@ -293,7 +293,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
         final ActionToolbar toolbar = UIUtil.getParentOfType(ActionToolbar.class, button);
         actionPerformed(AnActionEvent.createFromAnAction(QuickFixAction.this,
                                                          event,
-                                                         ActionPlaces.UNKNOWN,
+                                                         place,
                                                          toolbar == null ? DataManager.getInstance().getDataContext(button) : toolbar.getToolbarDataContext()));
         return true;
       }

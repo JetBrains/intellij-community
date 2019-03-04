@@ -418,6 +418,26 @@ public class MultiSelectionEventHandler extends EventHandler {
     singleSelection(component, getIndex(component), scrollAndFocus);
   }
 
+  @Override
+  public void setSelection(@NotNull List<CellPluginComponent> components) {
+    clearSelectionWithout(-1);
+    mySelectionIndex = -1;
+    mySelectionLength = components.size();
+
+    if (mySelectionLength == 0) {
+      return;
+    }
+
+    mySelectionIndex = getIndex(components.get(0));
+
+    for (CellPluginComponent component : components) {
+      mySelectionIndex = Math.min(mySelectionIndex, getIndex(component));
+      if (component.getSelection() != SelectionType.SELECTION) {
+        component.setSelection(SelectionType.SELECTION, true);
+      }
+    }
+  }
+
   private void singleSelection(int index) {
     singleSelection(myComponents.get(index), index);
   }

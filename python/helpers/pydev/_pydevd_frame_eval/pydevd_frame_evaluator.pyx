@@ -129,7 +129,7 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
                     bp.code_objects.add(frame.f_code)
         else:
             if main_debugger.has_plugin_line_breaks:
-                can_not_skip = main_debugger.plugin.can_not_skip(main_debugger, None, frame)
+                can_not_skip = main_debugger.plugin.can_not_skip(main_debugger, None, frame, additional_info)
                 if can_not_skip:
                     was_break = True
                     main_debugger.SetTrace(main_debugger.trace_dispatch)

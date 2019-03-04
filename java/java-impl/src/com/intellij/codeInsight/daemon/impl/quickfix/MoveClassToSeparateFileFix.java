@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,7 +53,7 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
-    if  (!myClass.isValid() || !ScratchFileService.isInProjectOrScratch(myClass)) return false;
+    if  (!myClass.isValid() || !BaseIntentionAction.canModify(myClass)) return false;
     PsiDirectory dir = file.getContainingDirectory();
     if (dir == null) return false;
     try {

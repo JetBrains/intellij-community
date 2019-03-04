@@ -7,8 +7,8 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ArrayUtil
 import groovy.lang.Closure
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 
 @JvmField val DELEGATES_TO_KEY: Key<String> = Key.create<String>("groovy.closure.delegatesTo.type")
@@ -16,13 +16,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 
 val defaultDelegatesToInfo: DelegatesToInfo = DelegatesToInfo(null, Closure.OWNER_ONLY)
 
-fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? = CachedValuesManager.getCachedValue(closure) {
+fun getDelegatesToInfo(closure: GrFunctionalExpression): DelegatesToInfo? = CachedValuesManager.getCachedValue(closure) {
   Result.create(doGetDelegatesToInfo(closure), PsiModificationTracker.MODIFICATION_COUNT)
 }
 
-private fun doGetDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
+private fun doGetDelegatesToInfo(expression: GrFunctionalExpression): DelegatesToInfo? {
   for (ext in GrDelegatesToProvider.EP_NAME.extensions) {
-    val info = ext.getDelegatesToInfo(closure)
+    val info = ext.getDelegatesToInfo(expression)
     if (info != null) {
       return info
     }
@@ -30,9 +30,9 @@ private fun doGetDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
   return null
 }
 
-fun getContainingCall(closableBlock: GrClosableBlock): GrCall? {
-  val parent = closableBlock.parent
-  if (parent is GrCall && ArrayUtil.contains(closableBlock, *parent.closureArguments)) {
+fun getContainingCall(expression: GrFunctionalExpression): GrCall? {
+  val parent = expression.parent
+  if (parent is GrCall && ArrayUtil.contains(expression, *parent.closureArguments)) {
     return parent
   }
 

@@ -155,7 +155,6 @@ public interface ASTNode extends UserDataHolder {
    * @param leafType type of leaf element to add.
    * @param leafText text of added leaf.
    * @param anchorBefore the node before which the child node is inserted.
-   * @since 7.0
    */
   void addLeaf(@NotNull IElementType leafType, @NotNull CharSequence leafText, @Nullable ASTNode anchorBefore);
 

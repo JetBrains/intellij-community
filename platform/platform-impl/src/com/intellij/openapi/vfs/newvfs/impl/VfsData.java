@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationAdapter;
@@ -82,7 +68,7 @@ public class VfsData {
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
-  
+
   private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
 
   private final ConcurrentIntObjectMap<Segment> mySegments = ContainerUtil.createConcurrentIntObjectMap();
@@ -219,7 +205,7 @@ public class VfsData {
 
     // <nameId, flags> pairs, "flags" part containing flags per se and modification stamp
     private final AtomicIntegerArray myIntArray = new AtomicIntegerArray(SEGMENT_SIZE * 2);
-    
+
     final VfsData vfsData;
 
     Segment(VfsData vfsData) {
@@ -300,17 +286,20 @@ public class VfsData {
     @NotNull
     volatile int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY; // guarded by this
 
-    private static final AtomicFieldUpdater<DirectoryData, Set> MY_ADOPTED_NAMES_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, Set.class);
-    // assigned under lock(this) only; modified under lock(myAdoptedNames)
+    // assigned under lock(this) only; accessed/modified map contents under lock(myAdoptedNames)
     private volatile Set<CharSequence> myAdoptedNames;
 
     @NotNull
-    VirtualFileSystemEntry[] getFileChildren(int fileId, @NotNull VirtualDirectoryImpl parent) {
-      assert fileId > 0;
+    VirtualFileSystemEntry[] getFileChildren(@NotNull VirtualDirectoryImpl parent) {
       int[] ids = myChildrenIds;
       VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[ids.length];
       for (int i = 0; i < ids.length; i++) {
-        children[i] = assertNotNull(parent.mySegment.vfsData.getFileById(ids[i], parent));
+        int childId = ids[i];
+        VirtualFileSystemEntry child = parent.mySegment.vfsData.getFileById(childId, parent);
+        if (child == null) {
+          throw new AssertionError("No file for id " + childId + ", parentId = " + parent.myId);
+        }
+        children[i] = child;
       }
       return children;
     }
@@ -332,6 +321,8 @@ public class VfsData {
     /**
      * must call removeAdoptedName() before adding new child with the same name
      * or otherwise {@link VirtualDirectoryImpl#doFindChild(String, boolean, NewVirtualFileSystem, boolean)} would risk finding already non-existing child
+     *
+     * Must be called in synchronized(VfsData)
      */
     void removeAdoptedName(@NotNull CharSequence name) {
       Set<CharSequence> adopted = myAdoptedNames;
@@ -341,12 +332,14 @@ public class VfsData {
       synchronized (adopted) {
         boolean removed = adopted.remove(name);
         if (removed && adopted.isEmpty()) {
-          // if failed then somebody's nulled it already, no need to retry
-          MY_ADOPTED_NAMES_UPDATER.compareAndSet(this, adopted, null);
+          myAdoptedNames = null;
         }
       }
     }
 
+    /**
+     * Must be called in synchronized(VfsData)
+     */
     void addAdoptedName(@NotNull CharSequence name, boolean caseSensitive) {
       Set<CharSequence> adopted = getOrCreateAdoptedNames(caseSensitive);
       CharSequence sequence = ByteArrayCharSequence.convertToBytesIfPossible(name);
@@ -355,25 +348,28 @@ public class VfsData {
       }
     }
 
-    @NotNull
-    private Set<CharSequence> getOrCreateAdoptedNames(boolean caseSensitive) {
-      Set<CharSequence> adopted;
-      while (true) {
-        adopted = myAdoptedNames;
-        if (adopted != null) break;
-        adopted = new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
-        if (MY_ADOPTED_NAMES_UPDATER.compareAndSet(this, null, adopted)) {
-          break;
-        }
-      }
-      return adopted;
-    }
-
+    /**
+     * Optimization: faster than call {@link #addAdoptedName(CharSequence, boolean)} one by one
+     * Must be called in synchronized(VfsData)
+     */
     void addAdoptedNames(@NotNull Collection<? extends CharSequence> names, boolean caseSensitive) {
       Set<CharSequence> adopted = getOrCreateAdoptedNames(caseSensitive);
       synchronized (adopted) {
         adopted.addAll(names);
       }
+    }
+
+    /**
+     * Must be called in synchronized(VfsData)
+     */
+    @NotNull
+    private Set<CharSequence> getOrCreateAdoptedNames(boolean caseSensitive) {
+      Set<CharSequence> adopted = myAdoptedNames;
+      if (adopted == null) {
+        myAdoptedNames = adopted =
+          new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+      }
+      return adopted;
     }
 
     @NotNull
@@ -385,6 +381,9 @@ public class VfsData {
       }
     }
 
+    /**
+     * Must be called in synchronized(VfsData)
+     */
     void clearAdoptedNames() {
       myAdoptedNames = null;
     }

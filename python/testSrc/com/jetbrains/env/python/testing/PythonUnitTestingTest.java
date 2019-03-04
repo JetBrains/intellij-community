@@ -281,9 +281,9 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String all, int exitCode) {
         assertEquals("Runner did not stop after first fail", 1, runner.getAllTestsCount());
         assertEquals("Bad tree produced for failfast", "Test tree:\n" +
-                                                       "[root]\n" +
-                                                       ".test_test\n" +
-                                                       "..SomeTestCase\n" +
+                                                       "[root](-)\n" +
+                                                       ".test_test(-)\n" +
+                                                       "..SomeTestCase(-)\n" +
                                                        "...test_1_test(-)\n", runner.getFormattedTestTree());
       }
     });
@@ -309,9 +309,9 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         runner.getFormattedTestTree();
         assertEquals("Skipped test with non-ascii message broke tree",
                      "Test tree:\n" +
-                     "[root]\n" +
-                     ".test_test\n" +
-                     "..TestCase\n" +
+                     "[root](~)\n" +
+                     ".test_test(~)\n" +
+                     "..TestCase(~)\n" +
                      "...test(~)\n", runner.getFormattedTestTree());
         assertThat(stdout)
           .describedAs("non-ascii char broken in output")
@@ -341,10 +341,10 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String all, int exitCode) {
         final String formattedTestTree = runner.getFormattedTestTree();
         assertEquals("Bad tree:" + formattedTestTree, "Test tree:\n" +
-                                                      "[root]\n" +
-                                                      ".test_test\n" +
-                                                      "..TestThis\n" +
-                                                      "...test_this\n" +
+                                                      "[root](-)\n" +
+                                                      ".test_test(-)\n" +
+                                                      "..TestThis(-)\n" +
+                                                      "...test_this(-)\n" +
                                                       "....[test](-)\n", formattedTestTree);
       }
     });
@@ -399,10 +399,10 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
         assertEquals("dots in subtest names broke output", "Test tree:\n" +
-                                                           "[root]\n" +
-                                                           ".test_test\n" +
-                                                           "..SampleTest\n" +
-                                                           "...test_sample\n" +
+                                                           "[root](-)\n" +
+                                                           ".test_test(-)\n" +
+                                                           "..SampleTest(-)\n" +
+                                                           "...test_sample(-)\n" +
                                                            "....(i='0_0')(-)\n" +
                                                            "....(i='1_1')(-)\n" +
                                                            "....(i='2_2')(+)\n" +
@@ -435,10 +435,10 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String all, int exitCode) {
         runner.getFormattedTestTree();
         assertEquals("unittest2 produced wrong tree", "Test tree:\n" +
-                                                      "[root]\n" +
-                                                      ".test_test\n" +
-                                                      "..SampleTest\n" +
-                                                      "...test_sample\n" +
+                                                      "[root](-)\n" +
+                                                      ".test_test(-)\n" +
+                                                      "..SampleTest(-)\n" +
+                                                      "...test_sample(-)\n" +
                                                       "....(i=0)(-)\n" +
                                                       "....(i=1)(-)\n" +
                                                       "....(i=2)(-)\n" +
@@ -468,11 +468,11 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
         assertEquals("Output tree broken for skipped exception thrown in setup method", "Test tree:\n" +
-                                                                                        "[root]\n" +
-                                                                                        ".test_test\n" +
-                                                                                        "..TestSimple\n" +
+                                                                                        "[root](~)\n" +
+                                                                                        ".test_test(~)\n" +
+                                                                                        "..TestSimple(~)\n" +
                                                                                         "...setUpClass(~)\n" +
-                                                                                        "..TestSubSimple\n" +
+                                                                                        "..TestSubSimple(~)\n" +
                                                                                         "...setUpClass(~)\n",
                      runner.getFormattedTestTree());
       }
@@ -614,10 +614,10 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull String stderr,
                                       @NotNull String all, int exitCode) {
         final String expectedResult = "Test tree:\n" +
-                                      "[root]\n" +
-                                      ".test_subtest\n" +
-                                      "..SpamTest\n" +
-                                      "...test_test\n" +
+                                      "[root](-)\n" +
+                                      ".test_subtest(-)\n" +
+                                      "..SpamTest(-)\n" +
+                                      "...test_test(-)\n" +
                                       "....(i=0)(-)\n" +
                                       "....(i=1)(+)\n" +
                                       "....(i=2)(-)\n" +

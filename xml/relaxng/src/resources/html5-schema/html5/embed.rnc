@@ -203,6 +203,8 @@ namespace local = ""
 			                    | onended
 			                    | onerror
 			                    | onfocus
+			                    | onfocusin
+			                    | onfocusout
 			                    | oninput
 			                    | oninvalid
 			                    | onkeydown

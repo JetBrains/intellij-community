@@ -27,9 +27,6 @@ public class EPAvailabilityListenerExtension implements PluginAware {
   private String myListenerClass;
   private PluginDescriptor myPluginDescriptor;
 
-  public EPAvailabilityListenerExtension() {
-  }
-
   public EPAvailabilityListenerExtension(@NotNull String extensionPointName, @NotNull String listenerClass) {
     myExtensionPointName = extensionPointName;
     myListenerClass = listenerClass;
@@ -62,12 +59,11 @@ public class EPAvailabilityListenerExtension implements PluginAware {
     return myPluginDescriptor;
   }
 
+  @NotNull
   public Class loadListenerClass() throws ClassNotFoundException {
     if (myPluginDescriptor != null && myPluginDescriptor.getPluginClassLoader() != null) {
       return Class.forName(getListenerClass(), true, myPluginDescriptor.getPluginClassLoader());
     }
-    else {
-      return Class.forName(getListenerClass());
-    }
+    return Class.forName(getListenerClass());
   }
 }

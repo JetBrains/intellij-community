@@ -703,7 +703,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
   public void testSwitchLabelSpacing() {
-    doMethodTest("switch (i) { case\n1\n:break;\ndefault\n:break;}",
+    doMethodTest("switch (i) { case\n1\n:break;\ndefault\n:break; }",
                  "switch (i) {\n" +
                  "    case 1:\n        break;\n" +
                  "    default:\n        break;\n" +
@@ -711,11 +711,49 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
   public void testSwitchLabeledRuleSpacing() {
-    doMethodTest("switch (i) { case\n1\n->\nfoo();\ncase\n2->{bar()};\ndefault->throw new Exception();}",
+    doMethodTest("switch (i) { case\n1\n->\nfoo();\ncase\n2->{bar()};\ndefault->throw new Exception(); }",
                  "switch (i) {\n" +
                  "    case 1 -> foo();\n" +
                  "    case 2 -> {\n        bar()\n    };\n" +
                  "    default -> throw new Exception();\n" +
+                 "}");
+  }
+
+  public void testMultiValueLabel() {
+    doMethodTest("switch(i) { case 1,2,  3: break; }",
+                 "switch (i) {\n" +
+                 "    case 1, 2, 3:\n" +
+                 "        break;\n" +
+                 "}");
+  }
+
+  public void testMultiValueLabeledRule() {
+    doMethodTest("switch(i) { case 1,2,  3 -> foo(); }",
+                 "switch (i) {\n" +
+                 "    case 1, 2, 3 -> foo();\n" +
+                 "}");
+  }
+
+  public void testSwitchExpression() {
+    doMethodTest("String s = switch\n(i   ){default -> null;}",
+                 "String s = switch (i) {\n" +
+                 "    default -> null;\n" +
+                 "}");
+  }
+
+  public void testBreakStatementSpacing() {
+    getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
+    doMethodTest("String s = switch (i) {\n" +
+                 "    case 0: break(foo) ;\n" +
+                 "    case 1: break\n        42 ;\n" +
+                 "    case 3: break  label ;\n" +
+                 "    case 4: break  ;\n" +
+                 "}",
+                 "String s = switch (i) {\n" +
+                 "    case 0: break (foo);\n" +
+                 "    case 1: break 42;\n" +
+                 "    case 3: break label;\n" +
+                 "    case 4: break;\n" +
                  "}");
   }
 }

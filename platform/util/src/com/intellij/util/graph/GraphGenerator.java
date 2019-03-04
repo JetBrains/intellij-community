@@ -29,7 +29,7 @@ import java.util.*;
 public class GraphGenerator<Node> implements Graph<Node> {
   @NotNull
   public static <T> Graph<T> generate(InboundSemiGraph<T> graph) {
-    return new GraphGenerator<T>(graph);
+    return new GraphGenerator<>(graph);
   }
 
   private final InboundSemiGraph<Node> myGraph;
@@ -37,12 +37,12 @@ public class GraphGenerator<Node> implements Graph<Node> {
 
   private GraphGenerator(@NotNull InboundSemiGraph<Node> graph) {
     myGraph = graph;
-    myOuts = new THashMap<Node, List<Node>>();
+    myOuts = new THashMap<>();
     buildOuts();
   }
 
   private void buildOuts() {
-    final Set<Pair<Node, Node>> edges = new THashSet<Pair<Node, Node>>();
+    final Set<Pair<Node, Node>> edges = new THashSet<>();
 
     Collection<Node> nodes = myGraph.getNodes();
 
@@ -58,7 +58,7 @@ public class GraphGenerator<Node> implements Graph<Node> {
 
         List<Node> edgesFromInNode = myOuts.get(inNode);
         if (edgesFromInNode == null) {
-          edgesFromInNode = new ArrayList<Node>();
+          edgesFromInNode = new ArrayList<>();
           myOuts.put(inNode, edgesFromInNode);
         }
         edgesFromInNode.add(node);
@@ -84,7 +84,7 @@ public class GraphGenerator<Node> implements Graph<Node> {
     final List<Node> outNodes = myOuts.get(n);
     return outNodes != null
            ? outNodes.iterator()
-           : ContainerUtil.<Node>emptyIterator();
+           : ContainerUtil.emptyIterator();
   }
 
   //<editor-fold desc="Deprecated stuff.">
@@ -101,7 +101,7 @@ public class GraphGenerator<Node> implements Graph<Node> {
   /** @deprecated use {@link #generate(InboundSemiGraph)} (to be removed in IDEA 2018) */
   @Deprecated
   public static <T> GraphGenerator<T> create(SemiGraph<T> graph) {
-    return new GraphGenerator<T>((InboundSemiGraph<T>)graph);
+    return new GraphGenerator<>(graph);
   }
   //</editor-fold>
 }

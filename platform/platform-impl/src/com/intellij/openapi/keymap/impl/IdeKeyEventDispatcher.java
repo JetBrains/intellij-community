@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -76,8 +75,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.im.InputContext;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * This class is automaton with finite number of state.
@@ -190,7 +189,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         // It is needed to ignore ENTER KEY_TYPED events which sometimes can reach editor when an action
         // is invoked from main menu via Enter key.
         setState(KeyState.STATE_PROCESSED);
-        return false;
+        return processMenuActions(e, selectedPath[0]);
       }
     }
 
@@ -610,7 +609,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
     @Override
     public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
       e.consume();
-      ShortcutsCollector.record(actionEvent);
 
       DataContext ctx = actionEvent.getDataContext();
       if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
@@ -808,6 +806,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
     for (Shortcut each : shortcuts) {
+      if (each == null) throw new NullPointerException("unexpected shortcut of action: " + action.toString());
       if (!each.isKeyboard()) continue;
 
       if (each.startsWith(sc)) {
@@ -948,5 +947,40 @@ public final class IdeKeyEventDispatcher implements Disposable {
         }
       }
     }
+  }
+
+  private static final String POPUP_MENU_PREFIX = "PopupMenu-"; // see PlatformActions.xml
+
+  private static boolean processMenuActions(KeyEvent event, MenuElement element) {
+    if (KeyEvent.KEY_PRESSED == event.getID() && Registry.is("ide.popup.navigation.via.actions")) {
+      KeymapManager manager = KeymapManager.getInstance();
+      if (manager != null) {
+        // search for action holder
+        Component component = element.getComponent();
+        if (component instanceof JPopupMenu) {
+          // BasicPopupMenuUI.MenuKeyboardHelper#stateChanged
+          JPopupMenu menu = (JPopupMenu)component;
+          JRootPane pane = SwingUtilities.getRootPane(menu.getInvoker());
+          if (pane != null) {
+            Keymap keymap = manager.getActiveKeymap();
+            if (keymap != null) {
+              // iterate through actions for the specified event
+              for (String id : keymap.getActionIds(KeyStroke.getKeyStrokeForEvent(event))) {
+                if (id.startsWith(POPUP_MENU_PREFIX)) {
+                  String actionId = id.substring(POPUP_MENU_PREFIX.length());
+                  Action action = pane.getActionMap().get(actionId);
+                  if (action != null) {
+                    action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, actionId));
+                    event.consume();
+                    return true; // notify dispatcher that event is processed
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 }

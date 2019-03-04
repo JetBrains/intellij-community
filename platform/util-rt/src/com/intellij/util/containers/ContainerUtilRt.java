@@ -13,25 +13,22 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Stripped-down version of {@code com.intellij.util.containers.ContainerUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
- *
- * @since 12.0
  */
 public class ContainerUtilRt {
   @NotNull
   @Contract(value = " -> new", pure = true)
   public static <K, V> HashMap<K, V> newHashMap() {
-    return new java.util.HashMap<K, V>();
+    return new HashMap<K, V>();
   }
 
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
-    return new java.util.HashMap<K, V>(map);
+    return new HashMap<K, V>(map);
   }
 
   @NotNull
@@ -41,7 +38,7 @@ public class ContainerUtilRt {
       throw new IllegalArgumentException(keys + " should have same length as " + values);
     }
 
-    Map<K, V> map = newHashMap(keys.size());
+    Map<K, V> map = new HashMap<K, V>(keys.size());
     for (int i = 0; i < keys.size(); ++i) {
       map.put(keys.get(i), values.get(i));
     }
@@ -51,7 +48,7 @@ public class ContainerUtilRt {
   @NotNull
   @Contract(value = "_,_ -> new", pure = true)
   public static <K, V> Map<K, V> newHashMap(@NotNull Pair<? extends K, ? extends V> first, @NotNull Pair<? extends K, ? extends V>... entries) {
-    Map<K, V> map = newHashMap(entries.length + 1);
+    Map<K, V> map = new HashMap<K, V>(entries.length + 1);
     map.put(first.getFirst(), first.getSecond());
     for (Pair<? extends K, ? extends V> entry : entries) {
       map.put(entry.getFirst(), entry.getSecond());
@@ -62,7 +59,7 @@ public class ContainerUtilRt {
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <K, V> Map<K, V> newHashMap(int initialCapacity) {
-    return new java.util.HashMap<K, V>(initialCapacity);
+    return new HashMap<K, V>(initialCapacity);
   }
 
   @NotNull
@@ -168,19 +165,19 @@ public class ContainerUtilRt {
   @NotNull
   @Contract(value = " -> new", pure = true)
   public static <T> HashSet<T> newHashSet() {
-    return new java.util.HashSet<T>();
+    return new HashSet<T>();
   }
 
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> HashSet<T> newHashSet(int initialCapacity) {
-    return new java.util.HashSet<T>(initialCapacity);
+    return new HashSet<T>(initialCapacity);
   }
 
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> HashSet<T> newHashSet(@NotNull T... elements) {
-    return new java.util.HashSet<T>(Arrays.asList(elements));
+    return new HashSet<T>(Arrays.asList(elements));
   }
 
   @NotNull
@@ -188,14 +185,14 @@ public class ContainerUtilRt {
   public static <T> HashSet<T> newHashSet(@NotNull Iterable<? extends T> elements) {
     if (elements instanceof Collection) {
       @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
-      return new java.util.HashSet<T>(collection);
+      return new HashSet<T>(collection);
     }
     return newHashSet(elements.iterator());
   }
 
   @NotNull
   public static <T> HashSet<T> newHashSet(@NotNull Iterator<? extends T> iterator) {
-    HashSet<T> set = newHashSet();
+    HashSet<T> set = new HashSet<T>();
     while (iterator.hasNext()) set.add(iterator.next());
     return set;
   }
@@ -339,13 +336,6 @@ public class ContainerUtilRt {
     return (List<T>)EmptyList.INSTANCE;
   }
 
-  @NotNull
-  @Contract(value = " -> new", pure = true)
-  public static <T> CopyOnWriteArrayList<T> createEmptyCOWList() {
-    // does not create garbage new Object[0]
-    return new CopyOnWriteArrayList<T>(ContainerUtilRt.<T>emptyList());
-  }
-
   /**
    * @see #addIfNotNull(Collection, Object)
    */
@@ -449,6 +439,7 @@ public class ContainerUtilRt {
    */
   @Deprecated
   @NotNull
+  @Contract(pure=true)
   public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
     return collection.toArray(array);
   }
@@ -458,17 +449,16 @@ public class ContainerUtilRt {
    */
   @Deprecated
   @NotNull
+  @Contract(pure=true)
   public static <T> T[] toArray(@NotNull Collection<? extends T> c, @NotNull T[] sample) {
     return c.toArray(sample);
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T, L extends List<T>> T getLastItem(@Nullable L list, @Nullable T def) {
     return isEmpty(list) ? def : list.get(list.size() - 1);
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T, L extends List<T>> T getLastItem(@Nullable L list) {
     return getLastItem(list, null);
@@ -479,13 +469,12 @@ public class ContainerUtilRt {
     return collection == null || collection.isEmpty();
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T, V extends T> V find(@NotNull Iterable<? extends V> iterable, @NotNull Condition<? super T> condition) {
     return find(iterable.iterator(), condition);
   }
 
-  @Nullable
+  @Contract(pure=true)
   public static <T, V extends T> V find(@NotNull Iterator<? extends V> iterator, @NotNull Condition<? super T> condition) {
     while (iterator.hasNext()) {
       V value = iterator.next();
@@ -504,5 +493,4 @@ public class ContainerUtilRt {
     }
     return -1;
   }
-
 }

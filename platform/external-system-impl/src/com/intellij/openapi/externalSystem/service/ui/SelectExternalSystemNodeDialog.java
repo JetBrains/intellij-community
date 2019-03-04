@@ -21,13 +21,12 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
-import com.intellij.openapi.externalSystem.view.ExternalProjectsStructure;
-import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
-import com.intellij.openapi.externalSystem.view.ExternalProjectsViewAdapter;
-import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
+import com.intellij.openapi.externalSystem.view.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleNodeVisitor;
@@ -79,7 +78,14 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
     myTree = new SimpleTree();
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-    final ExternalProjectsView projectsView = ExternalProjectsManagerImpl.getInstance(project).getExternalProjectsView(systemId);
+    ExternalProjectsView projectsView = ExternalProjectsManagerImpl.getInstance(project).getExternalProjectsView(systemId);
+    if (projectsView == null) {
+      ToolWindow toolWindow = ExternalToolWindowManager.getToolWindow(project, systemId);
+      if (toolWindow instanceof ToolWindowEx) {
+        projectsView = new ExternalProjectsViewImpl(project, (ToolWindowEx)toolWindow, systemId);
+        Disposer.register(getDisposable(), (ExternalProjectsViewImpl)projectsView);
+      }
+    }
     if(projectsView != null) {
       final ExternalProjectsStructure treeStructure = new ExternalProjectsStructure(project, myTree) {
         @Override

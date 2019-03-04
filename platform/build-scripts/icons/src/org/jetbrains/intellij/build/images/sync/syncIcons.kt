@@ -3,80 +3,113 @@ package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
 
-internal fun syncIcons(context: Context,
-                       devIcons: Map<String, GitObject>,
-                       icons: Map<String, GitObject>) {
-  if (context.doSyncIconsRepo || context.doSyncIconsAndCreateReview) {
-    log("Syncing icons repo:")
-    syncAdded(context.addedByDev, devIcons, File(context.iconsRepoDir)) { context.iconsRepo }
-    syncModified(context.modifiedByDev, icons, devIcons)
-    syncRemoved(context.removedByDev, icons)
-  }
-  if (context.doSyncDevRepo || context.doSyncDevIconsAndCreateReview) {
-    log("Syncing dev repo:")
-    syncAdded(context.addedByDesigners, icons, File(context.devRepoDir)) { findGitRepoRoot(it.absolutePath, true) }
-    syncModified(context.modifiedByDesigners, devIcons, icons)
-    if (context.doSyncRemovedIconsInDev) syncRemoved(context.removedByDesigners, devIcons)
+internal fun syncIconsRepo(context: Context) {
+  if (context.doSyncIconsRepo) {
+    log("Syncing ${context.iconsRepoName}:")
+    syncIconsRepo(context, context.byDev)
   }
 }
 
-internal fun syncAdded(added: Collection<String>,
-                       sourceRepoMap: Map<String, GitObject>,
-                       targetDir: File, targetRepo: (File) -> File) {
-  callSafely {
-    addChangesToGit { add ->
-      added.forEach {
-        val target = File(targetDir, it)
-        if (target.exists()) log("$it already exists in target repo!")
-        val source = sourceRepoMap[it]!!.file
+internal fun syncDevRepo(context: Context) {
+  if (context.doSyncDevRepo) {
+    log("Syncing ${context.devRepoName}:")
+    syncAdded(context.devRepoDir, context.iconsRepoDir, context.byDesigners.added)
+    syncModified(context.devRepoDir, context.iconsRepoDir, context.byDesigners.modified)
+    if (context.doSyncRemovedIconsInDev) {
+      syncRemoved(context.devRepoDir, context.byDesigners.removed)
+    }
+  }
+}
+
+internal fun syncIconsRepo(context: Context, byDev: Changes) {
+  syncAdded(context.iconsRepoDir, context.devRepoDir, byDev.added)
+  syncModified(context.iconsRepoDir, context.devRepoDir, byDev.modified)
+  syncRemoved(context.iconsRepoDir, byDev.removed)
+}
+
+private fun syncAdded(targetRoot: File, sourceRoot: File, added: MutableCollection<String>) {
+  stageChanges(added) { change, skip, stage ->
+    val source = sourceRoot.resolve(change)
+    if (!source.exists()) {
+      log("Sync added: unable to find $change in source repo")
+      return@stageChanges
+    }
+    val target = targetRoot.resolve(change)
+    when {
+      !target.exists() -> {
         source.copyTo(target, overwrite = true)
-        val repo = targetRepo(target)
-        add(repo, target.relativeTo(repo).path)
+        val repo = findRepo(target)
+        stage(repo, target.relativeTo(repo).path)
       }
+      same(source, target) -> {
+        log("Skipping $change")
+        skip()
+      }
+      else -> source.copyTo(target, overwrite = true)
     }
   }
 }
 
-internal fun syncModified(modified: Collection<String>,
-                          targetRepoMap: Map<String, GitObject>,
-                          sourceRepoMap: Map<String, GitObject>) {
+private fun same(f1: File, f2: File) = f1.readBytes().contentEquals(f2.readBytes())
+
+private fun syncModified(targetRoot: File, sourceRoot: File, modified: MutableCollection<String>) {
+  stageChanges(modified) { change, skip, stage ->
+    val source = sourceRoot.resolve(change)
+    if (!source.exists()) {
+      log("Sync modified: unable to find $change in source repo")
+      return@stageChanges
+    }
+    val target = targetRoot.resolve(change)
+    if (target.exists() && same(source, target)) {
+      log("$change is not modified, skipping")
+      skip()
+      return@stageChanges
+    }
+    if (!target.exists()) log("$change should be modified but not exist, creating")
+    source.copyTo(target, overwrite = true)
+    val repo = findRepo(target)
+    stage(repo, target.toRelativeString(repo))
+  }
+}
+
+private fun syncRemoved(targetRoot: File, removed: MutableCollection<String>) {
+  stageChanges(removed) { change, skip, stage ->
+    val target = targetRoot.resolve(change)
+    if (!target.exists()) {
+      log("$change is already removed, skipping")
+      skip()
+      return@stageChanges
+    }
+    if (target.exists()) {
+      if (target.delete()) {
+        val repo = findRepo(target)
+        stage(repo, target.toRelativeString(repo))
+      }
+      else log("Failed to delete ${target.absolutePath}")
+    }
+    cleanDir(target.parentFile)
+  }
+}
+
+private fun cleanDir(dir: File?) {
+  if (dir?.list()?.isEmpty() == true && dir.delete()) {
+    cleanDir(dir.parentFile)
+  }
+}
+
+private fun stageChanges(changes: MutableCollection<String>,
+                         action: (String, () -> Unit, (File, String) -> Unit) -> Unit) {
   callSafely {
-    addChangesToGit { add ->
-      modified.forEach {
-        val target = targetRepoMap[it]!!
-        val source = sourceRepoMap[it]!!
-        source.file.copyTo(target.file, overwrite = true)
-        add(target.repo, target.path)
+    val toStage = mutableMapOf<File, MutableList<String>>()
+    val iterator = changes.iterator()
+    while (iterator.hasNext()) {
+      action(iterator.next(), iterator::remove) { repo, change ->
+        if (!toStage.containsKey(repo)) toStage[repo] = mutableListOf()
+        toStage[repo]!! += change
       }
     }
-  }
-}
-
-internal fun syncRemoved(removed: Collection<String>,
-                         targetRepoMap: Map<String, GitObject>) {
-  callSafely {
-    addChangesToGit { add ->
-      removed.map { targetRepoMap[it]!! }.forEach { it ->
-        val target = it.file
-        if (!target.delete()) {
-          log("Failed to delete ${target.absolutePath}")
-        }
-        else {
-          add(it.repo, it.path)
-          if (target.parentFile.list().isEmpty()) target.parentFile.delete()
-        }
-      }
+    toStage.forEach { repo, change ->
+      stageFiles(change, repo)
     }
-  }
-}
-
-private fun addChangesToGit(action: ((File, String) -> Unit) -> Unit) {
-  val map = mutableMapOf<File, MutableList<String>>()
-  action { repo, path ->
-    if (!map.containsKey(repo)) map[repo] = mutableListOf()
-    map[repo]!!.add(path)
-  }
-  map.forEach { repo, file ->
-    addChangesToGit(file, repo)
   }
 }

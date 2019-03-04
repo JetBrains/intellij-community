@@ -1,4 +1,4 @@
-// "Unwrap 'switch' statement" "true"
+// "Remove unreachable branches" "true"
 class Main {
     static void fff() {
         System.out.println("one");

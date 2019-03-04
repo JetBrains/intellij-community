@@ -1,18 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -40,6 +36,16 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 
   @Override
   public boolean generateFile(@NotNull VirtualFile ignoreFileRoot, @NotNull AbstractVcs vcs) throws IOException {
+    return doGenerateOrAppend(ignoreFileRoot, vcs, false);
+  }
+
+  @Override
+  public boolean appendFile(@NotNull VirtualFile ignoreFileRoot, @NotNull AbstractVcs vcs) throws IOException {
+    return doGenerateOrAppend(ignoreFileRoot, vcs, true);
+  }
+
+  private boolean doGenerateOrAppend(@NotNull VirtualFile ignoreFileRoot,
+                                     @NotNull AbstractVcs vcs, boolean append) throws IOException {
     IgnoredFileContentProvider ignoredFileContentProvider = findIgnoredFileContentProvider(vcs);
     if (ignoredFileContentProvider == null) {
       LOG.debug("Cannot find content provider for vcs " + vcs.getName());
@@ -54,16 +60,18 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     }
 
     synchronized (myWriteLock) {
+      String ignoreFileContent =
+        ignoredFileContentProvider.buildIgnoreFileContent(ignoreFileRoot, IgnoredFileProvider.IGNORE_FILE.getExtensions());
+      if (StringUtil.isEmptyOrSpaces(ignoreFileContent)) return false;
+
       File ignoreFile = getIgnoreFile(ignoreFileRoot, ignoreFileName);
-      if (!ignoreFile.exists()) {
-        String projectCharsetName = EncodingProjectManager.getInstance(myProject).getDefaultCharsetName();
-        String ignoreFileContent = ignoredFileContentProvider.buildIgnoreFileContent(ignoreFileRoot, IgnoredFileProvider.IGNORE_FILE.getExtensions());
-        FileUtil.writeToFile(ignoreFile, ignoreFileContent.getBytes(projectCharsetName));
-        LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(ignoreFile));
-        notifyAboutIgnoreFileGeneration(ignoreFile);
-        return true;
-      }
-      return false;
+      if (ignoreFile.exists() && !append) return false;
+
+      String projectCharsetName = EncodingProjectManager.getInstance(myProject).getDefaultCharsetName();
+      FileUtil.writeToFile(ignoreFile, ignoreFileContent.getBytes(projectCharsetName), append);
+      IgnoredFileRootStore.getInstance(myProject).addRoot(ignoreFile.getParent());
+      LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(ignoreFile));
+      return true;
     }
   }
 
@@ -79,23 +87,6 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   private static File getIgnoreFile(@NotNull VirtualFile ignoreFileRoot, @NotNull String ignoreFileName) {
     File vcsRootFile = VfsUtilCore.virtualToIoFile(ignoreFileRoot);
     return new File(vcsRootFile.getPath(), ignoreFileName);
-  }
-
-  private void notifyAboutIgnoreFileGeneration(@NotNull File ignoreFile) {
-    IgnoredFileRootStore.getInstance(myProject).addRoot(ignoreFile.getParent());
-    VcsNotifier.getInstance(myProject)
-      .notifyMinorInfo("",
-                       VcsBundle.message("ignored.file.generation.message", ignoreFile.getName()),
-                       NotificationAction.create(VcsBundle.message("ignored.file.generation.review"), (event, notification) -> {
-                         notification.expire();
-                         VirtualFile ignoreVirtualFile = VfsUtil.findFileByIoFile(ignoreFile, true);
-                         if (ignoreVirtualFile != null) {
-                           new OpenFileDescriptor(myProject, ignoreVirtualFile).navigate(true);
-                         }
-                         else {
-                           LOG.warn("Cannot find ignore file " + ignoreFile.getName());
-                         }
-                       }));
   }
 
   private static boolean needGenerateIgnoreFile(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {

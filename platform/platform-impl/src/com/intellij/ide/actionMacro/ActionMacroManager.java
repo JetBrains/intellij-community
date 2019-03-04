@@ -78,7 +78,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
     myActionManager = actionManager;
     messageBus.connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, final AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull final AnActionEvent event) {
         String id = actionManager.getId(action);
         if (id == null) return;
         //noinspection HardCodedStringLiteral
@@ -485,6 +485,12 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(!getInstance().isPlaying());
+    }
+
+    @Nullable
+    @Override
+    public String getTemplateText() {
+      return "Invoke Macro";
     }
   }
 

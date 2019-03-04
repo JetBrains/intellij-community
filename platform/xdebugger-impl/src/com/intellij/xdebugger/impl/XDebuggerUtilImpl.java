@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.CommonBundle;
@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,6 +43,7 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.*;
@@ -86,6 +88,7 @@ import static org.jetbrains.concurrency.Promises.resolvedPromise;
  * @author nik
  */
 public class XDebuggerUtilImpl extends XDebuggerUtil {
+  private static final Ref<Boolean> SHOW_BREAKPOINT_AD = new Ref<>(true);
   private XLineBreakpointType<?>[] myLineBreakpointTypes;
   private Map<Class<? extends XBreakpointType>, XBreakpointType> myBreakpointTypeByClass;
 
@@ -306,8 +309,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                 selectionListener.initialSet(getList().getSelectedValue());
               }
             };
-            DebuggerUIUtil.registerExtraHandleShortcuts(popup, IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
-            popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT));
+            DebuggerUIUtil.registerExtraHandleShortcuts(popup, SHOW_BREAKPOINT_AD, IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
 
             popup.addListSelectionListener(selectionListener);
             popup.show(relativePoint);
@@ -585,7 +587,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Nullable
   public static Editor createEditor(@NotNull OpenFileDescriptor descriptor) {
-    return descriptor.canNavigate() ? FileEditorManager.getInstance(descriptor.getProject()).openTextEditor(descriptor, false) : null;
+    if (descriptor.canNavigate()) {
+      FileEditorManager fileEditorManager = FileEditorManager.getInstance(descriptor.getProject());
+      Editor editor = fileEditorManager.getSelectedTextEditor();
+      return fileEditorManager.openTextEditor(descriptor, editor != null && IJSwingUtilities.hasFocus(editor.getContentComponent()));
+    }
+    return null;
   }
 
   public static void rebuildAllSessionsViews(@Nullable Project project) {
@@ -617,7 +624,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     XExecutionStack activeExecutionStack = suspendContext.getActiveExecutionStack();
     if (activeExecutionStack != null) {
       activeExecutionStack.computeStackFrames(0, new XStackFrameContainerEx() {
-        List<XStackFrame> myFrames = new ArrayList<>();
+        final List<XStackFrame> myFrames = new ArrayList<>();
 
         @Override
         public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last) {

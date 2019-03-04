@@ -61,7 +61,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean SIGN_OFF_COMMIT = false;
     public boolean SET_USER_NAME_GLOBALLY = true;
     public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
-    public boolean UPDATE_BRANCHES_INFO = false;
+    public boolean UPDATE_BRANCHES_INFO = true;
     public int BRANCH_INFO_UPDATE_TIME = 10;
     public boolean PREVIEW_PUSH_ON_COMMIT_AND_PUSH = true;
     public boolean PREVIEW_PUSH_PROTECTED_ONLY = false;
@@ -251,7 +251,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   }
 
   public boolean shouldUpdateBranchInfo() {
-    return false;
+    return myState.UPDATE_BRANCHES_INFO;
   }
 
   public void setUpdateBranchInfo(boolean state) {
@@ -288,15 +288,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setCommitRenamesSeparately(boolean state) {
     myState.COMMIT_RENAMES_SEPARATELY = state;
-  }
-
-  /**
-   * Provides migration from project settings.
-   * This method is to be removed in IDEA 13: it should be moved to {@link GitVcsApplicationSettings}
-   */
-  @Deprecated
-  public boolean isIdeaSsh() {
-    return getAppSettings().isUseIdeaSsh();
   }
 
   @NotNull

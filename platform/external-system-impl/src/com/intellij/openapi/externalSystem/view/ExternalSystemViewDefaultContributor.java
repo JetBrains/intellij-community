@@ -182,10 +182,11 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
       for (ModuleNode moduleNode : moduleNodes) {
         moduleNode.setAllModules(moduleNodes);
         String parentGroup = moduleNode.getIdeParentGrouping();
-        if (parentGroup == null) {
+        ModuleNode parent = parentGroup != null ? groupToModule.get(parentGroup) : null;
+        if (parent == null) {
           continue;
         }
-        moduleNode.setParent(groupToModule.get(parentGroup));
+        moduleNode.setParent(parent);
       }
 
       result.addAll(moduleNodes);

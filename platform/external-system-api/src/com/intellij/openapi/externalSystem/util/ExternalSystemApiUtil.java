@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -17,7 +18,6 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -162,7 +162,7 @@ public class ExternalSystemApiUtil {
 
   @NotNull
   public static String getLocalFileSystemPath(@NotNull VirtualFile file) {
-    if (file.getFileType() == FileTypes.ARCHIVE) {
+    if (file.getFileType() == ArchiveFileType.INSTANCE) {
       final VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(file);
       if (jar != null) {
         return jar.getPath();
@@ -357,7 +357,9 @@ public class ExternalSystemApiUtil {
   }
 
   public static void executeProjectChangeAction(boolean synchronous, @NotNull final DisposeAwareProjectChange task) {
-    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
+    }
     executeOnEdt(synchronous, () -> ApplicationManager.getApplication().runWriteAction(task));
   }
 
@@ -714,6 +716,41 @@ public class ExternalSystemApiUtil {
 
     findAll(moduleDataNode, ProjectKeys.TASK).stream().map(DataNode::getData).forEach(tasks::add);
     return tasks;
+  }
+
+  @ApiStatus.Experimental
+  @Nullable
+  public static DataNode<ModuleData> findModuleData(@NotNull Module module,
+                                                    @NotNull ProjectSystemId systemId) {
+    String externalProjectPath = getExternalProjectPath(module);
+    if (externalProjectPath == null) return null;
+    Project project = module.getProject();
+    DataNode<ProjectData> projectNode = findProjectData(project, systemId, externalProjectPath);
+    if (projectNode == null) return null;
+    return find(projectNode, ProjectKeys.MODULE, node -> externalProjectPath.equals(node.getData().getLinkedExternalProjectPath()));
+  }
+
+  @ApiStatus.Experimental
+  @Nullable
+  public static DataNode<ProjectData> findProjectData(@NotNull Project project,
+                                                      @NotNull ProjectSystemId systemId,
+                                                      @NotNull String projectPath) {
+    ExternalProjectInfo projectInfo = findProjectInfo(project, systemId, projectPath);
+    if (projectInfo == null) return null;
+    return projectInfo.getExternalProjectStructure();
+  }
+
+  @ApiStatus.Experimental
+  @Nullable
+  public static ExternalProjectInfo findProjectInfo(@NotNull Project project,
+                                                    @NotNull ProjectSystemId systemId,
+                                                    @NotNull String projectPath) {
+    AbstractExternalSystemSettings settings = getSettings(project, systemId);
+    ExternalProjectSettings linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
+    if (linkedProjectSettings == null) return null;
+    return ProjectDataManager.getInstance().getExternalProjectsData(project, systemId).stream()
+      .filter(info -> FileUtil.pathsEqual(linkedProjectSettings.getExternalProjectPath(), info.getExternalProjectPath()))
+      .findFirst().orElse(null);
   }
 
   /**

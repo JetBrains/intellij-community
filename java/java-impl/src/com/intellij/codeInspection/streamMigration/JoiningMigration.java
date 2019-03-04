@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil.isEffectivelyFinal;
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.isCallOf;
@@ -772,6 +771,7 @@ List<PsiExpression> builderStrInitializers = null;
         List<PsiStatement> statements = Arrays.asList(terminalBlock.getStatements());
         List<PsiExpression> mainJoinParts = extractJoinParts(statements);
         if (mainJoinParts == null || mainJoinParts.isEmpty()) return null;
+        if (statements.isEmpty()) return null;
         PsiVariable targetBuilder = extractStringBuilder(statements.get(0));
         if (targetBuilder == null) return null;
         PsiStatement loop = terminalBlock.getStreamSourceStatement();
@@ -1129,13 +1129,43 @@ List<PsiExpression> builderStrInitializers = null;
 
       @Nullable
       static JoiningTerminal extractIndexBasedTerminal(@NotNull TerminalBlock terminalBlock,
-                                                        @Nullable List<PsiVariable> nonFinalVariables) {
+                                                       @Nullable List<PsiVariable> nonFinalVariables) {
         if (nonFinalVariables != null && !nonFinalVariables.isEmpty()) return null;
-        SpecialFirstIterationLoop specialFirstIterationLoop = SpecialFirstIterationLoop.IndexBasedLoop.extract(terminalBlock);
+        StreamApiMigrationInspection.CountingLoopSource countingLoopSource =
+          terminalBlock.getLastOperation(StreamApiMigrationInspection.CountingLoopSource.class);
+        if (countingLoopSource == null) return null;
+        SpecialFirstIterationLoop specialFirstIterationLoop =
+          SpecialFirstIterationLoop.IndexBasedLoop.extract(terminalBlock, countingLoopSource);
         if (specialFirstIterationLoop == null) return null;
         List<PsiStatement> firstIterationStatements = specialFirstIterationLoop.getFirstIterationStatements();
         List<PsiStatement> otherIterationStatements = specialFirstIterationLoop.getOtherIterationStatements();
         if (firstIterationStatements.isEmpty() || otherIterationStatements.isEmpty()) return null;
+
+        int additionalPrefix = 0;
+        while (additionalPrefix < firstIterationStatements.size()) {
+          PsiStatement statement = firstIterationStatements.get(additionalPrefix);
+          if (additionalPrefix >= otherIterationStatements.size() || statement != otherIterationStatements.get(additionalPrefix)) {
+            break;
+          }
+          if (statement instanceof PsiExpressionStatement &&
+              JoiningTerminal.tryExtractJoinPart(((PsiExpressionStatement)statement).getExpression(), new ArrayList<>())) {
+            break;
+          }
+          additionalPrefix++;
+        }
+        if (additionalPrefix > 0) {
+          TerminalBlock newBlock =
+            TerminalBlock.fromStatements(countingLoopSource, firstIterationStatements.toArray(PsiStatement.EMPTY_ARRAY));
+          int leftOver = firstIterationStatements.size() - additionalPrefix;
+          while (newBlock != null && newBlock.getStatements().length < leftOver) {
+            newBlock = newBlock.withoutLastOperation();
+          }
+          if (newBlock != null && newBlock.getStatements().length == leftOver) {
+            terminalBlock = newBlock;
+            firstIterationStatements = firstIterationStatements.subList(additionalPrefix, firstIterationStatements.size());
+            otherIterationStatements = otherIterationStatements.subList(additionalPrefix, otherIterationStatements.size());
+          }
+        }
 
         List<PsiExpression> firstIterationJoinParts = extractJoinParts(firstIterationStatements);
         List<PsiExpression> otherIterationJoinParts = extractJoinParts(otherIterationStatements);
@@ -1144,7 +1174,7 @@ List<PsiExpression> builderStrInitializers = null;
         JoinData joinData = JoinData.extractLeftDelimiter(otherIterationJoinParts);
         if (!joinPartsAreEquivalent(joinData.getMainJoinParts(), firstIterationJoinParts)) return null;
 
-
+        if (firstIterationStatements.isEmpty()) return null;
         PsiVariable targetBuilder = extractStringBuilder(firstIterationStatements.get(0));
         if (targetBuilder == null) return null;
         PsiStatement loop = terminalBlock.getStreamSourceStatement();

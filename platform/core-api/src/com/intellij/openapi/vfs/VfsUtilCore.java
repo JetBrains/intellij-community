@@ -170,7 +170,6 @@ public class VfsUtilCore {
    * @param dst           the file or directory, to which the path is built
    * @param separatorChar the separator for the path components
    * @return the relative path, or {@code null} if the files have no common ancestor
-   * @since 2018.1
    */
   @Nullable
   public static String findRelativePath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {

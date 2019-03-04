@@ -17,9 +17,9 @@ package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.activation.ActivationDataFlavor;
-import javax.activation.DataHandler;
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.*;
@@ -29,7 +29,7 @@ import java.awt.dnd.DragSource;
 
 public class TableRowsTransferHandler extends TransferHandler {
   private static final Logger LOG = Logger.getInstance(TableRowsTransferHandler.class);
-  private final DataFlavor myDataFlavor = new ActivationDataFlavor(RowsDragInfo.class, DataFlavor.stringFlavor.getMimeType());
+  private static final DataFlavor ourFlavor = new DataFlavor(RowsDragInfo.class, DataFlavor.stringFlavor.getMimeType());
   private final JTable myTable;
 
   public TableRowsTransferHandler(JTable table) {
@@ -39,7 +39,23 @@ public class TableRowsTransferHandler extends TransferHandler {
   @Override
   protected Transferable createTransferable(JComponent c) {
     assert (c == myTable);
-    return new DataHandler(new RowsDragInfo(myTable.getSelectedRows()), myDataFlavor.getMimeType());
+    return new Transferable() {
+      @Override
+      public DataFlavor[] getTransferDataFlavors() {
+        return new DataFlavor[]{ourFlavor};
+      }
+
+      @Override
+      public boolean isDataFlavorSupported(DataFlavor flavor) {
+        return ArrayUtil.contains(flavor, getTransferDataFlavors());
+      }
+
+      @NotNull
+      @Override
+      public Object getTransferData(DataFlavor flavor) {
+        return new RowsDragInfo(myTable.getSelectedRows());
+      }
+    };
   }
 
   @Override
@@ -68,7 +84,7 @@ public class TableRowsTransferHandler extends TransferHandler {
     myTable.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 
     try {
-      int[] rows = ((RowsDragInfo)support.getTransferable().getTransferData(myDataFlavor)).myRows;
+      int[] rows = ((RowsDragInfo)support.getTransferable().getTransferData(ourFlavor)).myRows;
       if (rows != null && rows.length > 0) {
         int dist = 0;
         for (int row : rows) {

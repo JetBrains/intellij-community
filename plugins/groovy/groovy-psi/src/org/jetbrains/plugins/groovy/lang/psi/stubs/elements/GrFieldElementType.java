@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
@@ -9,7 +9,7 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
@@ -47,7 +47,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
 
     return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames,
                            ArrayUtil.toStringArray(namedParameters),
-                           GroovyElementTypes.FIELD, GrFieldStub.buildFlags(psi),
+                           GroovyStubElementTypes.FIELD, GrFieldStub.buildFlags(psi),
                            GrStubUtils.getTypeText(psi.getTypeElementGroovy()));
   }
 
@@ -85,8 +85,8 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     final String[] namedParameters = GrStubUtils.readStringArray(dataStream);
     byte flags = dataStream.readByte();
     final String typeText = GrStubUtils.readNullableString(dataStream);
-    return new GrFieldStub(parentStub, ref, annNames, namedParameters, GrFieldStub.isEnumConstant(flags) ? GroovyElementTypes.ENUM_CONSTANT
-                                                                                                         : GroovyElementTypes.FIELD,
+    return new GrFieldStub(parentStub, ref, annNames, namedParameters, GrFieldStub.isEnumConstant(flags) ? GroovyStubElementTypes.ENUM_CONSTANT
+                                                                                                         : GroovyStubElementTypes.FIELD,
                                flags, typeText);
   }
 

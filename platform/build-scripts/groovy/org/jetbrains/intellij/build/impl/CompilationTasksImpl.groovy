@@ -47,7 +47,7 @@ class CompilationTasksImpl extends CompilationTasks {
       return
     }
 
-    CompilationContextImpl.setupCompilationDependencies(context.gradle)
+    CompilationContextImpl.setupCompilationDependencies(context.gradle, context.options)
 
     context.messages.progress("Compiling project")
     JpsCompilationRunner runner = new JpsCompilationRunner(context)

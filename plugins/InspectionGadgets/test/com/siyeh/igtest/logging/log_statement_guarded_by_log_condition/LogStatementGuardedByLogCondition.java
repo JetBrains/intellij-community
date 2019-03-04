@@ -36,6 +36,10 @@ public class LogStatementGuardedByLogCondition {
         LOG.<warning descr="'debug()' logging calls not guarded by log condition">debug</warning>(i, "asdfasdf");
     }
 
+    void lambda(String s) {
+      LOG.finest(() -> "Could not parse: " + s);
+    }
+
   static class Logger {
 
     public Logger(String log) {
@@ -47,6 +51,8 @@ public class LogStatementGuardedByLogCondition {
     public void debug(int i, String s) {}
 
     public void trace(String s) {}
+
+    public void finest(java.util.function.Supplier<String> msgSupplier) {}
 
     public boolean isDebug() {
       return true;

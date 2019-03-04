@@ -35,6 +35,7 @@ public interface OrderRootTypeUIFactory {
 
   KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType> FACTORY =
     new KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType>(OrderRootTypeUIFactory.class, EP_NAME, ApplicationManager.getApplication().getPicoContainer()) {
+      @NotNull
       @Override
       public String getKey(@NotNull final OrderRootType key) {
         return key.name();

@@ -5,6 +5,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -21,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
@@ -30,6 +32,7 @@ import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.history.FileHistoryKt;
+import com.intellij.vcs.log.history.FileHistoryUtil;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.MergedChange;
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
@@ -51,13 +54,15 @@ import static com.intellij.diff.util.DiffUserDataKeysEx.*;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS;
+import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES;
 
 /**
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
 public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
-  @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
+  @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
   @NotNull private final Project myProject;
+  @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
 
@@ -66,8 +71,9 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @NotNull private final Set<VirtualFile> myRoots = ContainerUtil.newHashSet();
   @NotNull private final List<Change> myChanges = ContainerUtil.newArrayList();
   @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = ContainerUtil.newHashMap();
+  @Nullable private Collection<FilePath> myAffectedPaths;
   @NotNull private final Wrapper myToolbarWrapper;
-  @Nullable private Runnable myModelUpdateListener;
+  @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
   VcsLogChangesBrowser(@NotNull Project project,
                        @NotNull MainVcsLogUiProperties uiProperties,
@@ -81,7 +87,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     myListener = new VcsLogUiProperties.PropertiesChangeListener() {
       @Override
       public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-        if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
+        if (SHOW_CHANGES_FROM_PARENTS.equals(property) || SHOW_ONLY_AFFECTED_CHANGES.equals(property)) {
           myViewer.rebuildTree();
         }
       }
@@ -114,8 +120,8 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     myToolbarWrapper.setVerticalSizeReferent(referent);
   }
 
-  public void setModelUpdateListener(@Nullable Runnable runnable) {
-    myModelUpdateListener = runnable;
+  public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
+    myDispatcher.addListener(listener, disposable);
   }
 
   @Override
@@ -147,10 +153,15 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     myRoots.clear();
     myViewer.setEmptyText("");
     myViewer.rebuildTree();
-    if (myModelUpdateListener != null) myModelUpdateListener.run();
+    myDispatcher.getMulticaster().onModelUpdated();
   }
 
-  public void setSelectedDetails(@NotNull List<VcsFullCommitDetails> detailsList) {
+  public void setAffectedPaths(@Nullable Collection<FilePath> paths) {
+    myAffectedPaths = paths;
+    myViewer.rebuildTree();
+  }
+
+  public void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
     myChanges.clear();
     myChangesToParents.clear();
     myRoots.clear();
@@ -186,21 +197,27 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     }
 
     myViewer.rebuildTree();
-    if (myModelUpdateListener != null) myModelUpdateListener.run();
+    myDispatcher.getMulticaster().onModelUpdated();
   }
 
   @NotNull
   @Override
   protected DefaultTreeModel buildTreeModel() {
-    MyTreeModelBuilder builder = new MyTreeModelBuilder();
-    builder.setChanges(myChanges, null);
+    Collection<Change> changes = collectAffectedChanges(myChanges);
+    Map<CommitId, Collection<Change>> changesToParents = ContainerUtil.newHashMap();
+    for (Map.Entry<CommitId, Set<Change>> entry : myChangesToParents.entrySet()) {
+      changesToParents.put(entry.getKey(), collectAffectedChanges(entry.getValue()));
+    }
 
-    if (isShowChangesFromParents() && !myChangesToParents.isEmpty()) {
-      if (myChanges.isEmpty()) {
+    MyTreeModelBuilder builder = new MyTreeModelBuilder();
+    builder.setChanges(changes, null);
+
+    if (isShowChangesFromParents() && !changesToParents.isEmpty()) {
+      if (changes.isEmpty()) {
         builder.addEmptyTextNode("No merged conflicts");
       }
-      for (CommitId commitId : myChangesToParents.keySet()) {
-        Collection<Change> changesFromParent = myChangesToParents.get(commitId);
+      for (CommitId commitId : changesToParents.keySet()) {
+        Collection<Change> changesFromParent = changesToParents.get(commitId);
         if (!changesFromParent.isEmpty()) {
           builder.addChangesFromParentNode(changesFromParent, commitId);
         }
@@ -210,9 +227,28 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     return builder.build();
   }
 
+  @NotNull
+  private Collection<Change> collectAffectedChanges(@NotNull Collection<Change> changes) {
+    if (!isShowOnlyAffected() || myAffectedPaths == null) return changes;
+    return ContainerUtil.filter(changes, change -> ContainerUtil.or(myAffectedPaths, filePath -> {
+      if (filePath.isDirectory()) {
+        return FileHistoryUtil.affectsDirectory(change, filePath);
+      }
+      else {
+        return FileHistoryUtil.affectsFile(change, filePath, false) ||
+               FileHistoryUtil.affectsFile(change, filePath, true);
+      }
+    }));
+  }
+
   private boolean isShowChangesFromParents() {
     return myUiProperties.exists(SHOW_CHANGES_FROM_PARENTS) &&
            myUiProperties.get(SHOW_CHANGES_FROM_PARENTS);
+  }
+
+  private boolean isShowOnlyAffected() {
+    return myUiProperties.exists(SHOW_ONLY_AFFECTED_CHANGES) &&
+           myUiProperties.get(SHOW_ONLY_AFFECTED_CHANGES);
   }
 
   @NotNull
@@ -237,6 +273,9 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       AbstractVcs vcs = getVcs();
       if (vcs == null) return null;
       return vcs.getKeyInstanceMethod();
+    }
+    else if (HAS_AFFECTED_FILES.is(dataId)) {
+      return myAffectedPaths != null;
     }
     return super.getData(dataId);
   }
@@ -365,7 +404,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       myModel.insertNodeInto(textNode, myRoot, myRoot.getChildCount());
     }
 
-    public void addChangesFromParentNode(@NotNull Collection<Change> changes, @NotNull CommitId commitId) {
+    public void addChangesFromParentNode(@NotNull Collection<? extends Change> changes, @NotNull CommitId commitId) {
       ChangesBrowserNode parentNode = new ChangesBrowserParentNode(commitId);
       parentNode.markAsHelperNode();
 
@@ -396,6 +435,10 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       text += " " + StringUtil.shortenTextWithEllipsis(detail.getSubject(), 50, 0);
     }
     return text;
+  }
+
+  public interface Listener extends EventListener {
+    void onModelUpdated();
   }
 
   private static class RootTag {

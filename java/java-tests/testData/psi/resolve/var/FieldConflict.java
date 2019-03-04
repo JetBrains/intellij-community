@@ -11,6 +11,6 @@ interface Derived2 extends Base {
 class Implementor implements Derived1, Derived2 {
   //Implementor[] EMPTY_ARRAY = new Implementor[0];
   Derived2[] f()  {
-    return <ref>EMPTY_ARRAY;  //conflict
+    return <caret>EMPTY_ARRAY;  //conflict
   }
 }

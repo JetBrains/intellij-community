@@ -7,37 +7,31 @@ package com.intellij.codeInspection.offlineViewer;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.codeInspection.ui.InspectionTreeModel;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   private final OfflineDescriptorResolveResult myDescriptorResolveResult;
+  private final OfflineProblemDescriptor myOfflineDescriptor;
 
-  private OfflineProblemDescriptorNode(OfflineDescriptorResolveResult descriptorResolveResult,
-                                       @NotNull InspectionToolPresentation presentation,
-                                       @NotNull OfflineProblemDescriptor offlineDescriptor) {
-    super(descriptorResolveResult.getResolvedEntity(), descriptorResolveResult.getResolvedDescriptor(), presentation, offlineDescriptor::getLine);
+  public OfflineProblemDescriptorNode(OfflineDescriptorResolveResult descriptorResolveResult,
+                                      @NotNull InspectionToolPresentation presentation,
+                                      @NotNull OfflineProblemDescriptor offlineDescriptor,
+                                      @NotNull InspectionTreeNode parent) {
+    super(descriptorResolveResult.getResolvedEntity(), descriptorResolveResult.getResolvedDescriptor(), presentation, offlineDescriptor::getLine, parent);
     myDescriptorResolveResult = descriptorResolveResult;
-    if (descriptorResolveResult.getResolvedDescriptor() == null) {
-      setUserObject(offlineDescriptor);
-    }
-  }
-
-  static OfflineProblemDescriptorNode create(@NotNull OfflineProblemDescriptor offlineDescriptor,
-                                             @NotNull OfflineDescriptorResolveResult resolveResult,
-                                             @NotNull InspectionToolPresentation presentation) {
-    return new OfflineProblemDescriptorNode(resolveResult,
-                                            presentation,
-                                            offlineDescriptor);
+    myOfflineDescriptor = offlineDescriptor;
   }
 
   @NotNull
   @Override
   protected String calculatePresentableName() {
     String presentableName = super.calculatePresentableName();
-    return presentableName.isEmpty() && getUserObject() instanceof OfflineProblemDescriptor
-           ? ProblemDescriptorUtil.unescapeTags(StringUtil.notNullize(((OfflineProblemDescriptor)getUserObject()).getDescription())).trim()
+    return presentableName.isEmpty() && getDescriptor() == null
+           ? ProblemDescriptorUtil.unescapeTags(StringUtil.notNullize(myOfflineDescriptor.getDescription())).trim()
            : presentableName;
   }
 

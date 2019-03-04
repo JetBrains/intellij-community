@@ -1,12 +1,9 @@
 <html>
 <body>
-
-Reports any call to <b><font color="#000080">wait()</font></b> not made inside a corresponding synchronized
-statement or synchronized method within Groovy code. Calling <b><font color="#000080">wait()</font></b> on an object
-without holding a lock on that object will result in an IllegalMonitorStateException being thrown.
+Reports calls to <b>wait()</b> not made inside a corresponding synchronized
+statement or synchronized method. Calling <b>wait()</b> on an object
+without holding a lock on that object will result in an <b>IllegalMonitorStateException</b> being thrown.
 Such a construct is not necessarily an error, as the necessary lock may be acquired before
 the containing method is called, but its worth looking at.
-<br>
-<small>Powered by InspectorGroovy</small>
 </body>
 </html>

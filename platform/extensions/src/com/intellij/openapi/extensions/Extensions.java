@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
+import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +31,7 @@ public class Extensions {
   @NotNull
   private static ExtensionsAreaImpl createRootArea() {
     ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null);
-    rootArea.registerExtensionPoint(AREA_LISTENER_EXTENSION_POINT.getName(), AreaListener.class.getName());
+    rootArea.registerExtensionPoint(new InterfaceExtensionPoint<>(AREA_LISTENER_EXTENSION_POINT.getName(), AreaListener.class, rootArea.getPicoContainer()));
     return rootArea;
   }
 

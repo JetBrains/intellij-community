@@ -21,12 +21,15 @@ import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.EventLogStatisticsService;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
-import com.intellij.internal.statistic.service.fus.FUStatisticsService;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Time;
 
 public class StatisticsUploadAssistant {
   private static final String IDEA_SUPPRESS_REPORT_STATISTICS = "idea.suppress.statistics.report";
+  private static final String ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT = "idea.local.statistics.without.report";
+
   public static final Object LOCK = new Object();
+  private static final EventLogStatisticsService logStatisticsService = new EventLogStatisticsService();
 
   private StatisticsUploadAssistant(){}
 
@@ -54,18 +57,25 @@ public class StatisticsUploadAssistant {
   }
 
   public static boolean isSendAllowed(final SentUsagesPersistence settings) {
-    return settings != null && settings.isAllowed() && !Boolean.getBoolean(IDEA_SUPPRESS_REPORT_STATISTICS);
+    return settings != null && settings.isAllowed() &&
+           !Boolean.getBoolean(IDEA_SUPPRESS_REPORT_STATISTICS) &&
+           !Boolean.getBoolean(ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT);
+  }
+
+  public static boolean isCollectAllowed() {
+    final UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
+    return (settings != null && settings.isAllowed()) || Boolean.getBoolean(ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT);
+  }
+
+  public static boolean isTestStatisticsEnabled() {
+    return Boolean.getBoolean(ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT) || StringUtil.isNotEmpty(System.getenv("TEAMCITY_VERSION"));
   }
 
   public static void updateSentTime() {
     UsageStatisticsPersistenceComponent.getInstance().setSentTime(System.currentTimeMillis());
   }
 
-  public static StatisticsService getApprovedGroupsStatisticsService() {
-    return new FUStatisticsService();
-  }
-
   public static StatisticsService getEventLogStatisticsService() {
-    return new EventLogStatisticsService();
+    return logStatisticsService;
   }
 }

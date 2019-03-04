@@ -19,7 +19,8 @@
  */
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,6 +31,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementTypeBase;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NonNls;
@@ -175,30 +177,34 @@ public class LazyParseableElement extends CompositeElement {
     }
     if (myParsed) return;
 
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      // we don't want to wait under lock on EDT while another thread is parsing the same chameleon
+      // and sleeping in ProgressManagerImpl.sleepIfNeededToGivePriorityToAnotherThread because EDT is occupied
+      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
+    }
+
     CharSequence text;
     synchronized (lock) {
       if (myParsed) return;
+
       text = myText.get();
       assert text != null;
-    }
 
-    FileElement fileElement = TreeUtil.getFileElement(this);
-    if (fileElement == null) {
-      LOG.error("Chameleons must not be parsed till they're in file tree: " + this);
-    }
-    else {
-      fileElement.assertReadAccessAllowed();
-    }
+      FileElement fileElement = TreeUtil.getFileElement(this);
+      if (fileElement == null) {
+        LOG.error("Chameleons must not be parsed till they're in file tree: " + this);
+      }
+      else {
+        fileElement.assertReadAccessAllowed();
+      }
 
-    DebugUtil.performPsiModification("lazy-parsing", () -> {
-      TreeElement parsedNode = (TreeElement)((ILazyParseableElementTypeBase)getElementType()).parseContents(this);
-      assertTextLengthIntact(text, parsedNode);
+      if (rawFirstChild() != null) {
+        LOG.error("Reentrant parsing?");
+      }
 
-      synchronized (lock) {
-        if (myParsed) return;
-        if (rawFirstChild() != null) {
-          LOG.error("Reentrant parsing?");
-        }
+      DebugUtil.performPsiModification("lazy-parsing", () -> {
+        TreeElement parsedNode = (TreeElement)((ILazyParseableElementTypeBase)getElementType()).parseContents(this);
+        assertTextLengthIntact(text, parsedNode);
 
         if (parsedNode != null) {
           setChildren(parsedNode);
@@ -206,9 +212,9 @@ public class LazyParseableElement extends CompositeElement {
 
         myParsed = true;
         myText = new SoftReference<>(text);
-      }
-    });
-  }
+      });
+    }
+}
 
   private void assertTextLengthIntact(CharSequence text, TreeElement child) {
     int length = 0;
@@ -217,7 +223,7 @@ public class LazyParseableElement extends CompositeElement {
       child = child.getTreeNext();
     }
     if (length != text.length()) {
-      LOG.error("Text mismatch in " + LogUtil.objectAndClass(getElementType()), PluginManagerCore.createPluginException("Text mismatch", null, getElementType().getClass()),
+      LOG.error("Text mismatch in " + LogUtil.objectAndClass(getElementType()), PluginException.createByClass("Text mismatch", null, getElementType().getClass()),
                 new Attachment("code.txt", text.toString()));
     }
   }

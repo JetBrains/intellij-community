@@ -64,7 +64,6 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
 
   public int BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS = 2;
   public int BLANK_LINES_BEFORE_FIRST_METHOD = 0;
-  // TODO make boolean (it needs special editor in BlankLinesPanel)
   public boolean BLANK_LINE_AT_FILE_END = true;
 
   public boolean ALIGN_COLLECTIONS_AND_COMPREHENSIONS = true;

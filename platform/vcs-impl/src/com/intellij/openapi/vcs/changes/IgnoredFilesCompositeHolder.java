@@ -13,7 +13,6 @@ import java.util.*;
 
 public class IgnoredFilesCompositeHolder implements FileHolder {
   private final Map<AbstractVcs, IgnoredFilesHolder> myVcsIgnoredHolderMap;
-  private IgnoredFilesHolder myIdeIgnoredFilesHolder;
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
 
@@ -21,7 +20,6 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
     super();
     myProject = project;
     myVcsIgnoredHolderMap = new HashMap<>();
-    myIdeIgnoredFilesHolder = new RecursiveFileHolder(myProject, HolderType.IGNORED);
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
   }
 
@@ -29,7 +27,6 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
   public void cleanAll() {
     myVcsIgnoredHolderMap.values().forEach(IgnoredFilesHolder::cleanAll);
     myVcsIgnoredHolderMap.clear();
-    myIdeIgnoredFilesHolder.cleanAll();
   }
 
   @Override
@@ -38,7 +35,6 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
     if (myVcsIgnoredHolderMap.containsKey(vcs)) {
       myVcsIgnoredHolderMap.get(vcs).cleanAndAdjustScope(scope);
     }
-    myIdeIgnoredFilesHolder.cleanAndAdjustScope(scope);
   }
 
   @Override
@@ -47,17 +43,12 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
     for (Map.Entry<AbstractVcs, IgnoredFilesHolder> entry : myVcsIgnoredHolderMap.entrySet()) {
       result.myVcsIgnoredHolderMap.put(entry.getKey(), (IgnoredFilesHolder)entry.getValue().copy());
     }
-    result.myIdeIgnoredFilesHolder = (IgnoredFilesHolder)myIdeIgnoredFilesHolder.copy();
     return result;
   }
 
   @Override
   public HolderType getType() {
     return HolderType.IGNORED;
-  }
-
-  public void addFile(@NotNull VirtualFile file) {
-    myIdeIgnoredFilesHolder.addFile(file);
   }
 
   public void addFile(@NotNull AbstractVcs vcs, @NotNull VirtualFile file) {
@@ -70,7 +61,6 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
   }
 
   public boolean containsFile(@NotNull VirtualFile file) {
-    if (myIdeIgnoredFilesHolder.containsFile(file)) return true;
     final AbstractVcs vcs = myVcsManager.getVcsFor(file);
     if (vcs == null) return false;
     final IgnoredFilesHolder ignoredFilesHolder = myVcsIgnoredHolderMap.get(vcs);
@@ -80,7 +70,6 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
   @NotNull
   public Collection<VirtualFile> values() {
     final HashSet<VirtualFile> result = ContainerUtil.newHashSet();
-    result.addAll(myIdeIgnoredFilesHolder.values());
     result.addAll(StreamEx.of(myVcsIgnoredHolderMap.values()).flatCollection(IgnoredFilesHolder::values).toSet());
     return result;
   }
@@ -113,11 +102,11 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
       return false;
     }
     IgnoredFilesCompositeHolder other = (IgnoredFilesCompositeHolder)obj;
-    return myVcsIgnoredHolderMap.equals(other.myVcsIgnoredHolderMap) && myIdeIgnoredFilesHolder.equals(other.myIdeIgnoredFilesHolder);
+    return myVcsIgnoredHolderMap.equals(other.myVcsIgnoredHolderMap);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myVcsIgnoredHolderMap, myIdeIgnoredFilesHolder);
+    return Objects.hash(myVcsIgnoredHolderMap);
   }
 }

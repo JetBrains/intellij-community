@@ -1,28 +1,15 @@
 package org.editorconfig.configmanagement;
 
-import com.intellij.application.options.CodeStyle;
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.codeStyle.IndentStatusBarUIContributor;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
-import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
-import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,14 +25,11 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
   public static final String tabWidthKey = "tab_width";
   public static final String indentStyleKey = "indent_style";
 
-  private static final String PROJECT_ADVERTISEMENT_FLAG = "editor.config.ad.shown";
-
-  private static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("EditorConfig", NotificationDisplayType.STICKY_BALLOON, true);
-
   @Nullable
   @Override
   public IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile psiFile) {
+    if (Utils.isFullIntellijSettingsSupport()) return null;
+
     final VirtualFile file = psiFile.getVirtualFile();
     if (file == null) return null;
 
@@ -53,7 +37,9 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     if (project.isDisposed() || !Utils.isEnabled(settings)) return null;
 
     // Get editorconfig settings
-    final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(project, file);
+    final List<EditorConfig.OutPair> outPairs =
+      SettingsProviderComponent.getInstance().getOutPairs(
+        project, file, EditorConfigNavigationActionsFactory.getInstance(psiFile.getVirtualFile()));
     // Apply editorconfig settings for the current editor
     return applyCodeStyleSettings(project, outPairs, file, settings);
   }
@@ -79,7 +65,7 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
                                             String indentSize, String continuationIndentSize, String tabWidth,
                                             String indentStyle, String filePath) {
     boolean changed = false;
-    final String calculatedIndentSize = calculateIndentSize(tabWidth, indentSize);
+    final String calculatedIndentSize = calculateIndentSize(tabWidth, indentSize, indentOptions);
     final String calculatedContinuationSize = calculateContinuationIndentSize(calculatedIndentSize, continuationIndentSize);
     final String calculatedTabWidth = calculateTabWidth(tabWidth, indentSize);
     if (!calculatedIndentSize.isEmpty()) {
@@ -116,8 +102,8 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     return changed;
   }
 
-  private static String calculateIndentSize(final String tabWidth, final String indentSize) {
-    return indentSize.equals("tab") ? tabWidth : indentSize;
+  private static String calculateIndentSize(final String tabWidth, final String indentSize, @NotNull final IndentOptions options) {
+    return indentSize.equals("tab") ? (tabWidth.isEmpty() ? String.valueOf(options.TAB_SIZE) : tabWidth) : indentSize;
   }
 
   private static String calculateContinuationIndentSize(final String indentSize, final String continuationIndentSize) {
@@ -173,103 +159,11 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     return false;
   }
 
-  @Override
-  public boolean areActionsAvailable(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
-    return isEditorConfigOptions(indentOptions);
-  }
 
   @Nullable
   @Override
-  public AnAction[] getActions(@NotNull PsiFile file, @NotNull IndentOptions indentOptions) {
-    if (isEditorConfigOptions(indentOptions)) {
-      List<AnAction> actions = ContainerUtil.newArrayList();
-      actions.addAll(EditorConfigNavigationActionsFactory.getNavigationActions(file));
-      return actions.toArray(AnAction.EMPTY_ARRAY);
-    }
-    return null;
+  public IndentStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
+    return new EditorConfigIndentStatusBarUIContributor(indentOptions);
   }
 
-  @Nullable
-  @Override
-  public AnAction createDisableAction(@NotNull Project project) {
-    return DumbAwareAction.create(
-      EditorConfigBundle.message("action.disable"),
-      e -> {
-        EditorConfigSettings settings = CodeStyle.getSettings(project).getCustomSettings(EditorConfigSettings.class);
-        settings.ENABLED = false;
-        notifyIndentOptionsChanged(project, null);
-        showDisabledDetectionNotification(project);
-      });
-  }
-
-  @Nullable
-  @Override
-  public String getHint(@NotNull IndentOptions indentOptions) {
-    return isEditorConfigOptions(indentOptions) ? "EditorConfig" : null;
-  }
-
-  private static boolean isEditorConfigOptions(@NotNull IndentOptions indentOptions) {
-    return indentOptions.getFileIndentOptionsProvider() instanceof EditorConfigIndentOptionsProvider;
-  }
-
-
-  @Nullable
-  @Override
-  public String getAdvertisementText(@NotNull PsiFile psiFile, @NotNull IndentOptions indentOptions) {
-    final PropertiesComponent projectProperties = PropertiesComponent.getInstance(psiFile.getProject());
-    boolean adFlag = projectProperties.getBoolean(PROJECT_ADVERTISEMENT_FLAG);
-    if (adFlag) return null;
-    projectProperties.setValue(PROJECT_ADVERTISEMENT_FLAG, true);
-    return EditorConfigBundle.message("advertisement.text");
-  }
-
-  private static void showDisabledDetectionNotification(@NotNull Project project) {
-    EditorConfigDisabledNotification notification = new EditorConfigDisabledNotification(project);
-    notification.notify(project);
-  }
-
-  private static class EditorConfigDisabledNotification extends Notification {
-    private EditorConfigDisabledNotification(Project project) {
-      super(NOTIFICATION_GROUP.getDisplayId(),
-            EditorConfigBundle.message("disabled.notification"), "",
-            NotificationType.INFORMATION);
-      addAction(new ReEnableAction(project, this));
-      addAction(new ShowEditorConfigOption(ApplicationBundle.message("code.style.indent.provider.notification.settings")));
-    }
-  }
-
-  private static class ShowEditorConfigOption extends DumbAwareAction {
-    private ShowEditorConfigOption(@Nullable String text) {
-      super(text);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      ShowSettingsUtilImpl.showSettingsDialog(e.getProject(), "preferences.sourceCode", "EditorConfig");
-    }
-  }
-
-  private static class ReEnableAction extends DumbAwareAction {
-    private final Project myProject;
-    private final Notification myNotification;
-
-    private ReEnableAction(@NotNull Project project, Notification notification) {
-      super(ApplicationBundle.message("code.style.indent.provider.notification.re.enable"));
-      myProject = project;
-      myNotification = notification;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      EditorConfigSettings settings = CodeStyle.getSettings(myProject).getCustomSettings(EditorConfigSettings.class);
-      settings.ENABLED = true;
-      notifyIndentOptionsChanged(myProject, null);
-      myNotification.expire();
-    }
-  }
-
-  @Override
-  public boolean isShowFileIndentOptionsEnabled() {
-    return false;
-  }
 }

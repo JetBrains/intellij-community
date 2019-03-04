@@ -12,6 +12,8 @@ import java.net.URLClassLoader;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
+import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
+import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
 import static org.junit.Assert.*;
 
 /**
@@ -48,11 +50,19 @@ public class PluginDescriptorTest {
   }
 
   @Test
-  public void testFilteringDuplicates() throws MalformedURLException {
+  public void testFilteringDuplicates() throws Exception {
     URL[] urls = {
       new File(getTestDataPath(), "duplicate1.jar").toURI().toURL(),
       new File(getTestDataPath(), "duplicate2.jar").toURI().toURL()};
     assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(new URLClassLoader(urls, null)).size());
+  }
+
+  @Test
+  public void testDuplicateDependency() {
+    IdeaPluginDescriptorImpl descriptor = loadDescriptor("duplicateDependency");
+    assertNotNull(descriptor);
+    assertEmpty(descriptor.getOptionalDependentPluginIds() );
+    assertEquals("foo",assertOneElement(descriptor.getDependentPluginIds()).getIdString());
   }
 
   @Test
@@ -70,7 +80,7 @@ public class PluginDescriptorTest {
   }
 
   @Test
-  public void testUrlTolerance() throws MalformedURLException {
+  public void testUrlTolerance() throws Exception {
     class SingleUrlEnumeration implements Enumeration<URL> {
       private final URL myUrl;
       private boolean hasMoreElements = true;

@@ -40,8 +40,14 @@ public class ChangeInfoImpl implements ChangeInfo {
     myNewLength = newChild != null ? newChild.getNotCachedLength() : 0;
   }
 
+  @Nullable
   public TreeElement getOldChild() {
     return myOldChild;
+  }
+
+  @Nullable
+  public TreeElement getNewChild() {
+    return myNewChild;
   }
 
   @Override

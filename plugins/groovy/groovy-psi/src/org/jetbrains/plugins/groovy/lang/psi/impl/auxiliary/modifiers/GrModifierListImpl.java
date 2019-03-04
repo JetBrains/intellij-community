@@ -100,7 +100,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub>
   }
 
   public GrModifierListImpl(GrModifierListStub stub) {
-    this(stub, GroovyElementTypes.MODIFIERS);
+    this(stub, GroovyElementTypes.MODIFIER_LIST);
   }
 
   public GrModifierListImpl(GrModifierListStub stub, IStubElementType nodeType) {

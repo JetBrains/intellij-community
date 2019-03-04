@@ -12,6 +12,10 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated See {@link ToolWindowViewModeAction} \
+ **/
+@Deprecated
 public class ToggleFloatingModeAction extends ToggleAction implements DumbAware {
 
   @Override

@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.*;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationListener;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -26,7 +25,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
@@ -71,7 +69,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public enum Event
   {ATTACHED, DETACHED, RESUME, STEP, PAUSE, REFRESH, CONTEXT, START_WAIT_ATTACH, DISPOSE, REFRESH_WITH_STACK, THREADS_REFRESH}
 
-  private volatile boolean myIsEvaluating;
   private volatile int myIgnoreFiltersFrameCountThreshold = 0;
 
   private DebuggerSessionState myState;
@@ -115,7 +112,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   public void setAlternativeJre(Sdk sdk) {
     myAlternativeJre = sdk;
-    Extensions.findExtension(PsiElementFinder.EP_NAME, getProject(), AlternativeJreClassFinder.class).clearCache();
+    PsiElementFinder.EP.findExtension(AlternativeJreClassFinder.class, getProject()).clearCache();
   }
 
   public Sdk getRunJre() {
@@ -167,8 +164,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
           LOG.debug("DebuggerSession state = " + state + ", event = " + event);
         }
 
-        myIsEvaluating = false;
-
         myState = new DebuggerSessionState(state, description);
         fireStateChanged(context, event);
       };
@@ -213,7 +208,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
     myContextManager = new MyDebuggerStateManager();
     myState = new DebuggerSessionState(State.STOPPED, null);
     myDebugProcess.addDebugProcessListener(new MyDebugProcessListener(debugProcess));
-    myDebugProcess.addEvaluationListener(new MyEvaluationListener());
     ValueLookupManager.getInstance(getProject()).startListening();
     myDebugEnvironment = environment;
     mySearchScope = environment.getSearchScope();
@@ -302,7 +296,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     stepOut(StepRequest.STEP_LINE);
   }
 
-  public void stepOver(boolean ignoreBreakpoints, int stepSize) {
+  public void stepOver(boolean ignoreBreakpoints, @Nullable MethodFilter methodFilter, int stepSize) {
     SuspendContextImpl suspendContext = getSuspendContext();
     DebugProcessImpl.ResumeCommand cmd = null;
     for (JvmSteppingCommandProvider handler : JvmSteppingCommandProvider.EP_NAME.getExtensionList()) {
@@ -310,10 +304,14 @@ public class DebuggerSession implements AbstractDebuggerSession {
       if (cmd != null) break;
     }
     if (cmd == null) {
-      cmd = myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints, stepSize);
+      cmd = myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints, methodFilter, stepSize);
     }
     setSteppingThrough(cmd.getContextThread());
     resumeAction(cmd, Event.STEP);
+  }
+
+  public void stepOver(boolean ignoreBreakpoints, int stepSize) {
+    stepOver(ignoreBreakpoints, null, stepSize);
   }
 
   public void stepOver(boolean ignoreBreakpoints) {
@@ -422,10 +420,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
     return getState() == State.WAITING_ATTACH;
   }
 
-  public boolean isEvaluating() {
-    return myIsEvaluating;
-  }
-
   public boolean isRunning() {
     return getState() == State.RUNNING && !getProcess().getProcessHandler().isProcessTerminated();
   }
@@ -511,11 +505,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
           }
           else {
             // heuristics: try to pre-select EventDispatchThread
-            for (ThreadReferenceProxyImpl thread : allThreads) {
-              if (ThreadState.isEDT(thread.name())) {
-                currentThread = thread;
-                break;
-              }
+            currentThread = allThreads.stream().filter(thread -> ThreadState.isEDT(thread.name())).findFirst().orElse(null);
+            if (currentThread == null) {
+              // heuristics: try to pre-select main thread
+              currentThread = allThreads.stream().filter(thread -> "main".equals(thread.name())).findFirst().orElse(null);
             }
             if (currentThread == null) {
               // heuristics: display the first thread with RUNNABLE status
@@ -760,27 +753,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
       return DebuggerBundle.message("status.paused.in.another.thread");
     }
     return null;
-  }
-
-  private class MyEvaluationListener implements EvaluationListener {
-    @Override
-    public void evaluationStarted(SuspendContextImpl context) {
-      myIsEvaluating = true;
-    }
-
-    @Override
-    public void evaluationFinished(final SuspendContextImpl context) {
-      myIsEvaluating = false;
-      // seems to be not required after move to xdebugger
-      //DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-      //  @Override
-      //  public void run() {
-      //    if (context != getSuspendContext()) {
-      //      getContextManager().setState(DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, context), STATE_PAUSED, REFRESH, null);
-      //    }
-      //  }
-      //});
-    }
   }
 
   public static boolean enableBreakpointsDuringEvaluation() {

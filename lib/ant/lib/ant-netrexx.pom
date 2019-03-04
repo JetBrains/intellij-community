@@ -26,13 +26,13 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.9.4</version>
+    <version>1.10.5</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <url>http://ant.apache.org/</url>  
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-netrexx</artifactId>
-  <version>1.9.4</version>
+  <version>1.10.5</version>
   <name>Apache Ant + NetRexx</name>
   <description>NetRexxC task
     dependency can be downloaded from http://www.ibm.com/software/awdtools/netrexx/download.html</description>
@@ -40,7 +40,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.9.4</version>
+      <version>1.10.5</version>
       <scope>compile</scope>
     </dependency>
     <!-- Processed too early, before maven-antrun-plugin gets a chance to work:

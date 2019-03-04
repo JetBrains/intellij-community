@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.openapi.Disposable;
@@ -21,13 +7,12 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.impl.JBEditorTabs;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.TabLabel;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.tabs.newImpl.JBTabsBackgroundAndBorder;
+import com.intellij.ui.tabs.newImpl.JBEditorTabs;
+import com.intellij.ui.tabs.newImpl.JBTabsImpl;
+import com.intellij.ui.tabs.newImpl.TabLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,9 +23,39 @@ import java.util.Map;
 /**
  * @author Dennis.Ushakov
  */
-public class JBRunnerTabs extends JBEditorTabs {
+public class JBRunnerTabs extends JBEditorTabs implements JBRunnerTabsBase {
+  public static JBRunnerTabsBase create(@Nullable Project project, @NotNull Disposable parentDisposable) {
+    IdeFocusManager focusManager = project != null ? IdeFocusManager.getInstance(project) : null;
+    return JBTabsFactory.getUseNewTabs()
+           ? new JBRunnerTabs(project, ActionManager.getInstance(), focusManager, parentDisposable)
+           : new JBRunnerTabsOld(project, ActionManager.getInstance(), focusManager, parentDisposable);
+  }
+
+
   public JBRunnerTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
+  }
+
+  @Override
+  protected JBTabsBackgroundAndBorder createTabBorder() {
+    return new JBTabsBackgroundAndBorder(this) {
+      @NotNull
+      @Override
+      public Insets getEffectiveBorder() {
+        return new Insets(getBorderThickness(), getBorderThickness(), 0, 0);
+      }
+
+      @Override
+      public void paintBorder(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height) {
+        if (isEmptyVisible()) return;
+        paintBackground((Graphics2D)g, new Rectangle(x, y, width, height));
+
+        getTabPainter().paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y), new Point(x, y + height));
+        getTabPainter()
+          .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + myHeaderFitSize.height),
+                           new Point(x + width, y + myHeaderFitSize.height));
+      }
+    };
   }
 
   @Override
@@ -54,10 +69,6 @@ public class JBRunnerTabs extends JBEditorTabs {
   }
 
   @Override
-  public int tabMSize() {
-    return 8;
-  }
-
   public boolean shouldAddToGlobal(Point point) {
     final TabLabel label = getSelectedLabel();
     if (label == null || point == null) {
@@ -91,11 +102,6 @@ public class JBRunnerTabs extends JBEditorTabs {
   }
 
   @Override
-  protected Color getEmptySpaceColor() {
-    return UIUtil.getBgFillColor(getParent());
-  }
-
-  @Override
   protected TabLabel createTabLabel(TabInfo info) {
     return new MyTabLabel(this, info);
   }
@@ -103,11 +109,6 @@ public class JBRunnerTabs extends JBEditorTabs {
   private static class MyTabLabel extends TabLabel {
     MyTabLabel(JBTabsImpl tabs, final TabInfo info) {
       super(tabs, info);
-    }
-
-    @Override
-    public void apply(UiDecorator.UiDecoration decoration) {
-      setBorder(JBUI.Borders.empty(4));
     }
 
     @Override

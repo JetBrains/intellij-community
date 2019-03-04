@@ -32,6 +32,8 @@ import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isComponentShowing
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.repeatUntil
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.tryWithPause
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
@@ -46,10 +48,12 @@ import org.fest.swing.core.Robot
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiTask
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.timing.Timeout
 import org.junit.Assert.assertNotNull
 import java.awt.Point
 import java.awt.Rectangle
 import java.util.*
+import javax.swing.JPopupMenu
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
@@ -83,12 +87,12 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
    * separated by slash sign: ["project_name/src/Test.java"]
    * @return NodeFixture object for a pathTo; may be used for expanding, scrolling and clicking node
    */
-  fun path(vararg pathTo: String): NodeFixture {
+  fun path(vararg pathTo: String, timeout: Timeout = Timeouts.seconds30): NodeFixture {
     val projectPane = selectProjectPane()
     val canonicalPath = pathTo.toList().expandSlashedPath()
     return tryWithPause(exceptionClass = ComponentLookupException::class.java,
                         condition = "node with path ${Arrays.toString(pathTo)} will appear",
-                        timeout = Timeouts.seconds30) {
+                        timeout = timeout) {
       activate()
       projectPane.getNode(canonicalPath)
     }
@@ -240,7 +244,9 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
     }
 
     fun rightClick() {
-      invokeContextMenu()
+      repeatUntil({ isComponentShowing(JPopupMenu::class.java) }, {
+        invokeContextMenu()
+      })
     }
 
     fun invokeContextMenu() {

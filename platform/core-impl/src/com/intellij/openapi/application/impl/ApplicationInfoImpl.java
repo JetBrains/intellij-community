@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.JBImageIcon;
@@ -41,6 +42,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myFullVersionFormat;
   private String myBuildNumber;
   private String myApiVersion;
+  private String myVersionSuffix;
   private String myCompanyName = "JetBrains s.r.o.";
   private String myCopyrightStart = "2000";
   private String myShortCompanyName;
@@ -53,8 +55,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myProgressTailIconName;
   private Icon myProgressTailIcon;
   private int myProgressHeight = 2;
-  private int myProgressX = 1;
   private int myProgressY = 350;
+  private int myLicenseOffsetX = 114;
   private int myLicenseOffsetY = 85;
   private String mySplashImageUrl;
   private String myAboutImageUrl;
@@ -130,8 +132,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR = "copyrightForeground";
   private static final String ATTRIBUTE_ABOUT_LINK_COLOR = "linkColor";
   private static final String ATTRIBUTE_PROGRESS_HEIGHT = "progressHeight";
-  private static final String ATTRIBUTE_PROGRESS_X = "progressX";
   private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
+  private static final String ATTRIBUTE_LICENSE_TEXT_OFFSET_X = "licenseOffsetX";
   private static final String ATTRIBUTE_LICENSE_TEXT_OFFSET_Y = "licenseOffsetY";
   private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
   private static final String ELEMENT_ABOUT = "about";
@@ -257,7 +259,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     else {
       result = StringUtil.notNullize(myMajorVersion, "0") + '.' + StringUtil.notNullize(myMinorVersion, "0");
     }
-    if (isEAP()) result += " EAP";
+    if (!StringUtil.isEmpty(myVersionSuffix)) {
+      result += " " + myVersionSuffix;
+    }
     return result;
   }
 
@@ -331,12 +335,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myProgressY;
   }
 
-  public int getLicenseOffsetY() {
-    return myLicenseOffsetY;
+  public int getLicenseOffsetX() {
+    return myLicenseOffsetX;
   }
 
-  public int getProgressX() {
-    return myProgressX;
+  public int getLicenseOffsetY() {
+    return myLicenseOffsetY;
   }
 
   @Nullable
@@ -447,6 +451,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getPluginManagerUrl() {
     return myPluginManagerUrl;
+  }
+
+  @Override
+  public boolean usesJetBrainsPluginRepository() {
+    return DEFAULT_PLUGINS_HOST.equalsIgnoreCase(myPluginManagerUrl);
   }
 
   @Override
@@ -605,6 +614,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myFullVersionFormat = versionElement.getAttributeValue(ATTRIBUTE_FULL);
       myCodeName = versionElement.getAttributeValue(ATTRIBUTE_CODENAME);
       myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
+      myVersionSuffix = versionElement.getAttributeValue("suffix");
+      if (myVersionSuffix == null && myEAP) {
+        myVersionSuffix = "EAP";
+      }
     }
 
     Element companyElement = getChild(parentNode, ELEMENT_COMPANY);
@@ -666,14 +679,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
         myProgressHeight = Integer.parseInt(v);
       }
 
-      v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_X);
-      if (v != null) {
-        myProgressX = Integer.parseInt(v);
-      }
-
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);
       if (v != null) {
         myProgressY = Integer.parseInt(v);
+      }
+
+      v = logoElement.getAttributeValue(ATTRIBUTE_LICENSE_TEXT_OFFSET_X);
+      if (v != null) {
+        myLicenseOffsetX = Integer.parseInt(v);
       }
 
       v = logoElement.getAttributeValue(ATTRIBUTE_LICENSE_TEXT_OFFSET_Y);
@@ -795,36 +808,40 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     Element pluginsElement = getChild(parentNode, ELEMENT_PLUGINS);
     if (pluginsElement != null) {
       String url = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
-      myPluginManagerUrl = url != null ? url : DEFAULT_PLUGINS_HOST;
-      boolean closed = StringUtil.endsWith(myPluginManagerUrl, "/");
+      if (url != null) {
+        myPluginManagerUrl = StringUtil.trimEnd(url, "/");
+      }
 
       String listUrl = pluginsElement.getAttributeValue(ATTRIBUTE_LIST_URL);
-      myPluginsListUrl = listUrl != null ? listUrl : myPluginManagerUrl + (closed ? "" : "/") + "plugins/list/";
+      if (listUrl != null) {
+        myPluginsListUrl = listUrl;
+      }
 
       String channelListUrl = pluginsElement.getAttributeValue(ATTRIBUTE_CHANNEL_LIST_URL);
-      myChannelsListUrl = channelListUrl != null ? channelListUrl  : myPluginManagerUrl + (closed ? "" : "/") + "channels/list/";
+      if (channelListUrl != null) {
+        myChannelsListUrl = channelListUrl;
+      }
 
       String downloadUrl = pluginsElement.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
-      myPluginsDownloadUrl = downloadUrl != null ? downloadUrl : myPluginManagerUrl + (closed ? "" : "/") + "pluginManager/";
+      if (downloadUrl != null) {
+        myPluginsDownloadUrl = downloadUrl;
+      }
 
       if (!getBuild().isSnapshot()) {
         myBuiltinPluginsUrl = StringUtil.nullize(pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL));
       }
     }
-    else {
-      myPluginManagerUrl = DEFAULT_PLUGINS_HOST;
-      myPluginsListUrl = DEFAULT_PLUGINS_HOST + "/plugins/list/";
-      myChannelsListUrl = DEFAULT_PLUGINS_HOST + "/channels/list/";
-      myPluginsDownloadUrl = DEFAULT_PLUGINS_HOST + "/pluginManager/";
-    }
 
     final String pluginsHost = System.getProperty("idea.plugins.host");
     if (pluginsHost != null) {
-      myPluginManagerUrl = pluginsHost;
-      myPluginsListUrl = myPluginsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
-      myChannelsListUrl = myChannelsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
-      myPluginsDownloadUrl = myPluginsDownloadUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
+      myPluginManagerUrl = StringUtil.trimEnd(pluginsHost, "/");
+      myPluginsListUrl = myChannelsListUrl = myPluginsDownloadUrl = null;
     }
+
+    myPluginManagerUrl = ObjectUtils.coalesce(myPluginsListUrl, DEFAULT_PLUGINS_HOST);
+    myPluginsListUrl = ObjectUtils.coalesce(myPluginsListUrl, myPluginManagerUrl + "/plugins/list/");
+    myChannelsListUrl = ObjectUtils.coalesce(myChannelsListUrl, myPluginManagerUrl + "/channels/list/");
+    myPluginsDownloadUrl = ObjectUtils.coalesce(myPluginsDownloadUrl, myPluginManagerUrl + "/pluginManager/");
 
     Element keymapElement = getChild(parentNode, ELEMENT_KEYMAP);
     if (keymapElement != null) {
@@ -851,7 +868,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     }
     else {
       myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
-      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v2-assistant.xml";
+      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v3-assistant.xml";
     }
 
     Element tvElement = getChild(parentNode, ELEMENT_JB_TV);
@@ -941,7 +958,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   public List<String> getEssentialPluginsIds() {
-    return Collections.unmodifiableList(Arrays.asList(myEssentialPluginsIds));
+    return ContainerUtil.immutableList(myEssentialPluginsIds);
   }
 
   private static class UpdateUrlsImpl implements UpdateUrls {

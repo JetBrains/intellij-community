@@ -27,13 +27,16 @@ import java.util.Map;
  * @author traff
  */
 public class PythonConsoleLexer extends PythonIndentingLexer {
-  private final static Map<String, PyElementType> SPECIAL_IPYTHON_SYMBOLS = ImmutableMap.of("?", PyConsoleTokenTypes
-    .QUESTION_MARK, "!", PyConsoleTokenTypes.PLING);
+  private final static Map<String, PyElementType> SPECIAL_IPYTHON_SYMBOLS = ImmutableMap.of(
+    "?", PyConsoleTokenTypes.QUESTION_MARK,
+    "!", PyConsoleTokenTypes.PLING,
+    "$", PyConsoleTokenTypes.DOLLAR
+  );
 
-  @Override
   /**
    * Treats special symbols used in IPython console
    */
+  @Override
   public IElementType getTokenType() {
     IElementType type = super.getTokenType();
     if (type == PyTokenTypes.BAD_CHARACTER && isSpecialSymbols(getTokenText())) {

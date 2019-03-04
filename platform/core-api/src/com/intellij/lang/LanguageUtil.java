@@ -114,6 +114,7 @@ public final class LanguageUtil {
 
   @NotNull
   public static List<Language> getFileLanguages() {
+    LanguageParserDefinitions.INSTANCE.ensureValuesLoaded();
     List<Language> result = ContainerUtil.newArrayList();
     for (Language language : Language.getRegisteredLanguages()) {
       if (!isFileLanguage(language)) continue;

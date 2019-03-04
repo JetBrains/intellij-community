@@ -364,7 +364,8 @@ public class ReorderingUtils {
     static ContractFailExceptionProblem from(PsiExpression expression) {
       if (expression instanceof PsiCallExpression) {
         PsiCallExpression call = (PsiCallExpression)expression;
-        List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
+        PsiMethod method = call.resolveMethod();
+        List<? extends MethodContract> contracts = DfaUtil.addRangeContracts(method, JavaMethodContractUtil.getMethodCallContracts(call));
         contracts = ContainerUtil.filter(contracts, c -> c.getReturnValue().isFail() && c.getConditions().size() == 1);
         if (contracts.isEmpty()) return null;
         DfaValueFactory factory = new DfaValueFactory(null, false);

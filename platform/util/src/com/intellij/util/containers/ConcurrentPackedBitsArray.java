@@ -33,7 +33,7 @@ public class ConcurrentPackedBitsArray {
       throw new IllegalArgumentException("Bits-to-pack number must be between 1 and 64, but got: "+bitsPerChunk);
     }
     this.bitsPerChunk = bitsPerChunk;
-    mask = (1 << bitsPerChunk) - 1;
+    mask = bitsPerChunk == 64 ? -1 : (1L << bitsPerChunk) - 1;
     chunksPerWord = 64 / bitsPerChunk;
   }
 
@@ -56,12 +56,7 @@ public class ConcurrentPackedBitsArray {
     }
     final int bitIndex = id/chunksPerWord * 64 + (id%chunksPerWord)*bitsPerChunk;
 
-    long prevChunk = bits.changeWord(bitIndex, new TLongFunction() {
-      @Override
-      public long execute(long word) {
-        return word & ~(mask << bitIndex) | (flags << bitIndex);
-      }
-    }) >> bitIndex;
+    long prevChunk = bits.changeWord(bitIndex, word -> word & ~(mask << bitIndex) | (flags << bitIndex)) >> bitIndex;
 
     return prevChunk;
   }

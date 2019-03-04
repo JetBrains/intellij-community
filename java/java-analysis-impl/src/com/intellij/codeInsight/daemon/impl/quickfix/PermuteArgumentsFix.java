@@ -19,7 +19,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -70,7 +70,7 @@ public class PermuteArgumentsFix implements IntentionAction, HighPriorityAction 
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return !project.isDisposed() && myCall.isValid() && ScratchFileService.isInProjectOrScratch(myCall);
+    return !project.isDisposed() && myCall.isValid() && BaseIntentionAction.canModify(myCall);
   }
 
   @Override
@@ -78,9 +78,9 @@ public class PermuteArgumentsFix implements IntentionAction, HighPriorityAction 
     myCall.getArgumentList().replace(myPermutation.getArgumentList());
   }
 
-  public static void registerFix(HighlightInfo info, PsiCall callExpression, final CandidateInfo[] candidates, final TextRange fixRange) {
+  public static boolean registerFix(HighlightInfo info, PsiCall callExpression, final CandidateInfo[] candidates, final TextRange fixRange) {
     PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
-    if (expressions.length < 2) return;
+    if (expressions.length < 2) return false;
     List<PsiCall> permutations = new ArrayList<>();
 
     for (CandidateInfo candidate : candidates) {
@@ -115,7 +115,10 @@ public class PermuteArgumentsFix implements IntentionAction, HighPriorityAction 
     if (permutations.size() == 1) {
       PermuteArgumentsFix fix = new PermuteArgumentsFix(callExpression, permutations.get(0));
       QuickFixAction.registerQuickFixAction(info, fixRange, fix);
+      return true;
     }
+
+    return false;
   }
 
   private static void registerShiftFixes(final PsiExpression[] expressions, final PsiCall callExpression, final List<? super PsiCall> permutations,

@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.pico;
 
-import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,7 +14,7 @@ import org.picocontainer.defaults.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class DefaultPicoContainer implements AreaPicoContainer {
+public class DefaultPicoContainer implements MutablePicoContainer {
   static final DelegatingComponentMonitor DEFAULT_DELEGATING_COMPONENT_MONITOR = new DelegatingComponentMonitor();
   static final DefaultLifecycleStrategy DEFAULT_LIFECYCLE_STRATEGY = new DefaultLifecycleStrategy(DEFAULT_DELEGATING_COMPONENT_MONITOR);
   private final PicoContainer parent;

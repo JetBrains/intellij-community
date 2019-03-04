@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
@@ -32,7 +19,6 @@ import com.intellij.semantic.SemRegistrar;
 import com.intellij.semantic.SemService;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.Processor;
 import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.EvaluatedXmlNameImpl;
 import com.intellij.util.xml.XmlName;
@@ -46,31 +32,29 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 import static com.intellij.patterns.XmlPatterns.*;
 
 /**
  * @author peter
  */
-public class DomSemContributor extends SemContributor {
-  private final SemService mySemService;
-
-  public DomSemContributor(SemService semService) {
-    mySemService = semService;
-  }
-
+final class DomSemContributor extends SemContributor {
   @Override
-  public void registerSemProviders(SemRegistrar registrar) {
+  public void registerSemProviders(@NotNull SemRegistrar registrar, @NotNull Project project) {
     registrar.registerSemElementProvider(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlFile(), xmlFile -> {
       ApplicationManager.getApplication().assertReadAccessAllowed();
       return new FileDescriptionCachedValueProvider(DomManagerImpl.getDomManager(xmlFile.getProject()), xmlFile);
     });
 
+    final SemService semService = SemService.getSemService(project);
     registrar.registerSemElementProvider(DomManagerImpl.DOM_HANDLER_KEY, xmlTag().withParent(psiElement(XmlElementType.XML_DOCUMENT).withParent(xmlFile())),
                                          xmlTag -> {
                                            final FileDescriptionCachedValueProvider provider =
-                                             mySemService.getSemElement(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlTag.getContainingFile());
+                                             semService.getSemElement(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlTag.getContainingFile());
                                            assert provider != null;
                                            final DomFileElementImpl element = provider.getFileElement();
                                            if (element != null) {
@@ -165,8 +149,8 @@ public class DomSemContributor extends SemContributor {
         final List<? extends CustomDomChildrenDescription> customs = info.getCustomNameChildrenDescription();
         if (customs.isEmpty()) return null;
 
-        if (mySemService.getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, tag) == null &&
-            mySemService.getSemElement(DomManagerImpl.DOM_COLLECTION_HANDLER_KEY, tag) == null) {
+        if (semService.getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, tag) == null &&
+            semService.getSemElement(DomManagerImpl.DOM_COLLECTION_HANDLER_KEY, tag) == null) {
 
           String localName = tag.getLocalName();
           XmlFile file = parent.getFile();
@@ -189,39 +173,13 @@ public class DomSemContributor extends SemContributor {
       }
     });
 
-    registrar.registerSemElementProvider(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, xmlAttribute(), attribute -> {
-      final XmlTag tag = PhysicalDomParentStrategy.getParentTag(attribute);
-      final DomInvocationHandler handler = tag == null ? null : getParentDom(tag);
-      if (handler == null) return null;
-
-      final String localName = attribute.getLocalName();
-      final Ref<AttributeChildInvocationHandler> result = Ref.create(null);
-      handler.getGenericInfo().processAttributeChildrenDescriptions(description -> {
-        if (description.getXmlName().getLocalName().equals(localName)) {
-          final EvaluatedXmlName evaluatedXmlName = handler.createEvaluatedXmlName(description.getXmlName());
-
-          final String ns = evaluatedXmlName.getNamespace(tag, handler.getFile());
-          //see XmlTagImpl.getAttribute(localName, namespace)
-          if (ns.equals(tag.getNamespace()) && localName.equals(attribute.getName()) ||
-              ns.equals(attribute.getNamespace())) {
-            final DomManagerImpl myDomManager = handler.getManager();
-            final AttributeChildInvocationHandler attributeHandler =
-              new AttributeChildInvocationHandler(evaluatedXmlName, description, myDomManager,
-                                                  new PhysicalDomParentStrategy(attribute, myDomManager), null);
-            result.set(attributeHandler);
-            return false;
-          }
-        }
-        return true;
-      });
-
-      return result.get();
-    });
-
+    registrar.registerSemElementProvider(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY,
+                                         xmlAttribute(),
+                                         DomSemContributor::createAttributeHandler);
   }
 
   @Nullable
-  private static DomInvocationHandler getParentDom(@NotNull XmlTag tag) {
+  static DomInvocationHandler getParentDom(@NotNull XmlTag tag) {
     LinkedHashSet<XmlTag> allParents = new LinkedHashSet<>();
     PsiElement each = tag;
     while (each instanceof XmlTag && allParents.add((XmlTag)each)) {
@@ -262,5 +220,33 @@ public class DomSemContributor extends SemContributor {
       }
     }
     return null;
+  }
+
+  @Nullable
+  static AttributeChildInvocationHandler createAttributeHandler(@NotNull XmlAttribute attribute) {
+    XmlTag tag = PhysicalDomParentStrategy.getParentTag(attribute);
+    DomInvocationHandler handler = tag == null ? null : getParentDom(tag);
+    if (handler == null) return null;
+
+    String localName = attribute.getLocalName();
+    Ref<AttributeChildInvocationHandler> result = Ref.create(null);
+    handler.getGenericInfo().processAttributeChildrenDescriptions(description -> {
+      if (description.getXmlName().getLocalName().equals(localName)) {
+        final EvaluatedXmlName evaluatedXmlName = handler.createEvaluatedXmlName(description.getXmlName());
+
+        final String ns = evaluatedXmlName.getNamespace(tag, handler.getFile());
+        //see XmlTagImpl.getAttribute(localName, namespace)
+        if (ns.equals(tag.getNamespace()) && localName.equals(attribute.getName()) ||
+            ns.equals(attribute.getNamespace())) {
+          DomManagerImpl manager = handler.getManager();
+          result.set(new AttributeChildInvocationHandler(evaluatedXmlName, description, manager,
+                                                         new PhysicalDomParentStrategy(attribute, manager), null));
+          return false;
+        }
+      }
+      return true;
+    });
+
+    return result.get();
   }
 }

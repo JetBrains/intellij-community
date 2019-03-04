@@ -42,6 +42,7 @@ import org.apache.tools.ant.BuildException
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.jps.api.CmdlineRemoteProto
 import org.jetbrains.jps.api.GlobalOptions
@@ -67,6 +68,7 @@ import org.jetbrains.jps.model.module.JpsModule
  */
 @CompileStatic
 class JpsCompilationRunner {
+  private static boolean ourToolsJarAdded
   private final CompilationContext context
   private final JpsCompilationData compilationData
 
@@ -86,6 +88,10 @@ class JpsCompilationRunner {
       }
     }
     runBuild(names, false, [], false, false)
+  }
+
+  void buildModulesWithoutDependencies(Collection<JpsModule> modules, boolean includeTests) {
+    runBuild(modules.collect { it.name }.toSet(), false, [], includeTests, false)
   }
 
   void resolveProjectDependencies() {
@@ -146,6 +152,9 @@ class JpsCompilationRunner {
 
   private void runBuild(final Set<String> modulesSet, final boolean allModules, Collection<String> artifactNames, boolean includeTests,
                         boolean resolveProjectDependencies) {
+    if (!modulesSet.isEmpty() || allModules) {
+      addToolsJarToSystemClasspath(context.paths.jdkHome, context.messages)
+    }
     System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
     final AntMessageHandler messageHandler = new AntMessageHandler()
     AntLoggerFactory.ourMessageHandler = messageHandler
@@ -211,6 +220,23 @@ class JpsCompilationRunner {
       context.messages.reportStatisticValue("Compilation time, ms", String.valueOf(System.currentTimeMillis() - compilationStart))
       compilationData.statisticsReported = true
     }
+  }
+
+  /**
+   * Add tools.jar to the system classloader's classpath. {@link javax.tools.ToolProvider} will load javac implementation classes by its own URLClassLoader,
+   * which uses the system classloader as its parent, so we need to ensure that tools.jar will be accessible from the system classloader,
+   * otherwise the loaded classes will be incompatible with the classes loaded by {@link org.jetbrains.jps.javac.ast.JavacReferenceCollectorListener}.
+   */
+  private static void addToolsJarToSystemClasspath(String jdkHome, BuildMessages messages) {
+    if (ourToolsJarAdded) {
+      return
+    }
+    File toolsJar = new File(jdkHome, "lib/tools.jar")
+    if (!toolsJar.exists()) {
+      messages.error("Failed to add tools.jar to classpath: $toolsJar doesn't exist")
+    }
+    BuildUtils.addToSystemClasspath(toolsJar)
+    ourToolsJarAdded = true
   }
 
   private class AntMessageHandler implements MessageHandler {

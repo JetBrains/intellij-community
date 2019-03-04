@@ -10,7 +10,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -182,9 +181,7 @@ public class UsedIconsListingAction extends AnAction {
       if (replacement != null) {
         final PsiFile file = att.getContainingFile();
         if (useScope.contains(file.getVirtualFile())) {
-          WriteCommandAction.writeCommandAction(project, file).run(() -> {
-            att.setValue(replacement);
-          });
+          WriteCommandAction.writeCommandAction(project, file).run(() -> att.setValue(replacement));
         }
       }
     }

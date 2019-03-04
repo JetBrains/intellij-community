@@ -6,6 +6,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
+import com.intellij.analysis.dialog.ModelScopeItem;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
@@ -20,10 +21,11 @@ import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -41,7 +43,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,10 +53,17 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class RunInspectionAction extends GotoActionBase {
+public class RunInspectionAction extends GotoActionBase implements DataProvider {
   private static final Logger LOGGER = Logger.getInstance(RunInspectionAction.class);
+  private final String myPredefinedText;
 
+  @SuppressWarnings("unused")
   public RunInspectionAction() {
+    this(null);
+  }
+
+  public RunInspectionAction(String predefinedText) {
+    myPredefinedText = predefinedText;
     getTemplatePresentation().setText(IdeBundle.message("goto.inspection.action.text"));
   }
 
@@ -86,6 +94,12 @@ public class RunInspectionAction extends GotoActionBase {
           () -> runInspection(project, (((InspectionElement)element)).getToolWrapper().getShortName(), virtualFile, psiElement, psiFile));
       }
     }, false);
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NotNull String dataId) {
+    return PlatformDataKeys.PREDEFINED_TEXT.is(dataId) ? myPredefinedText : null;
   }
 
   public static void runInspection(final @NotNull Project project,
@@ -126,12 +140,11 @@ public class RunInspectionAction extends GotoActionBase {
     fileFilterPanel.init(options);
 
     final AnalysisScope initialAnalysisScope = analysisScope;
+    List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(project, analysisScope, module, psiElement);
     final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog("Run '" + toolWrapper.getDisplayName() + "'",
                                                                          AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle
-                                                                           .message("inspection.action.noun")), project, BaseAnalysisActionDialog.standardItems(
-      project, analysisScope, module, psiElement),
-                                                                         options, true, ModuleUtil
-                                                                           .isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE)) {
+                                                                           .message("inspection.action.noun")), project,
+                                                                         items, options, true) {
 
       private InspectionToolWrapper myUpdatedSettingsToolWrapper;
 
@@ -205,7 +218,7 @@ public class RunInspectionAction extends GotoActionBase {
             public void actionPerformed(ActionEvent e) {
               InspectionToolWrapper wrapper = getToolWrapper();
               InspectionProfileImpl cleanupToolProfile = RunInspectionIntention.createProfile(wrapper, managerEx, null);
-              managerEx.createNewGlobalContext(false)
+              managerEx.createNewGlobalContext()
                 .codeCleanup(getScope(), cleanupToolProfile, "Cleanup by " + wrapper.getDisplayName(), null, false);
               close(DialogWrapper.OK_EXIT_CODE);
             }

@@ -1,4 +1,4 @@
-// "Merge with 'case 1:'" "GENERIC_ERROR_OR_WARNING"
+// "Merge with 'case 1'" "GENERIC_ERROR_OR_WARNING"
 class C {
     void foo(int n, boolean b) {
         switch (n) {

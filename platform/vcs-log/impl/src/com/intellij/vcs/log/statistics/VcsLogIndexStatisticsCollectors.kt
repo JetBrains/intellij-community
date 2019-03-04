@@ -2,8 +2,8 @@
 package com.intellij.vcs.log.statistics
 
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getCountingUsage
@@ -42,9 +42,9 @@ class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesCollector() {
 
   private fun getBigRepositoriesList() = getServiceIfCreated<VcsLogBigRepositoriesList>(VcsLogBigRepositoriesList::class.java)
 
-  override fun getContext(): FUSUsageContext = FUSUsageContext.OS_CONTEXT
+  override fun getData(): FeatureUsageData? = FeatureUsageData().addOS()
 
-  override fun getGroupId(): String = "statistics.vcs.log.index.application"
+  override fun getGroupId(): String = "vcs.log.index.application"
 }
 
 class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
@@ -71,9 +71,9 @@ class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
 
   private fun getIndexCollector(project: Project) = getServiceIfCreated<VcsLogIndexCollector>(project, VcsLogIndexCollector::class.java)
 
-  override fun getContext(project: Project): FUSUsageContext = FUSUsageContext.OS_CONTEXT
+  override fun getData(project: Project): FeatureUsageData? = FeatureUsageData().addOS()
 
-  override fun getGroupId(): String = "statistics.vcs.log.index.project"
+  override fun getGroupId(): String = "vcs.log.index.project"
 }
 
 class VcsLogIndexCollectorState {

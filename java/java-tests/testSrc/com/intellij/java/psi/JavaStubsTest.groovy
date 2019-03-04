@@ -31,9 +31,11 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 
 import java.util.concurrent.Callable
 
+@CompileStatic
 class JavaStubsTest extends LightCodeInsightFixtureTestCase {
 
   void "test resolve from annotation method default"() {
@@ -343,6 +345,15 @@ class A {
       myFixture.findClass("A").extendsList.referenceElements[0].delete()
     }
     PsiTestUtil.checkStubsMatchText(file)
+  }
+
+  void "test remove type argument list after space"() {
+    def file = myFixture.addFileToProject('a.java', 'class A { A <B>a; }')
+    WriteCommandAction.runWriteCommandAction(project) {
+      myFixture.findClass("A").fields[0].typeElement.innermostComponentReferenceElement.parameterList.delete()
+    }
+    PsiTestUtil.checkStubsMatchText(file)
+    PsiTestUtil.checkFileStructure(file)
   }
 
   void "test add reference into broken extends list"() {

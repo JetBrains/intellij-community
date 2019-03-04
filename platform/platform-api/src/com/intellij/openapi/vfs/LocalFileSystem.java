@@ -1,10 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.util.Collection;
@@ -14,8 +14,8 @@ import java.util.Set;
 import static java.util.Collections.singleton;
 
 public abstract class LocalFileSystem extends NewVirtualFileSystem {
-  @NonNls public static final String PROTOCOL = StandardFileSystems.FILE_PROTOCOL;
-  @NonNls public static final String PROTOCOL_PREFIX = StandardFileSystems.FILE_PROTOCOL_PREFIX;
+  public static final String PROTOCOL = StandardFileSystems.FILE_PROTOCOL;
+  public static final String PROTOCOL_PREFIX = StandardFileSystems.FILE_PROTOCOL_PREFIX;
 
   private static class LocalFileSystemHolder {
     private static final LocalFileSystem ourInstance = (LocalFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
@@ -35,26 +35,22 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    * Performs a non-recursive synchronous refresh of specified files.
    *
    * @param files files to refresh.
-   * @since 6.0
    */
-  public abstract void refreshIoFiles(@NotNull Iterable<File> files);
+  public abstract void refreshIoFiles(@NotNull Iterable<? extends File> files);
 
-  public abstract void refreshIoFiles(@NotNull Iterable<File> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
+  public abstract void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
   /**
    * Performs a non-recursive synchronous refresh of specified files.
    *
    * @param files files to refresh.
-   * @since 6.0
    */
-  public abstract void refreshFiles(@NotNull Iterable<VirtualFile> files);
+  public abstract void refreshFiles(@NotNull Iterable<? extends VirtualFile> files);
 
-  public abstract void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
+  public abstract void refreshFiles(@NotNull Iterable<? extends VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
   public interface WatchRequest {
-    @NotNull
-    String getRootPath();
-
+    @NotNull @SystemIndependent String getRootPath();
     boolean isToWatchRecursively();
   }
 
@@ -77,10 +73,8 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     }
   }
 
-  public void removeWatchedRoot(@Nullable WatchRequest watchRequest) {
-    if (watchRequest != null) {
-      removeWatchedRoots(singleton(watchRequest));
-    }
+  public void removeWatchedRoot(@NotNull WatchRequest watchRequest) {
+    removeWatchedRoots(singleton(watchRequest));
   }
 
   public void removeWatchedRoots(@NotNull Collection<WatchRequest> watchRequests) {
@@ -97,6 +91,10 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     return result.size() == 1 ? result.iterator().next() : null;
   }
 
+  /**
+   * Stops watching given watch requests and starts watching new paths.
+   * May do nothing and return the same set of requests when it contains exactly the same paths.
+   */
   @NotNull
   public abstract Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
                                                         @Nullable Collection<String> recursiveRoots,

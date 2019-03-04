@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -45,7 +45,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
                                                                        PsiKeyword.THROWS, PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS);
 
   public JavaCompilingVisitor(GlobalCompilingVisitor compilingVisitor) {
-    this.myCompilingVisitor = compilingVisitor;
+    myCompilingVisitor = compilingVisitor;
   }
 
   public void compile(PsiElement[] topLevelElements) {
@@ -94,6 +94,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     @Override
     public void visitCatchSection(PsiCatchSection section) {
+      // check parameter first and skip catch section if count is zero
       final PsiParameter parameter = section.getParameter();
       if (parameter != null && !handleWord(parameter.getName(), CODE, myCompilingVisitor.getContext())) return;
       super.visitCatchSection(section);
@@ -138,7 +139,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       }
       else if (element instanceof PsiKeyword) {
         final String keyword = element.getText();
-        if (!excludedKeywords.contains(keyword)) {
+        if (!excludedKeywords.contains(keyword) || element.getParent() instanceof PsiExpression) {
           GlobalCompilingVisitor.addFilesToSearchForGivenWord(keyword, true, CODE, myCompilingVisitor.getContext());
         }
       }
@@ -146,7 +147,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     @Override
     public List<String> getDescendantsOf(String className, boolean includeSelf, Project project) {
-      SmartList<String> result = new SmartList<>();
+      final SmartList<String> result = new SmartList<>();
 
       // use project and libraries scope, because super class may be outside the scope of the search
       final GlobalSearchScope projectAndLibraries = ProjectScope.getAllScope(project);

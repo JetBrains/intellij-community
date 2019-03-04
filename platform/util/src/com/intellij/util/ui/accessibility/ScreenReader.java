@@ -73,11 +73,8 @@ public class ScreenReader {
     Properties properties = new Properties();
     for (String path : paths) {
       try {
-        FileInputStream in = new FileInputStream(new File(path));
-        try {
+        try (FileInputStream in = new FileInputStream(new File(path))) {
           properties.load(in);
-        } finally {
-          in.close();
         }
       }
       catch (Exception ignore) {

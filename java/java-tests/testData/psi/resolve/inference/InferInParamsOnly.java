@@ -6,6 +6,6 @@ class C {
     <T> T f(T t1, T t2) {return null;}
 
     void foo () {
-        Object o = <ref>f (new A(), new B ());
+        Object o = <caret>f (new A(), new B ());
     }
 }

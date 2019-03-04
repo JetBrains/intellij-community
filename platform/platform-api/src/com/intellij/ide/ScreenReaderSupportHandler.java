@@ -17,31 +17,18 @@ package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.NotNull;
-
-import java.beans.PropertyChangeListener;
 
 /**
  * Keep {@link ScreenReader#isActive} in sync with {@link GeneralSettings#isSupportScreenReaders}
  */
-public class ScreenReaderSupportHandler implements Disposable {
-  private final GeneralSettings mySettings;
-  private final PropertyChangeListener myGeneralSettingsListener;
-
-  public ScreenReaderSupportHandler(@NotNull GeneralSettings generalSettings) {
-    mySettings = generalSettings;
-    myGeneralSettingsListener = e -> {
-      if (GeneralSettings.PROP_SUPPORT_SCREEN_READERS.equals(e.getPropertyName())) {
-        ScreenReader.setActive((Boolean)e.getNewValue());
-      }
-    };
-    mySettings.addPropertyChangeListener(myGeneralSettingsListener);
-
-    ScreenReader.setActive(mySettings.isSupportScreenReaders());
+public final class ScreenReaderSupportHandler implements Disposable {
+  public ScreenReaderSupportHandler() {
+    GeneralSettings generalSettings = GeneralSettings.getInstance();
+    generalSettings.addPropertyChangeListener(GeneralSettings.PROP_SUPPORT_SCREEN_READERS, this, e -> ScreenReader.setActive((Boolean)e.getNewValue()));
+    ScreenReader.setActive(generalSettings.isSupportScreenReaders());
   }
 
   @Override
   public void dispose() {
-    mySettings.removePropertyChangeListener(myGeneralSettingsListener);
   }
 }

@@ -66,7 +66,7 @@ public class ShowDiffContext {
     return map;
   }
 
-  public void addActions(@NotNull List<AnAction> action) {
+  public void addActions(@NotNull List<? extends AnAction> action) {
     if (myActions == null) myActions = ContainerUtil.newArrayList();
     myActions.addAll(action);
   }

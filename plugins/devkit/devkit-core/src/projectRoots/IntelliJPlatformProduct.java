@@ -23,6 +23,7 @@ import com.intellij.util.PlatformUtils;
 public enum IntelliJPlatformProduct {
   IDEA("IU", "IntelliJ IDEA", null),
   IDEA_IC("IC", "IntelliJ IDEA Community Edition", PlatformUtils.IDEA_CE_PREFIX),
+  IDEA_IE("IE", "IntelliJ IDEA Educational Edition", PlatformUtils.IDEA_EDU_PREFIX),
   RUBYMINE("RM", "RubyMine", PlatformUtils.RUBY_PREFIX),
   PYCHARM("PY", "PyCharm", PlatformUtils.PYCHARM_PREFIX),
   PYCHARM_PC("PC", "PyCharm Community Edition", PlatformUtils.PYCHARM_CE_PREFIX),

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.icons.AllIcons;
@@ -31,8 +17,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.vcs.log.VcsLogBranchFilter;
 import com.intellij.vcs.log.VcsLogDataPack;
+import com.intellij.vcs.log.VcsLogRevisionFilter;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.visible.filters.FilterPair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +29,8 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 
-public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogBranchFilter> {
+public class BranchFilterPopupComponent
+  extends MultipleValueFilterPopupComponent<FilterPair<VcsLogBranchFilter, VcsLogRevisionFilter>, VcsLogClassicFilterUi.BranchFilterModel> {
   public static final String BRANCH_FILTER_NAME = "Branch";
   private final VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
 
@@ -53,14 +42,14 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
 
   @NotNull
   @Override
-  protected String getText(@NotNull VcsLogBranchFilter filter) {
-    return displayableText(myFilterModel.getFilterValues(filter));
+  protected List<String> getFilterValues(@NotNull FilterPair<VcsLogBranchFilter, VcsLogRevisionFilter> filter) {
+    return myFilterModel.getFilterPresentation(filter);
   }
 
-  @Nullable
   @Override
-  protected String getToolTip(@NotNull VcsLogBranchFilter filter) {
-    return tooltip(myFilterModel.getFilterValues(filter));
+  @Nullable
+  protected FilterPair<VcsLogBranchFilter, VcsLogRevisionFilter> createFilter(@NotNull List<String> values) {
+    return myFilterModel.createFilterFromPresentation(values);
   }
 
   @Override
@@ -99,13 +88,13 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   private class MyBranchPopupBuilder extends BranchPopupBuilder {
     protected MyBranchPopupBuilder(@NotNull VcsLogDataPack dataPack,
                                    @Nullable Collection<VirtualFile> visibleRoots,
-                                   @Nullable List<List<String>> recentItems) {
+                                   @Nullable List<? extends List<String>> recentItems) {
       super(dataPack, visibleRoots, recentItems);
     }
 
     @NotNull
     @Override
-    public AnAction createAction(@NotNull String name, @NotNull Collection<VcsRef> refs) {
+    public AnAction createAction(@NotNull String name, @NotNull Collection<? extends VcsRef> refs) {
       return new BranchFilterAction(name, refs);
     }
 
@@ -116,7 +105,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
 
     @NotNull
     @Override
-    protected AnAction createCollapsedAction(@NotNull String actionName, @NotNull Collection<VcsRef> refs) {
+    protected AnAction createCollapsedAction(@NotNull String actionName, @NotNull Collection<? extends VcsRef> refs) {
       return new BranchFilterAction(actionName, refs);
     }
 
@@ -128,10 +117,10 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     private class BranchFilterAction extends PredefinedValueAction {
       @NotNull private final LayeredIcon myIcon;
       @NotNull private final LayeredIcon myHoveredIcon;
-      @NotNull private final Collection<VcsRef> myReferences;
+      @NotNull private final Collection<? extends VcsRef> myReferences;
       private boolean myIsFavorite;
 
-      BranchFilterAction(@NotNull String value, @NotNull Collection<VcsRef> references) {
+      BranchFilterAction(@NotNull String value, @NotNull Collection<? extends VcsRef> references) {
         super(value);
         myReferences = references;
         myIcon = new LayeredIcon(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16);

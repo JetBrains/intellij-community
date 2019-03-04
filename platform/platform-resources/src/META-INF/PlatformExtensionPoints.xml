@@ -47,6 +47,11 @@
     <extensionPoint name="fileTypeFactory"
                     interface="com.intellij.openapi.fileTypes.FileTypeFactory"/>
 
+    <extensionPoint name="fileTypeUsageSchemaDescriptor"
+                    beanClass="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$FileTypeUsageSchemaDescriptorEP">
+      <with attribute="implementationClass" implements="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageSchemaDescriptor"/>
+    </extensionPoint>
+
     <extensionPoint name="virtualFileSystem"
                     beanClass="com.intellij.util.KeyedLazyInstanceEP">
       <with attribute="implementationClass" implements="com.intellij.openapi.vfs.VirtualFileSystem"/>
@@ -154,6 +159,8 @@
       <with attribute="conditionClass" implements="com.intellij.openapi.util.Condition"/>
     </extensionPoint>
 
+    <extensionPoint name="toolWindowWhitelist" beanClass="com.intellij.openapi.wm.ToolWindowWhitelistEP"/>
+
     <extensionPoint name="library.toolWindow"  beanClass="com.intellij.openapi.wm.ext.LibraryDependentToolWindow">
       <with attribute="librarySearchClass" implements="com.intellij.openapi.wm.ext.LibrarySearchHelper"/>
       <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>
@@ -190,7 +197,10 @@
 
     <extensionPoint name="writingAccessProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vfs.WritingAccessProvider"/>
     <extensionPoint name="nonProjectFileWritingAccessExtension" area="IDEA_PROJECT" interface="com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension"/>
+
     <extensionPoint name="editorNotificationProvider" area="IDEA_PROJECT" interface="com.intellij.ui.EditorNotifications$Provider"/>
+    <extensionPoint name="editorNotificationProviderApp" interface="com.intellij.ui.EditorNotifications$Provider"/>
+
     <extensionPoint name="featureStatBundle" interface="com.intellij.featureStatistics.FeatureStatisticsBundleProvider"/>
     <extensionPoint name="featureStatisticsBundle" beanClass="com.intellij.featureStatistics.FeatureStatisticsBundleEP"/>
 
@@ -199,6 +209,7 @@
     <extensionPoint name="statistics.usagesCollector" interface="com.intellij.internal.statistic.UsagesCollector"/>
     <extensionPoint name="statistics.applicationUsagesCollector" interface="com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector"/>
     <extensionPoint name="statistics.projectUsagesCollector" interface="com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector"/>
+    <extensionPoint name="statistics.counterUsagesCollector" beanClass="com.intellij.internal.statistic.service.fus.collectors.CounterUsageCollectorEP"/>
 
     <extensionPoint name="editorHighlighterProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.EditorHighlighterProvider"/>
@@ -222,6 +233,7 @@
     <extensionPoint name="colorPickerListenerFactory" interface="com.intellij.ui.ColorPickerListenerFactory"/>
 
     <extensionPoint name="search.topHitProvider" interface="com.intellij.ide.SearchTopHitProvider"/>
+    <extensionPoint name="search.projectOptionsTopHitProvider" interface="com.intellij.ide.ui.OptionsSearchTopHitProvider$ProjectLevelProvider"/>
 
     <extensionPoint name="search.optionContributor" interface="com.intellij.ide.ui.search.SearchableOptionContributor"/>
 
@@ -285,7 +297,10 @@
     <extensionPoint name="notification.parentGroup" beanClass="com.intellij.notification.impl.NotificationParentGroupBean"/>
     <extensionPoint name="notification.group" beanClass="com.intellij.notification.impl.NotificationGroupBean"/>
 
-    <extensionPoint name="settingsSummaryFactory" interface="com.intellij.settingsSummary.ProblemType"/>
+    <!--suppress DeprecatedClassUsageInspection -->
+    <extensionPoint name="settingsSummaryFactory" interface="com.intellij.settingsSummary.ProblemType"/> <!-- To be removed in IDEA 2020.1 -->
+    <extensionPoint name="troubleInfoCollector" interface="com.intellij.troubleshooting.TroubleInfoCollector"/>
+    <extensionPoint name="generalTroubleInfoCollector" interface="com.intellij.troubleshooting.GeneralTroubleInfoCollector"/>
 
     <extensionPoint name="credentialStore" interface="com.intellij.credentialStore.CredentialStoreFactory"/>
 
@@ -314,6 +329,9 @@
       <with attribute="id"/>
       <with attribute="path"/>
     </extensionPoint>
+    <extensionPoint name="themeMetadataProvider" beanClass="com.intellij.ide.ui.UIThemeMetadataProvider">
+      <with attribute="path"/>
+    </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.tree.CustomLanguageASTComparator"/>
@@ -325,5 +343,11 @@
     </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean"/>
+
+    <extensionPoint name="fileBreadcrumbsCollector" interface="com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector" area="IDEA_PROJECT"/>
+
+    <extensionPoint qualifiedName="com.intellij.search.traverseUiHelper" interface="com.intellij.ide.ui.search.TraverseUIHelper"/>
+
+    <extensionPoint name="stalledStorage" beanClass="com.intellij.configurationStore.StalledStorageBean"/>
   </extensionPoints>
 </idea-plugin>

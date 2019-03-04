@@ -184,8 +184,8 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   }
 
   private void addFiles(@NotNull AbstractTreeNode parentNode,
-                        @NotNull List<File> roots,
-                        @NotNull final Collection<File> files,
+                        @NotNull List<? extends File> roots,
+                        @NotNull final Collection<? extends File> files,
                         @NotNull GroupByPackages groupByPackages,
                         String parentPath) {
     Collections.sort(roots, (file1, file2) -> {

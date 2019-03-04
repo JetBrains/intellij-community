@@ -99,7 +99,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
-  public void setValue(String valueText) throws IncorrectOperationException {
+  public void setValue(@NotNull String valueText) throws IncorrectOperationException {
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
     final PomModel model = PomManager.getModel(getProject());
     final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute(
@@ -181,7 +181,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
 
   private volatile VolatileState myVolatileState;
 
-  protected void appendChildToDisplayValue(StringBuilder buffer, ASTNode child) {
+  protected void appendChildToDisplayValue(@NotNull StringBuilder buffer, @NotNull ASTNode child) {
     buffer.append(child.getChars());
   }
 
@@ -249,7 +249,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   @Override
   public TextRange getValueTextRange() {
     final VolatileState state = getFreshState();
-    return state == null ? new TextRange(0,0) : state.myValueTextRange;
+    return state == null ? TextRange.EMPTY_RANGE :  state.myValueTextRange;
   }
 
   @Override
@@ -272,6 +272,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
+  @NotNull
   public PsiElement setName(@NotNull final String nameText) throws IncorrectOperationException {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     final String oldName = name == null ? "" : name.getText();
@@ -370,6 +371,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
                                                                                       externalResourceModificationTracker()));
   }
 
+  @NotNull
   private ModificationTracker externalResourceModificationTracker() {
     Project project = getProject();
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
@@ -387,6 +389,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     return attributeDescr == null ? descr.getAttributeDescriptor(getName(), tag) : attributeDescr;
   }
 
+  @NotNull
   public String getRealLocalName() {
     final String name = getLocalName();
     return name.endsWith(DUMMY_IDENTIFIER_TRIMMED) ? name.substring(0, name.length() - DUMMY_IDENTIFIER_TRIMMED.length()) : name;
@@ -456,7 +459,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     return volatileState;
   }
 
-  private static String getEntityValue(final XmlEntityRef entityRef) {
+  @NotNull
+  private static String getEntityValue(@NotNull final XmlEntityRef entityRef) {
     final XmlEntityDecl decl = entityRef.resolve(entityRef.getContainingFile());
     if (decl != null) {
       final XmlAttributeValue valueElement = decl.getValueElement();

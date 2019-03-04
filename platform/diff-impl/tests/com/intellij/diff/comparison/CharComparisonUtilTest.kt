@@ -82,14 +82,14 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       ("x_" - "")
       ("--" - "").default()
-      ("- " - "").ignore()
+      ("- " - "").trim()
       testAll()
     }
 
     chars {
       ("" - "x_")
       ("" - "--").default()
-      ("" - "- ").ignore()
+      ("" - "- ").trim()
       testAll()
     }
 
@@ -154,6 +154,7 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       (" x y z " - "xyz")
       ("- - - -" - "   ").default()
+      ("  - -  " - "   ").trim()
       ("       " - "   ").ignore()
       testAll()
     }
@@ -161,6 +162,7 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       ("xyz" - " x y z ")
       ("   " - "- - - -").default()
+      ("   " - "  - -  ").trim()
       ("   " - "       ").ignore()
       testAll()
     }
@@ -168,28 +170,28 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       ("x " - "x")
       (" -" - " ").default()
-      ("  " - " ").ignore()
+      ("  " - " ").trim()
       testAll()
     }
 
     chars {
       ("x" - " x")
       (" " - "- ").default()
-      (" " - "  ").ignore()
+      (" " - "  ").trim()
       testAll()
     }
 
     chars {
       (" x " - "x")
       ("- -" - " ").default()
-      ("   " - " ").ignore()
+      ("   " - " ").trim()
       testAll()
     }
 
     chars {
       ("x" - " x ")
       (" " - "- -").default()
-      (" " - "   ").ignore()
+      (" " - "   ").trim()
       testAll()
     }
   }
@@ -198,28 +200,44 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       (" x " - "z")
       ("---" - "-").default()
-      (" - " - "-").ignore()
+      (" - " - "-").trim()
       testAll()
     }
 
     chars {
       ("x" - " z ")
       ("-" - "---").default()
-      ("-" - " - ").ignore()
+      ("-" - " - ").trim()
       testAll()
     }
 
     chars {
       (" x" - "z\t")
-      ("--" - "--").default()
-      (" -" - "- ").ignore()
+      ("--" - "-.-").default()
+      (" -" - "-. ").trim()
       testAll()
     }
 
     chars {
       ("x " - "\tz")
-      ("--" - "--").default()
-      ("- " - " -").ignore()
+      ("--" - ".--").default()
+      ("- " - ". -").trim()
+      testAll()
+    }
+
+    chars {
+      ("x y z" - "xy_z")
+      (" - - " - "  - ").default()
+      (" - - " - "    ").trim()
+      ("     " - "    ").ignore()
+      testAll()
+    }
+
+    chars {
+      ("x y \n z" - "xy\nz")
+      (" - -. - " - "  .  ").default()
+      (" -  .   " - "  .  ").trim()
+      ("    .   " - "  .  ").ignore()
       testAll()
     }
   }
@@ -241,7 +259,7 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       ("x y z" - "x y m ")
       ("    -" - "    --").default()
-      ("    -" - "    - ").ignore()
+      ("    -" - "    - ").trim()
       testAll()
     }
 
@@ -254,7 +272,7 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       ("x y z" - " m y z")
       ("-    " - "--    ").default()
-      ("-    " - " -    ").ignore()
+      ("-    " - " -    ").trim()
       testAll()
     }
 
@@ -370,18 +388,115 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       (" x _ y _ z " - "x z")
       ("-  ------ -" - "   ").default()
-      ("     -     " - "   ").ignore()
+      ("     -     " - "   ").trim()
       default(del(0, 0, 1), del(3, 2, 6), del(10, 3, 1))
-      ignore(del(5, 2, 1))
+      trim(del(5, 2, 1))
       testAll()
     }
 
     chars {
       ("x z" - " x _ y _ z ")
       ("   " - "-  ------ -").default()
-      ("   " - "     -     ").ignore()
+      ("   " - "     -     ").trim()
       default(ins(0, 0, 1), ins(2, 3, 6), ins(3, 10, 1))
-      ignore(ins(2, 5, 1))
+      trim(ins(2, 5, 1))
+      testAll()
+    }
+  }
+
+  fun testTwoSteps() {
+    chars_smart {
+      ("  a" - "a  ")
+      ("-- " - " --").default()
+      testDefault()
+    }
+
+    chars_raw {
+      ("  a" - "a  ")
+      ("  -" - "-  ").default()
+      testDefault()
+    }
+
+    chars_smart {
+      ("bba" - "abb")
+      ("  -" - "-  ").default()
+      testDefault()
+    }
+
+    chars_raw {
+      ("bba" - "abb")
+      ("  -" - "-  ").default()
+      testDefault()
+    }
+
+    chars_smart {
+      ("$chSmile$chFace $chMan" - " $chGun$chFace$chMan ")
+      ("--  -  " - "---    -").default()
+      testDefault()
+    }
+
+    chars_raw {
+      ("$chSmile$chFace $chMan" - " $chGun$chFace$chMan ")
+      ("--   --" - "---  -- ").default()
+      testDefault()
+    }
+  }
+
+  fun testHighSurrogates() {
+    chars {
+      (chSmile - chSmile)
+      ("  " - "  ").default()
+      testAll()
+    }
+
+    chars {
+      (chSmile - chMan)
+      ("--" - "--").default()
+      testAll()
+    }
+
+    chars {
+      (chSmile - chGun)
+      ("--" - "--").default()
+      testAll()
+    }
+
+    chars {
+      (chFace - chGun)
+      ("--" - "--").default()
+      testAll()
+    }
+
+    chars {
+      ("$chSmile$chGun$chMan$chFace" - "$chGun$chMan$chFace$chSmile")
+      ("--      " - "      --").default()
+      testAll()
+    }
+
+    chars {
+      (chSmile - chGun)
+      ("--" - "--").default()
+      testAll()
+    }
+
+    chars {
+      (chFace - chGun)
+      ("--" - "--").default()
+      testAll()
+    }
+
+    chars {
+      ("$chSmile " - chGun)
+      ("---" - "--").default()
+      ("-- " - "--").trim()
+      testAll()
+    }
+
+    chars {
+      (" $chSmile$chFace $chMan" - "$chGun$chFace$chMan")
+      ("---  -  " - "--    ").default()
+      (" --  -  " - "--    ").trim()
+      (" --     " - "--    ").ignore()
       testAll()
     }
   }

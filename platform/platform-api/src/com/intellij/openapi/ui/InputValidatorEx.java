@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
  * a certain condition.
  *
  * @author yole
- * @since 9.0
  */
 public interface InputValidatorEx extends InputValidator {
   @Nullable

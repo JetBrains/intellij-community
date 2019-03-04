@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.navigator.actions;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -40,7 +39,7 @@ public class RemoveMavenRunConfigurationAction extends AnAction {
 
     int res = Messages.showYesNoDialog(project, "Delete \"" + settings.getName() + "\"?", "Confirmation", Messages.getQuestionIcon());
     if (res == Messages.YES) {
-      ((RunManagerEx)RunManager.getInstance(project)).removeConfiguration(settings);
+      RunManager.getInstance(project).removeConfiguration(settings);
     }
   }
 

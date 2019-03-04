@@ -22,7 +22,7 @@ public class RedundantStringOperationMerger extends InspectionElementsMergerBase
   }
 
   @Override
-  protected Element getSourceElement(Map<String, Element> inspectionElements, String sourceToolName) {
+  protected Element getSourceElement(@NotNull Map<String, Element> inspectionElements, @NotNull String sourceToolName) {
     if (inspectionElements.containsKey(sourceToolName)) {
       return inspectionElements.get(sourceToolName);
     }
@@ -42,12 +42,12 @@ public class RedundantStringOperationMerger extends InspectionElementsMergerBase
         }
 
         @Override
-        public Element merge(Map<String, Element> inspectionElements) {
+        public Element merge(@NotNull Map<String, Element> inspectionElements) {
           return super.merge(inspectionElements);
         }
 
         @Override
-        protected boolean writeMergedContent(Element toolElement) {
+        protected boolean writeMergedContent(@NotNull Element toolElement) {
           return true;
         }
       }.merge(inspectionElements);

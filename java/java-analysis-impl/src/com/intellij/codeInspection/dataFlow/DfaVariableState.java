@@ -40,7 +40,7 @@ class DfaVariableState {
   }
 
   DfaVariableState(@NotNull DfaFactMap factMap) {
-    myFactMap = factMap;
+    myFactMap = factMap.with(DfaFactType.SPECIAL_FIELD_VALUE, null);
     myHash = myFactMap.hashCode();
   }
 

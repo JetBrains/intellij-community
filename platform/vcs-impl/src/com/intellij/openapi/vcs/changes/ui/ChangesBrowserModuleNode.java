@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -52,20 +53,22 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
 
   @Override
   public int getSortWeight() {
-    return DIRECTORY_PATH_SORT_WEIGHT;
+    return MODULE_SORT_WEIGHT;
   }
 
   @Override
   public int compareUserObjects(final Module o2) {
-    return getUserObject().getName().compareToIgnoreCase(o2.getName());
+    return compareFileNames(getUserObject().getName(), o2.getName());
   }
 
   @NotNull
   private static FilePath getModuleRootFilePath(Module module) {
-    VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
-    if (roots.length == 1) {
-      return VcsUtil.getFilePath(roots[0]);
-    }
-    return VcsUtil.getFilePath(ModuleUtilCore.getModuleDirPath(module));
+    return ReadAction.compute(() -> {
+      VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
+      if (roots.length == 1) {
+        return VcsUtil.getFilePath(roots[0]);
+      }
+      return VcsUtil.getFilePath(ModuleUtilCore.getModuleDirPath(module));
+    });
   }
 }

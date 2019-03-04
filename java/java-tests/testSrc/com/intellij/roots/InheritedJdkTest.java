@@ -47,8 +47,8 @@ public class InheritedJdkTest extends ModuleTestCase {
       ModuleRootModificationUtil.setSdkInherited(myModule);
     });
 
-    assertTrue("JDK is inherited after explicit inheritSdk()", rootManager.isSdkInherited());
-    assertEquals("Correct jdk inherited", jdk, rootManager.getSdk());
+    assertTrue("JDK isn't inherited after explicit inheritSdk()", rootManager.isSdkInherited());
+    assertEquals("Incorrect jdk inherited", jdk, rootManager.getSdk());
 
     ModuleRootModificationUtil.setModuleSdk(myModule, null);
 

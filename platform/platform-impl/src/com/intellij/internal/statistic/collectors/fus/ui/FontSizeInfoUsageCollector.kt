@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.CollectUsagesException
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.ensureProperKey
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
@@ -19,9 +19,9 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
   override fun getUsages(): Set<UsageDescriptor> {
     val scheme = EditorColorsManager.getInstance().globalScheme
     val ui = UISettings.shadowInstance
-    var usages = setOf(
-      UsageDescriptor("UI.font.size[${ui.state.fontSize}]"),
-      UsageDescriptor(ensureProperKey("UI.font.name[${ui.state.fontFace}]")),
+    val usages = mutableSetOf(
+      UsageDescriptor("UI.font.size[${ui.fontSize}]"),
+      UsageDescriptor(ensureProperKey("UI.font.name[${ui.fontFace}]")),
       UsageDescriptor("Presentation.mode.font.size[${ui.presentationModeFontSize}]")
     )
     if (!scheme.isUseAppFontPreferencesInEditor) {
@@ -53,10 +53,10 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
   }
 
   override fun getGroupId(): String {
-    return "statistics.ui.fonts"
+    return "ui.fonts"
   }
 
-  override fun getContext(): FUSUsageContext? {
-    return FUSUsageContext.OS_CONTEXT
+  override fun getData(): FeatureUsageData? {
+    return FeatureUsageData().addOS()
   }
 }

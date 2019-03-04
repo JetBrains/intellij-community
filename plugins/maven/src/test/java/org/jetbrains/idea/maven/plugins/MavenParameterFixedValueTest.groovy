@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.plugins
 
+
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**

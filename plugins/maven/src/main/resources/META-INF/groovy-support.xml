@@ -30,5 +30,7 @@
 
     <completion.contributor language="Groovy" id="mavenGroovyPom" order="last"
                             implementationClass="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPomCompletionContributor"/>
+
+    <fileTypeUsageSchemaDescriptor schema="Maven Groovy" implementationClass="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyScriptTypeDetector"/>
   </extensions>
 </idea-plugin>

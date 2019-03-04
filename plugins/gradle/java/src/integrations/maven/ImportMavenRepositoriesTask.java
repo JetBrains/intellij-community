@@ -95,7 +95,7 @@ class ImportMavenRepositoriesTask {
       psiFileList.add(psiFile);
     }
 
-    final PsiFile[] psiFiles = ArrayUtil.toObjectArray(psiFileList, PsiFile.class);
+    final PsiFile[] psiFiles = psiFileList.toArray(PsiFile.EMPTY_ARRAY);
 
     final Set<MavenRemoteRepository> mavenRemoteRepositories = ReadAction.compute(() -> {
       Set<MavenRemoteRepository> myRemoteRepositories = ContainerUtil.newHashSet();
@@ -211,7 +211,7 @@ class ImportMavenRepositoriesTask {
 
     try {
       if (expression instanceof PsiLiteral) {
-        URI uri = new URI(String.valueOf(PsiLiteral.class.cast(expression).getValue()));
+        URI uri = new URI(String.valueOf(((PsiLiteral)expression).getValue()));
         if (uri.getScheme() != null && StringUtil.startsWith(uri.getScheme(), "http")) return uri;
       }
     }

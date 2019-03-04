@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.controlflow;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
@@ -39,11 +40,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author oleg
  */
 public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
+
+  @NotNull
+  private static final Set<String> EXCEPTION_SUPPRESSORS = ImmutableSet.of("suppress", "assertRaises", "assertRaisesRegex");
+
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
 
   public ControlFlow buildControlFlow(@NotNull final ScopeOwner owner) {
@@ -881,10 +887,20 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   @Override
   public void visitPyWithStatement(final PyWithStatement node) {
     super.visitPyWithStatement(node);
+
+    final boolean suppressor = StreamEx
+      .of(node.getWithItems())
+      .map(PyWithItem::getExpression)
+      .select(PyCallExpression.class)
+      .map(PyCallExpression::getCallee)
+      .select(PyReferenceExpression.class)
+      .anyMatch(it -> EXCEPTION_SUPPRESSORS.contains(it.getReferencedName()));
+
     myBuilder.processPending((pendingScope, instruction) -> {
       final PsiElement element = instruction.getElement();
-      if (element != null && PsiTreeUtil.isAncestor(node, element, true) &&
-          PsiTreeUtil.getParentOfType(element, PyRaiseStatement.class) != null) {
+      if (element != null &&
+          PsiTreeUtil.isAncestor(node, element, true) &&
+          (suppressor && canRaiseExceptions(instruction) || PsiTreeUtil.getParentOfType(element, PyRaiseStatement.class) != null)) {
         myBuilder.addPendingEdge(node, instruction);
       }
       myBuilder.addPendingEdge(pendingScope, instruction);

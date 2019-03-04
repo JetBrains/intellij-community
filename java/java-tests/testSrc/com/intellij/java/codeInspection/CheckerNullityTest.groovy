@@ -2,11 +2,12 @@
 package com.intellij.java.codeInspection
 
 import com.intellij.codeInsight.NullableNotNullManager
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase 
-
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 /**
  * @author peter
  */
+@CompileStatic
 class CheckerNullityTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -103,6 +104,19 @@ class MyClass {
     assert !NullableNotNullManager.isNullable(clazz.fields[0]) && !NullableNotNullManager.isNotNull(clazz.fields[0])
     assert NullableNotNullManager.isNullable(clazz.methods[0])
     assert NullableNotNullManager.isNullable(clazz.methods[0].parameterList.parameters[0])
+  }
+
+  void "test default nonnull qualifier"() {
+    def clazz = myFixture.addClass """
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.framework.qual.DefaultQualifier;
+import org.checkerframework.framework.qual.TypeUseLocation;
+
+@DefaultQualifier(value= NonNull.class, locations = TypeUseLocation.ALL)
+class Test {
+    private void testDefault(String param){ }
+}"""
+    assert NullableNotNullManager.isNotNull(clazz.methods[0].parameterList.parameters[0])
   }
   
 }

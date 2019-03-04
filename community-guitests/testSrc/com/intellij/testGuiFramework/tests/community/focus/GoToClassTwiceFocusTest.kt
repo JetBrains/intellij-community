@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.LogActionsDuringTest
 import com.intellij.testGuiFramework.impl.ScreenshotsDuringTest
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key.ESCAPE
@@ -21,11 +20,6 @@ import javax.swing.KeyStroke
 class GoToClassTwiceFocusTest : GuiTestCase() {
 
   private val typedString = "hefuihwefwehrf;werfwerfw"
-
-  @Rule @JvmField
-  val screenshotsDuringTest = ScreenshotsDuringTest()
-  @Rule @JvmField
-  val logActionsDuringTest = LogActionsDuringTest()
 
   private val actionKeyStroke: KeyStroke by lazy {
     val activeKeymapShortcuts: ShortcutSet = KeymapUtil.getActiveKeymapShortcuts("GotoClass")

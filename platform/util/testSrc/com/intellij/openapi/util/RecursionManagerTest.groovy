@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util
 
 import groovy.transform.Immutable
@@ -61,6 +47,12 @@ class RecursionManagerTest extends TestCase {
     }
     assert "bar-return2" == prevent("bar") {
       return "bar-return2"
+    }
+  }
+
+  void "test no memoization after exiting SOE loop inside another preventing call"() {
+    prevent("unrelated") {
+      testNoMemoizationAfterExit()
     }
   }
 
@@ -122,9 +114,7 @@ class RecursionManagerTest extends TestCase {
       assert "2-return" == prevent("2") { fail() }
       assert !stamp.mayCacheNow()
 
-      stamp = myGuard.markStack()
-      assert "3-return" == prevent("3") { fail() }
-      assert !stamp.mayCacheNow()
+      assert "3-another-return" == prevent("3") { "3-another-return" } // call to 3 doesn't depend on 2 now, so recalculate
 
       return "1-return"
     }
@@ -176,7 +166,7 @@ class RecursionManagerTest extends TestCase {
 
   @Immutable
   private static class RecursiveKey {
-    final String id;
+    final String id
 
     @Override
     int hashCode() {
@@ -186,7 +176,7 @@ class RecursionManagerTest extends TestCase {
     @Override
     boolean equals(Object obj) {
       RecursionManager.doPreventingRecursion("abc", false) { true }
-      return obj instanceof RecursiveKey && obj.id == id;
+      return obj instanceof RecursiveKey && obj.id == id
     }
   }
 

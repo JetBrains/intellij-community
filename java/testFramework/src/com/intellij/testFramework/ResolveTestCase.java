@@ -40,6 +40,9 @@ public abstract class ResolveTestCase extends PsiTestCase {
         myDocument = null;
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -91,6 +94,7 @@ public abstract class ResolveTestCase extends PsiTestCase {
     return ref;
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath() + "/psi/resolve/";

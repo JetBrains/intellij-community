@@ -29,7 +29,7 @@ import java.util.concurrent.locks.Lock;
  */
 public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Value, Input> {
 
-  boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
+  boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
 
   @NotNull
   Lock getReadLock();

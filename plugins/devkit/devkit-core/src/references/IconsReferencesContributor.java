@@ -241,10 +241,10 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   private static void registerForPresentationAnnotation(@NotNull PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar.registerUastReferenceProvider(
       registrar,
-      UastPatterns.stringLiteralExpression()
+      UastPatterns.injectionHostUExpression()
         .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
         .annotationParam(Presentation.class.getName(), "icon"),
-      UastReferenceRegistrar.uastLiteralReferenceProvider((uElement, referencePsiElement) -> new PsiReference[]{
+      UastReferenceRegistrar.uastInjectionHostReferenceProvider((uElement, referencePsiElement) -> new PsiReference[]{
         new IconPsiReferenceBase(referencePsiElement) {
 
           private UElement getUElement() {

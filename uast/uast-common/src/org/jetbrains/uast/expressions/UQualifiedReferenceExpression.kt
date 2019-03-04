@@ -53,4 +53,9 @@ interface UQualifiedReferenceExpression : UReferenceExpression {
     visitor.visitQualifiedReferenceExpression(this, data)
 
   override fun asLogString(): String = log()
+
+  @JvmDefault
+  override val referenceNameElement: UElement?
+    get() = unwrapReferenceNameElement(selector)
+
 }

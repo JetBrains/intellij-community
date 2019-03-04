@@ -33,6 +33,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
@@ -54,6 +57,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 
@@ -64,6 +68,7 @@ public class GradleProjectResolverUtil {
   private static final Logger LOG = Logger.getInstance(GradleProjectResolverUtil.class);
   @NotNull
   private static final Key<Object> CONTAINER_KEY = Key.create(Object.class, ExternalSystemConstants.UNORDERED);
+  public static final String BUILD_SRC_NAME = "buildSrc";
 
   @NotNull
   public static DataNode<ModuleData> createMainModule(@NotNull ProjectResolverContext resolverCtx,
@@ -134,22 +139,18 @@ public class GradleProjectResolverUtil {
                                       @NotNull ProjectResolverContext resolverCtx) {
     String delimiter;
     StringBuilder moduleName = new StringBuilder();
-    String defaultGroupId = resolverCtx.getDefaultGroupId();
+    String buildSrcGroup = resolverCtx.getBuildSrcGroup();
     if (resolverCtx.isUseQualifiedModuleNames()) {
       delimiter = ".";
-      String groupId = externalProject.getGroup();
-      if (StringUtil.isEmpty(groupId)) {
-        groupId = defaultGroupId;
+      if (StringUtil.isNotEmpty(buildSrcGroup)) {
+        moduleName.append(buildSrcGroup).append(delimiter);
       }
-      if (StringUtil.isNotEmpty(groupId)) {
-        moduleName.append(groupId).append(delimiter);
-      }
-      moduleName.append(externalProject.getName());
+      moduleName.append(gradlePathToQualifiedName(gradleModule.getProject().getName(), externalProject.getQName()));
     }
     else {
       delimiter = "_";
-      if (StringUtil.isNotEmpty(defaultGroupId)) {
-        moduleName.append(defaultGroupId).append(delimiter);
+      if (StringUtil.isNotEmpty(buildSrcGroup)) {
+        moduleName.append(buildSrcGroup).append(delimiter);
       }
       moduleName.append(gradleModule.getName());
     }
@@ -159,6 +160,16 @@ public class GradleProjectResolverUtil {
       moduleName.append(sourceSetName);
     }
     return PathUtilRt.suggestFileName(moduleName.toString(), true, false);
+  }
+
+  @NotNull
+  private static String gradlePathToQualifiedName(@NotNull String rootName,
+                                                  @NotNull String gradlePath) {
+    return
+      (gradlePath.startsWith(":") ? rootName + "." : "")
+      + Arrays.stream(gradlePath.split(":"))
+        .filter(s -> !s.isEmpty())
+        .collect(Collectors.joining("."));
   }
 
   @NotNull
@@ -402,6 +413,7 @@ public class GradleProjectResolverUtil {
     }
   }
 
+  @Deprecated
   @SuppressWarnings("unchecked")
   public static Collection<DependencyData> getIdeDependencies(@NotNull ProjectResolverContext resolverCtx,
                                                               @NotNull DataNode<? extends ModuleData> moduleDataNode,
@@ -523,9 +535,9 @@ public class GradleProjectResolverUtil {
       DataNode<? extends ExternalEntityData> depOwnerDataNode = null;
       if (mergedDependency instanceof ExternalProjectDependency) {
         class ProjectDependencyInfo {
-          @NotNull ModuleData myModuleData;
-          @Nullable ExternalSourceSet mySourceSet;
-          Collection<File> dependencyArtifacts;
+          @NotNull final ModuleData myModuleData;
+          @Nullable final ExternalSourceSet mySourceSet;
+          final Collection<File> dependencyArtifacts;
 
           ProjectDependencyInfo(@NotNull ModuleData moduleData,
                                        @Nullable ExternalSourceSet sourceSet,
@@ -551,14 +563,26 @@ public class GradleProjectResolverUtil {
           String moduleId = getModuleId(projectDependency);
           Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> projectPair = sourceSetMap.get(moduleId);
           if (projectPair == null) {
+            MultiMap<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, File> projectPairs =
+              new LinkedMultiMap<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, File>() {
+                @Override
+                protected EqualityPolicy<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> getEqualityPolicy() {
+                  //noinspection unchecked
+                  return (EqualityPolicy<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>>)EqualityPolicy.IDENTITY;
+                }
+              };
+
             for (File file: projectDependency.getProjectDependencyArtifacts()) {
               moduleId = artifactsMap.get(ExternalSystemApiUtil.toCanonicalPath(file.getAbsolutePath()));
               if (moduleId == null) continue;
               projectPair = sourceSetMap.get(moduleId);
 
               if (projectPair == null) continue;
+              projectPairs.putValue(projectPair, file);
+            }
+            for (Map.Entry<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, Collection<File>> entry : projectPairs.entrySet()) {
               projectDependencyInfos.add(new ProjectDependencyInfo(
-                projectPair.first.getData(), projectPair.second, Collections.singleton(file)));
+                entry.getKey().first.getData(), entry.getKey().second, entry.getValue()));
             }
           }
           else {

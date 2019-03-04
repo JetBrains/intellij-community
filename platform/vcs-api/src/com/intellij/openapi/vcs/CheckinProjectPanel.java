@@ -60,7 +60,6 @@ public interface CheckinProjectPanel extends Refreshable, CommitMessageI {
    * includes files which will be deleted from the VCS during the check-in operation.
    *
    * @return the files selected for checkin.
-   * @since 5.1
    */
   Collection<File> getFiles();
 
@@ -89,7 +88,6 @@ public interface CheckinProjectPanel extends Refreshable, CommitMessageI {
    * Gets the description for the check-in.
    *
    * @return the description text.
-   * @since 5.1
    */
   @NotNull
   String getCommitMessage();

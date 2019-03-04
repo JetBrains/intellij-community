@@ -30,7 +30,6 @@ import java.util.List;
  * @author Konstantin Bulenkov
  * @see FileSaverDialog
  * @see FileChooserDescriptor
- * @since 9.0
  */
 public class FileSaverDescriptor extends FileChooserDescriptor implements Cloneable {
   private final List<String> extensions;

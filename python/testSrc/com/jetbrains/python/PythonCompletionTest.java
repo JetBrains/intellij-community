@@ -314,6 +314,14 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  public void testSuperMethodWithAnnotation() {
+    doTest();
+  }
+
+  public void testSuperMethodWithCommentAnnotation() {
+    doTest();
+  }
+
   public void testLocalVarInDictKey() {  // PY-2558
     doTest();
   }
@@ -1406,6 +1414,15 @@ public class PythonCompletionTest extends PyTestCase {
                                               "c1.<caret>");
     assertNotNull(suggested);
     assertContainsElements(suggested, "_make", "_asdict", "_replace", "_fields");
+  }
+
+  // PY-31938
+  public void testReassignedDictKeys() {
+    final List<String> suggested = doTestByText("foo = {'k1': '1', 'k2': '2'}\n" +
+                                                "bar = foo\n" +
+                                                "bar['<caret>']");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "'k1'", "'k2'");
   }
 
   private void assertNoVariantsInExtendedCompletion() {

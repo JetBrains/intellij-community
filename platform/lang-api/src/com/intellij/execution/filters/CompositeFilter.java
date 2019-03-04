@@ -46,19 +46,17 @@ public class CompositeFilter implements Filter, FilterMixin {
   public CompositeFilter(@NotNull Project project, @NotNull List<Filter> filters) {
     myDumbService = DumbService.getInstance(project);
     myFilters = filters;
-    myFilters.forEach(filter -> {
-      myIsAnyHeavy |= filter instanceof FilterMixin;
-    });
+    myFilters.forEach(filter -> myIsAnyHeavy |= filter instanceof FilterMixin);
   }
 
-  protected CompositeFilter(DumbService dumbService) {
+  protected CompositeFilter(@NotNull DumbService dumbService) {
     myDumbService = dumbService;
     myFilters = new ArrayList<>();
   }
 
   @Override
   @Nullable
-  public Result applyFilter(final String line, final int entireLength) {
+  public Result applyFilter(@NotNull final String line, final int entireLength) {
     final boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
     int count = filters.size();
@@ -80,25 +78,27 @@ public class CompositeFilter implements Filter, FilterMixin {
         catch (Throwable t) {
           throw new RuntimeException("Error while applying " + filter + " to '" + line + "'", t);
         }
-        resultItems = merge(resultItems, result, entireLength, filter);
+        if (result != null) {
+          resultItems = merge(resultItems, result, entireLength, filter);
+        }
 
         t0 = System.currentTimeMillis() - t0;
         if (t0 > 1000) {
           LOG.warn(filter.getClass().getSimpleName() + ".applyFilter() took " + t0 + " ms on '''" + line + "'''");
         }
-        if (shouldStopFiltering(result)) {
+        if (result != null && shouldStopFiltering(result)) {
           break;
         }
       }
     }
-    return createFinalResult(resultItems);
-  }
-
-  @Nullable
-  private static Result createFinalResult(@Nullable List<ResultItem> resultItems) {
     if (resultItems == null) {
       return null;
     }
+    return createFinalResult(resultItems);
+  }
+
+  @NotNull
+  private static Result createFinalResult(@NotNull List<ResultItem> resultItems) {
     if (resultItems.size() == 1) {
       ResultItem resultItem = resultItems.get(0);
       return new Result(resultItem.getHighlightStartOffset(), resultItem.getHighlightEndOffset(), resultItem.getHyperlinkInfo(),
@@ -112,30 +112,27 @@ public class CompositeFilter implements Filter, FilterMixin {
     return new Result(resultItems);
   }
 
-  private boolean shouldStopFiltering(@Nullable Result result) {
-    return result != null && result.getNextAction() == NextAction.EXIT && !forceUseAllFilters;
+  private boolean shouldStopFiltering(@NotNull Result result) {
+    return result.getNextAction() == NextAction.EXIT && !forceUseAllFilters;
   }
 
-  @Nullable
-  private List<ResultItem> merge(@Nullable List<ResultItem> resultItems, @Nullable Result newResult, int entireLength, Filter filter) {
-    if (newResult != null) {
-      if (resultItems == null) {
-        resultItems = new ArrayList<>();
-      }
-      List<ResultItem> newItems = newResult.getResultItems();
-      for (int i = 0; i < newItems.size(); i++) {
-        ResultItem item = newItems.get(i);
-        if ((item.getHyperlinkInfo() == null || !
-          intersects(resultItems, item)) &&
-            checkOffsetsCorrect(item, entireLength, filter)) {
-          resultItems.add(item);
-        }
+  @NotNull
+  private static List<ResultItem> merge(@Nullable List<ResultItem> resultItems, @NotNull Result newResult, int entireLength, @NotNull Filter filter) {
+    if (resultItems == null) {
+      resultItems = new ArrayList<>();
+    }
+    List<ResultItem> newItems = newResult.getResultItems();
+    for (int i = 0; i < newItems.size(); i++) {
+      ResultItem item = newItems.get(i);
+      if ((item.getHyperlinkInfo() == null || !
+        intersects(resultItems, item)) && checkOffsetsCorrect(item, entireLength, filter)) {
+        resultItems.add(item);
       }
     }
     return resultItems;
   }
 
-  private static boolean checkOffsetsCorrect(ResultItem item, int entireLength, Filter filter) {
+  private static boolean checkOffsetsCorrect(@NotNull ResultItem item, int entireLength, @NotNull Filter filter) {
     int start = item.getHighlightStartOffset();
     int end = item.getHighlightEndOffset();
     if (end < start || end > entireLength) {
@@ -145,16 +142,16 @@ public class CompositeFilter implements Filter, FilterMixin {
     return true;
   }
 
-  protected boolean intersects(List<? extends ResultItem> items, ResultItem newItem) {
+  protected static boolean intersects(@NotNull List<? extends ResultItem> items, @NotNull ResultItem newItem) {
     TextRange newItemTextRange = null;
 
     for (int i = 0; i < items.size(); i++) {
       ResultItem item = items.get(i);
       if (item.getHyperlinkInfo() != null) {
         if (newItemTextRange == null) {
-          newItemTextRange = new TextRange(newItem.highlightStartOffset, newItem.highlightEndOffset);
+          newItemTextRange = new TextRange(newItem.getHighlightStartOffset(), newItem.getHighlightEndOffset());
         }
-        if (newItemTextRange.intersectsStrict(item.highlightStartOffset, item.highlightEndOffset)) {
+        if (newItemTextRange.intersectsStrict(item.getHighlightStartOffset(), item.getHighlightEndOffset())) {
           return true;
         }
       }

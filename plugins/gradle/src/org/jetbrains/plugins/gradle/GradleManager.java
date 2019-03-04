@@ -21,9 +21,9 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.SearchScopeProvider;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
@@ -36,9 +36,9 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternalSystemAutoImportAware;
@@ -46,12 +46,17 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.startup.StartupActivity;
@@ -78,6 +83,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.settings.GradleConfigurable;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.*;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -89,6 +95,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findAll;
 import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 
 /**
@@ -175,8 +182,9 @@ public class GradleManager
   public Function<Pair<Project, String>, GradleExecutionSettings> getExecutionSettingsProvider() {
     return pair -> {
       final Project project = pair.first;
+      final String projectPath = pair.second;
       GradleSettings settings = GradleSettings.getInstance(project);
-      File gradleHome = myInstallationManager.getGradleHome(project, pair.second);
+      File gradleHome = myInstallationManager.getGradleHome(project, projectPath);
       String localGradlePath = null;
       if (gradleHome != null) {
         try {
@@ -188,11 +196,11 @@ public class GradleManager
         }
       }
 
-      GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(pair.second);
+      GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(projectPath);
       final DistributionType distributionType;
       if (projectLevelSettings == null) {
         distributionType =
-          GradleUtil.isGradleDefaultWrapperFilesExist(pair.second) ? DistributionType.DEFAULT_WRAPPED : DistributionType.BUNDLED;
+          GradleUtil.isGradleDefaultWrapperFilesExist(projectPath) ? DistributionType.DEFAULT_WRAPPED : DistributionType.BUNDLED;
       }
       else {
         distributionType =
@@ -208,7 +216,7 @@ public class GradleManager
         result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
       }
 
-      final String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : pair.second;
+      final String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : projectPath;
       final Sdk gradleJdk = myInstallationManager.getGradleJdk(project, rootProjectPath);
       final String javaHome = gradleJdk != null ? gradleJdk.getHomePath() : null;
       if (!StringUtil.isEmpty(javaHome)) {
@@ -228,8 +236,10 @@ public class GradleManager
         result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
         result.setUseQualifiedModuleNames(projectLevelSettings.isUseQualifiedModuleNames());
       }
+      boolean delegatedBuildEnabled = GradleSettingsService.getInstance(project).isDelegatedBuildEnabled(projectPath);
+      result.setDelegatedBuild(delegatedBuildEnabled);
 
-      configureExecutionWorkspace(projectLevelSettings, settings, result, project, pair.second);
+      configureExecutionWorkspace(projectLevelSettings, settings, result, project, projectPath);
       return result;
     };
   }
@@ -337,7 +347,7 @@ public class GradleManager
   @Nullable
   @Override
   public Icon getProjectIcon() {
-    return GradleIcons.Gradle;
+    return GradleIcons.GradleFile;
   }
 
   @Nullable
@@ -435,6 +445,43 @@ public class GradleManager
       @Override
       public void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath) {
         ExternalProjectsManager.getInstance(project).getExternalProjectsWatcher().markDirty(linkedProjectPath);
+      }
+
+      @Override
+      public void onBuildDelegationChange(boolean delegatedBuild, @NotNull String linkedProjectPath) {
+        if (!updateOutputRoots(delegatedBuild, linkedProjectPath)) {
+          ExternalProjectsManager.getInstance(project).getExternalProjectsWatcher().markDirty(linkedProjectPath);
+        }
+      }
+
+      private boolean updateOutputRoots(boolean delegatedBuild, @NotNull String linkedProjectPath) {
+        ExternalProjectInfo projectInfo =
+          ProjectDataManager.getInstance().getExternalProjectData(project, GradleConstants.SYSTEM_ID, linkedProjectPath);
+        if (projectInfo == null) return false;
+
+        String buildNumber = projectInfo.getBuildNumber();
+        if (buildNumber == null) return false;
+
+        final DataNode<ProjectData> projectStructure = projectInfo.getExternalProjectStructure();
+        if (projectStructure == null) return false;
+
+        String title = ExternalSystemBundle.message("progress.refresh.text", projectStructure.getData().getExternalName(),
+                                                    projectInfo.getProjectSystemId().getReadableName());
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, title, false) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            DumbService.getInstance(project).suspendIndexingAndRun(title, () -> {
+              for (DataNode<ModuleData> moduleDataNode : findAll(projectStructure, ProjectKeys.MODULE)) {
+                moduleDataNode.getData().useExternalCompilerOutput(delegatedBuild);
+                for (DataNode<GradleSourceSetData> sourceSetDataNode : findAll(projectStructure, GradleSourceSetData.KEY)) {
+                  sourceSetDataNode.getData().useExternalCompilerOutput(delegatedBuild);
+                }
+              }
+              ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, project, true);
+            });
+          }
+        });
+        return true;
       }
     });
 

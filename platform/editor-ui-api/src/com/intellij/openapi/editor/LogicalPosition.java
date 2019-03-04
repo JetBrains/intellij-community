@@ -27,58 +27,9 @@ import java.awt.*;
  *
  * @see Editor#xyToLogicalPosition(Point)
  */
-@SuppressWarnings("FieldMayBeStatic") // To be removed after deprecated fields are removed
 public class LogicalPosition implements Comparable<LogicalPosition> {
   public final int line;
   public final int column;
-
-  /**
-   * @deprecated Not used by platform code since 2018.2.
-   *             Always {@code false} in {@link LogicalPosition} instances returned by platform code since 2016.1.
-   *             Always {@code false} since 2018.2.
-   *             To be removed in 2019.2.
-   */
-  @Deprecated public final boolean visualPositionAware = false;
-
-  /**
-   * @deprecated Not used by platform code since 2018.2.
-   *             Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
-   *             Always {@code 0} since 2018.2.
-   *             To be removed in 2019.2.
-   */
-  @Deprecated public final int softWrapLinesBeforeCurrentLogicalLine = 0;
-
-  /**
-   * @deprecated Not used by platform code since 2018.2.
-   *             Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
-   *             Always {@code 0} since 2018.2.
-   *             To be removed in 2019.2.
-   */
-  @Deprecated public final int softWrapLinesOnCurrentLogicalLine = 0;
-
-  /**
-   * @deprecated Not used by platform code since 2018.2.
-   *             Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
-   *             Always {@code 0} since 2018.2.
-   *             To be removed in 2019.2.
-   */
-  @Deprecated public final int softWrapColumnDiff = 0;
-
-  /**
-   * @deprecated Not used by platform code since 2018.2.
-   *             Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
-   *             Always {@code 0} since 2018.2.
-   *             To be removed in 2019.2.
-   */
-  @Deprecated public final int foldedLines = 0;
-
-  /**
-   * @deprecated Not used by platform code since 2018.2.
-   *             Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
-   *             Always {@code 0} since 2018.2.
-   *             To be removed in 2019.2.
-   */
-  @Deprecated public final int foldingColumnDiff = 0;
 
   /**
    * If {@code true}, this position is associated with succeeding character (in logical order), otherwise it's associated with
@@ -88,14 +39,6 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * This field has no impact on equality and comparison relationships between {@code LogicalPosition} instances.
    */
   public final boolean leansForward;
-
-  /**
-   * @deprecated Not used by platform code since 2018.2.
-   *             Always {@code false} in {@link LogicalPosition} instances returned by platform code since 2016.1.
-   *             Always {@code false} since 2018.2.
-   *             To be removed in 2019.2.
-   */
-  @Deprecated public final boolean visualPositionLeansRight = false;
 
   public LogicalPosition(int line, int column) throws IllegalArgumentException {
     this(line, column, false);
@@ -130,31 +73,6 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
                          int softWrapColumnDiff, int foldedLines, int foldingColumnDiff, boolean leansForward,
                          boolean visualPositionLeansRight) throws IllegalArgumentException {
     this(line, column, leansForward);
-  }
-
-  /**
-   * Builds visual position based on a state of the current logical position.
-   *
-   * @return    visual position based on a state of the current logical position
-   *
-   * @deprecated Result doesn't makes sense since 2018.2 - it just returns a visual position with same line and column as logical position.
-   *             To convert logical to visual position, use {@link Editor#logicalToVisualPosition(LogicalPosition)}.
-   *             To be removed in 2019.2.
-   */
-  @Deprecated
-  public VisualPosition toVisualPosition() {
-    return new VisualPosition(line, column);
-  }
-
-  /**
-   * Returns a new instance of class corresponding to the same logical position in the document, but without any cached
-   * reference to its visual position.
-   * 
-   * @deprecated Not needed since 2018.2 (just returns {@code this}). To be removed in 2019.2.
-   */
-  @Deprecated
-  public LogicalPosition withoutVisualPositionInfo() {
-    return this;
   }
 
   /**

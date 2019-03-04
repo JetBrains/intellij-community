@@ -208,11 +208,11 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   public <T extends DomElement> T createStableCopy() {
     XmlTag tag = getXmlTag();
     if (tag != null && tag.isPhysical()) {
-      final DomElement existing = myManager.getDomElement(tag);
-      assert existing != null : existing + "\n---------\n" + tag.getParent().getText() + "\n-----------\n" + tag.getText();
-      assert getProxy().equals(existing) : existing + "\n---------\n" + tag.getParent().getText() + "\n-----------\n" + tag.getText() + "\n----\n" + this + " != " +
-                                           DomManagerImpl.getDomInvocationHandler(existing);
-      final SmartPsiElementPointer<XmlTag> pointer =
+      DomInvocationHandler existing = myManager.getDomHandler(tag);
+      if (!equals(existing)) {
+        throw new IllegalStateException(this + " != " + existing);
+      }
+      SmartPsiElementPointer<XmlTag> pointer =
         SmartPointerManager.getInstance(myManager.getProject()).createSmartPsiElementPointer(tag);
       return myManager.createStableValue(new StableCopyFactory<T>(pointer, myType, getClass()));
     }
@@ -665,8 +665,13 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         AttributeChildInvocationHandler semElement =
           myManager.getSemService().getSemElement(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute);
         if (semElement == null) {
-          final AttributeChildInvocationHandler take2 = myManager.getSemService().getSemElement(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute);
-          throw new AssertionError("No DOM at XML. Parent=" + tag + "; attribute=" + attribute + "; second attempt=" + take2);
+          throw new AssertionError("No DOM at XML. Parent=" + tag +
+                                   "; ns=" + ns +
+                                   "; description=" + description +
+                                   "; attribute=" + attribute.getName() +
+                                   "; XML consistent=" + (PhysicalDomParentStrategy.getParentTag(attribute) == tag) +
+                                   "; DOM consistent =" + equals(DomSemContributor.getParentDom(tag)) +
+                                   "; re-creation=" + DomSemContributor.createAttributeHandler(attribute));
         }
         return semElement;
       }
@@ -858,7 +863,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       final SemKey<? extends DomInvocationHandler> key = description instanceof CustomDomChildrenDescription ? DomManagerImpl.DOM_CUSTOM_HANDLER_KEY : DomManagerImpl.DOM_COLLECTION_HANDLER_KEY;
       final DomInvocationHandler semElement = myManager.getSemService().getSemElement(key, subTag);
       if (semElement == null) {
-        String msg = "No child for subTag '" + subTag.getName() + "' in tag '" + tag.getName() + "' using key " + key + "; subtag count=" + subTags.size();
+        String msg = "No child for subTag '" + subTag.getName() + "' in tag '" + tag.getName() + "' using key " + key + "; subtag count=" + subTags.size() + ", description=" + description + ", subtag.class=" + subTag.getClass().getName();
         DomInvocationHandler anyDom = myManager.getDomHandler(subTag);
         if (anyDom != null) {
           msg += "\n sub-dom=" + anyDom + " with " + anyDom.getChildDescription();

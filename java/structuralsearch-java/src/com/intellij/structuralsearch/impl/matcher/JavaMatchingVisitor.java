@@ -1280,7 +1280,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitBreakStatement(final PsiBreakStatement break1) {
     final PsiBreakStatement break2 = (PsiBreakStatement)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(break1.getLabelIdentifier(), break2.getLabelIdentifier()));
+    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(break1.getExpression(), break2.getExpression()));
   }
 
   @Override
@@ -1371,7 +1371,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       ContainerUtil.addAll(unmatchedElements, catches2);
       context.pushMatchedElementsListener(elements -> unmatchedElements.removeAll(elements));
       try {
-        myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(catches1, catches2));
+        if (!myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(catches1, catches2))) {
+          return;
+        }
       } finally {
         context.popMatchedElementsListener();
       }

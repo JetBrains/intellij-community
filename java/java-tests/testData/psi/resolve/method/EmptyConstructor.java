@@ -1,5 +1,5 @@
 class A{
  A(){
-  <ref>super();
+  <caret>super();
  }
 }

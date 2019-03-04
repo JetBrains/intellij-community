@@ -4,6 +4,8 @@ package com.intellij.ide.projectWizard.kotlin.createProject
 import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -18,6 +20,16 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest(private val testParameters: 
     val gradleModuleGroup: NewProjectDialogModel.GradleGroupModules,
     val expectedFacet: FacetStructure) : Serializable {
     override fun toString() = projectName
+  }
+
+  @Before
+  fun beforeTest(){
+    screenshot("before")
+  }
+
+  @After
+  fun afterTest(){
+    screenshot("after")
   }
 
   @Test

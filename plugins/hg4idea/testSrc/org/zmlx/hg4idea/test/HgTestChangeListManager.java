@@ -93,7 +93,7 @@ public class HgTestChangeListManager {
    */
   public void ensureUpToDate() {
     if (!ApplicationManager.getApplication().isDispatchThread()) { // for dispatch thread no need to force update.
-      peer.ensureUpToDate(false);
+      peer.ensureUpToDate();
     }
   }
 

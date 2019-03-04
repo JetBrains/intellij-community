@@ -45,8 +45,8 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameForUnshelve;
+import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager.getBinaryShelveChanges;
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager.getShelveChanges;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
@@ -81,9 +81,9 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
   }
 
   private static void unshelveMultipleShelveChangeLists(@NotNull final Project project,
-                                                        @NotNull final List<ShelvedChangeList> changeLists,
-                                                        @NotNull List<ShelvedBinaryFile> binaryFiles,
-                                                        @NotNull List<ShelvedChange> changes) {
+                                                        @NotNull final List<? extends ShelvedChangeList> changeLists,
+                                                        @NotNull List<? extends ShelvedBinaryFile> binaryFiles,
+                                                        @NotNull List<? extends ShelvedChange> changes) {
     String suggestedName = changeLists.get(0).DESCRIPTION;
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     final ChangeListChooser chooser =
@@ -112,14 +112,15 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
   private static class MyUnshelveDialog extends ApplyPatchDifferentiatedDialog {
 
     MyUnshelveDialog(@NotNull Project project,
-                            @NotNull VirtualFile patchFile,
-                            @NotNull ShelvedChangeList changeList,
-                            @NotNull List<ShelvedBinaryFilePatch> binaryShelvedPatches,
-                            @Nullable Change[] preselectedChanges) {
+                     @NotNull VirtualFile patchFile,
+                     @NotNull ShelvedChangeList changeList,
+                     @NotNull List<? extends ShelvedBinaryFilePatch> binaryShelvedPatches,
+                     @Nullable Change[] preselectedChanges) {
       super(project, new UnshelvePatchDefaultExecutor(project, changeList), Collections.emptyList(), ApplyPatchMode.UNSHELVE, patchFile,
             null, getPredefinedChangeList(changeList, ChangeListManager.getInstance(project)), binaryShelvedPatches,
             hasNotAllSelectedChanges(project, changeList, preselectedChanges) ? newArrayList(preselectedChanges) : null,
             getChangeListNameForUnshelve(changeList), true);
+      setOKButtonText(VcsBundle.getString("unshelve.changes.action"));
     }
 
     @Nullable

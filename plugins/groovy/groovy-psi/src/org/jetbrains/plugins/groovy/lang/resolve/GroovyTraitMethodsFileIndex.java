@@ -100,7 +100,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     if (stub == null) return null;
     BufferExposingByteArrayOutputStream buffer = new BufferExposingByteArrayOutputStream();
     ApplicationManager.getApplication().runReadAction(() -> SerializationManagerEx.getInstanceEx().serialize(stub, buffer));
-    return new ByteArraySequence(buffer.getInternalBuffer(), 0, buffer.size());
+    return buffer.toByteArraySequence();
   }
 
   @Nullable

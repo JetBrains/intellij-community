@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class EvaluatorBuilderImpl
@@ -33,6 +33,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,7 +157,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (unboxedLType != null) {
         if (rType instanceof PsiPrimitiveType && !PsiType.NULL.equals(rType)) {
           if (!rType.equals(unboxedLType)) {
-            rEvaluator = new TypeCastEvaluator(rEvaluator, unboxedLType.getCanonicalText(), true);
+            rEvaluator = createTypeCastEvaluator(rEvaluator, unboxedLType);
           }
           rEvaluator = new BoxingEvaluator(rEvaluator);
         }
@@ -170,7 +172,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           final PsiType _rType = unboxedRType != null? unboxedRType : rType;
           if (_rType instanceof PsiPrimitiveType && !PsiType.NULL.equals(_rType)) {
             if (!lType.equals(_rType)) {
-              rEvaluator = new TypeCastEvaluator(rEvaluator, lType.getCanonicalText(), true);
+              rEvaluator = createTypeCastEvaluator(rEvaluator, lType);
             }
           }
         }
@@ -224,9 +226,14 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       myResult = new ReturnEvaluator(accept(statement.getReturnValue()));
     }
 
+    @Override
+    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+      throw new EvaluateRuntimeException(new UnsupportedExpressionException("Synchronized is not yet supported"));
+    }
 
     @Override
     public void visitStatement(PsiStatement statement) {
+      LOG.error(DebuggerBundle.message("evaluation.error.statement.not.supported", statement.getText()));
       throwEvaluateException(DebuggerBundle.message("evaluation.error.statement.not.supported", statement.getText()));
     }
 
@@ -368,6 +375,32 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
+    public void visitSwitchStatement(PsiSwitchStatement statement) {
+      PsiCodeBlock body = statement.getBody();
+      if (body != null) {
+        Evaluator expressionEvaluator = accept(statement.getExpression());
+        if (expressionEvaluator != null) {
+          myResult = new SwitchStatementEvaluator(expressionEvaluator, visitStatements(body.getStatements()), getLabel(statement));
+        }
+      }
+    }
+
+    @Override
+    public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+      List<Evaluator> evaluators = ContainerUtil.newSmartList();
+      PsiExpressionList caseValues = statement.getCaseValues();
+      if (caseValues != null) {
+        for (PsiExpression expression : caseValues.getExpressions()) {
+          Evaluator evaluator = accept(expression);
+          if (evaluator != null) {
+            evaluators.add(evaluator);
+          }
+        }
+      }
+      myResult = new SwitchStatementEvaluator.SwitchCaseEvaluator(evaluators, statement.isDefaultCase());
+    }
+
+    @Override
     public void visitBreakStatement(PsiBreakStatement statement) {
       PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
       myResult = BreakContinueStatementEvaluator.createBreakEvaluator(labelIdentifier != null ? labelIdentifier.getText() : null);
@@ -377,6 +410,16 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     public void visitContinueStatement(PsiContinueStatement statement) {
       PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
       myResult = BreakContinueStatementEvaluator.createContinueEvaluator(labelIdentifier != null ? labelIdentifier.getText() : null);
+    }
+
+    @Override
+    public void visitExpressionListStatement(PsiExpressionListStatement statement) {
+      myResult = new ExpressionListEvaluator(ContainerUtil.mapNotNull(statement.getExpressionList().getExpressions(), this::accept));
+    }
+
+    @Override
+    public void visitEmptyStatement(PsiEmptyStatement statement) {
+      // do nothing
     }
 
     @Override
@@ -454,40 +497,40 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         // handle numeric promotion
         if (PsiType.DOUBLE.equals(_lType)) {
           if (TypeConversionUtil.areTypesConvertible(_rType, PsiType.DOUBLE)) {
-            rResult = new TypeCastEvaluator(rResult, PsiType.DOUBLE.getCanonicalText(), true);
+            rResult = createTypeCastEvaluator(rResult, PsiType.DOUBLE);
           }
         }
         else if (PsiType.DOUBLE.equals(_rType)) {
           if (TypeConversionUtil.areTypesConvertible(_lType, PsiType.DOUBLE)) {
-            lResult = new TypeCastEvaluator(lResult, PsiType.DOUBLE.getCanonicalText(), true);
+            lResult = createTypeCastEvaluator(lResult, PsiType.DOUBLE);
           }
         }
         else if (PsiType.FLOAT.equals(_lType)) {
           if (TypeConversionUtil.areTypesConvertible(_rType, PsiType.FLOAT)) {
-            rResult = new TypeCastEvaluator(rResult, PsiType.FLOAT.getCanonicalText(), true);
+            rResult = createTypeCastEvaluator(rResult, PsiType.FLOAT);
           }
         }
         else if (PsiType.FLOAT.equals(_rType)) {
           if (TypeConversionUtil.areTypesConvertible(_lType, PsiType.FLOAT)) {
-            lResult = new TypeCastEvaluator(lResult, PsiType.FLOAT.getCanonicalText(), true);
+            lResult = createTypeCastEvaluator(lResult, PsiType.FLOAT);
           }
         }
         else if (PsiType.LONG.equals(_lType)) {
           if (TypeConversionUtil.areTypesConvertible(_rType, PsiType.LONG)) {
-            rResult = new TypeCastEvaluator(rResult, PsiType.LONG.getCanonicalText(), true);
+            rResult = createTypeCastEvaluator(rResult, PsiType.LONG);
           }
         }
         else if (PsiType.LONG.equals(_rType)) {
           if (TypeConversionUtil.areTypesConvertible(_lType, PsiType.LONG)) {
-            lResult = new TypeCastEvaluator(lResult, PsiType.LONG.getCanonicalText(), true);
+            lResult = createTypeCastEvaluator(lResult, PsiType.LONG);
           }
         }
         else {
           if (!PsiType.INT.equals(_lType) && TypeConversionUtil.areTypesConvertible(_lType, PsiType.INT)) {
-            lResult = new TypeCastEvaluator(lResult, PsiType.INT.getCanonicalText(), true);
+            lResult = createTypeCastEvaluator(lResult, PsiType.INT);
           }
           if (!PsiType.INT.equals(_rType) && TypeConversionUtil.areTypesConvertible(_rType, PsiType.INT)) {
-            rResult = new TypeCastEvaluator(rResult, PsiType.INT.getCanonicalText(), true);
+            rResult = createTypeCastEvaluator(rResult, PsiType.INT);
           }
         }
       }
@@ -1134,7 +1177,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (_unboxedIndexType instanceof PsiPrimitiveType) {
         final PsiType promotionType = calcUnaryNumericPromotionType((PsiPrimitiveType)_unboxedIndexType);
         if (promotionType != null) {
-          operandEvaluator = new TypeCastEvaluator(operandEvaluator, promotionType.getCanonicalText(), true);
+          operandEvaluator = createTypeCastEvaluator(operandEvaluator, promotionType);
         }
       }
       return operandEvaluator;
@@ -1174,21 +1217,27 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       final boolean performCastToWrapperClass = shouldPerformBoxingConversion && !castingToPrimitive;
 
       if (!(PsiUtil.resolveClassInClassTypeOnly(castType) instanceof PsiTypeParameter)) {
-        String castTypeName = castType.getCanonicalText();
         if (performCastToWrapperClass) {
-          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(castType);
-          if (unboxedType != null) {
-            castTypeName = unboxedType.getCanonicalText();
-          }
+          castType = ObjectUtils.notNull(PsiPrimitiveType.getUnboxedType(castType), operandType);
         }
 
-        myResult = new TypeCastEvaluator(operandEvaluator, castTypeName, castingToPrimitive);
+        myResult = createTypeCastEvaluator(operandEvaluator, castType);
       }
 
       if (performCastToWrapperClass) {
         myResult = new BoxingEvaluator(myResult);
       }
     }
+
+    private static TypeCastEvaluator createTypeCastEvaluator(Evaluator operandEvaluator, PsiType castType) {
+      if (castType instanceof PsiPrimitiveType) {
+        return new TypeCastEvaluator(operandEvaluator, castType.getCanonicalText());
+      }
+      else {
+        return new TypeCastEvaluator(operandEvaluator, new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(castType)));
+      }
+    }
+
 
     @Override
     public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
@@ -1221,7 +1270,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
             PsiClass containingClass = method.getContainingClass();
             if (containingClass != null) {
               String find;
-              String bind = "";
+              boolean bind = false;
               if (method.isConstructor()) {
                 find = "findConstructor(" + containingClass.getQualifiedName() + ".class, mt)";
               }
@@ -1229,7 +1278,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
                 find = "in(" + containingClass.getQualifiedName() + ".class).findSpecial(" +
                        containingClass.getQualifiedName() + ".class, \"" + method.getName() + "\", mt, " +
                        containingClass.getQualifiedName() + ".class)";
-                bind = "mh = mh.bindTo(" + qualifier.getText() + ");\n";
+                bind = true;
               }
               else {
                 find = containingClass.getQualifiedName() + ".class, \"" + method.getName() + "\", mt)";
@@ -1238,13 +1287,22 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
                 }
                 else {
                   find = "findVirtual(" + find;
-                  bind = "mh = mh.bindTo(" + qualifier.getText() + ");\n";
+                  if (qualifier instanceof PsiReference) {
+                    PsiElement resolve = ((PsiReference)qualifier).resolve();
+                    if (!(resolve instanceof PsiClass)) {
+                      bind = true;
+                    }
+                  }
+                  else {
+                    bind = true;
+                  }
                 }
               }
+              String bidStr = bind ? "mh = mh.bindTo(" + qualifier.getText() + ");\n" : "";
               code =
                 "MethodType mt = MethodType.fromMethodDescriptorString(\"" + JVMNameUtil.getJVMSignature(method) + "\", null);\n" +
                 "MethodHandle mh = MethodHandles.lookup()." + find + ";\n" +
-                bind +
+                bidStr +
                 "MethodHandleProxies.asInterfaceInstance(" + interfaceType.getCanonicalText() + ".class, mh);";
             }
           } else if (PsiUtil.isArrayClass(resolved)) {
@@ -1273,11 +1331,16 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         new UnsupportedExpressionException(DebuggerBundle.message("evaluation.error.method.reference.evaluation.not.supported")));
     }
 
-    private Evaluator buildFromJavaCode(String code, String imports, @NotNull PsiElement context) throws EvaluateException {
+    private Evaluator buildFromJavaCode(String code, String imports, @NotNull PsiElement context) {
       TextWithImportsImpl text = new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, code, imports, StdFileTypes.JAVA);
       JavaCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(text, context, context.getProject());
-      ExpressionEvaluator evaluator = new Builder(myPosition).buildElement(codeFragment);
-      return evaluationContext -> evaluator.evaluate(evaluationContext);
+      try {
+        ExpressionEvaluator evaluator = new Builder(myPosition).buildElement(codeFragment);
+        return evaluationContext -> evaluator.evaluate(evaluationContext);
+      }
+      catch (EvaluateException e) {
+        throw new EvaluateRuntimeException(e);
+      }
     }
 
     @Override
@@ -1432,6 +1495,19 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
     }
 
+    @Override
+    public void visitAssertStatement(PsiAssertStatement statement) {
+      PsiExpression condition = statement.getAssertCondition();
+      if (condition == null) {
+        throwEvaluateException("Assert condition expected in: " + statement.getText());
+      }
+      PsiExpression description = statement.getAssertDescription();
+      String descriptionText = description != null ? description.getText() : "";
+      myResult = new AssertStatementEvaluator(buildFromJavaCode("if (!(" + condition.getText() + ")) { " +
+                                                                "throw new java.lang.AssertionError(" + descriptionText + ");}",
+                                                                "", statement));
+    }
+
     @Nullable
     private static PsiClass getOuterClass(PsiClass aClass) {
       return aClass == null ? null : PsiTreeUtil.getContextOfType(aClass, PsiClass.class, true);
@@ -1491,7 +1567,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           break;
         }
         final PsiType actualArgType = actualArgumentExpressions[idx].getType();
-        if (TypeConversionUtil.boxingConversionApplicable(declaredParamType, actualArgType)) {
+        if (TypeConversionUtil.boxingConversionApplicable(declaredParamType, actualArgType) ||
+            (declaredParamType != null && actualArgType == null)) {
           final Evaluator argEval = argumentEvaluators[idx];
           argumentEvaluators[idx] = declaredParamType instanceof PsiPrimitiveType ? new UnBoxingEvaluator(argEval) : new BoxingEvaluator(argEval);
         }

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
 
@@ -25,11 +26,13 @@ public class GithubPullRequestDetailed extends GithubPullRequest {
     return merged;
   }
 
-  public boolean getMergeable() {
-    return mergeable != null && mergeable;
+  @Nullable
+  public Boolean getMergeable() {
+    return mergeable;
   }
 
-  public boolean getRebaseable() {
-    return rebaseable != null && rebaseable;
+  @Nullable
+  public Boolean getRebaseable() {
+    return rebaseable;
   }
 }

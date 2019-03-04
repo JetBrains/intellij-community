@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <g fill="none" fill-rule="evenodd">
+    <path fill="#9AA7B0" fill-opacity=".8" d="M9,3 L9,4 L2,4 L2,12 L9,12 L9,13 L1,13 L1,3 L9,3 Z M12,3 L15,3 L15,13 L12,13 L12,12 L14,12 L14,4 L12,4 L12,3 Z M6,6 L6,11 L5,11 L5,6 L3,6 L3,5 L8,5 L8,6 L6,6 Z"/>
+    <path fill="#231F20" fill-opacity=".7" d="M8,1 L10,1 L10,2 L8,2 L8,1 Z M11,1 L13,1 L13,2 L11,2 L11,1 Z M10,2 L11,2 L11,14 L10,14 L10,2 Z M8,14 L10,14 L10,15 L8,15 L8,14 Z M11,14 L13,14 L13,15 L11,15 L11,14 Z"/>
+  </g>
+</svg>

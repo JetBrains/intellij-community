@@ -20,7 +20,6 @@ import com.intellij.diff.tools.simple.ThreesideDiffChangeBase;
 import com.intellij.diff.tools.util.text.MergeInnerDifferences;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -303,32 +302,20 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
     Icon icon = isOnesideAppliedConflict() ? DiffUtil.getArrowDownIcon(side) : DiffUtil.getArrowIcon(side);
-    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, isConflict(), () -> {
-      myViewer.executeMergeCommand("Accept change", Collections.singletonList(this), () -> {
-        myViewer.replaceChange(this, side, modifier);
-      });
-    });
+    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, isConflict(), () -> myViewer.executeMergeCommand("Accept change", Collections.singletonList(this), () -> myViewer.replaceChange(this, side, modifier)));
   }
 
   @Nullable
   private GutterIconRenderer createIgnoreRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
-    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, isConflict(), () -> {
-      myViewer.executeMergeCommand("Ignore change", Collections.singletonList(this), () -> {
-        myViewer.ignoreChange(this, side, modifier);
-      });
-    });
+    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, isConflict(), () -> myViewer.executeMergeCommand("Ignore change", Collections.singletonList(this), () -> myViewer.ignoreChange(this, side, modifier)));
   }
 
   @Nullable
   private GutterIconRenderer createResolveRenderer() {
     if (!this.isConflict() || !myViewer.canResolveChangeAutomatically(this, ThreeSide.BASE)) return null;
 
-    return createIconRenderer(DiffBundle.message("merge.dialog.resolve.change.action.name"), AllIcons.Diff.MagicResolve, false, () -> {
-      myViewer.executeMergeCommand("Resolve conflict", Collections.singletonList(this), () -> {
-        myViewer.resolveChangeAutomatically(this, ThreeSide.BASE);
-      });
-    });
+    return createIconRenderer(DiffBundle.message("merge.dialog.resolve.change.action.name"), AllIcons.Diff.MagicResolve, false, () -> myViewer.executeMergeCommand("Resolve conflict", Collections.singletonList(this), () -> myViewer.resolveChangeAutomatically(this, ThreeSide.BASE)));
   }
 
   @NotNull
@@ -339,7 +326,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     final String tooltipText = DiffUtil.createTooltipText(text, ctrlClickVisible ? CTRL_CLICK_TO_RESOLVE : null);
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
-      protected void performAction(@NotNull AnActionEvent e) {
+      protected void handleMouseClick() {
         perform.run();
       }
     };

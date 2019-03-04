@@ -34,12 +34,10 @@
                      implementationClass="com.intellij.codeInspection.i18n.I18nInspection"/>
     <localInspection groupPath="Java"  language="JAVA" shortName="UnresolvedPropertyKey" bundle="messages.CodeInsightBundle"
                      key="inspection.unresolved.property.key.reference.name"
-                     displayName="inspection.unresolved.property.key.reference.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.properties.files" enabledByDefault="true"
                      level="ERROR" implementationClass="com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection"/>
     <globalInspection language="Properties" shortName="InconsistentResourceBundle" bundle="messages.InspectionsBundle"
                       key="inconsistent.resource.bundle.display.name" groupBundle="messages.PropertiesBundle"
-                      displayName="inconsistent.resource.bundle.display.name"
                       groupKey="properties.files.inspection.group.display.name" enabledByDefault="true" level="ERROR"
                       implementationClass="com.intellij.codeInspection.i18n.inconsistentResourceBundle.InconsistentResourceBundleInspection"/>
     <localInspection language="Properties" shortName="UnusedMessageFormatParameter" bundle="messages.PropertiesBundle"
@@ -47,7 +45,6 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.lang.properties.UnusedMessageFormatParameterInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DuplicateStringLiteralInspection" bundle="messages.InspectionsBundle"
-                     displayName="inspection.duplicates.display.name"
                      key="inspection.duplicates.display.name" groupKey="group.names.internationalization.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection"/>

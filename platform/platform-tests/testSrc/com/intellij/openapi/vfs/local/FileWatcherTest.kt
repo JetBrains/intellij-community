@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -18,7 +18,9 @@ import com.intellij.openapi.vfs.local.FileWatcherTestUtil.NATIVE_PROCESS_DELAY
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.SHORT_PROCESS_DELAY
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.shutdown
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.startup
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.unwatch
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.wait
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.watch
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.PlatformTestUtil
@@ -30,14 +32,10 @@ import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.After
+import org.junit.*
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
 import java.io.File
-import java.lang.IllegalStateException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
@@ -227,6 +225,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
   // ensure that flat roots set via symbolic paths behave correctly and do not report dirty files returned from other recursive roots
   @Test fun testSymbolicLinkIntoFlatRoot() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
+
     val root = tempDir.newFolder("root")
     val cDir = tempDir.newFolder("root/A/B/C")
     val aLink = File(root, "aLink")
@@ -242,6 +242,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testMultipleSymbolicLinkPathsToFile() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
+
     val root = tempDir.newFolder("root")
     val file = tempDir.newFile("root/A/B/C/test.txt")
     val bLink = File(root, "bLink")
@@ -260,6 +262,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testSymbolicLinkWatchRoot() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
+
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
     val link = Files.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
@@ -273,6 +277,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testSymbolicLinkAboveWatchRoot() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
+
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
     val link = Files.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
@@ -291,14 +297,20 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val junction = IoTestUtil.createJunction("${top.path}/dir1/dir2", "${top}/link")
-    val fileLink = File(top, "link/dir3/test.txt")
-    refresh(top)
+    val junctionPath = "${top}/link"
+    val junction = IoTestUtil.createJunction("${top.path}/dir1/dir2", junctionPath)
+    try {
+      val fileLink = File(top, "link/dir3/test.txt")
+      refresh(top)
 
-    watch(junction)
-    assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
-    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
-    assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
+      watch(junction)
+      assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
+      assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+      assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
+    }
+    finally {
+      IoTestUtil.deleteJunction(junctionPath)
+    }
   }
 
   @Test fun testJunctionAboveWatchRoot() {
@@ -306,16 +318,22 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    IoTestUtil.createJunction("${top.path}/dir1/dir2", "${top}/link")
-    val watchRoot = File(top, "link/dir3")
-    val fileLink = File(watchRoot, file.name)
-    refresh(top)
+    val junctionPath = "${top}/link"
+    IoTestUtil.createJunction("${top.path}/dir1/dir2", junctionPath)
+    try {
+      val watchRoot = File(top, "link/dir3")
+      val fileLink = File(watchRoot, file.name)
+      refresh(top)
 
-    watch(watchRoot)
+      watch(watchRoot)
 
-    assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
-    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
-    assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
+      assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
+      assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+      assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
+    }
+    finally {
+      IoTestUtil.deleteJunction(junctionPath)
+    }
   }
 
   /*
@@ -461,7 +479,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testLineBreaksInName() {
-    assumeTrue(SystemInfo.isUnix)
+    assumeTrue("Expected Unix", SystemInfo.isUnix)
 
     val root = tempDir.newFolder("root")
     val file = tempDir.newFile("root/weird\ndir\nname/weird\nfile\nname")
@@ -578,7 +596,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   private enum class WatchStatus { CHECK_WATCHED, CHECK_NOT_WATCHED, DO_NOT_CHECK }
 
   private fun watch(file: File, recursive: Boolean = true, checkRoots: WatchStatus = WatchStatus.CHECK_WATCHED): LocalFileSystem.WatchRequest {
-    val request = FileWatcherTestUtil.watch(watcher, file, recursive)
+    val request = watch(watcher, file, recursive)
     @Suppress("NON_EXHAUSTIVE_WHEN")
     when (checkRoots) {
       WatchStatus.CHECK_WATCHED -> assertThat(watcher.manualWatchRoots).doesNotContain(file.path)
@@ -588,7 +606,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   private fun unwatch(request: LocalFileSystem.WatchRequest) {
-    FileWatcherTestUtil.unwatch(watcher, request)
+    unwatch(watcher, request)
     fs.refresh(false)
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
 import org.jetbrains.annotations.NotNull;
@@ -11,16 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * @see Block#getAlignment()
  * @see ChildAttributes#getAlignment()
  */
-
 public abstract class Alignment {
-
   public enum Anchor { LEFT, RIGHT }
-
-  private static AlignmentFactory myFactory;
-
-  static void setFactory(AlignmentFactory factory) {
-    myFactory = factory;
-  }
 
   public static Alignment createAlignment() {
     return createAlignment(false, Anchor.LEFT);
@@ -83,7 +75,7 @@ public abstract class Alignment {
    * @return                      alignment object with the given {@code 'allow backward shift'} setting
    */
   public static Alignment createAlignment(boolean allowBackwardShift, @NotNull Anchor anchor) {
-    return myFactory.createAlignment(allowBackwardShift, anchor);
+    return Formatter.getInstance().createAlignment(allowBackwardShift, anchor);
   }
 
   /**
@@ -120,6 +112,6 @@ public abstract class Alignment {
    * @return        alignment object with the given alignment defined as a {@code 'base alignment'}
    */
   public static Alignment createChildAlignment(final Alignment base) {
-    return myFactory.createChildAlignment(base);
+    return Formatter.getInstance().createChildAlignment(base);
   }
 }

@@ -21,12 +21,12 @@ import java.lang.reflect.Field;
  * @author Konstantin Bulenkov
  */
 public abstract class PropertiesComponent extends SimpleModificationTracker {
-  public abstract void unsetValue(String name);
+  public abstract void unsetValue(@NotNull String name);
 
-  public abstract boolean isValueSet(String name);
+  public abstract boolean isValueSet(@NotNull String name);
 
   @Nullable
-  public abstract String getValue(@NonNls String name);
+  public abstract String getValue(@NonNls @NotNull String name);
 
   /**
    * Consider to use {@link #setValue(String, String, String)} to avoid write defaults.
@@ -61,9 +61,9 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
   public abstract void setValue(@NotNull String name, boolean value, boolean defaultValue);
 
   @Nullable
-  public abstract String[] getValues(@NonNls String name);
+  public abstract String[] getValues(@NonNls @NotNull String name);
 
-  public abstract void setValues(@NonNls String name, String[] values);
+  public abstract void setValues(@NonNls @NotNull String name, String[] values);
 
   public static PropertiesComponent getInstance(Project project) {
     return ServiceManager.getService(project, PropertiesComponent.class);
@@ -86,7 +86,7 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
   }
 
   @NotNull
-  public String getValue(@NonNls String name, @NotNull String defaultValue) {
+  public String getValue(@NonNls @NotNull String name, @NotNull String defaultValue) {
     if (!isValueSet(name)) {
       return defaultValue;
     }
@@ -106,7 +106,7 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
     return StringUtilRt.parseInt(getValue(name), defaultValue);
   }
 
-  public final long getOrInitLong(@NonNls String name, long defaultValue) {
+  public final long getOrInitLong(@NonNls @NotNull String name, long defaultValue) {
     try {
       String value = getValue(name);
       return value == null ? defaultValue : Long.parseLong(value);
@@ -120,7 +120,7 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
    * @deprecated Use {@link #getValue(String, String)}
    */
   @Deprecated
-  public String getOrInit(@NonNls String name, String defaultValue) {
+  public String getOrInit(@NonNls @NotNull String name, String defaultValue) {
     if (!isValueSet(name)) {
       setValue(name, defaultValue);
       return defaultValue;
@@ -189,7 +189,7 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
     }
   }
 
-  public float getFloat(String name, float defaultValue) {
+  public float getFloat(@NotNull String name, float defaultValue) {
     if (isValueSet(name)) {
       try {
         return Float.parseFloat(getValue(name));

@@ -26,6 +26,44 @@ public class UnnecessaryBoxing {
         return foo == null ? <warning descr="Unnecessary boxing 'Integer.valueOf(0)'">Integer.valueOf(0)</warning> : bar;
     }
 
+    void additionalInnerBoxing(String str) {
+      short s = <warning descr="Redundant boxing inside 'Short.valueOf(str)'">Short.valueOf(str)</warning>;
+      int i = <warning descr="Redundant boxing inside 'Integer.valueOf(str)'">Integer.valueOf(str)</warning>;
+      long l = <warning descr="Redundant boxing inside 'Long.valueOf(str)'">Long.valueOf(str)</warning>;
+      double d = <warning descr="Redundant boxing inside 'Double.valueOf(str)'">Double.valueOf(str)</warning>;
+      float f = <warning descr="Redundant boxing inside 'Float.valueOf(str)'">Float.valueOf(str)</warning>;
+      boolean bool = <warning descr="Redundant boxing inside 'Boolean.valueOf(str)'">Boolean.valueOf(str)</warning>;
+      byte b = <warning descr="Redundant boxing inside 'Byte.valueOf(str)'">Byte.valueOf(str)</warning>;
+    }
+
+    short parseShort(String id) {
+      return <warning descr="Redundant boxing inside 'Short.valueOf(id)'">Short.valueOf(id)</warning>;
+    }
+
+    int parseInt(String id) {
+      return <warning descr="Redundant boxing inside 'Integer.valueOf(id)'">Integer.valueOf(id)</warning>;
+    }
+
+    long parseLong(String id) {
+      return <warning descr="Redundant boxing inside 'Long.valueOf(id)'">Long.valueOf(id)</warning>;
+    }
+
+    double parseDouble(String id) {
+      return <warning descr="Redundant boxing inside 'Double.valueOf(id)'">Double.valueOf(id)</warning>;
+    }
+
+    float parseFloat(String id) {
+      return <warning descr="Redundant boxing inside 'Float.valueOf(id)'">Float.valueOf(id)</warning>;
+    }
+
+    boolean parseBoolean(String id) {
+      return <warning descr="Redundant boxing inside 'Boolean.valueOf(id)'">Boolean.valueOf(id)</warning>;
+    }
+
+    byte parseByte(String id) {
+      return <warning descr="Redundant boxing inside 'Byte.valueOf(id)'">Byte.valueOf(id)</warning>;
+    }
+
     void noUnboxing(Object val) {
         if (val == Integer.valueOf(0)) {
 
@@ -141,5 +179,11 @@ class WithLambdaUnfriendlyOverloads {
     Integer y = <warning descr="Unnecessary boxing 'Integer.valueOf(5)'">Integer.valueOf(5)</warning>;
     System.out.println(x.getClass());
     System.out.println(y.getClass());
+  }
+
+  int testSwitchExpression(int x) {
+    return switch(x) {
+      default -> <warning descr="Unnecessary boxing 'Integer.valueOf(x)'">Integer.valueOf(x)</warning>;
+    };
   }
 }

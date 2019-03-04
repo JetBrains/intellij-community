@@ -19,34 +19,33 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.impl.RunDialog;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class EditConfigurationAction extends RunConfigurationTreeAction {
-  public EditConfigurationAction() {
-    super(ExecutionBundle.message("run.dashboard.edit.configuration.action.name"),
-          ExecutionBundle.message("run.dashboard.edit.configuration.action.name"),
-          AllIcons.Actions.EditSource);
-  }
-
+public class EditConfigurationAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
-      e.getPresentation().setText(ExecutionBundle.message("run.dashboard.edit.configuration.action.name") + "...");
+    Project project = e.getProject();
+    RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTarget(e);
+    boolean enabled = node != null && RunManager.getInstance(project).hasSettings(node.getConfigurationSettings());
+    e.getPresentation().setEnabled(enabled);
+    boolean popupPlace = ActionPlaces.isPopupPlace(e.getPlace());
+    e.getPresentation().setVisible(enabled || !popupPlace);
+    if (popupPlace) {
+      e.getPresentation().setText(getTemplatePresentation().getText() + "...");
     }
   }
 
   @Override
-  protected boolean isEnabled4(RunDashboardRunConfigurationNode node) {
-    return RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
-  }
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTarget(e);
+    if (node == null) return;
 
-  @Override
-  protected void doActionPerformed(RunDashboardRunConfigurationNode node) {
-    RunDialog.editConfiguration(node.getProject(), node.getConfigurationSettings(),
+    RunDialog.editConfiguration(project, node.getConfigurationSettings(),
                                 ExecutionBundle.message("run.dashboard.edit.configuration.dialog.title"));
   }
 }

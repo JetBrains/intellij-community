@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.style;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -30,9 +31,13 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
 
   public void testSimpleStringBuffer() { doTestFor("StringBuffer"); }
   public void testStringBuilderAppend() { doTestFor("StringBuilder"); }
+  public void testStringBuilderAppendSubString() { doTestFor("StringBuilder"); }
   public void testStringBufferVariable() { doTestFor("StringBuffer"); }
   public void testStringBufferVariable2() { doTestFor("StringBuffer"); }
   public void testStartsWithPrimitive() { doTestFor("StringBuffer"); }
+  public void testStartsWithPrimitive2() { doTestFor("StringBuilder"); }
+  public void testStartsWithPrimitive3() { doTestFor("StringBuilder"); }
+  public void testStartsWithPrimitive4() { doTestFor("StringBuilder"); }
   public void testPrecedence() { doTestFor("StringBuilder"); }
   public void testPrecedence2() { doTestFor("StringBuilder"); }
   public void testPrecedence3() { doTestFor("StringBuilder"); }
@@ -42,6 +47,7 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   public void testMarathon() { doTestFor("StringBuilder"); }
   public void testArray() { doTestFor("StringBuilder"); }
   public void testArray2() { doTestFor("StringBuilder"); }
+  public void testArray3() { doTestFor("StringBuilder"); }
   public void testConstructorArgument() { doTestFor("StringBuilder"); }
   public void testConstructorArgument2() { doTestFor("StringBuilder"); }
   public void testNoConstructorArgument() { doTestFor("StringBuilder"); }
@@ -58,6 +64,10 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   public void testComment2() { doTestFor("StringBuilder"); }
   public void testComment3() { doTestFor("StringBuffer"); }
   public void testComment4() { doTestFor("StringBuilder"); }
+  public void testComment5() { doTestFor("StringBuilder"); }
+  public void testImplicitToString() { doTestFor("StringBuilder"); }
+  public void testImplicitToString2() { doTestFor("StringBuilder"); }
+  public void testImplicitToString3() { doTestFor("StringBuilder"); }
   public void testJoiner() { doTestFor("StringJoiner"); }
   public void testJoiner2() { doTestFor("StringJoiner"); }
 

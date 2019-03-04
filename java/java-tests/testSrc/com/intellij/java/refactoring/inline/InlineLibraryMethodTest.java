@@ -16,14 +16,13 @@
 package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.RefactoringTestCase;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
 import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
@@ -31,23 +30,23 @@ import java.io.IOException;
 /**
  * @author anna
  */
-public class InlineLibraryMethodTest extends RefactoringTestCase {
+public class InlineLibraryMethodTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testInlineAllInProjectFromLibrary() throws Exception {
-    configureByText(JavaFileType.INSTANCE, "package mycompany;\n" +
+  public void testInlineAllInProjectFromLibrary() {
+    myFixture.addClass("package mycompany;\n" +
                                            "public class File {\n" +
                                            " public static File createTempFile(String pr, String postfix){return createTempFile(pr, postfix, null);}\n" +
                                            " public static File createTempFile(String pr, String postfix, String base){return new File();}\n" +
                                            "}");
     @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
-    configureByFile(fileName);
+    myFixture.configureByFile(fileName);
 
-    PsiClass fileClass = getJavaFacade().findClass("mycompany.File");
-    assertNotNull(fileClass);
+    PsiClass fileClass = myFixture.findClass("mycompany.File");
+
     final PsiFile file = fileClass.getContainingFile();
     WriteCommandAction.runWriteCommandAction(null, () -> {
       try {
@@ -70,8 +69,8 @@ public class InlineLibraryMethodTest extends RefactoringTestCase {
     PsiMethod method = element;
     final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
     assertFalse("Bad returns found", condition);
-    final InlineMethodProcessor processor = new InlineMethodProcessor(getProject(), method, null, myEditor, false);
+    final InlineMethodProcessor processor = new InlineMethodProcessor(getProject(), method, null, getEditor(), false);
     processor.run();
-    checkResultByFile(fileName + ".after");
+    myFixture.checkResultByFile(fileName + ".after");
   }
 }

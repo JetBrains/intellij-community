@@ -82,10 +82,17 @@ private fun getReferenceHighlightingAttribute(reference: GrReferenceElement<*>):
   val nameElement = reference.referenceNameElement
   if (nameElement != null && nameElement.isThisOrSuper()) {
     if (resolved is PsiMethod && resolved.isConstructor) {
-      return null // don't highlight this() or super()
+      return null // don't highlight this() or super(), they are already highlighted
     }
     else if (resolved is PsiClass) {
-      return if (shouldBeErased(nameElement)) KEYWORD else null
+      return if (shouldBeErased(nameElement)) {
+        // keyword highlighting was erased, highlight the keyword back
+        KEYWORD
+      }
+      else {
+        // don't highlight, because highlighting of the keyword was not erased
+        null
+      }
     }
   }
 

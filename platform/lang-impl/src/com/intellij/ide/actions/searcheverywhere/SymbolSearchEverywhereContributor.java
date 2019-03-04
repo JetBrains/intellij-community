@@ -45,11 +45,6 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
   }
 
   @Override
-  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
-    return super.getElementPriority(element, searchPattern) + 3;
-  }
-
-  @Override
   public boolean isDumbModeSupported() {
     return false;
   }

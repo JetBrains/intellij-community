@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -8,6 +8,7 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -96,6 +97,16 @@ import java.util.List;
  * shown (Ctrl+Alt+Shift+W / Cmd+Alt+Shift+W), the action also copies the debug info to the the Clipboard.
  * <p>
  *
+ * Q: Elements in the lookup are sorted in an unexpected way, the weights I provide are not honored, why?<br>
+ * A: To be more responsive, when first lookup elements are produced, completion infrastructure waits for some small time
+ * and then displays the lookup with whatever items are ready. After that, few the most relevant of the displayed items
+ * are considered "frozen" and not re-sorted anymore, to avoid changes around the selected item that the user already sees
+ * and can interact with. Even if new, more relevant items are added, they won't make it to the top of the list anymore.
+ * Therefore you should try to create most relevant items as early as possible. If you can't reliably produce
+ * most relevant items first, you could also return all your items in batch via {@link CompletionResultSet#addAllElements} to ensure
+ * that this batch is all sorted and displayed together.
+ * <p>
+ *
  * Q: My completion is not working! How do I debug it?<br>
  * A: One source of common errors is that the pattern you gave to {@link #extend(CompletionType, ElementPattern, CompletionProvider)} method
  * may be incorrect. To debug this problem you can still override {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} in
@@ -108,9 +119,18 @@ import java.util.List;
  * {@link CompletionService#getVariantsFromContributors(CompletionParameters, CompletionContributor, Consumer)},
  * to the 'return false' line.<p>
  *
+ * Q: My completion contributor has to get its results from far away (e.g. blocking I/O or internet). How do I do that?<br>
+ * A: To avoid UI freezes, your completion thread should be cancellable at all times.
+ * So it's a bad idea to do blocking requests from it directly, since it runs in a read action,
+ * and if it can't do {@link ProgressManager#checkCanceled()} and therefore any attempt to type in a document will freeze the UI.
+ * A common solution is to start another thread, without read action, for such blocking requests,
+ * and wait for their results in completion thread. You can use {@link com.intellij.openapi.application.ex.ApplicationUtil#runWithCheckCanceled} for that.
+ * <p></p>
+ *
  * @author peter
  */
 public abstract class CompletionContributor {
+  public static final ExtensionPointName<CompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.contributor");
 
   private final MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> myMap =
     new MultiMap<>();
@@ -237,5 +257,5 @@ public abstract class CompletionContributor {
     return DumbService.getInstance(project).filterByDumbAwareness(forLanguage(language));
   }
 
-  private static final LanguageExtension<CompletionContributor> INSTANCE = new CompletionExtension<>("com.intellij.completion.contributor");
+  private static final LanguageExtension<CompletionContributor> INSTANCE = new CompletionExtension<>(EP.getName());
 }

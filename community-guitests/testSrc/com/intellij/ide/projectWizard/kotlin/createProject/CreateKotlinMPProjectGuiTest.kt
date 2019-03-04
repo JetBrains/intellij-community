@@ -11,6 +11,7 @@ import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.scenarios.openProjectStructureAndCheck
 import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogModel
 import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
+import com.intellij.testGuiFramework.util.step
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -23,7 +24,8 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
     val projectName: String,
     val project: ProjectProperties,
     val gradleGroup: String,
-    val suffixes: Map<TargetPlatform, String>) : Serializable {
+    val suffixes: Map<TargetPlatform, String>,
+    val facets: Map<TargetPlatform, FacetStructure>) : Serializable {
     override fun toString() = projectName
   }
 
@@ -45,19 +47,24 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
     if (!isIdeFrameRun()) return
     createKotlinMPProject(
       projectPath = projectFolder,
-      templateName = testParameters.project.frameworkName
+      templateName = testParameters.project.frameworkName,
+      projectSdk = "1.8"
     )
 
     waitAMoment()
-    waitForGradleReimport(projectName)
+    step("wait for initial gradle import") {
+      waitForGradleReimport(projectName)
+    }
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = false
     )
 
-    gradleReimport()
-    assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
+    step("gradle reimport after editing gradle files") {
+      gradleReimport()
+      assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
+    }
     waitAMoment()
 
     projectStructureDialogScenarios.openProjectStructureAndCheck {
@@ -68,10 +75,9 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
       )
 
       testParameters.project.modules.forEach { platform: TargetPlatform ->
-        val shownProjectName = if(testParameters.gradleGroup.isEmpty()) projectName else "${testParameters.gradleGroup}.$projectName"
         listOf("Main", "Test").forEach { moduleKind: String ->
-          val path = arrayOf(shownProjectName, "${testParameters.suffixes[platform]!!}$moduleKind", "Kotlin")
-          projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[platform]!!, path = *path)
+          val path = arrayOf(projectName, "${testParameters.suffixes[platform]!!}$moduleKind", "Kotlin")
+          projectStructureDialogModel.checkFacetInOneModule(testParameters.facets[platform]!!, path = *path)
         }
       }
     }
@@ -101,6 +107,19 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
       TargetPlatform.Native to "ios"
     )
 
+    private val jsOptions = defaultFacetSettings[TargetPlatform.JavaScript]!!.jsOptions!!.copy(
+      generateSourceMap = true,
+      moduleKind = FacetJSModuleKind.UMD
+      )
+
+    private val defaultFacets = TargetPlatform.values().map { Pair(it, defaultFacetSettings[it]!!) }.toMap()
+    private val clientServerFacets = TargetPlatform.values().map {
+      if(it == TargetPlatform.JavaScript)
+        Pair(it, defaultFacets[it]!!.copy(jsOptions = jsOptions))
+      else
+      Pair(it, defaultFacetSettings[it]!!)
+    }.toMap()
+
     private const val libraryGroup = "com.example"
 
     @JvmStatic
@@ -111,25 +130,29 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
           projectName = "kotlin_mpp_library",
           project = kotlinProjects.getValue(Projects.KotlinMPProjectLibrary),
           suffixes = suffixes,
-          gradleGroup = libraryGroup
+          gradleGroup = libraryGroup,
+          facets = defaultFacets
         ),
         TestParameters(
           projectName = "kotlin_mpp_client_server",
           project = kotlinProjects.getValue(Projects.KotlinMPProjectClientServer),
           suffixes = suffixes,
-          gradleGroup = ""
+          gradleGroup = "",
+          facets = clientServerFacets
         ),
         TestParameters(
           projectName = "kotlin_mpp_native",
           project = kotlinProjects.getValue(Projects.KotlinProjectNative),
           suffixes = suffixes,
-        gradleGroup = ""
+          gradleGroup = "",
+          facets = defaultFacets
         ),
         TestParameters(
           projectName = "kotlin_mpp_mobile_library",
           project = kotlinProjects.getValue(Projects.KotlinMPProjectMobileLibrary),
           suffixes = mobileSuffixes,
-          gradleGroup = libraryGroup
+          gradleGroup = libraryGroup,
+          facets = defaultFacets
         )
       )
     }

@@ -14,6 +14,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParserFacade;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,12 +117,20 @@ public class SuppressionUtil extends SuppressionUtilCore {
     final String prefix = getLineCommentPrefix(comment);
     final String commentText = comment.getText();
     if (prefix != null) {
-      return commentText.startsWith(prefix + SUPPRESS_INSPECTIONS_TAG_NAME);
+      return startsWithSuppressionTag(commentText, prefix);
     }
     final Couple<String> prefixSuffixPair = getBlockPrefixSuffixPair(comment);
     return prefixSuffixPair != null
-           && commentText.startsWith(prefixSuffixPair.first + SUPPRESS_INSPECTIONS_TAG_NAME)
+           && startsWithSuppressionTag(commentText, prefixSuffixPair.first)
            && commentText.endsWith(prefixSuffixPair.second);
+  }
+
+  private static boolean startsWithSuppressionTag(String commentText, String prefix) {
+    if (!commentText.startsWith(prefix)) {
+      return false;
+    }
+    int index = CharArrayUtil.shiftForward(commentText, prefix.length(), " ");
+    return index < commentText.length() && commentText.startsWith(SUPPRESS_INSPECTIONS_TAG_NAME, index);
   }
 
   public static void replaceSuppressionComment(@NotNull PsiElement comment, @NotNull String id,

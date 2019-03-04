@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -6,11 +6,13 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Element;
@@ -35,6 +37,7 @@ import static com.intellij.util.ui.JBUI.asUIResource;
  * @author Konstantin Bulenkov
  */
 public class UITheme {
+  public static final String FILE_EXT_ENDING = ".theme.json";
   private String name;
   private boolean dark;
   private String author;
@@ -63,10 +66,12 @@ public class UITheme {
     return author;
   }
 
-  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @NotNull ClassLoader provider) throws IOException {
+  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) throws IOException {
     UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
     theme.id = themeId;
-    theme.providerClassLoader = provider;
+    if (provider != null) {
+      theme.providerClassLoader = provider;
+    }
     if (theme.icons != null && !theme.icons.isEmpty()) {
       theme.patcher = new IconPathPatcher() {
         @Nullable
@@ -175,6 +180,8 @@ public class UITheme {
     colorPalette.put("Actions.Blue.Dark", "#3592C4");
     colorPalette.put("Actions.Grey", "#6E6E6E");
     colorPalette.put("Actions.Grey.Dark", "#AFB1B3");
+    colorPalette.put("Actions.GreyInline", "#7F8B91");
+    colorPalette.put("Actions.GreyInline.Dark", "#7F8B91");
     colorPalette.put("Objects.Grey", "#9AA7B0");
     colorPalette.put("Objects.Blue", "#40B6E0");
     colorPalette.put("Objects.Green", "#62B543");
@@ -186,6 +193,31 @@ public class UITheme {
     colorPalette.put("Objects.RedStatus", "#E05555");
     colorPalette.put("Objects.GreenAndroid", "#A4C639");
     colorPalette.put("Objects.BlackText", "#231F20");
+    colorPalette.put("Checkbox.Background.Default", "#FFFFFF");
+    colorPalette.put("Checkbox.Background.Default.Dark", "#43494A");
+    colorPalette.put("Checkbox.Background.Disabled", "#F2F2F2");
+    colorPalette.put("Checkbox.Background.Disabled.Dark", "#3C3F41");
+    colorPalette.put("Checkbox.Border.Default", "#878787");
+    colorPalette.put("Checkbox.Border.Default.Dark", "#6B6B6B");
+    colorPalette.put("Checkbox.Border.Disabled", "#BDBDBD");
+    colorPalette.put("Checkbox.Border.Disabled.Dark", "#545556");
+    colorPalette.put("Checkbox.Focus.Thin.Default", "#7B9FC7");
+    colorPalette.put("Checkbox.Focus.Thin.Default.Dark", "#466D94");
+    colorPalette.put("Checkbox.Focus.Wide", "#97C3F3");
+    colorPalette.put("Checkbox.Focus.Wide.Dark", "#3D6185");
+    colorPalette.put("Checkbox.Foreground.Disabled", "#ABABAB");
+    colorPalette.put("Checkbox.Foreground.Disabled.Dark", "#606060");
+
+    colorPalette.put("Checkbox.Background.Selected", "#4D89C9");
+    colorPalette.put("Checkbox.Background.Selected.Dark", "#43494A");
+
+    colorPalette.put("Checkbox.Border.Selected", "#4982CC");
+    colorPalette.put("Checkbox.Border.Selected.Dark", "#6B6B6B");
+    colorPalette.put("Checkbox.Foreground.Selected", "#FFFFFF");
+    colorPalette.put("Checkbox.Foreground.Selected.Dark", "#A7A7A7");
+
+    colorPalette.put("Checkbox.Focus.Thin.Selected", "#ACCFF7");
+    colorPalette.put("Checkbox.Focus.Thin.Selected.Dark", "#466D94");
   }
 
   public String getId() {
@@ -356,6 +388,11 @@ public class UITheme {
 
   public void setEditorSchemeName(String editorSchemeName) {
     this.editorSchemeName = editorSchemeName;
+  }
+
+  @Contract("null -> false")
+  public static boolean isThemeFile(@Nullable VirtualFile file) {
+    return file != null && StringUtil.endsWithIgnoreCase(file.getName(), FILE_EXT_ENDING);
   }
 
   //

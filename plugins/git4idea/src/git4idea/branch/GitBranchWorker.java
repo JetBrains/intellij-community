@@ -82,7 +82,7 @@ public final class GitBranchWorker {
   public void createNewTag(@NotNull final String name, @NotNull final String reference, @NotNull final List<GitRepository> repositories) {
     for (GitRepository repository : repositories) {
       myGit.createNewTag(repository, name, null, reference);
-      repository.getRepositoryFiles().refresh();
+      repository.getRepositoryFiles().refreshTagsFiles();
     }
   }
 
@@ -144,9 +144,7 @@ public final class GitBranchWorker {
                       @NotNull final GitRepository selectedRepository) {
     try {
       CommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        displayCompareDialog(branchName, GitBranchUtil.getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository);
-      });
+      ApplicationManager.getApplication().invokeLater(() -> displayCompareDialog(branchName, GitBranchUtil.getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository));
     }
     catch (VcsException e) {
       VcsNotifier.getInstance(myProject).notifyError("Can't Compare with Branch", e.getMessage());

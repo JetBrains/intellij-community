@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -21,13 +22,9 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.ServiceKt;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -133,24 +130,33 @@ public class PlatformTestUtil {
     return uppercaseChars >= 3;
   }
 
+  /**
+   * @see ExtensionPointImpl#maskAll(List, Disposable)
+   */
+  public static <T> void maskExtensions(@NotNull ExtensionPointName<T> pointName, @NotNull List<T> newExtensions, @NotNull Disposable parentDisposable) {
+    ((ExtensionPointImpl<T>)pointName.getPoint(null)).maskAll(newExtensions, parentDisposable);
+  }
+
+  /**
+   * @see ExtensionPointImpl#maskAll(List, Disposable)
+   */
+  public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName, @NotNull Project project, @NotNull List<T> newExtensions, @NotNull Disposable parentDisposable) {
+    ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable);
+  }
+
+  /**
+   * @deprecated Use {@link ExtensionPointName#getPoint(AreaInstance)} and {@link ExtensionPoint#registerExtension(Object, Disposable)}.
+   */
+  @Deprecated
   public static <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T t, @NotNull Disposable parentDisposable) {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
   }
 
   public static <T> void registerExtension(@NotNull ExtensionsArea area,
-                                           @NotNull ExtensionPointName<T> name,
+                                           @NotNull BaseExtensionPointName name,
                                            @NotNull T t,
                                            @NotNull Disposable parentDisposable) {
-    ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
-    extensionPoint.registerExtension(t);
-    Disposer.register(parentDisposable, () -> extensionPoint.unregisterExtension(t));
-  }
-
-  public static <T> void unregisterAllExtensions(@NotNull ExtensionPointName<T> name, @NotNull Disposable parentDisposable) {
-    ExtensionPoint<T> extensionPoint = Extensions.getRootArea().getExtensionPoint(name.getName());
-    T[] extensions = name.getExtensions();
-    Arrays.stream(extensions).forEach(extensionPoint::unregisterExtension);
-    Disposer.register(parentDisposable, () -> Arrays.stream(extensions).forEach(extensionPoint::registerExtension));
+    area.<T>getExtensionPoint(name.getName()).registerExtension(t, parentDisposable);
   }
 
   @Nullable
@@ -289,9 +295,8 @@ public class PlatformTestUtil {
     }
   }
 
-  private static boolean isBusy(JTree tree) {
+  private static boolean isBusy(JTree tree, TreeModel model) {
     UIUtil.dispatchAllInvocationEvents();
-    TreeModel model = tree.getModel();
     if (model instanceof AsyncTreeModel) {
       AsyncTreeModel async = (AsyncTreeModel)model;
       if (async.isProcessing()) return true;
@@ -306,10 +311,15 @@ public class PlatformTestUtil {
   }
 
   public static void waitWhileBusy(JTree tree) {
+    waitWhileBusy(tree, tree.getModel());
+  }
+
+  public static void waitWhileBusy(JTree tree, TreeModel model) {
     assertDispatchThreadWithoutWriteAccess();
     long startTimeMillis = System.currentTimeMillis();
-    while (isBusy(tree)) {
+    while (isBusy(tree, model)) {
       assertMaxWaitTimeSince(startTimeMillis);
+      TimeoutUtil.sleep(5);
     }
   }
 
@@ -406,17 +416,22 @@ public class PlatformTestUtil {
   }
 
   /**
-   * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}.
+   * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}, ignores and removes all other events from the queue.
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
-  public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
+  public static void dispatchAllInvocationEventsInIdeEventQueue() {
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
-      AWTEvent event1 = eventQueue.getNextEvent();
-      if (event1 instanceof InvocationEvent) {
-        eventQueue.dispatchEvent(event1);
+      try {
+        event = eventQueue.getNextEvent();
+        if (event instanceof InvocationEvent) {
+          eventQueue.dispatchEvent(event);
+        }
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
       }
     }
   }
@@ -595,13 +610,19 @@ public class PlatformTestUtil {
     }
   }
 
+  public static void forceCloseProjectWithoutSaving(@NotNull Project project) {
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project, false /* do not dispose */);
+    // explicitly dispose because `dispose` option for forceCloseProject doesn't work todo why?
+    getApplication().runWriteAction(() -> Disposer.dispose(project));
+  }
+
   public static void saveProject(@NotNull Project project) {
     saveProject(project, false);
   }
 
-  public static void saveProject(@NotNull Project project, boolean isForce) {
+  public static void saveProject(@NotNull Project project, boolean isForceSavingAllSettings) {
     ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
-    StoreUtil.save(ServiceKt.getStateStore(project), project, isForce);
+    StateStorageManagerKt.saveComponentManager(project, isForceSavingAllSettings);
   }
 
   static void waitForAllBackgroundActivityToCalmDown() {
@@ -787,6 +808,7 @@ public class PlatformTestUtil {
   }
 
   public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
+    Charset.forName(encoding); // check the encoding exists
     try {
       Charset oldCharset = Charset.defaultCharset();
       try {

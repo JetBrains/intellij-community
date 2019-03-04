@@ -126,6 +126,7 @@ public class SingleClassesTest {
   @Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
   @Test public void testSuspendLambda() { doTest("pkg/TestSuspendLambdaKt"); }
   @Test public void testNamedSuspendFun2Kt() { doTest("pkg/TestNamedSuspendFun2Kt"); }
+  @Test public void testGenericArgs() { doTest("pkg/TestGenericArgs"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

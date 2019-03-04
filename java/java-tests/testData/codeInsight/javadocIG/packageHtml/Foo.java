@@ -1,0 +1,3 @@
+package packageHtml;
+
+class Foo { }

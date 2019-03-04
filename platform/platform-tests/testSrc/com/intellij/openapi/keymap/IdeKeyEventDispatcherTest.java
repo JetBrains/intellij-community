@@ -44,6 +44,9 @@ public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
       KeymapManagerEx.getInstanceEx().setActiveKeymap(mySavedKeymap);
       ActionManager.getInstance().unregisterAction(ACTION_EMPTY);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

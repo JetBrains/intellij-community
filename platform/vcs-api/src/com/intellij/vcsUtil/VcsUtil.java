@@ -31,10 +31,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.*;
@@ -47,6 +44,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.stream.Collectors.groupingBy;
@@ -563,5 +561,14 @@ public class VcsUtil {
     }
 
     return change.getBeforeRevision().getFile();
+  }
+
+  @NotNull
+  public static Set<String> getVcsIgnoreFileNames(@NotNull Project project) {
+    return IgnoredFileContentProvider
+      .IGNORE_FILE_CONTENT_PROVIDER
+      .extensions(project)
+      .map(IgnoredFileContentProvider::getFileName)
+      .collect(Collectors.toSet());
   }
 }

@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNull
 
 /**
  * @author Denis Zhdanov
- * @since 11/09/2012
  */
 class IntObjectMapTest {
   

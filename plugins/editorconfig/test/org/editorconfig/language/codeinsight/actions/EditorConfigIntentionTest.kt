@@ -9,7 +9,7 @@ import org.jetbrains.annotations.PropertyKey
 
 class EditorConfigIntentionTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/actions/intention/"
+    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/actions/intention/"
 
   fun testInvertBooleanValue() = doTest("intention.invert-option-value")
   fun testInvertSpaceValue() = doTest("intention.invert-option-value")

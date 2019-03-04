@@ -37,7 +37,6 @@ import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 /**
  * @author Vladislav.Soroka
- * @since 11/10/2015
  */
 class EarModelBuilderImpl implements ModelBuilderService {
 

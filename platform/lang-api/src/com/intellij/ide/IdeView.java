@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Common interface for IDE views where files can be selected (project view, packages view,
  * favorites or commander).
- *
- * @since 5.1
  * @see LangDataKeys#IDE_VIEW
  */
 public interface IdeView {

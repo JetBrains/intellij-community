@@ -148,7 +148,19 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
     actions.add(new TerminalAction("New Session", mySettingsProvider.getNewSessionKeyStrokes(), input -> {
       myListener.onNewSession();
       return true;
-    }).withMnemonicKey(KeyEvent.VK_T));
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
+    actions.add(new TerminalAction("Select Previous Tab", mySettingsProvider.getPreviousTabKeyStrokes(), input -> {
+      myListener.onPreviousTabSelected();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
+    actions.add(new TerminalAction("Select Next Tab", mySettingsProvider.getNextTabKeyStrokes(), input -> {
+      myListener.onNextTabSelected();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
+    actions.add(new TerminalAction("Show Tabs", mySettingsProvider.getShowTabsKeyStrokes(), input -> {
+      myListener.showTabs();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
     if (!mySettingsProvider.overrideIdeShortcuts()) {
       actions
         .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, input -> {
@@ -161,6 +173,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
           }
         }).withHidden(true));
     }
+    actions.add(new TerminalAction("Close Session", mySettingsProvider.getCloseSessionKeyStrokes(), input -> {
+      myListener.onSessionClosed();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
     return actions;
   }
 
@@ -280,7 +296,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
   private static final class JBTerminalWidgetDisposableWrapper extends DisposableWrapper<JBTerminalWidget> {
     private final JBTerminalWidget myObject;
 
-    public JBTerminalWidgetDisposableWrapper(JBTerminalWidget object, Disposable parent) {
+    private JBTerminalWidgetDisposableWrapper(JBTerminalWidget object, Disposable parent) {
       super(object, parent);
       myObject = object;
     }
@@ -296,7 +312,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
 
     @NotNull
     @Override
-    protected JBTerminalWidgetDisposableWrapper createNewWrapper(@NotNull Disposable parent, JBTerminalWidget object) {
+    protected JBTerminalWidgetDisposableWrapper createNewWrapper(JBTerminalWidget object, @NotNull Disposable parent) {
       return new JBTerminalWidgetDisposableWrapper(object, parent);
     }
   }

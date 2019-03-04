@@ -2,6 +2,7 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Document;
@@ -104,13 +105,13 @@ public class InspectionDiff {
       }
     }
 
-    Element root = new Element("problems");
+    Element root = new Element(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
     Document delta = new Document(root);
 
     for (ArrayList<Element> fileList : ourFileToProblem.values()) {
       if (fileList != null) {
         for (Element element : fileList) {
-          root.addContent((Element)element.clone());
+          root.addContent(element.clone());
         }
       }
     }

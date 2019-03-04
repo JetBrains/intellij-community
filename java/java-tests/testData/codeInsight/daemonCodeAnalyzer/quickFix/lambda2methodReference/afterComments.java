@@ -5,6 +5,8 @@ class Example {
 
   {
       //my comments here
+      //1
+      //2
       Runnable r = this::m
   }
 }

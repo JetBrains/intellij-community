@@ -15,9 +15,16 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
@@ -50,11 +57,28 @@ class ShelvedWrapper {
     return FileUtil.toSystemDependentName(chooseNotNull(getAfterPath(), getBeforePath()));
   }
 
-  private String getBeforePath() {
+  String getBeforePath() {
     return myShelvedChange != null ? myShelvedChange.getBeforePath() : assertNotNull(myBinaryFile).BEFORE_PATH;
   }
 
-  private String getAfterPath() {
+  String getAfterPath() {
     return myShelvedChange != null ? myShelvedChange.getAfterPath() : assertNotNull(myBinaryFile).AFTER_PATH;
   }
+
+  FileStatus getFileStatus() {
+    return myShelvedChange != null ? myShelvedChange.getFileStatus() : assertNotNull(myBinaryFile).getFileStatus();
+  }
+
+  Change getChange(@NotNull Project project) {
+    return myShelvedChange != null ? myShelvedChange.getChange(project) : assertNotNull(myBinaryFile).createChange(project);
+  }
+
+  @Nullable
+  public VirtualFile getBeforeVFUnderProject(@NotNull final Project project) {
+    if (getBeforePath() == null || project.getBaseDir() == null) return null;
+    final File baseDir = new File(project.getBaseDir().getPath());
+    final File file = new File(baseDir, getBeforePath());
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+  }
+
 }

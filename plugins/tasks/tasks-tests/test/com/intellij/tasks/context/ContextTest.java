@@ -36,6 +36,11 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class ContextTest extends TaskManagerTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    WorkingContextManager.getInstance(getProject()).enableUntil(getTestRootDisposable());
+  }
 
   public void testSaveContext() {
     WorkingContextManager manager = getContextManager();

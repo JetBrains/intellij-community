@@ -3,11 +3,12 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomFileDescription;
@@ -17,18 +18,15 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
  * @author peter
  */
 public class DomApplicationComponent {
-  private final Map<String, Set<DomFileDescription>> myRootTagName2FileDescription = FactoryMap.create(key -> new THashSet<>());
-  private final Set<DomFileDescription> myAcceptingOtherRootTagNamesDescriptions = new THashSet<>();
+  private final MultiMap<String, DomFileMetaData> myRootTagName2FileDescription = MultiMap.createSet();
+  private final Set<DomFileMetaData> myAcceptingOtherRootTagNamesDescriptions = new THashSet<>();
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache(DomImplementationClassEP.EP_NAME);
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
   final ReflectionAssignabilityCache assignabilityCache = new ReflectionAssignabilityCache();
@@ -47,8 +45,12 @@ public class DomApplicationComponent {
 
 
   public DomApplicationComponent() {
+    //noinspection deprecation
     for (final DomFileDescription description : DomFileDescription.EP_NAME.getExtensionList()) {
       registerFileDescription(description);
+    }
+    for (DomFileMetaData meta : DomFileMetaData.EP_NAME.getExtensionList()) {
+      registerFileDescription(meta);
     }
   }
 
@@ -56,39 +58,55 @@ public class DomApplicationComponent {
     return ServiceManager.getService(DomApplicationComponent.class);
   }
 
-  public int getCumulativeVersion(boolean forStubs) {
+  public synchronized int getCumulativeVersion(boolean forStubs) {
     int result = 0;
-    for (DomFileDescription description : getAllFileDescriptions()) {
+    for (DomFileMetaData meta : allMetas()) {
       if (forStubs) {
-        if (description.hasStubs()) {
-          result += description.getStubVersion();
-          result += description.getRootTagName().hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
+        if (meta.stubVersion != null) {
+          result += meta.stubVersion;
+          result += StringUtil.notNullize(meta.rootTagName).hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
         }
       }
       else {
-        result += description.getVersion();
-        result += description.getRootTagName().hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
+        result += meta.domVersion;
+        result += StringUtil.notNullize(meta.rootTagName).hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
       }
     }
     return result;
   }
 
-  public final synchronized Set<DomFileDescription> getFileDescriptions(String rootTagName) {
-    return myRootTagName2FileDescription.get(rootTagName);
+  private Iterable<DomFileMetaData> allMetas() {
+    return ContainerUtil.concat(myRootTagName2FileDescription.values(), myAcceptingOtherRootTagNamesDescriptions);
   }
 
-  public final synchronized Set<DomFileDescription> getAcceptingOtherRootTagNameDescriptions() {
-    return myAcceptingOtherRootTagNamesDescriptions;
+  @Nullable
+  public synchronized DomFileMetaData findMeta(DomFileDescription description) {
+    return ContainerUtil.find(allMetas(), m -> m.lazyInstance == description);
   }
 
-  public final synchronized void registerFileDescription(final DomFileDescription description) {
-    myRootTagName2FileDescription.get(description.getRootTagName()).add(description);
-    if (description.acceptsOtherRootTagNames()) {
-      myAcceptingOtherRootTagNamesDescriptions.add(description);
+  public synchronized Set<DomFileDescription> getFileDescriptions(String rootTagName) {
+    return ContainerUtil.map2Set(myRootTagName2FileDescription.get(rootTagName), DomFileMetaData::getDescription);
+  }
+
+  public synchronized Set<DomFileDescription> getAcceptingOtherRootTagNameDescriptions() {
+    return ContainerUtil.map2Set(myAcceptingOtherRootTagNamesDescriptions, DomFileMetaData::getDescription);
+  }
+
+  synchronized void registerFileDescription(DomFileDescription<?> description) {
+    registerFileDescription(new DomFileMetaData(description));
+    initDescription(description);
+  }
+
+  void registerFileDescription(DomFileMetaData meta) {
+    if (StringUtil.isEmpty(meta.rootTagName)) {
+      myAcceptingOtherRootTagNamesDescriptions.add(meta);
+    } else {
+      myRootTagName2FileDescription.putValue(meta.rootTagName, meta);
     }
+  }
 
-    //noinspection unchecked
-    final Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations = description.getImplementations();
+  void initDescription(DomFileDescription<?> description) {
+    Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations = description.getImplementations();
     for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : implementations.entrySet()) {
       registerImplementation(entry.getKey(), entry.getValue(), null);
     }
@@ -96,27 +114,17 @@ public class DomApplicationComponent {
     myTypeChooserManager.copyFrom(description.getTypeChooserManager());
   }
 
-  public synchronized List<DomFileDescription> getAllFileDescriptions() {
-    final List<DomFileDescription> result = newArrayList();
-    for (Set<DomFileDescription> descriptions : myRootTagName2FileDescription.values()) {
-      result.addAll(descriptions);
-    }
-    result.addAll(myAcceptingOtherRootTagNamesDescriptions);
-    return result;
+  synchronized void removeDescription(DomFileDescription<?> description) {
+    DomFileMetaData meta = findMeta(description);
+    myRootTagName2FileDescription.get(description.getRootTagName()).remove(meta);
+    myAcceptingOtherRootTagNamesDescriptions.remove(meta);
   }
 
   @Nullable
   private synchronized DomFileDescription findFileDescription(Class rootElementClass) {
-    for (Set<DomFileDescription> descriptions : myRootTagName2FileDescription.values()) {
-      for (DomFileDescription description : descriptions) {
-        if (description.getRootElementClass() == rootElementClass) {
-          return description;
-        }
-      }
-    }
-
-    for (DomFileDescription description : myAcceptingOtherRootTagNamesDescriptions) {
-      if (description.getRootElementClass() == rootElementClass) {
+    for (DomFileMetaData meta : allMetas()) {
+      DomFileDescription description = meta.lazyInstance;
+      if (description != null && description.getRootElementClass() == rootElementClass) {
         return description;
       }
     }
@@ -138,7 +146,7 @@ public class DomApplicationComponent {
     myCachedImplementationClasses.registerImplementation(domElementClass, implementationClass, parentDisposable);
   }
 
-  public TypeChooserManager getTypeChooserManager() {
+  TypeChooserManager getTypeChooserManager() {
     return myTypeChooserManager;
   }
 

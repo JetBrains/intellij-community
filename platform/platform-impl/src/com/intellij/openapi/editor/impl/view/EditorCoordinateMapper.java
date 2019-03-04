@@ -3,8 +3,6 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -28,8 +26,6 @@ import java.util.List;
  * @see VisualPosition
  */
 class EditorCoordinateMapper {
-  private static final Logger LOG = Logger.getInstance(EditorCoordinateMapper.class);
-
   private final EditorView myView;
   private final Document myDocument;
   private final FoldingModelImpl myFoldingModel;
@@ -97,19 +93,28 @@ class EditorCoordinateMapper {
     int column = pos.column;
     int logicalLineCount = myDocument.getLineCount();
     if (line >= logicalLineCount) {
-      return new VisualPosition(line - logicalLineCount + myView.getEditor().getVisibleLineCount(), column, pos.leansForward);
+      if (line == 0) {
+        int resultColumn = logToVisWithInlays(0, column, pos.leansForward);
+        if (resultColumn < 0) resultColumn = Integer.MAX_VALUE; // guarding against overflow
+        return new VisualPosition(0, resultColumn, pos.leansForward);
+      }
+      else {
+        return new VisualPosition(line - logicalLineCount + myView.getEditor().getVisibleLineCount(), column, pos.leansForward);
+      }
     }
     int offset = logicalPositionToOffset(pos);
     int visualLine = offsetToVisualLine(offset, beforeSoftWrap);
     int maxVisualColumn = 0;
     int maxLogicalColumn = 0;
+    int endLogicalLine = line;
     for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, beforeSoftWrap)) {
       if (!pos.leansForward && offset == fragment.getVisualLineStartOffset()) {
         return new VisualPosition(visualLine, fragment.getStartVisualColumn());
       }
+      endLogicalLine = fragment.getEndLogicalLine();
+      maxVisualColumn = fragment.getEndVisualColumn();
       if (fragment.isCollapsedFoldRegion()) {
         int startLogicalLine = fragment.getStartLogicalLine();
-        int endLogicalLine = fragment.getEndLogicalLine();
         int startLogicalColumn = fragment.getStartLogicalColumn();
         int endLogicalColumn = fragment.getEndLogicalColumn();
         if ((line > startLogicalLine || line == startLogicalLine && (column > startLogicalColumn ||
@@ -118,7 +123,7 @@ class EditorCoordinateMapper {
           return new VisualPosition(visualLine, fragment.getStartVisualColumn(), true);
         }
         if (line == endLogicalLine && column == endLogicalColumn && !pos.leansForward) {
-          return new VisualPosition(visualLine, fragment.getEndVisualColumn());
+          return new VisualPosition(visualLine, maxVisualColumn);
         }
         maxLogicalColumn = startLogicalLine == endLogicalLine ? Math.max(maxLogicalColumn, endLogicalColumn) : endLogicalColumn;
       }
@@ -133,22 +138,31 @@ class EditorCoordinateMapper {
         }
         maxLogicalColumn = Math.max(maxLogicalColumn, maxColumn);
       }
-      maxVisualColumn = fragment.getEndVisualColumn();
     }
-    int resultColumn = column - maxLogicalColumn + maxVisualColumn;
-    if (resultColumn < 0) {
-      if (maxVisualColumn > maxLogicalColumn) {
-        resultColumn = Integer.MAX_VALUE; // guarding against overflow
-      }
-      else {
-        LOG.error("Error converting " + pos + " to visual position",
-                  new Attachment("details.txt", String.format("offset: %d, visual line: %d, max logical column: %d, max visual column: %d",
-                                                              offset, visualLine, maxLogicalColumn, maxVisualColumn)),
-                  new Attachment("dump.txt", myView.getEditor().dumpState()));
-        resultColumn = 0;
-      }
-    }
+    int resultColumn = maxVisualColumn + logToVisWithInlays(endLogicalLine, column - maxLogicalColumn, pos.leansForward);
+    if (resultColumn < 0) resultColumn = Integer.MAX_VALUE; // guarding against overflow
     return new VisualPosition(visualLine, resultColumn, pos.leansForward);
+  }
+
+  private int logToVisWithInlays(int logLine, int remainingLogColumn, boolean leansForward) {
+    if (remainingLogColumn > 1 || remainingLogColumn == 1 && leansForward) {
+      remainingLogColumn += myView.getEditor().getInlayModel().getAfterLineEndElementsForLogicalLine(logLine).size();
+    }
+    return remainingLogColumn;
+  }
+
+  private int visToLogWithInlays(int logLine, int remainingVisColumns, boolean[] leansForward) {
+    if (remainingVisColumns == 0) return 0;
+    int inlayCount = myView.getEditor().getInlayModel().getAfterLineEndElementsForLogicalLine(logLine).size();
+    if (inlayCount == 0) return remainingVisColumns;
+    if (remainingVisColumns < inlayCount + 1) {
+      leansForward[0] = false;
+      return 1;
+    }
+    if (remainingVisColumns == inlayCount + 1) {
+      leansForward[0] = true;
+    }
+    return remainingVisColumns - inlayCount;
   }
 
   @NotNull
@@ -157,7 +171,14 @@ class EditorCoordinateMapper {
     int column = pos.column;
     int visualLineCount = myView.getEditor().getVisibleLineCount();
     if (line >= visualLineCount) {
-      return new LogicalPosition(line - visualLineCount + myDocument.getLineCount(), column, pos.leansRight);
+      if (line == 0) {
+        boolean[] leansForward = new boolean[] {pos.leansRight};
+        int resultColumn = visToLogWithInlays(0, column, leansForward);
+        return new LogicalPosition(0, resultColumn, leansForward[0]);
+      }
+      else {
+        return new LogicalPosition(line - visualLineCount + myDocument.getLineCount(), column, pos.leansRight);
+      }
     }
     int offset = visualLineToOffset(line);
     int logicalLine = myDocument.getLineNumber(offset);
@@ -193,11 +214,10 @@ class EditorCoordinateMapper {
       maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
     }
     if (myView.getEditor().getSoftWrapModel().getSoftWrap(maxOffset) == null) {
-      int resultColumn = column - maxVisualColumn + maxLogicalColumn;
-      if (resultColumn < 0 && maxLogicalColumn > maxVisualColumn) {
-        resultColumn = Integer.MAX_VALUE; // guarding against overflow
-      }
-      return new LogicalPosition(logicalLine, resultColumn, true);
+      boolean[] leansForward = new boolean[] {pos.leansRight};
+      int resultColumn = maxLogicalColumn + visToLogWithInlays(logicalLine, column - maxVisualColumn, leansForward);
+      if (resultColumn < 0) resultColumn = Integer.MAX_VALUE; // guarding against overflow
+      return new LogicalPosition(logicalLine, resultColumn, leansForward[0]);
     }
     else {
       return offsetToLogicalPosition(maxOffset).leanForward(true);
@@ -301,6 +321,7 @@ class EditorCoordinateMapper {
     int lastColumn = 0;
     float x = getStartX(visualLine);
     float px = (float)p.getX();
+    int logicalLine = -1;
     if (visualLine < myView.getEditor().getVisibleLineCount()) {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
@@ -325,6 +346,7 @@ class EditorCoordinateMapper {
         x = nextX;
         lastColumn = fragment.getEndVisualColumn();
         maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
+        logicalLine = fragment.getEndLogicalLine();
       }
       if (myView.getEditor().getSoftWrapModel().getSoftWrap(maxOffset) != null) {
         int markerWidth = myView.getEditor().getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
@@ -334,10 +356,34 @@ class EditorCoordinateMapper {
         }
         px -= markerWidth;
         lastColumn++;
+        logicalLine = -1;
       }
+      else if (logicalLine == -1) {
+        logicalLine = myDocument.getLineNumber(visualLineStartOffset);
+      }
+    }
+    else if (visualLine == 0) {
+      logicalLine = 0;
     }
     float plainSpaceWidth = myView.getPlainSpaceWidth();
     float remainingShift = px - x;
+    if (remainingShift > plainSpaceWidth && logicalLine >= 0) {
+      List<Inlay> inlays = myView.getEditor().getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
+      int inlaysWidth = 0;
+      int inlayCount = 0;
+      for (Inlay inlay : inlays) {
+        int width = inlay.getWidthInPixels();
+        int newWidth = inlaysWidth + width;
+        if (remainingShift <= plainSpaceWidth + newWidth) {
+          boolean leftPart = remainingShift <= plainSpaceWidth + (inlaysWidth + newWidth) / 2;
+          return new VisualPosition(visualLine, lastColumn + 1 + inlayCount + (leftPart ? 0 : 1), leftPart);
+        }
+        inlaysWidth = newWidth;
+        inlayCount++;
+      }
+      remainingShift -= inlaysWidth;
+      lastColumn += inlayCount;
+    }
     int additionalColumns = remainingShift <= 0 ? 0 : Math.round(remainingShift / plainSpaceWidth);
     return new VisualPosition(visualLine, lastColumn + additionalColumns, remainingShift > additionalColumns * plainSpaceWidth);
   }
@@ -349,6 +395,7 @@ class EditorCoordinateMapper {
     int y = visualLineToY(visualLine);
     float x = getStartX(visualLine);
     int lastColumn = 0;
+    int logicalLine = -1;
     if (visualLine < myView.getEditor().getVisibleLineCount()) {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
@@ -364,11 +411,32 @@ class EditorCoordinateMapper {
         x = fragment.getEndX();
         lastColumn = endColumn;
         maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
+        logicalLine = fragment.getEndLogicalLine();
       }
       if (column > lastColumn && myView.getEditor().getSoftWrapModel().getSoftWrap(maxOffset) != null) {
         column--;
         x += myView.getEditor().getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
       }
+      else if (logicalLine == -1) {
+        logicalLine = myDocument.getLineNumber(visualLineStartOffset);
+      }
+    }
+    else if (visualLine == 0) {
+      logicalLine = 0;
+    }
+    if (column > lastColumn + 1 && logicalLine >= 0) {
+      List<Inlay> inlays = myView.getEditor().getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
+      int inlaysWidth = 0;
+      int inlayCount = 0;
+      for (Inlay inlay : inlays) {
+        inlayCount++;
+        inlaysWidth += inlay.getWidthInPixels();
+        if (column == lastColumn + 1 + inlayCount) {
+          break;
+        }
+      }
+      x += inlaysWidth;
+      column -= inlayCount;
     }
     float additionalShift = column <= lastColumn ? 0 : (column - lastColumn) * myView.getPlainSpaceWidth();
     return new Point2D.Double(x + additionalShift, y);

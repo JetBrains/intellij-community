@@ -685,6 +685,10 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
         expectedType = methodCall instanceof PsiCallExpression ? policy.getDefaultExpectedType((PsiCallExpression)methodCall) : null;
       }
 
+      if (policy.requestForBoxingExplicitly() && TypeConversionUtil.isPrimitiveAndNotNull(expectedType)) {
+        expectedType = ((PsiPrimitiveType)expectedType).getBoxedType(typeParameter);
+      }
+
       returnType = ((PsiMethod)typeParameter.getOwner()).getReturnType();
 
       constraint =
@@ -736,7 +740,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
       PsiSubstitutor newSubstitutor = substitutor.put(typeParameter, guess);
       for (PsiClassType extendsType1 : extendsTypes) {
         PsiType extendsType = newSubstitutor.substitute(extendsType1);
-        if (guess != null && !extendsType.isAssignableFrom(guess)) {
+        if (guess != null && extendsType != null && !extendsType.isAssignableFrom(guess)) {
           if (guess.isAssignableFrom(extendsType)) {
             guess = extendsType;
             newSubstitutor = substitutor.put(typeParameter, guess);

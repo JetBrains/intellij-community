@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -9,13 +9,13 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiExpressionList
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
-
+import groovy.transform.CompileStatic
 /**
  * @author peter
  */
+@CompileStatic
 class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
   void testConstructorDoc() {
     configure """\
@@ -172,7 +172,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
         JavaPsiFacade.getInstance(project).findClass('Foo', it.resolveScope)?.findMethodBySignature(it, false)
       }
     }
-    PlatformTestUtil.registerExtension DocumentationDelegateProvider.EP_NAME, provider, myFixture.testRootDisposable
+    DocumentationDelegateProvider.EP_NAME.getPoint(null).registerExtension(provider, myFixture.testRootDisposable)
 
     configure '''\
 class Foo {

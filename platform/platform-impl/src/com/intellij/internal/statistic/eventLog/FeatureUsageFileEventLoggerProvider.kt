@@ -2,43 +2,23 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
-import com.intellij.openapi.application.ApplicationAdapter
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import java.util.*
 
 class FeatureUsageFileEventLoggerProvider : FeatureUsageEventLoggerProvider {
   override fun createLogger(): FeatureUsageEventLogger {
-    val sessionId = UUID.randomUUID().toString().shortedUUID()
-    val build = ApplicationInfo.getInstance().build.asBuildNumber()
-    val logger = FeatureUsageFileEventLogger(sessionId, build, "-1", "7", FeatureUsageLogEventWriter())
-
-    ApplicationManager.getApplication().addApplicationListener(object : ApplicationAdapter() {
-      override fun applicationExiting() {
-        logger.dispose()
-      }
-    })
+    val config = EventLogConfiguration
+    val bucket = config.bucket.toString()
+    val version = config.version.toString()
+    val logger = FeatureUsageFileEventLogger(config.sessionId, config.build, bucket, version, FeatureUsageLogEventWriter())
+    Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
   }
 
-  private fun String.shortedUUID(): String {
-    val start = this.lastIndexOf('-')
-    if (start > 0 && start + 1 < this.length) {
-      return this.substring(start + 1)
-    }
-    return this
-  }
-
-  private fun BuildNumber.asBuildNumber(): String {
-    val str = this.asStringWithoutProductCodeAndSnapshot()
-    return if (str.endsWith(".")) str + "0" else str
-  }
-
   override fun isEnabled(): Boolean {
-    return StatisticsUploadAssistant.isSendAllowed() &&
+    return !ApplicationManager.getApplication().isUnitTestMode &&
            Registry.`is`("feature.usage.event.log.collect.and.upload") &&
-           !ApplicationManager.getApplication().isUnitTestMode
+           StatisticsUploadAssistant.isCollectAllowed()
   }
 }

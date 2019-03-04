@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -51,11 +52,16 @@ public class MavenImportingSettings implements Cloneable {
   private boolean downloadSourcesAutomatically = false;
   private boolean downloadDocsAutomatically = false;
   private boolean downloadAnnotationsAutomatically = false;
+  private boolean autoDetectCompiler = true;
 
   private GeneratedSourcesFolder generatedSourcesFolder = GeneratedSourcesFolder.AUTODETECT;
 
   private String dependencyTypes = "jar, test-jar, maven-plugin, ejb, ejb-client, jboss-har, jboss-sar, war, ear, bundle";
   private Set<String> myDependencyTypesAsSet;
+
+  @NotNull private String vmOptionsForImporter = "";
+
+  @NotNull private String jdkForImporter = MavenRunnerSettings.USE_INTERNAL_JAVA;
 
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -196,6 +202,14 @@ public class MavenImportingSettings implements Cloneable {
     this.downloadAnnotationsAutomatically = value;
   }
 
+  public boolean isAutoDetectCompiler() {
+    return autoDetectCompiler;
+  }
+
+  public void setAutoDetectCompiler(boolean autoDetectCompiler) {
+    this.autoDetectCompiler = autoDetectCompiler;
+  }
+
   @Property
   @NotNull
   public GeneratedSourcesFolder getGeneratedSourcesFolder() {
@@ -206,6 +220,24 @@ public class MavenImportingSettings implements Cloneable {
     if (generatedSourcesFolder == null) return; // null may come from deserializator
 
     this.generatedSourcesFolder = generatedSourcesFolder;
+  }
+
+  @NotNull
+  public String getVmOptionsForImporter() {
+    return vmOptionsForImporter;
+  }
+
+  public void setVmOptionsForImporter(String vmOptionsForImporter) {
+    this.vmOptionsForImporter = StringUtil.notNullize(vmOptionsForImporter);
+  }
+
+  @NotNull
+  public String getJdkForImporter() {
+    return jdkForImporter;
+  }
+
+  public void setJdkForImporter(@NotNull String jdkForImporter) {
+    this.jdkForImporter = jdkForImporter;
   }
 
   @Override
@@ -222,12 +254,15 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadDocsAutomatically != that.downloadDocsAutomatically) return false;
     if (downloadSourcesAutomatically != that.downloadSourcesAutomatically) return false;
     if (downloadAnnotationsAutomatically != that.downloadAnnotationsAutomatically) return false;
+    if (autoDetectCompiler != that.autoDetectCompiler) return false;
     if (lookForNested != that.lookForNested) return false;
     if (keepSourceFolders != that.keepSourceFolders) return false;
     if (excludeTargetFolder != that.excludeTargetFolder) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
     if (generatedSourcesFolder != that.generatedSourcesFolder) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
+    if (!jdkForImporter.equals(that.jdkForImporter)) return false;
+    if (!vmOptionsForImporter.equals(that.vmOptionsForImporter)) return false;
     if (updateFoldersOnImportPhase != null
         ? !updateFoldersOnImportPhase.equals(that.updateFoldersOnImportPhase)
         : that.updateFoldersOnImportPhase != null) {
@@ -258,6 +293,8 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadDocsAutomatically) result++;
     result <<= 1;
     if (downloadAnnotationsAutomatically) result++;
+    result <<= 1;
+    if (autoDetectCompiler) result++;
     result <<= 1;
 
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);

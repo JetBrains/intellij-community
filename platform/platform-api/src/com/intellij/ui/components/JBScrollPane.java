@@ -28,6 +28,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.lang.reflect.Field;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ui.JBUI.emptyInsets;
 
@@ -37,22 +38,11 @@ public class JBScrollPane extends JScrollPane {
    * If a client property is set to {@code true} the bar's brightness
    * will be modified according to the view's background.
    *
-   * @see UIUtil#putClientProperty
+   * @see UIUtil#putClientProperty(JComponent, Key, Object)
    * @see UIUtil#isUnderDarcula
    */
+  @Deprecated
   public static final Key<Boolean> BRIGHTNESS_FROM_VIEW = Key.create("JB_SCROLL_PANE_BRIGHTNESS_FROM_VIEW");
-
-  @Deprecated
-  public static final RegionPainter<Float> THUMB_PAINTER = ScrollPainter.EditorThumb.DEFAULT;
-
-  @Deprecated
-  public static final RegionPainter<Float> THUMB_DARK_PAINTER = ScrollPainter.EditorThumb.DARCULA;
-
-  @Deprecated
-  public static final RegionPainter<Float> MAC_THUMB_PAINTER = ScrollPainter.EditorThumb.Mac.DEFAULT;
-
-  @Deprecated
-  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = ScrollPainter.EditorThumb.Mac.DARCULA;
 
   /**
    * Supposed to be used as a client property key for scrollbar and indicates if this scrollbar should be ignored
@@ -291,8 +281,7 @@ public class JBScrollPane extends JScrollPane {
 
     Corner(String pos) {
       myPos = pos;
-      ScrollColorProducer.setBackground(this);
-      ScrollColorProducer.setForeground(this);
+      ScrollBarPainter.setBackground(this);
     }
 
     @Override
@@ -800,4 +789,10 @@ public class JBScrollPane extends JScrollPane {
   private static final int SCROLL_MODIFIERS = // event modifiers allowed during scrolling
     ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & // for horizontal scrolling
     ~InputEvent.BUTTON1_MASK & ~InputEvent.BUTTON1_DOWN_MASK; // for selection
+
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static RegionPainter<Float> getThumbPainter(@NotNull Supplier<? extends Component> supplier) {
+    return new ScrollBarPainter.Thumb(supplier, SystemInfo.isMac);
+  }
 }

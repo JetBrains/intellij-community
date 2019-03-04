@@ -136,8 +136,10 @@ class ProductModulesLayout {
 
   /**
    * Name of the module containing search/searchableOptions.xml file.
+   * @deprecated not used anymore as searchable options are split between modules
    */
-  String searchableOptionsModule = "intellij.platform.resources"
+  @Deprecated
+  String searchableOptionsModule = ""
 
   /**
    * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #setPluginModulesToPublish} plugins.

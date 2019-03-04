@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.unwrap;
 
 import com.intellij.codeInsight.unwrap.UnwrapTestCase;
@@ -20,7 +6,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 
 public class UnwrapTryTest extends UnwrapTestCase {
-  public void testTryEmpty() throws Exception {
+  public void testTryEmpty() {
     assertUnwrapped("{\n" +
                     "    try {\n" +
                     "        <caret>\n" +
@@ -31,7 +17,7 @@ public class UnwrapTryTest extends UnwrapTestCase {
                     "<caret>}\n");
   }
 
-  public void testTryWithStatements() throws Exception {
+  public void testTryWithStatements() {
     assertUnwrapped("try {\n" +
                     "    int i;\n" +
                     "    int j;<caret>\n" +
@@ -41,7 +27,7 @@ public class UnwrapTryTest extends UnwrapTestCase {
                     "int j;<caret>\n");
   }
 
-  public void testTryWithCatches() throws Exception {
+  public void testTryWithCatches() {
     assertUnwrapped("try {\n" +
                     "    int i;<caret>\n" +
                     "} catch(RuntimeException e) {\n" +
@@ -53,7 +39,7 @@ public class UnwrapTryTest extends UnwrapTestCase {
                     "int i;<caret>\n");
   }
 
-  public void testTryWithFinally() throws Exception {
+  public void testTryWithFinally() {
     assertUnwrapped("try {\n" +
                     "    int i;<caret>\n" +
                     "} finally {\n" +
@@ -64,7 +50,7 @@ public class UnwrapTryTest extends UnwrapTestCase {
                     "int j;<caret>\n");
   }
 
-  public void testFinallyBlock() throws Exception {
+  public void testFinallyBlock() {
     assertUnwrapped("try {\n" +
                     "    int i;\n" +
                     "} finally {\n" +
@@ -75,7 +61,7 @@ public class UnwrapTryTest extends UnwrapTestCase {
                     "int j;<caret>\n");
   }
 
-  public void testFinallyBlockWithCatch() throws Exception {
+  public void testFinallyBlockWithCatch() {
     assertUnwrapped("try {\n" +
                     "    int i;\n" +
                     "} catch(Exception e) {\n" +
@@ -88,7 +74,7 @@ public class UnwrapTryTest extends UnwrapTestCase {
                     "int k;<caret>\n");
   }
 
-  public void testCatchBlock() throws Exception {
+  public void testCatchBlock() {
     assertUnwrapped("try {\n" +
                     "    int i;\n" +
                     "} catch(Exception e) {\n" +
@@ -98,7 +84,7 @@ public class UnwrapTryTest extends UnwrapTestCase {
                     "int i;<caret>\n");
   }
 
-  public void testManyCatchBlocks() throws Exception {
+  public void testManyCatchBlocks() {
     assertUnwrapped("try {\n" +
                     "    int i;\n" +
                     "} catch(RuntimeException e) {\n" +
@@ -114,7 +100,7 @@ public class UnwrapTryTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testWatchBlockWithFinally() throws Exception {
+  public void testWatchBlockWithFinally() {
     assertUnwrapped("try {\n" +
                     "    int i;\n" +
                     "} catch(Exception e) {\n" +
@@ -127,7 +113,7 @@ public class UnwrapTryTest extends UnwrapTestCase {
                     "int k;<caret>\n");
   }
 
-  public void testTryFinally() throws Exception {
+  public void testTryFinally() {
     assertOptions("try {\n" +
                   "} finally {\n" +
                   "    <caret>\n" +
@@ -136,7 +122,7 @@ public class UnwrapTryTest extends UnwrapTestCase {
                   "Unwrap 'try...'");
   }
 
-  public void testTryWithOnlyOneCatch() throws Exception {
+  public void testTryWithOnlyOneCatch() {
     assertOptions("try {\n" +
                   "} catch(Exception e) {\n" +
                   "    <caret>\n" +
@@ -145,7 +131,7 @@ public class UnwrapTryTest extends UnwrapTestCase {
                   "Unwrap 'try...'");
   }
 
-  public void testTryWithSeveralCatches() throws Exception {
+  public void testTryWithSeveralCatches() {
     assertOptions("try {\n" +
                   "} catch(Exception e) {\n" +
                   "} catch(Exception e) {\n" +
@@ -157,7 +143,7 @@ public class UnwrapTryTest extends UnwrapTestCase {
                   "Unwrap 'try...'");
   }
 
-  public void testTryWithResources() throws Exception {
+  public void testTryWithResources() {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_9);
     assertUnwrapped("AutoCloseable s = null;\n" +
                     "try (AutoCloseable r = null; s) {\n" +

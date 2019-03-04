@@ -10,9 +10,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.UDeclaration;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.*;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -30,7 +29,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   private static final int IS_STATIC_MASK = 0x04;
   private static final int IS_FINAL_MASK = 0x08;
   private static final int IS_SYNTHETIC_JSP_ELEMENT_MASK = 0x400;
-  private static final int IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK = 0x800;
+  private static final int FORBID_PROTECTED_ACCESS_MASK = 0x800;
 
   protected RefJavaElementImpl(@NotNull String name, @NotNull RefJavaElement owner) {
     super(name, owner);
@@ -218,30 +217,36 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
         ((RefJavaFileImpl)refWhat).addInReference(this);
         getRefManager().fireNodeMarkedReferenced(psiWhat, psiFrom);
       } else if (refWhat instanceof RefJavaElementImpl) {
-        ((RefJavaElementImpl)refWhat).markReferenced(this, psiFrom, psiWhat, forWriting, forReading, expression);
+        ((RefJavaElementImpl)refWhat).markReferenced(this, forWriting, forReading, expression);
       }
     } else {
       if (psiWhat instanceof PsiMethod) {
-        markEnumUsedIfValuesMethod((PsiMethod)psiWhat, expression, psiFrom);
+        markEnumUsedIfValuesMethod((PsiMethod)psiWhat, expression);
       }
       getRefManager().fireNodeMarkedReferenced(psiWhat, psiFrom);
     }
   }
 
-  protected void markReferenced(final RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, final boolean forWriting, boolean forReading, UExpression expressionFrom) {
+  protected void markReferenced(@NotNull RefElementImpl refFrom,
+                                boolean forWriting,
+                                boolean forReading,
+                                @Nullable UExpression expressionFrom) {
     addInReference(refFrom);
-    setUsedQualifiedOutsidePackageFlag(refFrom, expressionFrom);
+    setForbidProtectedAccess(refFrom, expressionFrom);
     getRefManager().fireNodeMarkedReferenced(this, refFrom, false, forReading, forWriting, expressionFrom == null ? null : expressionFrom.getSourcePsi());
   }
 
-  void setUsedQualifiedOutsidePackageFlag(RefElementImpl refFrom, UExpression expressionFrom) {
-    if (!checkFlag(IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK) && expressionFrom instanceof UQualifiedReferenceExpression && RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
-      setFlag(true, IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK);
+  void setForbidProtectedAccess(RefElementImpl refFrom, @Nullable UExpression expressionFrom) {
+    if (!checkFlag(FORBID_PROTECTED_ACCESS_MASK) &&
+        (expressionFrom instanceof UQualifiedReferenceExpression || 
+         expressionFrom instanceof UCallExpression && ((UCallExpression)expressionFrom).getKind() == UastCallKind.CONSTRUCTOR_CALL) && 
+        RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
+      setFlag(true, FORBID_PROTECTED_ACCESS_MASK);
     }
   }
 
-  public boolean isUsedQualifiedOutsidePackage() {
-    return checkFlag(IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK);
+  public boolean isProtectedAccessForbidden() {
+    return checkFlag(FORBID_PROTECTED_ACCESS_MASK);
   }
   
   RefJavaManager getRefJavaManager() {
@@ -268,7 +273,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     return super.getIcon(expanded);
   }
 
-  private void markEnumUsedIfValuesMethod(PsiMethod psiWhat, UExpression expression, PsiElement psiFrom) {
+  private void markEnumUsedIfValuesMethod(PsiMethod psiWhat, UExpression expression) {
     //TODO support kotlin enums
     final PsiClass containingClass = psiWhat.getContainingClass();
     if (containingClass != null && containingClass.isEnum() && "values".equals(psiWhat.getName())) {
@@ -277,7 +282,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
           final RefJavaElementImpl enumConstantReference = (RefJavaElementImpl)getRefManager().getReference(enumConstant);
           if (enumConstantReference != null) {
             addOutReference(enumConstantReference);
-            enumConstantReference.markReferenced(this, psiFrom, enumConstant, false, true, expression);
+            enumConstantReference.markReferenced(this, false, true, expression);
           }
         }
       }

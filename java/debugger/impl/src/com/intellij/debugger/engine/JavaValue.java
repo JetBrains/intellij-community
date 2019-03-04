@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -13,6 +13,8 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.memory.agent.MemoryAgent;
+import com.intellij.debugger.memory.agent.MemoryAgentReferringObjectsProvider;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
@@ -24,10 +26,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XExpression;
@@ -38,22 +37,16 @@ import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
 import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
-import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
-import com.sun.jdi.ArrayReference;
-import com.sun.jdi.ArrayType;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -163,17 +156,14 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           @Override
           public void labelChanged() {
             Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor, myParent != null ? myParent.getDescriptor() : null);
-            final String value = getValueString();
-            EvaluateException exception = myValueDescriptor.getEvaluateException();
-            XValuePresentation presentation = new JavaValuePresentation(
-              value, myValueDescriptor.getIdLabel(), exception != null ? exception.getMessage() : null, myValueDescriptor);
 
+            XValuePresentation presentation = createPresentation(myValueDescriptor);
             Renderer lastRenderer = myValueDescriptor.getLastRenderer();
             boolean fullEvaluatorSet = setFullValueEvaluator(lastRenderer);
             if (!fullEvaluatorSet && lastRenderer instanceof CompoundNodeRenderer) {
               fullEvaluatorSet = setFullValueEvaluator(((CompoundNodeRenderer)lastRenderer).getLabelRenderer());
             }
-            if (!fullEvaluatorSet && value.length() > XValueNode.MAX_VALUE_LENGTH) {
+            if (!fullEvaluatorSet && getValueText().length() > XValueNode.MAX_VALUE_LENGTH) {
               node.setFullValueEvaluator(new JavaFullValueEvaluator(myEvaluationContext) {
                 @Override
                 public void evaluate(@NotNull final XFullValueEvaluationCallback callback) {
@@ -203,6 +193,18 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         });
       }
     });
+  }
+
+  public static XValuePresentation createPresentation(ValueDescriptorImpl descriptor) {
+    XValuePresentation presentation = null;
+    Renderer lastLabelRenderer = descriptor.getLastLabelRenderer();
+    if (lastLabelRenderer instanceof ValueLabelRenderer) {
+      presentation = ((ValueLabelRenderer)lastLabelRenderer).getPresentation(descriptor);
+    }
+    if (presentation == null) {
+      presentation = new JavaValuePresentation(descriptor);
+    }
+    return presentation;
   }
 
   public abstract static class JavaFullValueEvaluator extends XFullValueEvaluator {
@@ -244,145 +246,6 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         }
       });
     }
-  }
-
-  private static String truncateToMaxLength(@NotNull String value) {
-    return value.substring(0, Math.min(value.length(), XValueNode.MAX_VALUE_LENGTH));
-  }
-
-  private static class JavaValuePresentation extends XValueExtendedPresentation implements XValueCompactPresentation {
-    private final String myValue;
-    private final String myType;
-    private final String myError;
-    private final ValueDescriptorImpl myValueDescriptor;
-
-    JavaValuePresentation(@NotNull String value, @Nullable String type, @Nullable String error, ValueDescriptorImpl valueDescriptor) {
-      myValue = value;
-      myType = type;
-      myError = error;
-      myValueDescriptor = valueDescriptor;
-    }
-
-    @Nullable
-    @Override
-    public String getType() {
-      return StringUtil.nullize(myType);
-    }
-
-    @Override
-    public void renderValue(@NotNull XValueTextRenderer renderer) {
-      renderValue(renderer, null);
-    }
-
-    @Override
-    public void renderValue(@NotNull XValueTextRenderer renderer, @Nullable XValueNodeImpl node) {
-      boolean compact = node != null;
-      if (myError != null) {
-        if (myValue.endsWith(myError)) {
-          renderer.renderValue(myValue.substring(0, myValue.length() - myError.length()));
-        }
-        renderer.renderError(myError);
-      }
-      else {
-        if (compact && node.getValueContainer() instanceof JavaValue) {
-          final JavaValue container = (JavaValue)node.getValueContainer();
-
-          if (container.getDescriptor().isArray()) {
-            final ArrayReference value = (ArrayReference)container.getDescriptor().getValue();
-            final ArrayType type = (ArrayType)container.getDescriptor().getType();
-            if (type != null) {
-              final String typeName = type.componentTypeName();
-              if (TypeConversionUtil.isPrimitive(typeName) || CommonClassNames.JAVA_LANG_STRING.equals(typeName)) {
-                int size = value.length();
-                int max = Math.min(size, CommonClassNames.JAVA_LANG_STRING.equals(typeName) ? 5 : 10);
-                //TODO [eu]: this is a quick fix for IDEA-136606, need to move this away from EDT!!!
-                final List<Value> values = value.getValues(0, max);
-                int i = 0;
-                final List<String> vals = new ArrayList<>(max);
-                while (i < values.size()) {
-                  vals.add(StringUtil.first(values.get(i).toString(), 15, true));
-                  i++;
-                }
-                String more = "";
-                if (vals.size() < size) {
-                  more = ", + " + (size - vals.size()) + " more";
-                }
-
-                renderer.renderValue("{" + StringUtil.join(vals, ", ") + more + "}");
-                return;
-              }
-            }
-          }
-        }
-
-        if (myValueDescriptor.isString()) {
-          renderer.renderStringValue(myValue, "\"", XValueNode.MAX_VALUE_LENGTH);
-          return;
-        }
-
-        String value = truncateToMaxLength(myValue);
-        Renderer lastRenderer = myValueDescriptor.getLastRenderer();
-        if (lastRenderer instanceof CompoundTypeRenderer) {
-          lastRenderer = ((CompoundTypeRenderer)lastRenderer).getLabelRenderer();
-        }
-        if (lastRenderer instanceof ToStringRenderer) {
-          if (!((ToStringRenderer)lastRenderer).isShowValue(myValueDescriptor, myValueDescriptor.getStoredEvaluationContext())) {
-            return; // to avoid empty line for not calculated toStrings
-          }
-          value = StringUtil.wrapWithDoubleQuote(value);
-        }
-        renderer.renderValue(value);
-      }
-    }
-
-    @NotNull
-    @Override
-    public String getSeparator() {
-      boolean emptyAfterSeparator = !myValueDescriptor.isShowIdLabel() && isValueEmpty();
-      String declaredType = myValueDescriptor.getDeclaredTypeLabel();
-      if (!StringUtil.isEmpty(declaredType)) {
-        return emptyAfterSeparator ? declaredType : declaredType + " " + DEFAULT_SEPARATOR;
-      }
-      return emptyAfterSeparator ? "" : DEFAULT_SEPARATOR;
-    }
-
-    @Override
-    public boolean isModified() {
-      return myValueDescriptor.isDirty();
-    }
-
-    private boolean isValueEmpty() {
-      final MyEmptyContainerChecker checker = new MyEmptyContainerChecker();
-      renderValue(new XValueTextRendererImpl(checker));
-      return checker.isEmpty;
-    }
-
-    private static class MyEmptyContainerChecker implements ColoredTextContainer {
-      boolean isEmpty = true;
-
-      @Override
-      public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
-        if (!fragment.isEmpty()) isEmpty = false;
-      }
-
-      @Override
-      public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
-        append(fragment, attributes);
-      }
-
-      @Override
-      public void setIcon(@Nullable Icon icon) {
-      }
-
-      @Override
-      public void setToolTipText(@Nullable String text) {
-      }
-    }
-  }
-
-  @NotNull
-  String getValueString() {
-    return myValueDescriptor.getValueText();
   }
 
   private int myChildrenRemaining = -1;
@@ -599,7 +462,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Override
   public Promise<XExpression> calculateEvaluationExpression() {
     if (evaluationExpression != null) {
-      return Promise.resolve(evaluationExpression);
+      return Promises.resolvedPromise(evaluationExpression);
     }
     else {
       final AsyncPromise<XExpression> res = new AsyncPromise<>();
@@ -640,16 +503,23 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   @Override
+  @NotNull
   public String getValueText() {
     return myValueDescriptor.getValueText();
   }
+
   @Nullable
   @Override
   public XReferrersProvider getReferrersProvider() {
     return new XReferrersProvider() {
       @Override
       public XValue getReferringObjectsValue() {
-        return new JavaReferringObjectsValue(JavaValue.this, false);
+        MemoryAgent memoryAgent = getEvaluationContext().getDebugProcess().getMemoryAgent();
+        ReferringObjectsProvider provider = ReferringObjectsProvider.BASIC_JDI;
+        if (memoryAgent != null && memoryAgent.canFindGcRoots()) {
+          provider = new MemoryAgentReferringObjectsProvider(memoryAgent, MemoryAgent.DEFAULT_GC_ROOTS_OBJECTS_LIMIT);
+        }
+        return new JavaReferringObjectsValue(JavaValue.this, provider, null);
       }
     };
   }

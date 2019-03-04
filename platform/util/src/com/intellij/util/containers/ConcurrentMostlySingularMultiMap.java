@@ -40,13 +40,13 @@ public class ConcurrentMostlySingularMultiMap<K, V> extends MostlySingularMultiM
       }
       else if (current instanceof MostlySingularMultiMap.ValueList) {
         ValueList<?> curList = (ValueList)current;
-        ValueList<Object> newList = new ValueList<Object>(curList.size() + 1);
+        ValueList<Object> newList = new ValueList<>(curList.size() + 1);
         newList.addAll(curList);
         newList.add(value);
         if (map.replace(key, curList, newList)) break;
       }
       else {
-        ValueList<Object> newList = new ValueList<Object>(2);
+        ValueList<Object> newList = new ValueList<>(2);
         newList.add(current);
         newList.add(value);
         if (map.replace(key, current, newList)) break;

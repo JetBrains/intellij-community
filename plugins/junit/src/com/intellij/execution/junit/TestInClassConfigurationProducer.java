@@ -1,33 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import org.jetbrains.annotations.NotNull;
 
-public class TestInClassConfigurationProducer extends JUnitConfigurationProducer {
+public final class TestInClassConfigurationProducer extends JUnitConfigurationProducer {
   private final JUnitInClassConfigurationProducerDelegate myDelegate = new JUnitInClassConfigurationProducerDelegate();
-  public TestInClassConfigurationProducer() {
-    super(JUnitConfigurationType.getInstance());
-  }
 
   @Override
   protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
@@ -55,9 +39,12 @@ public class TestInClassConfigurationProducer extends JUnitConfigurationProducer
     return myDelegate.isApplicableTestType(type, context);
   }
 
-  private static class JUnitInClassConfigurationProducerDelegate
-    extends AbstractInClassConfigurationProducer<JUnitConfiguration> {
-    JUnitInClassConfigurationProducerDelegate() {super(JUnitConfigurationType.getInstance());}
+  private static class JUnitInClassConfigurationProducerDelegate extends AbstractInClassConfigurationProducer<JUnitConfiguration> {
+    @NotNull
+    @Override
+    public ConfigurationFactory getConfigurationFactory() {
+      return JUnitConfigurationType.getInstance().getConfigurationFactories()[0];
+    }
 
     @Override
     protected boolean isApplicableTestType(String type, ConfigurationContext context) {

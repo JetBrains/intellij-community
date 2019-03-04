@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.navigation.History;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -24,14 +25,14 @@ import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.EventListener;
 import java.util.List;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 public class VcsLogUiImpl extends AbstractVcsLogUi {
   private static final String HELP_ID = "reference.changesToolWindow.log";
@@ -40,15 +41,18 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final MyVcsLogUiPropertiesListener myPropertiesListener;
   @NotNull private final History myHistory;
+  @NotNull private final EventDispatcher<VcsLogFilterListener> myFilterListenerDispatcher =
+    EventDispatcher.create(VcsLogFilterListener.class);
 
   public VcsLogUiImpl(@NotNull String id,
                       @NotNull VcsLogData logData,
                       @NotNull VcsLogColorManager manager,
                       @NotNull MainVcsLogUiProperties uiProperties,
-                      @NotNull VisiblePackRefresher refresher) {
+                      @NotNull VisiblePackRefresher refresher,
+                      @Nullable VcsLogFilterCollection filters) {
     super(id, logData, manager, refresher);
     myUiProperties = uiProperties;
-    myMainFrame = new MainFrame(logData, this, uiProperties, myLog, myVisiblePack);
+    myMainFrame = new MainFrame(logData, this, uiProperties, myLog, myVisiblePack, filters);
 
     for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
@@ -122,12 +126,13 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
                        pack -> pack.getFilters().isEmpty());
       }
     });
-    if (VcsLogProjectTabsProperties.MAIN_LOG_ID.equals(getId())) {
+    VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
+    VcsLogManager logManager = projectLog.getLogManager();
+    if (logManager != null && logManager.getDataManager() == myLogData) {
       runnables.add(new NamedRunnable("View in New Tab") {
         @Override
         public void run() {
-          VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
-          VcsLogUiImpl ui = projectLog.getTabsManager().openAnotherLogTab(notNull(projectLog.getLogManager()), true);
+          VcsLogUiImpl ui = projectLog.getTabsManager().openAnotherLogTab(logManager, VcsLogFilterObject.collection());
           ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create()),
                             pack -> pack.getFilters().isEmpty());
         }
@@ -145,6 +150,11 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
 
   public void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
     myRefresher.onFiltersChange(filters);
+    myFilterListenerDispatcher.getMulticaster().onFiltersChanged();
+  }
+
+  public void addFilterListener(@NotNull VcsLogFilterListener listener) {
+    myFilterListenerDispatcher.addListener(listener);
   }
 
   @NotNull
@@ -219,10 +229,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       else if (MainVcsLogUiProperties.BEK_SORT_TYPE.equals(property)) {
         myRefresher.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
       }
-      else if (MainVcsLogUiProperties.TEXT_FILTER_REGEX.equals(property) ||
-               MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE.equals(property)) {
-        applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
-      }
       else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
         myMainFrame.getGraphTable().onColumnOrderSettingChanged();
       }
@@ -232,16 +238,15 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       else if (property instanceof CommonUiProperties.TableColumnProperty) {
         myMainFrame.getGraphTable().forceReLayout(((CommonUiProperties.TableColumnProperty)property).getColumn());
       }
-      else if (MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS.equals(property)) {
-      }
-      else {
-        throw new UnsupportedOperationException("Property " + property + " does not exist");
-      }
     }
 
     private void onShowLongEdgesChanged() {
       myVisiblePack.getVisibleGraph().getActionController()
         .setLongEdgesHidden(!myUiProperties.get(MainVcsLogUiProperties.SHOW_LONG_EDGES));
     }
+  }
+
+  public interface VcsLogFilterListener extends EventListener {
+    void onFiltersChanged();
   }
 }

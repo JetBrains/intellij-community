@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
  * @author nik
@@ -65,6 +66,11 @@ public abstract class FileIndexBase implements FileIndex {
     return iterateContentUnderDirectory(dir, processor, null);
   }
 
+  protected boolean isTestSourcesRoot(@NotNull DirectoryInfo info) {
+    JpsModuleSourceRootType<?> rootType = myDirectoryIndex.getSourceRootType(info);
+    return rootType != null && rootType.isForTests();
+  }
+
   private static boolean iterateContentUnderDirectoryWithFilter(@NotNull VirtualFile dir,
                                                                 @NotNull ContentIterator iterator,
                                                                 @NotNull VirtualFileFilter filter) {
@@ -87,7 +93,7 @@ public abstract class FileIndexBase implements FileIndex {
   }
 
   @NotNull
-  protected static VirtualFile[][] getModuleContentAndSourceRoots(Module module) {
+  protected static VirtualFile[][] getModuleContentAndSourceRoots(@NotNull Module module) {
     return new VirtualFile[][]{ModuleRootManager.getInstance(module).getContentRoots(),
       ModuleRootManager.getInstance(module).getSourceRoots()};
   }

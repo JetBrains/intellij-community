@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 import java.util.List;
 
+@FunctionalInterface
 public interface EditorTrackerListener extends EventListener{
   void activeEditorsChanged(@NotNull List<Editor> activeEditors);
 }

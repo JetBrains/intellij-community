@@ -9,13 +9,13 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.PackageDirectoryCache;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElementFinder;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleClassFinder;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.*;
@@ -34,6 +34,9 @@ public class GradleBuildClasspathManager {
   @NotNull
   private final AtomicReference<Map<String/*module path*/, List<VirtualFile> /*module build classpath*/>> myClasspathMap
     = new AtomicReference<>(new HashMap<>());
+
+  private final Map<String, PackageDirectoryCache> myClassFinderCache = ConcurrentFactoryMap
+    .createMap(path -> PackageDirectoryCache.createCache(getModuleClasspathEntries(path)));
 
   public GradleBuildClasspathManager(@NotNull Project project) {
     myProject = project;
@@ -84,12 +87,11 @@ public class GradleBuildClasspathManager {
       set.addAll(virtualFiles);
     }
     allFilesCache = ContainerUtil.newArrayList(set);
-    for (PsiElementFinder finder : PsiElementFinder.EP_NAME.getExtensions(myProject)) {
-      if (finder instanceof GradleClassFinder) {
-        ((GradleClassFinder)finder).clearCache();
-        break;
-      }
-    }
+    myClassFinderCache.clear();
+  }
+
+  public Map<String, PackageDirectoryCache> getClassFinderCache() {
+    return myClassFinderCache;
   }
 
   @NotNull

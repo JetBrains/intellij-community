@@ -225,41 +225,56 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   @Override
   public void doApplyInformationToEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    CachedIntentions cachedIntentions = myCachedIntentions;
+    boolean actionsChanged = myActionsChanged;
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-    if ((state == null || state.isFinished()) && myCachedIntentions != null) {
-      IntentionsUI.getInstance(myProject).update(myCachedIntentions, myActionsChanged);
+    if ((state == null || state.isFinished()) && cachedIntentions != null) {
+      IntentionsInfo syncInfo = new IntentionsInfo();
+      getActionsToShowSync(myEditor, myFile, syncInfo, myPassIdToShowIntentionsFor);
+      actionsChanged |= cachedIntentions.addActions(syncInfo);
+
+      IntentionsUI.getInstance(myProject).update(cachedIntentions, actionsChanged);
     }
   }
 
 
   /**
    * Returns the list of actions to show in the Alt-Enter popup at the caret offset in the given editor.
+   *
+   * @param includeSyncActions whether EDT-only providers should be queried, if {@code true}, this method should be invoked in EDT
    */
   @NotNull
-  public static IntentionsInfo getActionsToShow(@NotNull Editor hostEditor, @NotNull PsiFile hostFile) {
-    return getActionsToShow(hostEditor, hostFile, hostEditor.getCaretModel().getOffset());
-  }
-
-  @NotNull
-  public static IntentionsInfo getActionsToShow(@NotNull Editor hostEditor, @NotNull PsiFile hostFile, int offset) {
+  public static IntentionsInfo getActionsToShow(@NotNull Editor hostEditor, @NotNull PsiFile hostFile, boolean includeSyncActions) {
     IntentionsInfo result = new IntentionsInfo();
-    getActionsToShow(hostEditor, hostFile, result, -1, offset);
+    getActionsToShow(hostEditor, hostFile, result, -1);
+    if (includeSyncActions) {
+      getActionsToShowSync(hostEditor, hostFile, result, -1);
+    }
     return result;
   }
 
+  /**
+   * Collects intention actions from providers intended to be invoked in EDT.
+   */
+  public static void getActionsToShowSync(@NotNull final Editor hostEditor,
+                                          @NotNull final PsiFile hostFile,
+                                          @NotNull final IntentionsInfo intentions,
+                                          int passIdToShowIntentionsFor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    new EditorNotificationActions().collectActions(hostEditor, hostFile, intentions, passIdToShowIntentionsFor,
+                                                   hostEditor.getCaretModel().getOffset());
+    intentions.filterActions(hostFile);
+  }
+
+  /**
+   * Collects intention actions from providers intended to be invoked in a background thread.
+   */
   public static void getActionsToShow(@NotNull final Editor hostEditor,
                                       @NotNull final PsiFile hostFile,
                                       @NotNull final IntentionsInfo intentions,
                                       int passIdToShowIntentionsFor) {
-    getActionsToShow(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, hostEditor.getCaretModel().getOffset());
-  }
-
-
-  public static void getActionsToShow(@NotNull final Editor hostEditor,
-                                      @NotNull final PsiFile hostFile,
-                                      @NotNull final IntentionsInfo intentions,
-                                      int passIdToShowIntentionsFor,
-                                      int offset) {
+    int offset = hostEditor.getCaretModel().getOffset();
     final PsiElement psiElement = hostFile.findElementAt(offset);
     if (psiElement != null) PsiUtilCore.ensureValid(psiElement);
 

@@ -2,7 +2,9 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -41,6 +43,44 @@ public class SwitchStatementWithTooManyBranchesInspectionTest extends LightInspe
                  "    }");
   }
 
+  public void testJava12() {
+    doMemberTest("    public void foo(int x) {\n" +
+                 "         /*'switch' has too many branches (11)*/switch/**/ (x) {\n" +
+                 "            case 1 -> {}\n" +
+                 "            case 2 -> {}\n" +
+                 "            case 3 -> {}\n" +
+                 "            case 4 -> {}\n" +
+                 "            case 5 -> {}\n" +
+                 "            case 6 -> {}\n" +
+                 "            case 7 -> {}\n" +
+                 "            case 8 -> {}\n" +
+                 "            case 9 -> {}\n" +
+                 "            case 10 -> {}\n" +
+                 "            case 11,12,13 -> {}\n" +
+                 "            default -> {}\n" +
+                 "        }\n" +
+                 "    }");
+  }
+
+  public void testJava12Expression() {
+    doMemberTest("    public int foo(int x) {\n" +
+                 "         return /*'switch' has too many branches (11)*/switch/**/ (x) {\n" +
+                 "            case 1 -> 0;\n" +
+                 "            case 2 -> 0;\n" +
+                 "            case 3 -> 0;\n" +
+                 "            case 4 -> 0;\n" +
+                 "            case 5 -> 0;\n" +
+                 "            case 6 -> 0;\n" +
+                 "            case 7 -> 0;\n" +
+                 "            case 8 -> 0;\n" +
+                 "            case 9 -> 0;\n" +
+                 "            case 10 -> 0;\n" +
+                 "            case 11,12,13 -> 0;\n" +
+                 "            default -> 0;\n" +
+                 "        };\n" +
+                 "    }");
+  }
+
   public void testNoWarn() {
     doMemberTest("    public void foo(int x) {\n" +
                  "         switch (x) {\n" +
@@ -68,6 +108,12 @@ public class SwitchStatementWithTooManyBranchesInspectionTest extends LightInspe
                  "                break;\n" +
                  "        }\n" +
                  "    }");
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_12;
   }
 
   @Nullable

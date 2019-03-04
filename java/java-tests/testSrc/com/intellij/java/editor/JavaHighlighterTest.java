@@ -34,6 +34,9 @@ public class JavaHighlighterTest extends LightCodeInsightTestCase {
         EditorFactory.getInstance().releaseEditor(editor);
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

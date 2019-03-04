@@ -76,6 +76,12 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
     return myConstructor;
   }
 
+  @Nullable
+  @Override
+  public PsiElement getPsiElement() {
+    return myConstructor;
+  }
+
   @Override
   public boolean equals(Object o) {
     return this == o || super.equals(o) && myConstructor.equals(((JavaConstructorCallElement)o).myConstructor);
@@ -136,7 +142,7 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
     return !constructor.hasModifierProperty(PsiModifier.PRIVATE) && psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 
-  private static boolean isConstructorCallPlace(@NotNull PsiElement position) {
+  static boolean isConstructorCallPlace(@NotNull PsiElement position) {
     return CachedValuesManager.getCachedValue(position, () -> {
       boolean result = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position) &&
                        !JavaClassNameInsertHandler.isArrayTypeExpected(PsiTreeUtil.getParentOfType(position, PsiNewExpression.class));

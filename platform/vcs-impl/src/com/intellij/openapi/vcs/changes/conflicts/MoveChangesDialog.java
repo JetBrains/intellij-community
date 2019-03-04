@@ -32,10 +32,10 @@ import java.util.Set;
 public class MoveChangesDialog extends DialogWrapper {
   private static final String MOVE_CHANGES_CURRENT_ONLY = "move.changes.current.only";
   private final ChangesTree myTreeList;
-  private final Collection<Change> mySelected;
+  private final Collection<? extends Change> mySelected;
   private final JBCheckBox myCheckBox;
 
-  public MoveChangesDialog(final Project project, Collection<Change> selected, final Set<ChangeList> changeLists, VirtualFile current) {
+  public MoveChangesDialog(final Project project, Collection<? extends Change> selected, final Set<ChangeList> changeLists, VirtualFile current) {
     super(project, true);
     mySelected = selected;
     setTitle("Move Changes to Active Changelist");

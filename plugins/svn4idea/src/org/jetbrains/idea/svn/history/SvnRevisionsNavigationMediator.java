@@ -55,7 +55,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     underProgress(exception, process);
 
     Info info = infoRef.get();
-    if (info == null || info.getRevision() == null || info.getRepositoryRootURL() == null) {
+    if (info == null || !info.getRevision().isValid() || info.getRepositoryRootUrl() == null) {
       throw new VcsException("Could not get head info for " + location);
     }
 
@@ -70,8 +70,8 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
 
     myChunkFactory = new BunchFactory(myInternallyCached, myVisuallyCached, new LiveProvider(vcs, location, info.getRevision().getNumber(),
                                                                                              new SvnLogUtil(myProject, vcs, location,
-                                                                                                            info.getRepositoryRootURL()),
-                                                                                             info.getRepositoryRootURL()));
+                                                                                                            info.getRepositoryRootUrl()),
+                                                                                             info.getRepositoryRootUrl()));
 
     myCurrentIdx = -1;
 

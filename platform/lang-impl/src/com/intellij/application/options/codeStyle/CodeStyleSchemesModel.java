@@ -150,13 +150,17 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     CodeStyleSettingsManager projectSettingsManager = getProjectSettings();
     projectSettingsManager.USE_PER_PROJECT_SETTINGS = isProjectScheme(mySelectedScheme);
     projectSettingsManager.PREFERRED_PROJECT_CODE_STYLE = mySelectedScheme instanceof ProjectScheme ? null : mySelectedScheme.getName();
-    projectSettingsManager.setMainProjectCodeStyle(myProjectScheme.getCodeStyleSettings());
+    CodeStyleSettings projectSettings = myProjectScheme.getCodeStyleSettings();
+    projectSettings.getModificationTracker().incModificationCount();
+    projectSettingsManager.setMainProjectCodeStyle(projectSettings);
   }
 
   private void commitClonedSettings() {
     for (CodeStyleScheme scheme : mySettingsToClone.keySet()) {
       if (!(scheme instanceof ProjectScheme)) {
-        scheme.getCodeStyleSettings().copyFrom(mySettingsToClone.get(scheme));
+        CodeStyleSettings settings = scheme.getCodeStyleSettings();
+        settings.copyFrom(mySettingsToClone.get(scheme));
+        settings.getModificationTracker().incModificationCount();
       }
     }
   }

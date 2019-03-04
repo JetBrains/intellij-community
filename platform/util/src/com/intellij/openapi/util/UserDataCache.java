@@ -27,7 +27,7 @@ public abstract class UserDataCache<T, Owner extends UserDataHolder, Param> exte
   }
 
   public UserDataCache(@NonNls String keyName) {
-    myKey = new Key<T>(keyName);
+    myKey = new Key<>(keyName);
   }
 
   public T get(final Owner owner, final Param parameter) {

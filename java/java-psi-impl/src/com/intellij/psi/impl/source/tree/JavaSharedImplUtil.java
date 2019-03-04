@@ -59,7 +59,8 @@ public class JavaSharedImplUtil {
   }
 
   // collects annotations bound to C-style arrays
-  private static List<PsiAnnotation[]> collectAnnotations(PsiElement anchor, PsiAnnotation stopAt) {
+  @Nullable
+  private static List<PsiAnnotation[]> collectAnnotations(@NotNull PsiElement anchor, @Nullable PsiAnnotation stopAt) {
     List<PsiAnnotation[]> annotations = ContainerUtil.newSmartList();
 
     List<PsiAnnotation> current = null;
@@ -175,7 +176,7 @@ public class JavaSharedImplUtil {
     }
   }
 
-  public static void setInitializer(PsiVariable variable, PsiExpression initializer) throws IncorrectOperationException {
+  public static void setInitializer(@NotNull PsiVariable variable, PsiExpression initializer) throws IncorrectOperationException {
     PsiExpression oldInitializer = variable.getInitializer();
     if (oldInitializer != null) {
       oldInitializer.delete();
@@ -203,7 +204,7 @@ public class JavaSharedImplUtil {
     private final TypeAnnotationProvider myOriginalProvider;
     private volatile PsiAnnotation[] myCache;
 
-    private FilteringTypeAnnotationProvider(PsiAnnotation[] candidates, TypeAnnotationProvider originalProvider) {
+    private FilteringTypeAnnotationProvider(@NotNull PsiAnnotation[] candidates, @NotNull TypeAnnotationProvider originalProvider) {
       myCandidates = candidates;
       myOriginalProvider = originalProvider;
     }

@@ -47,6 +47,9 @@ public class CreateModuleLibraryFromFilesTest extends ModuleRootManagerTestCase 
     try {
       myModifiableRootModel.dispose();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myModifiableModel = null;
       myModifiableRootModel = null;

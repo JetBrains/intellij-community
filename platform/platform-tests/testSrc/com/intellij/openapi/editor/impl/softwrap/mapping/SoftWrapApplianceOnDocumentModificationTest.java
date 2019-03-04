@@ -51,6 +51,9 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
         settings.setSmartHome(mySmartHome);
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

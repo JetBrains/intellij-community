@@ -70,9 +70,6 @@ public final class ActionMenu extends JBMenu {
     if (SystemInfo.isMacSystemMenu) {
       installSynchronizer();
     }
-    if (UIUtil.isUnderIntelliJLaF()) {
-      setOpaque(true);
-    }
 
     // Triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
     getPopupMenu();
@@ -262,11 +259,9 @@ public final class ActionMenu extends JBMenu {
 
   public void fillMenu() {
     DataContext context;
-    boolean mayContextBeInvalid;
 
     if (myContext != null) {
       context = myContext;
-      mayContextBeInvalid = false;
     }
     else {
       @SuppressWarnings("deprecation") DataContext contextFromFocus = DataManager.getInstance().getDataContext();
@@ -275,11 +270,10 @@ public final class ActionMenu extends JBMenu {
         IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, this);
         context = DataManager.getInstance().getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor(frame));
       }
-      mayContextBeInvalid = true;
     }
 
     final boolean isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar();
-    Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, mayContextBeInvalid, LaterInvocator.isInModalContext(), isDarkMenu);
+    Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, LaterInvocator.isInModalContext(), isDarkMenu);
   }
 
   private class MenuItemSynchronizer implements PropertyChangeListener {

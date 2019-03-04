@@ -21,10 +21,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -129,11 +127,6 @@ public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub
     final StringBuilder buffer = new StringBuilder();
     appendMirrorText(0, buffer);
     return buffer.toString();
-  }
-
-  @Override
-  public PsiMetaData getMetaData() {
-    return MetaRegistry.getMetaBase(this);
   }
 
   @Override

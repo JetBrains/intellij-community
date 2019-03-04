@@ -20,8 +20,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.ThreadLocalCachedByteArray;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
@@ -29,11 +27,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.DebugAssertions;
 import com.intellij.util.indexing.impl.MapReduceIndex;
+import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.*;
-import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -43,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class SnapshotInputMappings<Key, Value, Input> {
   private static final Logger LOG = Logger.getInstance(SnapshotInputMappings.class);
@@ -51,7 +50,7 @@ class SnapshotInputMappings<Key, Value, Input> {
   private final ID<Key, Value> myIndexId;
   private final VfsAwareMapReduceIndex.MapDataExternalizer<Key, Value> myMapExternalizer;
   private final DataIndexer<Key, Value, Input> myIndexer;
-  private volatile PersistentHashMap<Integer, ByteArraySequence> myContents;
+  private final PersistentMapBasedForwardIndex myContents;
   private volatile PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
   private volatile PersistentHashMap<Integer, String> myIndexingTrace;
 
@@ -62,6 +61,7 @@ class SnapshotInputMappings<Key, Value, Input> {
     myIsPsiBackedIndex = indexExtension instanceof PsiDependentIndex;
     myMapExternalizer = new VfsAwareMapReduceIndex.MapDataExternalizer<>(indexExtension);
     myIndexer = indexExtension.getIndexer();
+    myContents = createContentsIndex();
     createMaps();
   }
 
@@ -71,7 +71,7 @@ class SnapshotInputMappings<Key, Value, Input> {
     if (currentHashId != null) {
       ByteArraySequence byteSequence = readContents(currentHashId);
       if (byteSequence != null) {
-        return deserializeSavedPersistentData(byteSequence);
+        return AbstractForwardIndexAccessor.deserializeFromByteSeq(byteSequence, myMapExternalizer);
       }
     }
     return Collections.emptyMap();
@@ -111,7 +111,7 @@ class SnapshotInputMappings<Key, Value, Input> {
           ByteArraySequence bytes = readContents(hashId);
 
           if (bytes != null) {
-            data = deserializeSavedPersistentData(bytes);
+            data = AbstractForwardIndexAccessor.deserializeFromByteSeq(bytes, myMapExternalizer);
             havePersistentData = true;
             if (DebugAssertions.EXTRA_SANITY_CHECKS) {
               Map<Key, Value> contentData = myIndexer.map(content);
@@ -194,39 +194,57 @@ class SnapshotInputMappings<Key, Value, Input> {
   }
 
   public void clear() throws IOException {
-    List<File> baseDirs = ContainerUtil.list(myContents, myIndexingTrace, myInputsSnapshotMapping)
-      .stream()
-      .filter(Objects::nonNull)
-      .map(PersistentHashMap::getBaseFile)
-      .collect(Collectors.toList());
     try {
-      close();
+      List<File> baseDirs = Stream.of(myIndexingTrace, myInputsSnapshotMapping)
+        .filter(Objects::nonNull)
+        .map(PersistentHashMap::getBaseFile)
+        .collect(Collectors.toList());
+      try {
+        closeInternalMaps();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      baseDirs.forEach(PersistentHashMap::deleteFilesStartingWith);
+      createMaps();
+    } finally {
+      if (myContents != null) {
+        myContents.clear();
+      }
     }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    baseDirs.forEach(PersistentHashMap::deleteFilesStartingWith);
-    createMaps();
   }
 
   public void close() throws IOException {
-    if (myContents != null) myContents.close();
-    if (myInputsSnapshotMapping != null) myInputsSnapshotMapping.close();
-    if (myIndexingTrace != null) myIndexingTrace.close();
+    closeInternalMaps();
+    if (myContents != null) {
+      myContents.close();
+    }
+  }
+
+  private void closeInternalMaps() {
+    Stream.of(myContents, myIndexingTrace)
+      .filter(Objects::nonNull)
+      .forEach(store -> {
+        try {
+          store.close();
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      });
   }
 
   private void createMaps() throws IOException {
-    myContents = createContentsIndex();
     myIndexingTrace = DebugAssertions.EXTRA_SANITY_CHECKS ? createIndexingTrace() : null;
     myInputsSnapshotMapping =
       !SharedIndicesData.ourFileSharedIndicesEnabled || SharedIndicesData.DO_CHECKS ? createInputSnapshotMapping() : null;
   }
 
-  private PersistentHashMap<Integer, ByteArraySequence> createContentsIndex() throws IOException {
+  private PersistentMapBasedForwardIndex createContentsIndex() throws IOException {
     if (SharedIndicesData.ourFileSharedIndicesEnabled && !SharedIndicesData.DO_CHECKS) return null;
     final File saved = new File(IndexInfrastructure.getPersistentIndexRootDir(myIndexId), "values");
     try {
-      return new PersistentHashMap<>(saved, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE);
+      return new PersistentMapBasedForwardIndex(saved);
     }
     catch (IOException ex) {
       IOUtil.deleteAllFilesStartingWith(saved);
@@ -329,12 +347,6 @@ class SnapshotInputMappings<Key, Value, Input> {
     return myContents.get(hashId);
   }
 
-  private Map<Key, Value> deserializeSavedPersistentData(ByteArraySequence bytes) throws IOException {
-    DataInputStream stream = new DataInputStream(new UnsyncByteArrayInputStream(bytes.getBytes(), bytes.getOffset(), bytes.getLength()));
-
-    return myMapExternalizer.read(stream);
-  }
-
   private Integer getHashOfContent(FileContent content) throws IOException {
     FileType fileType = content.getFileType();
     if (myIsPsiBackedIndex && content instanceof FileContentImpl) {
@@ -421,23 +433,17 @@ class SnapshotInputMappings<Key, Value, Input> {
     return moreInfo;
   }
 
-  private static final ThreadLocalCachedByteArray ourSpareByteArray = new ThreadLocalCachedByteArray();
   private boolean savePersistentData(Map<Key, Value> data, int id, boolean delayedReading) {
     try {
       if (delayedReading && myContents.containsMapping(id)) return false;
-      BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(ourSpareByteArray.getBuffer(4 * data.size()));
-      DataOutputStream stream = new DataOutputStream(out);
-      myMapExternalizer.save(stream, data);
-
-      saveContents(id, out);
+      saveContents(id, AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size()));
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
     return true;
   }
 
-  private void saveContents(int id, BufferExposingByteArrayOutputStream out) throws IOException {
-    ByteArraySequence byteSequence = new ByteArraySequence(out.getInternalBuffer(), 0, out.size());
+  private void saveContents(int id, ByteArraySequence byteSequence) throws IOException {
     if (SharedIndicesData.ourFileSharedIndicesEnabled) {
       if (SharedIndicesData.DO_CHECKS) {
         synchronized (myContents) {

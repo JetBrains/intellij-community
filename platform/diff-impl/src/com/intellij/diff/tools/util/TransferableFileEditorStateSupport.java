@@ -47,9 +47,7 @@ public class TransferableFileEditorStateSupport {
   @NotNull private static final Key<MyState> TRANSFERABLE_FILE_EDITOR_STATE =
     Key.create("Diff.TransferableFileEditorState");
 
-  private static final Condition<BinaryEditorHolder> IS_SUPPORTED = holder -> {
-    return getEditorState(holder.getEditor()) != null;
-  };
+  private static final Condition<BinaryEditorHolder> IS_SUPPORTED = holder -> getEditorState(holder.getEditor()) != null;
 
   @NotNull private final DiffSettings mySettings;
   @NotNull private final List<? extends BinaryEditorHolder> myHolders;

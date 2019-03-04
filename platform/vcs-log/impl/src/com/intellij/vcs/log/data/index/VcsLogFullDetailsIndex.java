@@ -106,7 +106,7 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
     });
   }
 
-  protected void iterateCommitIdsAndValues(int key, @NotNull ObjIntConsumer<T> consumer) throws StorageException {
+  protected void iterateCommitIdsAndValues(int key, @NotNull ObjIntConsumer<? super T> consumer) throws StorageException {
     myMapReduceIndex.getData(key).forEach((id, value) -> {
       consumer.accept(value, id);
       return true;

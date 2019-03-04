@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -48,7 +47,7 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
    */
   public boolean checkFile(@Nullable PsiFile file) {
     if (file == null) return false;
-    return ScratchFileService.isInProjectOrScratch(file);
+    return canModify(file);
   }
 
   /**

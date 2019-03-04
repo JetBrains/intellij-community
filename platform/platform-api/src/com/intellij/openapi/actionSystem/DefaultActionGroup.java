@@ -2,16 +2,14 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * A default implementation of {@link ActionGroup}. Provides the ability
@@ -32,7 +30,8 @@ import java.util.List;
  */
 public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.DefaultActionGroup");
-  private static final String CANT_ADD_ITSELF = "Cannot add a group to itself";
+  private static final String CANT_ADD_ITSELF = "Cannot add a group to itself: ";
+  private static final String CANT_ADD_ACTION_TWICE = "Cannot add an action twice: ";
   /**
    * Contains instances of AnAction
    */
@@ -50,7 +49,6 @@ public class DefaultActionGroup extends ActionGroup {
    * Creates an action group containing the specified actions.
    *
    * @param actions the actions to add to the group
-   * @since 9.0
    */
   public DefaultActionGroup(@NotNull AnAction... actions) {
     this(Arrays.asList(actions));
@@ -60,7 +58,6 @@ public class DefaultActionGroup extends ActionGroup {
    * Creates an action group containing the specified actions.
    *
    * @param actions the actions to add to the group
-   * @since 13.0
    */
   public DefaultActionGroup(@NotNull List<? extends AnAction> actions) {
     this(null, actions);
@@ -77,11 +74,16 @@ public class DefaultActionGroup extends ActionGroup {
 
   private void addActions(@NotNull List<? extends AnAction> actions) {
     HashSet<Object> actionSet = new HashSet<>();
+    List<AnAction> uniqueActions = new ArrayList<>(actions.size());
     for (AnAction action : actions) {
-      if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF);
-      if (!(action instanceof Separator) && !actionSet.add(action)) throw new ActionDuplicationException(action);
+      if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF + action);
+      if (!(action instanceof Separator) && !actionSet.add(action)) {
+        LOG.error(CANT_ADD_ACTION_TWICE + action);
+        continue;
+      }
+      uniqueActions.add(action);
     }
-    mySortedChildren.addAll(actions);
+    mySortedChildren.addAll(uniqueActions);
   }
 
   /**
@@ -135,13 +137,11 @@ public class DefaultActionGroup extends ActionGroup {
 
   @NotNull
   public final ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager) {
-    if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF);
+    if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF + action);
     // Check that action isn't already registered
-    if (!(action instanceof Separator)) {
-      if (mySortedChildren.contains(action)) throw new ActionDuplicationException(action);
-      for (Pair<AnAction, Constraints> pair : myPairs) {
-        if (action.equals(pair.first)) throw new ActionDuplicationException(action);
-      }
+    if (!(action instanceof Separator) && containsAction(action)) {
+      LOG.error(CANT_ADD_ACTION_TWICE + action);
+      return new ActionInGroup(this, action);
     }
 
     constraint = (Constraints)constraint.clone();
@@ -162,6 +162,14 @@ public class DefaultActionGroup extends ActionGroup {
     }
 
     return new ActionInGroup(this, action);
+  }
+
+  private boolean containsAction(@NotNull AnAction action) {
+    if (mySortedChildren.contains(action)) return true;
+    for (Pair<AnAction, Constraints> pair : myPairs) {
+      if (action.equals(pair.first)) return true;
+    }
+    return false;
   }
 
   private void actionAdded(@NotNull AnAction addedAction, @NotNull ActionManager actionManager) {
@@ -353,6 +361,9 @@ public class DefaultActionGroup extends ActionGroup {
       replace(stub, action);
       return action;
     }
+    catch (ProcessCanceledException ex) {
+      throw ex;
+    }
     catch (Throwable e1) {
       LOG.error(e1);
       return null;
@@ -404,9 +415,19 @@ public class DefaultActionGroup extends ActionGroup {
     add(Separator.create(separatorText));
   }
 
-  private static class ActionDuplicationException extends IllegalArgumentException {
-    ActionDuplicationException(@NotNull AnAction action) {
-      super("cannot add an action twice: " + action);
-    }
+  /**
+   * Creates an action group with specified template text. It is necessary to redefine template text if group contains
+   * user specific data such as Project name, file name, etc
+   * @param templateText template text which will be used in statistics
+   * @return action group
+   */
+  public static DefaultActionGroup createUserDataAwareGroup(String templateText) {
+    return new DefaultActionGroup() {
+      @Nullable
+      @Override
+      public String getTemplateText() {
+        return templateText;
+      }
+    };
   }
 }

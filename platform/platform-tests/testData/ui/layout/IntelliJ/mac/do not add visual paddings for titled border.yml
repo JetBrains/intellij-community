@@ -32,9 +32,9 @@ columnConstraints:
   - {}
   count: 2
 componentConstrains:
-  'Repository:': {}
+  Repository [label]: {}
   Auto Sync: {spanX: 2097051, wrap: true}
-  Use File -> Settings Repository... to configure:
+  Use File -> Settings Repository... to configure [label]:
     horizontal:
       gapBefore:
         min: &id006 {horizontal: true, value: 26.0}
@@ -49,7 +49,7 @@ cellBounds:
 - [76, 21, 404, 13]
 - [0, 44, 480, 58]
 componentBounds:
-  'Repository:': [0, 0, 70, 15]
+  Repository [label]: [0, 0, 70, 15]
   Auto Sync: [72, -4, 87, 22]
-  Use File -> Settings Repository... to configure: [102, 21, 234, 13]
+  Use File -> Settings Repository... to configure [label]: [102, 21, 234, 13]
   'JPanel #3': [0, 44, 29, 58]

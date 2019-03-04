@@ -3,53 +3,127 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
-import com.intellij.testFramework.PlatformTestCase;
-import junit.framework.Assert;
+import com.intellij.testFramework.LightPlatformTestCase;
 
-/**
- * Created in IntelliJ IDEA.
- * By: Alexander.Chernikov
- * When: 10.10.2006, 20:19:35
- */
-public class PresentationTest extends PlatformTestCase {
+public class PresentationTest extends LightPlatformTestCase {
+  private final Data[] data = new Data[]{
+    new Data("No mnemonic", "No mnemonic", "No mnemonic", "No mnemonic", 0, -1),
+    new Data("_First char", "&First char", "First char", "_First char", 'F', 0),
+    new Data("S_econd char", "S&econd char", "Second char", "S_econd char", 'E', 1),
+    new Data("Pre-last and not unique ch_ar", "Pre-last and not unique ch&ar", "Pre-last and not unique char",
+             "Pre-last and not unique ch_ar", 'A', 26),
+    new Data("Last cha_r", "Last cha&r", "Last char", "Last cha_r", 'R', 8),
+    new Data("Too late_", "Too late&", "Too late", "Too late", 0, -1),
+    new Data("Do__uble", "Do&_uble", "Do_uble", "Do__uble", 0, -1),
+    new Data("Dou_&ble", "Dou&&ble", "Dou&ble", "Dou&&ble", 0, -1),
+    new Data("Complete double__", "Complete double&_", "Complete double_", "Complete double__", 0, -1),
+    new Data("Complete double_&", "Complete double&&", "Complete double&", "Complete double&&", 0, -1),
+    new Data("Repea_te_d", "Repea&te_d", "Repeate_d", "Repea_te_d", 'T', 5),
+    new Data("Re_peate&d", "Re&peate&d", "Repeate&d", "Re_peate&d", 'P', 2),
+    new Data("Run 'test__1' with Co_verage", "Run 'test__1' with Co&verage", "Run 'test_1' with Coverage",
+             "Run 'test__1' with Co_verage", 'V', 20),
+    new Data("R_un 'test_1'", "R&un 'test_1'", "Run 'test_1'", "R_un 'test_1'", 'U', 1),
+  };
 
-  private final String[] inputTextsUnderscores = new String[]{"No mnemonic", "_First char",
-    "S_econd char", "Pre-last and not unique ch_ar", "Last cha_r", "Too late_", "Do__uble", "Dou_&ble",
-    "Complete double__", "Complete double_&", "Repea_te_d", "Re_peate&d", "Run 'test__1' with Co&verage"
-    /*,
-    "Alphanumeric only _! _@ _# _$ _% _^ _& _* _( _) _- __ _= _+ _| _\\ _/ _0"*/};
-  private final String[] inputTextsAmpersands = new String[]{"No mnemonic", "&First char", "S&econd char",
-    "Pre-last and not unique ch&ar", "Last cha&r", "Too late&", "Do&_uble", "Dou&&ble", "Complete double&_",
-    "Complete double&&", "Repea&te_d", "Re&peate&d"
-    /*,
-    "Alphanumeric only &! &@ &# &$ &% &^ && &* &( &) &- &_ &= &+ &| &\\ &/ &0"*/};
-  private final String[] menuTexts = new String[]{"No mnemonic", "First char", "Second char",
-    "Pre-last and not unique char", "Last char", "Too late", "Do_uble", "Dou&ble", "Complete double_",
-    "Complete double&", "Repeate_d", "Repeate&d", "Run 'test_1' with Coverage"};
-  private final int[] mnemonics = new int[]{0, 'F', 'E', 'A', 'R', 0, 0, 0, 0, 0, 'T', 'P', 'V'};
-  private final int[] indeces = new int[]{-1, 0, 1, 26, 8, -1, -1, -1, -1, -1, 5, 2, 20};
-  private final String[] fullMenuTexts = new String[]{"No mnemonic", "_First char", "S_econd char",
-    "Pre-last and not unique ch_ar", "Last cha_r", "Too late", "Do_uble", "Dou&ble", "Complete double_",
-    "Complete double&", "Repea_te_d", "Re_peate&d", "Run 'test_1' with Co_verage"};
+  private static class Data {
+    public final String inputTextsUnderscore;
+    public final String inputTextsAmpersand;
+    public final String menuText;
+    public final String fullMenuText;
+    public final int mnemonic;
+    public final int index;
 
-  public void testPresentationSetText() {
-    for (int i = 0; i < inputTextsUnderscores.length; i++) {
-      Presentation p = new Presentation();
-      p.setText(inputTextsUnderscores[i]);
-      Assert.assertEquals(menuTexts[i], p.getText());
-      Assert.assertEquals(mnemonics[i], p.getMnemonic());
-      Assert.assertEquals(indeces[i], p.getDisplayedMnemonicIndex());
-      Assert.assertEquals(fullMenuTexts[i], p.getTextWithMnemonic());
+    private Data(String inputTextsUnderscore,
+                 String inputTextsAmpersand,
+                 String menuText,
+                 String fullMenuText,
+                 int mnemonic,
+                 int index) {
+      this.inputTextsUnderscore = inputTextsUnderscore;
+      this.inputTextsAmpersand = inputTextsAmpersand;
+      this.menuText = menuText;
+      this.mnemonic = mnemonic;
+      this.index = index;
+      this.fullMenuText = fullMenuText;
     }
-    for (int i = 0; i < inputTextsAmpersands.length; i++) {
-      Presentation p = new Presentation();
-      p.setText(inputTextsAmpersands[i]);
-      Assert.assertEquals(menuTexts[i], p.getText());
-      Assert.assertEquals(mnemonics[i], p.getMnemonic());
-      Assert.assertEquals(indeces[i], p.getDisplayedMnemonicIndex());
-      Assert.assertEquals(fullMenuTexts[i], p.getTextWithMnemonic());
+  }
 
-      Assert.assertTrue(menuTexts[i].length() > p.getDisplayedMnemonicIndex());
+  public void testSetTextWithUnderscores() {
+    for (Data testCase : data) {
+      Presentation p = new Presentation();
+      p.setText(testCase.inputTextsUnderscore);
+      assertEquals(testCase.menuText, p.getText());
+      assertEquals(testCase.mnemonic, p.getMnemonic());
+      assertEquals(testCase.index, p.getDisplayedMnemonicIndex());
+      assertEquals(testCase.fullMenuText, p.getTextWithPossibleMnemonic().toString());
+    }
+  }
+
+  public void testSetTextWithAmpersands() {
+    for (Data testCase : data) {
+      Presentation p = new Presentation();
+      p.setText(testCase.inputTextsAmpersand);
+      assertEquals(testCase.menuText, p.getText());
+      assertEquals(testCase.mnemonic, p.getMnemonic());
+      assertEquals(testCase.index, p.getDisplayedMnemonicIndex());
+      assertEquals(testCase.fullMenuText, p.getTextWithPossibleMnemonic().toString());
+
+      assertTrue(testCase.menuText.length() > p.getDisplayedMnemonicIndex());
+    }
+  }
+
+  public void testGetTextWithMnemonic() {
+    for (Data testCase : data) {
+      Presentation p1 = new Presentation();
+      p1.setText(testCase.inputTextsUnderscore);
+
+      Presentation p2 = new Presentation();
+      p2.setText(p1.getTextWithMnemonic());
+
+      assertEquals(p1.getText(), p2.getText());
+      assertEquals(p1.getMnemonic(), p2.getMnemonic());
+      assertEquals(p1.getDisplayedMnemonicIndex(), p2.getDisplayedMnemonicIndex());
+    }
+  }
+
+  public void testMnemonicCharacters() {
+    for (Data testCase : data) {
+      Presentation p1 = new Presentation();
+      p1.setText(testCase.inputTextsAmpersand);
+      Presentation p2 = new Presentation();
+      p2.setText(testCase.inputTextsUnderscore);
+
+      assertEquals(p1.getText(), p2.getText());
+      assertEquals(p1.getMnemonic(), p2.getMnemonic());
+      assertEquals(p1.getDisplayedMnemonicIndex(), p2.getDisplayedMnemonicIndex());
+    }
+  }
+
+  public void testPresentationCopying() {
+    for (Data testCase : data) {
+      Presentation p1 = new Presentation();
+      p1.setText(testCase.inputTextsUnderscore);
+
+      Presentation p2 = new Presentation();
+      p2.copyFrom(p1);
+
+      assertEquals(p1.getText(), p2.getText());
+      assertEquals(p1.getMnemonic(), p2.getMnemonic());
+      assertEquals(p1.getDisplayedMnemonicIndex(), p2.getDisplayedMnemonicIndex());
+    }
+  }
+
+  public void testPresentationWithDisabledMnemonics() {
+    UISettingsState uiSettings = UISettings.getInstance().getState();
+    uiSettings.setDisableMnemonics(true);
+    uiSettings.setDisableMnemonicsInControls(true);
+
+    for (Data testCase : data) {
+      Presentation p = new Presentation();
+      p.setText(testCase.inputTextsUnderscore);
+      assertEquals(testCase.menuText, p.getText());
+      assertEquals(0, p.getMnemonic());
+      assertEquals(-1, p.getDisplayedMnemonicIndex());
     }
   }
 
@@ -68,7 +142,11 @@ public class PresentationTest extends PlatformTestCase {
       UISettingsState uiSettings = UISettings.getInstance().getState();
       uiSettings.setDisableMnemonics(defaults.getDisableMnemonics());
       uiSettings.setDisableMnemonicsInControls(defaults.getDisableMnemonicsInControls());
-    } finally {
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
       super.tearDown();
     }
   }

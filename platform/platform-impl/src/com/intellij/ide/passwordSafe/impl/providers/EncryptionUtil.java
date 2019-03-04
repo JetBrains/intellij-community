@@ -2,8 +2,8 @@
 package com.intellij.ide.passwordSafe.impl.providers;
 
 import com.intellij.credentialStore.CredentialAttributes;
-import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.OneTimeString;
+import com.intellij.credentialStore.OneTimeStringKt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,17 +82,6 @@ public class EncryptionUtil {
   }
 
   /**
-   * Generate key based on password
-   *
-   * @param password the password to use
-   * @return the generated key
-   */
-  public static byte[] genPasswordKey(@NotNull String password) {
-    return genKey(hash(getUTF8Bytes(password)));
-  }
-
-
-  /**
    * Encrypt key (does not use salting, so the encryption result is the same for the same input)
    *
    * @param password the secret key to use
@@ -110,25 +99,6 @@ public class EncryptionUtil {
       throw new IllegalStateException(e);
     }
   }
-
-  /**
-   * Decrypt key (does not use salting, so the encryption result is the same for the same input)
-   *
-   * @param password     the secret key to use
-   * @param encryptedKey the key to decrypt
-   * @return the decrypted key
-   */
-  public static byte[] decryptKey(byte[] password, byte[] encryptedKey) {
-    try {
-      Cipher c = Cipher.getInstance(ENCRYPT_KEY_ALGORITHM);
-      c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(password, SECRET_KEY_ALGORITHM), CBC_SALT_KEY);
-      return c.doFinal(encryptedKey);
-    }
-    catch (Exception e) {
-      throw new IllegalStateException(ENCRYPT_KEY_ALGORITHM + " is not available", e);
-    }
-  }
-
 
   /**
    * Encrypt key (does not use salting, so the encryption result is the same for the same input)
@@ -179,7 +149,7 @@ public class EncryptionUtil {
     if (len < 0 || len > plain.length - 4) {
       throw new IllegalStateException("Unmatched password is used");
     }
-    return CredentialAttributesKt.OneTimeString(plain, 4, len);
+    return OneTimeStringKt.OneTimeString(plain, 4, len);
   }
 
   /**

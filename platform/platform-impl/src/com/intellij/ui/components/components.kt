@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("FunctionName")
 
 package com.intellij.ui.components
@@ -120,6 +120,12 @@ fun Panel(title: String? = null, layout: LayoutManager2? = BorderLayout()): JPan
   return panel
 }
 
+fun DialogPanel(title: String? = null, layout: LayoutManager2? = BorderLayout()): DialogPanel {
+  val panel = DialogPanel(layout)
+  title?.let { setTitledBorder(it, panel) }
+  return panel
+}
+
 private fun setTitledBorder(title: String, panel: JPanel) {
   val border = IdeBorderFactory.createTitledBorder(title, false)
   panel.border = border
@@ -129,6 +135,7 @@ private fun setTitledBorder(title: String, panel: JPanel) {
 /**
  * Consider using [UI DSL](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout#readme) to create panel.
  */
+@JvmOverloads
 fun dialog(title: String,
            panel: JComponent,
            resizable: Boolean = false,
@@ -138,8 +145,9 @@ fun dialog(title: String,
            parent: Component? = null,
            errorText: String? = null,
            modality: IdeModalityType = IdeModalityType.IDE,
+           createActions: ((DialogManager) -> List<Action>)? = null,
            ok: (() -> List<ValidationInfo>?)? = null): DialogWrapper {
-  return object : DialogWrapper(project, parent, true, modality) {
+  return object : MyDialogWrapper(project, parent, modality) {
     init {
       setTitle(title)
       setResizable(resizable)
@@ -155,37 +163,60 @@ fun dialog(title: String,
 
     override fun createCenterPanel() = panel
 
+    override fun createActions(): Array<out Action> {
+      return if (createActions == null) super.createActions() else createActions(this).toTypedArray()
+    }
+
     override fun getPreferredFocusedComponent() = focusedComponent
 
     override fun doOKAction() {
-      if (!okAction.isEnabled) {
-        return
-      }
-
-      val validationInfoList = ok?.invoke()
-      if (validationInfoList == null || validationInfoList.isEmpty()) {
-        super.doOKAction()
-      }
-      else {
-        setErrorInfoAll(validationInfoList)
-        clearErrorInfoOnFirstChange(validationInfoList)
+      if (okAction.isEnabled) {
+        performAction(ok)
       }
     }
+  }
+}
 
-    private fun clearErrorInfoOnFirstChange(validationInfoList: List<ValidationInfo>) {
-      val unchangedFields = SmartList<Component>()
-      for (info in validationInfoList) {
-        val component = info.component as? JTextComponent ?: continue
-        unchangedFields.add(component)
-        component.document.addDocumentListener(object : DocumentAdapter() {
-          override fun textChanged(e: DocumentEvent) {
-            component.document.removeDocumentListener(this)
-            if (unchangedFields.remove(component) && unchangedFields.isEmpty()) {
-              setErrorInfoAll(emptyList())
-            }
+interface DialogManager {
+  fun performAction(action: (() -> List<ValidationInfo>?)? = null)
+}
+
+private abstract class MyDialogWrapper(project: Project?,
+                                       parent: Component?,
+                                       modality: IdeModalityType) : DialogWrapper(project, parent, true, modality), DialogManager {
+  override fun performAction(action: (() -> List<ValidationInfo>?)?) {
+    val validationInfoList = action?.invoke()
+    if (validationInfoList == null || validationInfoList.isEmpty()) {
+      super.doOKAction()
+    }
+    else {
+      setErrorInfoAll(validationInfoList)
+      clearErrorInfoOnFirstChange(validationInfoList)
+    }
+  }
+
+  private fun getTextField(info: ValidationInfo): JTextComponent? {
+    val component = info.component ?: return null
+    return when (component) {
+      is JTextComponent -> component
+      is TextFieldWithBrowseButton -> component.textField
+      else -> null
+    }
+  }
+
+  private fun clearErrorInfoOnFirstChange(validationInfoList: List<ValidationInfo>) {
+    val unchangedFields = SmartList<Component>()
+    for (info in validationInfoList) {
+      val textField = getTextField(info) ?: continue
+      unchangedFields.add(textField)
+      textField.document.addDocumentListener(object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) {
+          textField.document.removeDocumentListener(this)
+          if (unchangedFields.remove(textField) && unchangedFields.isEmpty()) {
+            setErrorInfoAll(emptyList())
           }
-        })
-      }
+        }
+      })
     }
   }
 }

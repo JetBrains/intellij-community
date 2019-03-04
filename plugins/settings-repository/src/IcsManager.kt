@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.StreamProvider
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.io.exists
 import com.intellij.util.io.move
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.GitRepositoryService
 import org.jetbrains.settingsRepository.git.processChildren
@@ -60,7 +61,9 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
   private val commitAlarm = SingleAlarm(Runnable {
     runBackgroundableTask(icsMessage("task.commit.title")) { indicator ->
       LOG.runAndLogException {
-        repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
+        runBlocking {
+          repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
+        }
       }
     }
   }, settings.commitDelay)
@@ -101,7 +104,9 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     }
   }
 
-  fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): Boolean = syncManager.sync(syncType, project, localRepositoryInitializer)
+  suspend fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): Boolean {
+    return syncManager.sync(syncType, project, localRepositoryInitializer)
+  }
 
   private fun cancelAndDisableAutoCommit() {
     if (autoCommitEnabled) {
@@ -110,7 +115,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     }
   }
 
-  fun runInAutoCommitDisabledMode(task: ()->Unit) {
+  suspend fun runInAutoCommitDisabledMode(task: suspend () -> Unit) {
     cancelAndDisableAutoCommit()
     try {
       task()
@@ -136,7 +141,9 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     val messageBusConnection = application.messageBus.connect()
     messageBusConnection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
       override fun appWillBeClosed(isRestart: Boolean) {
-        autoSyncManager.autoSync(true)
+        runBlocking {
+          autoSyncManager.autoSync(true)
+        }
       }
     })
     messageBusConnection.subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
@@ -149,7 +156,9 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
       }
 
       override fun afterProjectClosed(project: Project) {
-        autoSyncManager.autoSync()
+        runBlocking {
+          autoSyncManager.autoSync()
+        }
       }
     })
   }
@@ -158,8 +167,8 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     override val enabled: Boolean
       get() = this@IcsManager.isActive
 
-    override val isDisableExportAction: Boolean
-      get() = this@IcsManager.isRepositoryActive
+    override val isExclusive: Boolean
+      get() = isRepositoryActive
 
     override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = isRepositoryActive
 
@@ -249,7 +258,11 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
       val removeOtherXml = repositoryManager.delete("other.xml")
       if (migrateSchemes || migrateKeyMaps || removeOtherXml) {
         // schedule push to avoid merge conflicts
-        application.invokeLater { icsManager.autoSyncManager.autoSync(force = true) }
+        application.invokeLater {
+          runBlocking {
+            icsManager.autoSyncManager.autoSync(force = true)
+          }
+        }
       }
     }
 

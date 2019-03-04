@@ -1,31 +1,24 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.documentation.DockablePopupManager;
-import com.intellij.openapi.compiler.ex.CompilerPathsEx;
+import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +27,7 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.util.Textifier;
 import org.jetbrains.org.objectweb.asm.util.TraceClassVisitor;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -105,13 +99,11 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
     updateByteCode(element, component, content, getByteCode(element));
   }
 
-  public void updateByteCode(PsiElement element,
-                             ByteCodeViewerComponent component,
-                             Content content,
-                             final String byteCode) {
+  private void updateByteCode(PsiElement element, ByteCodeViewerComponent component, Content content, String byteCode) {
     if (!StringUtil.isEmpty(byteCode)) {
       component.setText(byteCode, element);
-    } else {
+    }
+    else {
       PsiElement presentableElement = getContainingClass(element);
       if (presentableElement == null) {
         presentableElement = element.getContainingFile();
@@ -135,7 +127,6 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
       updateByteCode(element, component, content);
     }
   }
-
 
   @Override
   protected void doUpdateComponent(Editor editor, PsiFile psiFile) {
@@ -164,12 +155,16 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
   @Nullable
   public static String getByteCode(@NotNull PsiElement psiElement) {
     PsiClass containingClass = getContainingClass(psiElement);
-    //todo show popup
-    if (containingClass == null) return null;
-    CompilerPathsEx.ClassFileDescriptor file = CompilerPathsEx.findClassFileInOutput(containingClass);
-    if (file != null) {
+    if (containingClass != null) {
       try {
-        return processClassFile(file.loadFileBytes());
+        byte[] bytes = loadClassFileBytes(containingClass);
+        if (bytes != null) {
+          StringWriter writer = new StringWriter();
+          try (PrintWriter printWriter = new PrintWriter(writer)) {
+            new ClassReader(bytes).accept(new TraceClassVisitor(null, new Textifier(), printWriter), 0);
+          }
+          return writer.toString();
+        }
       }
       catch (IOException e) {
         LOG.error(e);
@@ -178,31 +173,74 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
     return null;
   }
 
-  private static String processClassFile(byte[] bytes) {
-    final ClassReader classReader = new ClassReader(bytes);
-    final StringWriter writer = new StringWriter();
-    final PrintWriter printWriter = new PrintWriter(writer);
-    try {
-      classReader.accept(new TraceClassVisitor(null, new Textifier(), printWriter), 0);
+  private static byte[] loadClassFileBytes(PsiClass aClass) throws IOException {
+    String jvmClassName = getJVMClassName(aClass);
+    if (jvmClassName != null) {
+      VirtualFile file = aClass.getOriginalElement().getContainingFile().getVirtualFile();
+      if (file != null) {
+        ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(aClass.getProject());
+        if (file.getFileType() == StdFileTypes.CLASS) {
+          // compiled class; looking for the right .class file (inner class 'A.B' is "contained" in 'A.class', but we need 'A$B.class')
+          String classFileName = StringUtil.getShortName(jvmClassName) + ".class";
+          if (index.isInLibraryClasses(file)) {
+            VirtualFile classFile = file.getParent().findChild(classFileName);
+            if (classFile != null) {
+              return classFile.contentsToByteArray(false);
+            }
+          }
+          else {
+            File classFile = new File(file.getParent().getPath(), classFileName);
+            if (classFile.isFile()) {
+              return FileUtil.loadFileBytes(classFile);
+            }
+          }
+        }
+        else {
+          // source code; looking for a .class file in compiler output
+          Module module = index.getModuleForFile(file);
+          if (module != null) {
+            CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+            if (extension != null) {
+              boolean inTests = index.isInTestSourceContent(file);
+              VirtualFile classRoot = inTests ? extension.getCompilerOutputPathForTests() : extension.getCompilerOutputPath();
+              if (classRoot != null) {
+                String relativePath = jvmClassName.replace('.', '/') + ".class";
+                File classFile = new File(classRoot.getPath(), relativePath);
+                if (classFile.exists()) {
+                  return FileUtil.loadFileBytes(classFile);
+                }
+              }
+            }
+          }
+        }
+      }
     }
-    finally {
-      printWriter.close();
-    }
-    return writer.toString();
+
+    return null;
   }
 
+  private static String getJVMClassName(PsiClass aClass) {
+    if (!(aClass instanceof PsiAnonymousClass)) {
+      return ClassUtil.getJVMClassName(aClass);
+    }
 
-  public static PsiClass getContainingClass(PsiElement psiElement) {
+    PsiClass containingClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
+    if (containingClass != null) {
+      return getJVMClassName(containingClass) + JavaAnonymousClassesHelper.getName((PsiAnonymousClass)aClass);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static PsiClass getContainingClass(@NotNull PsiElement psiElement) {
     for (ClassSearcher searcher : CLASS_SEARCHER_EP.getExtensions()) {
       PsiClass aClass = searcher.findClass(psiElement);
       if (aClass != null) {
         return aClass;
       }
     }
-    return findClass(psiElement);
-  }
 
-  public static PsiClass findClass(@NotNull PsiElement psiElement) {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class, false);
     while (containingClass instanceof PsiTypeParameter) {
       containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);

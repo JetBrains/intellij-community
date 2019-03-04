@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
 
 /**
@@ -201,6 +201,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testImports$imp8() throws Throwable { doTest() }
 
+  void testImports$typeArguments() { doTest() }
+
   void testKing_regex$king1() throws Throwable { doTest() }
 
   void testKing_regex$king2() throws Throwable { doTest() }
@@ -226,6 +228,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testLoop$while6() throws Throwable { doTest() }
 
   void testLoop$while7() throws Throwable { doTest() }
+
+  void testLoop$whileEmptyBody() { doTest() }
 
   void testLoop$dowhile0() { doTest() }
 
@@ -284,7 +288,7 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testSwitch$identifierWithin() { doTest() }
 
   void testSyn$syn1() throws Throwable { doTest() }
-  
+
   void testSyn$newLineBeforeBlock() { doTest() }
 
   void testTop_methods$method1() throws Throwable { doTest() }

@@ -8,11 +8,16 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.event.SelectionEvent;
+import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -20,6 +25,7 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.ScrollingModelImpl;
+import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -70,8 +76,9 @@ public final class EditorUtil {
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
     if (editor instanceof EditorImpl) {
-      LogicalPosition lineEndPosition = editor.visualToLogicalPosition(new VisualPosition(line, Integer.MAX_VALUE));
-      int lineEndOffset = editor.logicalPositionToOffset(lineEndPosition);
+      EditorImpl editorImpl = (EditorImpl)editor;
+      int lineEndOffset = line >= editorImpl.getVisibleLineCount()
+                          ? editor.getDocument().getTextLength() : new VisualLinesIterator(editorImpl, line).getVisualLineEndOffset();
       return editor.offsetToVisualPosition(lineEndOffset, true, true).column;
     }
     Document document = editor.getDocument();
@@ -289,6 +296,10 @@ public final class EditorUtil {
     return offset - start + shift;
   }
 
+  /**
+   * @deprecated use {@link EditorEx#setCustomCursor(Object, Cursor)} instead. To be removed in 2020.1.
+   */
+  @Deprecated
   public static void setHandCursor(@NotNull Editor view) {
     Cursor c = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
     // XXX: Workaround, simply view.getContentComponent().setCursor(c) doesn't work
@@ -360,7 +371,7 @@ public final class EditorUtil {
     }
     float tabSizePixels = tabSize * plainSpaceWidth;
 
-    int nTabs = (int) (x / tabSizePixels);
+    int nTabs = (int) ((x + plainSpaceWidth / 2) / tabSizePixels);
     return (nTabs + 1) * tabSizePixels;
   }
 
@@ -646,6 +657,12 @@ public final class EditorUtil {
     return TextRange.create(start, end);
   }
 
+  public static int logicalToVisualLine(@NotNull Editor editor, int logicalLine) {
+    LogicalPosition logicalPosition = new LogicalPosition(logicalLine, 0);
+    VisualPosition visualPosition = editor.logicalToVisualPosition(logicalPosition);
+    return visualPosition.line;
+  }
+
   public static int yPositionToLogicalLine(@NotNull Editor editor, @NotNull MouseEvent event) {
     return yPositionToLogicalLine(editor, event.getY());
   }
@@ -828,5 +845,74 @@ public final class EditorUtil {
       sum += inlay.getHeightInPixels();
     }
     return sum;
+  }
+
+  /**
+   * This is similar to {@link SelectionModel#addSelectionListener(SelectionListener, Disposable)}, but when selection changes happen within
+   * the scope of {@link CaretModel#runForEachCaret(CaretAction)} call, there will be only one notification at the end of iteration over
+   * carets.
+   */
+  public static void addBulkSelectionListener(@NotNull Editor editor, @NotNull SelectionListener listener, @NotNull Disposable disposable) {
+    Ref<Pair<int[], int[]>> selectionBeforeBulkChange = new Ref<>();
+    Ref<Boolean> selectionChangedDuringBulkChange = new Ref<>();
+    editor.getSelectionModel().addSelectionListener(new SelectionListener() {
+      @Override
+      public void selectionChanged(@NotNull SelectionEvent e) {
+        if (selectionBeforeBulkChange.isNull()) {
+          listener.selectionChanged(e);
+        }
+        else {
+          selectionChangedDuringBulkChange.set(Boolean.TRUE);
+        }
+      }
+    }, disposable);
+    editor.getCaretModel().addCaretActionListener(new CaretActionListener() {
+      @Override
+      public void beforeAllCaretsAction() {
+        selectionBeforeBulkChange.set(getSelectionOffsets());
+        selectionChangedDuringBulkChange.set(null);
+      }
+
+      @Override
+      public void afterAllCaretsAction() {
+        if (!selectionChangedDuringBulkChange.isNull()) {
+          Pair<int[], int[]> beforeBulk = selectionBeforeBulkChange.get();
+          Pair<int[], int[]> afterBulk = getSelectionOffsets();
+          listener.selectionChanged(new SelectionEvent(editor, beforeBulk.first, beforeBulk.second, afterBulk.first, afterBulk.second));
+        }
+        selectionBeforeBulkChange.set(null);
+      }
+
+      private Pair<int[], int[]> getSelectionOffsets() {
+        return Pair.create(editor.getSelectionModel().getBlockSelectionStarts(), editor.getSelectionModel().getBlockSelectionEnds());
+      }
+    }, disposable);
+  }
+
+  /**
+   * If a command is currently executing (see {@link CommandProcessor}), schedules the execution of given task before the end of that
+   * command (so that it becomes part of it), otherwise does nothing.
+   */
+  public static void performBeforeCommandEnd(@NotNull Runnable task) {
+    if (CommandProcessor.getInstance().getCurrentCommand() == null) return;
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(CommandListener.TOPIC, new CommandListener() {
+      @Override
+      public void beforeCommandFinished(@NotNull CommandEvent event) {
+        task.run();
+      }
+
+      @Override
+      public void commandFinished(@NotNull CommandEvent event) {
+        connection.disconnect();
+      }
+    });
+  }
+
+  public static boolean isPrimaryCaretVisible(@NotNull Editor editor) {
+    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    Caret caret = editor.getCaretModel().getPrimaryCaret();
+    Point caretPoint = editor.visualPositionToXY(caret.getVisualPosition());
+    return visibleArea.contains(caretPoint);
   }
 }

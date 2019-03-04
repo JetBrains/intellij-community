@@ -11,6 +11,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.ui.tabs.TabInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
+import org.jetbrains.plugins.terminal.TerminalTabState;
+import org.jetbrains.plugins.terminal.TerminalUtil;
+import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
 /**
  * @author traff
@@ -32,12 +36,15 @@ public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAw
       JBTerminalWidget widget = terminalFile.getTerminalWidget();
 
       TabInfo tabInfo = new TabInfo(widget).setText(terminalFile.getName());
-      TerminalSessionVirtualFileImpl newSessionVirtualFile =
-        new TerminalSessionVirtualFileImpl(tabInfo, widget, terminalFile.getSettingsProvider());
-      tabInfo
-        .setObject(newSessionVirtualFile);
-
-      return new TerminalSessionEditor(project, newSessionVirtualFile);
+      TerminalTabState tts = new TerminalTabState();
+      tts.myWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget, file.getName());
+      LocalTerminalDirectRunner runner = LocalTerminalDirectRunner.createTerminalRunner(project);
+      JBTerminalWidget newWidget = TerminalUtil.createTerminal(runner, tts, null);
+      TerminalSessionVirtualFileImpl newSessionVirtualFile = new TerminalSessionVirtualFileImpl(tabInfo, newWidget, terminalFile.getSettingsProvider());
+      tabInfo.setObject(newSessionVirtualFile);
+      TerminalSessionEditor editor = new TerminalSessionEditor(project, newSessionVirtualFile);
+      newWidget.moveDisposable(editor);
+      return editor;
     }
   }
 

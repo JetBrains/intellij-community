@@ -25,7 +25,7 @@ public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
 
   @Override
   @Nullable
-  protected Result applyChange(final Project project, final VirtualFile fileToPatch, final FilePath pathBeforeRename, @Nullable final Getter<CharSequence> baseContents) throws IOException {
+  protected Result applyChange(final Project project, final VirtualFile fileToPatch, final FilePath pathBeforeRename, @Nullable final Getter<? extends CharSequence> baseContents) throws IOException {
     final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
     if (document == null) {
       throw new IOException("Failed to set contents for updated file " + fileToPatch.getPath());
@@ -33,9 +33,7 @@ public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
 
     GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(document.getText(), myPatch.getHunks());
     if (appliedPatch != null) {
-      FormatChangedTextUtil.getInstance().runHeavyModificationTask(project, document, () -> {
-        document.setText(appliedPatch.patchedText);
-      });
+      FormatChangedTextUtil.getInstance().runHeavyModificationTask(project, document, () -> document.setText(appliedPatch.patchedText));
       FileDocumentManager.getInstance().saveDocument(document);
       return new Result(appliedPatch.status);
     }

@@ -17,16 +17,27 @@ package org.jetbrains.idea.maven.inspections;
 
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-public class MojoAnnotationInJavadocTest extends InspectionTestCase {
+public class MojoAnnotationInJavadocTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("maven") + "/src/test/data/inspections";
+    return PluginPathManager.getPluginHomePath("maven") + "/src/test/data/inspections/javadocMojoValidTags";
   }
 
-  public void testJavadocMojoValidTags() {
-    doTest(getTestName(true), new JavaDocLocalInspection());
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new JavaDocLocalInspection());
+  }
+
+  public void testTestMojo() {
+    doTes();
+  }
+
+  private void doTes() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
   }
 }

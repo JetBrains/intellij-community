@@ -100,9 +100,9 @@ print '%d, %d, %d, %d' % <warning descr="Too few arguments for format string">my
 
 # PY-12801
 print '%d %s' % ((42,) + ('spam',))
-print '%d %s' % (<warning descr="Unexpected type str">('ham',) + ('spam',)</warning>)
-print '%d %s' % (<warning descr="Too few arguments for format string">(42,) + ()</warning>)
-print '%d' % (<warning descr="Too many arguments for format string">(42,) + ('spam',)</warning>)
+print '%d %s' % (<warning descr="Unexpected type (str, str)">('ham',) + ('spam',)</warning>)
+print '%d %s' % (<warning descr="Too few arguments for format string"><warning descr="Unexpected type (int)">(42,) + ()</warning></warning>)
+print '%d' % (<warning descr="Too many arguments for format string"><warning descr="Unexpected type (int, str)">(42,) + ('spam',)</warning></warning>)
 
 # PY-11274
 import collections

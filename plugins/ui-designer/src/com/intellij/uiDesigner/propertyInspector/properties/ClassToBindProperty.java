@@ -65,7 +65,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
   }
 
   @Override
-  protected void setValueImpl(final RadRootContainer component, final String value) throws Exception {
+  protected void setValueImpl(final RadRootContainer component, final String value) {
     String className = value;
 
     if (className != null && className.length() == 0) {
@@ -75,7 +75,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
     component.setClassToBind(className);
   }
 
-  private final class MyEditor extends PropertyEditor<String> {
+  private static final class MyEditor extends PropertyEditor<String> {
     private final EditorTextField myEditorTextField;
     private Document myDocument;
     private final ComponentWithBrowseButton<EditorTextField> myTfWithButton;
@@ -107,7 +107,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
     }
 
     @Override
-    public String getValue() throws Exception {
+    public String getValue() {
       final String value = myDocument.getText();
       if (value.length() == 0 && myInitialValue == null) {
         return null;
@@ -169,9 +169,8 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
           setEditorText(result.getQualifiedName());
         }
 
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myEditorTextField, true);
-        }); // todo[anton] make it via providing proper parent
+        // todo[anton] make it via providing proper parent
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEditorTextField, true));
       }
     }
 

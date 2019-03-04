@@ -44,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.lang.reflect.Array;
 import java.util.*;
 
 public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, Queryable {
@@ -115,7 +114,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return null;
   }
 
-  protected FileElement derefTreeElement() {
+  FileElement derefTreeElement() {
     return myTrees.derefTreeElement();
   }
 
@@ -186,6 +185,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @NotNull
   private FileElement loadTreeElement() {
     assertReadAccessAllowed();
+
+    if (myPossiblyInvalidated) {
+      PsiUtilCore.ensureValid(this); // for invalidation trace diagnostics
+    }
+
     final FileViewProvider viewProvider = getViewProvider();
     if (viewProvider.isPhysical()) {
       final VirtualFile vFile = viewProvider.getVirtualFile();
@@ -320,24 +324,23 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public void subtreeChanged() {
-    doClearCaches("subtreeChanged");
-    getViewProvider().rootChanged(this);
-  }
-
-  private void doClearCaches(String reason) {
-    final FileElement tree = getTreeElement();
+    FileElement tree = getTreeElement();
     if (tree != null) {
       tree.clearCaches();
     }
 
     synchronized (myPsiLock) {
-      updateTrees(myTrees.clearStub(reason));
+      if (myTrees.useSpineRefs()) {
+        LOG.error("Somebody has requested stubbed spine during PSI operations; not only is this expensive, but will also cause stub PSI invalidation");
+      }
+      updateTrees(myTrees.clearStub("subtreeChanged"));
     }
     clearCaches();
+    getViewProvider().rootChanged(this);
   }
 
   @Override
-  @SuppressWarnings({"CloneDoesntCallSuperClone"})
+  @SuppressWarnings("CloneDoesntCallSuperClone")
   protected PsiFileImpl clone() {
     FileViewProvider viewProvider = getViewProvider();
     FileViewProvider providerCopy = viewProvider.clone();
@@ -516,7 +519,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     for (PsiElement child : getChildren()) {
       if (aClass.isInstance(child)) result.add((T)child);
     }
-    return result.toArray((T[]) Array.newInstance(aClass, result.size()));
+    return result.toArray(ArrayUtil.newArray(aClass, result.size()));
   }
 
   @SuppressWarnings("unchecked")
@@ -990,7 +993,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     putInfo(this, info);
   }
 
-  public static void putInfo(PsiFile psiFile, Map<String, String> info) {
+  public static void putInfo(@NotNull PsiFile psiFile, @NotNull Map<String, String> info) {
     info.put("fileName", psiFile.getName());
     info.put("fileType", psiFile.getFileType().toString());
   }

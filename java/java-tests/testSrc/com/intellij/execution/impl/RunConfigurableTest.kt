@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
+import com.intellij.execution.actions.ChooseRunConfigurationPopup
+import com.intellij.execution.actions.ExecutorProvider
 import com.intellij.execution.application.ApplicationConfigurationType
 import com.intellij.execution.impl.RunConfigurableNodeKind.*
 import com.intellij.execution.junit.JUnitConfigurationType
@@ -195,25 +197,26 @@ internal class RunConfigurableTest {
     model.drop(2, 14, ABOVE)
     assertThat(configurable.isModified).isTrue()
     configurable.apply()
-    assertThat(configurable.runManager.allSettings.map { it.name }).containsExactly("Renamer",
-                                                                                    "UI",
-                                                                                    "AuTest",
-                                                                                    "Simples",
-                                                                                    "OutAndErr",
-                                                                                    "C148C_TersePrincess",
-                                                                                    "Periods",
-                                                                                    "C148E_Porcelain",
-                                                                                    "ErrAndOut",
-                                                                                    "CodeGenerator",
-                                                                                    "All in titled",
-                                                                                    "All in titled2",
-                                                                                    "All in titled3",
-                                                                                    "All in titled4",
-                                                                                    "All in titled5")
+    val runManager = configurable.runManager
+    assertThat(runManager.allSettings.map { it.name }).containsExactly("Renamer",
+                                                                       "UI",
+                                                                       "AuTest",
+                                                                       "Simples",
+                                                                       "OutAndErr",
+                                                                       "C148C_TersePrincess",
+                                                                       "Periods",
+                                                                       "C148E_Porcelain",
+                                                                       "ErrAndOut",
+                                                                       "CodeGenerator",
+                                                                       "All in titled",
+                                                                       "All in titled2",
+                                                                       "All in titled3",
+                                                                       "All in titled4",
+                                                                       "All in titled5")
     assertThat(configurable.isModified).isFalse()
     model.drop(4, 8, BELOW)
     configurable.apply()
-    assertThat(configurable.runManager.allSettings.joinToString("\n") { "[${it.type.displayName}] [${it.folderName ?: ""}] ${it.name}" }).isEqualTo("""
+    assertThat(runManager.allSettings.joinToString("\n") { "[${it.type.displayName}] [${it.folderName ?: ""}] ${it.name}" }).isEqualTo("""
       [Application] [1] Renamer
       [Application] [1] UI
       [Application] [1] Simples
@@ -229,6 +232,42 @@ internal class RunConfigurableTest {
       [JUnit] [5] All in titled3
       [JUnit] [5] All in titled4
       [JUnit] [] All in titled5
+    """.trimIndent())
+
+    val executorProvider = ExecutorProvider { throw UnsupportedOperationException() }
+    assertThat(ChooseRunConfigurationPopup.createSettingsList(runManager, executorProvider, false, false).joinToString("\n") {
+      val value = it.value
+      if (value is String) {
+        "[$value]"
+      }
+      else {
+        it.value!!.toString()
+      }
+    }).isEqualTo("""
+      [1]
+      [2  (mnemonic is to "AuTest")]
+      [3]
+      Application: CodeGenerator (level: WORKSPACE)
+      [4]
+      [5]
+      JUnit: All in titled5 (level: TEMPORARY)
+    """.trimIndent())
+    assertThat(ChooseRunConfigurationPopup.createSettingsList(runManager, executorProvider, false, true).joinToString("\n") {
+      val value = it.value
+      if (value is String) {
+        "[$value]"
+      }
+      else {
+        it.value!!.toString()
+      }
+    }).isEqualTo("""
+     [1]
+     [2  (mnemonic is to "AuTest")]
+     [3]
+     [4]
+     [5]
+     Application: CodeGenerator (level: WORKSPACE)
+     JUnit: All in titled5 (level: TEMPORARY)
     """.trimIndent())
   }
 }

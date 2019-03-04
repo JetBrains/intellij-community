@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -66,9 +67,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
     state.current.isAutoScrollToSource = true;
 
-    TodoConfiguration.getInstance().addPropertyChangeListener(new MyPropertyChangeListener(), this);
-
     MessageBusConnection connection = project.getMessageBus().connect(this);
+    connection.subscribe(TodoConfiguration.PROPERTY_CHANGE, new MyPropertyChangeListener());
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
   }
@@ -97,7 +97,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     if (myContentManager != null) {
       // all panel were constructed
       Content content = myContentManager.getSelectedContent();
-      state.selectedIndex = myContentManager.getIndexOfContent(content);
+      state.selectedIndex = content == null ? -1 : myContentManager.getIndexOfContent(content);
     }
     return state;
   }
@@ -109,7 +109,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   public void initToolWindow(@NotNull ToolWindow toolWindow) {
     // Create panels
     ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
-    Content allTodosContent = contentFactory.createContent(null, IdeBundle.message("title.project"), false);
+    Content allTodosContent = contentFactory.createContent(null, IdeUICustomization.getInstance().getProjectDisplayName(), false);
     toolWindow.setHelpId("find.todoList");
     myAllTodos = new TodoPanel(myProject, state.all, false, allTodosContent) {
       @Override

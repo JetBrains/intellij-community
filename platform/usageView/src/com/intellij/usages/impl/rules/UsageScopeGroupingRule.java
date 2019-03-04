@@ -57,7 +57,7 @@ public class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implem
     }
     Project project = element.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    boolean isInLib = fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile);
+    boolean isInLib = fileIndex.isInLibrary(virtualFile);
     if (isInLib) return LIBRARY;
     return TestSourcesFilter.isTestSources(virtualFile, project) ? TEST : PRODUCTION;
   }

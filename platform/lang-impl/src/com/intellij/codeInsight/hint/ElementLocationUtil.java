@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -32,24 +33,29 @@ public class ElementLocationUtil {
   private ElementLocationUtil() {
   }
 
+  @Deprecated
   public static void customizeElementLabel(final PsiElement element, final JLabel label) {
+    Ref<Icon> ref = new Ref<>();
+    label.setText(renderElementLocation(element, ref));
+    label.setIcon(ref.get());
+  }
+
+  public static String renderElementLocation(final PsiElement element, final Ref<Icon> icon) {
     if (element != null) {
       PsiFile file = element.getContainingFile();
       VirtualFile vfile = file == null ? null : file.getVirtualFile();
 
       if (vfile == null) {
-        label.setText("");
-        label.setIcon(null);
-
-        return;
+        icon.set(null);
+        return "";
       }
 
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
       final Module module = fileIndex.getModuleForFile(vfile);
 
       if (module != null) {
-        label.setText(module.getName());
-        label.setIcon(ModuleType.get(module).getIcon());
+        icon.set(ModuleType.get(module).getIcon());
+        return module.getName();
       }
       else {
         final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(vfile);
@@ -64,10 +70,12 @@ public class ElementLocationUtil {
         }
 
         if (entry != null) {
-          label.setText(entry.getPresentableName());
-          label.setIcon(AllIcons.Nodes.PpLibFolder);
+          icon.set(AllIcons.Nodes.PpLibFolder);
+          return entry.getPresentableName();
         }
       }
     }
+    icon.set(null);
+    return "";
   }
 }

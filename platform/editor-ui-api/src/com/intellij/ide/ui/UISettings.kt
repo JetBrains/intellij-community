@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("PropertyName")
 
 package com.intellij.ide.ui
@@ -11,16 +11,13 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.UIUtil.isValidFont
 import com.intellij.util.xmlb.annotations.Transient
-import java.awt.Font
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
@@ -30,7 +27,7 @@ import javax.swing.SwingConstants
 private val LOG = logger<UISettings>()
 
 @State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], reportStatistic = true)
-class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponent<UISettingsState> {
+class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRoamableUiSettings = NotRoamableUiSettings()) : PersistentStateComponent<UISettingsState> {
   private var state = UISettingsState()
 
   private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
@@ -245,11 +242,17 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
       state.editorTabPlacement = value
     }
 
-  val editorTabLimit: Int
+  var editorTabLimit: Int
     get() = state.editorTabLimit
+    set(value) {
+      state.editorTabLimit = value
+    }
 
   val recentFilesLimit: Int
     get() = state.recentFilesLimit
+
+  val recentLocationsLimit: Int
+    get() = state.recentLocationsLimit
 
   var maxLookupWidth: Int
     get() = state.maxLookupWidth
@@ -270,15 +273,21 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
     }
 
   var fontFace: String?
-    get() = state.fontFace
+    get() = notRoamableOptions.state.fontFace
     set(value) {
-      state.fontFace = value
+      notRoamableOptions.state.fontFace = value
     }
 
   var fontSize: Int
-    get() = state.fontSize
+    get() = notRoamableOptions.state.fontSize
     set(value) {
-      state.fontSize = value
+      notRoamableOptions.state.fontSize = value
+    }
+
+  var fontScale: Float
+    get() = notRoamableOptions.state.fontScale
+    set(value) {
+      notRoamableOptions.state.fontScale = value
     }
 
   var showDirectoryForNonUniqueFilenames: Boolean
@@ -373,12 +382,17 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
     @JvmStatic
     val shadowInstance: UISettings
       get() {
-        val app = ApplicationManager.getApplication()
-        return (if (app == null) null else instanceOrNull) ?: UISettings(NotRoamableUiSettings()).withDefFont()
+        val uiSettings = if (ApplicationManager.getApplication() == null) null else instanceOrNull
+        return when {
+          uiSettings != null -> uiSettings
+          else -> {
+            return UISettings()
+          }
+        }
       }
 
     @JvmField
-    val FORCE_USE_FRACTIONAL_METRICS: Boolean = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false)
+    val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false)
 
     @JvmStatic
     fun setupFractionalMetrics(g2d: Graphics2D) {
@@ -477,11 +491,6 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
     }
   }
 
-  private fun withDefFont(): UISettings {
-    initDefFont()
-    return this
-  }
-
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Please use {@link UISettingsListener#TOPIC}")
   fun addUISettingsListener(listener: UISettingsListener, parentDisposable: Disposable) {
@@ -524,13 +533,6 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
     CONSOLE_CYCLE_BUFFER_SIZE_KB = consoleCycleBufferSizeKb
   }
 
-  private fun initDefFont() {
-    val fontData = systemFontFaceAndSize
-    if (fontFace == null) fontFace = fontData.first
-    if (fontSize <= 0) fontSize = fontData.second
-    if (state.fontScale <= 0) state.fontScale = defFontScale
-  }
-
   override fun getState() = state
 
   override fun loadState(state: UISettingsState) {
@@ -538,6 +540,9 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
     updateDeprecatedProperties()
 
     migrateOldSettings()
+    if (migrateOldFontSettings()) {
+      notRoamableOptions.fixFontSettings()
+    }
 
     // Check tab placement in editor
     val editorTabPlacement = state.editorTabPlacement
@@ -557,32 +562,6 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
       state.alphaModeRatio = 0.5f
     }
 
-    state.fontSize = restoreFontSize(state.fontSize, state.fontScale)
-    state.fontScale = defFontScale
-    initDefFont()
-
-    // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
-    // find any other suitable font withing "preferred" fonts first.
-    var fontIsValid = isValidFont(Font(state.fontFace, Font.PLAIN, state.fontSize))
-    if (!fontIsValid) {
-      for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
-        if (isValidFont(Font(preferredFont, Font.PLAIN, state.fontSize))) {
-          state.fontFace = preferredFont
-          fontIsValid = true
-          break
-        }
-      }
-
-      // 2. If all preferred fonts are not valid in current environment
-      // we have to find first valid font (if any)
-      if (!fontIsValid) {
-        val fontNames = UIUtil.getValidFontNames(false)
-        if (fontNames.isNotEmpty()) {
-          state.fontFace = fontNames[0]
-        }
-      }
-    }
-
     if (state.maxClipboardContents <= 0) {
       state.maxClipboardContents = 5
     }
@@ -600,6 +579,27 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
       editorAAType = state.editorAAType
       state.editorAAType = AntialiasingType.SUBPIXEL
     }
+  }
+
+  @Suppress("DEPRECATION")
+  private fun migrateOldFontSettings(): Boolean {
+    var migrated = false
+    if (state.fontSize != 0) {
+      fontSize = restoreFontSize(state.fontSize, state.fontScale)
+      state.fontSize = 0
+      migrated = true
+    }
+    if (state.fontScale != 0f) {
+      fontScale = state.fontScale
+      state.fontScale = 0f
+      migrated = true
+    }
+    if (state.fontFace != null) {
+      fontFace = state.fontFace
+      state.fontFace = null
+      migrated = true
+    }
+    return migrated
   }
 
   //<editor-fold desc="Deprecated stuff.">
@@ -657,7 +657,7 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
   @Transient
   var PRESENTATION_MODE = false
 
-  @Suppress("unused")
+  @Suppress("unused", "SpellCheckingInspection")
   @Deprecated("Use overrideLafFonts", replaceWith = ReplaceWith("overrideLafFonts"))
   @JvmField
   @Transient
@@ -688,13 +688,3 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
   var CONSOLE_CYCLE_BUFFER_SIZE_KB = consoleCycleBufferSizeKb
   //</editor-fold>
 }
-
-internal val systemFontFaceAndSize: Pair<String, Int>
-  get() {
-    val fontData = UIUtil.getSystemFontData()
-    if (fontData != null) {
-      return fontData
-    }
-
-    return Pair.create("Dialog", 12)
-  }

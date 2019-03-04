@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,15 +74,16 @@ class WinExeInstallerBuilder {
     customizer.fileAssociations.collect { !it.startsWith(".") ? ".$it" : it}
   }
 
-  void buildInstaller(String winDistPath, String additionalDirectoryToInclude) {
+  void buildInstaller(String winDistPath, String additionalDirectoryToInclude, String secondJreSuffix = null, String jre32BitVersionSupported = null) {
+
     if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
       return
     }
 
     String communityHome = buildContext.paths.communityHome
-    String outFileName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) +
-                         buildContext.bundledJreManager.jreSuffix()
+    def suffix = secondJreSuffix != null ? secondJreSuffix : buildContext.bundledJreManager.jreSuffix()
+    String outFileName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + suffix
     buildContext.messages.progress("Building Windows installer $outFileName")
 
     def box = "$buildContext.paths.temp/winInstaller"
@@ -130,7 +131,7 @@ class WinExeInstallerBuilder {
       buildContext.messages.error("Failed to generated list of files for NSIS installer: $e")
     }
 
-    prepareConfigurationFiles(box, winDistPath)
+    prepareConfigurationFiles(box, winDistPath, jre32BitVersionSupported)
     customizer.customNsiConfigurationFiles.each {
       ant.copy(file: it, todir: "$box/nsiconf", overwrite: "true")
     }
@@ -183,7 +184,7 @@ class WinExeInstallerBuilder {
     buildContext.notifyArtifactBuilt(installerPath)
   }
 
-  private void prepareConfigurationFiles(String box, String winDistPath) {
+  private void prepareConfigurationFiles(String box, String winDistPath, String jre32BitVersionSupported = null) {
     def productProperties = buildContext.productProperties
     def x64LauncherName = "${productProperties.baseFileName}64.exe"
     def mainExeLauncherName = customizer.include32BitLauncher ? "${productProperties.baseFileName}.exe" : x64LauncherName
@@ -213,6 +214,7 @@ class WinExeInstallerBuilder {
 !define ASSOCIATION "$fileAssociations"
 !define UNINSTALL_WEB_PAGE "${customizer.getUninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
 !define LINK_TO_JRE "$linkToJre"
+!define JRE_32BIT_VERSION_SUPPORTED "$jre32BitVersionSupported"
 
 ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDE build has been installed
 ; set to 1 for release build

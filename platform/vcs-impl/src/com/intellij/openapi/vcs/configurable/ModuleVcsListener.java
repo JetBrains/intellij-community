@@ -23,5 +23,5 @@ import java.util.Collection;
  * @author yole
  */
 interface ModuleVcsListener {
-  void activeVcsSetChanged(Collection<AbstractVcs> activeVcses);
+  void activeVcsSetChanged(Collection<? extends AbstractVcs> activeVcses);
 }

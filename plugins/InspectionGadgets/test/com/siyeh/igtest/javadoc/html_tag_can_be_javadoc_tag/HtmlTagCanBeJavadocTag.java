@@ -22,7 +22,7 @@ class HtmlTagCanBeJavadocTag {
   void extremeFormatting() {}
 
   /**
-   * Demo value.
+   * Demo value. Use <code>{</code> or <code>}</code>.
    */
   public int x;
 
@@ -32,4 +32,10 @@ class HtmlTagCanBeJavadocTag {
    * <code>x2 = {@link #x x} * 2</code>
    */
   public int x2 = x*2;
+
+  /**
+   * <warning descr="'<code>...</code>' can be replaced with '{@code ...}'"><code></warning>{}</code>
+   * <code>}{</code>
+   */
+  private String indubitably = null;
 }

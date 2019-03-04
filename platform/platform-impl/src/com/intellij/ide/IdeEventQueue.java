@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
@@ -22,12 +8,15 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
@@ -47,6 +36,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +47,7 @@ import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -205,6 +196,36 @@ public class IdeEventQueue extends EventQueue {
     abracadabraDaberBoreh();
 
     IdeKeyEventDispatcher.addDumbModeWarningListener(() -> flushDelayedKeyEvents());
+
+    if (Registry.is("skip.move.resize.events")) {
+      myPostEventListeners.addListener(IdeEventQueue::skipMoveResizeEvents);
+    }
+
+    ((IdeKeyboardFocusManager)KeyboardFocusManager.getCurrentKeyboardFocusManager()).setTypeaheadHandler(ke -> {
+      if (myKeyEventDispatcher.dispatchKeyEvent(ke)) {
+        ke.consume();
+      }
+    });
+  }
+
+  private static boolean skipMoveResizeEvents(AWTEvent event) {
+    // JList, JTable and JTree paint every cell/row/column using the following method:
+    //   CellRendererPane.paintComponent(Graphics, Component, Container, int, int, int, int, boolean)
+    // This method sets bounds to a renderer component and invokes the following internal method:
+    //   Component.notifyNewBounds
+    // All default and simple renderers do not post specified events,
+    // but panel-based renderers have to post events by contract.
+    switch (event.getID()) {
+      case ComponentEvent.COMPONENT_MOVED:
+      case ComponentEvent.COMPONENT_RESIZED:
+      case HierarchyEvent.ANCESTOR_MOVED:
+      case HierarchyEvent.ANCESTOR_RESIZED:
+        Object source = event.getSource();
+        if (source instanceof Component && null != UIUtil.getParentOfType(CellRendererPane.class, (Component)source)) {
+          return true;
+        }
+    }
+    return false;
   }
 
   private void abracadabraDaberBoreh() {
@@ -257,16 +278,8 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  public void addActivityListener(@NotNull final Runnable runnable, @NotNull Disposable parentDisposable) {
-    synchronized (myLock) {
-      ContainerUtil.add(runnable, myActivityListeners, parentDisposable);
-    }
-  }
-
-  public void removeActivityListener(@NotNull final Runnable runnable) {
-    synchronized (myLock) {
-      myActivityListeners.remove(runnable);
-    }
+  public void addActivityListener(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
+    ContainerUtil.add(runnable, myActivityListeners, parentDisposable);
   }
 
   public void addDispatcher(@NotNull EventDispatcher dispatcher, Disposable parent) {
@@ -334,6 +347,8 @@ public class IdeEventQueue extends EventQueue {
     if (Registry.is("skip.typed.event") && skipTypedKeyEventsIfFocusReturnsToOwner(e)) return;
 
     if (isMetaKeyPressedOnLinux(e)) return;
+
+    if (e.getSource() instanceof TrayIcon) return;
 
     checkForTimeJump();
 
@@ -640,8 +655,15 @@ public class IdeEventQueue extends EventQueue {
     }
 
     if (e instanceof KeyEvent) {
-      if (myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
-        ((KeyEvent)e).consume();
+      if (
+        !SystemInfo.isJetBrainsJvm ||
+        (JavaVersion.current().compareTo(JavaVersion.compose(8, 0, 202, 1504, false)) < 0 &&
+         JavaVersion.current().compareTo(JavaVersion.compose(9, 0, 0, 0, false)) < 0) ||
+        JavaVersion.current().compareTo(JavaVersion.compose(11, 0, 0, 0, false)) > 0
+      ) {
+        if (myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
+          ((KeyEvent)e).consume();
+        }
       }
       defaultDispatchEvent(e);
     }
@@ -1135,7 +1157,7 @@ public class IdeEventQueue extends EventQueue {
             && ((KeyboardShortcut)s).getSecondKeyStroke() == null
             && ((KeyboardShortcut)s).getFirstKeyStroke().equals(keyStrokeToFind));
 
-        if (thisShortcutMayShowPopup && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
+        if (!isActionPopupShown() && thisShortcutMayShowPopup && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
           if (TYPEAHEAD_LOG.isDebugEnabled()) {
             TYPEAHEAD_LOG.debug("Delay following events; Focused window is " +
                                 KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow().getClass().getName());
@@ -1160,7 +1182,7 @@ public class IdeEventQueue extends EventQueue {
               break;
             case TRIGGERED:
               long timeDelta = keyEvent.getWhen() - ourLastTimePressed.get();
-              if (timeDelta >= 100 && timeDelta <= 500) {
+              if (!isActionPopupShown() && timeDelta >= 100 && timeDelta <= 500) {
                 delayKeyEvents.set(true);
                 lastTypeaheadTimestamp = System.currentTimeMillis();
                 mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DETECTED;
@@ -1234,9 +1256,16 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public void flushDelayedKeyEvents() {
-    if (delayKeyEvents.compareAndSet(true, false)) {
+    if (!isActionPopupShown() && delayKeyEvents.compareAndSet(true, false)) {
       postDelayedKeyEvents();
     }
+  }
+
+  private static boolean isActionPopupShown() {
+    ActionManager actionManager = ActionManager.getInstance();
+    return actionManager instanceof ActionManagerImpl &&
+           !((ActionManagerImpl)actionManager).isActionPopupStackEmpty() &&
+           !((ActionManagerImpl)actionManager).isToolWindowContextMenuVisible();
   }
 
   private SearchEverywhereTypeaheadState mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
@@ -1248,6 +1277,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private final Set<Shortcut> shortcutsShowingPopups = new HashSet<>();
+  private WeakReference<Keymap> lastActiveKeymap = new WeakReference<Keymap>(null);
 
   private final List<String> actionsShowingPopupsList = new ArrayList<>();
   private long lastTypeaheadTimestamp = -1;
@@ -1255,16 +1285,23 @@ public class IdeEventQueue extends EventQueue {
   @NotNull
   private Set<Shortcut> getShortcutsShowingPopups () {
     KeymapManager keymapManager = KeymapManager.getInstance();
-    if (shortcutsShowingPopups.isEmpty() && keymapManager != null && keymapManager.getActiveKeymap() != null) {
-      String actionsAwareTypeaheadActionsList = Registry.get("action.aware.typeahead.actions.list").asString();
-      actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
-      actionsShowingPopupsList.forEach(actionId -> {
-        List<Shortcut> shortcuts = Arrays.asList(keymapManager.getActiveKeymap().getShortcuts(actionId));
-        if (TYPEAHEAD_LOG.isDebugEnabled()) {
-          shortcuts.forEach(s -> TYPEAHEAD_LOG.debug("Typeahead for " + actionId + " : Shortcuts: " + s));
+    if (keymapManager != null) {
+      Keymap keymap = keymapManager.getActiveKeymap();
+      if (keymap != null) {
+        if (!keymap.equals(lastActiveKeymap.get())) {
+          String actionsAwareTypeaheadActionsList = Registry.get("action.aware.typeahead.actions.list").asString();
+          shortcutsShowingPopups.clear();
+          actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
+          actionsShowingPopupsList.forEach(actionId -> {
+            List<Shortcut> shortcuts = Arrays.asList(keymap.getShortcuts(actionId));
+            if (TYPEAHEAD_LOG.isDebugEnabled()) {
+              shortcuts.forEach(s -> TYPEAHEAD_LOG.debug("Typeahead for " + actionId + " : Shortcuts: " + s));
+            }
+            shortcutsShowingPopups.addAll(shortcuts);
+          });
+          lastActiveKeymap = new WeakReference<>(keymap);
         }
-        shortcutsShowingPopups.addAll(shortcuts);
-      });
+      }
     }
     return shortcutsShowingPopups;
   }

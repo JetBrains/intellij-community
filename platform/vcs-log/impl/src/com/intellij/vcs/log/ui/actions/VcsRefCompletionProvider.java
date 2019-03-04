@@ -39,9 +39,8 @@ public class VcsRefCompletionProvider extends TwoStepCompletionProvider<VcsRef> 
 
   @NotNull
   private Stream<VcsRef> filterAndSort(@NotNull CompletionResultSet result, @NotNull Stream<VcsRef> stream) {
-    Stream<VcsRef> matched = stream.filter(ref -> {
-      return myRoots.contains(ref.getRoot()) && result.getPrefixMatcher().prefixMatches(ref.getName());
-    });
+    Stream<VcsRef> matched = stream.filter(ref -> myRoots.contains(ref.getRoot()) &&
+                                                  result.getPrefixMatcher().prefixMatches(ref.getName()));
     return filterRefs(matched);
   }
 

@@ -155,9 +155,11 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager</implementation-class>
+      <headless-implementation-class/>
     </component>
     <component>
       <implementation-class>com.intellij.ide.palette.impl.PaletteToolWindowManager</implementation-class>
+      <headless-implementation-class/>
     </component>
   </project-components>
 
@@ -167,7 +169,7 @@
       <action id="GuiDesigner.PreviewForm" class="com.intellij.uiDesigner.actions.PreviewFormAction"
               icon="AllIcons.Actions.Preview"/>
       <action id="GuiDesigner.DataBindingWizard" class="com.intellij.uiDesigner.actions.DataBindingWizardAction"
-              icon="UIDesignerIcons.DataBindingWizard"/>
+              icon="AllIcons.Actions.Lightning"/>
       <action id="GuiDesigner.ReloadCustomComponents" class="com.intellij.uiDesigner.actions.ReloadCustomComponentsAction"
               icon="AllIcons.Actions.Refresh"/>
       <action id="GuiDesigner.ChooseLocale" class="com.intellij.uiDesigner.actions.ChooseLocaleAction"/>

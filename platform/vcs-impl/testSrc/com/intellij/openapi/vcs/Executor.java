@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -96,7 +97,7 @@ public class Executor {
 
   public static void echo(@NotNull String fileName, @NotNull String content) {
     try {
-      FileUtil.writeToFile(child(fileName), content.getBytes(), true);
+      FileUtil.writeToFile(child(fileName), content.getBytes(StandardCharsets.UTF_8), true);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -108,11 +109,11 @@ public class Executor {
   }
 
   public static void overwrite(@NotNull File file, @NotNull String content) throws IOException {
-    FileUtil.writeToFile(file, content.getBytes(), false);
+    FileUtil.writeToFile(file, content.getBytes(StandardCharsets.UTF_8), false);
   }
 
   public static void append(@NotNull File file, @NotNull String content) throws IOException {
-    FileUtil.writeToFile(file, content.getBytes(), true);
+    FileUtil.writeToFile(file, content.getBytes(StandardCharsets.UTF_8), true);
   }
 
   public static void append(@NotNull String fileName, @NotNull String content) throws IOException {

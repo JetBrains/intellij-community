@@ -15,11 +15,13 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 
 /**
  * @author nik
  */
+@CompileStatic
 @Immutable
 class ModuleLibraryData {
   String moduleName

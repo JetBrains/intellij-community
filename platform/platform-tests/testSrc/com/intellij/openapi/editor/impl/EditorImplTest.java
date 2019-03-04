@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -102,11 +103,7 @@ public class EditorImplTest extends AbstractEditorTest {
   public void testNoExceptionDuringBulkModeDocumentUpdate() {
     initText("something");
     DocumentEx document = (DocumentEx)myEditor.getDocument();
-    runWriteCommand(() -> {
-      DocumentUtil.executeInBulk(document, true, ()-> {
-        document.setText("something\telse");
-      });
-    });
+    runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.setText("something\telse")));
 
     checkResultByText("something\telse");
   }
@@ -171,11 +168,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("long long line<caret>");
     configureSoftWraps(12);
     DocumentEx document = (DocumentEx)myEditor.getDocument();
-    runWriteCommand(() -> {
-      DocumentUtil.executeInBulk(document, true, ()-> {
-        document.replaceString(4, 5, "-");
-      });
-    });
+    runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.replaceString(4, 5, "-")));
 
     assertEquals(new VisualPosition(1, 5), myEditor.getCaretModel().getVisualPosition());
   }
@@ -185,15 +178,11 @@ public class EditorImplTest extends AbstractEditorTest {
     DocumentEx document = (DocumentEx)myEditor.getDocument();
 
     runWriteCommand(() -> {
-      DocumentUtil.executeInBulk(document, true, ()-> {
-        document.replaceString(4, 5, "-");
-      });
+      DocumentUtil.executeInBulk(document, true, ()-> document.replaceString(4, 5, "-"));
 
       myEditor.getCaretModel().moveToOffset(9);
 
-      DocumentUtil.executeInBulk(document, true, ()-> {
-        document.replaceString(4, 5, "+");
-      });
+      DocumentUtil.executeInBulk(document, true, ()-> document.replaceString(4, 5, "+"));
     });
 
 
@@ -217,7 +206,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("a\nbbb\nccccc");
     myEditor.getSettings().setAdditionalColumnsCount(0);
     myEditor.getSettings().setAdditionalLinesCount(0);
-    assertEquals(new Dimension(50, 30), myEditor.getContentComponent().getPreferredSize());
+    assertEquals(new Dimension(50, (int)(30 * FontPreferences.DEFAULT_LINE_SPACING)), myEditor.getContentComponent().getPreferredSize());
   }
   
   public void testCollapsingRegionContainingSoftWrap() {
@@ -233,7 +222,7 @@ public class EditorImplTest extends AbstractEditorTest {
     myEditor.getSettings().setAdditionalLinesCount(0);
     configureSoftWraps(4);
     myEditor.getSettings().setUseSoftWraps(false);
-    assertEquals(new Dimension(70, 10), myEditor.getContentComponent().getPreferredSize());
+    assertEquals(new Dimension(70, (int)(10 * FontPreferences.DEFAULT_LINE_SPACING)), myEditor.getContentComponent().getPreferredSize());
   }
   
   public void testUpdatingCaretPositionAfterBulkMode() {
@@ -321,11 +310,7 @@ public class EditorImplTest extends AbstractEditorTest {
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(DocumentBulkUpdateListener.TOPIC, listener);
     initText("abcdef");
     DocumentEx document = (DocumentEx)myEditor.getDocument();
-    runWriteCommand(() -> {
-      DocumentUtil.executeInBulk(document, true, ()-> {
-        document.insertString(3, "\n\n");
-      });
-    });
+    runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.insertString(3, "\n\n")));
     RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
     assertEquals(1, highlighters.length);
     assertEquals(7, highlighters[0].getStartOffset());
@@ -582,5 +567,11 @@ public class EditorImplTest extends AbstractEditorTest {
     checkResultByText("<caret>line 2");
     rightWithSelection();
     checkResultByText("<selection>l<caret></selection>ine 2");
+  }
+
+  public void testRightClickOutsideSelectionRemovesIt() {
+    initText("<selection>some<caret></selection> text");
+    mouse().right().clickAt(0, 6);
+    checkResultByText("some t<caret>ext");
   }
 }

@@ -37,10 +37,11 @@ import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ref.GCUtil
+import com.intellij.util.ref.GCWatcher
 
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Future 
+import java.util.concurrent.Future
 /**
  * @author peter
  */
@@ -107,7 +108,7 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
     latch.await()
   }
 
-  void "test external modification of a stubbed file with smart pointer switches the file to AST"() {
+  void "test smart pointer survives an external modification of a stubbed file"() {
     PsiFile file = myFixture.addFileToProject("A.java", "class A {}")
     def oldClass = JavaPsiFacade.getInstance(project).findClass("A", GlobalSearchScope.allScope(project))
     def pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(oldClass)
@@ -121,7 +122,6 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
 
     ApplicationManager.application.runWriteAction { VfsUtil.saveText(file.virtualFile, "import java.util.*; class A {}; class B {}") }
     assert pointer.element == oldClass
-    assert ((PsiFileImpl)file).treeElement
   }
 
   void "test do not parse when resolving references inside an anonymous class"() {
@@ -199,9 +199,7 @@ class B {
     StubTree stubHardRef = ((PsiFileImpl)file).stubTree
 
     assert file.classes[0].nameIdentifier
-    GCUtil.tryGcSoftlyReachableObjects()
-
-    assert !((PsiFileImpl)file).treeElement
+    loadAndGcAst(file)
     assertNoStubLoaded(file)
 
     assert file.classes[0].methods[0].modifierList.hasExplicitModifier(PsiModifier.STATIC)
@@ -212,22 +210,24 @@ class B {
     PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("a.java", "class A<T>{}")
     PsiClass psiClass = ((PsiJavaFile)file).classes[0]
     assert psiClass.nameIdentifier
-    GCUtil.tryGcSoftlyReachableObjects()
 
-    assert !file.treeElement
+    loadAndGcAst(file)
+
     assertNoStubLoaded(file)
     StubElement hardRefToStub = file.greenStub
     assert hardRefToStub
     assert hardRefToStub == file.stub
 
-    assert file.node
-
-    GCUtil.tryGcSoftlyReachableObjects()
-    assert !file.treeElement
+    loadAndGcAst(file)
     assert hardRefToStub.is(file.greenStub)
 
     assert psiClass.typeParameters.length == 1
     assert !file.treeElement
+  }
+
+  private static void loadAndGcAst(PsiFile file) {
+    GCWatcher.tracking(file.node).tryGc()
+    assert !((PsiFileImpl)file).treeElement
   }
 
   private static assertNoStubLoaded(PsiFile file) {
@@ -250,8 +250,7 @@ class B {
     def cls = file.classes[0]
     assert cls.nameIdentifier
 
-    GCUtil.tryGcSoftlyReachableObjects()
-    assert !file.treeElement
+    loadAndGcAst(file)
 
     assert ((PsiClassImpl) cls).stub
   }
@@ -276,10 +275,7 @@ class B {
 
   void "test bind stubs to AST after AST has been loaded and gc-ed"() {
     PsiJavaFileImpl file = (PsiJavaFileImpl)myFixture.addFileToProject("a.java", "class A{}")
-    file.node
-
-    GCUtil.tryGcSoftlyReachableObjects()
-    assert !file.treeElement
+    loadAndGcAst(file)
 
     def cls1 = file.classes[0]
     def cls2 = file.lastChild
@@ -291,8 +287,8 @@ class B {
     List<PsiJavaFileImpl> files = fileNumbers.collect {
       (PsiJavaFileImpl)myFixture.addFileToProject("a${it}.java", "import foo.bar; class A{}")
     }
-    for (iteration in 0..3) {
-      GCUtil.tryGcSoftlyReachableObjects()
+    for (iteration in 0..<3) {
+      GCWatcher.tracking(files.collect { it.node }).tryGc()
       files.each { assert !it.treeElement }
 
       List<Future<PsiImportList>> stubFutures = []

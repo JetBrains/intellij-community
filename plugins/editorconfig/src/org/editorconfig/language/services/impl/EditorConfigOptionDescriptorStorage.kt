@@ -16,15 +16,22 @@ class EditorConfigOptionDescriptorStorage(source: Iterable<EditorConfigOptionDes
     val allDescriptors = mutableListOf<EditorConfigOptionDescriptor>()
     val descriptors = THashMap<String, MutableList<EditorConfigOptionDescriptor>>(CaseInsensitiveStringHashingStrategy())
     val badDescriptors = mutableListOf<EditorConfigOptionDescriptor>()
-    source.forEach { optionDescriptor ->
+    for (optionDescriptor in source) {
       allDescriptors.add(optionDescriptor)
-      val key = optionDescriptor.key
-      val constants = EditorConfigDescriptorUtil.findConstants(key)
-      if (constants.isEmpty()) badDescriptors.add(optionDescriptor)
-      else constants.forEach { constant ->
-        val presentList = descriptors[constant]
-        if (presentList != null) presentList.add(optionDescriptor)
-        else descriptors[constant] = mutableListOf(optionDescriptor)
+
+      val constants = EditorConfigDescriptorUtil.collectConstants(optionDescriptor.key)
+      if (constants.isEmpty()) {
+        badDescriptors.add(optionDescriptor)
+        continue
+      }
+
+      for (constant in constants) {
+        var list = descriptors[constant]
+        if (list == null) {
+          list = mutableListOf()
+          descriptors[constant] = list
+        }
+        list.add(optionDescriptor)
       }
     }
     this.allDescriptors = allDescriptors
@@ -32,28 +39,14 @@ class EditorConfigOptionDescriptorStorage(source: Iterable<EditorConfigOptionDes
     this.badDescriptors = badDescriptors
   }
 
-  operator fun get(key: PsiElement, parts: List<String>) = parts.flatMapNotNull {
-    descriptors[it]
-  }.firstOrNull {
-    it.key.matches(key)
-  } ?: badDescriptors.firstOrNull {
-    it.key.matches(key)
-  }
-
-  private inline fun <T, R : Any> Iterable<T>.flatMapNotNull(transform: (T) -> Iterable<R?>?): List<R> {
-    return flatMapNotNullTo(ArrayList(), transform)
-  }
-
-  private inline fun <T, R : Any, C : MutableCollection<in R>> Iterable<T>.flatMapNotNullTo(
-    destination: C,
-    transform: (T) -> Iterable<R?>?
-  ): C {
-    for (element in this) {
-      transform(element)?.forEach {
-        it?.let(destination::add)
+  operator fun get(key: PsiElement, parts: List<String>): EditorConfigOptionDescriptor? {
+    for (part in parts) {
+      val partDescriptors = descriptors[part] ?: continue
+      for (descriptor in partDescriptors) {
+        if (descriptor.key.matches(key)) return descriptor
       }
     }
-    return destination
-  }
 
+    return badDescriptors.firstOrNull { it.key.matches(key) }
+  }
 }

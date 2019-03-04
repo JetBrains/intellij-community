@@ -21,6 +21,7 @@ import java.util.*
 abstract class GrReferenceExpressionReference(ref: GrReferenceExpressionImpl) : GroovyCachingReference<GrReferenceExpressionImpl>(ref) {
 
   override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
+    require(!incomplete)
     val staticResults = element.staticReference.resolve(incomplete)
     if (staticResults.isNotEmpty()) {
       return staticResults
@@ -72,8 +73,12 @@ private fun GrReferenceExpression.handleSpecialCases(): Collection<GroovyResolve
   return null
 }
 
-private fun GrReferenceExpressionImpl.resolveKinds(): Set<GroovyResolveKind> {
-  return if (isQualified) {
+fun GrReferenceExpressionImpl.resolveKinds(): Set<GroovyResolveKind> {
+  return resolveKinds(isQualified)
+}
+
+fun resolveKinds(qualified: Boolean): Set<GroovyResolveKind> {
+  return if (qualified) {
     EnumSet.of(FIELD, PROPERTY, VARIABLE)
   }
   else {

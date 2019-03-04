@@ -15,44 +15,40 @@
  */
 package com.intellij.execution.dashboard.actions;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardManager;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.ui.RunContentManagerImpl;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getLeafTargets;
 
 /**
  * @author konstantin.aleev
  */
-public class StopAction extends RunDashboardTreeLeafAction<RunDashboardRunConfigurationNode> implements DumbAware {
-  public StopAction() {
-    super(ExecutionBundle.message("run.dashboard.stop.action.name"),
-          ExecutionBundle.message("run.dashboard.stop.action.description"),
-          AllIcons.Actions.Suspend);
-  }
-
+public class StopAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null || RunDashboardManager.getInstance(project).isShowConfigurations()) {
-      List<RunDashboardRunConfigurationNode> targetNodes = getTargetNodes(e);
-      boolean enabled = targetNodes.stream().anyMatch(node -> {
+    if (project == null) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+
+    if (RunDashboardManager.getInstance(project).isShowConfigurations()) {
+      JBIterable<RunDashboardRunConfigurationNode> targetNodes = getLeafTargets(e);
+      boolean enabled = targetNodes.filter(node -> {
         Content content = node.getContent();
         return content != null && !RunContentManagerImpl.isTerminated(content);
-      });
+      }).isNotEmpty();
       e.getPresentation().setEnabled(enabled);
-      if (!enabled && ActionPlaces.isPopupPlace(e.getPlace())) {
-        e.getPresentation().setVisible(false);
-      }
+      e.getPresentation().setVisible(enabled || !ActionPlaces.isPopupPlace(e.getPlace()));
     }
     else {
       Content content = RunDashboardManager.getInstance(project).getDashboardContentManager().getSelectedContent();
@@ -63,8 +59,12 @@ public class StopAction extends RunDashboardTreeLeafAction<RunDashboardRunConfig
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null || RunDashboardManager.getInstance(project).isShowConfigurations()) {
-      super.actionPerformed(e);
+    if (project == null) return;
+
+    if (RunDashboardManager.getInstance(project).isShowConfigurations()) {
+      for (RunDashboardRunConfigurationNode node : getLeafTargets(e)) {
+        ExecutionManagerImpl.stopProcess(node.getDescriptor());
+      }
     }
     else {
       Content content = RunDashboardManager.getInstance(project).getDashboardContentManager().getSelectedContent();
@@ -72,15 +72,5 @@ public class StopAction extends RunDashboardTreeLeafAction<RunDashboardRunConfig
         ExecutionManagerImpl.stopProcess(RunContentManagerImpl.getRunContentDescriptorByContent(content));
       }
     }
-  }
-
-  @Override
-  protected void doActionPerformed(RunDashboardRunConfigurationNode node) {
-    ExecutionManagerImpl.stopProcess(node.getDescriptor());
-  }
-
-  @Override
-  protected Class<RunDashboardRunConfigurationNode> getTargetNodeClass() {
-    return RunDashboardRunConfigurationNode.class;
   }
 }

@@ -170,7 +170,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return getTool().loadDescription();
   }
 
-  protected URL getDescriptionUrl() {
+  private URL getDescriptionUrl() {
     Application app = ApplicationManager.getApplication();
     if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
       return superGetDescriptionUrl();
@@ -180,13 +180,13 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   @Nullable
-  protected URL superGetDescriptionUrl() {
+  private URL superGetDescriptionUrl() {
     final String fileName = getDescriptionFileName();
     return ResourceUtil.getResource(getDescriptionContextClass(), "inspectionDescriptions", fileName);
   }
 
   @NotNull
-  public String getDescriptionFileName() {
+  private String getDescriptionFileName() {
     return getShortName() + ".html";
   }
 

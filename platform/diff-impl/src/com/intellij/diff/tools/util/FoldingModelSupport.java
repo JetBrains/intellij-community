@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
-import static com.intellij.util.ArrayUtil.toObjectArray;
 
 /**
  * This class allows to add custom foldings to hide unchanged regions in diff.
@@ -170,7 +169,7 @@ public class FoldingModelSupport {
       }
 
       if (result.size() > 0) {
-        FoldedBlock[] block = toObjectArray(result, FoldedBlock.class);
+        FoldedBlock[] block = result.toArray(new FoldedBlock[0]);
         for (FoldedBlock folding : block) {
           folding.installHighlighter(block);
         }
@@ -321,7 +320,7 @@ public class FoldingModelSupport {
 
   private class MyFoldingListener implements FoldingListener {
     private final int myIndex;
-    @NotNull Set<FoldRegion> myModifiedRegions = new HashSet<>();
+    @NotNull private final Set<FoldRegion> myModifiedRegions = new HashSet<>();
 
     MyFoldingListener(int index) {
       myIndex = index;

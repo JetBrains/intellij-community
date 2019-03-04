@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.lang.ASTNode;
@@ -12,6 +12,8 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
@@ -50,17 +52,17 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
       public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
         IElementType childType = node.getElementType();
         IElementType parentType = parent.getElementType();
-        if (childType == GroovyElementTypes.PARAMETER && parentType != GroovyElementTypes.PARAMETERS_LIST) {
+        if (childType == GroovyStubElementTypes.PARAMETER && parentType != GroovyEmptyStubElementTypes.PARAMETER_LIST) {
           return true;
         }
-        if (childType == GroovyElementTypes.PARAMETERS_LIST && !(parent.getPsi() instanceof GrMethod)) {
+        if (childType == GroovyEmptyStubElementTypes.PARAMETER_LIST && !(parent.getPsi() instanceof GrMethod)) {
           return true;
         }
-        if (childType == GroovyElementTypes.MODIFIERS) {
+        if (childType == GroovyStubElementTypes.MODIFIER_LIST) {
           if (parentType == GroovyElementTypes.CLASS_INITIALIZER) {
             return true;
           }
-          if (parentType == GroovyElementTypes.VARIABLE_DEFINITION && !GroovyElementTypes.VARIABLE_DEFINITION.shouldCreateStub(parent)) {
+          if (parentType == GroovyStubElementTypes.VARIABLE_DECLARATION && !GroovyStubElementTypes.VARIABLE_DECLARATION.shouldCreateStub(parent)) {
             return true;
           }
         }

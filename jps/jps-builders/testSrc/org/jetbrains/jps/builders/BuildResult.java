@@ -59,13 +59,9 @@ public class BuildResult implements MessageHandler {
   void storeMappingsDump(ProjectDescriptor pd) throws IOException {
     final ByteArrayOutputStream dump = new ByteArrayOutputStream();
 
-    final PrintStream stream = new PrintStream(dump);
-    try {
+    try (PrintStream stream = new PrintStream(dump)) {
       pd.dataManager.getMappings().toStream(stream);
       dumpSourceToOutputMappings(pd, stream);
-    }
-    finally {
-      stream.close();
     }
 
     dump.close();

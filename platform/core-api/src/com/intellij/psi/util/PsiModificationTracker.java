@@ -50,7 +50,6 @@ public interface PsiModificationTracker extends ModificationTracker {
     }
 
     /**
-     * @param project
      * @return The instance of {@link PsiModificationTracker} corresponding to the given project.
      */
     public static PsiModificationTracker getInstance(Project project) {
@@ -79,7 +78,9 @@ public interface PsiModificationTracker extends ModificationTracker {
    * This key can be passed as a dependency in a {@link CachedValueProvider}.
    * The corresponding {@link CachedValue} will then be flushed on every physical PSI change that can affect Java structure and resolve.
    * @see #getJavaStructureModificationCount()
+   * @deprecated rarely supported by JVM language plugins; also a wrong way for optimisations
    */
+  @Deprecated
   Key JAVA_STRUCTURE_MODIFICATION_COUNT = Key.create("JAVA_STRUCTURE_MODIFICATION_COUNT");
 
   /**
@@ -114,12 +115,16 @@ public interface PsiModificationTracker extends ModificationTracker {
    * Tracks structural Java modifications, i.e. the ones on class/method/field/file level. Modifications inside method bodies are not tracked.
    * Useful to work with resolve caches that only depend on Java structure, and not the method code.
    * @return current counter value. Increased whenever any physical PSI in Java structure is changed.
+   * @deprecated rarely supported by JVM language plugins; also a wrong way for optimisations
    */
+  @Deprecated
   long getJavaStructureModificationCount();
 
   /**
    * @return an object returning {@link #getJavaStructureModificationCount()}
+   * @deprecated rarely supported by JVM language plugins; also a wrong way for optimisations
    */
+  @Deprecated
   @NotNull
   ModificationTracker getJavaStructureModificationTracker();
 
@@ -127,6 +132,7 @@ public interface PsiModificationTracker extends ModificationTracker {
    * A listener to be notified on any PSI modification count change (which happens on any physical PSI change).
    * @see #TOPIC
    */
+  @FunctionalInterface
   interface Listener {
 
     /**

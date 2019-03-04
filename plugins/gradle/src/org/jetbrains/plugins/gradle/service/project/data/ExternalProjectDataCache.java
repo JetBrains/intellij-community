@@ -20,13 +20,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.FilePathHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.DefaultExternalProject;
@@ -49,25 +49,36 @@ public class ExternalProjectDataCache {
     return ServiceManager.getService(project, ExternalProjectDataCache.class);
   }
 
-  @NotNull private final Map<Pair<ProjectSystemId, File>, ExternalProject> myExternalRootProjects;
+  @NotNull private final Map<String, ExternalProject> myExternalRootProjects;
 
   public ExternalProjectDataCache() {
     myExternalRootProjects = ConcurrentFactoryMap.createMap(key->
-      new ExternalProjectSerializer().load(key.first, key.second),
-
-                                                            () -> ConcurrentCollectionFactory.createMap(ExternalSystemUtil.HASHING_STRATEGY)
+      new ExternalProjectSerializer().load(GradleConstants.SYSTEM_ID, new File(key)),
+                                                            () -> ConcurrentCollectionFactory.createMap(FilePathHashingStrategy.create())
     );
   }
 
-
+  /**
+   * Kept for compatibility with Kotlin
+   * @deprecated since 2019.1
+   */
+  @Deprecated
   @Nullable
   public ExternalProject getRootExternalProject(@NotNull ProjectSystemId systemId, @NotNull File projectRootDir) {
-    ExternalProject externalProject = myExternalRootProjects.get(Pair.create(systemId, projectRootDir));
+    if (GradleConstants.SYSTEM_ID != systemId) {
+      throw new IllegalStateException("Attempt to use Gradle-specific cache with illegal system id [" + systemId.getReadableName() + "]");
+    }
+    return getRootExternalProject(ExternalSystemApiUtil.toCanonicalPath(projectRootDir.getAbsolutePath()));
+  }
+
+  @Nullable
+  public ExternalProject getRootExternalProject(@NotNull String externalProjectPath) {
+    ExternalProject externalProject = myExternalRootProjects.get(externalProjectPath);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Can not find data for project at: " + projectRootDir);
+      LOG.debug("Can not find data for project at: " + externalProjectPath);
       LOG.debug("Existing imported projects paths: " + ContainerUtil.map(
         myExternalRootProjects.entrySet(),
-        (Function<Map.Entry<Pair<ProjectSystemId, File>, ExternalProject>, Object>)entry -> {
+        (Function<Map.Entry<String, ExternalProject>, Object>)entry -> {
           //noinspection ConstantConditions
           if (!(entry.getValue() instanceof ExternalProject)) return null;
           return Pair.create(entry.getKey(), entry.getValue().getProjectDir());
@@ -80,7 +91,7 @@ public class ExternalProjectDataCache {
     DefaultExternalProject value = new DefaultExternalProject(externalProject);
     new ExternalProjectSerializer().save(value);
     myExternalRootProjects.put(
-      Pair.create(new ProjectSystemId(externalProject.getExternalSystemId()), externalProject.getProjectDir()),
+      ExternalSystemApiUtil.toCanonicalPath(externalProject.getProjectDir().getAbsolutePath()),
       value
     );
   }

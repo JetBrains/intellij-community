@@ -1,2 +1,2 @@
-def <warning descr="'async' and 'await' are keywords in Python 3.7 and newer">a<caret>wait</warning>():
+def <warning descr="Python version 3.7 does not allow 'async' and 'await' as names">a<caret>wait</warning>():
     pass

@@ -22,6 +22,11 @@ public class JpsJavaSdkType extends JpsSdkType<JpsDummyElement> implements JpsEl
     return JpsElementFactory.getInstance().createDummyElement();
   }
 
+  @Override
+  public String getPresentableName() {
+    return "JDK";
+  }
+
   public static String getJavaExecutable(JpsSdk<?> sdk) {
     return sdk.getHomePath() + "/bin/java";
   }

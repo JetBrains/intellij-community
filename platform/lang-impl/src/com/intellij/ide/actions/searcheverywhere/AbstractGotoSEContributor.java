@@ -37,7 +37,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   protected static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
                                                                                 "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
-                                                                                "(\\d+)?(?:(?:\\D)(\\d+)?)?" + // line + column
+                                                                                "(\\d+)?(?:\\W(\\d+)?)?" + // line + column
                                                                                 "[)\\]]?" // possible closing paren/brace
   );
   protected static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
@@ -71,16 +71,10 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   @Override
   public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<F> filter,
                             @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
-    if (myProject == null) {
-      return; //nothing to search
-    }
+    if (myProject == null) return; //nothing to search
+    if (!isEmptyPatternSupported() && pattern.isEmpty()) return;
+    if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) return;
 
-    if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) {
-      return;
-    }
-
-    String suffix = pattern.endsWith(fullMatchSearchSuffix) ? fullMatchSearchSuffix : "";
-    String searchString = filterControlSymbols(pattern) + suffix;
     FilteringGotoByModel<F> model = createModel(myProject);
     if (filter != null) {
       model.setFilterItems(filter.getSelectedElements());
@@ -88,9 +82,12 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
     ProgressIndicatorUtils.yieldToPendingWriteActions();
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
-      ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, psiContext);
+      if (progressIndicator.isCanceled()) return;
+
+      PsiElement context = psiContext != null && psiContext.isValid() ? psiContext : null;
+      ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, context);
       try {
-        popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator, element -> {
+        popup.getProvider().filterElements(popup, pattern, everywhere, progressIndicator, element -> {
           if (progressIndicator.isCanceled()) return false;
           if (element == null) {
             LOG.error("Null returned from " + model + " in " + this);

@@ -37,6 +37,7 @@ import java.util.Comparator;
  */
 public class PropertiesFileStructureViewModel extends TextEditorBasedStructureViewModel implements PropertiesGroupingStructureViewModel {
   private final GroupByWordPrefixes myByWordPrefixesGrouper;
+  private volatile boolean myGroupingState = true;
   @NonNls public static final String KIND_SORTER_ID = "KIND_SORTER";
   private static final Sorter KIND_SORTER = new Sorter() {
     @Override
@@ -87,9 +88,14 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
   }
 
   @Override
+  public void setGroupingActive(boolean state) {
+    myGroupingState = state;
+  }
+
+  @Override
   @NotNull
   public StructureViewTreeElement getRoot() {
-    return new PropertiesFileStructureViewElement((PropertiesFileImpl)getPsiFile());
+    return new PropertiesFileStructureViewElement((PropertiesFileImpl)getPsiFile(), () -> myGroupingState);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
@@ -45,7 +46,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   public GrFieldImpl(GrFieldStub stub) {
-    this(stub, GroovyElementTypes.FIELD);
+    this(stub, GroovyStubElementTypes.FIELD);
   }
 
   public GrFieldImpl(GrFieldStub stub, IStubElementType nodeType) {
@@ -104,7 +105,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   @Override
   public PsiType getTypeGroovy() {
-    PsiType type = TypeInferenceHelper.getCurrentContext().getExpressionType(this, field -> {
+    PsiType type = TypeInferenceHelper.inTopContext(() -> GroovyPsiManager.getInstance(getProject()).getType(this, field -> {
       if (getDeclaredType() == null && getInitializerGroovy() == null) {
         final PsiType type1 = GrVariableEnhancer.getEnhancedType(field);
         if (type1 != null) {
@@ -112,13 +113,13 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
         }
       }
       return null;
-    });
+    }));
 
     if (type != null) {
       return type;
     }
 
-    return super.getTypeGroovy();
+    return TypeInferenceHelper.inTopContext(() -> super.getTypeGroovy());
   }
 
   @Override

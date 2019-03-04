@@ -319,7 +319,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
   }
 
   public void selectElement(final Object selector, final VirtualFile file, final boolean requestFocus) {
-    myBuilder.select(selector, file, requestFocus);
+    myBuilder.selectAsync(selector, file, requestFocus);
   }
 
   @Override
@@ -733,9 +733,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
   public void add(@NotNull DockableContent content, RelativePoint dropTarget) {
     if (content.getKey() instanceof VirtualFile) {
       VirtualFile vFile = (VirtualFile)content.getKey();
-      final PsiFileSystemItem psiFile = vFile.isDirectory()
-                                        ? PsiManager.getInstance(myProject).findDirectory(vFile)
-                                        : PsiManager.getInstance(myProject).findFile(vFile);
+      PsiFileSystemItem psiFile = PsiUtilCore.findFileSystemItem(myProject, vFile);
       Point p = dropTarget.getScreenPoint();
       SwingUtilities.convertPointFromScreen(p, myTree);
       FavoritesListNode node = findFavoritesListNode(p);

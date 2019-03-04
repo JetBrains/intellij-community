@@ -6,8 +6,8 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.impl.deserializeConfigurationFrom
 import com.intellij.execution.impl.serializeConfigurationInto
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.loadElement
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 
@@ -20,7 +20,7 @@ fun checkRunConfigurationSerialization(configuration: RunConfiguration, expected
 
   if (factory != null) {
     val c2 = factory.createTemplateConfiguration(project)
-    deserializeConfigurationFrom(c2, loadElement(expected))
+    deserializeConfigurationFrom(c2, JDOMUtil.load(expected))
     checkRunConfigurationSerialization(c2, expected, null, project)
   }
 }

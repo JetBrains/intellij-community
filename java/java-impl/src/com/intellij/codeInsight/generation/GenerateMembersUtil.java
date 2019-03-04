@@ -683,7 +683,22 @@ public class GenerateMembersUtil {
     Project project = field.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     String template = templatesManager.getDefaultTemplate().getTemplate();
-    String methodText = GenerationUtil.velocityGenerateCode(psiClass, Collections.singletonList(field), new HashMap<>(), template, 0, false);
+    Function<String, String> calculateTemplateText = 
+      currentTemplate -> 
+        GenerationUtil.velocityGenerateCode(psiClass, Collections.singletonList(field), new HashMap<>(), currentTemplate, 0, false);
+    String methodText;
+    try {
+      methodText = calculateTemplateText.fun(template);
+    }
+    catch (GenerateCodeException e) {
+      if (ignoreInvalidTemplate) {
+        LOG.info(e);
+        methodText = calculateTemplateText.fun(templatesManager.getDefaultTemplates()[0].getTemplate());
+      }
+      else {
+        throw e;
+      }
+    }
 
     boolean isGetter = templatesManager instanceof GetterTemplatesManager;
     PsiMethod result;

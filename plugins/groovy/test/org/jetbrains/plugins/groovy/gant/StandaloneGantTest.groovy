@@ -1,37 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.gant
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.libraries.Library
+
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.util.SdkHomeBean
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author peter
  */
 class StandaloneGantTest extends LightCodeInsightFixtureTestCase {
-  public static final DefaultLightProjectDescriptor GROOVY_17_PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-    @Override
-    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel()
-      final VirtualFile groovyJar = JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_7LibraryName() + "!/")
-      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES)
-      modifiableModel.commit()
-    }
-  }
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GROOVY_17_PROJECT_DESCRIPTOR
+    return GroovyProjectDescriptors.GROOVY_1_7
   }
 
   @Override

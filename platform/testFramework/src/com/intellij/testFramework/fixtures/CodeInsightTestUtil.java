@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
@@ -175,9 +175,7 @@ public class CodeInsightTestUtil {
   public static void doFormattingTest(@NotNull final CodeInsightTestFixture fixture,
                                       @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
-    WriteCommandAction.writeCommandAction(fixture.getProject()).run(() -> {
-      CodeStyleManager.getInstance(fixture.getProject()).reformat(fixture.getFile());
-    });
+    WriteCommandAction.writeCommandAction(fixture.getProject()).run(() -> CodeStyleManager.getInstance(fixture.getProject()).reformat(fixture.getFile()));
     fixture.checkResultByFile(after, false);
   }
 
@@ -191,7 +189,7 @@ public class CodeInsightTestUtil {
     Project project = editor.getProject();
     Disposable disposable = Disposer.newDisposable();
     try {
-      TemplateManagerImpl.setTemplateTesting(project, disposable);
+      TemplateManagerImpl.setTemplateTesting(disposable);
       handler.doRename(elementAtCaret, editor, DataManager.getInstance().getDataContext(editor.getComponent()));
       if (editor instanceof EditorWindow) {
         editor = ((EditorWindow)editor).getDelegate();

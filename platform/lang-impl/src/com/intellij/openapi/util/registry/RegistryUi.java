@@ -203,9 +203,7 @@ public class RegistryUi implements Disposable {
   private void startEditingAtSelection() {
     myTable.editCellAt(myTable.getSelectedRow(), 2);
     if (myTable.isEditing()) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myTable.getEditorComponent(), true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable.getEditorComponent(), true));
     }
   }
 

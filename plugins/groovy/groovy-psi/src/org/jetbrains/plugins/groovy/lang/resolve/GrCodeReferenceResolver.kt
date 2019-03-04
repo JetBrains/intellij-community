@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
@@ -17,6 +16,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind.*
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter
+import org.jetbrains.plugins.groovy.lang.psi.impl.explicitTypeArguments
 import org.jetbrains.plugins.groovy.lang.psi.util.contexts
 import org.jetbrains.plugins.groovy.lang.psi.util.skipSameTypeParents
 import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUp
@@ -40,7 +41,7 @@ internal object GrCodeReferenceResolver : GroovyResolver<GrCodeReferenceElement>
     return when (ref.kind) {
       PACKAGE_REFERENCE -> ref.resolveAsPackageReference()
       IMPORT_REFERENCE -> ref.resolveAsImportReference()
-      REFERENCE -> ref.resolveReference()
+      REFERENCE -> ref.resolveAsReference()
     }
   }
 }
@@ -90,7 +91,7 @@ private fun resolveImportReference(file: GroovyFile, import: GroovyImport): Coll
   return listOf(ElementResolveResult(resolved))
 }
 
-private fun GrCodeReferenceElement.resolveReference(): Collection<GroovyResolveResult> {
+private fun GrCodeReferenceElement.resolveAsReference(): Collection<GroovyResolveResult> {
   val name = referenceName ?: return emptyList()
 
   if (canResolveToTypeParameter()) {
@@ -108,12 +109,11 @@ private fun GrCodeReferenceElement.resolveReference(): Collection<GroovyResolveR
   else if (isQualified) {
     val clazz = resolveClassFqn()
     if (clazz != null) {
-      val substitutor = PsiSubstitutor.EMPTY.putAll(clazz, typeArguments)
-      return listOf(ClassResolveResult(clazz, this, null, substitutor))
+      return listOf(ClassProcessor.createResult(clazz, this, ResolveState.initial(), explicitTypeArguments))
     }
   }
 
-  val processor = ClassProcessor(name, this, typeArguments, isAnnotationReference())
+  val processor = ClassProcessor(name, this, explicitTypeArguments, isAnnotationReference())
   val state = ResolveState.initial()
   processClasses(processor, state)
   val classes = processor.results
@@ -130,14 +130,17 @@ private fun GrCodeReferenceElement.resolveReference(): Collection<GroovyResolveR
 private fun GrReferenceElement<*>.canResolveToTypeParameter(): Boolean {
   if (isQualified) return false
   val parent = parent
-  return parent !is GrReferenceElement<*> &&
-         parent !is GrExtendsClause &&
-         parent !is GrImplementsClause &&
-         parent !is GrAnnotation &&
-         parent !is GrImportStatement &&
-         parent !is GrNewExpression &&
-         parent !is GrAnonymousClassDefinition &&
-         parent !is GrCodeReferenceElement
+  return when (parent) {
+    is GrReferenceElement<*>,
+    is GrExtendsClause,
+    is GrImplementsClause,
+    is GrAnnotation,
+    is GrImportStatement,
+    is GrNewExpression,
+    is GrAnonymousClassDefinition,
+    is GrCodeReferenceElement -> false
+    else -> true
+  }
 }
 
 private fun resolveToTypeParameter(place: PsiElement, name: String): Collection<GroovyResolveResult> {
@@ -218,7 +221,8 @@ private fun GrCodeReferenceElement.processQualifier(qualifier: GrCodeReferenceEl
 }
 
 private fun GrCodeReferenceElement.canResolveToInnerClassOfCurrentClass(): Boolean {
-  val parent = getActualParent()
+  val (_, outerMostReference) = skipSameTypeParents()
+  val parent = outerMostReference.getActualParent()
   return parent !is GrExtendsClause &&
          parent !is GrImplementsClause &&
          (parent !is GrAnnotation || parent.classReference != this) // annotation's can't be inner classes of current class
@@ -235,6 +239,9 @@ private fun GrCodeReferenceElement.getActualParent(): PsiElement? = containingFi
 private fun PsiElement.getCurrentClass(): GrTypeDefinition? {
   for (context in contexts()) {
     if (context !is GrTypeDefinition) {
+      continue
+    }
+    else if (context is GrTypeParameter) {
       continue
     }
     else if (context is GrAnonymousClassDefinition && this === context.baseClassReferenceGroovy) {

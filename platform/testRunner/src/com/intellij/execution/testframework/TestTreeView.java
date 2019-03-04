@@ -83,6 +83,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     });
     installHandlers();
     setCellRenderer(getRenderer(myModel.getProperties()));
+    putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true);
   }
 
   @Override

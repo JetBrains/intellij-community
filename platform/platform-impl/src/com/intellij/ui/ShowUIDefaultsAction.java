@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.speedSearch.FilteringTableModel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -40,7 +41,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 
@@ -261,8 +261,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
       private void addNewValue() {
         ApplicationManager.getApplication().invokeLater(() -> new DialogWrapper(myTable, true) {
-          JBTextField name = new JBTextField(40);
-          JBTextField value = new JBTextField(40);
+          final JBTextField name = new JBTextField(40);
+          final JBTextField value = new JBTextField(40);
           {
             setTitle("Add New Value");
             init();
@@ -371,7 +371,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         }
 
         try {
-          List<Integer> v = Arrays.stream(parts).map(p -> Integer.parseInt(p)).collect(Collectors.toList());
+          List<Integer> v = ContainerUtil.map(parts, p -> Integer.parseInt(p));
           return JBUI.insets(v.get(0), v.get(1), v.get(2), v.get(3));
         } catch (NumberFormatException nex) {
           return null;
@@ -406,7 +406,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         }
 
         try {
-          List<Integer> v = Arrays.stream(parts).map(p -> Integer.parseInt(p)).collect(Collectors.toList());
+          List<Integer> v = ContainerUtil.map(parts, p -> Integer.parseInt(p));
           return new UIUtil.GrayFilter(v.get(0), v.get(1), v.get(2));
         } catch (NumberFormatException nex) {
           return null;

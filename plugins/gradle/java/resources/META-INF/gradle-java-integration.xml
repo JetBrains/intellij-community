@@ -41,7 +41,7 @@
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.BuildClasspathModuleGradleDataService"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager"/>
 
-    <editorNotificationProvider implementation="org.jetbrains.plugins.gradle.codeInsight.UseDistributionWithSourcesNotificationProvider"/>
+    <editorNotificationProviderApp implementation="org.jetbrains.plugins.gradle.codeInsight.UseDistributionWithSourcesNotificationProvider"/>
 
     <compiler.updateResourcesBuildContributor
         implementation="org.jetbrains.plugins.gradle.execution.build.GradleUpdateResourcesBuildContributor"/>
@@ -59,6 +59,8 @@
         implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager" id="gradleTest" order="before gradle"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer"
                               order="last"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.AllInDirectoryGradleConfigurationProducer"
+                              order="last"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer"
                               order="last"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer"
@@ -67,6 +69,7 @@
                               order="last"/>
 
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalAnnotationsDataService"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalAnnotationsModuleLibrariesService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.MavenRepositoriesDataService"/>
   </extensions>
   <actions>

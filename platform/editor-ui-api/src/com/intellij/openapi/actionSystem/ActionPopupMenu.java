@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
 /**
@@ -26,20 +28,23 @@ public interface ActionPopupMenu {
   /**
    * Returns the visual presentation of the popup menu.
    */
+  @NotNull
   JPopupMenu getComponent();
 
   /**
    * Returns the place where the action group is displayed (the first parameter of {@link ActionManager#createActionPopupMenu(String, ActionGroup)}.
    */
+  @NotNull
   String getPlace();
 
   /**
    * Returns the action group from which the menu was created.
    */
+  @NotNull
   ActionGroup getActionGroup();
 
   /**
    * Will be used for data-context retrieval.
    */
-  void setTargetComponent(JComponent component);
+  void setTargetComponent(@NotNull JComponent component);
 }

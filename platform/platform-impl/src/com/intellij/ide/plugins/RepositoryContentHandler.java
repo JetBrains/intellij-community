@@ -38,6 +38,7 @@ class RepositoryContentHandler extends DefaultHandler {
   private static final String SIZE = "size";
   private static final String RATING = "rating";
   private static final String DATE = "date";
+  private static final String PLUGIN_UPDATED_DATE = "updatedDate";
   private static final String TAGS = "tags";
 
   private final StringBuilder currentValue = new StringBuilder();
@@ -72,7 +73,7 @@ class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setDownloads(attributes.getValue(DOWNLOADS));
       currentPlugin.setSize(attributes.getValue(SIZE));
       currentPlugin.setUrl(attributes.getValue(URL));
-      String dateString = attributes.getValue(DATE);
+      String dateString = attributes.getValue(PLUGIN_UPDATED_DATE) != null ? attributes.getValue(PLUGIN_UPDATED_DATE) : attributes.getValue(DATE);
       if (dateString != null) {
         currentPlugin.setDate(dateString);
       }
@@ -151,14 +152,10 @@ class RepositoryContentHandler extends DefaultHandler {
     currentValue.append(ch, start, length);
   }
 
+  @NotNull
   private String buildCategoryName() {
     if (categoryName == null) {
-      StringBuilder builder = new StringBuilder();
-      for (int i = 0; i < categories.size(); i++) {
-        if (i > 0) builder.append('/');
-        builder.append(categories.get(i));
-      }
-      categoryName = builder.toString();
+      categoryName = String.join("/", categories);
     }
     return categoryName;
   }

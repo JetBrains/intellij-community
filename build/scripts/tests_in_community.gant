@@ -18,8 +18,13 @@ import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.jps.idea.IdeaProjectLoader
 
 /**
- * Compiles the sources and runs tests from 'community' project. Look at org.jetbrains.intellij.build.TestingOptions to see which options are
- * supported.
+ * Compiles the sources and runs tests from 'community' project. Look at {@link org.jetbrains.intellij.build.TestingOptions} to see which
+ * options are supported.
+ *
+ * If you want to run this script from IntelliJ IDEA, it's important to add 'Build Project' step in 'Before Launch' section of the created
+ * run configuration to ensure that required files are compiled before the script starts. It also makes sense to have
+ * {@linkplain org.jetbrains.intellij.build.BuildOptions#USE_COMPILED_CLASSES_PROPERTY '-Dintellij.build.use.compiled.classes=true'} in 'VM Options'
+ * to skip compilation and use the compiled classes from the project output.
  */
 target("default": "Run tests") {
   String home = IdeaProjectLoader.guessHome(this)

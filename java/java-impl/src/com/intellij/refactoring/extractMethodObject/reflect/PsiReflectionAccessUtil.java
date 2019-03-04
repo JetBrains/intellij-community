@@ -131,6 +131,10 @@ class PsiReflectionAccessUtil {
   }
 
   private static boolean isAccessible(@NotNull PsiType type) {
+    if (type instanceof PsiArrayType) {
+      return isAccessible(type.getDeepComponentType());
+    }
+
     return TypeConversionUtil.isPrimitiveAndNotNull(type) || isAccessible(PsiTypesUtil.getPsiClass(type));
   }
 

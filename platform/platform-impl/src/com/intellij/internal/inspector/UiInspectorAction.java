@@ -704,7 +704,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       myDimensionComponent.repaint();
     }
 
-    private class PropertyNameRenderer extends DefaultTableCellRenderer {
+    private static class PropertyNameRenderer extends DefaultTableCellRenderer {
       @Override
       public Component getTableCellRendererComponent(JTable table,
                                                      Object value,

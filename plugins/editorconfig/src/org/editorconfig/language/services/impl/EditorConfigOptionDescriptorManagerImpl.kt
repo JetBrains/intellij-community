@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.services.impl
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import com.intellij.reference.SoftReference
 import org.editorconfig.language.codeinsight.completion.providers.EditorConfigCompletionProviderUtil
@@ -12,19 +13,24 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigQualifiedKe
 import org.editorconfig.language.services.EditorConfigOptionDescriptorManager
 import org.editorconfig.language.util.EditorConfigDescriptorUtil
 import org.editorconfig.language.util.EditorConfigTemplateUtil
+import org.jetbrains.annotations.TestOnly
 import java.lang.ref.Reference
 
 class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorManager {
+  companion object {
+    private val logger = Logger.getInstance(EditorConfigOptionDescriptorManager::class.java)
+  }
+
   // These structures can be very big but are vital for plugin
-  private val fullySupportedDescriptors: EditorConfigOptionDescriptorStorage
-  private val partiallySupportedDescriptors: EditorConfigOptionDescriptorStorage
+  private var fullySupportedDescriptors = EditorConfigOptionDescriptorStorage(emptyList())
+  private var partiallySupportedDescriptors = EditorConfigOptionDescriptorStorage(emptyList())
 
   // These structures are relatively small and can be stored via strong reference
   private val requiredDeclarationDescriptorsCache = mutableMapOf<String, List<EditorConfigDeclarationDescriptor>>()
   private val declarationDescriptorsCache = mutableMapOf<String, List<EditorConfigDeclarationDescriptor>>()
 
-  private val cachedSmartQualifiedKeys: List<EditorConfigQualifiedKeyDescriptor> by lazy { findQualifiedKeys(true) }
-  private val cachedDumbQualifiedKeys: List<EditorConfigQualifiedKeyDescriptor> by lazy { findQualifiedKeys(false) }
+  private var cachedSmartQualifiedKeys: Reference<List<EditorConfigQualifiedKeyDescriptor>> = SoftReference(null)
+  private var cachedDumbQualifiedKeys: Reference<List<EditorConfigQualifiedKeyDescriptor>> = SoftReference(null)
 
   // These structures can be very big
   private var cachedSmartSimpleKeys: Reference<List<EditorConfigDescriptor>> = SoftReference(null)
@@ -34,6 +40,12 @@ class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorMana
   private var cachedAllDumbDescriptors: Reference<List<EditorConfigOptionDescriptor>> = SoftReference(null)
 
   init {
+    loadDescriptors()
+  }
+
+  @TestOnly
+  fun loadDescriptors() {
+    val start = System.currentTimeMillis()
     val fullySupportedDescriptors = mutableListOf<EditorConfigOptionDescriptor>()
     val partiallySupportedDescriptors = mutableListOf<EditorConfigOptionDescriptor>()
 
@@ -47,11 +59,22 @@ class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorMana
       destination.addAll(loadedDescriptors)
     }
 
-    val extensions = EditorConfigOptionDescriptorProvider.EP_NAME.extensions
-    extensions.forEach(::loadDescriptors)
+    EditorConfigOptionDescriptorProvider.EP_NAME.extensionList.forEach(::loadDescriptors)
 
     this.fullySupportedDescriptors = EditorConfigOptionDescriptorStorage(fullySupportedDescriptors)
     this.partiallySupportedDescriptors = EditorConfigOptionDescriptorStorage(partiallySupportedDescriptors)
+
+    requiredDeclarationDescriptorsCache.clear()
+    declarationDescriptorsCache.clear()
+
+    cachedSmartQualifiedKeys.clear()
+    cachedDumbQualifiedKeys.clear()
+
+    cachedSmartSimpleKeys.clear()
+    cachedDumbSimpleKeys.clear()
+
+    cachedAllDumbDescriptors.clear()
+    logger.debug("Loading EditorConfig option descriptors took ${System.currentTimeMillis() - start} ms")
   }
 
   override fun getOptionDescriptor(key: PsiElement, parts: List<String>, smart: Boolean): EditorConfigOptionDescriptor? {
@@ -88,7 +111,7 @@ class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorMana
     val cachedResult = declarationDescriptorsCache[id]
     if (cachedResult != null) return cachedResult
     val allDescriptors = getOptionDescriptors(false)
-    val declarationDescriptors = allDescriptors.flatMap { it -> EditorConfigDescriptorUtil.findDeclarations(it, id) }
+    val declarationDescriptors = allDescriptors.flatMap { it -> EditorConfigDescriptorUtil.collectDeclarations(it, id) }
     declarationDescriptorsCache[id] = declarationDescriptors
     return declarationDescriptors
   }
@@ -102,14 +125,18 @@ class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorMana
     return required
   }
 
-  override fun getQualifiedKeys(smart: Boolean): List<EditorConfigQualifiedKeyDescriptor> =
-    if (smart) cachedSmartQualifiedKeys else cachedDumbQualifiedKeys
+  override fun getQualifiedKeyDescriptors(smart: Boolean): List<EditorConfigQualifiedKeyDescriptor> {
+    val cache = if (smart) cachedSmartQualifiedKeys else cachedDumbQualifiedKeys
+    SoftReference.dereference(cache)?.let { return it }
 
-  private fun findQualifiedKeys(smart: Boolean) =
-    getOptionDescriptors(smart)
+    val result = getOptionDescriptors(smart)
       .asSequence()
       .mapNotNull { it.key as? EditorConfigQualifiedKeyDescriptor }
       .filterNot(EditorConfigTemplateUtil::startsWithVariable)
       .filter(EditorConfigTemplateUtil::checkStructuralConsistency)
       .toList()
+    val newCache = SoftReference(result)
+    if (smart) cachedSmartQualifiedKeys = newCache else cachedDumbQualifiedKeys = newCache
+    return result
+  }
 }

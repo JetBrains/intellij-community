@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,13 +100,13 @@ public class TestVirtualFile extends VirtualFile {
 
   @Override
   public long getLength() {
-    return myContent == null ? 0 : myContent.getBytes().length;
+    return myContent == null ? 0 : myContent.getBytes(StandardCharsets.UTF_8).length;
   }
 
   @Override
   @NotNull
   public byte[] contentsToByteArray() {
-    return myContent == null ? ArrayUtil.EMPTY_BYTE_ARRAY : myContent.getBytes();
+    return myContent == null ? ArrayUtil.EMPTY_BYTE_ARRAY : myContent.getBytes(StandardCharsets.UTF_8);
   }
 
   @Override

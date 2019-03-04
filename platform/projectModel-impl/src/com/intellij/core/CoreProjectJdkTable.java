@@ -31,7 +31,7 @@ public class CoreProjectJdkTable extends ProjectJdkTable {
   private final List<Sdk> mySdks = new ArrayList<>();
 
   @Override
-  public Sdk findJdk(String name) {
+  public Sdk findJdk(@NotNull String name) {
     synchronized (mySdks) {
       for (Sdk jdk : mySdks) {
         if (Comparing.strEqual(name, jdk.getName())) {
@@ -43,7 +43,7 @@ public class CoreProjectJdkTable extends ProjectJdkTable {
   }
 
   @Override
-  public Sdk findJdk(String name, String type) {
+  public Sdk findJdk(@NotNull String name, @NotNull String type) {
     return findJdk(name);
   }
 

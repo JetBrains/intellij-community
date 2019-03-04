@@ -4,6 +4,8 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.json.pointer.JsonPointerPosition;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -54,13 +56,14 @@ public class JsonSchemaComplianceChecker {
   }
 
   public void annotate(@NotNull final PsiElement element) {
+    Project project = element.getProject();
     final JsonPropertyAdapter firstProp = myWalker.getParentPropertyAdapter(element);
     if (firstProp != null) {
-      final List<JsonSchemaVariantsTreeBuilder.Step> position = myWalker.findPosition(firstProp.getDelegate(), true);
+      final JsonPointerPosition position = myWalker.findPosition(firstProp.getDelegate(), true);
       if (position == null || position.isEmpty()) return;
-      final MatchResult result = new JsonSchemaResolver(myRootSchema, false, position).detailedResolve();
+      final MatchResult result = new JsonSchemaResolver(project, myRootSchema, false, position).detailedResolve();
       for (JsonValueAdapter value : firstProp.getValues()) {
-        createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(value, result, myOptions));
+        createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(project, value, result, myOptions));
       }
     }
     checkRoot(element, firstProp);
@@ -77,8 +80,9 @@ public class JsonSchemaComplianceChecker {
       }
     }
     if (rootToCheck != null) {
-      final MatchResult matchResult = new JsonSchemaResolver(myRootSchema).detailedResolve();
-      createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(rootToCheck, matchResult, myOptions));
+      Project project = element.getProject();
+      final MatchResult matchResult = new JsonSchemaResolver(project, myRootSchema).detailedResolve();
+      createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(project, rootToCheck, matchResult, myOptions));
     }
   }
 
@@ -125,12 +129,12 @@ public class JsonSchemaComplianceChecker {
     if (checkIfAlreadyProcessed(psiElement)) return;
     String value = validationError.getMessage();
     if (myMessagePrefix != null) value = myMessagePrefix + value;
-    LocalQuickFix[] fix = validationError.createFixes(myWalker.getQuickFixAdapter(myHolder.getProject()));
+    LocalQuickFix[] fix = validationError.createFixes(myWalker.getSyntaxAdapter(myHolder.getProject()));
     if (fix.length == 0) {
       myHolder.registerProblem(psiElement, range, value);
     }
     else {
-      myHolder.registerProblem(psiElement, range, value, fix);
+      myHolder.registerProblem(range.isEmpty() ? psiElement.getContainingFile() : psiElement, range, value, fix);
     }
   }
 
@@ -141,7 +145,7 @@ public class JsonSchemaComplianceChecker {
       if (!isTop) ref.set(el);
       return isTop;
     });
-    return ref.isNull() ? null : walker.createValueAdapter(ref.get());
+    return ref.isNull() ? (walker.acceptsEmptyRoot() ? walker.createValueAdapter(element) : null) : walker.createValueAdapter(ref.get());
   }
 
   private boolean checkIfAlreadyProcessed(@NotNull PsiElement property) {

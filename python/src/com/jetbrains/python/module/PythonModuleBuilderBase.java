@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.module;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -45,7 +45,7 @@ public class PythonModuleBuilderBase extends ModuleBuilder {
   }
 
   @Override
-  public void setupRootModel(final ModifiableRootModel rootModel) throws ConfigurationException {
+  public void setupRootModel(@NotNull final ModifiableRootModel rootModel) throws ConfigurationException {
     // false for the module automatically created in a new project
     if (myJdk != null) {
       rootModel.setSdk(myJdk);

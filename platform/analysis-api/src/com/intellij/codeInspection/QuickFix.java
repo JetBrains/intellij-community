@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
  * Common base interface for quick fixes provided by local and global inspections.
  *
  * @author anna
- * @since 6.0
  * @see CommonProblemDescriptor#getFixes()
  */
 public interface QuickFix<D extends CommonProblemDescriptor> extends WriteActionAware {

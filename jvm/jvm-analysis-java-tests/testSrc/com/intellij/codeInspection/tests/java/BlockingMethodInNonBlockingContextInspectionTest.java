@@ -24,6 +24,9 @@ public class BlockingMethodInNonBlockingContextInspectionTest extends UsefulTest
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
       super.tearDown();

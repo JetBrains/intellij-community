@@ -49,7 +49,7 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUsageTriggerCollector.triggerUsage(e);
+    VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES);

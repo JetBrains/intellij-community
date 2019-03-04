@@ -29,7 +29,7 @@ public abstract class ProjectLevelVcsManager {
   public static final Topic<VcsListener> VCS_CONFIGURATION_CHANGED = Topic.create("VCS configuration changed", VcsListener.class);
   public static final Topic<VcsListener> VCS_CONFIGURATION_CHANGED_IN_PLUGIN = Topic.create("VCS configuration changed in VCS plugin", VcsListener.class);
 
-  public abstract void iterateVfUnderVcsRoot(VirtualFile file, Processor<VirtualFile> processor);
+  public abstract void iterateVfUnderVcsRoot(VirtualFile file, Processor<? super VirtualFile> processor);
 
   /**
    * Returns the <code>ProjectLevelVcsManager<code> instance for the specified project.
@@ -179,7 +179,6 @@ public abstract class ProjectLevelVcsManager {
    *
    * @param listener the listener instance.
    * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
-   * @since 6.0
    */
   @Deprecated
   public abstract void addVcsListener(VcsListener listener);
@@ -189,22 +188,17 @@ public abstract class ProjectLevelVcsManager {
    *
    * @param listener the listener instance.
    * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
-   * @since 6.0
    */
   @Deprecated
   public abstract void removeVcsListener(VcsListener listener);
 
   /**
    * Marks the beginning of a background VCS operation (commit or update).
-   *
-   * @since 6.0
    */
   public abstract void startBackgroundVcsOperation();
 
   /**
    * Marks the end of a background VCS operation (commit or update).
-   *
-   * @since 6.0
    */
   public abstract void stopBackgroundVcsOperation();
 
@@ -212,7 +206,6 @@ public abstract class ProjectLevelVcsManager {
    * Checks if a background VCS operation (commit or update) is currently in progress.
    *
    * @return true if a background operation is in progress, false otherwise.
-   * @since 6.0
    */
   public abstract boolean isBackgroundVcsOperationRunning();
 
@@ -249,9 +242,9 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract void setDirectoryMappings(final List<VcsDirectoryMapping> items);
 
-  public abstract void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator);
+  public abstract void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator);
   
-  public abstract void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator,
+  public abstract void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator,
                                       @Nullable VirtualFileFilter directoryFilter);
 
   @Nullable

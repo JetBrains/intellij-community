@@ -77,8 +77,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
     VirtualFile file = context.getVirtualFile();
     Object selector = context.getSelectorInFile();
     if (selector == null) {
-      PsiManager psiManager = PsiManager.getInstance(myProject);
-      selector = file.isDirectory() ? psiManager.findDirectory(file) : psiManager.findFile(file);
+      selector = PsiUtilCore.findFileSystemItem(myProject, file);
     }
 
     if (selector instanceof PsiElement) {

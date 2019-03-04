@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitVcs;
+import git4idea.commands.GitCommand.LockingPolicy;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitExecutableProblemsNotifier;
 import git4idea.config.GitVersion;
@@ -32,12 +34,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import static git4idea.commands.GitCommand.LockingPolicy.WRITE;
+import static git4idea.commands.GitCommand.LockingPolicy.READ;
+import static git4idea.commands.GitCommand.LockingPolicy.READ_OPTIONAL_LOCKING;
 
 /**
  * Basic functionality for git handler execution.
  */
 abstract class GitImplBase implements Git {
+
+  private static final Logger LOG = Logger.getInstance(GitImplBase.class);
+
   @NotNull
   @Override
   public GitCommandResult runCommand(@NotNull GitLineHandler handler) {
@@ -120,6 +126,11 @@ abstract class GitImplBase implements Git {
     }
 
     Project project = handler.project();
+    if (project != null && project.isDisposed()) {
+      LOG.warn("Project has already been disposed");
+      throw new ProcessCanceledException();
+    }
+
     if (project != null && handler.isRemote()) {
       try (GitHandlerAuthenticationManager authenticationManager = prepareAuthentication(project, handler)) {
         GitCommandResult result = doRun(handler, version, outputCollector);
@@ -149,10 +160,16 @@ abstract class GitImplBase implements Git {
                                         @NotNull OutputCollector outputCollector) {
     getGitTraceEnvironmentVariables(version).forEach(handler::addCustomEnvironmentVariable);
 
+    boolean canSuppressOptionalLocks = Registry.is("git.use.no.optional.locks") &&
+                                       GitVersionSpecialty.ENV_GIT_OPTIONAL_LOCKS_ALLOWED.existsIn(version);
+    if (canSuppressOptionalLocks) {
+      handler.addCustomEnvironmentVariable("GIT_OPTIONAL_LOCKS", "0");
+    }
+
     GitCommandResultListener resultListener = new GitCommandResultListener(outputCollector);
     handler.addLineListener(resultListener);
 
-    try (AccessToken ignored = lock(handler)) {
+    try (AccessToken ignored = lock(handler, !canSuppressOptionalLocks)) {
       writeOutputToConsole(handler);
       handler.runInCurrentThread();
     }
@@ -275,19 +292,24 @@ abstract class GitImplBase implements Git {
   }
 
   @NotNull
-  private static AccessToken lock(@NotNull GitLineHandler handler) {
+  private static AccessToken lock(@NotNull GitLineHandler handler, boolean canTakeOptionalLocks) {
     Project project = handler.project();
-    if (project != null && !project.isDefault() && WRITE == handler.getCommand().lockingPolicy()) {
-      ReadWriteLock executionLock = GitVcs.getInstance(project).getCommandLock();
-      executionLock.writeLock().lock();
-      return new AccessToken() {
-        @Override
-        public void finish() {
-          executionLock.writeLock().unlock();
-        }
-      };
+    LockingPolicy lockingPolicy = handler.getCommand().lockingPolicy();
+
+    if (project == null || project.isDefault() ||
+        lockingPolicy == READ ||
+        lockingPolicy == READ_OPTIONAL_LOCKING && !canTakeOptionalLocks) {
+      return AccessToken.EMPTY_ACCESS_TOKEN;
     }
-    return AccessToken.EMPTY_ACCESS_TOKEN;
+
+    ReadWriteLock executionLock = GitVcs.getInstance(project).getCommandLock();
+    executionLock.writeLock().lock();
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        executionLock.writeLock().unlock();
+      }
+    };
   }
 
   private static boolean looksLikeProgress(@NotNull String line) {

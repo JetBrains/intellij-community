@@ -1,0 +1,2 @@
+deprecated: nextStepGrayed.png -> /icons/ide/nextStep.svg; to be removed in IDEA 2020 - use AllIcons.Icons.Ide.NextStep
+deprecated: speedSearchPrompt.png; to be removed in IDEA 2020

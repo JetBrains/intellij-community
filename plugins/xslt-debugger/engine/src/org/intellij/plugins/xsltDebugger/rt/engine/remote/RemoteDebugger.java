@@ -83,7 +83,7 @@ public interface RemoteDebugger extends Remote {
     String getInstruction() throws RemoteException;
   }
 
-  public interface Variable extends Remote {
+  interface Variable extends Remote {
     boolean isGlobal() throws RemoteException;
 
     Debugger.Variable.Kind getKind() throws RemoteException;

@@ -3,6 +3,7 @@ package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -13,7 +14,6 @@ import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
 import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 
 import java.lang.annotation.RetentionPolicy;
-import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -508,7 +508,7 @@ class ClassfileAnalyzer {
                 if (!myAcc.isEmpty()) {
                   final Object elem = myAcc.get(0);
                   if (elem != null) {
-                    template = (Object[])Array.newInstance(elem.getClass(), 0);
+                    template = ArrayUtil.newArray(elem.getClass(), 0);
                   }
                 }
                 defaultValue.set(template != null? myAcc.toArray(template) : myAcc.toArray());

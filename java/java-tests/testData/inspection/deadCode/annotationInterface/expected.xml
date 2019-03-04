@@ -2,8 +2,13 @@
 <problems>
   <problem>
     <file>Test.java</file>
+    <line>4</line>
+    <description>Interface is not implemented.</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
     <line>5</line>
-    <description>Method is never used.</description>
+    <description>Method owner class is never instantiated OR An instantiation is not reachable from entry points.</description>
   </problem>
 </problems>
 

@@ -75,7 +75,7 @@ public class ExtensionsRootType extends RootType {
       private final ExtensionsRootType myRootType = getInstance();
       @Override
       public boolean value(File file) {
-        if (file.isDirectory()) return false;
+        if (file.isDirectory() || file.isHidden()) return false;
         String name = file.getName();
         String extension = FileUtilRt.getExtension(name);
         return !extension.isEmpty() &&
@@ -182,7 +182,9 @@ public class ExtensionsRootType extends RootType {
 
   @Contract("null->null")
   private VirtualFile getPluginResourcesDirectoryFor(@Nullable VirtualFile resource) {
-    VirtualFile root = resource != null ? getRootDirectory() : null;
+    if (resource == null) return null;
+    String rootPath = ScratchFileService.getInstance().getRootPath(this);
+    VirtualFile root = LocalFileSystem.getInstance().findFileByPath(rootPath);
     if (root == null) return null;
 
     VirtualFile parent = resource;
@@ -192,12 +194,6 @@ public class ExtensionsRootType extends RootType {
       parent = file.getParent();
     }
     return parent != null && file.isDirectory() ? file : null;
-  }
-
-  @Nullable
-  private VirtualFile getRootDirectory() {
-    String path = ScratchFileService.getInstance().getRootPath(this);
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
   }
 
   @NotNull

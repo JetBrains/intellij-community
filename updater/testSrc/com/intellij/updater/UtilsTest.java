@@ -27,11 +27,10 @@ import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 public class UtilsTest {
-  public static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
-
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   @BeforeClass
@@ -61,7 +60,7 @@ public class UtilsTest {
 
   @Test
   public void testDeleteLockedFileOnWindows() throws Exception {
-    assumeTrue(IS_WINDOWS);
+    assumeTrue(Utils.IS_WINDOWS);
 
     File f = tempDir.newFile("temp_file");
     assertTrue(f.exists());
@@ -85,7 +84,7 @@ public class UtilsTest {
 
   @Test
   public void testDeleteLockedFileOnUnix() throws Exception {
-    assumeTrue(!IS_WINDOWS);
+    assumeFalse(Utils.IS_WINDOWS);
 
     File f = tempDir.newFile("temp_file");
     assertTrue(f.exists());
@@ -113,7 +112,7 @@ public class UtilsTest {
 
   @Test
   public void testNonRecursiveSymlinkDelete() throws Exception {
-    assumeTrue(!IS_WINDOWS);
+    assumeFalse(Utils.IS_WINDOWS);
 
     File dir = tempDir.newFolder("temp_dir");
     File file = new File(dir, "file");
@@ -132,7 +131,7 @@ public class UtilsTest {
 
   @Test
   public void testDeleteDanglingSymlink() throws Exception {
-    assumeTrue(!IS_WINDOWS);
+    assumeFalse(Utils.IS_WINDOWS);
 
     File dir = tempDir.newFolder("temp_dir");
     File link = new File(dir, "link");

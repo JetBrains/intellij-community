@@ -37,5 +37,12 @@ class JavaUCallableReferenceExpression(
 
   override fun multiResolve(): Iterable<ResolveResult> = psi.multiResolve(false).asIterable()
 
-  override val resolvedName: String? = (psi.resolve() as? PsiNamedElement)?.name
+  override val resolvedName: String?
+    get() = (psi.resolve() as? PsiNamedElement)?.name
+
+  override val referenceNameElement: UElement? by lz {
+    psi.referenceNameElement?.let { JavaUSimpleNameReferenceExpression(it, callableName, this, it.reference) }
+  }
+
+
 }

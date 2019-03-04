@@ -15,14 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
-import com.intellij.codeInsight.generation.ConstructorBodyGeneratorBase;
-import com.intellij.codeInsight.generation.ConstructorBodyGeneratorEx;
+import com.intellij.codeInsight.generation.ConstructorBodyGenerator;
 
 
-public class GrConstructorBodyGenerator extends ConstructorBodyGeneratorBase implements ConstructorBodyGeneratorEx{
-  
-  @Override
-  public void finish(StringBuilder buffer) {
-    buffer.append('}');
-  }
+public class GrConstructorBodyGenerator implements ConstructorBodyGenerator {
 }

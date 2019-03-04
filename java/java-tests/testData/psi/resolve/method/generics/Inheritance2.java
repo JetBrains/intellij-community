@@ -11,6 +11,6 @@ class Test{
     }
 
     {
-        new A<Integer>().new B<Boolean>().getZ().<ref>booleanValue();
+        new A<Integer>().new B<Boolean>().getZ().<caret>booleanValue();
     }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.AttachSourcesProvider;
@@ -24,11 +10,10 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -74,12 +59,11 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
         Collection<MavenArtifact> artifacts = findArtifacts(mavenProjects, orderEntries);
         if (artifacts.isEmpty()) return ActionCallback.REJECTED;
 
-        final AsyncResult<MavenArtifactDownloader.DownloadResult> result = new AsyncResult<>();
+        final AsyncPromise<MavenArtifactDownloader.DownloadResult> result = new AsyncPromise<>();
         manager.scheduleArtifactsDownloading(mavenProjects, artifacts, true, false, result);
 
         final ActionCallback resultWrapper = new ActionCallback();
-
-        result.doWhenDone((Consumer<MavenArtifactDownloader.DownloadResult>)downloadResult -> {
+        result.onSuccess(downloadResult -> {
           if (!downloadResult.unresolvedSources.isEmpty()) {
             final StringBuilder message = new StringBuilder();
 
@@ -109,7 +93,6 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
             resultWrapper.setDone();
           }
         });
-
         return resultWrapper;
       }
     });

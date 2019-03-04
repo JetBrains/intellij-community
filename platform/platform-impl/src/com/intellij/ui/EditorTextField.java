@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -223,9 +224,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
       validate();
       if (isFocused) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(newEditor.getContentComponent(), true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(newEditor.getContentComponent(), true));
       }
     }
   }
@@ -356,9 +355,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
     revalidate();
     if (isFocused) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        requestFocus();
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> requestFocus());
     }
   }
 
@@ -408,7 +405,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     // and only then execute another removal from the hierarchy. Otherwise
     // swing goes nuts because of nested removals and indices get corrupted
     EditorEx editor = myEditor;
-    ApplicationManager.getApplication().invokeLater(() -> releaseEditor(editor));
+    ApplicationManager.getApplication().invokeLater(() -> releaseEditor(editor), ModalityState.stateForComponent(this));
     myEditor = null;
   }
 
@@ -436,11 +433,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     editor.setOneLineMode(isOneLineMode);
 
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    final EditorColorsScheme defaultScheme =
-      UIUtil.isUnderDarcula() ? colorsManager.getGlobalScheme() : colorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME);
-    EditorColorsScheme customGlobalScheme = isOneLineMode? defaultScheme : null;
-
-    editor.setColorsScheme(editor.createBoundColorSchemeDelegate(customGlobalScheme));
+    EditorColorsScheme customGlobalScheme = colorsManager.getSchemeForCurrentUITheme();
+    editor.setColorsScheme(editor.createBoundColorSchemeDelegate(isOneLineMode ? customGlobalScheme : null));
 
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     editor.getSettings().setCaretRowShown(false);
@@ -719,9 +713,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   @Override
   public void requestFocus() {
     if (myEditor != null) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true));
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }

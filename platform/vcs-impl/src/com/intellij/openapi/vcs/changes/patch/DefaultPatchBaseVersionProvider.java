@@ -74,7 +74,7 @@ public class DefaultPatchBaseVersionProvider {
 
   @CalledInAny
   public void getBaseVersionContent(final FilePath filePath,
-                                    final Processor<String> processor) throws VcsException {
+                                    final Processor<? super String> processor) throws VcsException {
     if (myVcs == null) {
       return;
     }

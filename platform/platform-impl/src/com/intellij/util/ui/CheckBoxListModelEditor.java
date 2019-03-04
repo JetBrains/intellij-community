@@ -58,9 +58,7 @@ public class CheckBoxListModelEditor<T> {
         if (newItem != null) {
           list.updateItem(item, newItem, StringUtil.notNullize(toNameConverter.fun(newItem)));
         }
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(list, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(list, true));
       }
     };
     toolbarDecorator.setEditAction(new AnActionButtonRunnable() {

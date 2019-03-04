@@ -21,7 +21,6 @@ import java.util.List;
  * Represents a resource list of try-with-resources statement (automatic resource management) introduced in JDK 7.
  *
  * @see PsiTryStatement#getResourceList()
- * @since 10.5
  */
 public interface PsiResourceList extends PsiElement, Iterable<PsiResourceListElement> {
   int getResourceVariablesCount();

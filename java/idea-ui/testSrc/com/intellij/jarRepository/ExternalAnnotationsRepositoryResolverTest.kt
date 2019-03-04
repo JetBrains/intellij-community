@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository
 
+import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
@@ -88,6 +89,20 @@ class ExternalAnnotationsRepositoryResolverTest: UsefulTestCase() {
     }
 
     resolver.resolve(myProject, library, "myGroup:myArtifact:1.0")
+    assertTrue(library.getFiles(AnnotationOrderRootType.getInstance()).isNotEmpty())
+  }
+
+  @Test fun testAnnotationsSyncResolutionUsingLocation() {
+    val resolver = ExternalAnnotationsRepositoryResolver()
+    val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
+    val library = WriteAction.compute<Library, RuntimeException> { libraryTable.createLibrary("NewLibrary") }
+
+    MavenRepoFixture(myMavenRepo).apply {
+      addAnnotationsArtifact(version = "1.0-an1")
+      generateMavenMetadata("myGroup", "myArtifact")
+    }
+
+    resolver.resolve(myProject, library, AnnotationsLocation("myGroup", "myArtifact", "1.0", myTestRepo.url))
     assertTrue(library.getFiles(AnnotationOrderRootType.getInstance()).isNotEmpty())
   }
 

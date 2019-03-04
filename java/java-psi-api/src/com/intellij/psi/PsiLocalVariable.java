@@ -15,7 +15,6 @@ public interface PsiLocalVariable extends PsiVariable {
    *
    * @param initializer the initializer to add.
    * @throws IncorrectOperationException if the modifications fails for some reason.
-   * @since 5.0.2
    */
   @Override
   void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException;

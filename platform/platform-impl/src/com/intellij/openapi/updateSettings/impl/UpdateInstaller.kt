@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -16,15 +16,20 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Restarter
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.lang.JavaVersion
 import java.io.File
 import java.io.IOException
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.zip.ZipFile
 import javax.swing.UIManager
 
 object UpdateInstaller {
   const val UPDATER_MAIN_CLASS = "com.intellij.updater.Runner"
+
+  private const val PATCH_FILE_NAME = "patch-file.zip"
+  private const val UPDATER_ENTRY = "com/intellij/updater/Runner.class"
 
   private val patchesUrl: URL
     get() = URL(System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl)
@@ -36,13 +41,14 @@ object UpdateInstaller {
 
     val files = mutableListOf<File>()
     val product = ApplicationInfo.getInstance().build.productCode
-    val jdk = if (System.getProperty("idea.java.redist", "").lastIndexOf("NoJavaDistribution") >= 0) "-no-jdk" else ""
+    val jdk = getJdkSuffix()
     val share = 1.0 / (chain.size - 1)
 
     for (i in 1 until chain.size) {
       val from = chain[i - 1].withoutProductCode().asString()
       val to = chain[i].withoutProductCode().asString()
       val patchName = "${product}-${from}-${to}-patch${jdk}-${PatchInfo.OS_SUFFIX}.jar"
+      System.out.println( "  patchName: $patchName" )
       val patchFile = File(getTempDir(), patchName)
       val url = URL(patchesUrl, patchName).toString()
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
@@ -51,6 +57,11 @@ object UpdateInstaller {
         }
       }
       HttpRequests.request(url).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, partIndicator)
+      ZipFile(patchFile).use {
+        if (it.getEntry(PATCH_FILE_NAME) == null || it.getEntry(UPDATER_ENTRY) == null) {
+          throw IOException("Corrupted patch file: ${patchFile.name}")
+        }
+      }
       files += patchFile
     }
 
@@ -174,4 +185,15 @@ object UpdateInstaller {
   }
 
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
+
+  private fun getJdkSuffix(): String {
+    val jreHome = File(PathManager.getHomePath(), if (SystemInfo.isMac) "jdk" else "jre64")
+    if (!jreHome.exists()) return "-no-jbr"
+    val releaseFile = File(jreHome, if (SystemInfo.isMac) "Contents/Home/release" else "release")
+    val version = try {
+      releaseFile.readLines().first { it.startsWith("JAVA_VERSION=") }.let { JavaVersion.parse(it) }.feature
+    }
+    catch (e: Exception) { 0 }
+    return if (version == 11) "-jbr11" else ""
+  }
 }

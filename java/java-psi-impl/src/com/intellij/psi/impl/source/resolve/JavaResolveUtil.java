@@ -279,10 +279,6 @@ public class JavaResolveUtil {
                                                                                                   boolean needToPreventRecursion,
                                                                                                   boolean incompleteCode,
                                                                                                   @NotNull PsiFile containingFile) {
-    boolean valid = containingFile.isValid();
-    if (!valid) {
-      return JavaResolveResult.EMPTY_ARRAY;
-    }
     Project project = containingFile.getProject();
     ResolveResult[] results = ResolveCache.getInstance(project).resolveWithCaching(ref, resolver, needToPreventRecursion, incompleteCode,
                                                                                    containingFile);

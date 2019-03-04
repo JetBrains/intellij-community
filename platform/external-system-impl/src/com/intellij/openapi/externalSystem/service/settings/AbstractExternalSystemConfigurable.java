@@ -34,12 +34,14 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.File;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -123,7 +125,10 @@ public abstract class AbstractExternalSystemConfigurable<
     myProjectsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     addTitle(ExternalSystemBundle.message("settings.title.linked.projects", myExternalSystemId.getReadableName()));
-    myComponent.add(new JBScrollPane(myProjectsList), ExternalSystemUiUtil.getFillLineConstraints(1));
+    myComponent.add(new JBScrollPane(myProjectsList),
+                    ExternalSystemUiUtil
+                      .getFillLineConstraints(1)
+                      .pady(JBUI.scale(30)));
 
     addTitle(ExternalSystemBundle.message("settings.title.project.settings"));
     List<ProjectSettings> settings = ContainerUtilRt.newArrayList(s.getLinkedProjectsSettings());
@@ -233,8 +238,8 @@ public abstract class AbstractExternalSystemConfigurable<
       }
       systemSettings.setLinkedProjectsSettings(projectSettings);
       for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
-        if(control instanceof AbstractExternalProjectSettingsControl){
-          AbstractExternalProjectSettingsControl.class.cast(control).updateInitialSettings();
+        if(control instanceof AbstractExternalProjectSettingsControl) {
+          ((AbstractExternalProjectSettingsControl)control).updateInitialSettings();
         }
       }
       if (mySystemSettingsControl != null) {
@@ -255,10 +260,10 @@ public abstract class AbstractExternalSystemConfigurable<
   @Override
   public void reset() {
     for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
-      control.reset();
+      control.reset(myProject);
     }
     if (mySystemSettingsControl != null) {
-      mySystemSettingsControl.reset();
+      mySystemSettingsControl.reset(myProject);
     }
   }
 
@@ -275,5 +280,11 @@ public abstract class AbstractExternalSystemConfigurable<
     myProjectsList = null;
     myProjectsModel = null;
     mySystemSettingsControl = null;
+  }
+
+  @TestOnly
+  @NotNull
+  List<ExternalSystemSettingsControl<ProjectSettings>> getProjectSettingsControls() {
+    return Collections.unmodifiableList(myProjectSettingsControls);
   }
 }

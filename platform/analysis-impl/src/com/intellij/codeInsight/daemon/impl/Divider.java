@@ -94,7 +94,7 @@ public class Divider {
     int startOffset = restrictRange.getStartOffset();
     int endOffset = restrictRange.getEndOffset();
 
-    final List<Condition<PsiElement>> filters = CollectHighlightsUtil.EP_NAME.getExtensionList();
+    final Condition<PsiElement>[] filters = CollectHighlightsUtil.FiltersHolder.FILTERS;
 
     final TIntStack starts = new TIntStack(STARTING_TREE_HEIGHT);
     starts.push(startOffset);

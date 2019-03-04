@@ -28,16 +28,39 @@ public class VFileContentChangeEvent extends VFileEvent {
   private final VirtualFile myFile;
   private final long myOldModificationStamp;
   private final long myNewModificationStamp;
+  private final long myOldTimestamp;
+  private final long myNewTimestamp;
+  private final long myOldLength;
+  private final long myNewLength;
+  
+  private static final int UNDEFINED_TIMESTAMP_OR_LENGTH = -1;
 
-  public VFileContentChangeEvent(final Object requestor,
-                                 @NotNull final VirtualFile file,
-                                 final long oldModificationStamp,
-                                 final long newModificationStamp,
-                                 final boolean isFromRefresh) {
+  public VFileContentChangeEvent(Object requestor,
+                                 @NotNull VirtualFile file,
+                                 long oldModificationStamp,
+                                 long newModificationStamp,
+                                 boolean isFromRefresh) {
+    this(requestor, file, oldModificationStamp, newModificationStamp, UNDEFINED_TIMESTAMP_OR_LENGTH, UNDEFINED_TIMESTAMP_OR_LENGTH, 
+         UNDEFINED_TIMESTAMP_OR_LENGTH, UNDEFINED_TIMESTAMP_OR_LENGTH, isFromRefresh);
+  }
+
+  public VFileContentChangeEvent(Object requestor,
+                                 @NotNull VirtualFile file,
+                                 long oldModificationStamp,
+                                 long newModificationStamp,
+                                 long oldTimestamp,
+                                 long newTimestamp,
+                                 long oldLength,
+                                 long newLength,
+                                 boolean isFromRefresh) {
     super(requestor, isFromRefresh);
     myFile = file;
     myOldModificationStamp = oldModificationStamp;
     myNewModificationStamp = newModificationStamp == -1 ? LocalTimeCounter.currentTime() : newModificationStamp;
+    myOldTimestamp = oldTimestamp;
+    myNewTimestamp = newTimestamp;
+    myOldLength = oldLength;
+    myNewLength = newLength;
   }
 
   @NotNull
@@ -54,9 +77,33 @@ public class VFileContentChangeEvent extends VFileEvent {
     return myOldModificationStamp;
   }
 
+  public long getOldTimestamp() {
+    return myOldTimestamp;
+  }
+
+  public long getNewTimestamp() {
+    return myNewTimestamp;
+  }
+
+  public long getOldLength() {
+    return myOldLength;
+  }
+
+  public long getNewLength() {
+    return myNewLength;
+  }
+  
+  public boolean isLengthAndTimestampDiffProvided() {
+    return myOldTimestamp != UNDEFINED_TIMESTAMP_OR_LENGTH || myNewTimestamp != UNDEFINED_TIMESTAMP_OR_LENGTH ||
+           myOldLength != UNDEFINED_TIMESTAMP_OR_LENGTH || myNewLength != UNDEFINED_TIMESTAMP_OR_LENGTH;
+  }
+
   @NonNls
   public String toString() {
-    return "VfsEvent[update: " + myFile.getUrl() + "]";
+    return "VfsEvent[update: " + myFile.getUrl() +
+           (myOldTimestamp != myNewTimestamp ? ", oldTimestamp:" + myOldTimestamp + ", newTimestamp:" + myNewTimestamp : "") +
+           (myOldLength != myNewLength ? ", oldLength:" + myOldLength + ", newLength:" + myNewLength : "") +
+           "]";
   }
 
   @NotNull

@@ -60,6 +60,6 @@ public class DarculaSeparatorUI extends BasicSeparatorUI {
   }
 
   protected String getColorResourceName() {
-    return "Separator.foreground";
+    return "Separator.separatorColor";
   }
 }

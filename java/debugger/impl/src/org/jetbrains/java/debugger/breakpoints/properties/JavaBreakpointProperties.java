@@ -29,6 +29,9 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
   private ClassFilter[] myCallerFilters;
   private ClassFilter[] myCallerExclusionFilters;
 
+  private boolean TRACING_START = false;
+  private boolean TRACING_END   = false;
+
   @XCollection(propertyElementName = "instance-filters")
   public InstanceFilter[] getInstanceFilters() {
     return myInstanceFilters != null ? myInstanceFilters : InstanceFilter.EMPTY_ARRAY;
@@ -100,6 +103,9 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
     setCALLER_FILTERS_ENABLED(state.isCALLER_FILTERS_ENABLED());
     myCallerFilters = state.getCallerFilters();
     myCallerExclusionFilters = state.getCallerExclusionFilters();
+
+    setTRACING_START(state.isTRACING_START());
+    setTRACING_END(state.isTRACING_END());
   }
 
   @OptionTag("count-filter-enabled")
@@ -176,6 +182,28 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
   public boolean setCallerExclusionFilters(ClassFilter[] callerExclusionFilters) {
     boolean changed = !filtersEqual(myCallerExclusionFilters, callerExclusionFilters);
     myCallerExclusionFilters = callerExclusionFilters;
+    return changed;
+  }
+
+  @OptionTag("tracing-start")
+  public boolean isTRACING_START() {
+    return TRACING_START;
+  }
+
+  public boolean setTRACING_START(boolean TRACING_START) {
+    boolean changed = this.TRACING_START != TRACING_START;
+    this.TRACING_START = TRACING_START;
+    return changed;
+  }
+
+  @OptionTag("tracing-end")
+  public boolean isTRACING_END() {
+    return TRACING_END;
+  }
+
+  public boolean setTRACING_END(boolean TRACING_END) {
+    boolean changed = this.TRACING_END != TRACING_END;
+    this.TRACING_END = TRACING_END;
     return changed;
   }
 }

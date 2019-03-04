@@ -105,7 +105,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
   }
 
   @Override
-  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
+  protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
     runnable.run();
   }
 

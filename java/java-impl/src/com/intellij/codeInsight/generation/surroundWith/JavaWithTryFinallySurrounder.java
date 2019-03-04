@@ -49,14 +49,14 @@ public class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
     PsiTryStatement tryStatement = (PsiTryStatement)factory.createStatementFromText(text, null);
     tryStatement = (PsiTryStatement)codeStyleManager.reformat(tryStatement);
 
-    tryStatement = (PsiTryStatement)container.addAfter(tryStatement, statements[statements.length - 1]);
+    tryStatement = (PsiTryStatement)addAfter(tryStatement, container, statements);
 
     PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock == null) {
       return null;
     }
     SurroundWithUtil.indentCommentIfNecessary(tryBlock, statements);
-    tryBlock.addRange(statements[0], statements[statements.length - 1]);
+    addRangeWithinContainer(tryBlock, container, statements, true);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();

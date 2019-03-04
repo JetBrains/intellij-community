@@ -1,7 +1,6 @@
 <idea-plugin>
   <name>Plugin DevKit</name>
   <id>DevKit</id>
-  <version>1.0</version>
 
   <description>
     IntelliJ Platform plugin development kit.
@@ -13,19 +12,20 @@
   <depends>com.intellij.properties</depends>
   <depends>com.intellij.modules.json</depends>
   <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
+  <depends config-file="groovy-devkit.xml" optional="true">org.intellij.groovy</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem" />
-    <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider" />
-    <fileIconProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupFileIconProvider" />
+    <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem"/>
+    <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider"/>
+    <fileIconProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupFileIconProvider"/>
 
     <runLineMarkerContributor language="JAVA" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataAsRelatedFileProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>
-    <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.navigation.DescriptionInspectionGotoRelatedProvider" />
+    <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.navigation.DescriptionInspectionGotoRelatedProvider"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.testAssistant.TestDataReferenceContributor"/>
     <getDataRule key="TestLocationData" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestLocationDataRule"/>
 
@@ -35,9 +35,12 @@
     <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>
 
-    <xmlStructureViewBuilderProvider implementation="org.jetbrains.idea.devkit.navigation.structure.PluginDescriptorXmlStructureViewBuilderProvider"/>
+    <xmlStructureViewBuilderProvider
+        implementation="org.jetbrains.idea.devkit.navigation.structure.PluginDescriptorXmlStructureViewBuilderProvider"/>
 
-    <dom.fileDescription implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"
+                      rootTagName="idea-plugin"
+                      stubVersion="10"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
@@ -67,8 +70,8 @@
     <lang.documentationProvider language="XML"
                                 implementationClass="org.jetbrains.idea.devkit.references.extensions.ExtensionPointDocumentationProvider"/>
 
-    <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor" language="XML" />
-    <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ThemeJsonCompletionContributor" language="JSON" />
+    <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor"
+                            language="XML"/>
 
     <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity" applyToDialects="false"
                      groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
@@ -153,10 +156,6 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"/>
-    <localInspection language="JVM" shortName="StatefulEp2" displayName="Stateful Extension 2"
-                     groupKey="inspections.group.name"
-                     enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection2"/>
     <localInspection language="UAST" shortName="UElementAsPsi" displayName="UElement as PsiElement usage"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
@@ -165,7 +164,7 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="HighlightVisitorInternal"
+    <localInspection groupPath="Java" shortName="HighlightVisitorInternal"
                      displayName="Good code is red"
                      groupKey="inspections.group.name"
                      enabledByDefault="false" isInternal="true"
@@ -180,22 +179,31 @@
                      displayName="Using PsiElement string representation to generate new expression is incorrect"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PsiElementConcatenationInspection"/>
+    <localInspection language="UAST" shortName="NonDefaultConstructor" displayName="Non default constructors for bean extension class"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.NonDefaultConstructorInspection"/>
     <localInspection language="UAST" shortName="PresentationAnnotation" displayName="Invalid icon path in @Presentation"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PresentationAnnotationInspection"/>
-
-    <intentionAction>
-      <className>org.jetbrains.idea.devkit.codeStyle.bean.CodeStyleBeanIntention</className>
-    </intentionAction>
+    <localInspection language="UAST" shortName="UnregisteredNamedColor" displayName="Unregistered named color"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" isInternal="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UnregisteredNamedColorInspection"/>
+    <localInspection language="UAST" shortName="MissingRecentApi" displayName="Usage of IntelliJ API not available in older IDEs"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.dom.impl.I18nReferenceContributor"/>
-    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.ExperimentalFeatureIdContributor"/>
+    <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.ExperimentalFeatureIdContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
-    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
-    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.ThemePathReferenceContributor"/>
+    <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
+    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.references.ThemePathReferenceContributor"/>
+    <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.RegistryKeyIdReferenceContributor"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 
@@ -234,7 +242,6 @@
     <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 
     <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
-    <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeColorAnnotator"/>
 
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultThemeFilter"/>
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultHiDPIThemeFilter"/>
@@ -242,6 +249,12 @@
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaHiDPIThemeFilter"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdater"/>
+    <postStartupActivity
+        implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdateStartupActivity"/>
+    <java.externalAnnotation.locationProvider
+        implementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.IdeExternalAnnotationsLocationProvider"/>
+
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
 
     <psi.referenceContributor
@@ -253,10 +266,40 @@
 
     <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
     <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
+
+    <!--cached value profiler-->
+    <fileTypeFactory implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileTypeFactory"/>
+    <fileEditorProvider implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileEditorProvider"/>
+
+    <!-- themes -->
+    <completion.contributor implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonCompletionContributor" language="JSON"/>
+    <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeColorAnnotator"/>
+    <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeAnnotator"/>
+    <spellchecker.support language="JSON"
+                          order="first"
+                          implementationClass="org.jetbrains.idea.devkit.themes.ThemeSpellcheckingStrategy"/>
+    <editorNotificationProviderApp implementation="org.jetbrains.idea.devkit.themes.ThemeEditorToolbar"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService"/>
+    <lang.documentationProvider language="JSON"
+                                order="first"
+                                implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonDocumentationProvider"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>
+    <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.metadata.ThemeMetadataJsonSchemaProviderFactory"/>
   </extensions>
+
+  <extensions defaultExtensionNs="DevKit.lang">
+    <goodCodeRedVisitor language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.internal.JavaGoodCodeRedVisitor"/>
+  </extensions>
+
+
+  <extensionPoints >
+    <extensionPoint name="lang.goodCodeRedVisitor"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.internal.GoodCodeRedVisitor"/>
+    </extensionPoint>
+  </extensionPoints>
 
   <project-components>
     <component>
@@ -327,6 +370,13 @@
     <action class="org.jetbrains.idea.devkit.actions.MigrateModuleNamesInSourcesAction" id="ReplaceModuleNamesInSources" internal="true">
       <add-to-group group-id="FindMenuGroup" anchor="last"/>
     </action>
+
+    <!-- Theme Toolbar -->
+    <group id="DevKit.ThemeEditorToolbar">
+      <action class="org.jetbrains.idea.devkit.themes.ApplyThemeAction" id="DevKit.ApplyTheme" text="Apply Theme" icon="AllIcons.Actions.Execute"/>
+      <action class="org.jetbrains.idea.devkit.themes.RollbackThemeAction" id="DevKit.RollbackTheme" text="Reset to Original Theme" icon="AllIcons.Actions.Rollback"/>
+      <action class="org.jetbrains.idea.devkit.themes.EditThemeEditorColorSchemeAction" id="DevKit.EditThemeEditorColorScheme" text="Edit Color Scheme" icon="AllIcons.Actions.EditSource"/>
+    </group>
 
   </actions>
 

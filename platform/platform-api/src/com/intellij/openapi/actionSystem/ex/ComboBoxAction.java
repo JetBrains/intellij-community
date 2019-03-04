@@ -80,13 +80,22 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return popup;
   }
 
+  /** @deprecated use {@link ComboBoxAction#createCustomComponent(Presentation, String)} */
+  @Deprecated
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation) {
+    return createCustomComponent(presentation, ActionPlaces.UNKNOWN);
+  }
+
+  @NotNull
+  @Override
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     JPanel panel = new JPanel(new GridBagLayout());
     ComboBoxButton button = createComboBoxButton(presentation);
-    panel.add(button,
-              new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insets(0, 3), 0, 0));
+    GridBagConstraints constraints = new GridBagConstraints(
+      0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insets(0, 3), 0, 0);
+    panel.add(button, constraints);
     return panel;
   }
 
@@ -134,9 +143,12 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private final Presentation myPresentation;
     private boolean myForcePressed = false;
     private PropertyChangeListener myButtonSynchronizer;
+    private String myTooltipText;
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
+      myTooltipText = myPresentation.getDescription();
+
       setModel(new MyButtonModel());
       getModel().setEnabled(myPresentation.isEnabled());
       setVisible(presentation.isVisible());
@@ -222,6 +234,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         myPresentation.removePropertyChangeListener(myButtonSynchronizer);
         myButtonSynchronizer = null;
       }
+      HelpTooltip.dispose(this);
       super.removeNotify();
     }
 
@@ -238,12 +251,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private void initButton() {
       setIcon(myPresentation.getIcon());
       setText(myPresentation.getText());
-      updateTooltipText(myPresentation.getDescription());
+      myTooltipText = myPresentation.getDescription();
+      updateTooltipText();
       updateButtonSize();
     }
 
-    private void updateTooltipText(String description) {
-      String tooltip = KeymapUtil.createTooltipText(description, ComboBoxAction.this);
+    private void updateTooltipText() {
+      String tooltip = KeymapUtil.createTooltipText(myTooltipText, ComboBoxAction.this);
       if (Registry.is("ide.helptooltip.enabled") && StringUtil.isNotEmpty(tooltip)) {
         HelpTooltip.dispose(this);
         new HelpTooltip().setDescription(tooltip).setLocation(HelpTooltip.Alignment.BOTTOM).installOn(this);
@@ -273,7 +287,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           updateButtonSize();
         }
         else if (Presentation.PROP_DESCRIPTION.equals(propertyName)) {
-          updateTooltipText((String)evt.getNewValue());
+          myTooltipText = (String)evt.getNewValue();
+          updateTooltipText();
         }
         else if (Presentation.PROP_ICON.equals(propertyName)) {
           setIcon((Icon)evt.getNewValue());
@@ -339,6 +354,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       super.updateUI();
       setMargin(JBUI.insets(0, 5, 0, 2));
       updateButtonSize();
+      updateTooltipText();
     }
 
     protected void updateButtonSize() {

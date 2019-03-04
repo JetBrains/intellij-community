@@ -27,8 +27,8 @@ public class ExceptionUtil extends ExceptionUtilRt {
     while (e != null && !klass.isInstance(e)) {
       e = e.getCause();
     }
-    @SuppressWarnings("unchecked") T t = (T)e;
-    return t;
+    //noinspection unchecked
+    return (T)e;
   }
 
   public static boolean causedBy(Throwable e, Class klass) {

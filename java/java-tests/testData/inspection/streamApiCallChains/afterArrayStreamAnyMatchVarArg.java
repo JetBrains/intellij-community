@@ -1,4 +1,4 @@
-// "Replace with List.contains()" "true"
+// "Replace with 'List.contains()'" "true"
 
 import java.util.List;
 import java.util.stream.Stream;

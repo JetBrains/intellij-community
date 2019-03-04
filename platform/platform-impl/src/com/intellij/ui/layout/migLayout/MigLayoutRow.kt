@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.VisualPaddingsProvider
 import com.intellij.openapi.ui.OnePixelDivider
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
@@ -207,8 +208,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  override operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?) {
+  override operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?): CellBuilder<T> {
     addComponent(this, constraints.create()?.let { lazyOf(it) } ?: lazy { CC() }, gapLeft, growPolicy, comment)
+    return CellBuilderImpl(builder, this)
   }
 
   // separate method to avoid JComponent as a receiver
@@ -316,6 +318,22 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   override fun createRow(label: String?): Row {
     return createChildRow(label = label?.let { Label(it) })
+  }
+}
+
+class CellBuilderImpl<T : JComponent> internal constructor(
+  private val builder: MigLayoutBuilder,
+  private val component: T
+) : CellBuilder<T> {
+
+  override fun focused(): CellBuilder<T> {
+    builder.preferredFocusedComponent = component
+    return this
+  }
+
+  override fun withValidation(callback: (T) -> ValidationInfo?): CellBuilder<T> {
+    builder.validateCallbacks.add { callback(component) }
+    return this
   }
 }
 

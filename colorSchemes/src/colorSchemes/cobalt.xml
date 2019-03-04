@@ -1624,7 +1624,8 @@
     </option>
     <option name="RUBY_PARAMETER_ID">
       <value>
-        <option name="FOREGROUND" value="CCCCCC" />
+        <option name="FONT_TYPE" value="2" />
+        <option name="FOREGROUND" value="E4FF00" />
       </value>
     </option>
     <option name="RUBY_REGEXP">

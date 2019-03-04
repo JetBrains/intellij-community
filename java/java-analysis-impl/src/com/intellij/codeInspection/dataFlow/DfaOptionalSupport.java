@@ -19,11 +19,11 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,11 +32,6 @@ import org.jetbrains.annotations.Nullable;
  * @author anet, peter
  */
 public class DfaOptionalSupport {
-  public static final String GUAVA_OPTIONAL = "com.google.common.base.Optional";
-
-  public static final CallMatcher JDK_OPTIONAL_OF_NULLABLE = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "ofNullable").parameterCount(1);
-  public static final CallMatcher GUAVA_OPTIONAL_FROM_NULLABLE = CallMatcher.staticCall(GUAVA_OPTIONAL, "fromNullable").parameterCount(1);
-  public static final CallMatcher OPTIONAL_OF_NULLABLE = CallMatcher.anyOf(JDK_OPTIONAL_OF_NULLABLE, GUAVA_OPTIONAL_FROM_NULLABLE);
 
   @Nullable
   static LocalQuickFix registerReplaceOptionalOfWithOfNullableFix(@NotNull PsiExpression qualifier) {
@@ -48,7 +43,7 @@ public class DfaOptionalSupport {
       if (CommonClassNames.JAVA_UTIL_OPTIONAL.equals(qualifiedName)) {
         return new ReplaceOptionalCallFix("ofNullable", false);
       }
-      if (GUAVA_OPTIONAL.equals(qualifiedName)) {
+      if (OptionalUtil.GUAVA_OPTIONAL.equals(qualifiedName)) {
         return new ReplaceOptionalCallFix("fromNullable", false);
       }
     }
@@ -70,7 +65,7 @@ public class DfaOptionalSupport {
   static LocalQuickFix createReplaceOptionalOfNullableWithEmptyFix(@NotNull PsiElement anchor) {
     final PsiMethodCallExpression parent = findCallExpression(anchor);
     if (parent == null) return null;
-    boolean jdkOptional = JDK_OPTIONAL_OF_NULLABLE.test(parent);
+    boolean jdkOptional = OptionalUtil.JDK_OPTIONAL_OF_NULLABLE.test(parent);
     return new ReplaceOptionalCallFix(jdkOptional ? "empty" : "absent", true);
   }
 
@@ -81,10 +76,6 @@ public class DfaOptionalSupport {
     return new ReplaceOptionalCallFix("of", false);
   }
 
-  public static boolean isOptionalGetMethodName(String name) {
-    return "get".equals(name) || "getAsDouble".equals(name) || "getAsInt".equals(name) || "getAsLong".equals(name);
-  }
-
   /**
    * Creates a DfaValue which represents present or absent optional (non-null)
    * @param factory a value factory to use
@@ -93,7 +84,9 @@ public class DfaOptionalSupport {
    */
   @NotNull
   public static DfaValue getOptionalValue(DfaValueFactory factory, boolean present) {
-    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.OPTIONAL_PRESENCE, present).with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
+    DfaValue value = present ? factory.getFactValue(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL) : factory.getConstFactory().getNull();
+    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
+      .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.OPTIONAL_VALUE.withValue(value));
     return factory.getFactFactory().createValue(facts);
   }
 

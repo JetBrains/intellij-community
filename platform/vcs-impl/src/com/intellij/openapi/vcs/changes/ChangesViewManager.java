@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -14,12 +14,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -31,6 +33,7 @@ import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.awt.RelativePoint;
@@ -44,7 +47,6 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
-import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,8 +58,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,7 +79,7 @@ import static java.util.stream.Collectors.toList;
 
 @State(
   name = "ChangesViewManager",
-  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public class ChangesViewManager implements ChangesViewI, ProjectComponent, PersistentStateComponent<ChangesViewManager.State> {
 
@@ -90,7 +90,9 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private final VcsConfiguration myVcsConfiguration;
   private JPanel myProgressLabel;
 
-  private final Alarm myRepaintAlarm;
+  private final Alarm myTreeUpdateAlarm;
+  private final Object myTreeUpdateIndicatorLock = new Object();
+  @NotNull private ProgressIndicator myTreeUpdateIndicator = new EmptyProgressIndicator();
 
   private boolean myDisposed = false;
 
@@ -105,7 +107,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   @NotNull private final PropertyChangeListener myGroupingChangeListener;
   private MyChangeViewContent myContent;
   private boolean myModelUpdateInProgress;
-  private MyTreeExpander myTreeExpander;
+  private final MyTreeExpander myTreeExpander;
 
   @NotNull
   public static ChangesViewI getInstance(@NotNull Project project) {
@@ -119,7 +121,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myView = new ChangesListView(project, isNonModalCommit());
     myTreeExpander = new MyTreeExpander();
     myView.setTreeExpander(myTreeExpander);
-    myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+    myTreeUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
     myTsl = new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
@@ -141,7 +143,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     };
     myGroupingChangeListener = e -> {
       myState.groupingKeys = myView.getGroupingSupport().getGroupingKeys();
-      refreshView();
+      scheduleRefresh();
     };
   }
 
@@ -157,8 +159,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContentManager.addContent(myContent);
 
     scheduleRefresh();
-    myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED,
-                                                  () -> ApplicationManager.getApplication().invokeLater(() -> refreshView(), ModalityState.NON_MODAL, myProject.getDisposed()));
+    myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
     updatePreview(false);
   }
 
@@ -167,7 +168,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myView.removeTreeSelectionListener(myTsl);
     myView.removeGroupingChangeListener(myGroupingChangeListener);
     myDisposed = true;
-    myRepaintAlarm.cancelAllRequests();
+    myTreeUpdateAlarm.cancelAllRequests();
+
+    synchronized (myTreeUpdateIndicatorLock) {
+      myTreeUpdateIndicator.cancel();
+    }
   }
 
   @Override
@@ -220,9 +225,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), component);
     registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), component);
     registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), component);
-    registerWithShortcutSet("ChangesView.SetDefault",
-                            new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK | ctrlMask())), component);
-    registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), component);
   }
 
   @NotNull
@@ -248,12 +250,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return toolbar;
   }
 
-  @JdkConstants.InputEventMask
-  private static int ctrlMask() {
-    return SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
-  }
-
-  private void updateProgressComponent(@NotNull final Factory<JComponent> progress) {
+  private void updateProgressComponent(@NotNull final Factory<? extends JComponent> progress) {
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       if (myProgressLabel != null) {
@@ -287,48 +284,63 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   public void scheduleRefresh() {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (myProject.isDisposed()) return;
-    int was = myRepaintAlarm.cancelAllRequests();
+    int was = myTreeUpdateAlarm.cancelAllRequests();
     if (LOG.isDebugEnabled()) {
       LOG.debug("schedule refresh, was " + was);
     }
-    if (!myRepaintAlarm.isDisposed()) {
-      myRepaintAlarm.addRequest(() -> refreshView(), 100, ModalityState.NON_MODAL);
+    if (!myTreeUpdateAlarm.isDisposed()) {
+      myTreeUpdateAlarm.addRequest(() -> refreshView(), 100);
     }
   }
 
   public void refreshImmediately() {
-    myRepaintAlarm.cancelAllRequests();
-    refreshView();
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myTreeUpdateAlarm.cancelAllRequests();
+
+    ProgressManager.getInstance().executeNonCancelableSection(() -> refreshView());
   }
 
   private void refreshView() {
-    if (myDisposed || !myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return;
-    if (!ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return;
-
-    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-
-    TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
-      .setChangeLists(changeListManager.getChangeListsCopy(), Registry.is("vcs.skip.single.default.changelist"))
-      .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
-      .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
-      .setSwitchedFiles(changeListManager.getSwitchedFilesMap())
-      .setSwitchedRoots(changeListManager.getSwitchedRoots())
-      .setLockedFolders(changeListManager.getLockedFolders())
-      .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
-      .setUnversioned(changeListManager.getUnversionedFiles());
-    if (myState.myShowIgnored) {
-      treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.isIgnoredInUpdateMode());
+    ProgressIndicator indicator = new EmptyProgressIndicator();
+    synchronized (myTreeUpdateIndicatorLock) {
+      myTreeUpdateIndicator.cancel();
+      myTreeUpdateIndicator = indicator;
     }
-    DefaultTreeModel newModel = treeModelBuilder.build();
 
-    myModelUpdateInProgress = true;
-    try {
-      myView.updateModel(newModel);
-    }
-    finally {
-      myModelUpdateInProgress = false;
-    }
-    updatePreview(true);
+    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      if (myDisposed || !myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return;
+      if (!ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return;
+
+      ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
+
+      TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
+        .setChangeLists(changeListManager.getChangeListsCopy(), Registry.is("vcs.skip.single.default.changelist"))
+        .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
+        .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
+        .setSwitchedFiles(changeListManager.getSwitchedFilesMap())
+        .setSwitchedRoots(changeListManager.getSwitchedRoots())
+        .setLockedFolders(changeListManager.getLockedFolders())
+        .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
+        .setUnversioned(changeListManager.getUnversionedFiles());
+      if (myState.myShowIgnored) {
+        treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.isIgnoredInUpdateMode());
+      }
+      DefaultTreeModel newModel = treeModelBuilder.build();
+
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        if (myDisposed) return;
+        indicator.checkCanceled();
+
+        myModelUpdateInProgress = true;
+        try {
+          myView.updateModel(newModel);
+        }
+        finally {
+          myModelUpdateInProgress = false;
+        }
+        updatePreview(true);
+      }, ModalityState.NON_MODAL);
+    }, indicator);
   }
 
   private void updatePreview(boolean fromModelRefresh) {
@@ -375,7 +387,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   @Override
-  public void selectChanges(@NotNull List<Change> changes) {
+  public void selectChanges(@NotNull List<? extends Change> changes) {
     List<TreePath> paths = new ArrayList<>();
 
     for (Change change : changes) {
@@ -541,13 +553,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
 
     @NotNull
-    private List<Wrapper> wrap(@NotNull Stream<Change> changes, @NotNull Stream<VirtualFile> unversioned) {
+    private List<Wrapper> wrap(@NotNull Stream<? extends Change> changes, @NotNull Stream<? extends VirtualFile> unversioned) {
       return Stream.concat(changes.map(ChangeWrapper::new), unversioned.map(UnversionedFileWrapper::new)).collect(toList());
     }
   }
 
   private class MyChangeViewContent extends DnDActivateOnHoldTargetContent {
-  
+
     private MyChangeViewContent(JComponent component, @NotNull String displayName, boolean isLockable) {
       super(myProject, component, displayName, isLockable);
     }
@@ -557,7 +569,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       super.drop(event);
       Object attachedObject = event.getAttachedObject();
       if (attachedObject instanceof ShelvedChangeListDragBean) {
-        unshelveSilentlyWithDnd(myProject,(ShelvedChangeListDragBean)attachedObject, getDropRootNode(myView, event));
+        unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attachedObject, getDropRootNode(myView, event),
+                                !ChangesDnDSupport.isCopyAction(event));
       }
     }
 

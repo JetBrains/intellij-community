@@ -21,6 +21,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationsAdapter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.tasks.actions.TaskSearchSupport;
 import com.intellij.tasks.impl.LocalTaskImpl;
@@ -48,7 +49,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
         count.set(count.get() + 1);
       }
     };
-    myTaskManager.addTaskListener(listener, myFixture.getTestRootDisposable());
+    myTaskManager.addTaskListener(listener, getTestRootDisposable());
     LocalTask localTask = myTaskManager.createLocalTask("foo");
     myTaskManager.activateTask(localTask, false);
     assertEquals(1, count.get().intValue());
@@ -61,7 +62,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
   public void testNotifications() {
 
     final Ref<Notification> notificationRef = new Ref<>();
-    getProject().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
       @Override
       public void notify(@NotNull Notification notification) {
         notificationRef.set(notification);
@@ -205,5 +206,17 @@ public class TaskManagerTest extends TaskManagerTestCase {
     myTaskManager.loadState(config);
     assertEquals("${id}", myTaskManager.getState().branchNameFormat);
     assertEquals("${id} ${summary}", myTaskManager.getState().changelistNameFormat);
+  }
+
+  public void testPasswordMigration() {
+    TestRepository repository = new TestRepository();
+    repository.setUrl("http://server");
+    repository.setUsername("me");
+    String password = "foo";
+    repository.setEncodedPassword(PasswordUtil.encodePassword(password));
+    repository.setRepositoryType(new TestRepositoryType());
+    repository.initializeRepository();
+    assertEquals(password, repository.getPassword());
+    assertNull(repository.getEncodedPassword());
   }
 }

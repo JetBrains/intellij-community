@@ -9,10 +9,7 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.DocumentUtil;
@@ -576,10 +573,9 @@ public class IterationState {
 
     Color fore = null;
     Color back = isInGuardedBlock ? myReadOnlyColor : null;
-    Color effect = null;
-    EffectType effectType = null;
     int fontType = 0;
 
+    TextAttributesEffectsBuilder effectsBuilder = null;
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < cachedAttributes.size(); i++) {
       TextAttributes attrs = cachedAttributes.get(i);
@@ -596,18 +592,22 @@ public class IterationState {
         fontType = attrs.getFontType();
       }
 
-      if (effect == null) {
-        effect = attrs.getEffectColor();
-        effectType = attrs.getEffectType();
+      if (attrs.hasEffects()) {
+        if (effectsBuilder == null) {
+          effectsBuilder = TextAttributesEffectsBuilder.create();
+        }
+        effectsBuilder.slipUnder(attrs);
       }
     }
 
     if (fore == null) fore = myDefaultForeground;
     if (back == null) back = myDefaultBackground;
-    if (effectType == null) effectType = EffectType.BOXED;
     if (fontType == Font.PLAIN) fontType = myDefaultFontType;
 
-    attributes.setAttributes(fore, back, effect, null, effectType, fontType);
+    attributes.setAttributes(fore, back, null, null, null, fontType);
+    if (effectsBuilder != null) {
+      effectsBuilder.applyTo(attributes);
+    }
   }
 
   private boolean isInCaretRow(boolean includeLineStart, boolean includeLineEnd) {

@@ -4,6 +4,7 @@ package com.intellij.execution.junit.testDiscovery;
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.junit.JUnitConfiguration;
@@ -23,8 +24,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
-  protected JUnitTestDiscoveryConfigurationProducer() {
-    super(JUnitConfigurationType.getInstance());
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return JUnitConfigurationType.getInstance().getConfigurationFactories()[0];
   }
 
   @Override
@@ -88,7 +91,7 @@ public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfig
           allDeps.computeIfAbsent(usedModule, __ -> new LinkedHashSet<>()).add(usedModule);
         }
 
-        
+
         Optional<Map.Entry<Module, Set<Module>>> maxDependency =
           allDeps.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().size()));
 

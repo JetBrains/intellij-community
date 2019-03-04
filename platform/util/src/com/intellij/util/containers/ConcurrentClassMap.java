@@ -20,6 +20,6 @@ package com.intellij.util.containers;
  */
 public class ConcurrentClassMap<T> extends ClassMap<T> {
   public ConcurrentClassMap() {
-    super(ContainerUtil.<Class, T>newConcurrentMap());
+    super(ContainerUtil.newConcurrentMap());
   }
 }

@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
-import com.intellij.configurationStore.StoreAwareProjectManager
+import com.intellij.configurationStore.ConfigurationStorageReloader
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
@@ -12,6 +12,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.delete
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
+import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -21,16 +22,17 @@ class ProjectInspectionManagerTest {
   companion object {
     @JvmField
     @ClassRule
-    val projectRule: ProjectRule = ProjectRule()
+    val appRule = ApplicationRule()
   }
 
   private val tempDirManager = TemporaryDirectory()
 
   @Rule
   @JvmField
-  val ruleChain: RuleChain = RuleChain(tempDirManager, InitInspectionRule())
+  val ruleChain = RuleChain(tempDirManager, InitInspectionRule())
 
-  @Test fun `component`() {
+  @Test
+  fun component() = runBlocking {
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.path
     }) { project ->
@@ -55,7 +57,7 @@ class ProjectInspectionManagerTest {
 
       val inspectionDir = Paths.get(project.stateStore.projectConfigDir, "inspectionProfiles")
       val file = inspectionDir.resolve("profiles_settings.xml")
-      project.saveStore()
+      project.stateStore.save()
       assertThat(file).exists()
       val doNotUseProjectProfileData = """
       <component name="InspectionProjectProfileManager">
@@ -70,17 +72,17 @@ class ProjectInspectionManagerTest {
       file.delete()
 
       project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
+      (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
       file.write(doNotUseProjectProfileData)
       project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
+      (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
       assertThat(projectInspectionProfileManager.state).isEqualTo(doNotUseProjectProfileState)
     }
   }
 
-  @Test fun `do not save default project profile`() {
+  @Test fun `do not save default project profile`() = runBlocking {
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.path
     }) { project ->
@@ -95,13 +97,14 @@ class ProjectInspectionManagerTest {
 
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
-      project.saveStore()
+      project.stateStore.save()
 
       assertThat(profileFile).doesNotExist()
     }
   }
 
-  @Test fun `profiles`() {
+  @Test
+  fun profiles() = runBlocking {
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.path
     }) { project ->
@@ -115,7 +118,7 @@ class ProjectInspectionManagerTest {
       assertThat(currentProfile.isProjectLevel).isTrue()
       currentProfile.setToolEnabled("Convert2Diamond", false)
 
-      project.saveStore()
+      project.stateStore.save()
 
       val inspectionDir = Paths.get(project.stateStore.projectConfigDir, "inspectionProfiles")
       val file = inspectionDir.resolve("profiles_settings.xml")
@@ -139,12 +142,13 @@ class ProjectInspectionManagerTest {
       </component>""".trimIndent())
 
       project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
+      (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
       assertThat(projectInspectionProfileManager.currentProfile.getToolDefaultState("Convert2Diamond", project).level).isEqualTo(HighlightDisplayLevel.ERROR)
     }
   }
 
-  @Test fun `ipr`() {
+  @Test
+  fun ipr() = runBlocking {
     val emptyProjectFile = """
       <?xml version="1.0" encoding="UTF-8"?>
       <project version="4">
@@ -162,7 +166,7 @@ class ProjectInspectionManagerTest {
       currentProfile.setToolEnabled("Convert2Diamond", false)
       currentProfile.profileChanged()
 
-      project.saveStore()
+      project.stateStore.save()
       val projectFile = Paths.get((project.stateStore).projectFilePath)
 
       assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
@@ -182,7 +186,7 @@ class ProjectInspectionManagerTest {
 
       currentProfile.disableAllTools()
       currentProfile.profileChanged()
-      project.saveStore()
+      project.stateStore.save()
       assertThat(projectFile.readText()).isNotEqualTo(expected)
       assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
     }

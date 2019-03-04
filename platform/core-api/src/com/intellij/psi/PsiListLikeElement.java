@@ -9,8 +9,6 @@ import java.util.List;
  * Element with list-like structure.
  * <p>
  * Implement this interface to enable Move Element Left/Right action.
- *
- * @since 2019.1
  */
 public interface PsiListLikeElement extends PsiElement {
 

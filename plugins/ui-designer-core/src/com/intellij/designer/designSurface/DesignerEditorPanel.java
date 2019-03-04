@@ -1082,7 +1082,7 @@ public abstract class DesignerEditorPanel extends JPanel
 
       Presentation presentation = getTemplatePresentation();
       presentation.setDescription("Warnings");
-      presentation.setIcon(AllIcons.Ide.Warning_notifications);
+      presentation.setIcon(AllIcons.General.Warning);
     }
 
     public void show(List<FixableMessageInfo> messages) {

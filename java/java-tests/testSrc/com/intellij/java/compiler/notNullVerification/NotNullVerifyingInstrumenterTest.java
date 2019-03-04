@@ -6,6 +6,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -15,12 +16,18 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 import org.junit.rules.TestName;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
@@ -34,7 +41,41 @@ import static org.junit.Assert.*;
 /**
  * @author yole
  */
-public class NotNullVerifyingInstrumenterTest {
+public abstract class NotNullVerifyingInstrumenterTest {
+  @Retention(RetentionPolicy.RUNTIME)
+  private @interface TestDirectory { String value(); }
+
+  @TestDirectory("members")
+  public static class MembersTargetTest extends NotNullVerifyingInstrumenterTest { }
+  @TestDirectory("types")
+  public static class TypesTargetTest extends NotNullVerifyingInstrumenterTest { }
+  @TestDirectory("mixed")
+  public static class MixedTargetTest extends NotNullVerifyingInstrumenterTest { }
+
+  private static final String TEST_DATA_PATH = "/compiler/notNullVerification/";
+
+  private static class AnnotationCompiler extends ExternalResource {
+    private File classes;
+
+    @Override
+    public Statement apply(Statement base, Description description) {
+      TestDirectory annotation = description.getAnnotation(TestDirectory.class);
+      if (annotation == null) throw new IllegalArgumentException("Class " + description.getTestClass() + " misses @TestDirectory annotation");
+      File source = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH + annotation.value() + "/NotNull.java");
+      if (!source.isFile()) throw new IllegalArgumentException("Cannot find annotation file at " + source);
+      classes = IoTestUtil.createTestDir("test-notNullInstrumenter-" + annotation.value());
+      IdeaTestUtil.compileFile(source, classes);
+      return super.apply(base, description);
+    }
+
+    @Override
+    protected void after() {
+      IoTestUtil.delete(classes);
+    }
+  }
+
+  @ClassRule public static final AnnotationCompiler annotation = new AnnotationCompiler();
+
   @Rule public TempDirectory tempDir = new TempDirectory();
   @Rule public TestName testName = new TestName();
 
@@ -159,14 +200,18 @@ public class NotNullVerifyingInstrumenterTest {
 
   @Test
   public void testNonStaticInnerClass() throws Exception {
-    Class aClass = prepareTest();
-    assertNotNull(aClass.newInstance());
+    Class<?> testClass = prepareTest();
+    assertNotNull(testClass.newInstance());
+    verifyCallThrowsException(
+      "Argument 1 for @NotNull parameter of NonStaticInnerClass$Inner.<init> must not be null", null, testClass.getMethod("fail"));
   }
 
   @Test
   public void testGroovyInnerClass() throws Exception {
-    Class aClass = prepareTest();
-    assertNotNull(aClass.newInstance());
+    Class<?> testClass = prepareTest();
+    assertNotNull(testClass.newInstance());
+    verifyCallThrowsException(
+      "Argument for @NotNull parameter 's2' of GroovyInnerClass$Inner.<init> must not be null", null, testClass.getMethod("fail"));
   }
 
   @Test
@@ -260,6 +305,54 @@ public class NotNullVerifyingInstrumenterTest {
     verifyCallThrowsException("Argument for @NotNull parameter 'param' of LocalClassImplicitParameters$Inner.<init> must not be null", instance, test.getMethod("failInner"));
   }
 
+  @Test
+  public void testNoCheckForConstant() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
+  @Test
+  public void testNoCheckForNewObject() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
+  @Test
+  public void testNoCheckForNewConstructorCall() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
+  @Test
+  public void testNoCheckForNewArray() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
+  @Test
+  public void testNoCheckForNewMultiArray() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
+  @Test
+  public void testNoCheckForPrivateNotNullMethodCall() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
+  @Test
+  public void testNoCheckForFinalNotNullMethodCall() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
+  @Test
+  public void testNoCheckForStaticNotNullMethodCall() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
   private static void verifyCallThrowsException(String expectedError, @Nullable Object instance, Member member, Object... args) throws Exception {
     String exceptionText = null;
     try {
@@ -284,11 +377,14 @@ public class NotNullVerifyingInstrumenterTest {
   }
 
   private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnotations) throws IOException {
-    String testDir = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification/";
+    return prepareTest(withDebugInfo, true, notNullAnnotations);
+  }
+
+  private Class<?> prepareTest(boolean withDebugInfo, boolean expectInstrumented, String... notNullAnnotations) throws IOException {
     String testName = PlatformTestUtil.getTestName(this.testName.getMethodName(), false);
-    File testFile = IdeaTestUtil.findSourceFile(testDir + testName);
+    File testFile = IdeaTestUtil.findSourceFile((JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH) + testName);
     File classesDir = tempDir.newFolder("output");
-    List<String> args = ContainerUtil.newArrayList("-classpath", testDir + "annotations.jar");
+    List<String> args = ContainerUtil.newArrayList("-cp", annotation.classes.getPath());
     if (withDebugInfo) args.add("-g");
     IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(args));
 
@@ -308,7 +404,12 @@ public class NotNullVerifyingInstrumenterTest {
         mainClass = aClass;
       }
     }
-    assertTrue("Class file not instrumented!", modified);
+    if (expectInstrumented) {
+      assertTrue("Class file not instrumented!", modified);
+    }
+    else {
+      assertFalse("Class file instrumented, but should have not!", modified);
+    }
     assertNotNull("Class " + testName + " not found!", mainClass);
     return mainClass;
   }

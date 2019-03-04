@@ -219,7 +219,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       "Global <global_var>variable</global_var>\n" +
       "<doc_comment>/** \n" +
       " * Doc comment\n" +
-      " * <doc_tag>@tag</doc_tag> <doc_markup><code></doc_markup><doc_tag_value>Markup</doc_tag_value><doc_markup></code></doc_markup>" +
+      " * <doc_tag>@tag</doc_tag> <doc_markup><code></doc_markup>Markup<<doc_markup></code></doc_markup>" +
       RainbowHighlighter.generatePaletteExample("\n * ") + "\n" +
       " * <doc_tag>@param</doc_tag> <doc_tag_value>parameter1</doc_tag_value> documentation\n" +
       " * <doc_tag>@param</doc_tag> <doc_tag_value>parameter2</doc_tag_value> documentation\n" +

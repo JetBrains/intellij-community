@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsState;
 import com.intellij.ide.ui.laf.LafManagerImpl;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,12 +11,12 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class LafManagerTest extends PlatformTestCase {
+public class LafManagerTest extends LightPlatformTestCase {
   public void testCustomFont() {
-    UISettingsState uiSettings = UISettings.getInstance().getState();
-    final String fontFace = uiSettings.getFontFace();
-    final int fontSize = UISettings.getInstance().getFontSize();
-    final LafManagerImpl lafManager = LafManagerImpl.getTestInstance();
+    UISettings uiSettings = UISettings.getInstance();
+    String fontFace = uiSettings.getFontFace();
+    int fontSize = UISettings.getInstance().getFontSize();
+    LafManagerImpl lafManager = LafManagerImpl.getTestInstance();
 
     try {
       String newFontName = "Arial";

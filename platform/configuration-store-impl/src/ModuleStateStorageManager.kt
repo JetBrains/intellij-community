@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
@@ -9,9 +9,9 @@ import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.isExternalStorageEnabled
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.LineSeparator
-import com.intellij.util.loadElement
 import org.jdom.Element
 import java.io.FileNotFoundException
 import java.nio.ByteBuffer
@@ -81,7 +81,7 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
                                   provider: StreamProvider? = null) : MyFileStorage(storageManager, file, fileSpec, rootElementName, roamingType, pathMacroManager, provider) {
     // use VFS to load module file because it is refreshed and loaded into VFS in any case
     override fun loadLocalData(): Element? {
-      blockSavingTheContent = false
+      isBlockSavingTheContent = false
       val virtualFile = virtualFile
       if (virtualFile == null || !virtualFile.exists()) {
         // only on first load
@@ -100,7 +100,7 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
         runAndHandleExceptions {
           val charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(virtualFile.contentsToByteArray()))
           lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-          return loadElement(charBuffer)
+          return JDOMUtil.load(charBuffer)
         }
       }
       return null

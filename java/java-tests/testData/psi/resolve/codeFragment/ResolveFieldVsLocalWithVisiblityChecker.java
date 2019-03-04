@@ -9,7 +9,7 @@ public class AnonField {
     new AnonField() {
       @Override
       public void foo() {
-        System.out.println(<ref>xxx);
+        System.out.println(<caret>xxx);
       }
     }.foo();
   }

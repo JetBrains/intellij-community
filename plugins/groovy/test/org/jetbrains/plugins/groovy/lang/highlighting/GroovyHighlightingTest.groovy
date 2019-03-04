@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.siyeh.ig.junit.AbstractTestClassNamingConvention
@@ -133,7 +133,7 @@ class A {
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java")
   }
 
-  void testSuperConstructorInvocation() { doTest() }
+  void testSuperConstructorInvocation() { doTest(new GroovyAssignabilityCheckInspection()) }
 
   void testDuplicateMapKeys() { doTest() }
 
@@ -577,6 +577,11 @@ print <warning descr="Cannot resolve symbol 'abc'">abc</warning>
 @CompileStatic
 def bar() {
 print <error descr="Cannot resolve symbol 'abc'">abc</error>
+  new Object() {
+    def baz() {
+      print(<error descr="Cannot resolve symbol 'unknown'">unknown</error>)
+    }
+  }
 }
 }
 ''', true, false, false, GrUnresolvedAccessInspection)
@@ -855,6 +860,15 @@ new Base() {
   String value3()
 }
 ''')
+  }
+
+  void testAnnotationMethodThrowsList() {
+    testHighlighting '''\
+@interface A {
+  int aaa() <error descr="'throws' clause is not allowed in @interface members">throws IOException</error>;
+  int aab() throws<error descr="<type> expected, got ';'"> </error>;
+}
+'''
   }
 
   void testAnnotationAttributeTypes() {
@@ -1394,8 +1408,8 @@ def bar() {
 
 def testConfig = bar()
 print testConfig.list[0]
-print testConfig.foo<warning descr="'testConfig.foo' cannot be applied to '()'">()</warning>
-''', true, false, false, GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
+print <weak_warning descr="Cannot infer argument types">testConfig.foo<warning descr="'testConfig.foo' cannot be applied to '()'">()</warning></weak_warning>
+''', true, false, true, GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 
   void testGStringInjectionLFs() {
@@ -1838,7 +1852,9 @@ class A {
   }
 
   void testUnresolvedPropertyWhenGetPropertyDeclared() {
-    myFixture.enableInspections(GrUnresolvedAccessInspection)
+    def inspection = new GrUnresolvedAccessInspection()
+    inspection.myHighlightIfGroovyObjectOverridden = false
+    myFixture.enableInspections(inspection)
     myFixture.configureByText('_.groovy', '''\
 class DelegatesToTest {
     void ideSupport() {
@@ -1866,8 +1882,6 @@ class DslDelegate {
 print new DslDelegate().foo   //resolved
 print new DslDelegate().<warning descr="Cannot resolve symbol 'foo'">foo</warning>() //unresolved
 ''')
-
-    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightIfGroovyObjectOverridden = false
     myFixture.testHighlighting(true, false, true)
   }
 
@@ -2134,5 +2148,30 @@ w.width.compareTo(2f)
 
   void "test no warning on extension method with spread operator"() {
     testHighlighting '[1, 2, 3]*.multiply(4)', GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection
+  }
+
+  void 'test type arguments in import references'() {
+    testHighlighting '''\
+import java.util.List<error descr="Type argument list is not allowed here"><String></error>
+import java.util.Map<error descr="Type argument list is not allowed here"><Integer, String></error>.Entry
+import static java.util.Map<error descr="Type argument list is not allowed here"><Integer, String></error>.*
+import java.util.List<error descr="Type argument list is not allowed here"><String></error> as Foo
+''', false
+  }
+
+  void 'test assign collection to an array in @CS'() {
+    testHighlighting '''\
+Collection<? extends Runnable> foo() {}
+
+@groovy.transform.CompileStatic
+def usage() {
+  Runnable[] ar = foo()
+}
+
+@groovy.transform.CompileStatic
+def usage(Collection<? extends Runnable> cr) {
+  Runnable[] ar = cr //https://issues.apache.org/jira/browse/GROOVY-8983
+}
+'''
   }
 }

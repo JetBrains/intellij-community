@@ -40,7 +40,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
   protected void setUp() throws Exception {
     long start = System.currentTimeMillis();
     super.setUp();
-    System.out.println("setUp took " + (System.currentTimeMillis() - start) + " ms");
+    LOG.debug("setUp took " + (System.currentTimeMillis() - start) + " ms");
   }
 
   public void testLargeTextFileWithManyTypos() {
@@ -49,17 +49,17 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
 
     long start = System.currentTimeMillis();
     VirtualFile file = myFixture.addFileToProject("foo.txt", text).getVirtualFile();
-    System.out.println("creation took " + (System.currentTimeMillis() - start) + " ms");
+    LOG.debug("creation took " + (System.currentTimeMillis() - start) + " ms");
 
     start = System.currentTimeMillis();
     myFixture.configureFromExistingVirtualFile(file);
-    System.out.println("configure took " + (System.currentTimeMillis() - start) + " ms");
+    LOG.debug("configure took " + (System.currentTimeMillis() - start) + " ms");
 
     myFixture.enableInspections(getInspectionTools());
 
     start = System.currentTimeMillis();
     assertSize(typoCount, runLocalInspections());
-    System.out.println("warm-up took " + (System.currentTimeMillis() - start) + " ms");
+    LOG.debug("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
     PlatformTestUtil.startPerformanceTest("many typos highlighting", 12_000, () -> {
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
@@ -73,16 +73,16 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
 
     long start = System.currentTimeMillis();
     VirtualFile file = myFixture.addFileToProject("foo.java", text).getVirtualFile();
-    System.out.println("creation took " + (System.currentTimeMillis() - start) + " ms");
+    LOG.debug("creation took " + (System.currentTimeMillis() - start) + " ms");
 
     start = System.currentTimeMillis();
     myFixture.configureFromExistingVirtualFile(file);
-    System.out.println("configure took " + (System.currentTimeMillis() - start) + " ms");
+    LOG.debug("configure took " + (System.currentTimeMillis() - start) + " ms");
 
     start = System.currentTimeMillis();
     List<HighlightInfo> infos = runLocalInspections();
     assertEmpty(infos);
-    System.out.println("warm-up took " + (System.currentTimeMillis() - start) + " ms");
+    LOG.debug("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
     PlatformTestUtil.startPerformanceTest("many whitespaces highlighting", 4500, () -> {
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
@@ -129,8 +129,9 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     PlatformTestUtil.startPerformanceTest("long word for spelling", expectedTime, () -> {
       try{
         splitter.split(text, TextRange.allOf(text), (textRange) -> {});
-      }catch(ProcessCanceledException pce){
-        System.out.println("pce is thrown");
+      }
+      catch(ProcessCanceledException pce){
+        System.err.println("pce is thrown");
       }
     }).attempts(1).assertTiming();
   }

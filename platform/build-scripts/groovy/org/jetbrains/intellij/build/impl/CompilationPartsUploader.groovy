@@ -1,15 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-
+import com.google.gson.Gson
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.methods.HttpPut
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.FileEntity
+import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.client.LaxRedirectStrategy
@@ -38,7 +40,7 @@ class CompilationPartsUploader implements Closeable {
     myMessages = messages
     CompilationPartsUtil.initLog4J(messages)
     myHttpClient = HttpClientBuilder.create()
-      .setUserAgent(this.class.name)
+      .setUserAgent('Parts Uploader')
       .setRedirectStrategy(LaxRedirectStrategy.INSTANCE)
       .setMaxConnTotal(20)
       .setMaxConnPerRoute(10)
@@ -66,22 +68,22 @@ class CompilationPartsUploader implements Closeable {
     myMessages.error(message)
   }
 
-  boolean upload(@NotNull final String path, @NotNull final File file) throws UploadException {
+  boolean upload(@NotNull final String path, @NotNull final File file, boolean sendHead) throws UploadException {
     debug("Preparing to upload " + file + " to " + myServerUrl)
 
     if (!file.exists()) {
       throw new UploadException("The file " + file.getPath() + " does not exist")
     }
-
-    int code = doHead(path)
-    if (code == 200) {
-      log("File '$path' already exist on server, nothing to upload")
-      return false
+    if (sendHead) {
+      int code = doHead(path)
+      if (code == 200) {
+        log("File '$path' already exist on server, nothing to upload")
+        return false
+      }
+      if (code != 404) {
+        error("HEAD $path responded with unexpected $code")
+      }
     }
-    if (code != 404) {
-      error("HEAD $path responded with unexpected $code")
-    }
-
     final String response = doPut(path, file)
     if (StringUtil.isEmptyOrSpaces(response)) {
       log("Performed '$path' upload.")
@@ -90,6 +92,43 @@ class CompilationPartsUploader implements Closeable {
       debug("Performed '$path' upload. Server answered: " + response)
     }
     return true
+  }
+
+  @CompileStatic
+  static class CheckFilesResponse {
+    List<String> found
+    List<String> missing
+
+    CheckFilesResponse() {
+    }
+  }
+
+  CheckFilesResponse getFoundAndMissingFiles(String metadataJson) {
+    String path = '/check-files'
+
+    CloseableHttpResponse response = null
+    try {
+      String url = myServerUrl + StringUtil.trimStart(path, '/')
+      debug("POST " + url)
+
+      def request = new HttpPost(url)
+      request.setEntity(new StringEntity(metadataJson, ContentType.APPLICATION_JSON))
+
+      response = myHttpClient.execute(request)
+
+      debug("POST code: ${response.getStatusLine().getStatusCode()}")
+
+      def responseString = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
+      def parsedResponse = new Gson().fromJson(responseString, CheckFilesResponse.class)
+      return parsedResponse
+    }
+    catch (Exception e) {
+      myMessages.warning("Failed to check for found and mising files ('$path'): ${e.message}")
+      return null
+    }
+    finally {
+      StreamUtil.closeStream(response)
+    }
   }
 
   @NotNull

@@ -113,7 +113,7 @@ public class JsonTypedHandler extends TypedHandlerDelegate {
                                               @NotNull Editor editor,
                                               @NotNull PsiFile file) {
     if (!JsonEditorOptions.getInstance().COMMA_ON_MATCHING_BRACES) return;
-    if (c != '[' && c != '{' && c != '"') return;
+    if (c != '[' && c != '{' && c != '"' && c != '\'') return;
     SmartEnterProcessor.commitDocument(editor);
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
@@ -121,7 +121,7 @@ public class JsonTypedHandler extends TypedHandlerDelegate {
     PsiElement parent = element.getParent();
     if (c == '[' && parent instanceof JsonArray
         || c == '{' && parent instanceof JsonObject
-        || c == '"' && parent instanceof JsonStringLiteral) {
+        || (c == '"' || c == '\'') && parent instanceof JsonStringLiteral) {
       if (shouldAddCommaInParentContainer((JsonValue)parent)) {
         editor.getDocument().insertString(parent.getTextRange().getEndOffset(), ",");
       }

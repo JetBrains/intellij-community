@@ -66,17 +66,18 @@ public class ResourceUtil {
   /**
    * Copied from java.util.ResourceBundle implementation
    */
-  private static List<String> calculateBundleNames(String baseName, Locale locale) {
-    final List<String> result = new ArrayList<String>(3);
+  @NotNull
+  private static List<String> calculateBundleNames(@NotNull String baseName, @NotNull Locale locale) {
+    final List<String> result = new ArrayList<>(3);
+
+    result.add(0, baseName);
+
     final String language = locale.getLanguage();
     final int languageLength = language.length();
     final String country = locale.getCountry();
     final int countryLength = country.length();
     final String variant = locale.getVariant();
     final int variantLength = variant.length();
-
-    result.add(0, baseName);
-
     if (languageLength + countryLength + variantLength == 0) {
       //The locale is "", "", "".
       return result;
@@ -113,8 +114,7 @@ public class ResourceUtil {
   public static String loadText(@NotNull URL url) throws IOException {
     InputStream inputStream = new BufferedInputStream(URLUtil.openStream(url));
 
-    InputStreamReader reader = new InputStreamReader(inputStream, CharsetToolkit.UTF8_CHARSET);
-    try {
+    try (InputStreamReader reader = new InputStreamReader(inputStream, CharsetToolkit.UTF8_CHARSET)) {
       StringBuilder text = new StringBuilder();
       char[] buf = new char[5000];
       while (reader.ready()) {
@@ -123,9 +123,6 @@ public class ResourceUtil {
         text.append(buf, 0, length);
       }
       return text.toString();
-    }
-    finally {
-      reader.close();
     }
   }
 }

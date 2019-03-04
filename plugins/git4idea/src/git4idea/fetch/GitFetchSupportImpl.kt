@@ -15,7 +15,6 @@
  */
 package git4idea.fetch
 
-import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
 import com.intellij.dvcs.MultiMessage
 import com.intellij.dvcs.MultiRootMessage
 import com.intellij.notification.NotificationType
@@ -23,16 +22,20 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
 import com.intellij.util.concurrency.AppExecutorUtil
-import git4idea.GitUtil.*
+import git4idea.GitUtil.findRemoteByName
+import git4idea.GitUtil.mention
 import git4idea.commands.Git
 import git4idea.commands.GitAuthenticationGate
+import git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS
 import git4idea.commands.GitImpl
 import git4idea.commands.GitRestrictingAuthenticationGate
+import git4idea.config.GitConfigUtil
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
@@ -43,6 +46,7 @@ import java.util.regex.Pattern
 
 private val LOG = logger<GitFetchSupportImpl>()
 private val PRUNE_PATTERN = Pattern.compile("\\s*x\\s*\\[deleted\\].*->\\s*(\\S*)") // x [deleted]  (none) -> origin/branch
+private const val MAX_SSH_CONNECTIONS = 10 // by default SSH server has a limit of 10 multiplexed ssh connection
 
 internal class GitFetchSupportImpl(git: Git,
                                    private val project: Project,
@@ -64,70 +68,107 @@ internal class GitFetchSupportImpl(git: Git,
     }
   }
 
-  override fun fetch(repositories: Collection<GitRepository>): GitFetchResult {
-    val remotesToFetch = mutableMapOf<GitRepository, GitRemote>()
+  override fun fetchDefaultRemote(repositories: Collection<GitRepository>): GitFetchResult {
+    val remotesToFetch = mutableListOf<Pair<GitRepository, GitRemote>>()
     for (repository in repositories) {
       val remote = getDefaultRemoteToFetch(repository)
-      if (remote != null) remotesToFetch[repository] = remote
+      if (remote != null) remotesToFetch.add(repository to remote)
       else LOG.info("No remote to fetch found in $repository")
     }
-    return doFetch(remotesToFetch)
+    return fetch(remotesToFetch)
   }
 
-  private fun doFetch(remotes: Map<GitRepository, GitRemote>): GitFetchResult {
-    val tasks = fetchInParallel(remotes)
-    val results = waitForFetchTasks(tasks)
-    return FetchResultImpl(project, vcsNotifier, results)
+  override fun fetchAllRemotes(repositories: Collection<GitRepository>): GitFetchResult {
+    val remotesToFetch = mutableListOf<Pair<GitRepository, GitRemote>>()
+    for (repository in repositories) {
+      if (repository.remotes.isEmpty()) {
+        LOG.info("No remote to fetch found in $repository")
+      }
+      else {
+        for (remote in repository.remotes) {
+          remotesToFetch.add(repository to remote)
+        }
+      }
+    }
+    return fetch(remotesToFetch)
   }
 
   override fun fetch(repository: GitRepository, remote: GitRemote): GitFetchResult {
-    return withIndicator(repository) { fetch(repository, listOf(remote)) }
+    return fetch(listOf(repository to remote))
   }
 
-  override fun fetch(repository: GitRepository, remotes: List<GitRemote>): GitFetchResult {
-    return withIndicator(repository) { resultOf(mapOf(Pair(repository, doFetch(repository, remotes)))) }
+  private fun fetch(remotes: List<Pair<GitRepository, GitRemote>>): GitFetchResult {
+    return withIndicator {
+      val tasks = fetchInParallel(remotes)
+      val results = waitForFetchTasks(tasks)
+
+      val mergedResults = mutableMapOf<GitRepository, RepoResult>()
+      for (result in results) {
+        val res = mergedResults[result.repository]
+        mergedResults[result.repository] = mergeRepoResults(res, result)
+      }
+      FetchResultImpl(project, vcsNotifier, mergedResults)
+    }
   }
 
-  private fun fetchInParallel(remotes: Map<GitRepository, GitRemote>): Map<GitRepository, Future<RepoResult>> {
-    val tasks = mutableMapOf<GitRepository, Future<RepoResult>>()
-    val maxThreads = getMaxThreads(remotes.size)
+  private fun mergeRepoResults(firstResult: RepoResult?, secondResult: SingleRemoteResult): RepoResult {
+    if (firstResult == null) {
+      return RepoResult(mapOf(secondResult.remote to secondResult))
+    }
+    else {
+      return RepoResult(firstResult.results + (secondResult.remote to secondResult))
+    }
+  }
+
+  private fun fetchInParallel(remotes: List<Pair<GitRepository, GitRemote>>): List<FetchTask> {
+    val tasks = mutableListOf<FetchTask>()
+    val maxThreads = getMaxThreads(remotes.mapTo(HashSet()) {it.first}, remotes.size)
     LOG.debug("Fetching $remotes using $maxThreads threads")
     val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitFetch pool", maxThreads)
     val commonIndicator = progressManager.progressIndicator ?: EmptyProgressIndicator()
     val authenticationGate = GitRestrictingAuthenticationGate()
     for ((repository, remote) in remotes) {
       LOG.debug("Fetching $remote in $repository")
-      val task: Future<RepoResult> = executor.submit<RepoResult> {
+      val future: Future<SingleRemoteResult> = executor.submit<SingleRemoteResult> {
         commonIndicator.checkCanceled()
-        lateinit var result: RepoResult
+        lateinit var result: SingleRemoteResult
         ProgressManager.getInstance().executeProcessUnderProgress({
           commonIndicator.checkCanceled()
-          val fetchResult = doFetch(repository, remote, authenticationGate)
-          result = resultOf(remote, fetchResult)
+          result = doFetch(repository, remote, authenticationGate)
         }, commonIndicator)
         result
       }
-      tasks[repository] = task
+      tasks.add(FetchTask(repository, remote, future))
     }
     return tasks
   }
 
-  private fun getMaxThreads(numberOfRemotes: Int): Int {
-    val maxThreads = Registry.intValue("git.parallel.fetch.threads")
-    return when {
-      maxThreads > 0 -> maxThreads
-      maxThreads == -1 -> Runtime.getRuntime().availableProcessors()
-      maxThreads == -2 -> numberOfRemotes
-      maxThreads == -3 -> Math.min(numberOfRemotes, Runtime.getRuntime().availableProcessors() * 2)
+  private fun getMaxThreads(repositories: Collection<GitRepository>, numberOfRemotes: Int): Int {
+    val config = Registry.intValue("git.parallel.fetch.threads")
+    val maxThreads = when {
+      config > 0 -> config
+      config == -1 -> Runtime.getRuntime().availableProcessors()
+      config == -2 -> numberOfRemotes
+      config == -3 -> Math.min(numberOfRemotes, Runtime.getRuntime().availableProcessors() * 2)
       else -> 1
     }
+
+    if (isStoreCredentialsHelperUsed(repositories)) {
+      return 1
+    }
+
+    return Math.min(maxThreads, MAX_SSH_CONNECTIONS)
   }
 
-  private fun waitForFetchTasks(tasks: Map<GitRepository, Future<RepoResult>>): Map<GitRepository, RepoResult> {
-    val results = mutableMapOf<GitRepository, RepoResult>()
-    for ((repository, task) in tasks) {
+  private fun isStoreCredentialsHelperUsed(repositories: Collection<GitRepository>): Boolean {
+    return repositories.any { GitConfigUtil.getValue(project, it.root, "credential.helper").equals("store", ignoreCase = true) }
+  }
+
+  private fun waitForFetchTasks(tasks: List<FetchTask>): List<SingleRemoteResult> {
+    val results = mutableListOf<SingleRemoteResult>()
+    for (task in tasks) {
       try {
-        results[repository] = task.get()
+        results.add(task.future.get())
       }
       catch (e: CancellationException) {
         throw ProcessCanceledException(e)
@@ -137,21 +178,17 @@ internal class GitFetchSupportImpl(git: Git,
       }
       catch (e: ExecutionException) {
         if (e.cause is ProcessCanceledException) throw e.cause as ProcessCanceledException
-        results[repository] = ErrorRepoResult(e.message ?: "")
+        results.add(SingleRemoteResult(task.repository, task.remote, e.cause?.message ?: "Error", emptyList()))
         LOG.error(e)
       }
     }
     return results
   }
 
-  private fun <T> withIndicator(repository: GitRepository, operation: () -> T): T {
-    return withIndicator(getProgressTitle(repository), operation)
-  }
-
-  private fun <T> withIndicator(title: String, operation: () -> T): T {
+  private fun <T> withIndicator(operation: () -> T): T {
     val indicator = progressManager.progressIndicator
     val prevText = indicator?.text
-    indicator?.text = title
+    indicator?.text = "Fetching"
     try {
       return operation()
     } finally {
@@ -159,26 +196,15 @@ internal class GitFetchSupportImpl(git: Git,
     }
   }
 
-  private fun getProgressTitle(repository: GitRepository): String {
-    return "Fetching ${if (justOneGitRepository(project)) "" else getShortRepositoryName(repository)}"
-  }
-
-  private fun doFetch(repository: GitRepository, remotes: List<GitRemote>): RepoResult {
-    val results = mutableMapOf<GitRemote, SingleRemoteResult>()
-    for (remote in remotes) {
-      results[remote] = doFetch(repository, remote)
-    }
-    return RepoResultPerRemote(results)
-  }
-
   private fun doFetch(repository: GitRepository, remote: GitRemote, authenticationGate: GitAuthenticationGate? = null): SingleRemoteResult {
     val result = git.fetch(repository, remote, emptyList(), authenticationGate)
     val pruned = result.output.mapNotNull { getPrunedRef(it) }
     if (result.success()) {
+      BackgroundTaskUtil.syncPublisher(repository.project, GIT_AUTHENTICATION_SUCCESS).authenticationSucceeded(repository, remote)
       repository.update()
     }
     val error = if (result.success()) null else result.errorOutputAsJoinedString
-    return SingleRemoteResult(error, pruned)
+    return SingleRemoteResult(repository, remote, error, pruned)
   }
 
   private fun getPrunedRef(line: String): String? {
@@ -186,35 +212,13 @@ internal class GitFetchSupportImpl(git: Git,
     return if (matcher.matches()) matcher.group(1) else null
   }
 
-  private fun resultOf(remote: GitRemote, remoteResult: SingleRemoteResult): RepoResult {
-    return RepoResultPerRemote(mapOf(Pair(remote, remoteResult)))
-  }
+  private class FetchTask(val repository: GitRepository, val remote: GitRemote, val future: Future<SingleRemoteResult>)
 
-  private fun resultOf(results: Map<GitRepository, RepoResult>) = FetchResultImpl(project, vcsNotifier, results)
+  private class RepoResult(val results: Map<GitRemote, SingleRemoteResult>) {
 
-  private interface RepoResult {
-    fun totallySuccessful(): Boolean
-    fun error(): String?
-    fun prunedRefs(): String
-  }
+    fun totallySuccessful() = results.values.all { it.success() }
 
-  private class ErrorRepoResult(val error: String) : RepoResult {
-    override fun totallySuccessful() = false
-    override fun error() = error
-    override fun prunedRefs() = ""
-  }
-
-  private class RepoResultPerRemote(val results: Map<GitRemote, SingleRemoteResult>) : RepoResult {
-    /*
-       For simplicity, remote and repository results are merged separately.
-       It means that they are not merged, if two repositories have two remotes,
-       and then fetch succeeds for the first remote in both repos, and fails for the second remote in both repos.
-       Such cases are rare, and can be handled when actual problem is reported.
-     */
-
-    override fun totallySuccessful() = results.values.all { it.success() }
-
-    override fun error(): String? {
+    fun error(): String? {
       val errorMessage = multiRemoteMessage(true)
       for ((remote, result) in results) {
         if (result.error != null) errorMessage.append(remote, result.error)
@@ -222,7 +226,7 @@ internal class GitFetchSupportImpl(git: Git,
       return errorMessage.asString()
     }
 
-    override fun prunedRefs(): String {
+    fun prunedRefs(): String {
       val prunedRefs = multiRemoteMessage(false)
       for ((remote, result) in results) {
         if (result.prunedRefs.isNotEmpty()) prunedRefs.append(remote, result.prunedRefs.joinToString("\n"))
@@ -230,11 +234,17 @@ internal class GitFetchSupportImpl(git: Git,
       return prunedRefs.asString()
     }
 
+    /*
+       For simplicity, remote and repository results are merged separately.
+       It means that they are not merged, if two repositories have two remotes,
+       and then fetch succeeds for the first remote in both repos, and fails for the second remote in both repos.
+       Such cases are rare, and can be handled when actual problem is reported.
+     */
     private fun multiRemoteMessage(remoteInPrefix: Boolean) =
-        MultiMessage(results.keys, GitRemote::getName, GitRemote::getName, remoteInPrefix)
+      MultiMessage(results.keys, GitRemote::getName, GitRemote::getName, remoteInPrefix)
   }
 
-  private class SingleRemoteResult(val error: String?, val prunedRefs: List<String>) {
+  private class SingleRemoteResult(val repository: GitRepository, val remote: GitRemote, val error: String?, val prunedRefs: List<String>) {
     fun success() = error == null
   }
 

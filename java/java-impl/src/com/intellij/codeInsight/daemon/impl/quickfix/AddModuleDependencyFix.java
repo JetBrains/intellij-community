@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.ModuleListCellRenderer;
@@ -17,7 +17,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiJavaModuleReference;
+import com.intellij.psi.PsiJavaModuleReference;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PointersKt;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,11 +64,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
     return JavaResolveUtil.isAccessible(aClass, aClass.getContainingClass(), aClass.getModifierList(), refElement, aClass, null);
   }
 
-  AddModuleDependencyFix(PsiJavaModuleReference reference,
-                                Module currentModule,
-                                Set<Module> modules,
-                                DependencyScope scope,
-                                boolean exported) {
+  AddModuleDependencyFix(PsiJavaModuleReference reference, Module currentModule, Set<Module> modules, DependencyScope scope, boolean exported) {
     super(reference);
     myCurrentModule = currentModule;
     myModules = modules;

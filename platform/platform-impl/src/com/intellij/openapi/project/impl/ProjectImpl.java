@@ -1,20 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -40,14 +41,12 @@ import com.intellij.project.ProjectKt;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.*;
 import org.picocontainer.*;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
@@ -58,7 +57,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @TestOnly
   public static final String LIGHT_PROJECT_NAME = "light_temp";
 
-  private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
   private String myName;
   private final boolean myLight;
   private static boolean ourClassesAreLoaded;
@@ -194,6 +192,12 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return plugin.getProjectComponents();
   }
 
+  @NotNull
+  @Override
+  protected List<ServiceDescriptor> getServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+    return ((IdeaPluginDescriptorImpl)pluginDescriptor).getProjectServices();
+  }
+
   @Nullable
   @Override
   public @SystemIndependent String getProjectFilePath() {
@@ -259,19 +263,12 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void init() {
     Application application = ApplicationManager.getApplication();
 
-    long start = System.currentTimeMillis();
-
     ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
-    init(progressIndicator,
-         () -> application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this));
-
-    long time = System.currentTimeMillis() - start;
-    String message = getComponentConfigCount() + " project components initialized in " + time + " ms";
-    if (application.isUnitTestMode()) {
-      LOG.debug(message);
-    } else {
-      LOG.info(message);
-    }
+    //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
+    //noinspection CodeBlock2Expr
+    init(PluginManagerCore.getLoadedPlugins(null), progressIndicator, !isDefault() && application.isUnitTestMode() ? () -> {
+      application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
+    } : null, true);
 
     if (!isDefault() && !application.isHeadlessEnvironment()) {
       distributeProgress();
@@ -315,11 +312,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public void save() {
-    save(false);
-  }
-
-  @Override
-  public void save(boolean isForce) {
     if (!ApplicationManagerEx.getApplicationEx().isSaveAllowed()) {
       // no need to save
       return;
@@ -332,19 +324,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       return;
     }
 
-    if (!mySavingInProgress.compareAndSet(false, true)) {
-      return;
-    }
-
-    HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-
-    try {
-      StoreUtil.save(ServiceKt.getStateStore(this), this, isForce);
-    }
-    finally {
-      mySavingInProgress.set(false);
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectSaved.TOPIC).saved(this);
-    }
+    StoreUtil.saveSettings(this, false);
   }
 
   @Override
@@ -398,8 +378,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
            " " + getName();
   }
 
+  @Nullable
   @Override
-  protected boolean logSlowComponents() {
-    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
+  protected String measureTokenNamePrefix() {
+    return "project ";
   }
 }

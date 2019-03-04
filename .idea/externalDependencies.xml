@@ -4,12 +4,12 @@
     <plugin id="DevKit" />
     <plugin id="Git4Idea" />
     <plugin id="JUnit" />
-    <plugin id="com.intellij" min-version="182.3684.101"/>
+    <plugin id="com.intellij" min-version="183.4284.148" />
     <plugin id="com.intellij.copyright" />
     <plugin id="com.intellij.java-i18n" />
     <plugin id="com.intellij.properties" />
     <plugin id="com.intellij.uiDesigner" />
     <plugin id="org.intellij.groovy" />
-    <plugin id="org.jetbrains.kotlin" min-version="1.2.40" max-version="1.3.99" />
+    <plugin id="org.jetbrains.kotlin" min-version="1.3.0" max-version="1.3.99"/>
   </component>
 </project>

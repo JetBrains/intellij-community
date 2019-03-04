@@ -40,10 +40,13 @@ public abstract class ActionPlaces {
   public static final String EDITOR_TOOLBAR = "EditorToolbar";
   public static final String EDITOR_TAB_POPUP = "EditorTabPopup";
   public static final String EDITOR_TAB = "EditorTab";
+  public static final String EDITOR_GUTTER = "ICON_NAVIGATION";
+  public static final String EDITOR_GUTTER_POPUP = "ICON_NAVIGATION_SECONDARY_BUTTON";
   public static final String COMMANDER_POPUP = "CommanderPopup";
   public static final String COMMANDER_TOOLBAR = "CommanderToolbar";
   public static final String CONTEXT_TOOLBAR = "ContextToolbar";
   public static final String TOOLWINDOW_TITLE = "ToolwindowTitle";
+  public static final String TOOLWINDOW_CONTENT = "ToolwindowContent";
 
   public static final String PROJECT_VIEW_POPUP = "ProjectViewPopup";
   public static final String PROJECT_VIEW_TOOLBAR = "ProjectViewToolbar";
@@ -122,6 +125,10 @@ public abstract class ActionPlaces {
   public static final String DOCK_MENU = "DockMenu";
   public static final String PHING_MESSAGES_TOOLBAR = "PhingMessagesToolbar";
 
+  public static final String COMPOSER_EDITOR_NOTIFICATION_PANEL = "ComposerEditorNotificationPanel";
+  public static final String COMPOSER_EDITOR_NOTIFICATION_PANEL_EXTRA = "ComposerEditorNotificationPanel.ExtraActions";
+  public static final String COMPOSER_LOG_RERUN = "ComposerLogRerun";
+
   public static final String DIFF_TOOLBAR = "DiffToolbar";
 
   public static final String ANALYZE_STACKTRACE_PANEL_TOOLBAR = "ANALYZE_STACKTRACE_PANEL_TOOLBAR";
@@ -131,12 +138,26 @@ public abstract class ActionPlaces {
   public static final String V8_HEAP_DIFF_PROFILING_POPUP = "V8_HEAP_DIFF_PROFILING_POPUP";
 
   public static final String RUN_DASHBOARD_POPUP = "RunDashboardPopup";
+  public static final String SERVICES_POPUP = "ServicesPopup";
+  public static final String SERVICES_TOOLBAR = "ServicesToolbar";
 
   public static final String TOUCHBAR_GENERAL = "TouchBarGeneral";
 
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place);
   }
+
+  private static final Set<String> ourCommonPlaces = ContainerUtil.newHashSet(
+    UNKNOWN, MAIN_MENU, MAIN_TOOLBAR, EDITOR_TOOLBAR, EDITOR_TAB, COMMANDER_TOOLBAR, CONTEXT_TOOLBAR, TOOLWINDOW_TITLE,
+    PROJECT_VIEW_TOOLBAR, STATUS_BAR_PLACE, ACTION_SEARCH, TESTTREE_VIEW_TOOLBAR, TYPE_HIERARCHY_VIEW_TOOLBAR,
+    METHOD_HIERARCHY_VIEW_TOOLBAR, CALL_HIERARCHY_VIEW_TOOLBAR, RUNNER_TOOLBAR, DEBUGGER_TOOLBAR, USAGE_VIEW_TOOLBAR,
+    STRUCTURE_VIEW_TOOLBAR, NAVIGATION_BAR_TOOLBAR, TODO_VIEW_TOOLBAR, COMPILER_MESSAGES_TOOLBAR,
+    ANT_MESSAGES_TOOLBAR, ANT_EXPLORER_TOOLBAR, CODE_INSPECTION, JAVADOC_TOOLBAR, JAVADOC_INPLACE_SETTINGS,
+    FILEHISTORY_VIEW_TOOLBAR, RUN_CONFIGURATIONS_COMBOBOX, WELCOME_SCREEN, CHANGES_VIEW_TOOLBAR, DATABASE_VIEW_TOOLBAR,
+    ACTION_PLACE_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_TOOLBAR, DOCK_MENU, PHING_MESSAGES_TOOLBAR, DIFF_TOOLBAR,
+    ANALYZE_STACKTRACE_PANEL_TOOLBAR, TOUCHBAR_GENERAL, COMPOSER_EDITOR_NOTIFICATION_PANEL, COMPOSER_EDITOR_NOTIFICATION_PANEL_EXTRA,
+    COMPOSER_LOG_RERUN, EDITOR_GUTTER, TOOLWINDOW_CONTENT
+  );
 
   private static final Set<String> ourPopupPlaces = ContainerUtil.newHashSet(
     POPUP, EDITOR_POPUP, EDITOR_TAB_POPUP, COMMANDER_POPUP,
@@ -147,13 +168,17 @@ public abstract class ActionPlaces {
     GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,
     CREATE_EJB_POPUP, CHANGES_VIEW_POPUP, DATABASE_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
     ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP, JS_BUILD_TOOL_POPUP,
-    V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP
+    V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP, SERVICES_POPUP, EDITOR_GUTTER_POPUP
   );
 
   private static final String POPUP_PREFIX = "popup@";
 
   public static boolean isPopupPlace(@NotNull String place) {
     return ourPopupPlaces.contains(place) || place.startsWith(POPUP_PREFIX);
+  }
+
+  public static boolean isCommonPlace(@NotNull String place) {
+    return ourPopupPlaces.contains(place) || ourCommonPlaces.contains(place);
   }
 
   @NotNull

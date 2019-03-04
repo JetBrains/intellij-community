@@ -31,11 +31,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<JavaTestConfigurationWithDiscoverySupport> {
-  protected TestDiscoveryConfigurationProducer(ConfigurationType type) {
-    super(type);
-  }
-
-
   protected abstract void setPosition(JavaTestConfigurationBase configuration, PsiLocation<PsiMethod> position);
   protected abstract Pair<String, String> getPosition(JavaTestConfigurationBase configuration);
 
@@ -200,7 +195,11 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
           .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
-  private class MyRunProfile implements WrappingRunConfiguration<RunConfiguration>, RunConfiguration, ConfigurationWithCommandLineShortener, RunProfileWithCompileBeforeLaunchOption {
+  private class MyRunProfile implements WrappingRunConfiguration<RunConfiguration>,
+                                        RunConfiguration,
+                                        ConfigurationWithCommandLineShortener,
+                                        RunProfileWithCompileBeforeLaunchOption,
+                                        ModuleRunProfile {
     private final Location<PsiMethod>[] myTestMethods;
     private final Module myModule;
     private final JavaTestConfigurationBase myConfiguration;

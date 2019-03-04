@@ -93,6 +93,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       getTable().getSelectionModel().addListSelectionListener(selectionListener);
 
       myDiffPreviewSplitter = new OnePixelSplitter(false, "vcs.history.diff.splitter.proportion", 0.7f);
+      myDiffPreviewSplitter.setHonorComponentsMinimumSize(false);
       myDiffPreviewSplitter.setFirstComponent(myFileHistoryPanel);
       showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
       myMainComponent = myDiffPreviewSplitter;
@@ -213,18 +214,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
         });
       }
     }
-  }
-
-  public void jumpToNearestCommit(@NotNull Hash hash) {
-    jumpTo(hash, (model, h) -> {
-      if (!myLogData.getStorage().containsCommit(new CommitId(h, myRoot))) return GraphTableModel.COMMIT_NOT_FOUND;
-      int commitIndex = myLogData.getCommitIndex(h, myRoot);
-      Integer rowIndex = myVisiblePack.getVisibleGraph().getVisibleRowIndex(commitIndex);
-      if (rowIndex == null) {
-        rowIndex = ReachableNodesUtilKt.findVisibleAncestorRow(commitIndex, myVisiblePack);
-      }
-      return rowIndex == null ? GraphTableModel.COMMIT_DOES_NOT_MATCH : rowIndex;
-    }, SettableFuture.create());
   }
 
   public boolean matches(@NotNull FilePath targetPath, @Nullable Hash targetRevision) {

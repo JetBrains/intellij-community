@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,11 +17,12 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class ChangeProjectIconAction extends RecentProjectsWelcomeScreenActionBase {
+  private final static Logger LOG = Logger.getInstance(ChangeProjectIconAction.class);
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     List<AnAction> elements = getSelectedElements(e);
-    String path = ((ReopenProjectAction)elements.get(0)).getProjectPath();
-    final ChangeProjectIconForm form = new ChangeProjectIconForm(path);
+    final ChangeProjectIconForm form = new ChangeProjectIconForm(((ReopenProjectAction)elements.get(0)).getProjectPath());
     DialogWrapper dialog = new DialogWrapper(null) {
       {
         init();
@@ -51,8 +39,8 @@ public class ChangeProjectIconAction extends RecentProjectsWelcomeScreenActionBa
       try {
         form.apply();
       }
-      catch (IOException e1) {
-        System.out.println(e1);
+      catch (IOException io) {
+        LOG.error(io);
       }
     }
   }
@@ -61,9 +49,5 @@ public class ChangeProjectIconAction extends RecentProjectsWelcomeScreenActionBa
   public void update(@NotNull AnActionEvent e) {
     boolean enabled = getSelectedElements(e).size() == 1 && !hasGroupSelected(e);
     e.getPresentation().setEnabled(enabled);
-  }
-
-  public static class Form {
-
   }
 }

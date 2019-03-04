@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -9,7 +10,6 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,13 +27,13 @@ public class ChooseLocaleAction extends ComboBoxAction {
   public ChooseLocaleAction() {
     getTemplatePresentation().setText("");
     getTemplatePresentation().setDescription(UIDesignerBundle.message("choose.locale.description"));
-    getTemplatePresentation().setIcon(UIDesignerIcons.ChooseLocale);
+    getTemplatePresentation().setIcon(AllIcons.Nodes.PpWeb);
   }
 
   @NotNull
-  @Override public JComponent createCustomComponent(@NotNull Presentation presentation) {
+  @Override public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     myPresentation = presentation;
-    return super.createCustomComponent(presentation);
+    return super.createCustomComponent(presentation, place);
   }
 
   @Override

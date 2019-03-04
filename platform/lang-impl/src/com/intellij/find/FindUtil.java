@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -82,7 +81,6 @@ public class FindUtil {
   }
 
   public static void configureFindModel(boolean replace, @Nullable Editor editor, FindModel model, boolean firstSearch) {
-    boolean isGlobal = true;
     String stringToFind = firstSearch ? "" : model.getStringToFind();
     final SelectionModel selectionModel = editor != null ? editor.getSelectionModel() : null;
     String selectedText = selectionModel != null ? selectionModel.getSelectedText() : null;
@@ -91,6 +89,7 @@ public class FindUtil {
     }
     model.setReplaceState(replace);
     boolean multiline = stringToFind.contains("\n");
+    boolean isGlobal = true;
     if (replace && multiline) {
       isGlobal = false;
       stringToFind = "";
@@ -204,12 +203,13 @@ public class FindUtil {
     }
 
     model.setReplaceState(false);
-    model.setFindAllEnabled(PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) != null);
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    model.setFindAllEnabled(psiFile != null);
 
     findManager.showFindDialog(model, () -> {
-      if (model.isFindAll()) {
+      if (model.isFindAll() && psiFile != null) {
         findManager.setFindNextModel(model);
-        findAllAndShow(project, editor, model);
+        findAllAndShow(project, psiFile, model);
         return;
       }
 
@@ -249,13 +249,14 @@ public class FindUtil {
   }
 
   @Nullable
-  public static List<Usage> findAll(@NotNull Project project, @NotNull Editor editor, @NotNull FindModel findModel) {
-    return findAll(project, PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()), findModel);
-  }
-
-  @Nullable
-  private static List<Usage> findAll(@NotNull Project project, @Nullable PsiFile psiFile, @NotNull FindModel findModel) {
-    if (psiFile == null || project.isDisposed()) return null;
+  static List<Usage> findAll(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull FindModel findModel) {
+    if (project.isDisposed()) {
+      return null;
+    }
+    psiFile = (PsiFile)psiFile.getNavigationElement();
+    if (psiFile == null) {
+      return null;
+    }
     Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document == null) return null;
 
@@ -285,11 +286,7 @@ public class FindUtil {
     return usages;
   }
 
-  public static void findAllAndShow(@NotNull Project project, @NotNull Editor editor, @NotNull FindModel findModel) {
-    findAllAndShow(project, PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()), findModel);
-  }
-
-  private static void findAllAndShow(@NotNull Project project, @Nullable PsiFile psiFile, @NotNull FindModel findModel) {
+  static void findAllAndShow(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull FindModel findModel) {
     List<Usage> usages = findAll(project, psiFile, findModel);
     if (usages == null) return;
     final UsageTarget[] usageTargets = {new FindInProjectUtil.StringUsageTarget(project, findModel)};
@@ -613,7 +610,7 @@ public class FindUtil {
           if (model.isGlobal()) {
             editor.getSelectionModel().removeSelection();
           }
-        }), null, document);
+        }), null, null);
       }
     }
 
@@ -707,10 +704,8 @@ public class FindUtil {
       }
       IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
 
-      EditorColorsManager manager = EditorColorsManager.getInstance();
-      TextAttributes selectionAttributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-
       if (!model.isGlobal()) {
+        TextAttributes selectionAttributes = editor.getColorsScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
         final RangeHighlighterEx segmentHighlighter = (RangeHighlighterEx)editor.getMarkupModel().addRangeHighlighter(
           result.getStartOffset(),
           result.getEndOffset(),

@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 
-class LazyFileHyperlinkInfo(project: Project, filePath: String, documentLine: Int, documentColumn: Int)
+open class LazyFileHyperlinkInfo(project: Project, filePath: String, documentLine: Int, documentColumn: Int)
   : FileHyperlinkInfoBase(project, documentLine, documentColumn) {
 
   override val virtualFile: VirtualFile? by lazy {

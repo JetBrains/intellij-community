@@ -4,12 +4,17 @@ package com.intellij.execution.dashboard;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.dashboard.tree.RunConfigurationNode;
 import com.intellij.execution.dashboard.tree.RunDashboardGrouper;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.services.ServiceViewContributor;
+import com.intellij.execution.services.ServiceViewManager;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -21,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -41,7 +47,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 /**
  * @author konstantin.aleev
@@ -75,15 +80,12 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myProject = project;
 
     ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
-    ContentUI contentUI = new PanelContentUI();
-    myContentManager = contentFactory.createContentManager(contentUI, false, project);
+    myContentManager = contentFactory.createContentManager(new PanelContentUI(), false, project);
     myContentManagerListener = new DashboardContentManagerListener();
     myContentManager.addContentManagerListener(myContentManagerListener);
     myReuseCondition = this::canReuseContent;
 
-    myGroupers = Arrays.stream(RunDashboardGroupingRule.EP_NAME.getExtensions())
-      .map(RunDashboardGrouper::new)
-      .collect(Collectors.toList());
+    myGroupers = ContainerUtil.map(RunDashboardGroupingRule.EP_NAME.getExtensions(), RunDashboardGrouper::new);
   }
 
   private void initToolWindowContentListeners() {
@@ -157,8 +159,29 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myContentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
       public void selectionChanged(@NotNull ContentManagerEvent event) {
+        boolean onAdd = event.getOperation() == ContentManagerEvent.ContentOperation.add;
+        if (onAdd) {
+          RunnerLayoutUiImpl ui = getRunnerLayoutUi(RunContentManagerImpl.getRunContentDescriptorByContent(event.getContent()));
+          if (ui != null) {
+            ui.setLeftToolbarVisible(false);
+            ui.setContentToolbarBefore(false);
+          }
+        }
+
         updateToolWindowContent();
         updateDashboard(true);
+
+        if (Registry.is("ide.service.view") && onAdd) {
+          RunContentDescriptor contentDescriptor = RunContentManagerImpl.getRunContentDescriptorByContent(event.getContent());
+          Set<RunnerAndConfigurationSettings> configurationsSettings =
+            ExecutionManagerImpl.getInstance(myProject).getConfigurations(contentDescriptor);
+          RunnerAndConfigurationSettings configurationSettings = ContainerUtil.getFirstItem(configurationsSettings);
+          if (configurationSettings != null) {
+            RunConfigurationNode node = new RunConfigurationNode(myProject, Pair.create(configurationSettings, contentDescriptor),
+                                                                 getContributor(configurationSettings.getType()));
+            ServiceViewManager.getInstance(myProject).selectNode(node);
+          }
+        }
       }
 
       @Override
@@ -177,7 +200,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public String getToolWindowId() {
-    return ToolWindowId.RUN_DASHBOARD;
+    return Registry.is("ide.service.view") ? ToolWindowId.SERVICES : ToolWindowId.RUN_DASHBOARD;
   }
 
   @Override
@@ -242,10 +265,9 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     // It is possible that run configuration was deleted or moved out from dashboard,
     // but there is a content descriptor for such run configuration.
     // It should be shown in the dashboard tree.
-    List<RunConfiguration> storedConfigurations = configurations.stream().map(RunnerAndConfigurationSettings::getConfiguration)
-      .collect(Collectors.toList());
-    List<RunContentDescriptor> notStoredDescriptors = filterByContent(executionManager.getDescriptors(settings ->
-      !storedConfigurations.contains(settings.getConfiguration())));
+    List<RunConfiguration> storedConfigurations = ContainerUtil.map(configurations, RunnerAndConfigurationSettings::getConfiguration);
+    List<RunContentDescriptor> notStoredDescriptors = filterByContent(
+      executionManager.getDescriptors(settings -> !storedConfigurations.contains(settings.getConfiguration())));
     notStoredDescriptors.forEach(descriptor -> {
       Set<RunnerAndConfigurationSettings> settings = executionManager.getConfigurations(descriptor);
       settings.forEach(setting -> result.add(Pair.create(setting, descriptor)));
@@ -352,6 +374,10 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public void updateDashboard(final boolean withStructure) {
+    myProject.getMessageBus().syncPublisher(ServiceViewContributor.TOPIC).handle(new ServiceViewContributor.ServiceEvent(
+      RunConfigurationsServiceViewContributor.class
+    ));
+
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     if (toolWindowManager == null) return;
 
@@ -361,10 +387,11 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       }
 
       if (withStructure) {
-        boolean available = hasContent();
+        boolean canCreate = !Registry.is("ide.service.view");
+        boolean available = hasContent() && canCreate;
         ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolWindowId());
         if (toolWindow == null) {
-          if (!myState.configurationTypes.isEmpty() || available) {
+          if (canCreate && (!myState.configurationTypes.isEmpty() || available)) {
             toolWindow = createToolWindow(toolWindowManager, available);
           }
           if (available) {
@@ -373,10 +400,12 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
           return;
         }
 
-        boolean doShow = !toolWindow.isAvailable() && available;
-        toolWindow.setAvailable(available, null);
-        if (doShow) {
-          toolWindow.show(null);
+        if (canCreate) {
+          boolean doShow = !toolWindow.isAvailable() && available;
+          toolWindow.setAvailable(available, null);
+          if (doShow) {
+            toolWindow.show(null);
+          }
         }
       }
 
@@ -496,6 +525,14 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       myToolWindowContent.setIcon(null);
       myToolWindowContent.setCloseable(false);
     }
+  }
+
+  @Nullable
+  static RunnerLayoutUiImpl getRunnerLayoutUi(@Nullable RunContentDescriptor descriptor) {
+    if (descriptor == null) return null;
+
+    RunnerLayoutUi layoutUi = descriptor.getRunnerLayoutUi();
+    return layoutUi instanceof RunnerLayoutUiImpl ? (RunnerLayoutUiImpl)layoutUi : null;
   }
 
   @Nullable

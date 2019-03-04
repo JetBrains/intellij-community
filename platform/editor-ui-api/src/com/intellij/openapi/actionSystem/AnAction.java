@@ -253,9 +253,14 @@ public abstract class AnAction implements PossiblyDumbAware {
   public final Presentation getTemplatePresentation() {
     Presentation presentation = myTemplatePresentation;
     if (presentation == null){
-      myTemplatePresentation = presentation = new Presentation();
+      myTemplatePresentation = presentation = createTemplatePresentation();
     }
     return presentation;
+  }
+
+  @NotNull
+  Presentation createTemplatePresentation() {
+    return new Presentation();
   }
 
   /**
@@ -329,7 +334,23 @@ public abstract class AnAction implements PossiblyDumbAware {
     return getTemplatePresentation().toString();
   }
 
+  public final boolean isGlobal() {
+    return myIsGlobal;
+  }
+
   void markAsGlobal() {
     myIsGlobal = true;
+  }
+
+  /**
+   * Returns default action text.
+   * This method must be overridden in case template presentation contains user data like Project name,
+   * Run Configuration name, etc
+   *
+   * @return action presentable text without private user data
+   */
+  @Nullable
+  public String getTemplateText() {
+    return getTemplatePresentation().getText();
   }
 }

@@ -29,6 +29,9 @@ import java.awt.event.InputEvent;
 import java.util.Optional;
 import java.util.function.Function;
 
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText;
+
 public class ActionSearchEverywhereContributor implements SearchEverywhereContributor<Void> {
   private static final Logger LOG = Logger.getInstance(ActionSearchEverywhereContributor.class);
 
@@ -48,6 +51,14 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   @Override
   public String getGroupName() {
     return "Actions";
+  }
+
+  @NotNull
+  @Override
+  public String getAdvertisement() {
+    ShortcutSet altEnterShortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
+    String altEnter = getFirstKeyboardShortcutText(altEnterShortcutSet);
+    return "Press " + altEnter + " to assign a shortcut";
   }
 
   @Override
@@ -179,7 +190,6 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Void> {
-
     @NotNull
     @Override
     public SearchEverywhereContributor<Void> createContributor(AnActionEvent initEvent) {

@@ -130,10 +130,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       defaults.remove("Spinner.arrowButtonBorder");
       defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
       MetalLookAndFeel.setCurrentTheme(createMetalTheme());
-      if (SystemInfo.isWindows && Registry.is("ide.win.frame.decoration")) {
-        JFrame.setDefaultLookAndFeelDecorated(true);
-        JDialog.setDefaultLookAndFeelDecorated(true);
-      }
       if (SystemInfo.isLinux && JBUI.isUsrHiDPI()) {
         applySystemFonts(defaults);
       }

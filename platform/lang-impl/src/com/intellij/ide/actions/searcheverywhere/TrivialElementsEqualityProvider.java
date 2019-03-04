@@ -9,10 +9,10 @@ public class TrivialElementsEqualityProvider implements SEResultsEqualityProvide
 
   @NotNull
   @Override
-  public Action compareItems(@NotNull SESearcher.ElementInfo newItem, @NotNull SESearcher.ElementInfo alreadyFoundItem) {
+  public SEEqualElementsActionType compareItems(@NotNull SearchEverywhereFoundElementInfo newItem, @NotNull SearchEverywhereFoundElementInfo alreadyFoundItem) {
     if (Objects.equals(newItem.getElement(), alreadyFoundItem.getElement())) {
-      return newItem.getPriority() > alreadyFoundItem.getPriority() ? Action.REPLACE : Action.SKIP;
+      return newItem.getPriority() > alreadyFoundItem.getPriority() ? SEEqualElementsActionType.REPLACE : SEEqualElementsActionType.SKIP;
     }
-    return Action.DO_NOTHING;
+    return SEEqualElementsActionType.DO_NOTHING;
   }
 }

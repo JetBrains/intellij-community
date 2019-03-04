@@ -60,6 +60,10 @@ public class SystemNotificationsImpl extends SystemNotifications {
       if (SystemInfo.isXWindow && Registry.is("ide.libnotify.enabled") ) {
         return LibNotifyWrapper.getInstance();
       }
+
+      if (SystemInfo.isWin10OrNewer && Registry.is("ide.system.tray.enabled")) {
+        return SystemTrayNotifications.getWin10Instance();
+      }
     }
     catch (Throwable t) {
       Logger logger = Logger.getInstance(SystemNotifications.class);

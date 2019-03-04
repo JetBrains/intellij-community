@@ -13,6 +13,6 @@ public class Seq<T> {
     }
 
     static void foo() {
-        Seq<String> n = <ref>nil();
+        Seq<String> n = <caret>nil();
     }
 }

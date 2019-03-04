@@ -162,10 +162,6 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     });
   }
 
-  private boolean canEnableConnectionCheck() {
-    return !myNoProxyRb.isSelected();
-  }
-
   @Override
   public void reset(@NotNull HttpConfigurable settings) {
     myNoProxyRb.setSelected(true);  // default
@@ -291,7 +287,6 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
     myProxyAuthCheckBox.setEnabled(enabled);
     enableProxyAuthentication(enabled && myProxyAuthCheckBox.isSelected());
-    myCheckButton.setEnabled(canEnableConnectionCheck());
 
     final boolean autoDetectProxy = myAutoDetectProxyRb.isSelected();
     myPacUrlCheckBox.setEnabled(autoDetectProxy);

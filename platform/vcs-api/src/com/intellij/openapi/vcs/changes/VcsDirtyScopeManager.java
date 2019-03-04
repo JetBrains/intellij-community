@@ -28,7 +28,6 @@ import java.util.Collection;
  * Manages asynchronous file status updating for files under VCS.
  *
  * @author max
- * @since 6.0
  */
 public abstract class VcsDirtyScopeManager {
   @NotNull
@@ -70,15 +69,15 @@ public abstract class VcsDirtyScopeManager {
   public abstract void changesProcessed();
 
   @NotNull
-  public abstract Collection<FilePath> whatFilesDirty(@NotNull Collection<FilePath> files);
+  public abstract Collection<FilePath> whatFilesDirty(@NotNull Collection<? extends FilePath> files);
 
   /**
    * Requests an asynchronous file status update for all files specified and under the specified directories
    */
-  public abstract void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty);
+  public abstract void filePathsDirty(@Nullable final Collection<? extends FilePath> filesDirty, @Nullable final Collection<? extends FilePath> dirsRecursivelyDirty);
 
   /**
    * Requests an asynchronous file status update for all files specified and under the specified directories
    */
-  public abstract void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty);
+  public abstract void filesDirty(@Nullable final Collection<? extends VirtualFile> filesDirty, @Nullable final Collection<? extends VirtualFile> dirsRecursivelyDirty);
 }

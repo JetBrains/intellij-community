@@ -65,7 +65,7 @@ abstract class HeavyDiffTestCase : DiffTestCase() {
     val disposable = Disposer.newDisposable()
     try {
       val diffProvider = SimpleTextDiffProvider(settings, Runnable {}, disposable)
-      return diffProvider.compare(text1, text2, ranges, INDICATOR)!!.flatMap { it }
+      return diffProvider.compare(text1, text2, ranges, INDICATOR)!!.flatten()
     }
     finally {
       Disposer.dispose(disposable)

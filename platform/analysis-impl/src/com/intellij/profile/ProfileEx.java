@@ -31,12 +31,8 @@ public abstract class ProfileEx implements Comparable, ExternalizableScheme {
   protected String myName;
 
   public ProfileEx(@NotNull String name) {
-    this(name, SmartSerializer.skipEmptySerializer());
-  }
-
-  protected ProfileEx(@NotNull String name, @NotNull SmartSerializer serializer) {
     myName = name;
-    mySerializer = serializer;
+    mySerializer = SmartSerializer.skipEmptySerializer();
   }
 
   @Override
@@ -52,10 +48,12 @@ public abstract class ProfileEx implements Comparable, ExternalizableScheme {
     myName = name;
   }
 
+  @Override
   public boolean equals(Object o) {
     return this == o || o instanceof ProfileEx && myName.equals(((ProfileEx)o).myName);
   }
 
+  @Override
   public int hashCode() {
     return myName.hashCode();
   }

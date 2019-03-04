@@ -56,6 +56,6 @@ public final class WeakKeyWeakValueHashMap<K,V> extends RefKeyRefValueHashMap<K,
   protected ValueReference<K, V> createValueReference(@NotNull RefHashMap.Key<K> key,
                                                       V referent,
                                                       ReferenceQueue<? super V> q) {
-    return new WeakValueReference<K, V>(key, referent, q);
+    return new WeakValueReference<>(key, referent, q);
   }
 }

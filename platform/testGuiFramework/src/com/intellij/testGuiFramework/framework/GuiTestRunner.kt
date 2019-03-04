@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.framework
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.param.GuiTestLocalRunnerParam
@@ -26,6 +27,7 @@ import com.intellij.testGuiFramework.launcher.GradleLauncher
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.launcher.ide.Ide
+import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.remote.IdeControl.closeIde
 import com.intellij.testGuiFramework.remote.IdeControl.ensureIdeIsRunning
 import com.intellij.testGuiFramework.remote.IdeControl.restartIde
@@ -36,6 +38,8 @@ import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
 import com.intellij.testGuiFramework.remote.transport.*
 import com.intellij.testGuiFramework.testCases.PluginTestCase.Companion.PLUGINS_INSTALLED
 import com.intellij.testGuiFramework.testCases.SystemPropertiesTestCase.Companion.SYSTEM_PROPERTIES
+import com.intellij.testGuiFramework.util.DisabledOnOs
+import com.intellij.util.io.exists
 import org.junit.Assert
 import org.junit.AssumptionViolatedException
 import org.junit.internal.runners.model.EachTestNotifier
@@ -45,6 +49,8 @@ import org.junit.runner.notification.RunListener
 import org.junit.runner.notification.RunNotifier
 import org.junit.runners.model.FrameworkMethod
 import java.net.SocketException
+import java.nio.file.Files
+import java.nio.file.Paths
 
 
 open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInterface) {
@@ -72,15 +78,25 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
   private fun runOnServerSide(method: FrameworkMethod, notifier: RunNotifier) {
 
     val description = runner.describeChild(method)
+    SERVER_LOG.info("DEBUG_TEST_DESCRIPTION: ${description.displayName} ${description.className} ${description.testClass} ${description.methodName}")
     val localIde = runner.ide ?: getIdeFromAnnotation(method.declaringClass)
     val systemProperties = getSystemPropertiesFromAnnotation(method.declaringClass)
 
     val eachNotifier = EachTestNotifier(notifier, description)
-    if (criticalError.get()) {
-      eachNotifier.fireTestIgnored(); return
+
+    if (testShouldBeIgnored(method)) {
+      eachNotifier.fireTestIgnored()
+      return
     }
 
     val testName = runner.getTestName(method.name)
+
+    if (criticalError.get()) {
+      SERVER_LOG.info("Test $testName ignored by @DisabledOnOs annotation")
+      eachNotifier.fireTestIgnored()
+      return
+    }
+
     SERVER_LOG.info("Starting test on server side: $testName")
 
     try {
@@ -93,21 +109,36 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
       Assert.fail(e.message)
     }
     var testIsRunning = true
+    var restartIdeAfterTest = false
     while (testIsRunning) {
       try {
         val message = myServer.receive()
         if (message.content is JUnitInfo && message.content.testClassAndMethodName == JUnitInfo.getClassAndMethodName(description)) {
+          if (restartIdeAfterTest && message.content.type == Type.FINISHED) {
+            restartIde(ide = getIdeFromMethod(method), runIde = ::runIde)
+            //we're removing config/options/recentProjects.xml to avoid auto-opening of the previous project
+            deleteRecentProjectsSettings()
+            SERVER_LOG.info("Restarting IDE...")
+          }
           testIsRunning = processJUnitEvent(message.content, eachNotifier)
         }
         if (message.type == MessageType.RESTART_IDE) {
           restartIde(ide = getIdeFromMethod(method), runIde = ::runIde)
+          //we're removing config/options/recentProjects.xml to avoid auto-opening of the previous project
+          deleteRecentProjectsSettings()
           sendRunTestCommand(method, testName)
+        }
+        if (message.type == MessageType.RESTART_IDE_AFTER_TEST) {
+          SERVER_LOG.warn("IDE should be restarted after test")
+          restartIdeAfterTest = true
         }
         if (message.type == MessageType.RESTART_IDE_AND_RESUME) {
           if (message.content !is RestartIdeAndResumeContainer) throw Exception(
             "Transport exception: Message with type RESTART_IDE_AND_RESUME should have content type RestartIdeAndResumeContainer but has a ${message.content?.javaClass?.canonicalName}")
           when (message.content.restartIdeCause) {
             RestartIdeCause.PLUGIN_INSTALLED -> {
+              //do not restart IDE from previously opened project
+              deleteRecentProjectsSettings()
               restartIde(ide = getIdeFromMethod(method), runIde = ::runIde)
               resumeTest(method, PLUGINS_INSTALLED)
             }
@@ -129,6 +160,15 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
         testIsRunning = false
       }
     }
+  }
+
+  private fun deleteRecentProjectsSettings() {
+    val recentProjects = Paths.get(PathManager.getConfigPath(), "options", "recentProjects.xml")
+    if (recentProjects.exists())
+      Files.delete(recentProjects)
+    val recentProjectDirectories = Paths.get(PathManager.getConfigPath(), "options", "recentProjectDirectories.xml")
+    if (recentProjectDirectories.exists())
+      Files.delete(recentProjectDirectories)
   }
 
   private fun sendRunTestCommand(method: FrameworkMethod, testName: String) {
@@ -241,6 +281,10 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
 
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.framework.GuiTestRunner")
+
+    private fun testShouldBeIgnored(test: FrameworkMethod): Boolean =
+      test.getAnnotation(DisabledOnOs::class.java)?.os?.contains(SystemInfo.getSystemType()) ?: false ||
+      test.declaringClass.getAnnotation(DisabledOnOs::class.java)?.os?.contains(SystemInfo.getSystemType()) ?: false
   }
 
 }

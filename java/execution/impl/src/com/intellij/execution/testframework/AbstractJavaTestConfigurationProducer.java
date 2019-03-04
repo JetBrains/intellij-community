@@ -4,7 +4,6 @@ package com.intellij.execution.testframework;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -34,12 +33,15 @@ import org.jetbrains.annotations.Contract;
 import java.util.*;
 
 public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestConfigurationBase> extends JavaRunConfigurationProducerBase<T> {
-  protected AbstractJavaTestConfigurationProducer(ConfigurationFactory configurationFactory) {
-    super(configurationFactory);
-  }
-
+  /**
+   * @deprecated Override {@link #getConfigurationFactory()}.
+   */
+  @Deprecated
   protected AbstractJavaTestConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
+  }
+
+  protected AbstractJavaTestConfigurationProducer() {
   }
 
   @Contract("null->false")
@@ -92,8 +94,8 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     final Module predefinedModule = templateConfiguration.getConfigurationModule().getModule();
     final String vmParameters;
     if (predefinedConfiguration != null) {
-      vmParameters = predefinedConfiguration instanceof CommonJavaRunConfigurationParameters 
-                     ? ((CommonJavaRunConfigurationParameters)predefinedConfiguration).getVMParameters() 
+      vmParameters = predefinedConfiguration instanceof CommonJavaRunConfigurationParameters
+                     ? ((CommonJavaRunConfigurationParameters)predefinedConfiguration).getVMParameters()
                      : null;
     }
     else {
@@ -133,40 +135,42 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
                                  boolean checkIsTest,
                                  PsiElementProcessor.CollectElements<PsiElement> collectingProcessor) {
     for (PsiElement psiElement : psiElements) {
-      psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiMember.class, false);
-      if (psiElement instanceof PsiClassOwner) {
-        final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
-        for (PsiClass aClass : classes) {
-          if ((!checkIsTest && isRequiredVisibility(aClass) || checkIsTest && isTestClass(aClass)) &&
-              !collectingProcessor.execute(aClass)) {
-            return;
+      if (psiElement instanceof PsiDirectory) {
+        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)psiElement);
+        if (aPackage != null && !collectingProcessor.execute(aPackage)) {
+          return;
+        }
+      }
+      else {
+        psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiMember.class, false);
+        if (psiElement instanceof PsiClassOwner) {
+          final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
+          for (PsiClass aClass : classes) {
+            if ((!checkIsTest && isRequiredVisibility(aClass) || checkIsTest && isTestClass(aClass)) &&
+                !collectingProcessor.execute(aClass)) {
+              return;
+            }
           }
         }
-      }
-      else if (psiElement instanceof PsiClass) {
-        if ((!checkIsTest && isRequiredVisibility((PsiClass)psiElement) ||
-             checkIsTest && isTestClass((PsiClass)psiElement)) &&
-            !collectingProcessor.execute(psiElement)) {
-          return;
-        }
-      }
-      else if (psiElement instanceof PsiMethod) {
-        if (checkIsTest && isTestMethod(checkAbstract, (PsiMethod)psiElement) && !collectingProcessor.execute(psiElement)) {
-          return;
-        }
-        if (!checkIsTest) {
-          final PsiClass containingClass = ((PsiMethod)psiElement).getContainingClass();
-          if (containingClass != null &&
-              isRequiredVisibility(containingClass) &&
+        else if (psiElement instanceof PsiClass) {
+          if ((!checkIsTest && isRequiredVisibility((PsiClass)psiElement) ||
+               checkIsTest && isTestClass((PsiClass)psiElement)) &&
               !collectingProcessor.execute(psiElement)) {
             return;
           }
         }
-      }
-      else if (psiElement instanceof PsiDirectory) {
-        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)psiElement);
-        if (aPackage != null && !collectingProcessor.execute(aPackage)) {
-          return;
+        else if (psiElement instanceof PsiMethod) {
+          if (checkIsTest && isTestMethod(checkAbstract, (PsiMethod)psiElement) && !collectingProcessor.execute(psiElement)) {
+            return;
+          }
+          if (!checkIsTest) {
+            final PsiClass containingClass = ((PsiMethod)psiElement).getContainingClass();
+            if (containingClass != null &&
+                isRequiredVisibility(containingClass) &&
+                !collectingProcessor.execute(psiElement)) {
+              return;
+            }
+          }
         }
       }
     }

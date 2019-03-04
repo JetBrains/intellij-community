@@ -2,8 +2,8 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.parseInput
+import com.intellij.openapi.vcs.ex.ExclusionState.*
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.ExclusionState.*
 
 class PartiallyExcludedChangesTest : BasePartiallyExcludedChangesTest() {
   private val FILE_1 = "file1.txt"

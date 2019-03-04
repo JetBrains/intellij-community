@@ -76,7 +76,7 @@
 
     <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider"/>
     <extensionPoint name="embeddedTokenTypesProvider" interface="com.intellij.lexer.EmbeddedTokenTypesProvider"/>
-    <extensionPoint name="xml.html5SchemaProvider" interface="com.intellij.xml.Html5SchemaProvider"/>
+    <extensionPoint name="embeddedTokenHighlighter" interface="com.intellij.ide.highlighter.EmbeddedTokenHighlighter"/>
     <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider"/>
 
     <extensionPoint qualifiedName="org.jetbrains.javaScriptDebuggerStarter" interface="com.intellij.ide.browsers.JavaScriptDebuggerStarter"/>
@@ -101,6 +101,7 @@
     <extensionPoint name="xml.undefinedElementFixProvider" interface="com.intellij.xml.XmlUndefinedElementFixProvider"/>
 
     <extensionPoint name="html.codestyle.panel" interface="com.intellij.application.options.HtmlCodeStylePanelExtension"/>
+    <extensionPoint name="html.scriptDocumentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider"/>
   </extensionPoints>
 
   <project-components>
@@ -377,7 +378,7 @@
 
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.XmlMover" id="xml" order="before line"/>
 
-    <moveLeftRightHandler language="XML" 
+    <moveLeftRightHandler language="XML"
                           implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.XmlMoveLeftRightHandler"/>
 
     <applicationService serviceInterface="com.intellij.ide.browsers.WebBrowserService"

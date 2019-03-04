@@ -243,6 +243,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
       try {
         myApplying = true;
         apply();
+        myChangeListener.consume(myRepository);
         enableEditor();
       }
       finally {
@@ -278,6 +279,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myRepository.setUsername(myUserNameText.getText().trim());
     //noinspection deprecation
     myRepository.setPassword(myPasswordText.getText());
+    myRepository.storeCredentials();
     myRepository.setShared(myShareUrlCheckBox.isSelected());
     myRepository.setUseProxy(myUseProxy.isSelected());
     myRepository.setUseHttpAuthentication(myUseHttpAuthenticationCheckBox.isSelected());
@@ -285,8 +287,6 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
 
     myRepository.setShouldFormatCommitMessage(myAddCommitMessage.isSelected());
     myRepository.setCommitMessageFormat(myDocument.getText());
-
-    myChangeListener.consume(myRepository);
   }
 
   @Override

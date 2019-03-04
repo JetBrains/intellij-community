@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -57,8 +43,6 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 
 public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
-  protected final DaemonCodeAnalyzerSettings myDaemonSettings;
-  protected final EditorColorsManager myColorsManager;
   private final Option myLambdaOption = new Option("java.lambda", "Lambda", AllIcons.Gutter.ImplementingFunctionalInterface);
   private final Option myOverriddenOption = new Option("java.overridden", "Overridden method", AllIcons.Gutter.OverridenMethod);
   private final Option myImplementedOption = new Option("java.implemented", "Implemented method", AllIcons.Gutter.ImplementedMethod);
@@ -69,9 +53,12 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   private static final CallMatcher SERVICE_LOADER_LOAD = CallMatcher.staticCall("java.util.ServiceLoader", "load", "loadInstalled");
 
+  public JavaLineMarkerProvider() {
+  }
+
+  @SuppressWarnings("unused")
+  @Deprecated
   public JavaLineMarkerProvider(DaemonCodeAnalyzerSettings daemonSettings, EditorColorsManager colorsManager) {
-    myDaemonSettings = daemonSettings;
-    myColorsManager = colorsManager;
   }
 
   @Override
@@ -112,7 +99,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       }
     }
 
-    if (myDaemonSettings.SHOW_METHOD_SEPARATORS && element.getFirstChild() == null) {
+    if (DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS && element.getFirstChild() == null) {
       PsiElement element1 = element;
       boolean isMember = false;
       while (element1 != null && !(element1 instanceof PsiFile) && element1.getPrevSibling() == null) {
@@ -139,7 +126,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
         }
 
         if (drawSeparator) {
-          return LineMarkersPass.createMethodSeparatorLineMarker(element, myColorsManager);
+          return LineMarkersPass.createMethodSeparatorLineMarker(element, EditorColorsManager.getInstance());
         }
       }
     }

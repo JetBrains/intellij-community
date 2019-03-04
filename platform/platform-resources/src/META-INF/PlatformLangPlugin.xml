@@ -22,7 +22,7 @@
     <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
 
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
-                        serviceImplementation="com.intellij.ide.RecentDirectoryProjectsManagerEx"/>
+                        serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager"/>
 
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
@@ -65,7 +65,7 @@
                         serviceImplementation="com.intellij.openapi.roots.PlatformModifiableModelsProvider"/>
 
 
-    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler"/>
+    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyFilesOrDirectories"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler" id="moveFileOrDir"/>
 
     <treeStructureProvider implementation="com.intellij.platform.PlatformProjectViewStructureProvider"/>

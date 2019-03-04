@@ -6,6 +6,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.FirstBaseTestConfigurationFactory;
 import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.SecondBaseTestConfigurationFactory;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -329,13 +330,13 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
   }
 
   @NotNull
-  private static FUSUsageContext create(boolean isShared, boolean isEditBeforeRun, boolean isActivate, boolean isParallel) {
-    return FUSUsageContext.create(
-      valueOf(isShared),
-      valueOf(isEditBeforeRun),
-      valueOf(isActivate),
-      valueOf(isParallel)
-    );
+  private static FeatureUsageData create(boolean isShared, boolean isEditBeforeRun, boolean isActivate, boolean isParallel) {
+    return new FeatureUsageData().
+      addData("plugin_type", "PLATFORM").
+      addData("edit_before_run", isEditBeforeRun).
+      addData("activate_before_run", isActivate).
+      addData("shared", isShared).
+      addData("parallel", isParallel);
   }
 
   @NotNull
@@ -350,17 +351,17 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
   private static class TestUsageDescriptor {
     private final String myKey;
     private final int myValue;
-    private final FUSUsageContext myContext;
+    private final FeatureUsageData myData;
 
-    private TestUsageDescriptor(@NotNull String key, int value, @NotNull FUSUsageContext context) {
+    private TestUsageDescriptor(@NotNull String key, int value, @NotNull FeatureUsageData data) {
       myKey = key;
-      myContext = context;
+      myData = data;
       myValue = value;
     }
 
     private TestUsageDescriptor(@NotNull UsageDescriptor descriptor) {
       myKey = descriptor.getKey();
-      myContext = descriptor.getContext();
+      myData = descriptor.getData();
       myValue = descriptor.getValue();
     }
 
@@ -372,17 +373,17 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
 
       return myValue == that.myValue &&
              Objects.equals(myKey, that.myKey) &&
-             Objects.equals(myContext, that.myContext);
+             Objects.equals(myData, that.myData);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myKey, myValue, myContext);
+      return Objects.hash(myKey, myValue, myData);
     }
 
     @Override
     public String toString() {
-      return "'" + myKey + "' " + myContext.getData() + " : " + myValue;
+      return "'" + myKey + "' " + myData.build() + " : " + myValue;
     }
   }
 

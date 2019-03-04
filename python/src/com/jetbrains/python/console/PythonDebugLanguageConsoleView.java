@@ -50,7 +50,7 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
 
     enableConsole(!PyConsoleOptions.getInstance(project).isShowDebugConsoleByDefault());
 
-    getSwitchConsoleActionPresentation().setIcon(PythonIcons.Python.Debug.CommandLine);
+    getSwitchConsoleActionPresentation().setIcon(PythonIcons.Python.PythonConsole);
     getSwitchConsoleActionPresentation().setText(PyBundle.message("run.configuration.show.command.line.action.name"));
 
     List<AnAction> actions = ContainerUtil.newArrayList(PyConsoleUtil.createTabCompletionAction(getPydevConsoleView()));

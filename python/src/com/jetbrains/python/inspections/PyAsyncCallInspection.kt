@@ -14,7 +14,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyABCUtil
-import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil
 
@@ -29,7 +29,7 @@ class PyAsyncCallInspection : PyInspection() {
 
     override fun visitPyExpressionStatement(node: PyExpressionStatement) {
       val expr = node.expression
-      if (expr is PyCallExpression && isAwaitableCall(expr)) {
+      if (expr is PyCallExpression && isAwaitableCall(expr) && !isIgnored(expr)) {
         val awaitableType = when {
           isOuterFunctionAsync(expr) -> AwaitableType.AWAITABLE
           isOuterFunctionCoroutine(expr, myTypeEvalContext) -> AwaitableType.COROUTINE
@@ -40,6 +40,17 @@ class PyAsyncCallInspection : PyInspection() {
         registerProblem(node, PyBundle.message("INSP.NAME.coroutine.is.not.awaited", functionName),
                         PyAddAwaitCallForCoroutineFix(awaitableType))
       }
+    }
+
+    private fun isIgnored(callExpr: PyCallExpression): Boolean {
+      // ignore functions which return Task
+      val type = myTypeEvalContext.getType(callExpr) ?: return true
+      val typeQName = if (type is PyClassLikeType) type.classQName else null
+      if (ignoreReturnedType.contains(typeQName)) return true
+
+      // ignore builtin functions which schedule function to run in a loop without `await`
+      val qualifiedName = callExpr.multiResolveCalleeFunction(resolveContext).firstOrNull()?.qualifiedName
+      return ignoreBuiltinFunctions.contains(qualifiedName)
     }
 
     private fun isAwaitableCall(callExpr: PyCallExpression): Boolean {
@@ -54,6 +65,11 @@ class PyAsyncCallInspection : PyInspection() {
     enum class AwaitableType {
       AWAITABLE, COROUTINE
     }
+
+    val ignoreReturnedType = listOf("asyncio.tasks.Task")
+    val ignoreBuiltinFunctions = listOf("asyncio.events.AbstractEventLoop.run_in_executor",
+                                        "asyncio.tasks.ensure_future",
+                                        "asyncio.ensure_future")
 
     const val coroutineIsNotAwaited = "Coroutine is not awaited"
 

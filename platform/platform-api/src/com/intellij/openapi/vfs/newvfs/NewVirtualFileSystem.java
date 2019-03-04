@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -115,8 +101,15 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    *
    * @param file file to get attributes of.
    * @return attributes of a given file, or {@code null} if the file doesn't exist.
-   * @since 11.1
    */
   @Nullable
   public abstract FileAttributes getAttributes(@NotNull VirtualFile file);
+
+  /**
+   * Returns {@code true} if {@code path} represents a directory with at least one child.
+   * Override if your file system can answer this question more efficiently (without enumerating children).
+   */
+  public boolean hasChildren(@NotNull VirtualFile file) {
+    return list(file).length != 0;
+  }
 }

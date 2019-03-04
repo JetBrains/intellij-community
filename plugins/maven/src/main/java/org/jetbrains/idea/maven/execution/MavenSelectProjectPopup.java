@@ -59,9 +59,7 @@ public class MavenSelectProjectPopup {
       if (focusAfterSelection != null) {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (workingDirectoryField.hasFocus()) {
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(focusAfterSelection, true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(focusAfterSelection, true));
           }
         });
       }

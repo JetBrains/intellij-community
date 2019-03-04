@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.*;
@@ -87,7 +86,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
                                     @NotNull XExpression text,
                                     @Nullable XSourcePosition sourcePosition,
                                     boolean isCodeFragmentEvaluationSupported) {
-    super(WindowManager.getInstance().getFrame(project), true);
+    super(project, true);
     mySession = session;
     myEvaluatorSupplier = evaluatorSupplier;
     myProject = project;

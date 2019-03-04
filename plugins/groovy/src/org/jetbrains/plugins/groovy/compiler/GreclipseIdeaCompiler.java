@@ -59,7 +59,7 @@ public class GreclipseIdeaCompiler implements BackendCompiler {
   @NotNull
   @Override
   public Set<FileType> getCompilableFileTypes() {
-    return ContainerUtil.newTroveSet(StdFileTypes.JAVA, (FileType)GroovyFileType.GROOVY_FILE_TYPE);
+    return ContainerUtil.newTroveSet(StdFileTypes.JAVA, GroovyFileType.GROOVY_FILE_TYPE);
   }
 
   @NotNull

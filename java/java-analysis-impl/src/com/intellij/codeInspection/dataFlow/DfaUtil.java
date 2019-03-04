@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.inference.InferenceFromSourceUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.TextRange;
@@ -25,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * @author Gregory.Shrago
@@ -286,19 +289,18 @@ public class DfaUtil {
   }
 
   public static boolean ignoreInitializer(PsiVariable variable) {
-    // Skip boolean constant fields as they usually used as control knobs to modify program logic
-    // it's better to analyze both true and false values even if it's predefined
-    PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
-    return initializer != null &&
-           variable instanceof PsiField &&
-           variable.hasModifierProperty(PsiModifier.FINAL) &&
-           variable.getType().equals(PsiType.BOOLEAN) &&
-           (ExpressionUtils.isLiteral(initializer, Boolean.TRUE) || ExpressionUtils.isLiteral(initializer, Boolean.FALSE));
+    if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.FINAL) && variable.getType().equals(PsiType.BOOLEAN)) {
+      // Skip boolean constant fields as they usually used as control knobs to modify program logic
+      // it's better to analyze both true and false values even if it's predefined
+      PsiLiteralExpression initializer = tryCast(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()), PsiLiteralExpression.class);
+      return initializer != null && initializer.getValue() instanceof Boolean;
+    }
+    return false;
   }
 
   static boolean isEffectivelyUnqualified(DfaVariableValue variableValue) {
     return variableValue.getQualifier() == null ||
-     variableValue.getQualifier().getSource() instanceof DfaExpressionFactory.ThisSource;
+     variableValue.getQualifier().getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor;
   }
 
   public static boolean hasImplicitImpureSuperCall(PsiClass aClass, PsiMethod constructor) {
@@ -336,7 +338,8 @@ public class DfaUtil {
   @Nullable
   public static Boolean evaluateCondition(@Nullable PsiExpression condition) {
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(condition);
-    return result == null ? null : ObjectUtils.tryCast(result.getExpressionValue(condition), Boolean.class);
+    if (result == null) return null;
+    return tryCast(ContainerUtil.getOnlyItem(result.getExpressionValues(condition)), Boolean.class);
   }
 
   public static boolean isComparedByEquals(PsiType type) {
@@ -354,7 +357,7 @@ public class DfaUtil {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
       if (value instanceof DfaBoxedValue ||
           (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType()))) {
-        return value.getFactory().getBoxedFactory().createUnboxed(value, ObjectUtils.tryCast(type, PsiPrimitiveType.class));
+        return SpecialField.UNBOX.createValue(value.getFactory(), value);
       }
     }
     return value;
@@ -406,6 +409,33 @@ public class DfaUtil {
       return visitor.exprValue;
     }
     return null;
+  }
+
+  @NotNull
+  public static List<? extends MethodContract> addRangeContracts(@Nullable PsiMethod method,
+                                                                 @NotNull List<? extends MethodContract> contracts) {
+    if (method == null) return contracts;
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    List<MethodContract> rangeContracts = new ArrayList<>();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      LongRangeSet fromType = LongRangeSet.fromType(parameter.getType());
+      if (fromType == null) continue;
+      LongRangeSet fromAnnotation = LongRangeSet.fromPsiElement(parameter);
+      if (fromAnnotation.min() > fromType.min()) {
+        MethodContract contract = MethodContract.singleConditionContract(
+          ContractValue.argument(i), DfaRelationValue.RelationType.LT, ContractValue.constant(fromAnnotation.min(), PsiType.LONG),
+          ContractReturnValue.fail());
+        rangeContracts.add(contract);
+      }
+      if (fromAnnotation.max() < fromType.max()) {
+        MethodContract contract = MethodContract.singleConditionContract(
+          ContractValue.argument(i), DfaRelationValue.RelationType.GT, ContractValue.constant(fromAnnotation.max(), PsiType.LONG),
+          ContractReturnValue.fail());
+        rangeContracts.add(contract);
+      }
+    }
+    return ContainerUtil.concat(rangeContracts, contracts);
   }
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {

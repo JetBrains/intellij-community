@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -44,8 +45,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.function.Supplier;
-
-import static com.intellij.util.containers.ContainerUtil.map2Array;
 
 /**
  * Aggregates all {@link ProjectDataService#EP_NAME registered data services} and provides entry points for project data management.
@@ -182,17 +181,25 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
       trace.logPerformance("Data import total", System.currentTimeMillis() - allStartTime);
     }
     catch (Throwable t) {
-      runFinalTasks(synchronous, onFailureImportTasks);
-      dispose(modelsProvider, project, synchronous);
-      ExceptionUtil.rethrowAllAsUnchecked(t);
+      try {
+        runFinalTasks(project, synchronous, onFailureImportTasks);
+        dispose(modelsProvider, project, synchronous);
+      }
+      finally {
+        //noinspection ConstantConditions
+        ExceptionUtil.rethrowAllAsUnchecked(t);
+      }
     }
-    runFinalTasks(synchronous, onSuccessImportTasks);
+    runFinalTasks(project, synchronous, onSuccessImportTasks);
   }
 
-  private static void runFinalTasks(boolean synchronous, List<Runnable> tasks) {
-    Runnable runnable = () -> {
-      for (Runnable task : ContainerUtil.reverse(tasks)) {
-        task.run();
+  private static void runFinalTasks(@NotNull Project project, boolean synchronous, List<Runnable> tasks) {
+    Runnable runnable = new DisposeAwareProjectChange(project) {
+      @Override
+      public void execute() {
+        for (Runnable task : ContainerUtil.reverse(tasks)) {
+          task.run();
+        }
       }
     };
     if (synchronous) {
@@ -355,9 +362,10 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     if (Boolean.TRUE.equals(startNode.getUserData(DATA_READY))) return;
     final DeduplicateVisitorsSupplier supplier = new DeduplicateVisitorsSupplier();
     ExternalSystemApiUtil.visit(startNode, dataNode -> {
-      prepareDataToUse(dataNode);
-      dataNode.visitData(supplier.getVisitor(dataNode.getKey()));
-      dataNode.putUserData(DATA_READY, Boolean.TRUE);
+      if (prepareDataToUse(dataNode)) {
+        dataNode.visitData(supplier.getVisitor(dataNode.getKey()));
+        dataNode.putUserData(DATA_READY, Boolean.TRUE);
+      }
     });
   }
 
@@ -428,18 +436,27 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     }
   }
 
-  private void prepareDataToUse(@NotNull DataNode dataNode) {
+  private boolean prepareDataToUse(@NotNull DataNode dataNode) {
     final Map<Key<?>, List<ProjectDataService<?, ?>>> servicesByKey = myServices.getValue();
     List<ProjectDataService<?, ?>> services = servicesByKey.get(dataNode.getKey());
     if (services != null) {
       try {
-        dataNode.prepareData(map2Array(services, ClassLoader.class, service -> service.getClass().getClassLoader()));
+        Set<ClassLoader> classLoaders = ContainerUtil.newLinkedHashSet();
+        for (ProjectDataService<?, ?> dataService : services) {
+          classLoaders.add(dataService.getClass().getClassLoader());
+        }
+        for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
+          classLoaders.add(manager.getClass().getClassLoader());
+        }
+        dataNode.prepareData(ContainerUtil.toArray(classLoaders, ClassLoader[]::new));
       }
       catch (Exception e) {
         LOG.debug(e);
         dataNode.clear(true);
+        return false;
       }
     }
+    return true;
   }
 
   private static void commit(@NotNull final IdeModifiableModelsProvider modelsProvider,

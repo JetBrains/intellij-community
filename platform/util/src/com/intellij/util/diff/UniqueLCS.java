@@ -15,9 +15,9 @@
  */
 package com.intellij.util.diff;
 
-import com.intellij.util.IntIntFunction;
-import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntIntHashMap;
+
+import java.util.Arrays;
 
 class UniqueLCS {
   private final int[] myFirst;
@@ -119,14 +119,8 @@ class UniqueLCS {
   // return i + 1
   // assert a[i] != val
   private static int binarySearch(final int[] sequence, final int val, int length) {
-    int i = ObjectUtils.binarySearch(0, length, new IntIntFunction() {
-      @Override
-      public int fun(int middle) {
-        return sequence[middle] <= val ? -1 : 1;
-      }
-    });
-    int r = -i - 1;
-    return r;
-
+    int i = Arrays.binarySearch(sequence, 0, length, val);
+    assert i < 0;
+    return -i - 1;
   }
 }

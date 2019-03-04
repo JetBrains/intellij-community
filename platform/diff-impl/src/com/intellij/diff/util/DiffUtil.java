@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.diff.*;
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonMergeUtil;
@@ -73,6 +73,9 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
@@ -178,11 +181,14 @@ public class DiffUtil {
     if (highlighter != null) editor.setHighlighter(highlighter);
   }
 
-  public static void setEditorCodeStyle(@Nullable Project project, @NotNull EditorEx editor, @Nullable FileType fileType) {
-    if (project != null && fileType != null) {
-      CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
-      editor.getSettings().setTabSize(codeStyleFacade.getTabSize(fileType));
-      editor.getSettings().setUseTabCharacter(codeStyleFacade.useTabCharacter(fileType));
+  public static void setEditorCodeStyle(@Nullable Project project, @NotNull EditorEx editor, @Nullable DocumentContent content) {
+    if (project != null && content != null && editor.getVirtualFile() == null) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(content.getDocument());
+      CommonCodeStyleSettings.IndentOptions indentOptions = psiFile != null
+                                                            ? CodeStyle.getSettings(psiFile).getIndentOptionsByFile(psiFile)
+                                                            : CodeStyle.getSettings(project).getIndentOptions(content.getContentType());
+      editor.getSettings().setTabSize(indentOptions.TAB_SIZE);
+      editor.getSettings().setUseTabCharacter(indentOptions.USE_TAB_CHARACTER);
     }
     editor.getSettings().setCaretRowShown(false);
     editor.reinitSettings();
@@ -222,13 +228,13 @@ public class DiffUtil {
   }
 
   public static void configureEditor(@NotNull EditorEx editor, @NotNull DocumentContent content, @Nullable Project project) {
-    setEditorHighlighter(project, editor, content);
-    setEditorCodeStyle(project, editor, content.getContentType());
-
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(content.getDocument());
     if (virtualFile != null && Registry.is("diff.enable.psi.highlighting")) {
       editor.setFile(virtualFile);
     }
+
+    setEditorHighlighter(project, editor, content);
+    setEditorCodeStyle(project, editor, content);
   }
 
   public static boolean isMirrored(@NotNull Editor editor) {
@@ -401,7 +407,10 @@ public class DiffUtil {
 
   @NotNull
   public static String getSettingsConfigurablePath() {
-    return "Settings | Tools | Diff";
+    if (SystemInfo.isMac) {
+      return "Preferences | Tools | Diff & Merge";
+    }
+    return "Settings | Tools | Diff & Merge";
   }
 
   @NotNull
@@ -827,23 +836,14 @@ public class DiffUtil {
     int totalLines = getLineCount(document);
     BitSet lines = new BitSet(totalLines + 1);
 
-    if (editor instanceof EditorEx) {
-      int expectedCaretOffset = ((EditorEx)editor).getExpectedCaretOffset();
-      if (editor.getCaretModel().getOffset() != expectedCaretOffset) {
-        Caret caret = editor.getCaretModel().getPrimaryCaret();
-        appendSelectedLines(editor, lines, caret, expectedCaretOffset);
-        return lines;
-      }
-    }
-
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
-      appendSelectedLines(editor, lines, caret, -1);
+      appendSelectedLines(editor, lines, caret);
     }
 
     return lines;
   }
 
-  private static void appendSelectedLines(@NotNull Editor editor, @NotNull BitSet lines, @NotNull Caret caret, int expectedCaretOffset) {
+  private static void appendSelectedLines(@NotNull Editor editor, @NotNull BitSet lines, @NotNull Caret caret) {
     Document document = editor.getDocument();
     int totalLines = getLineCount(document);
 
@@ -854,16 +854,8 @@ public class DiffUtil {
       if (caret.getSelectionEnd() == document.getTextLength()) lines.set(totalLines);
     }
     else {
-      int offset;
-      VisualPosition visualPosition;
-      if (expectedCaretOffset == -1) {
-        offset = caret.getOffset();
-        visualPosition = caret.getVisualPosition();
-      }
-      else {
-        offset = expectedCaretOffset;
-        visualPosition = editor.offsetToVisualPosition(expectedCaretOffset);
-      }
+      int offset = caret.getOffset();
+      VisualPosition visualPosition = caret.getVisualPosition();
 
       Pair<LogicalPosition, LogicalPosition> pair = EditorUtil.calcSurroundingRange(editor, visualPosition, visualPosition);
       lines.set(pair.first.line, Math.max(pair.second.line, pair.first.line + 1));
@@ -1285,9 +1277,7 @@ public class DiffUtil {
   private static boolean canResolveLineConflict(@NotNull MergeLineFragment fragment,
                                                 @NotNull List<? extends CharSequence> sequences,
                                                 @NotNull List<? extends LineOffsets> lineOffsets) {
-    List<? extends CharSequence> contents = ThreeSide.map(side -> {
-      return getLinesContent(side.select(sequences), side.select(lineOffsets), fragment.getStartLine(side), fragment.getEndLine(side));
-    });
+    List<? extends CharSequence> contents = ThreeSide.map(side -> getLinesContent(side.select(sequences), side.select(lineOffsets), fragment.getStartLine(side), fragment.getEndLine(side)));
     return ComparisonMergeUtil.tryResolveConflict(contents.get(0), contents.get(1), contents.get(2)) != null;
   }
 
@@ -1375,16 +1365,14 @@ public class DiffUtil {
       return false;
     }
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().executeCommand(project, () -> {
-        if (underBulkUpdate) {
-          DocumentUtil.executeInBulk(document, true, task);
-        }
-        else {
-          task.run();
-        }
-      }, commandName, commandGroupId, confirmationPolicy, document);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
+      if (underBulkUpdate) {
+        DocumentUtil.executeInBulk(document, true, task);
+      }
+      else {
+        task.run();
+      }
+    }, commandName, commandGroupId, confirmationPolicy, document));
     return true;
   }
 
@@ -1424,7 +1412,7 @@ public class DiffUtil {
   @CalledInAwt
   public static boolean makeWritable(@Nullable Project project, @NotNull VirtualFile file) {
     if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-    return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles();
+    return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(file)).hasReadonlyFiles();
   }
 
   public static void putNonundoableOperation(@Nullable Project project, @NotNull Document document) {

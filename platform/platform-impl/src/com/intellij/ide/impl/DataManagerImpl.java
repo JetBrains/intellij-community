@@ -7,10 +7,12 @@ import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.dataRules.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
@@ -65,6 +67,7 @@ public class DataManagerImpl extends DataManager {
 
   @Nullable
   public Object getDataFromProvider(@NotNull final DataProvider provider, @NotNull String dataId, @Nullable Set<String> alreadyComputedIds) {
+    ProgressManager.checkCanceled();
     if (alreadyComputedIds != null && alreadyComputedIds.contains(dataId)) {
       return null;
     }
@@ -123,7 +126,7 @@ public class DataManagerImpl extends DataManager {
   private GetDataRule getRuleFromMap(@NotNull String dataId) {
     GetDataRule rule = myDataConstantToRuleMap.get(dataId);
     if (rule == null && !myDataConstantToRuleMap.containsKey(dataId)) {
-      for (KeyedLazyInstanceEP<GetDataRule> ruleEP : GetDataRule.EP_NAME.getExtensionList()) {
+      for (KeyedLazyInstanceEP<GetDataRule> ruleEP : GetDataRule.EP_NAME.getExtensions()) {
         if (ruleEP.key.equals(dataId)) {
           rule = ruleEP.getInstance();
         }
@@ -197,6 +200,7 @@ public class DataManagerImpl extends DataManager {
     return result;
   }
 
+  @NotNull
   public DataContext getDataContextTest(Component component) {
     DataContext dataContext = getDataContext(component);
     if (myWindowManager == null) {
@@ -316,7 +320,7 @@ public class DataManagerImpl extends DataManager {
     private Map<Key, Object> myUserData;
     private final Map<String, Object> myCachedData = ContainerUtil.createWeakValueMap();
 
-    public MyDataContext(final Component component) {
+    public MyDataContext(@Nullable Component component) {
       myEventCount = -1;
       myRef = component == null ? null : new WeakReference<>(component);
     }
@@ -329,11 +333,14 @@ public class DataManagerImpl extends DataManager {
 
     @Override
     public Object getData(@NotNull String dataId) {
-      int currentEventCount = IdeEventQueue.getInstance().getEventCount();
-      if (myEventCount != -1 && myEventCount != currentEventCount) {
-        LOG.error("cannot share data context between Swing events; initial event count = " + myEventCount + "; current event count = " +
-                  currentEventCount);
-        return doGetData(dataId);
+      ProgressManager.checkCanceled();
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        int currentEventCount = IdeEventQueue.getInstance().getEventCount();
+        if (myEventCount != -1 && myEventCount != currentEventCount) {
+          LOG.error("cannot share data context between Swing events; initial event count = " + myEventCount + "; current event count = " +
+                    currentEventCount);
+          return doGetData(dataId);
+        }
       }
 
       if (ourSafeKeys.contains(dataId)) {
@@ -365,9 +372,12 @@ public class DataManagerImpl extends DataManager {
         return component != null ? ModalityState.stateForComponent(component) : ModalityState.NON_MODAL;
       }
       if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId)) {
-        Editor editor = (Editor)((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
-        return validateEditor(editor);
+        return validateEditor((Editor)calcData(dataId, component));
       }
+      return calcData(dataId, component);
+    }
+
+    protected Object calcData(@NotNull String dataId, Component component) {
       return ((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
     }
 

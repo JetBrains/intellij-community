@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@FunctionalInterface
 public interface CustomScopesProvider {
   ExtensionPointName<CustomScopesProvider> CUSTOM_SCOPES_PROVIDER = ExtensionPointName.create("com.intellij.customScopesProvider");
 
@@ -15,7 +16,7 @@ public interface CustomScopesProvider {
 
   @NotNull
   default List<NamedScope> getFilteredScopes() {
-    List<CustomScopesFilter> filters = CustomScopesFilter.EP_NAME.getExtensionList();
+    CustomScopesFilter[] filters = CustomScopesFilter.EP_NAME.getExtensions();
     return ContainerUtil.filter(getCustomScopes(), scope -> {
       for (CustomScopesFilter filter : filters) {
         if (filter.excludeScope(scope)) return false;

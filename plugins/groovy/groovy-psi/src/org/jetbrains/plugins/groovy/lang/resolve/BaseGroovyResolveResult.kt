@@ -7,10 +7,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
+import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 
 open class BaseGroovyResolveResult<out T : PsiElement>(
   element: T,
-  private val place: PsiElement,
+  protected val place: PsiElement,
   private val resolveContext: PsiElement? = null,
   private val substitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
   private val spreadState: SpreadState? = null
@@ -24,13 +25,13 @@ open class BaseGroovyResolveResult<out T : PsiElement>(
     spreadState = state[SpreadState.SPREAD_STATE]
   )
 
-  private val accessible by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  private val accessible by recursionAwareLazy {
     element !is PsiMember || PsiUtil.isAccessible(place, element)
   }
 
   override fun isAccessible(): Boolean = accessible
 
-  private val staticsOk by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  private val staticsOk by recursionAwareLazy {
     resolveContext is GrImportStatement ||
     element !is PsiModifierListOwner ||
     GrStaticChecker.isStaticsOK(element, place, resolveContext, false)
@@ -39,6 +40,8 @@ open class BaseGroovyResolveResult<out T : PsiElement>(
   override fun isStaticsOK(): Boolean = staticsOk
 
   override fun getCurrentFileResolveContext(): PsiElement? = resolveContext
+
+  final override fun getContextSubstitutor(): PsiSubstitutor = substitutor
 
   override fun getSubstitutor(): PsiSubstitutor = substitutor
 

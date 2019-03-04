@@ -1,9 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.ApplyIntentionAction;
+import com.intellij.ide.ui.OptionsSearchTopHitProvider;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -98,13 +99,19 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   private boolean processTopHits(String pattern, Processor<? super MatchedValue> consumer, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final CollectConsumer<Object> collector = new CollectConsumer<>();
+    String commandAccelerator = SearchTopHitProvider.getTopHitAccelerator();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
       //noinspection deprecation
-      if (provider instanceof OptionsTopHitProvider.CoveredByToggleActions) continue;
-      if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) continue;
-      if (provider instanceof OptionsTopHitProvider && !StringUtil.startsWith(pattern, "#")) {
-        String prefix = "#" + ((OptionsTopHitProvider)provider).getId() + " ";
+      if (provider instanceof OptionsTopHitProvider.CoveredByToggleActions) {
+        continue;
+      }
+
+      if (provider instanceof OptionsSearchTopHitProvider && !StringUtil.startsWith(pattern, commandAccelerator)) {
+        String prefix = commandAccelerator + ((OptionsSearchTopHitProvider)provider).getId() + " ";
         provider.consumeTopHits(prefix + pattern, collector, project);
+      }
+      else if (project != null && provider instanceof OptionsTopHitProvider.ProjectLevelProvidersAdapter) {
+        ((OptionsTopHitProvider.ProjectLevelProvidersAdapter)provider).consumeAllTopHits(pattern, collector, project);
       }
       provider.consumeTopHits(pattern, collector, project);
     }
@@ -119,7 +126,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     Map<String, String> map = myModel.getConfigurablesNames();
     SearchableOptionsRegistrarImpl registrar = (SearchableOptionsRegistrarImpl)SearchableOptionsRegistrar.getInstance();
 
-    List<Comparable> options = ContainerUtil.newArrayList();
+    List<Object> options = ContainerUtil.newArrayList();
     final Set<String> words = registrar.getProcessedWords(pattern);
     Set<OptionDescription> optionDescriptions = null;
     final String actionManagerName = myActionManager.getComponentName();
@@ -216,11 +223,11 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   }
 
   private final static Logger LOG = Logger.getInstance(GotoActionItemProvider.class);
-  
-  private static boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<? super MatchedValue> consumer) {
+
+  private static boolean processItems(String pattern, JBIterable<?> items, Processor<? super MatchedValue> consumer) {
     List<MatchedValue> matched = ContainerUtil.newArrayList(items.map(o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern)));
     try {
-      Collections.sort(matched);
+      Collections.sort(matched, (o1, o2) -> o1.compareWeights(o2));
     }
     catch (IllegalArgumentException e) {
       LOG.error("Comparison method violates its general contract with pattern '" + pattern + "'", e);

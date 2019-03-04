@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -23,13 +22,6 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
 
 public class GroovyContinueInspection extends BaseInspection {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Continue statement";
-  }
 
   @Override
   @Nullable

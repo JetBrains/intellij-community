@@ -58,7 +58,8 @@
     <directoryProjectConfigurator implementation="com.intellij.platform.PlatformInspectionProfileConfigurator"/>
 
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
-                        serviceImplementation="com.jetbrains.python.PythonModuleTypeManager"/>
+                        serviceImplementation="com.jetbrains.python.PythonModuleTypeManager"
+                        overrides="true"/>
 
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.FileGroupingRuleProvider" order="first"/>
     <fileStructureGroupRuleProvider implementation="com.jetbrains.python.findUsages.PyClassGroupingRuleProvider"
@@ -93,8 +94,11 @@
   </extensions>
 
   <actions>
+    <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PyCharmNewProjectAction">
+      <add-to-group group-id="NewProjectOrModuleGroup"/>
+    </action>
     <group id="PlatformOpenProjectGroup">
-      <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PyCharmNewProjectAction"/>
+      <reference ref="NewProjectOrModuleGroup"/>
       <action id="NewElement" class="com.intellij.ide.actions.NewElementAction" />
       <reference ref="NewScratchFile" />
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
@@ -124,9 +128,6 @@
     </group>
 
     <action overrides="true" id="ForceStepInto" class="com.intellij.openapi.actionSystem.EmptyAction"/>
-
-    <group id="TypeHierarchyPopupMenu">
-    </group>
 
     <action id="RenameProject" class="com.intellij.platform.renameProject.RenameProjectAction">
       <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="RenameFile"/>

@@ -5,7 +5,6 @@ package com.intellij.execution.junit2.configuration;
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.MethodBrowser;
-import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
@@ -344,7 +343,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     myCommonJavaParameters.applyTo(configuration);
     configuration.setForkMode((String)myForkCb.getSelectedItem());
-    configuration.setShortenCommandLine((ShortenCommandLine)myShortenClasspathModeCombo.getComponent().getSelectedItem());
+    configuration.setShortenCommandLine(myShortenClasspathModeCombo.getComponent().getSelectedItem());
   }
 
   protected String[] setArrayFromText(LabeledComponent<RawCommandLineEditor> field) {
@@ -497,7 +496,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     }
     else if (selectedType == JUnitConfigurationModel.TAGS) {
       myPackagePanel.setVisible(false);
-      myScopesPanel.setVisible(false);
+      myScopesPanel.setVisible(true);
       myDir.setVisible(false);
       myPattern.setVisible(false);
       myClass.setVisible(false);
@@ -543,14 +542,15 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     for (int i = 0; i < myTestLocations.length; i++) {
       final LabeledComponent testLocation = getTestLocation(i);
       final JComponent component = testLocation.getComponent();
-      final ComponentWithBrowseButton field;
+      final ComponentWithBrowseButton<? extends JComponent> field;
       Object document;
       if (component instanceof TextFieldWithBrowseButton) {
         field = (TextFieldWithBrowseButton)component;
         document = new PlainDocument();
         ((TextFieldWithBrowseButton)field).getTextField().setDocument((Document)document);
-      } else if (component instanceof EditorTextFieldWithBrowseButton) {
-        field = (ComponentWithBrowseButton)component;
+      }
+      else if (component instanceof EditorTextFieldWithBrowseButton) {
+        field = (EditorTextFieldWithBrowseButton)component;
         document = ((EditorTextField)field.getChildComponent()).getDocument();
       }
       else {
@@ -708,7 +708,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     }
 
     @Override
-    protected void onClassChoosen(PsiClass psiClass) {
+    protected void onClassChosen(@NotNull PsiClass psiClass) {
       final JTextField textField = myPatternTextField.getTextField();
       final String text = textField.getText();
       textField.setText(text + (text.length() > 0 ? "||" : "") + psiClass.getQualifiedName());
@@ -719,9 +719,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       try {
         return TestClassFilter.create(SourceScope.wholeProject(getProject()), null);
       }
-      catch (JUnitUtil.NoJUnitException ignore) {
+      catch (JUnitUtil.NoJUnitException e) {
         throw new NoFilterException(new MessagesEx.MessageInfo(getProject(),
-                                                               ignore.getMessage(),
+                                                               e.getMessage(),
                                                                ExecutionBundle.message("cannot.browse.test.inheritors.dialog.title")));
       }
     }
@@ -738,7 +738,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     }
 
     @Override
-    protected void onClassChoosen(final PsiClass psiClass) {
+    protected void onClassChosen(@NotNull PsiClass psiClass) {
       setPackage(JUnitUtil.getContainingPackage(psiClass));
     }
 
@@ -752,7 +752,12 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       final ConfigurationModuleSelector moduleSelector = getModuleSelector();
       final Module module = moduleSelector.getModule();
       if (module == null) {
-        throw NoFilterException.moduleDoesntExist(moduleSelector);
+        final Project project = moduleSelector.getProject();
+        final String moduleName = moduleSelector.getModuleName();
+        throw new NoFilterException(new MessagesEx.MessageInfo(
+          project,
+          moduleName.isEmpty() ? "No module selected" : ExecutionBundle.message("module.does.not.exists", moduleName, project.getName()),
+          ExecutionBundle.message("cannot.browse.test.inheritors.dialog.title")));
       }
       final ClassFilter.ClassFilterWithScope classFilter;
       try {
@@ -769,14 +774,17 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
             @Override
             public boolean isAccepted(PsiClass aClass) {
-              return JUnitUtil.isJUnit5TestClass(aClass,true);
+              return JUnitUtil.isTestClass(aClass,true, true);
             }
           };
         }
         classFilter = TestClassFilter.create(sourceScope, configurationCopy.getConfigurationModule().getModule());
       }
       catch (JUnitUtil.NoJUnitException e) {
-        throw NoFilterException.noJUnitInModule(module);
+        throw new NoFilterException(new MessagesEx.MessageInfo(
+          module.getProject(),
+          ExecutionBundle.message("junit.not.found.in.module.error.message", module.getName()),
+          ExecutionBundle.message("cannot.browse.test.inheritors.dialog.title")));
       }
       return classFilter;
     }
@@ -816,7 +824,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     }
 
     @Override
-    protected void onClassChoosen(PsiClass psiClass) {
+    protected void onClassChosen(@NotNull PsiClass psiClass) {
       ((LabeledComponent<EditorTextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.CATEGORY)).getComponent()
         .setText(psiClass.getQualifiedName());
     }

@@ -5,17 +5,16 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/compatibilityResources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.util" exported="" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.extensions" exported="" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
-    <orderEntry type="library" name="NanoXML" level="project" />
     <orderEntry type="library" name="microba" level="project" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="intellij.xml" exported="" />

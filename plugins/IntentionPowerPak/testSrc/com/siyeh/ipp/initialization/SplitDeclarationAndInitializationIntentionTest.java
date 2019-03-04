@@ -31,6 +31,8 @@ public class SplitDeclarationAndInitializationIntentionTest extends IPPTestCase 
   public void testMultipleFieldsSingleDeclaration() { doTest(); }
   public void testMultipleFieldsSingleDeclaration2() { doTest(); }
   public void testMultipleFieldsSingleDeclaration3() { doTest(); }
+  public void testNotInsideCodeBlock() { doTest(); }
+  public void testInsideCodeBlock() { assertIntentionNotAvailable(); }
 
   @Override
   protected String getRelativePath() {

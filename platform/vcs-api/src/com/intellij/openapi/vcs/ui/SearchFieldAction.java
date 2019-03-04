@@ -1,11 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ui;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.JBUI;
@@ -59,8 +57,6 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
     else {
       myField.setBorder(emptyBorder);
     }
-
-    myField.setSearchIcon(AllIcons.General.Filter);
     myComponent = new JPanel();
     final BoxLayout layout = new BoxLayout(myComponent, BoxLayout.X_AXIS);
     myComponent.setLayout(layout);
@@ -75,7 +71,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
   }
 
   private void perform() {
-    actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null));
+    actionPerformed(ActionUtil.createEmptyEvent());
   }
 
   public String getText() {
@@ -84,7 +80,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return myComponent;
   }
 

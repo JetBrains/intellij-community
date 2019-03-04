@@ -1,10 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.avatars
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
@@ -27,15 +25,11 @@ internal class CachingGithubAvatarIconsProvider(private val avatarsLoader: Cachi
                                                 private val imagesResizer: GithubImageResizer,
                                                 private val requestExecutor: GithubApiRequestExecutor,
                                                 private val iconSize: JBValue,
-                                                private val component: Component) : Disposable {
+                                                private val component: Component) {
 
   private val scaleContext = JBUI.ScaleContext.create(component)
   private var defaultIcon = createDefaultIcon(iconSize.get())
   private val icons = mutableMapOf<GithubUser, Icon>()
-
-  init {
-    LowMemoryWatcher.register(Runnable { icons.clear() }, this)
-  }
 
   private fun createDefaultIcon(size: Int): Icon {
     val standardDefaultAvatar = GithubIcons.DefaultAvatar
@@ -78,8 +72,6 @@ internal class CachingGithubAvatarIconsProvider(private val avatarsLoader: Cachi
     override fun getIconWidth() = delegate.iconWidth
     override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) = delegate.paintIcon(c, g, x, y)
   }
-
-  override fun dispose() {}
 
   // helper to avoid passing all the services to clients
   class Factory(private val avatarsLoader: CachingGithubUserAvatarLoader,

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -55,7 +56,7 @@ public abstract class AbstractValueHint {
   };
 
   private RangeHighlighter myHighlighter;
-  private Cursor myStoredCursor;
+  private boolean myCursorSet;
   private final Project myProject;
   private final Editor myEditor;
   private final ValueHintType myType;
@@ -112,13 +113,13 @@ public abstract class AbstractValueHint {
   public void hideHint() {
     myHintHidden = true;
     myCurrentRange = null;
-    if (myStoredCursor != null) {
-      Component internalComponent = myEditor.getContentComponent();
-      internalComponent.setCursor(myStoredCursor);
+    if (myCursorSet) {
+      myCursorSet = false;
+      if (myEditor instanceof EditorEx) ((EditorEx)myEditor).setCustomCursor(AbstractValueHint.class, null);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("internalComponent.setCursor(myStoredCursor)");
+        LOG.debug("restore cursor in editor");
       }
-      internalComponent.removeKeyListener(myEditorKeyListener);
+      myEditor.getContentComponent().removeKeyListener(myEditorKeyListener);
     }
 
     if (myCurrentHint != null) {
@@ -179,13 +180,12 @@ public abstract class AbstractValueHint {
                                                                   HighlighterLayer.SELECTION, attributes,
                                                                   HighlighterTargetArea.EXACT_RANGE);
     if (myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
-      Component internalComponent = myEditor.getContentComponent();
-      myStoredCursor = internalComponent.getCursor();
-      internalComponent.addKeyListener(myEditorKeyListener);
-      internalComponent.setCursor(hintCursor());
+      myEditor.getContentComponent().addKeyListener(myEditorKeyListener);
+      if (myEditor instanceof EditorEx) ((EditorEx)myEditor).setCustomCursor(AbstractValueHint.class, hintCursor());
       if (LOG.isDebugEnabled()) {
-        LOG.debug("internalComponent.setCursor(hintCursor())");
+        LOG.debug("set hint cursor to editor");
       }
+      myCursorSet = true;
     }
     else {
       TextAttributesKey attributesKey = DebuggerColors.EVALUATED_EXPRESSION_ATTRIBUTES;
@@ -261,6 +261,9 @@ public abstract class AbstractValueHint {
                                                      HintManager.HIDE_BY_TEXT_CHANGE |
                                                      HintManager.HIDE_BY_SCROLLING, 0, false,
                                                      hint);
+    if (myHighlighter == null && DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument())) { // hint text update
+      createHighlighter();
+    }
     setHighlighterAttributes();
     myInsideShow = false;
     return true;

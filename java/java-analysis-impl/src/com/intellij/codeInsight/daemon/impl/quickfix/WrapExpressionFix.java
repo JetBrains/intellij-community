@@ -4,7 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -26,11 +26,13 @@ public class WrapExpressionFix implements IntentionAction {
   private final PsiExpression myExpression;
   private final PsiClassType myExpectedType;
   private final boolean myPrimitiveExpected;
+  private final String myMethodPresentation;
 
   public WrapExpressionFix(@NotNull PsiType expectedType, @NotNull PsiExpression expression) {
     myExpression = expression;
     myExpectedType = getClassType(expectedType, expression);
     myPrimitiveExpected = expectedType instanceof PsiPrimitiveType;
+    myMethodPresentation = getMethodPresentation(myExpression, myExpectedType, myPrimitiveExpected);
   }
 
   @Nullable
@@ -47,10 +49,21 @@ public class WrapExpressionFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    PsiType type = myExpression.getType();
-    final PsiMethod wrapper = myExpression.isValid() && myExpectedType != null && type != null ? findWrapper(type, myExpectedType, myPrimitiveExpected) : null;
-    final String methodPresentation = wrapper != null ? wrapper.getContainingClass().getName() + "." + wrapper.getName() : "";
-    return QuickFixBundle.message("wrap.expression.using.static.accessor.text", methodPresentation);
+    return QuickFixBundle.message("wrap.expression.using.static.accessor.text", myMethodPresentation);
+  }
+
+  private static String getMethodPresentation(PsiExpression expression, PsiClassType expectedType, boolean primitiveExpected) {
+    PsiType type = expression.getType();
+    if (expectedType != null && type != null) {
+      final PsiMethod wrapper = findWrapper(type, expectedType, primitiveExpected);
+      if (wrapper != null) {
+        final PsiClass containingClass = wrapper.getContainingClass();
+        if (containingClass != null) {
+          return containingClass.getName() + '.' + wrapper.getName();
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -91,8 +104,9 @@ public class WrapExpressionFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myExpression.isValid()
-           && ScratchFileService.isInProjectOrScratch(myExpression)
+    return myMethodPresentation != null
+           && myExpression.isValid()
+           && BaseIntentionAction.canModify(myExpression)
            && PsiImplUtil.getSwitchLabel(myExpression) == null
            && myExpectedType != null
            && myExpectedType.isValid()

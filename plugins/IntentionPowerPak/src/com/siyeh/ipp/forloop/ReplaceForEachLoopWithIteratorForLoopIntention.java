@@ -17,11 +17,12 @@ package com.siyeh.ipp.forloop;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -52,7 +53,7 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
     CommentTracker tracker = new CommentTracker();
     final String methodCall = tracker.text(iteratedValue, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".iterator()";
     final Project project = statement.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiExpression iteratorCall = factory.createExpressionFromText(methodCall, iteratedValue);
     final PsiType variableType = GenericsUtil.getVariableTypeByExpressionType(iteratorCall.getType());
     if (variableType == null) {
@@ -60,8 +61,8 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
     }
     @NonNls final StringBuilder newStatement = new StringBuilder();
     newStatement.append("for(").append(variableType.getCanonicalText()).append(' ');
-    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    final String iterator = codeStyleManager.suggestUniqueVariableName("iterator", statement, true);
+    final String iterator = new VariableNameGenerator(statement, VariableKind.LOCAL_VARIABLE)
+      .byName("iterator", "iter", "it").generate(true);
     newStatement.append(iterator).append("=").append(iteratorCall.getText()).append(';');
     newStatement.append(iterator).append(".hasNext();) {");
     if (JavaCodeStyleSettings.getInstance(statement.getContainingFile()).GENERATE_FINAL_LOCALS) {

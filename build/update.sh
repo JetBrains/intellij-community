@@ -53,6 +53,7 @@ OS_TYPE=`uname -s`
 if [ "$OS_TYPE" = "Linux" ]; then
   cp -a "$DEV_IDEA_HOME/bin/linux/"fsnotifier* "$WORK_IDEA_HOME/bin"
   cp -a "$DEV_IDEA_HOME/bin/linux/"*.py "$WORK_IDEA_HOME/bin"
+  cp -a "$DEV_IDEA_HOME/bin/linux/"*.so "$WORK_IDEA_HOME/bin"
 elif [ "$OS_TYPE" = "Darwin" ]; then
   cp -a "$DEV_IDEA_HOME/bin/mac/"*.dylib "$WORK_IDEA_HOME/bin"
   cp -a "$DEV_IDEA_HOME/bin/mac/fsnotifier" "$WORK_IDEA_HOME/bin"

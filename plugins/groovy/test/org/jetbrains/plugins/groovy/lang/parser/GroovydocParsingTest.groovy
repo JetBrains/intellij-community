@@ -81,4 +81,6 @@ class GroovydocParsingTest extends GroovyParsingTestCase {
   void testAsterisks() { doTest() }
 
   void testWs() { doTest() }
+
+  void testReturnGenerics() { doTest() }
 }

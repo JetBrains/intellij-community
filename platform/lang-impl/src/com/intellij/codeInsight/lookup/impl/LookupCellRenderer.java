@@ -55,11 +55,12 @@ public class LookupCellRenderer implements ListCellRenderer {
 
   public static final Color BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.background", new JBColor(new Color(235, 244, 254), JBColor.background()));
   public static final Color FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.foreground", JBColor.foreground());
-  private static final Color GRAYED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.grayForeground",  new JBColor(Gray._150, Gray._110));
+  private static final Color GRAYED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.infoForeground",  new JBColor(new Color(0x8c8e91), Gray.x91));
   private static final Color SELECTED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionBackground", new Color(0, 82, 164));
   public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveBackground", new JBColor(0x6e8ea2, 0x55585a));
+  private static final Color SELECTED_NON_FOCUSED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveInfoForeground", new JBColor(new Color(0x1c2b38), Gray.x91));
   public static final Color SELECTED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
-  private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionGrayForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
+  private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInfoForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
 
   private static final Color PREFIX_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchForeground", new JBColor(0xb000b0, 0xd17ad6));
   private static final Color SELECTED_PREFIX_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchSelectionForeground", new JBColor(0xf9eccc, 0xd17ad6));
@@ -119,7 +120,6 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myIsSelected = isSelected;
     final LookupElement item = (LookupElement)value;
-    final Color foreground = getForegroundColor(isSelected);
     final Color background = nonFocusedSelection ? SELECTED_NON_FOCUSED_BACKGROUND_COLOR :
                              isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
 
@@ -157,7 +157,9 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myNameComponent.clear();
     myNameComponent.setBackground(background);
-    allowedWidth -= setItemTextLabel(item, new JBColor(isSelected ? SELECTED_FOREGROUND_COLOR : presentation.getItemTextForeground(), presentation.getItemTextForeground()), isSelected, presentation, allowedWidth);
+
+    Color itemColor = isSelected ? SELECTED_FOREGROUND_COLOR : JBColor.namedColor("CompletionPopup.foreground", presentation.getItemTextForeground());
+    allowedWidth -= setItemTextLabel(item, itemColor, isSelected, presentation, allowedWidth);
 
     Font font = myLookup.getCustomFont(item, false);
     if (font == null) {
@@ -165,18 +167,18 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
     myTailComponent.setFont(font);
     myTypeLabel.setFont(font);
-    myNameComponent.setIcon(augmentIcon(myLookup.getEditor(), presentation.getIcon(), myEmptyIcon));
+    myNameComponent.setIcon(augmentIcon(myLookup.getTopLevelEditor(), presentation.getIcon(), myEmptyIcon));
 
-
+    final Color grayedForeground = nonFocusedSelection ? SELECTED_NON_FOCUSED_FOREGROUND_COLOR : getGrayedForeground(isSelected);
     myTypeLabel.clear();
     if (allowedWidth > 0) {
-      allowedWidth -= setTypeTextLabel(item, background, foreground, presentation, isSelected ? getMaxWidth() : allowedWidth, isSelected, nonFocusedSelection, normalMetrics);
+      allowedWidth -= setTypeTextLabel(item, background, grayedForeground, presentation, isSelected ? getMaxWidth() : allowedWidth, isSelected, nonFocusedSelection, normalMetrics);
     }
 
     myTailComponent.clear();
     myTailComponent.setBackground(background);
     if (isSelected || allowedWidth >= 0) {
-      setTailTextLabel(isSelected, presentation, foreground, isSelected ? getMaxWidth() : allowedWidth, nonFocusedSelection,
+      setTailTextLabel(isSelected, presentation, grayedForeground, isSelected ? getMaxWidth() : allowedWidth, nonFocusedSelection,
                        normalMetrics);
     }
 
@@ -228,10 +230,6 @@ public class LookupCellRenderer implements ListCellRenderer {
       width += icon.getIconWidth() + component.getIconTextGap();
     }
     return width;
-  }
-
-  private static Color getForegroundColor(boolean isSelected) {
-    return isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
   }
 
   private int getMaxWidth() {

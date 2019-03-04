@@ -34,7 +34,7 @@ public interface ApplyFilePatch {
                ApplyPatchContext context,
                Project project,
                FilePath pathBeforeRename,
-               Getter<CharSequence> baseContents,
+               Getter<? extends CharSequence> baseContents,
                CommitContext commitContext) throws IOException;
 
   class Result {

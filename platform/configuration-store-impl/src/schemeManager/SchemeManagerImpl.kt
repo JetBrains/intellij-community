@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.ide.ui.UITheme
+import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.RoamingType
@@ -15,6 +16,7 @@ import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -33,6 +35,7 @@ import org.jdom.Document
 import org.jdom.Element
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -110,6 +113,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     try {
       val url = when (requestor) {
         is AbstractExtensionPointBean -> requestor.loaderForClass.getResource(resourceName)
+        is TempUIThemeBasedLookAndFeelInfo -> File(resourceName).toURI().toURL()
         is UITheme -> DecodeDefaultsUtil.getDefaults(requestor.providerClassLoader, resourceName)
         else -> DecodeDefaultsUtil.getDefaults(requestor, resourceName)
       }
@@ -142,6 +146,9 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
         schemes.add(scheme)
         if (requestor is UITheme) {
           requestor.editorSchemeName = schemeKey
+        }
+        if (requestor is TempUIThemeBasedLookAndFeelInfo) {
+          requestor.theme.editorSchemeName = schemeKey
         }
       }
     }
@@ -183,7 +190,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       val schemeLoader = createSchemeLoader(isDuringLoad = true)
       val isLoadOnlyFromProvider = provider != null && provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
         catchAndLog(name) {
-          val scheme = schemeLoader.loadScheme(name, input)
+          val scheme = schemeLoader.loadScheme(name, input, null)
           if (readOnly && scheme != null) {
             schemeListManager.readOnlyExternalizableSchemes.put(processor.getSchemeKey(scheme), scheme)
           }
@@ -198,8 +205,9 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
               continue
             }
 
-            catchAndLog(file.fileName.toString()) { filename ->
-              file.inputStream().use { schemeLoader.loadScheme(filename, it) }
+            val fileName = file.fileName.toString()
+            catchAndLog(fileName) {
+              schemeLoader.loadScheme(fileName, null, Files.readAllBytes(file))
             }
           }
         }
@@ -253,7 +261,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   internal fun getFileName(scheme: T) = schemeToInfo.get(scheme)?.fileNameWithoutExtension
 
-  fun canRead(name: CharSequence): Boolean = (updateExtension && name.endsWith(DEFAULT_EXT, true) || name.endsWith(schemeExtension, ignoreCase = true)) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
+  fun canRead(name: CharSequence) = (updateExtension && name.endsWith(DEFAULT_EXT, true) || name.endsWith(schemeExtension, ignoreCase = true)) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
 
   override fun save(errors: MutableList<Throwable>) {
     if (isLoadingSchemes.get()) {
@@ -597,14 +605,24 @@ internal fun nameIsMissed(bytes: ByteArray): RuntimeException {
 internal class SchemeDataHolderImpl<out T : Any, in MUTABLE_SCHEME : T>(private val processor: SchemeProcessor<T, MUTABLE_SCHEME>,
                                                                         private val bytes: ByteArray,
                                                                         private val externalInfo: ExternalInfo) : SchemeDataHolder<MUTABLE_SCHEME> {
-  override fun read(): Element = loadElement(bytes.inputStream())
+  override fun read(): Element {
+    try {
+      return JDOMUtil.load(bytes.inputStream())
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Exception) {
+      throw RuntimeException("Cannot read ${externalInfo.fileName}", e)
+    }
+  }
 
   override fun updateDigest(scheme: MUTABLE_SCHEME) {
     try {
       updateDigest(processor.writeScheme(scheme) as Element)
     }
     catch (e: WriteExternalException) {
-      LOG.error("Cannot update digest", e)
+      LOG.error("Cannot update digest for ${externalInfo.fileName}", e)
     }
   }
 

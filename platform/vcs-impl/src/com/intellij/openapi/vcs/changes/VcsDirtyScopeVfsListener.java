@@ -32,10 +32,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Listens to file system events and notifies VcsDirtyScopeManagers responsible for changed files to mark these files dirty.
@@ -95,15 +97,21 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
     myForbid = forbid;
   }
 
-  public void flushDirt() {
-    myDirtReporter.run();
-  }
-
   @Override
   public void dispose() {
     synchronized (myLock) {
       myQueue.clear();
     }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      //noinspection TestOnlyProblems
+      waitForAsyncTaskCompletion();
+    }
+  }
+
+  @TestOnly
+  void waitForAsyncTaskCompletion() {
+    myZipperUpdater.waitForAllExecuted(10, TimeUnit.SECONDS);
   }
 
   @Override
@@ -148,7 +156,7 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
       }
       else if (event instanceof VFilePropertyChangeEvent) {
         final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
-        if (pce.getPropertyName().equals(VirtualFile.PROP_NAME)) {
+        if (pce.isRename()) {
           // if a file was renamed, then the file is dirty and its parent directory is dirty too;
           // if a directory was renamed, all its children are recursively dirty, the parent dir is also dirty but not recursively.
           dirtyFilesAndDirs.add(file);   // the file is dirty recursively

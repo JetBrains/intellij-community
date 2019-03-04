@@ -24,11 +24,10 @@ class GuiTestStarter : IdeaApplication.IdeStarter(), ApplicationStarter {
   private val PORT_UNDEFINED = "undefined"
   private val HOST_LOCALHOST = "localhost"
 
-  private val guiTestThread = GuiTestThread()
-
   override fun getCommandName(): String = COMMAND_NAME
 
   override fun premain(args: Array<String>) {
+    val guiTestThread = GuiTestThread()
     processArgs(args)
     LOG.info("Starting GuiTest activity")
     guiTestThread.start()

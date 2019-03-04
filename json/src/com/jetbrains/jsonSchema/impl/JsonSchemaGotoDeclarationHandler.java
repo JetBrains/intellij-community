@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.json.JsonElementTypes;
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.openapi.editor.Editor;
@@ -15,8 +16,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler {
   @Nullable
   @Override
@@ -26,17 +25,17 @@ public class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler 
     final JsonStringLiteral literal = PsiTreeUtil.getParentOfType(sourceElement, JsonStringLiteral.class);
     if (literal == null) return null;
     final PsiElement parent = literal.getParent();
-    if (parent instanceof JsonProperty && ((JsonProperty)parent).getNameElement() == literal) {
-      final JsonSchemaService service = JsonSchemaService.Impl.get(literal.getProject());
+    if (literal.getReferences().length == 0 && parent instanceof JsonProperty && ((JsonProperty)parent).getNameElement() == literal) {
       final PsiFile containingFile = literal.getContainingFile();
+      final JsonSchemaService service = JsonSchemaService.Impl.get(literal.getProject());
       final VirtualFile file = containingFile.getVirtualFile();
       if (file == null || !service.isApplicableToFile(file)) return null;
-      final List<JsonSchemaVariantsTreeBuilder.Step> steps = JsonOriginalPsiWalker.INSTANCE.findPosition(literal, true);
+      final JsonPointerPosition steps = JsonOriginalPsiWalker.INSTANCE.findPosition(literal, true);
       if (steps == null) return null;
       final JsonSchemaObject schemaObject = service.getSchemaObject(file);
       if (schemaObject != null) {
-        final PsiElement target = new JsonSchemaResolver(schemaObject, false, steps)
-          .findNavigationTarget(false, ((JsonProperty)parent).getValue(),
+        final PsiElement target = new JsonSchemaResolver(sourceElement.getProject(), schemaObject, false, steps)
+          .findNavigationTarget(((JsonProperty)parent).getValue(),
                                 JsonSchemaService.isSchemaFile(containingFile));
         if (target != null) {
           return new PsiElement[] {target};

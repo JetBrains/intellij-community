@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.util.Pair;
@@ -6,12 +6,14 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.history.LogHierarchyNode;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
+import org.jetbrains.idea.svn.mergeinfo.MergeCheckResult;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 
@@ -20,9 +22,7 @@ import java.util.List;
 import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.openapi.progress.ProgressManager.progress2;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static java.lang.Math.min;
 import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache.MergeCheckResult;
 
 public class MergeCalculatorTask extends BaseMergeTask {
 
@@ -123,7 +123,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
 
     List<SvnChangeList> changeLists = getChangeLists(mergeContext, settings, beforeRevision, size, (changeList, tree) -> changeList);
     return Pair.create(
-      changeLists.subList(0, min(size, changeLists.size())),
+      ContainerUtil.getFirstItems(changeLists, size),
       changeLists.size() < size + 1);
   }
 

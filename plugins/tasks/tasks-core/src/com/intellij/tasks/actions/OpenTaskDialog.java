@@ -137,13 +137,13 @@ public class OpenTaskDialog extends DialogWrapper {
         }
       }
     }
-    taskManager.activateTask(myTask, isClearContext());
-    if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {
-      AnalyzeTaskStacktraceAction.analyzeStacktrace(myTask, myProject);
-    }
 
     for (TaskDialogPanel panel : myPanels) {
       panel.commit();
+    }
+    taskManager.activateTask(myTask, isClearContext());
+    if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {
+      AnalyzeTaskStacktraceAction.analyzeStacktrace(myTask, myProject);
     }
   }
 

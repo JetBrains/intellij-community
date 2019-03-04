@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
@@ -28,6 +29,19 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     myBrowser = browser;
     myContentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     Disposer.register(disposable, this);
+
+    myBrowser.addListener(new VcsLogChangesBrowser.Listener() {
+      @Override
+      public void onModelUpdated() {
+        updatePreview(getComponent().isShowing());
+      }
+    }, this);
+
+    myBrowser.getViewer().addSelectionListener(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        updatePreview(getComponent().isShowing());
+      });
+    }, this);
   }
 
   @NotNull

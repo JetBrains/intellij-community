@@ -45,6 +45,9 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
       myVcs = null;
       FileUtil.delete(SvnApplicationSettings.getLoadedRevisionsDir(myFixture.getProject()));
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -178,7 +181,8 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
     final BunchFactory factory = new BunchFactory(internalProvider, committedProvider, liveProvider);
     Ref<Boolean> myYoungestRead = new Ref<>(Boolean.FALSE);
     long i = endRevision;
-    for (; i >= startRevision; i -= step * PAGE) {
+    int pageStep = step * PAGE;
+    for (; i >= startRevision; i -= pageStep) {
       assert (! Boolean.TRUE.equals(myYoungestRead.get()));
       final List<Fragment> fragments = factory.goBack(PAGE, myYoungestRead);
       checkFragments(i, internalRevisions, committedRevisions, fragments, step);
@@ -190,7 +194,8 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   private static void checkFragments(final long earlyRevision, final List<Long> internally, final List<Long> committed,
                                      final List<Fragment> fragments, final int step) {
     final List<Long> expectedRevisions = new ArrayList<>();
-    for (long i = earlyRevision; i > (earlyRevision - PAGE * step); i -= step) {
+    int pageStep = PAGE * step;
+    for (long i = earlyRevision; i > (earlyRevision - pageStep); i -= step) {
       expectedRevisions.add(i);
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -19,6 +19,7 @@ import java.util.function.Function;
 
 /**
  * Helper component that stores nesting rules and apply them to files
+ *
  * @see NestingTreeStructureProvider
  */
 public class FileNestingBuilder {
@@ -140,8 +141,8 @@ public class FileNestingBuilder {
     String parentFileSuffix = rule.getParentFileSuffix();
     String childFileSuffix = rule.getChildFileSuffix();
 
-    boolean matchesParent = !fileName.equalsIgnoreCase(parentFileSuffix) && StringUtil.endsWithIgnoreCase(fileName, parentFileSuffix);
-    boolean matchesChild = !fileName.equalsIgnoreCase(childFileSuffix) && StringUtil.endsWithIgnoreCase(fileName, childFileSuffix);
+    boolean matchesParent = /*!fileName.equalsIgnoreCase(parentFileSuffix) &&*/ StringUtil.endsWithIgnoreCase(fileName, parentFileSuffix);
+    boolean matchesChild = /*!fileName.equalsIgnoreCase(childFileSuffix) &&*/ StringUtil.endsWithIgnoreCase(fileName, childFileSuffix);
 
     if (matchesParent && matchesChild) {
       if (parentFileSuffix.length() > childFileSuffix.length()) {

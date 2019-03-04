@@ -1,0 +1,4 @@
+deprecated: ant_task.png; to be removed in IDEA 2020
+deprecated: dynamicProperty.png -> com.intellij.icons.AllIcons@/nodes/property.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Property
+deprecated: dynamicProperty_13.png; to be removed in IDEA 2020
+deprecated: groovy_32x32.png; to be removed in IDEA 2020

@@ -48,6 +48,7 @@ public abstract class AbstractImportFromExternalSystemControl<
   ProjectSettings extends ExternalProjectSettings,
   L extends ExternalSystemSettingsListener<ProjectSettings>,
   SystemSettings extends AbstractExternalSystemSettings<SystemSettings, ProjectSettings, L>>
+  extends AbstractSettingsControl
 {
   @NotNull private final SystemSettings  mySystemSettings;
   @NotNull private final ProjectSettings myProjectSettings;
@@ -60,8 +61,6 @@ public abstract class AbstractImportFromExternalSystemControl<
   @NotNull private final  ExternalSystemSettingsControl<ProjectSettings> myProjectSettingsControl;
   @NotNull private final  ProjectSystemId                                myExternalSystemId;
   @Nullable private final ExternalSystemSettingsControl<SystemSettings>  mySystemSettingsControl;
-
-  @Nullable Project myCurrentProject;
 
   private boolean myShowProjectFormatPanel;
   private final JLabel myProjectFormatLabel;
@@ -158,7 +157,7 @@ public abstract class AbstractImportFromExternalSystemControl<
    * @param currentProject  current ide project (if any)
    */
   public void setCurrentProject(@Nullable Project currentProject) {
-    myCurrentProject = currentProject;
+    setProject(currentProject);
   }
 
   protected abstract void onLinkedProjectPathChange(@NotNull String path);
@@ -217,10 +216,12 @@ public abstract class AbstractImportFromExternalSystemControl<
   }
 
   public void reset() {
-    reset(null);
+    reset(null, null);
   }
 
-  public void reset(@Nullable WizardContext wizardContext) {
+  @Override
+  public void reset(@Nullable WizardContext wizardContext, @Nullable Project project) {
+    super.reset(wizardContext, project);
     myLinkedProjectPathField.setNameComponentVisible(false);
     myLinkedProjectPathField.setNameValue("untitled");
     myLinkedProjectPathField.setPath("");
@@ -258,13 +259,14 @@ public abstract class AbstractImportFromExternalSystemControl<
     if (!myProjectSettingsControl.validate(myProjectSettings)) return false;
     if (mySystemSettingsControl != null && !mySystemSettingsControl.validate(mySystemSettings)) return false;
     String linkedProjectPath = myLinkedProjectPathField.getPath();
+    Project currentProject = getProject();
     if (StringUtil.isEmpty(linkedProjectPath)) {
       throw new ConfigurationException(ExternalSystemBundle.message("error.project.undefined"));
     }
-    else if (myCurrentProject != null) {
+    else if (currentProject != null) {
       ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
       assert manager != null;
-      AbstractExternalSystemSettings<?, ?,?> settings = manager.getSettingsProvider().fun(myCurrentProject);
+      AbstractExternalSystemSettings<?, ?, ?> settings = manager.getSettingsProvider().fun(currentProject);
       if (settings.getLinkedProjectSettings(linkedProjectPath) != null) {
         throw new ConfigurationException(ExternalSystemBundle.message("error.project.already.registered"));
       }

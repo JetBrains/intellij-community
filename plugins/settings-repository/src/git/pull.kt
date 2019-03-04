@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.diagnostic.debug
@@ -51,7 +51,7 @@ internal open class Pull(val manager: GitRepositoryClient, val indicator: Progre
   private val config = repository.config!!
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
 
-  fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commitMessage: String? = null, prefetchedRefToMerge: Ref? = null): UpdateResult? {
+  suspend fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commitMessage: String? = null, prefetchedRefToMerge: Ref? = null): UpdateResult? {
     indicator?.checkCanceled()
 
     LOG.debug("Pull")
@@ -285,7 +285,7 @@ private fun updateHead(refLogMessage: StringBuilder, newHeadId: ObjectId, oldHea
   }
 }
 
-private fun resolveConflicts(mergeResult: MergeResultEx, repository: Repository): MutableUpdateResult {
+private suspend fun resolveConflicts(mergeResult: MergeResultEx, repository: Repository): MutableUpdateResult {
   assert(mergeResult.mergedCommits.size == 2)
   val conflicts = mergeResult.conflicts!!
   val mergeProvider = JGitMergeProvider(repository, conflicts) { path, index ->
@@ -297,7 +297,7 @@ private fun resolveConflicts(mergeResult: MergeResultEx, repository: Repository)
   return mergeResult.result.toMutable().addChanged(mergedFiles)
 }
 
-private fun resolveConflicts(mergeProvider: JGitMergeProvider<out Any>, unresolvedFiles: MutableList<VirtualFile>, repository: Repository): List<String> {
+private suspend fun resolveConflicts(mergeProvider: JGitMergeProvider<out Any>, unresolvedFiles: MutableList<VirtualFile>, repository: Repository): List<String> {
   val mergedFiles = SmartList<String>()
   while (true) {
     val resolvedFiles = resolveConflicts(unresolvedFiles, mergeProvider)
@@ -320,7 +320,7 @@ private fun resolveConflicts(mergeProvider: JGitMergeProvider<out Any>, unresolv
   return mergedFiles
 }
 
-internal fun Repository.fixAndGetState(): RepositoryState {
+internal suspend fun Repository.fixAndGetState(): RepositoryState {
   var state = repositoryState
   if (state == RepositoryState.MERGING) {
     resolveUnmergedConflicts(this)
@@ -330,7 +330,7 @@ internal fun Repository.fixAndGetState(): RepositoryState {
   return state
 }
 
-internal fun resolveUnmergedConflicts(repository: Repository) {
+internal suspend fun resolveUnmergedConflicts(repository: Repository) {
   val conflicts = LinkedHashMap<String, Array<ByteArray?>>()
   repository.newObjectReader().use { reader ->
     val dirCache = repository.readDirCache()

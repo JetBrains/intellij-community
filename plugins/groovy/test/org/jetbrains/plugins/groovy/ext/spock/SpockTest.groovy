@@ -1,51 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.spock
 
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiVariable
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.util.HighlightingTest
+import org.jetbrains.plugins.groovy.util.TypingTest
+import org.junit.Ignore
+import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
-class SpockTest extends LightCodeInsightFixtureTestCase {
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 
-  @Override
-  protected void setUp() {
-    super.setUp()
+@CompileStatic
+class SpockTest extends SpockTestBase implements TypingTest, HighlightingTest {
 
-    myFixture.addFileToProject("spock/lang/Specification.groovy", """
-package spock.lang;
-
-class Specification {
-
-}
-""")
-  }
-
-
+  @Test
   void testCompletion() {
-    def file = myFixture.addFileToProject("FooSpec.groovy", """
+    configureByText '''\
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
     expect:
@@ -60,40 +30,37 @@ class FooSpec extends spock.lang.Specification {
     ""|""|""||""
   }
 }
-""")
-
-    checkCompletionStatic(file, "varAssigment", "varShl", "varShl1", "varShl2", "varShl3", "varTable1", "varTable2", "varTable3", "varTable4")
+'''
+    fixture.completeBasic()
+    fixture.assertPreferredCompletionItems(
+      0,
+      "varAssigment", "varShl", "varShl1", "varShl2", "varShl3", "varTable1", "varTable2", "varTable3", "varTable4"
+    )
   }
 
-  private void doTest(String expectedType, String text) {
-    myFixture.configureByText("FooSpec.groovy", text)
-
-    def var = myFixture.elementAtCaret
-    assertInstanceOf(var, PsiVariable)
-    assertEquals(expectedType, ((PsiVariable)var).type.canonicalText)
-  }
-
+  @Test
   void testEquals() {
-    doTest(CommonClassNames.JAVA_LANG_STRING, """
+    typingTest '''\
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
     expect:
-    name<caret>
+    <caret>name
 
     where:
     name = "xxx"
   }
 }
-""")
+''', JAVA_LANG_STRING
   }
 
+  @Test
   void testTable() {
-    doTest("java.util.List<? extends java.lang.Number>", """
+    typingTest '''\
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
     List<Byte> list = zzz()
     expect:
-    name<caret>
+    <caret>name
 
     where:
     varTable1|varT.a.ble2|varTable3|name
@@ -102,57 +69,61 @@ class FooSpec extends spock.lang.Specification {
     ""|""|""|null
   }
 }
-""")
+''', 'java.util.List<? extends java.lang.Number>'
   }
 
+  @Test
   void testShlSimple() {
-    doTest(AbstractMap.name, """
+    typingTest '''\
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
     expect:
-    name<caret>
+    <caret>name
 
     where:
     name << [new HashMap(), new TreeMap(), [aaa:1, bbb:2], null]
   }
 }
-""")
+''', '[java.util.AbstractMap,java.lang.Cloneable,java.io.Serializable]'
   }
 
+  @Test
   void testShlMulti1() {
-    doTest(CommonClassNames.JAVA_LANG_STRING, """
+    typingTest '''\
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
     def c = { return "1111" }
 
     expect:
-    name<caret>
+    <caret>name
 
     where:
     [x1, _, name] << [['x', 'y', c()], ['x', 'y', null]]
   }
 }
-""")
+''', JAVA_LANG_STRING
   }
 
+  @Test
   void testShlMulti2() {
-    doTest(CommonClassNames.JAVA_LANG_STRING, """
+    typingTest '''\
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
     def list = ["a", "b", "c"]
 
     expect:
-    name<caret>
+    <caret>name
 
     where:
     [x1, _, name] << [list, ['aaa', 'bbb', 'ccc']]
   }
 }
-""")
+''', JAVA_LANG_STRING
   }
 
+  @Test
   void testRename() {
-    myFixture.configureByText("FooSpec.groovy", """
+    fixture.configureByText("FooSpec.groovy", """
 class FooSpec extends spock.lang.Specification {
   @spock.lang.Unroll("xxx #name a #name #name    #name")
   def "foo test"() {
@@ -165,9 +136,9 @@ class FooSpec extends spock.lang.Specification {
 }
 """)
 
-    myFixture.renameElementAtCaret("n")
+    fixture.renameElementAtCaret("n")
 
-    myFixture.checkResult("""
+    fixture.checkResult("""
 class FooSpec extends spock.lang.Specification {
   @spock.lang.Unroll("xxx #n a #n #n    #n")
   def "foo test"() {
@@ -180,9 +151,9 @@ class FooSpec extends spock.lang.Specification {
 }
 """)
 
-    myFixture.renameElementAtCaret("z1234567890")
+    fixture.renameElementAtCaret("z1234567890")
 
-    myFixture.checkResult("""
+    fixture.checkResult("""
 class FooSpec extends spock.lang.Specification {
   @spock.lang.Unroll("xxx #z1234567890 a #z1234567890 #z1234567890    #z1234567890")
   def "foo test"() {
@@ -194,45 +165,11 @@ class FooSpec extends spock.lang.Specification {
   }
 }
 """)
-
   }
 
-
-  void checkCompletionStatic(PsiFile file, String... expectedVariants) {
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
-
-    LookupElement[] lookupElements = myFixture.completeBasic()
-
-    assertNotNull(lookupElements)
-
-    Set<String> missedVariants = ContainerUtil.newHashSet(expectedVariants)
-
-    for (LookupElement lookupElement : lookupElements) {
-      missedVariants.remove(lookupElement.getLookupString())
-    }
-
-    assertEmpty("Some completion variants are missed", missedVariants)
-  }
-
-  void testVariable_resolved() {
-    myFixture.enableInspections(GroovyAssignabilityCheckInspection, GrUnresolvedAccessInspection)
-
-    myFixture.configureByText("FooSpec.groovy", """\
-class FooSpec extends spock.lang.Specification {
-  def "foo test"() {
-    String subscriber = <warning descr="Cannot resolve symbol 'Mock'">Mock</warning>()
-    then: (0.._) * subscriber.concat<weak_warning descr="Cannot infer argument types">(_)</weak_warning>
-      subscriber.concat<weak_warning descr="Cannot infer argument types">(<warning descr="Cannot resolve symbol 'asdasdasd'">asdasdasd</warning>)</weak_warning>
-      subscriber.concat<warning descr="'concat' in 'java.lang.String' cannot be applied to '(java.lang.Integer)'">(23)</warning>
-  }
-}
-""")
-
-    myFixture.checkHighlighting(true, false, true)
-  }
-
+  @Test
   void testVariable_NotExistingInCompletion() {
-    myFixture.configureByText("FooSpec.groovy", """
+    fixture.configureByText("FooSpec.groovy", """
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
     String subscriber = Mock()
@@ -240,13 +177,17 @@ class FooSpec extends spock.lang.Specification {
   }
 }
 """)
-    myFixture.completeBasic()
-    def elements = myFixture.getLookupElementStrings()
-    assert !elements.contains("_")
+    fixture.completeBasic()
+    def elements = fixture.getLookupElementStrings()
+    assert elements.contains("_")
   }
 
+  @Ignore("see com.intellij.execution.junit2.inspection.JUnitCantBeStaticExtension")
+  @Test
   void 'test method may be static'() {
-    myFixture.configureByText 'specs.groovy', '''\
+    def inspection = new GrMethodMayBeStaticInspection()
+    inspection.myIgnoreEmptyMethods = false
+    highlightingTest '''\
 class SomeSpec extends spock.lang.Specification {
   def cleanup() {}
   def setupSpec() {}
@@ -255,10 +196,6 @@ class SomeSpec extends spock.lang.Specification {
     expect: 1 == 1
   }
 }
-'''
-    def inspection = new GrMethodMayBeStaticInspection()
-    inspection.myIgnoreEmptyMethods = false
-    myFixture.enableInspections inspection
-    myFixture.checkHighlighting()
+''', inspection
   }
 }

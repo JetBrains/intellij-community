@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
+@Deprecated
 public interface MergeVersion {
   Document createWorkingDocument(Project project);
 
@@ -120,7 +121,7 @@ public interface MergeVersion {
           }
         }
       }
-      return vfs.isEmpty() ? null : (Runnable)() -> {
+      return vfs.isEmpty() ? null : () -> {
         ProjectManagerEx ex = ProjectManagerEx.getInstanceEx();
         for (VirtualFile vf : vfs) {
           ex.saveChangedProjectFile(vf, project);

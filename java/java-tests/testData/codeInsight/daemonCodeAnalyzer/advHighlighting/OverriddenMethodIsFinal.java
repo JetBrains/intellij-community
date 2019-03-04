@@ -1,6 +1,6 @@
 
 interface ConflictWithObject {
-    <error descr="'notify()' cannot override 'notify()' in 'java.lang.Object'; overridden method is final">public void notify()</error>;
+    <error descr="'notify()' cannot override 'notify()' in 'java.lang.Object'; overridden method is final">public Object notify()</error>;
 }
 
 //--override final-------------------------------------------------------------------------

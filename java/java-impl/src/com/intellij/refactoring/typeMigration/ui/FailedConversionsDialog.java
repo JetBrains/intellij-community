@@ -55,6 +55,7 @@ public class FailedConversionsDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     final JEditorPane messagePane = new JEditorPane(UIUtil.HTML_MIME, "");
+    messagePane.setEditorKit(UIUtil.getHTMLEditorKit());
     messagePane.setEditable(false);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane);
     scrollPane.setPreferredSize(JBUI.size(500, 400));

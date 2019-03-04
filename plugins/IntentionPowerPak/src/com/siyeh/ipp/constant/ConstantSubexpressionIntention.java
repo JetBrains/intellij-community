@@ -86,10 +86,10 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
     CommentTracker commentTracker = new CommentTracker();
     for (PsiExpression operand : operands) {
       final PsiJavaToken currentToken = polyadicExpression.getTokenBeforeOperand(operand);
+      if (prevToken != null) {
+        newExpressionText.append(prevToken.getText());
+      }
       if (token == currentToken) {
-        if (prevToken != null) {
-          newExpressionText.append(prevToken.getText());
-        }
         if (newExpressionText.length() > 0) {
           newExpressionText.append(' ');
         }
@@ -137,9 +137,6 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
         prevToken = null;
       }
       else {
-        if (prevToken != null) {
-          newExpressionText.append(prevToken.getText());
-        }
         if (prevOperand != null) {
           newExpressionText.append(commentTracker.text(prevOperand));
         }

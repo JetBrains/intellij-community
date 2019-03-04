@@ -39,7 +39,7 @@ public class ArrangementUtil {
   public static ArrangementSettings readExternal(@NotNull Element element, @NotNull Language language) {
     ArrangementSettingsSerializer serializer = getSerializer(language);
     if (serializer == null) {
-      LOG.error("Can't find serializer for language: " + language.getDisplayName() + "(" + language.getID() + ")");
+      LOG.warn("Can't find serializer for language: " + language.getDisplayName() + "(" + language.getID() + ")");
       return null;
     }
 

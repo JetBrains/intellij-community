@@ -8,6 +8,6 @@ class B implements A {
 
 
 class C extends B {
-    static void foo(<ref>Entry e){
+    static void foo(<caret>Entry e){
     }
 }

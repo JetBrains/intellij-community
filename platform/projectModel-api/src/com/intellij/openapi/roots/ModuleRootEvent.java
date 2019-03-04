@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventObject;
 
@@ -24,7 +25,7 @@ import java.util.EventObject;
  */
 public abstract class ModuleRootEvent extends EventObject{
 
-  protected ModuleRootEvent(final Project project) {
+  protected ModuleRootEvent(@NotNull Project project) {
     super(project);
   }
 

@@ -30,7 +30,7 @@ public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> setCancelOnClickOutside(boolean cancelOnClickOutside);
 
   @NotNull
-  IPopupChooserBuilder<T> setTitle(@NotNull @Nls String title);
+  IPopupChooserBuilder<T> setTitle(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String title);
 
   @NotNull
   IPopupChooserBuilder<T> setCouldPin(@Nullable Processor<JBPopup> callback);

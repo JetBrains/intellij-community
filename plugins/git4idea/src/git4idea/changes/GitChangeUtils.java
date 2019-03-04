@@ -410,8 +410,28 @@ public class GitChangeUtils {
 
   @NotNull
   public static Collection<Change> getStagedChanges(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+    return getLocalChanges(project, root, "--cached", "-M");
+  }
+
+  @NotNull
+  public static Collection<Change> getUnstagedChanges(@NotNull Project project,
+                                                      @NotNull VirtualFile root,
+                                                      boolean detectMoves) throws VcsException {
+    if (detectMoves) {
+      return getLocalChanges(project, root, "-M");
+    }
+    else {
+      return getLocalChanges(project, root, "--no-renames");
+    }
+  }
+
+  @NotNull
+  private static Collection<Change> getLocalChanges(@NotNull Project project,
+                                                    @NotNull VirtualFile root,
+                                                    String... parameters) throws VcsException {
     GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
-    diff.addParameters("--name-status", "--cached", "-M");
+    diff.addParameters("--name-status");
+    diff.addParameters(parameters);
     String output = Git.getInstance().runCommand(diff).getOutputOrThrow();
 
     Collection<Change> changes = new ArrayList<>();

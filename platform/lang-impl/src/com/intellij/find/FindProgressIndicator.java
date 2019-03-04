@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class FindProgressIndicator extends BackgroundableProcessIndicator {
-  public FindProgressIndicator(@NotNull Project project, String scopeString) {
+  public FindProgressIndicator(@NotNull Project project, @NotNull String scopeString) {
     super(project,
          FindBundle.message("find.progress.searching.message", scopeString),
          new SearchInBackgroundOption(),

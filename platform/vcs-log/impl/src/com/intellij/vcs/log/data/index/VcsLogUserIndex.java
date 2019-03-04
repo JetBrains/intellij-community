@@ -70,7 +70,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
       @Override
       public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
         File storageFile = myStorageId.getStorageFile(myName + ".idx");
-        return new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
+        return new PersistentHashMap<>(storageFile, EnumeratorIntegerDescriptor.INSTANCE, new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
       }
     };
   }
@@ -83,7 +83,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
                                            storageId.getVersion());
   }
 
-  public TIntHashSet getCommitsForUsers(@NotNull Set<VcsUser> users) throws IOException, StorageException {
+  public TIntHashSet getCommitsForUsers(@NotNull Set<? extends VcsUser> users) throws IOException, StorageException {
     Set<Integer> ids = ContainerUtil.newHashSet();
     for (VcsUser user : users) {
       ids.add(myUserIndexer.getUserId(user));
@@ -127,7 +127,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
 
   private static class UserIndexer implements DataIndexer<Integer, Void, VcsFullCommitDetails> {
     @NotNull private final PersistentEnumeratorBase<VcsUser> myUserEnumerator;
-    @NotNull private Consumer<Exception> myFatalErrorConsumer = LOG::error;
+    @NotNull private Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
     UserIndexer(@NotNull PersistentEnumeratorBase<VcsUser> userEnumerator) {
       myUserEnumerator = userEnumerator;
@@ -157,7 +157,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
       return myUserEnumerator.enumerate(user);
     }
 
-    public void setFatalErrorConsumer(@NotNull Consumer<Exception> fatalErrorConsumer) {
+    public void setFatalErrorConsumer(@NotNull Consumer<? super Exception> fatalErrorConsumer) {
       myFatalErrorConsumer = fatalErrorConsumer;
     }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.application.options.colors.fileStatus.FileStatusColorsConfigurable;
@@ -36,7 +22,6 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.options.ex.ConfigurableWrapper.wrapConfigurable;
-import static com.intellij.util.ArrayUtil.toObjectArray;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 
@@ -122,21 +107,21 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
       result.add(new ChangelistConflictConfigurable(ChangeListManagerImpl.getInstanceImpl(myProject)));
     }
     result.add(new CommitDialogConfigurable(myProject));
-    result.add(new ShelfProjectConfigurable(myProject));  
+    result.add(new ShelfProjectConfigurable(myProject));
     for (VcsConfigurableProvider provider : VcsConfigurableProvider.EP_NAME.getExtensions()) {
       addIfNotNull(result, provider.getConfigurable(myProject));
     }
 
     result.add(new FileStatusColorsConfigurable());
 
-    Set<String> projectConfigurableIds = map2Set(myProject.getExtensions(Configurable.PROJECT_CONFIGURABLE), ep -> ep.id);
+    Set<String> projectConfigurableIds = map2Set(Configurable.PROJECT_CONFIGURABLE.getExtensionList(myProject), ep -> ep.id);
     for (VcsDescriptor descriptor : ProjectLevelVcsManager.getInstance(myProject).getAllVcss()) {
       if (!projectConfigurableIds.contains(getVcsConfigurableId(descriptor.getDisplayName()))) {
         result.add(wrapConfigurable(new VcsConfigurableEP(myProject, descriptor)));
       }
     }
 
-    return toObjectArray(result, Configurable.class);
+    return result.toArray(new Configurable[0]);
   }
 
   @Nullable
@@ -157,6 +142,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
 
     VcsConfigurableEP(@NotNull Project project, @NotNull VcsDescriptor descriptor) {
       super(project);
+
       myDescriptor = descriptor;
       displayName = descriptor.getDisplayName();
       id = getVcsConfigurableId(descriptor.getDisplayName());

@@ -36,7 +36,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
 
   @CalledInAwt
   @Override
-  public void apply(@NotNull List<FilePatch> remaining, @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroupsToApply,
+  public void apply(@NotNull List<? extends FilePatch> remaining, @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
                     @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {

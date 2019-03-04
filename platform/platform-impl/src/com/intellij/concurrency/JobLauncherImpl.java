@@ -66,7 +66,7 @@ public class JobLauncherImpl extends JobLauncher {
       // call checkCanceled a bit more often than .invoke()
       while (!applier.isDone()) {
         ProgressManager.checkCanceled();
-        // does automatic compensation against starvation
+        // does automatic compensation against starvation (in ForkJoinPool.awaitJoin)
         try {
           applier.get(1, TimeUnit.MILLISECONDS);
         }

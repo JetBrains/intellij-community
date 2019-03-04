@@ -11,9 +11,7 @@
   <depends>com.intellij.modules.lang</depends>
 
   <actions>
-    <action id="NewEditorConfigFile" class="org.editorconfig.language.codeinsight.actions.CreateEditorConfigFileAction">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
-    </action>
+    <action id="NewEditorConfigFile" class="org.editorconfig.language.codeinsight.actions.CreateEditorConfigFileAction"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -23,6 +21,7 @@
         serviceImplementation="org.editorconfig.plugincomponents.EditorConfigNotifier"/>
     <generalCodeStyleOptionsProvider instance="org.editorconfig.settings.EditorConfigConfigurable"/>
     <codeStyleSettingsProvider implementation="org.editorconfig.settings.EditorConfigConfigurable"/>
+    <codeStyleSettingsModifier implementation="org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier" order="first"/>
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" order="first"/>
     <applicationService
         serviceInterface="org.editorconfig.plugincomponents.SettingsProviderComponent"
@@ -56,8 +55,8 @@
     <renameHandler implementation="org.editorconfig.language.codeinsight.refactoring.EditorConfigRenameHandler"/>
     <elementDescriptionProvider
         implementation="org.editorconfig.language.codeinsight.documentation.EditorConfigElementDescriptionProvider"/>
-    <editorNotificationProvider implementation="org.editorconfig.language.messages.EditorConfigWrongFileNameNotificationProvider"/>
-    <editorNotificationProvider implementation="org.editorconfig.language.messages.EditorConfigWrongFileEncodingNotificationProvider"/>
+    <editorNotificationProviderApp implementation="org.editorconfig.language.messages.EditorConfigWrongFileNameNotificationProvider"/>
+    <editorNotificationProviderApp implementation="org.editorconfig.language.messages.EditorConfigWrongFileEncodingNotificationProvider"/>
     <fileBasedIndex implementation="org.editorconfig.language.index.EditorConfigIdentifierIndex"/>
     <gotoSymbolContributor implementation="org.editorconfig.language.codeinsight.findusages.EditorConfigGoToSymbolContributor"/>
     <gotoTargetRendererProvider
@@ -426,6 +425,7 @@
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigBasicOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigRoslynOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigReSharperOptionDescriptorProvider"/>
+    <optionDescriptorProvider implementation="org.editorconfig.configmanagement.extended.IntellijConfigOptionDescriptorProvider"/>
   </extensions>
 
 
@@ -433,5 +433,6 @@
     <extensionPoint
         qualifiedName="editorconfig.optionDescriptorProvider"
         interface="org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider"/>
+    <extensionPoint qualifiedName="editorconfig.exportProvider" interface="org.editorconfig.settings.EditorConfigExportProvider"/>
   </extensionPoints>
 </idea-plugin>

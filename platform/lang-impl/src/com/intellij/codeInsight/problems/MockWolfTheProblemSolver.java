@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.problems;
 
@@ -46,7 +46,7 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
 
   @Override
   public boolean hasProblemFilesBeneath(@NotNull Module scope) {
-    return false;
+    return myDelegate != null && myDelegate.hasProblemFilesBeneath(scope);
   }
 
   @Override
@@ -76,5 +76,15 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   @Override
   public void reportProblems(final VirtualFile file, Collection<Problem> problems) {
     if (myDelegate != null) myDelegate.reportProblems(file,problems);
+  }
+
+  @Override
+  public void reportProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source) {
+    if (myDelegate != null) myDelegate.reportProblemsFromExternalSource(file, source);
+  }
+
+  @Override
+  public void clearProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source) {
+    if (myDelegate != null) myDelegate.clearProblemsFromExternalSource(file, source);
   }
 }

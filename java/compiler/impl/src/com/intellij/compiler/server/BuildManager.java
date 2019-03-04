@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
 import com.intellij.ProjectTopics;
@@ -87,8 +87,7 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -336,8 +335,10 @@ public class BuildManager implements Disposable {
 
     ShutDownTracker.getInstance().registerShutdownTask(this::stopListening);
 
-    ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> runCommand(myGCTask), 3, 180, TimeUnit.MINUTES);
-    Disposer.register(this, () -> future.cancel(false));
+    if (!IS_UNIT_TEST_MODE) {
+      ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> runCommand(myGCTask), 3, 180, TimeUnit.MINUTES);
+      Disposer.register(this, () -> future.cancel(false));
+    }
   }
 
   @Nullable
@@ -611,7 +612,7 @@ public class BuildManager implements Disposable {
     return isValidProject(project)? project : null;
   }
 
-  private static boolean hasRunningProcess(Project project) {
+  private static boolean hasRunningProcess(@NotNull Project project) {
     for (ProcessHandler handler : ExecutionManager.getInstance(project).getRunningProcesses()) {
       if (!handler.isProcessTerminated() && !ALLOW_AUTOMAKE.get(handler, Boolean.FALSE)) { // active process
         return true;
@@ -620,7 +621,8 @@ public class BuildManager implements Disposable {
     return false;
   }
 
-  public Collection<TaskFuture> cancelAutoMakeTasks(Project project) {
+  @NotNull
+  public Collection<TaskFuture> cancelAutoMakeTasks(@NotNull Project project) {
     final Collection<TaskFuture> futures = new SmartList<>();
     synchronized (myAutomakeFutures) {
       for (Map.Entry<TaskFuture, Project> entry : myAutomakeFutures.entrySet()) {
@@ -645,6 +647,9 @@ public class BuildManager implements Disposable {
   }
 
   private void cancelPreloadedBuilds(final String projectPath) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Cancel preloaded build for " + projectPath + "\n" + getThreadTrace(Thread.currentThread(), 50));
+    }
     runCommand(() -> {
       Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> pair = takePreloadedProcess(projectPath);
       if (pair != null) {
@@ -889,7 +894,7 @@ public class BuildManager implements Disposable {
     if (project.isDisposed()) {
       return true;
     }
-    for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
+    for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensionList(project)) {
       if (!provider.isProcessPreloadingEnabled()) {
         return false;
       }
@@ -1200,7 +1205,7 @@ public class BuildManager implements Disposable {
       cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(projectSystemRoot.getPath()) + "/" + TEMP_DIR_NAME);
     }
 
-    for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
+    for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensionList(project)) {
       final List<String> args = provider.getVMArguments();
       cmdLine.addParameters(args);
     }
@@ -1955,6 +1960,7 @@ public class BuildManager implements Disposable {
     @Override
     public void cancel(RequestFuture<T> future) {
       myMessageDispatcher.cancelSession(future.getRequestID());
+      notifySessionTerminationIfNeeded(future.getRequestID(), null);
     }
   }
 }

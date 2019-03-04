@@ -1,0 +1,240 @@
+{
+  "html": {
+    "elements": {
+      "canvas": {
+        "__compat": {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Element/canvas",
+          "support": {
+            "chrome": {
+              "version_added": "1"
+            },
+            "chrome_android": {
+              "version_added": null
+            },
+            "edge": {
+              "version_added": true
+            },
+            "edge_mobile": {
+              "version_added": true
+            },
+            "firefox": {
+              "version_added": "1.5",
+              "notes": [
+                "Before Firefox 5, the canvas width and height were signed integers instead of unsigned integers.",
+                "Prior to Firefox 6, a &lt;canvas&gt; element with a zero width or height would be rendered as if it had default dimensions.",
+                "Before Firefox 12, if JavaScript is disabled, the &lt;canvas&gt; element was being rendered instead of showing the fallback content as per the specification. Since then, the fallback content is rendered instead."
+              ]
+            },
+            "firefox_android": {
+              "version_added": "4",
+              "notes": [
+                "Before Firefox 5, the canvas width and height were signed integers instead of unsigned integers.",
+                "Prior to Firefox 6, a &lt;canvas&gt; element with a zero width or height would be rendered as if it had default dimensions.",
+                "Before Firefox 12, if JavaScript is disabled, the &lt;canvas&gt; element was being rendered instead of showing the fallback content as per the specification. Since then, the fallback content is rendered instead."
+              ]
+            },
+            "ie": {
+              "version_added": "9"
+            },
+            "opera": {
+              "version_added": "9"
+            },
+            "opera_android": {
+              "version_added": false
+            },
+            "safari": {
+              "version_added": "2",
+              "notes": "Although early versions of Apple's Safari browser don't require the closing tag, the specification indicates that it is required, so you should be sure to include it for broadest compatibility. Versions of Safari prior to version 2 will render the content of the fallback in addition to the canvas itself unless you use CSS tricks to mask it."
+            },
+            "safari_ios": {
+              "version_added": "1"
+            },
+            "samsunginternet_android": {
+              "version_added": null
+            },
+            "webview_android": {
+              "version_added": null
+            }
+          },
+          "status": {
+            "experimental": false,
+            "standard_track": true,
+            "deprecated": false
+          }
+        },
+        "height": {
+          "__compat": {
+            "support": {
+              "chrome": {
+                "version_added": "1"
+              },
+              "chrome_android": {
+                "version_added": null
+              },
+              "edge": {
+                "version_added": true
+              },
+              "edge_mobile": {
+                "version_added": true
+              },
+              "firefox": {
+                "version_added": "1.5",
+                "notes": [
+                  "Before Firefox 5, the canvas width and height were signed integers instead of unsigned integers.",
+                  "Prior to Firefox 6, a &lt;canvas&gt; element with a zero width or height would be rendered as if it had default dimensions.",
+                  "Before Firefox 12, if JavaScript is disabled, the &lt;canvas&gt; element was being rendered instead of showing the fallback content as per the specification. Since then, the fallback content is rendered instead."
+                ]
+              },
+              "firefox_android": {
+                "version_added": "4",
+                "notes": [
+                  "Before Firefox 5, the canvas width and height were signed integers instead of unsigned integers.",
+                  "Prior to Firefox 6, a &lt;canvas&gt; element with a zero width or height would be rendered as if it had default dimensions.",
+                  "Before Firefox 12, if JavaScript is disabled, the &lt;canvas&gt; element was being rendered instead of showing the fallback content as per the specification. Since then, the fallback content is rendered instead."
+                ]
+              },
+              "ie": {
+                "version_added": "9"
+              },
+              "opera": {
+                "version_added": "9"
+              },
+              "opera_android": {
+                "version_added": false
+              },
+              "safari": {
+                "version_added": "2",
+                "notes": "Although early versions of Apple's Safari browser don't require the closing tag, the specification indicates that it is required, so you should be sure to include it for broadest compatibility. Versions of Safari prior to version 2 will render the content of the fallback in addition to the canvas itself unless you use CSS tricks to mask it."
+              },
+              "safari_ios": {
+                "version_added": "1"
+              },
+              "samsunginternet_android": {
+                "version_added": null
+              },
+              "webview_android": {
+                "version_added": null
+              }
+            },
+            "status": {
+              "experimental": false,
+              "standard_track": true,
+              "deprecated": false
+            }
+          }
+        },
+        "moz-opaque": {
+          "__compat": {
+            "support": {
+              "chrome": {
+                "version_added": false
+              },
+              "chrome_android": {
+                "version_added": false
+              },
+              "edge": {
+                "version_added": false
+              },
+              "edge_mobile": {
+                "version_added": false
+              },
+              "firefox": {
+                "version_added": "3.5"
+              },
+              "firefox_android": {
+                "version_added": "4"
+              },
+              "ie": {
+                "version_added": false
+              },
+              "opera": {
+                "version_added": false
+              },
+              "opera_android": {
+                "version_added": false
+              },
+              "safari": {
+                "version_added": false
+              },
+              "safari_ios": {
+                "version_added": false
+              },
+              "samsunginternet_android": {
+                "version_added": false
+              },
+              "webview_android": {
+                "version_added": false
+              }
+            },
+            "status": {
+              "experimental": false,
+              "standard_track": false,
+              "deprecated": false
+            }
+          }
+        },
+        "width": {
+          "__compat": {
+            "support": {
+              "chrome": {
+                "version_added": "1"
+              },
+              "chrome_android": {
+                "version_added": null
+              },
+              "edge": {
+                "version_added": true
+              },
+              "edge_mobile": {
+                "version_added": true
+              },
+              "firefox": {
+                "version_added": "1.5",
+                "notes": [
+                  "Before Firefox 5, the canvas width and height were signed integers instead of unsigned integers.",
+                  "Prior to Firefox 6, a &lt;canvas&gt; element with a zero width or height would be rendered as if it had default dimensions.",
+                  "Before Firefox 12, if JavaScript is disabled, the &lt;canvas&gt; element was being rendered instead of showing the fallback content as per the specification. Since then, the fallback content is rendered instead."
+                ]
+              },
+              "firefox_android": {
+                "version_added": "4",
+                "notes": [
+                  "Before Firefox 5, the canvas width and height were signed integers instead of unsigned integers.",
+                  "Prior to Firefox 6, a &lt;canvas&gt; element with a zero width or height would be rendered as if it had default dimensions.",
+                  "Before Firefox 12, if JavaScript is disabled, the &lt;canvas&gt; element was being rendered instead of showing the fallback content as per the specification. Since then, the fallback content is rendered instead."
+                ]
+              },
+              "ie": {
+                "version_added": "9"
+              },
+              "opera": {
+                "version_added": "9"
+              },
+              "opera_android": {
+                "version_added": false
+              },
+              "safari": {
+                "version_added": "2",
+                "notes": "Although early versions of Apple's Safari browser don't require the closing tag, the specification indicates that it is required, so you should be sure to include it for broadest compatibility. Versions of Safari prior to version 2 will render the content of the fallback in addition to the canvas itself unless you use CSS tricks to mask it."
+              },
+              "safari_ios": {
+                "version_added": "1"
+              },
+              "samsunginternet_android": {
+                "version_added": null
+              },
+              "webview_android": {
+                "version_added": null
+              }
+            },
+            "status": {
+              "experimental": false,
+              "standard_track": true,
+              "deprecated": false
+            }
+          }
+        }
+      }
+    }
+  }
+}

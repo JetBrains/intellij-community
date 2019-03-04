@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.*
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
-import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.io.delete
 import gnu.trove.THashMap
@@ -17,11 +16,9 @@ import java.util.*
 // part of specific tests in the IcsCredentialTest
 class KeePassCredentialStoreTest {
   // we don't use in memory fs to check real file io
-  private val tempDirManager = TemporaryDirectory()
-
   @Rule
   @JvmField
-  val ruleChain = RuleChain(tempDirManager)
+  val tempDirManager = TemporaryDirectory()
 
   @Test
   fun many() {
@@ -102,6 +99,7 @@ class KeePassCredentialStoreTest {
     assertThat(provider.get(fooAttributes)).isNull()
 
     provider.setPassword(fooAttributes, "pass")
+    assertThat(provider.getPassword(fooAttributes)).isEqualTo("pass")
 
     assertThat(baseDir).doesNotExist()
 
@@ -109,6 +107,7 @@ class KeePassCredentialStoreTest {
     val pdbPwdFile = baseDir.resolve(MASTER_KEY_FILE_NAME)
 
     provider.save(defaultEncryptionSpec)
+    assertThat(provider.getPassword(fooAttributes)).isEqualTo("pass")
 
     assertThat(pdbFile).isRegularFile()
     assertThat(pdbPwdFile).isRegularFile()
@@ -116,6 +115,7 @@ class KeePassCredentialStoreTest {
     val amAttributes = CredentialAttributes(serviceName, "am")
     provider.setPassword(amAttributes, "pass2")
 
+    // null, because on set "should be the only credentials per service name" and so, item `foo` will be removed when `am` is set
     assertThat(provider.getPassword(fooAttributes)).isNull()
     assertThat(provider.getPassword(amAttributes)).isEqualTo("pass2")
 
@@ -141,6 +141,15 @@ class KeePassCredentialStoreTest {
 
     assertThat(pdbFile).doesNotExist()
     assertThat(pdbPwdFile).doesNotExist()
+  }
+
+  @Test
+  fun `empty username`() {
+    val provider = createStore(tempDirManager.newPath())
+    val userName = ""
+    val attributes = CredentialAttributes(randomString(), userName)
+    provider.set(attributes, Credentials(userName, "foo"))
+    assertThat(provider.get(attributes)).isNotNull
   }
 }
 

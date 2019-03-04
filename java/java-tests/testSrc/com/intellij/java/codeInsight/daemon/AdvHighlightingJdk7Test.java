@@ -15,227 +15,311 @@
  */
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * This class intended for "heavily-loaded" tests only, e.g. those need to setup separate project directory structure to run.
- * For "lightweight" tests please use {@linkplain LightAdvHighlightingJdk7Test}.
- */
-public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
+public class AdvHighlightingJdk7Test extends LightCodeInsightFixtureTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting7/";
 
+
   @Override
-  public void setUp() throws Exception {
+  protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_7);
+    myFixture.enableInspections(new DefUseInspection());
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_7;
   }
 
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new DefUseInspection()};
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
   }
 
-  public void testStaticImports() throws Exception {
-    doTest(BASE_PATH + "staticImports/staticImports.java", BASE_PATH + "/staticImports", false, false);
+  public void testStaticImports() {
+    myFixture.addClass("package P1;\n" +
+                       "public class C1 {\n" +
+                       "    public static final int Foo;\n" +
+                       "}\n");
+    myFixture.addClass("package P1;\n" +
+                       "public class C2 {\n" +
+                       "    public static final int Foo;\n" +
+                       "}\n");
+
+    doTest();
   }
 
-  public void testStaticImportConflict() throws Exception {
-    doTest(BASE_PATH + "staticImportConflict/Usage.java", BASE_PATH + "/staticImportConflict", false, false);
+  public void testStaticImportMethodShadowing() {
+    doTest();
   }
 
-  public void testStaticOnDemandImportConflict() throws Exception {
-    doTest(BASE_PATH + "staticImportConflict/UsageOnDemand.java", BASE_PATH + "/staticImportConflict", false, false);
+  //static import conflicts---------------
+  private void setupBaseClasses() {
+    myFixture.addClass("package x;\n" +
+                       "\n" +
+                       "public class Base1 {\n" +
+                       "  public static final int F = 1;\n" +
+                       "  public static void m(int i) { }\n" +
+                       "  public static class F { }\n" +
+                       "  public static class D { }\n" +
+                       "  public interface I1 {\n" +
+                       "    int IF = 1;\n" +
+                       "  }\n" +
+                       "  public interface I2 {\n" +
+                       "    float IF = 2.0f;\n" +
+                       "  }\n" +
+                       "}");
+    myFixture.addClass("package x;\n" +
+                       "\n" +
+                       "public class Base2 extends Base1 {\n" +
+                       "  public static final float F = 2.0f;\n" +
+                       "  public static void m(float f) { }\n" +
+                       "  public static class F { }\n" +
+                       "  public static class D { }\n" +
+                       "  public interface II extends I1, I2 { }\n" +
+                       "  public enum E { }\n" +
+                       "}");
   }
 
-  public void testStaticImportMethodShadowing() throws Exception {
-    doTest(BASE_PATH + "staticImports/P1/MethodShadowing.java", BASE_PATH + "/staticImports", false, false);
+  public void testStaticImportConflict() {
+    setupBaseClasses();
+    doTest();
   }
 
-  public void testStaticAndSingleImportConflict() throws Exception {
-    doTest(BASE_PATH + "staticImportConflict/UsageMixed.java", BASE_PATH + "/staticImportConflict", false, false);
+  public void testStaticOnDemandImportConflict() {
+    setupBaseClasses();
+    myFixture.addClass("package x;\n" +
+                       "\n" +
+                       "public class E { }");
+    doTest();
   }
 
-  public void testRawInnerClassImport() throws Exception {
-    doTest(BASE_PATH + "raw/p/Class1.java", BASE_PATH + "/raw", false, false);
+  public void testStaticAndSingleImportConflict() {
+    setupBaseClasses();
+    doTest();
+  }
+
+  //----------------------------------------
+
+  public void testRawInnerClassImport() {
+    myFixture.addClass("package p;\n" +
+                       "import p2.GenericClass.InnerClass;\n" +
+                       "public class Class2 {\n" +
+                       "  public static boolean test(InnerClass context) {\n" +
+                       "    return true;\n" +
+                       "  }\n" +
+                       "}\n");
+    myFixture.addClass("package p2;\n" +
+                       "public class GenericClass<T> {\n" +
+                       "  public class InnerClass {\n" +
+                       "  }\n" +
+                       "}");
+    doTest();
   }
   
-  public void testRawInnerClassImportOnDemand() throws Exception {
-    doTest(BASE_PATH + "rawOnDemand/p/Class1.java", BASE_PATH + "/rawOnDemand", false, false);
+  public void testRawInnerClassImportOnDemand() {
+    myFixture.addClass("package p;\n" +
+                       "import p2.GenericClass.*;\n" +
+                       "public class Class2 {\n" +
+                       "  public static boolean test(InnerClass context) {\n" +
+                       "    return true;\n" +
+                       "  }\n" +
+                       "}\n");
+    myFixture.addClass("package p2;\n" +
+                       "public class GenericClass<T> {\n" +
+                       "  public class InnerClass {\n" +
+                       "  }\n" +
+                       "}");
+    doTest();
   }
 
-  //ambiguous method calls
-  private void doTestAmbiguous() throws Exception {
-    doTestAmbiguous(JavaSdkVersion.JDK_1_7);
+  public void testAmbiguous() {
+    doTest();
   }
 
-  //ambiguous method calls
-  private void doTestAmbiguous(@NotNull JavaSdkVersion javaSdkVersion) throws Exception {
-    final String name = getTestName(true);
-    IdeaTestUtil.setTestVersion(javaSdkVersion, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + name + "/pck/AmbiguousMethodCall.java", BASE_PATH + "/" + name, false, false);
+  public void testAmbiguousArrayInSubst() {
+    doTest();
   }
 
-  public void testAmbiguous() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousTypeParamExtends() {
+    doTest();
   }
 
-  public void testAmbiguousArrayInSubst() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousTypeParamNmb() {
+    doTest();
   }
 
-  public void testAmbiguousTypeParamExtends() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousTypeParamNmb1() {
+    doTest();
   }
 
-  public void testAmbiguousTypeParamNmb() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousInheritance() {
+    doTest();
   }
 
-  public void testAmbiguousTypeParamNmb1() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousInheritance1() {
+    doTest();
   }
 
-  public void testAmbiguousInheritance() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousVarargs() {
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, myFixture.getModule(), getTestRootDisposable());
+    doTest();
   }
 
-  public void testAmbiguousInheritance1() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousVarargs1() {
+    doTest();
   }
 
-  public void testAmbiguousVarargs() throws Exception {
-    doTestAmbiguous(JavaSdkVersion.JDK_1_8);
+  public void testAmbiguousMultiIntInheritance() {
+    doTest();
   }
 
-  public void testAmbiguousVarargs1() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousMultipleTypeParamExtends() {
+    doTest();
   }
 
-  public void testAmbiguousMultiIntInheritance() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousMultipleTypeParamExtends1() {
+    doTest();
   }
 
-  public void testAmbiguousMultipleTypeParamExtends() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousMultipleTypeParamExtends2() {
+    doTest();
   }
 
-  public void testAmbiguousMultipleTypeParamExtends1() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousMultipleTypeParamExtends3() {
+    doTest();
   }
 
-  public void testAmbiguousMultipleTypeParamExtends2() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA57317() {
+    doTest();
   }
 
-  public void testAmbiguousMultipleTypeParamExtends3() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA57278() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA57317() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA57269() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA57278() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA67573() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA57269() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA57306() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA67573() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA67841() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA57306() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA57535() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA67841() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA67832() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA57535() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA67837() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA67832() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA78027() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA67837() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA25097() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA78027() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA24768() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA25097() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA21660() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA24768() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA22547() {
+    myFixture.addClass("package pck;\n" +
+                       "class Assert {\n" +
+                       "  static void assertEquals(Object o1, Object o2) {}\n" +
+                       "  static void assertEquals(long l1, long l2) {}\n" +
+                       "}\n");
+    doTest();
   }
 
-  public void testAmbiguousIDEA21660() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousInferenceOrder() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA22547() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA87672() {
+    doTest();
   }
 
-  public void testAmbiguousInferenceOrder() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA57500() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA87672() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA67864() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA57500() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA67836() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA67864() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA67576() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA67836() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA67519() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA67576() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA57569() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA67519() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousMethodsFromSameClassAccess() {
+    doTest();
   }
 
-  public void testAmbiguousIDEA57569() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousIDEA57633() {
+    doTest();
   }
 
-  public void testAmbiguousMethodsFromSameClassAccess() throws Exception {
-    doTestAmbiguous();
+  public void testAmbiguousStaticImportMethod() {
+    myFixture.addFileToProject("pck\\A.java",
+                               "package pck;\n" +
+                               "public class A {\n" +
+                               "    static void bar(Object a) {\n" +
+                               "        System.out.println(\"A\");\n" +
+                               "    }\n" +
+                               "}\n" +
+                               "class B {\n" +
+                               "    static void bar(Object a) {\n" +
+                               "        System.out.println(\"B\");\n" +
+                               "    }\n" +
+                               "}\n");
+    doTest();
   }
 
-  public void testAmbiguousIDEA57633() throws Exception {
-    doTestAmbiguous();
-  }
-
-  public void testAmbiguousStaticImportMethod() throws Exception {
-    doTestAmbiguous();
+  private void doTest() {
+    final String name = getTestName(false);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, myFixture.getModule(), getTestRootDisposable());
+    myFixture.configureByFile(name + ".java");
+    myFixture.checkHighlighting(false, false, false);
   }
 }

@@ -16,6 +16,6 @@ class C {
 
   public static void main(String[] args) {
     final TestProcessor testProcessor = new TestProcessor();
-    testProcessor.<ref>processMap(new HashMap());
+    testProcessor.<caret>processMap(new HashMap());
   }
 }

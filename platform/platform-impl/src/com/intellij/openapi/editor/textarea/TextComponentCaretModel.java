@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.editor.textarea;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +36,7 @@ public class TextComponentCaretModel implements CaretModel {
   private final JTextComponent myTextComponent;
   private final TextComponentEditor myEditor;
   private final Caret myCaret;
+  private final EventDispatcher<CaretActionListener> myCaretActionListeners = EventDispatcher.create(CaretActionListener.class);
 
   public TextComponentCaretModel(@NotNull JTextComponent textComponent, @NotNull TextComponentEditor editor) {
     myTextComponent = textComponent;
@@ -228,12 +231,19 @@ public class TextComponentCaretModel implements CaretModel {
 
   @Override
   public void runForEachCaret(@NotNull CaretAction action) {
+    myCaretActionListeners.getMulticaster().beforeAllCaretsAction();
     action.perform(myCaret);
+    myCaretActionListeners.getMulticaster().afterAllCaretsAction();
   }
 
   @Override
   public void runForEachCaret(@NotNull CaretAction action, boolean reverseOrder) {
-    action.perform(myCaret);
+    runForEachCaret(action);
+  }
+
+  @Override
+  public void addCaretActionListener(@NotNull CaretActionListener listener, @NotNull Disposable disposable) {
+    myCaretActionListeners.addListener(listener, disposable);
   }
 
   @Override

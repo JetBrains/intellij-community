@@ -105,7 +105,11 @@ public class FileTemplateUtil {
           Token firstToken = literal.getFirstToken();
           if (firstToken != null) {
             String s = StringUtil.unquoteString(firstToken.toString());
-            final FileTemplate includedTemplate = FileTemplateManager.getInstance(project).getTemplate(s);
+            FileTemplateManager templateManager = FileTemplateManager.getInstance(project);
+            FileTemplate includedTemplate = templateManager.getTemplate(s);
+            if (includedTemplate == null) {
+              includedTemplate = templateManager.getPattern(s);
+            }
             if (includedTemplate != null && visitedIncludes.add(s)) {
               SimpleNode template = VelocityWrapper.parse(new StringReader(includedTemplate.getText()), "MyTemplate");
               collectAttributes(referenced, defined, template, propertiesNames, includeDummies, visitedIncludes, project);
@@ -316,6 +320,7 @@ public class FileTemplateUtil {
       propsMap.put(dummyRef, "");
     }
 
+    handler.prepareProperties(propsMap, fileName, template);
     handler.prepareProperties(propsMap);
 
     Map<String, Object> props_ = propsMap;

@@ -133,7 +133,6 @@ public abstract class PsiDocumentManager {
    * @return an immutable document corresponding to the current PSI state. For committed documents, the contents and timestamp are equal to
    * the ones of {@link #getDocument(PsiFile)}. For uncommitted documents, the text is {@link #getLastCommittedText(Document)} and
    * the modification stamp is {@link #getLastCommittedStamp(Document)}.
-   * @since 143.* builds
    */
   @Nullable
   public abstract Document getLastCommittedDocument(@NotNull PsiFile file);

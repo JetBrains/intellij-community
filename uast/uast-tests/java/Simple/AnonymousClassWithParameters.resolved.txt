@@ -1,0 +1,9 @@
+        UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> PsiTypeParameter:T: T
+            UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> PsiTypeParameter:T: T
+            UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> PsiField:name: name
+            UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = name) -> PsiParameter:name: name
+            UBlockExpression -> UQualifiedReferenceExpression -> PsiMethod:bar: bar
+            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> UQualifiedReferenceExpression -> PsiMethod:bar: bar
+                UObjectLiteralExpression -> USimpleNameReferenceExpression (identifier = Foo) -> PsiClass:Foo: Foo
+                UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+                    UAnnotation (fqName = java.lang.Override) -> USimpleNameReferenceExpression (identifier = Override) -> PsiClass:Override: Override

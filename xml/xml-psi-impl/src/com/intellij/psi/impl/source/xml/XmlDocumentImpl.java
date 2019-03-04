@@ -336,8 +336,9 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       final String schemaFilePath = getFilePathForLogging(xmlFile);
       
       LOG.debug("Schema file for " + filePath + " is " + schemaFilePath);
-      
-      XmlNSDescriptor descriptorFromDtd = getNSDescriptorFromMetaData(xmlFile == null ? null : xmlFile.getDocument(), forHtml);
+
+      XmlNSDescriptor descriptorFromDtd = getNSDescriptorFromMetaData(
+        xmlFile == null ? null : AstLoadingFilter.forceAllowTreeLoading(xmlFile, xmlFile::getDocument), forHtml);
 
       LOG.debug("Descriptor from meta data for schema file " +
                 schemaFilePath +

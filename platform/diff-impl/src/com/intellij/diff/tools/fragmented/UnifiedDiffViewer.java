@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
@@ -239,9 +238,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       final Document document1 = getContent1().getDocument();
       final Document document2 = getContent2().getDocument();
 
-      final CharSequence[] texts = ReadAction.compute(() -> {
-        return new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()};
-      });
+      final CharSequence[] texts = ReadAction.compute(() -> new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()});
 
       final List<LineFragment> fragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
 
@@ -267,14 +264,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       });
       UnifiedFragmentBuilder builder = data.getBuilder();
 
-      FileType fileType = content2.getContentType() == null ? content1.getContentType() : content2.getContentType();
-
       LineNumberConvertor convertor1 = builder.getConvertor1();
       LineNumberConvertor convertor2 = builder.getConvertor2();
       List<LineRange> changedLines = builder.getChangedLines();
       boolean isContentsEqual = builder.isEqual();
 
-      CombinedEditorData editorData = new CombinedEditorData(builder.getText(), data.getHighlighter(), data.getRangeHighlighter(), fileType,
+      CombinedEditorData editorData = new CombinedEditorData(builder.getText(), data.getHighlighter(), data.getRangeHighlighter(),
                                                              convertor1.createConvertor(), convertor2.createConvertor());
 
       return apply(editorData, builder.getBlocks(), convertor1, convertor2, changedLines, isContentsEqual);
@@ -382,7 +377,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       });
 
       if (data.getHighlighter() != null) myEditor.setHighlighter(data.getHighlighter());
-      DiffUtil.setEditorCodeStyle(myProject, myEditor, data.getFileType());
+      DiffUtil.setEditorCodeStyle(myProject, myEditor, getContent(myMasterSide));
 
       if (data.getRangeHighlighter() != null) data.getRangeHighlighter().apply(myProject, myDocument);
 
@@ -676,9 +671,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       List<UnifiedDiffChange> changes = myChangedBlockData.getDiffChanges();
       if (changes.isEmpty()) return false;
 
-      return DiffUtil.isSomeRangeSelected(getEditor(), lines -> {
-        return ContainerUtil.exists(changes, change -> isChangeSelected(change, lines));
-      });
+      return DiffUtil.isSomeRangeSelected(getEditor(), lines -> ContainerUtil.exists(changes, change -> isChangeSelected(change, lines)));
     }
 
     @NotNull
@@ -1123,20 +1116,17 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @NotNull private final CharSequence myText;
     @Nullable private final EditorHighlighter myHighlighter;
     @Nullable private final UnifiedEditorRangeHighlighter myRangeHighlighter;
-    @Nullable private final FileType myFileType;
     @NotNull private final TIntFunction myLineConvertor1;
     @NotNull private final TIntFunction myLineConvertor2;
 
     CombinedEditorData(@NotNull CharSequence text,
                               @Nullable EditorHighlighter highlighter,
                               @Nullable UnifiedEditorRangeHighlighter rangeHighlighter,
-                              @Nullable FileType fileType,
                               @NotNull TIntFunction convertor1,
                               @NotNull TIntFunction convertor2) {
       myText = text;
       myHighlighter = highlighter;
       myRangeHighlighter = rangeHighlighter;
-      myFileType = fileType;
       myLineConvertor1 = convertor1;
       myLineConvertor2 = convertor2;
     }
@@ -1154,11 +1144,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @Nullable
     public UnifiedEditorRangeHighlighter getRangeHighlighter() {
       return myRangeHighlighter;
-    }
-
-    @Nullable
-    public FileType getFileType() {
-      return myFileType;
     }
 
     @NotNull

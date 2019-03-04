@@ -49,7 +49,7 @@ public class VcsGeneralConfigurationConfigurable implements SearchableConfigurab
     if (mappings != null) {
       mappings.addVcsListener(new ModuleVcsListener() {
         @Override
-        public void activeVcsSetChanged(Collection<AbstractVcs> activeVcses) {
+        public void activeVcsSetChanged(Collection<? extends AbstractVcs> activeVcses) {
           myPanel.updateAvailableOptions(activeVcses);
         }
       });

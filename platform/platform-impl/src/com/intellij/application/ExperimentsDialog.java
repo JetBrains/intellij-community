@@ -74,7 +74,7 @@ public class ExperimentsDialog extends DialogWrapper {
 
   private TableModel createModel(ExperimentalFeature[] experimentalFeatures) {
     return new AbstractTableModel() {
-      ExperimentalFeature[] features = experimentalFeatures;
+      final ExperimentalFeature[] features = experimentalFeatures;
 
       @Override
       public int getRowCount() {

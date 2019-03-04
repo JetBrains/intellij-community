@@ -4,5 +4,6 @@ println 42
 0(1) element: null
 1(2) element: null
 2(3) READ println
-3(4) element: Call expression MAYBE_RETURN
-4() element: null
+3(4) ARGUMENTS element: Call expression
+4(5) element: Call expression MAYBE_RETURN
+5() element: null

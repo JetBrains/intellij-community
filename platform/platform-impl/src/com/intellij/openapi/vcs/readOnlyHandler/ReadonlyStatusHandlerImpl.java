@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.CommonBundle;
@@ -25,7 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 @State(name = "ReadonlyStatusHandler", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements PersistentStateComponent<ReadonlyStatusHandlerImpl.State> {
@@ -55,14 +58,16 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     myState = state;
   }
 
+  @NotNull
   @Override
-  public OperationStatus ensureFilesWritable(@NotNull VirtualFile... files) {
-    if (files.length == 0) {
+  public OperationStatus ensureFilesWritable(@NotNull Collection<VirtualFile> files) {
+    if (files.isEmpty()) {
       return new OperationStatusImpl(VirtualFile.EMPTY_ARRAY);
     }
+
     checkThreading();
 
-    Set<VirtualFile> realFiles = new THashSet<>(files.length);
+    Set<VirtualFile> realFiles = new THashSet<>(files.size());
     for (VirtualFile file : files) {
       if (file instanceof LightVirtualFile) {
         VirtualFile originalFile = ((LightVirtualFile)file).getOriginalFile();
@@ -75,7 +80,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
         realFiles.add(file);
       }
     }
-    files = VfsUtilCore.toVirtualFileArray(realFiles);
+    files = new ArrayList<>(realFiles);
 
     for (final WritingAccessProvider accessProvider : myAccessProviders) {
       Collection<VirtualFile> denied = ContainerUtil.filter(files, virtualFile -> !accessProvider.isPotentiallyWritable(virtualFile));
@@ -87,15 +92,16 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
         return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied));
       }
     }
-    
-    final FileInfo[] fileInfos = createFileInfos(files);
-    if (fileInfos.length == 0) { // if all files are already writable
+
+    final List<FileInfo> fileInfos = createFileInfos(files);
+    // if all files are already writable
+    if (fileInfos.isEmpty()) {
       return createResultStatus(files);
     }
-    
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (myClearReadOnlyInTests) {
-        processFiles(new ArrayList<>(Arrays.asList(fileInfos)), null);
+        processFiles(new ArrayList<>(fileInfos), null);
       }
       return createResultStatus(files);
     }
@@ -108,7 +114,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       new ReadOnlyStatusDialog(myProject, fileInfos).show();
     }
     else {
-      processFiles(new ArrayList<>(Arrays.asList(fileInfos)), null); // the collection passed is modified
+      processFiles(new ArrayList<>(fileInfos), null); // the collection passed is modified
     }
     IdeEventQueue.getInstance().setEventCount(savedEventCount);
     return createResultStatus(files);
@@ -124,7 +130,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
   }
 
-  private static OperationStatus createResultStatus(final VirtualFile[] files) {
+  private static OperationStatus createResultStatus(@NotNull Collection<VirtualFile> files) {
     List<VirtualFile> readOnlyFiles = new ArrayList<>();
     for (VirtualFile file : files) {
       if (file.exists()) {
@@ -137,14 +143,15 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(readOnlyFiles));
   }
 
-  private FileInfo[] createFileInfos(VirtualFile[] files) {
+  @NotNull
+  private List<FileInfo> createFileInfos(@NotNull Collection<VirtualFile> files) {
     List<FileInfo> fileInfos = new ArrayList<>();
     for (final VirtualFile file : files) {
       if (file != null && !file.isWritable() && file.isInLocalFileSystem()) {
         fileInfos.add(new FileInfo(file, myProject));
       }
     }
-    return fileInfos.toArray(new FileInfo[0]);
+    return fileInfos;
   }
 
   public static void processFiles(final List<FileInfo> fileInfos, @Nullable String changelist) {
@@ -182,7 +189,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
     private final VirtualFile[] myReadonlyFiles;
 
-    OperationStatusImpl(final VirtualFile[] readonlyFiles) {
+    OperationStatusImpl(@NotNull VirtualFile[] readonlyFiles) {
       myReadonlyFiles = readonlyFiles;
     }
 

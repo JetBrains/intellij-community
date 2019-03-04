@@ -278,7 +278,7 @@ object GuiTestLocalLauncher {
       .plus("-ea")
       .plus("-Xbootclasspath/p:${GuiTestOptions.bootClasspath}")
       .plus("-Dsun.awt.disablegrab=true")
-      .plus("-Dsun.io.useCanonCaches=false")
+      .plus("-Dsun.io.useCanonPrefixCache=false")
       .plus("-Djava.net.preferIPv4Stack=true")
       .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar}")
       .plus("-Didea.is.internal=${GuiTestOptions.isInternal}")
@@ -286,7 +286,11 @@ object GuiTestLocalLauncher {
       .plus("-Dnative.mac.file.chooser.enabled=false")
       .plus("-Didea.config.path=${GuiTestOptions.configPath}")
       .plus("-Didea.system.path=${GuiTestOptions.systemPath}")
+      .plus("-Didea.gui.tests.log.file=${GuiTestOptions.guiTestLogFile}")
       .plus("-Dfile.encoding=${GuiTestOptions.encoding}")
+      .plus("-Djb.privacy.policy.text=<!--999.999-->")
+      .plus("-Djb.consents.confirmation.enabled=false")
+      .plusIf(System.getProperty("java.io.tmpdir") != null, "-Djava.io.tmpdir=${System.getProperty("java.io.tmpdir")}")
       .plusIf(!ide.ideType.platformPrefix.isNullOrEmpty(), "-Didea.platform.prefix=${ide.ideType.platformPrefix}")
       .plus(ide.ideType.ideSpecificOptions)
       .plus(customVmOptions)
@@ -336,7 +340,7 @@ object GuiTestLocalLauncher {
   }
 
   private fun substituteAllMacro(classpath: MutableSet<File>): MutableSet<File> {
-    val macroList = listOf("\$MAVEN_REPOSITORY\$", "\$KOTLIN_BUNDLED\$")
+    val macroList = listOf("\$MAVEN_REPOSITORY\$")
     val macroMap = mutableMapOf<String, String>()
     macroList.forEach { macroMap[it] = resolveMacro(classpath, it) }
     val mutableClasspath = mutableListOf<File>()

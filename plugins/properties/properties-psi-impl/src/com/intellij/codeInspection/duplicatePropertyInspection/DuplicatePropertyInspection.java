@@ -35,8 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
@@ -67,17 +65,12 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
         HTMLComposer.appendAfterHeaderIndention(anchor);
         HTMLComposer.appendAfterHeaderIndention(anchor);
         anchor.append("<a HREF=\"");
-        try {
-          final PsiFile file = element.getContainingFile();
-          if (file != null) {
-            final VirtualFile virtualFile = file.getVirtualFile();
-            if (virtualFile != null) {
-              anchor.append(new URL(virtualFile.getUrl() + "#" + elementToLink.getTextRange().getStartOffset()));
-            }
+        final PsiFile file = element.getContainingFile();
+        if (file != null) {
+          final VirtualFile virtualFile = file.getVirtualFile();
+          if (virtualFile != null) {
+            anchor.append(virtualFile.getUrl()).append("#").append(elementToLink.getTextRange().getStartOffset());
           }
-        }
-        catch (MalformedURLException e) {
-          LOG.error(e);
         }
         anchor.append("\">");
         anchor.append(elementToLink.getText().replaceAll("\\$", "\\\\\\$"));
@@ -103,14 +96,9 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
         final int lineNumber = doc.getLineNumber(psiElement.getTextOffset()) + 1;
         lineAnchor.append(" ").append(InspectionsBundle.message("inspection.export.results.at.line")).append(" ");
         lineAnchor.append("<a HREF=\"");
-        try {
-          int offset = doc.getLineStartOffset(lineNumber - 1);
-          offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
-          lineAnchor.append(new URL(vFile.getUrl() + "#" + offset));
-        }
-        catch (MalformedURLException e) {
-          LOG.error(e);
-        }
+        int offset = doc.getLineStartOffset(lineNumber - 1);
+        offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
+        lineAnchor.append(vFile.getUrl()).append("#").append(offset);
         lineAnchor.append("\">");
         lineAnchor.append(lineNumber);
         lineAnchor.append("</a>");

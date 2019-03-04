@@ -18,8 +18,8 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Condition;
 
 import java.util.Collection;
-import java.util.Map;
 
+@FunctionalInterface
 public interface InternalIterator<T>{
   /**
    * @return false to stop iteration true to continue if more elements are avaliable.
@@ -39,27 +39,7 @@ public interface InternalIterator<T>{
     }
 
     public static <T> InternalIterator<T> create(Collection<? super T> collection) {
-      return new Collector<T>(collection);
-    }
-  }
-
-  class MapFromValues<K, Dom, V extends Dom> implements InternalIterator<V> {
-    private final Map<? super K, ? super V> myMap;
-    private final Convertor<? super Dom, ? extends K> myToKeyConvertor;
-
-    public MapFromValues(Map<? super K, ? super V> map, Convertor<? super Dom, ? extends K> toKeyConvertor) {
-      myMap = map;
-      myToKeyConvertor = toKeyConvertor;
-    }
-
-    @Override
-    public boolean visit(V value) {
-      myMap.put(myToKeyConvertor.convert(value), value);
-      return true;
-    }
-
-    public static <Dom, K, V extends Dom> InternalIterator<V> create(Convertor<? super Dom, ? extends K> toKey, Map<? super K, ? super V> map) {
-      return new MapFromValues<K, Dom, V>(map, toKey);
+      return new Collector<>(collection);
     }
   }
 
@@ -78,34 +58,15 @@ public interface InternalIterator<T>{
     }
 
     public static <T> InternalIterator<T> create(InternalIterator<? super T> iterator, Condition<? super T> filter) {
-      return new Filtering<T>(iterator, filter);
+      return new Filtering<>(iterator, filter);
     }
 
     public static <T, V extends T> InternalIterator<T> createInstanceOf(InternalIterator<V> iterator, FilteringIterator.InstanceOf<V> filter) {
-      return new Filtering<T>((InternalIterator<T>)iterator, filter);
+      return new Filtering<>((InternalIterator<T>)iterator, filter);
     }
 
     public static <T> InternalIterator createInstanceOf(InternalIterator<T> iterator, Class<T> aClass) {
       return createInstanceOf(iterator, FilteringIterator.instanceOf(aClass));
-    }
-  }
-
-  class Converting<Dom, Rng> implements InternalIterator<Dom> {
-    private final Convertor<? super Dom, ? extends Rng> myConvertor;
-    private final InternalIterator<? super Rng> myIterator;
-
-    public Converting(InternalIterator<? super Rng> iterator, Convertor<? super Dom, ? extends Rng> convertor) {
-      myIterator = iterator;
-      myConvertor = convertor;
-    }
-
-    @Override
-    public boolean visit(Dom element) {
-      return myIterator.visit(myConvertor.convert(element));
-    }
-
-    public static <Dom, Rng> InternalIterator<Dom> create(Convertor<? super Dom, ? extends Rng> convertor, InternalIterator<? super Rng> iterator) {
-      return new Converting<Dom, Rng>(iterator, convertor);
     }
   }
 }

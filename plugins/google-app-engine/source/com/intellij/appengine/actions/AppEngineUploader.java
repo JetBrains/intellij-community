@@ -112,9 +112,7 @@ public class AppEngineUploader {
         if (name == null) return null;
 
         final PsiFile file = application.getXmlTag().getContainingFile();
-        WriteCommandAction.writeCommandAction(project, file).run(() -> {
-          application.setStringValue(name);
-        });
+        WriteCommandAction.writeCommandAction(project, file).run(() -> application.setStringValue(name));
         final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         if (document != null) {
           FileDocumentManager.getInstance().saveDocument(document);

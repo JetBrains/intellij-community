@@ -24,12 +24,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
@@ -39,7 +39,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   public PsiElementFactoryImpl(final PsiManagerEx manager) {
     super(manager);
-    manager.registerRunnableToRunOnChange(() -> myCachedObjectType.clear());
+    manager.registerRunnableToRunOnChange(myCachedObjectType::clear);
   }
 
   @NotNull
@@ -621,6 +621,25 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     return statement;
   }
 
+  @Override
+  public PsiResourceVariable createResourceVariable(@NonNls @NotNull String name,
+                                                    @NotNull PsiType type,
+                                                    @Nullable PsiExpression initializer,
+                                                    @Nullable PsiElement context) {
+    PsiTryStatement tryStatement = (PsiTryStatement)createStatementFromText("try (X x = null){}", context);
+    PsiResourceList resourceList = tryStatement.getResourceList();
+    assert resourceList != null;
+    PsiResourceVariable resourceVariable = (PsiResourceVariable)resourceList.iterator().next();
+    resourceVariable.getTypeElement().replace(createTypeElement(type));
+    PsiIdentifier nameIdentifier = resourceVariable.getNameIdentifier();
+    assert nameIdentifier != null;
+    nameIdentifier.replace(createIdentifier(name));
+    if (initializer != null) {
+      resourceVariable.setInitializer(initializer);
+    }
+    return resourceVariable;
+  }
+
   private static void replace(@Nullable PsiElement original, @NotNull PsiElement replacement, @NotNull String message) {
     assert original != null : message;
     original.replace(replacement);
@@ -740,12 +759,8 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     return statements[0];
   }
 
-  private static final JavaParserUtil.ParserWrapper CATCH_SECTION = new JavaParserUtil.ParserWrapper() {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getStatementParser().parseCatchBlock(builder);
-    }
-  };
+  private static final JavaParserUtil.ParserWrapper CATCH_SECTION =
+    builder -> JavaParser.INSTANCE.getStatementParser().parseCatchBlock(builder);
 
   @NotNull
   @Override

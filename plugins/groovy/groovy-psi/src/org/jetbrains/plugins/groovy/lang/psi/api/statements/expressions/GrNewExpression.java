@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 
 public interface GrNewExpression extends GrCallExpression, GrConstructorCall {
 
@@ -30,4 +31,7 @@ public interface GrNewExpression extends GrCallExpression, GrConstructorCall {
 
   @Nullable
   GrTypeArgumentList getConstructorTypeArguments();
+  
+  @Nullable
+  GroovyCallReference getConstructorReference();
 }

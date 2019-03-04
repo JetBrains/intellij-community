@@ -16,10 +16,7 @@ import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
-import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
+import com.intellij.psi.impl.source.resolve.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.infos.CandidateInfo;
@@ -397,7 +394,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       if (result.length == 0 && (kind == Kind.CLASS_OR_PACKAGE_NAME_KIND || kind == Kind.CLASS_NAME_KIND)) {
         String qualifiedName = referenceElement.getClassNameText();
         if (qualifiedName != null) {
-          result = tryClassResult(qualifiedName, referenceElement, result);
+          result = tryClassResult(qualifiedName, referenceElement);
         }
       }
 
@@ -407,21 +404,21 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
-  public static JavaResolveResult[] tryClassResult(String qualifiedName, PsiElement referenceElement, JavaResolveResult[] result) {
-    String packageName = StringUtil.getPackageName(qualifiedName);
+  public static JavaResolveResult[] tryClassResult(String qualifiedName, PsiJavaCodeReferenceElement referenceElement) {
+    PsiElement qualifier = referenceElement.getQualifier();
     Project project = referenceElement.getProject();
-    if (!StringUtil.isEmptyOrSpaces(packageName)) {
-      PsiClass referencedClass = PsiResolveHelper.SERVICE.getInstance(project).resolveReferencedClass(packageName, referenceElement);
+    if (qualifier instanceof PsiJavaCodeReferenceElement) {
+      PsiClass referencedClass = ResolveClassUtil.resolveClass((PsiJavaCodeReferenceElement)qualifier, referenceElement.getContainingFile());
       //class is always preferred to package => when such a class exists, the qualified name can point to inner class only and that check must already have been failed
       if (referencedClass != null) {
-        return result;
+        return JavaResolveResult.EMPTY_ARRAY;
       }
       PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName, referenceElement.getResolveScope());
       if (aClass != null) {
-        result = new JavaResolveResult[] {new CandidateInfo(aClass, PsiSubstitutor.EMPTY, referenceElement, false)};
+        return new JavaResolveResult[] {new CandidateInfo(aClass, PsiSubstitutor.EMPTY, referenceElement, false)};
       }
     }
-    return result;
+    return JavaResolveResult.EMPTY_ARRAY;
   }
 
   @Override
@@ -526,7 +523,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         // A single-type-import declaration D in a compilation unit C of package P
         // that imports a type named N shadows, throughout C, the declarations of
         // ... any top level type named N declared in another compilation unit of P.
-        if (PsiTreeUtil.getParentOfType(this, PsiImportStatement.class) != null) {
+        PsiImportStatement importStatement = PsiTreeUtil.getParentOfType(this, PsiImportStatement.class);
+        if (importStatement != null && (!importStatement.isOnDemand() || !isQualified())) {
           result = resolve(Kind.PACKAGE_NAME_KIND, containingFile);
           if (result.length == 0) {
             result = resolve(classKind, containingFile);
@@ -902,7 +900,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_FQ_NAME_KIND:
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
         filters.add(ElementClassFilter.PACKAGE);
-        if (isQualified()) {
+        if (isQualified() || isCodeFragmentType(getTreeParent().getElementType())) {
           filters.add(ElementClassFilter.CLASS);
         }
         break;

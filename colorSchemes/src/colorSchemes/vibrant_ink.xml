@@ -1298,6 +1298,12 @@
         <option name="FOREGROUND" value="339999" />
       </value>
     </option>
+    <option name="RUBY_CONSTANT_DECLARATION">
+      <value>
+        <option name="FOREGROUND" value="FDA5FF" />
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
     <option name="RUBY_CVAR">
       <value>
         <option name="FOREGROUND" value="FFFFFF" />
@@ -1364,6 +1370,17 @@
         <option name="FOREGROUND" value="FFCC00" />
       </value>
     </option>
+    <option name="RUBY_SPECIFIC_CALL">
+      <value>
+        <option name="FOREGROUND" value="FC9800" />
+      </value>
+    </option>
+    <option name="RUBY_PARAMDEF_CALL">
+      <value>
+        <option name="FOREGROUND" value="FFC66D" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
     <option name="RUBY_NUMBER">
       <value>
         <option name="FOREGROUND" value="339999" />
@@ -1374,9 +1391,16 @@
         <option name="FOREGROUND" value="FF6600" />
       </value>
     </option>
+    <option name="RUBY_LOCAL_VAR_ID">
+      <value>
+        <option name="FOREGROUND" value="D4B01D" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
     <option name="RUBY_PARAMETER_ID">
       <value>
         <option name="FONT_TYPE" value="2" />
+        <option name="FOREGROUND" value="009EDF" />
       </value>
     </option>
     <option name="RUBY_REGEXP">

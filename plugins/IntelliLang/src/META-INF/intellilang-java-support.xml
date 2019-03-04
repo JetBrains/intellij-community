@@ -1,7 +1,4 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-
 <idea-plugin>
-
   <extensions defaultExtensionNs="com.intellij">
     <localInspection language="JAVA" shortName="UnknownLanguage" displayName="Unknown Language ID" groupName="Language Injection" enabledByDefault="true"
                      level="ERROR" implementationClass="org.intellij.plugins.intelliLang.inject.java.validation.UnknownLanguageID"/>
@@ -24,8 +21,7 @@
     <concatenationAwareInjector implementation="org.intellij.plugins.intelliLang.inject.java.ConcatenationInjector"/>
 
     <psi.referenceContributor language="UAST" implementation="org.intellij.plugins.intelliLang.inject.java.LanguageReferenceProvider"/>
-    <projectService serviceInterface="org.intellij.plugins.intelliLang.inject.java.InjectionCache"
-                    serviceImplementation="org.intellij.plugins.intelliLang.inject.java.InjectionCache"/>
+    <projectService serviceImplementation="org.intellij.plugins.intelliLang.inject.java.InjectionCache"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -36,8 +32,5 @@
     <languageSupport implementation="org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport"/>
     <injectionConfig config="resources/javaInjections.xml"/>
     <injectionConfig config="resources/xmlInjections-java.xml"/>
-
-
   </extensions>
-
 </idea-plugin>

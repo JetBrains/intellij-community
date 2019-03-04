@@ -35,7 +35,7 @@ public abstract class ImmutableUserMap {
   public abstract <T> T get(@NotNull Key<T> key);
 
   public final <T> ImmutableUserMap put(@NotNull final Key<T> key, final T value) {
-    return new ImmutableUserMapImpl<T>(key, value, this);
+    return new ImmutableUserMapImpl<>(key, value, this);
   }
 
   private static class ImmutableUserMapImpl<V> extends ImmutableUserMap {

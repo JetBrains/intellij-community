@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -13,8 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class EditorNotifications {
-  public static final ExtensionPointName<Provider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.editorNotificationProvider");
-
   /**
    * An extension allowing to add custom notifications to the top of file editors.
    *
@@ -25,8 +22,19 @@ public abstract class EditorNotifications {
     @NotNull
     public abstract Key<T> getKey();
 
+    /**
+     * @deprecated Override {@link #createNotificationPanel(VirtualFile, FileEditor, Project)}
+     */
     @Nullable
-    public abstract T createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor);
+    @Deprecated
+    public T createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
+      throw new AbstractMethodError();
+    }
+
+    @Nullable
+    public T createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
+      return createNotificationPanel(file, fileEditor);
+    }
   }
 
   public static EditorNotifications getInstance(Project project) {

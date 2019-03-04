@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
+import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
@@ -27,6 +28,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
+import java.util.Locale;
 
 import static com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI.isSearchFieldWithHistoryPopup;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
@@ -37,6 +39,7 @@ import static javax.swing.SwingConstants.WEST;
 /**
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("UnregisteredNamedColor")
 public class DarculaUIUtil {
   public enum Outline {
     error {
@@ -259,8 +262,8 @@ public class DarculaUIUtil {
 
       @Override
     public Insets getBorderInsets(Component c) {
-      return isTableCellEditor(c) || isCompact(c) ? JBUI.insets(2).asUIResource() :
-             isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(5, 8).asUIResource();
+      return isTableCellEditor(c) || isCompact(c) || isComboBoxEditor(c) ?
+             JBUI.insets(2, 3).asUIResource() : JBUI.insets(5, 8).asUIResource();
     }
   }
 
@@ -417,7 +420,7 @@ public class DarculaUIUtil {
   public static final JBValue COMPACT_HEIGHT = new JBValue.Float(20);
   public static final JBValue ARROW_BUTTON_WIDTH = new JBValue.Float(23);
   public static final JBValue LW = new JBValue.Float(1);
-  public static final JBValue BW = new JBValue.UIInteger("Border.width", 2);
+  public static final JBValue BW = new JBValue.UIInteger("Component.focusWidth", 2);
   public static final JBValue CELL_EDITOR_BW = new JBValue.UIInteger("CellEditor.border.width", 2);
   public static final JBValue BUTTON_ARC = new JBValue.UIInteger("Button.arc", 6);
   public static final JBValue COMPONENT_ARC = new JBValue.UIInteger("Component.arc", 5);
@@ -462,21 +465,22 @@ public class DarculaUIUtil {
 
   public static Color getOutlineColor(boolean enabled, boolean focused) {
     return enabled ?
-            focused ? JBColor.namedColor("Component.focusedBorderColor", 0x87AFDA) : JBColor.namedColor("Component.borderColor", Gray.xBF) :
-           JBColor.namedColor("Component.disabledBorderColor", Gray.xCF);
+            focused ? JBColor.namedColor("Component.focusedBorderColor", JBColor.namedColor("Outline.focusedColor", 0x87AFDA)) :
+            JBColor.namedColor("Component.borderColor", JBColor.namedColor("Outline.color", Gray.xBF)) :
+           JBColor.namedColor("Component.disabledBorderColor", JBColor.namedColor("Outline.disabledColor", Gray.xCF));
   }
 
   public static Color getArrowButtonBackgroundColor(boolean enabled, boolean editable) {
     return enabled ?
-      editable ? JBColor.namedColor("ComboBox.darcula.editable.arrowButtonBackground", Gray.xFC) :
-                 JBColor.namedColor("ComboBox.darcula.arrowButtonBackground", Gray.xFC)
+      editable ? JBColor.namedColor("ComboBox.ArrowButton.background", JBColor.namedColor("ComboBox.darcula.editable.arrowButtonBackground", Gray.xFC)) :
+                 JBColor.namedColor("ComboBox.ArrowButton.nonEditableBackground", JBColor.namedColor("ComboBox.darcula.arrowButtonBackground", Gray.xFC))
       : UIUtil.getPanelBackground();
   }
 
   public static Color getArrowButtonForegroundColor(boolean enabled) {
     return enabled ?
-      JBColor.namedColor("ComboBox.darcula.arrowButtonForeground", Gray.x66) :
-      JBColor.namedColor("ComboBox.darcula.arrowButtonDisabledForeground", Gray.xAB);
+      JBColor.namedColor("ComboBox.ArrowButton.iconColor", JBColor.namedColor("ComboBox.darcula.arrowButtonForeground", Gray.x66)) :
+      JBColor.namedColor("ComboBox.ArrowButton.disabledIconColor", JBColor.namedColor("ComboBox.darcula.arrowButtonDisabledForeground", Gray.xAB));
   }
 
   public static Dimension maximize(@Nullable Dimension s1, @NotNull Dimension s2) {
@@ -491,10 +495,23 @@ public class DarculaUIUtil {
     Color fg = button.getForeground();
     if (fg instanceof UIResource && DarculaButtonUI.isDefaultButton(button)) {
       Color selectedFg = UIManager.getColor("Button.default.foreground");
+      if (selectedFg == null) {
+        selectedFg = UIManager.getColor("Button.darcula.selectedButtonForeground");
+      }
+
       if (selectedFg != null) {
         return selectedFg;
       }
     }
     return fg;
+  }
+
+  public static boolean isMultiLineHTML(@Nullable String text) {
+    if (text != null) {
+      text = text.toLowerCase(Locale.getDefault());
+      return BasicHTML.isHTMLString(text) &&
+             (text.contains("<br>") || text.contains("<br/>"));
+    }
+    return false;
   }
 }

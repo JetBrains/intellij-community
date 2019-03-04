@@ -62,11 +62,13 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
       myModule = null;
       myProject = null;
-  
       super.tearDown();
     }
   }

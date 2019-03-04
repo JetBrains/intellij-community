@@ -184,9 +184,10 @@ public class PluginHeaderPanel {
           case INSTALL: return ColorUtil.mix(new JBColor(0x60cc69, 0x519557), new JBColor(0x326529, 0x28462f), 0.5);
           case RESTART:
           case UNINSTALL:
-            return UIUtil.isUnderDarcula()
-                   ? ColorUtil.mix(UIManager.getColor("Button.startBackground"), UIManager.getColor("Button.endBackground"), 0.5)
-                   : Gray._240;
+            //noinspection UnregisteredNamedColor
+            return UIUtil.isUnderDarcula() ?
+                   ColorUtil.mix(JBColor.namedColor("Button.startBackground", JBColor.namedColor("Button.darcula.startColor", 0x4C5052)),
+                                 JBColor.namedColor("Button.endBackground", JBColor.namedColor("Button.darcula.endColor", 0x4C5052)), 0.5) : Gray._240;
         }
         return Gray._238;
       }

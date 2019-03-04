@@ -1,8 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.lang.ASTNode;
@@ -17,6 +13,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -86,6 +83,6 @@ public class GroovyChangeUtilSupport implements TreeCopyHandler {
     while (node != null && node.getElementType() == GroovyElementTypes.REFERENCE_ELEMENT) {
       node = node.getTreeParent();
     }
-    return node != null && node.getElementType() == GroovyElementTypes.IMPORT_STATEMENT;
+    return node != null && node.getElementType() == GroovyStubElementTypes.IMPORT;
   }
 }

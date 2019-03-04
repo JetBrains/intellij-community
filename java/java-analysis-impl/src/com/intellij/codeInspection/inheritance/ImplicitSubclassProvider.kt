@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nls.Capitalization.Sentence
  * e.g. by some framework (CGLIB Proxy in Spring).
  *
  * @author Nicolay Mitropolsky
- *
- * @since 2017.2
  */
 abstract class ImplicitSubclassProvider {
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -11,11 +11,11 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import org.jdom.JDOMException;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.net.MalformedURLException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -38,11 +38,11 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
     assertEquals("0.1", downloader.getPluginVersion());
   }
 
-  private IdeaPluginDescriptor loadDescriptor(String filePath) throws InvalidDataException, FileNotFoundException, MalformedURLException {
+  private IdeaPluginDescriptor loadDescriptor(String filePath) throws InvalidDataException, IOException, JDOMException {
     String path = PlatformTestUtil.getPlatformTestDataPath() + "updates/customRepositories/" + getTestName(true);
     File descriptorFile = new File(path, filePath);
     IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(descriptorFile.getParentFile(), false);
-    descriptor.readExternal(descriptorFile.toURI().toURL());
+    descriptor.loadFromFile(descriptorFile, null);
     return descriptor;
   }
 }

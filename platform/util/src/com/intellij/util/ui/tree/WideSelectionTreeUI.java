@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui.tree;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
@@ -30,11 +31,17 @@ import javax.swing.border.Border;
 import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicTreeUI;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.lang.reflect.Method;
+import java.util.Set;
+
+import static com.intellij.util.ReflectionUtil.getMethod;
+import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
 
 /**
 * @author Konstantin Bulenkov
@@ -48,15 +55,71 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private static final Border LIST_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListBackgroundPainter");
   private static final Border LIST_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListSelectionBackgroundPainter");
   private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListFocusedSelectionBackgroundPainter");
-  
+
+  private static final Logger LOG = Logger.getInstance(WideSelectionTreeUI.class);
+  private static final Set<String> LOGGED_RENDERERS = newConcurrentSet();
+
   @NotNull private final Condition<? super Integer> myWideSelectionCondition;
   private final boolean myWideSelection;
   private boolean myOldRepaintAllRowValue;
   private boolean myForceDontPaintLines = false;
-  private final boolean mySkinny = false;
+  private static final boolean mySkinny = false;
+
+  private static final TreeUIAction EXPAND_OR_SELECT_NEXT = new TreeUIAction() {
+    @Override
+    public void actionPerformed(ActionEvent event) {
+      Object source = event.getSource();
+      if (source instanceof JTree) {
+        JTree tree = (JTree)source;
+        TreePath path = tree.getLeadSelectionPath();
+        if (path != null) {
+          if (tree.isExpanded(path) || tree.getModel().isLeaf(path.getLastPathComponent())) {
+            int row = tree.getRowForPath(path);
+            path = row < 0 ? null : tree.getPathForRow(row + 1);
+            if (path != null) {
+              tree.setSelectionPath(path);
+              tree.scrollPathToVisible(path);
+            }
+          }
+          else {
+            tree.expandPath(path);
+          }
+        }
+      }
+    }
+  };
+
+  private static final TreeUIAction COLLAPSE_OR_SELECT_PREVIOUS = new TreeUIAction() {
+    @Override
+    public void actionPerformed(ActionEvent event) {
+      Object source = event.getSource();
+      if (source instanceof JTree) {
+        JTree tree = (JTree)source;
+        TreePath path = tree.getLeadSelectionPath();
+        if (path != null) {
+          if (tree.isExpanded(path)) {
+            tree.collapsePath(path);
+          }
+          else {
+            TreePath parent = path.getParentPath();
+            if (parent != null) {
+              if (!tree.isRootVisible() && null == parent.getParentPath()) {
+                int row = tree.getRowForPath(path);
+                parent = row < 1 ? null : tree.getPathForRow(row - 1);
+              }
+              if (parent != null) {
+                tree.setSelectionPath(parent);
+                tree.scrollPathToVisible(parent);
+              }
+            }
+          }
+        }
+      }
+    }
+  };
 
   public WideSelectionTreeUI() {
-    this(true, Conditions.<Integer>alwaysTrue());
+    this(true, Conditions.alwaysTrue());
   }
 
   /**
@@ -141,87 +204,9 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   @Override
   protected void installKeyboardActions() {
     super.installKeyboardActions();
-
-    if (Boolean.TRUE.equals(tree.getClientProperty("MacTreeUi.actionsInstalled"))) return;
-
-    tree.putClientProperty("MacTreeUi.actionsInstalled", Boolean.TRUE);
-
-    final InputMap inputMap = tree.getInputMap(JComponent.WHEN_FOCUSED);
-    inputMap.put(KeyStroke.getKeyStroke("pressed LEFT"), "collapse_or_move_up");
-    inputMap.put(KeyStroke.getKeyStroke("pressed RIGHT"), "expand");
-
-    final ActionMap actionMap = tree.getActionMap();
-
-    final Action expandAction = actionMap.get("expand");
-    if (expandAction != null) {
-      actionMap.put("expand", new TreeUIAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          final Object source = e.getSource();
-          if (source instanceof JTree) {
-            JTree tree = (JTree)source;
-            int selectionRow = tree.getLeadSelectionRow();
-            if (selectionRow != -1) {
-              TreePath selectionPath = tree.getPathForRow(selectionRow);
-              if (selectionPath != null) {
-                boolean leaf = tree.getModel().isLeaf(selectionPath.getLastPathComponent());
-                int toSelect = -1;
-                int toScroll = -1;
-                if ((!leaf && tree.isExpanded(selectionRow)) || leaf) {
-                  if (selectionRow + 1 < tree.getRowCount()) {
-                    toSelect = selectionRow + 1;
-                    toScroll = toSelect;
-                  }
-                }
-                //todo[kb]: make cycle scrolling
-
-                if (toSelect != -1) {
-                  tree.setSelectionInterval(toSelect, toSelect);
-                }
-
-                if (toScroll != -1) {
-                  tree.scrollRowToVisible(toScroll);
-                }
-
-                if (toSelect != -1 || toScroll != -1) return;
-              }
-            }
-          }
-
-
-          expandAction.actionPerformed(e);
-        }
-      });
-    }
-
-    actionMap.put("collapse_or_move_up", new TreeUIAction() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        final Object source = e.getSource();
-        if (source instanceof JTree) {
-          JTree tree = (JTree)source;
-          int selectionRow = tree.getLeadSelectionRow();
-          if (selectionRow == -1) return;
-
-          TreePath selectionPath = tree.getPathForRow(selectionRow);
-          if (selectionPath == null) return;
-
-          if (tree.getModel().isLeaf(selectionPath.getLastPathComponent()) || tree.isCollapsed(selectionRow)) {
-            final TreePath parentPath = tree.getPathForRow(selectionRow).getParentPath();
-            if (parentPath != null) {
-              if (parentPath.getParentPath() != null || tree.isRootVisible()) {
-                final int parentRow = tree.getRowForPath(parentPath);
-                tree.scrollRowToVisible(parentRow);
-                tree.setSelectionInterval(parentRow, parentRow);
-              }
-            }
-          }
-          else {
-            tree.collapseRow(selectionRow);
-          }
-        }
-      }
-    });
+    ActionMap map = tree.getActionMap();
+    map.put("selectChild", EXPAND_OR_SELECT_NEXT);
+    map.put("selectParent", COLLAPSE_OR_SELECT_PREVIOUS);
   }
 
   public void setForceDontPaintLines() {
@@ -398,6 +383,15 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     return new CellRendererPane() {
       @Override
       public void paintComponent(Graphics g, Component c, Container p, int x, int y, int w, int h, boolean shouldValidate) {
+        TreeCellRenderer renderer = currentCellRenderer;
+        if (c != null && renderer != null && LOG.isDebugEnabled()) {
+          Method method = getMethod(c.getClass(), "validate");
+          Class<?> type = method == null ? null : method.getDeclaringClass();
+          if (Component.class.equals(type) || Container.class.equals(type)) {
+            String name = renderer.getClass().getName();
+            if (LOGGED_RENDERERS.add(name)) LOG.debug("suspicious renderer: " + name);
+          }
+        }
         if (c instanceof JComponent && myWideSelection) {
           if (c.isOpaque()) {
             ((JComponent)c).setOpaque(false);

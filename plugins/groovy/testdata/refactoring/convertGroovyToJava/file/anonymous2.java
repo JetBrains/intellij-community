@@ -19,7 +19,7 @@ new anonymous2(new groovy.lang.Binding(args)).run();
 public java.lang.Object run() {
 Anon an = new Anon(3){
 public void run() {
-org.codehaus.groovy.runtime.DefaultGroovyMethods.println(this, getFoo());
+invokeMethod("println", new java.lang.Object[]{getFoo()});
 }
 
 };

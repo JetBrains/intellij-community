@@ -16,6 +16,8 @@
 package com.intellij.openapi.util;
 
 /**
+ * Please use {@link java.util.function.Predicate} instead.
+ *
  * Returns {@code true} or {@code false} for the given input object.
  * <p/>
  * See {@link Conditions} for chained conditions.

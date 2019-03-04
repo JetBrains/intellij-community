@@ -2,23 +2,27 @@
 <problems>
   <problem>
     <file>B.java</file>
-    <line>3</line>
-    <description>Test-only method is called in production code</description>
-  </problem>
-  <problem>
-    <file>B.java</file>
-    <line>5</line>
+    <line>4</line>
     <description>Test-only method is called in production code</description>
   </problem>
   <problem>
     <file>B.java</file>
     <line>6</line>
-    <description>Test-only class is referenced in production code</description>
+    <description>Test-only method is called in production code</description>
   </problem>
   <problem>
     <file>B.java</file>
     <line>7</line>
+    <description>Test-only class is referenced in production code</description>
+  </problem>
+  <problem>
+    <file>B.java</file>
+    <line>8</line>
     <description>Test-only method is called in production code</description>
   </problem>
-
+  <problem>
+    <file>AGrandChild.java</file>
+    <line>6</line>
+    <description>Test-only method is called in production code</description>
+  </problem>
 </problems>

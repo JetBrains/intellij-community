@@ -29,9 +29,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -303,7 +301,7 @@ public class FileManagerImpl implements FileManager {
 
   void possiblyInvalidatePhysicalPsi() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    removeInvalidDirs(true);
+    removeInvalidDirs();
     for (FileViewProvider provider : getVFileToViewProviderMap().values()) {
       markPossiblyInvalidated(provider);
     }
@@ -372,7 +370,7 @@ public class FileManagerImpl implements FileManager {
   @Nullable
   public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    LOG.assertTrue(vFile.isValid(), "Invalid file");
+    if (!vFile.isValid()) throw new InvalidVirtualFileAccessException(vFile);
     if (myDisposed) {
       LOG.error("Project is already disposed: " + myManager.getProject());
     }
@@ -399,12 +397,12 @@ public class FileManagerImpl implements FileManager {
     if (!vFile.isDirectory()) return null;
     dispatchPendingEvents();
 
-    return findDirectoryImpl(vFile);
+    return findDirectoryImpl(vFile, getVFileToPsiDirMap());
   }
 
   @Nullable
-  private PsiDirectory findDirectoryImpl(@NotNull VirtualFile vFile) {
-    PsiDirectory psiDir = getVFileToPsiDirMap().get(vFile);
+  private PsiDirectory findDirectoryImpl(@NotNull VirtualFile vFile, @NotNull ConcurrentMap<VirtualFile, PsiDirectory> psiDirMap) {
+    PsiDirectory psiDir = psiDirMap.get(vFile);
     if (psiDir != null) return psiDir;
 
     if (Registry.is("ide.hide.excluded.files")) {
@@ -416,11 +414,11 @@ public class FileManagerImpl implements FileManager {
 
     VirtualFile parent = vFile.getParent();
     if (parent != null) { //?
-      findDirectoryImpl(parent);// need to cache parent directory - used for firing events
+      findDirectoryImpl(parent, psiDirMap);// need to cache parent directory - used for firing events
     }
 
     psiDir = PsiDirectoryFactory.getInstance(myManager.getProject()).createDirectory(vFile);
-    return ConcurrencyUtil.cacheOrGet(getVFileToPsiDirMap(), vFile, psiDir);
+    return ConcurrencyUtil.cacheOrGet(psiDirMap, vFile, psiDir);
   }
 
   public PsiDirectory getCachedDirectory(@NotNull VirtualFile vFile) {
@@ -479,29 +477,12 @@ public class FileManagerImpl implements FileManager {
     return files;
   }
 
-  private void removeInvalidDirs(boolean useFind) {
-    Map<VirtualFile, PsiDirectory> fileToPsiDirMap = new THashMap<>(getVFileToPsiDirMap());
-    if (useFind) {
-      myVFileToPsiDirMap.set(null);
-    }
-    for (Iterator<VirtualFile> iterator = fileToPsiDirMap.keySet().iterator(); iterator.hasNext();) {
-      VirtualFile vFile = iterator.next();
-      if (!vFile.isValid()) {
-        iterator.remove();
-      }
-      else {
-        PsiDirectory psiDir = findDirectory(vFile);
-        if (psiDir == null) {
-          iterator.remove();
-        }
-      }
-    }
+  private void removeInvalidDirs() {
     myVFileToPsiDirMap.set(null);
-    getVFileToPsiDirMap().putAll(fileToPsiDirMap);
   }
 
   void removeInvalidFilesAndDirs(boolean useFind) {
-    removeInvalidDirs(useFind);
+    removeInvalidDirs();
 
     // note: important to update directories map first - findFile uses findDirectory!
     Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<>(getVFileToViewProviderMap());
@@ -624,9 +605,11 @@ public class FileManagerImpl implements FileManager {
       LOG.assertTrue(getRawCachedViewProvider(file) == viewProvider);
 
       for (PsiFile psiFile : viewProvider.getCachedPsiFiles()) {
-        // update "myPossiblyInvalidated" fields in files
+        // update "myPossiblyInvalidated" fields in files by calling "isValid"
         // that will call us recursively again, but since we're not IN_COMA now, we'll exit earlier and avoid SOE
-        LOG.assertTrue(psiFile.isValid());
+        if (!psiFile.isValid()) {
+          LOG.error(new PsiInvalidElementAccessException(psiFile));
+        }
       }
       return true;
     }
@@ -638,7 +621,7 @@ public class FileManagerImpl implements FileManager {
     return false;
   }
 
-  private boolean shouldResurrect(FileViewProvider viewProvider, VirtualFile file) {
+  private boolean shouldResurrect(@NotNull FileViewProvider viewProvider, @NotNull VirtualFile file) {
     if (!file.isValid()) return false;
 
     Map<VirtualFile, FileViewProvider> tempProviders = myTempProviders.get();
@@ -660,7 +643,7 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
-  private static boolean hasInvalidOriginal(PsiFile file) {
+  private static boolean hasInvalidOriginal(@NotNull PsiFile file) {
     PsiFile original = file.getOriginalFile();
     return original != file && !original.isValid();
   }

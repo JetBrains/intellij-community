@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
  * <li>from some frameworks: {@code @javax.ejb.EJB private DataStore myInjectedDataStore;}</li> etc
  * </ul>
  * @author yole
- * @since 6.0
  */
 public interface ImplicitUsageProvider {
   ExtensionPointName<ImplicitUsageProvider> EP_NAME = new ExtensionPointName<>("com.intellij.implicitUsageProvider");

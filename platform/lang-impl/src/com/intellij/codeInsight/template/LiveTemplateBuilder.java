@@ -20,8 +20,7 @@ import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
-import java.util.HashMap;
-import java.util.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -154,7 +153,7 @@ public class LiveTemplateBuilder {
     }
     if (mySegmentLimit > 0 && list.size() > mySegmentLimit) {
       warnTooManySegments(list.size());
-      return list.subList(0, Math.min(list.size(), mySegmentLimit));
+      return ContainerUtil.getFirstItems(list, mySegmentLimit);
     }
     return list;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -75,7 +75,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   @NotNull
-  public abstract String suggestSdkName(String currentSdkName, String sdkHome);
+  public abstract String suggestSdkName(@Nullable String currentSdkName, String sdkHome);
 
   /**
    * Returns a comparator used to order SDKs in project or module settings combo boxes.
@@ -100,13 +100,13 @@ public abstract class SdkType implements SdkTypeId {
   public abstract AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull SdkModel sdkModel, @NotNull SdkModificator sdkModificator);
 
   @Nullable
-  public SdkAdditionalData loadAdditionalData(Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull Element additional) {
     return null;
   }
 
   @Override
   @Nullable
-  public SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, @NotNull Element additional) {
     return loadAdditionalData(additional);
   }
 
@@ -159,7 +159,7 @@ public abstract class SdkType implements SdkTypeId {
   public FileChooserDescriptor getHomeChooserDescriptor() {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
-      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+      public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
         if (files.length != 0) {
           String selectedPath = files[0].getPath();
           boolean valid = isValidSdkHome(selectedPath);
@@ -231,7 +231,6 @@ public abstract class SdkType implements SdkTypeId {
    * the {@link #showCustomCreateUI} method is called.
    *
    * @return true if the custom create UI is supported, false otherwise.
-   * @since 12.0
    */
   public boolean supportsCustomCreateUI() {
     return false;
@@ -245,7 +244,6 @@ public abstract class SdkType implements SdkTypeId {
    * @param parentComponent    the parent component for showing the dialog.
    * @param selectedSdk        current selected sdk in parentComponent
    * @param sdkCreatedCallback the callback to which the created SDK is passed.
-   * @since 2017.1
    * @implSpec method's implementations should not add sdk to the jdkTable neither  invoke {@link SdkType#setupSdkPaths}. Only create and
    * and pass to the callback. The rest is done by {@link ProjectSdksModel#setupSdk}
    */
@@ -268,13 +266,13 @@ public abstract class SdkType implements SdkTypeId {
    *
    * @param sdk the SDK to validate the path for.
    * @return true if the home path is valid, false otherwise.
-   * @since 12.1
    */
   public boolean sdkHasValidPath(@NotNull Sdk sdk) {
     VirtualFile homeDir = sdk.getHomeDirectory();
     return homeDir != null && homeDir.isValid();
   }
 
+  @NotNull
   public String sdkPath(@NotNull VirtualFile homePath) {
     return homePath.getPath();
   }

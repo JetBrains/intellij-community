@@ -67,7 +67,7 @@ public class ApplyPatchMergeTool implements MergeTool {
       components.statusPanel = getStatusPanel();
       components.toolbarActions = createToolbarActions();
 
-      components.closeHandler = () -> MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext);
+      components.closeHandler = () -> MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext, true);
       return components;
     }
 
@@ -92,7 +92,7 @@ public class ApplyPatchMergeTool implements MergeTool {
           }
 
           if (result == MergeResult.CANCEL &&
-              !MergeUtil.showExitWithoutApplyingChangesDialog(MyApplyPatchViewer.this, myMergeRequest, myMergeContext)) {
+              !MergeUtil.showExitWithoutApplyingChangesDialog(MyApplyPatchViewer.this, myMergeRequest, myMergeContext, true)) {
             return;
           }
 

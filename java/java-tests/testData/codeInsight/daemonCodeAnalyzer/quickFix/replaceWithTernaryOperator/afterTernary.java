@@ -1,8 +1,12 @@
-// "Replace with '(b ? null : "foo") != null ?:'" "true"
+// "Replace with '(b ? foo(1) : foo(2)) != null ?:'" "true"
 class A {
   void bar(String s) {}
 
   void foo(boolean b){
-    bar((b ? null : "foo") != null ? b ? null : "foo" : null);
+    bar((b ? foo(1) : foo(2)) != null ? b ? foo(1) : foo(2) : null);
+  }
+  
+  static String foo(int x) {
+    return x > 0 ? "pos" : x < 0 ? "neg" : null;
   }
 }

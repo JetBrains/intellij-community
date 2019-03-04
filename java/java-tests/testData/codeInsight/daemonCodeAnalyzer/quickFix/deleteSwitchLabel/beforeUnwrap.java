@@ -1,4 +1,4 @@
-// "Unwrap 'switch' statement" "true"
+// "Remove unreachable branches" "true"
 class Main {
     static void fff(int x) {
         if (x == 5) {

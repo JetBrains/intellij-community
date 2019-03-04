@@ -29,11 +29,6 @@ public interface EditorEventMulticaster {
 
   void removeEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener);
 
-  /**
-   * Use {@link EditorEventListener#TOPIC}
-   * @deprecated
-   */
-  @Deprecated
   void addCaretListener(@NotNull CaretListener listener);
 
   void addCaretListener(@NotNull CaretListener listener, @NotNull Disposable parentDisposable);

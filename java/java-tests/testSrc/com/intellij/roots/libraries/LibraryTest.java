@@ -65,9 +65,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     ModuleRootModificationUtil.addModuleLibrary(myModule, getJDomJar().getUrl());
     Library library = assertOneElement(OrderEntryUtil.getModuleLibraries(ModuleRootManager.getInstance(myModule)));
     assertTrue(LibraryTableImplUtil.isValidLibrary(library));
-    ModuleRootModificationUtil.updateModel(myModule, model -> {
-      model.getModuleLibraryTable().removeLibrary(library);
-    });
+    ModuleRootModificationUtil.updateModel(myModule, model -> model.getModuleLibraryTable().removeLibrary(library));
     assertFalse(LibraryTableImplUtil.isValidLibrary(library));
   }
 
@@ -333,12 +331,15 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
     ModuleRootModificationUtil.updateModel(getModule(), m -> m.addLibraryEntry(library));
 
+    assertSize(1, library.getUrls(OrderRootType.CLASSES));
+    assertSameElements(library.getUrls(OrderRootType.CLASSES), libDir.getUrl());
+    assertSize(1, library.getFiles(OrderRootType.CLASSES));
+    assertEquals(libDir.getPath() + "/" + libJar.getName() + "!/", library.getFiles(OrderRootType.CLASSES)[0].getPath());
+
     PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
 
-    System.gc();
-    System.gc();
-    System.gc(); // ?? unlock the file?
+    // wait until unlock the file?
     while (!FileUtil.delete(new File(libDir.getPath(),"lib.jar"))) {
 
     }

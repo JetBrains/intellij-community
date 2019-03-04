@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -17,7 +17,10 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ErrorCode;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
@@ -85,7 +88,7 @@ public class SvnRecursiveStatusWalker {
     File ioFile = item.getPath().getIOFile();
 
     myHandler.setCurrentItem(item);
-    item.getClient().doStatus(ioFile, Revision.WORKING, item.getDepth(), false, false, true, true, myHandler);
+    item.getClient().doStatus(ioFile, item.getDepth(), false, false, true, true, myHandler);
 
     // check if current item was already processed - not to request its status once again
     if (!myHandler.myMetCurrentItem) {
@@ -117,7 +120,7 @@ public class SvnRecursiveStatusWalker {
   private void handleStatusException(@NotNull MyItem item, @NotNull SvnBindException e) throws SvnBindException {
     if (e.contains(ErrorCode.WC_NOT_WORKING_COPY) || e.contains(ErrorCode.WC_NOT_FILE) || e.contains(ErrorCode.WC_PATH_NOT_FOUND)) {
       final VirtualFile virtualFile = item.getPath().getVirtualFile();
-      if (virtualFile != null && !isIgnoredByVcs(virtualFile)) {
+      if (virtualFile != null && !isIgnoredByVcs(virtualFile) && !myChangeListManager.isVcsIgnoredFile(virtualFile)) {
         // self is unversioned
         myReceiver.processUnversioned(virtualFile);
 
@@ -247,24 +250,23 @@ public class SvnRecursiveStatusWalker {
     }
 
     public void processCurrentItem(@NotNull Status status) {
-      StatusType nodeStatus = status.getNodeStatus();
       FilePath path = myCurrentItem.getPath();
       VirtualFile vf = path.getVirtualFile();
 
       if (vf != null) {
-        if (StatusType.STATUS_IGNORED.equals(nodeStatus)) {
+        if (status.is(StatusType.STATUS_IGNORED)) {
           myReceiver.processIgnored(vf);
         }
-        else if (StatusType.STATUS_UNVERSIONED.equals(nodeStatus) || StatusType.UNKNOWN.equals(nodeStatus)) {
+        else if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_NONE)) {
           myReceiver.processUnversioned(vf);
           processRecursively(vf, myCurrentItem.getDepth());
         }
-        else if (!StatusType.OBSTRUCTED.equals(nodeStatus) && !StatusType.STATUS_NONE.equals(nodeStatus)) {
+        else if (!status.is(StatusType.OBSTRUCTED)) {
           if (myCurrentItem.isIsInnerCopyRoot()) {
-            myReceiver.processCopyRoot(vf, status.getURL(), myVcs.getWorkingCopyFormat(path.getIOFile()), status.getRepositoryRootURL());
+            myReceiver.processCopyRoot(vf, status.getUrl(), myVcs.getWorkingCopyFormat(path.getIOFile()), status.getRepositoryRootUrl());
           }
           else {
-            myReceiver.bewareRoot(vf, status.getURL());
+            myReceiver.bewareRoot(vf, status.getUrl());
           }
         }
       }
@@ -291,7 +293,7 @@ public class SvnRecursiveStatusWalker {
         }
       }
       else {
-        myReceiver.process(VcsUtil.getFilePath(ioFile, status.getKind().isDirectory()), status);
+        myReceiver.process(VcsUtil.getFilePath(ioFile, status.getNodeKind().isDirectory()), status);
       }
     }
   }

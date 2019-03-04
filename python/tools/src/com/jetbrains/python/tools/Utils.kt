@@ -43,22 +43,19 @@ fun createSdkForPerformance(module: Module,
 }
 
 
-fun openProjectWithPythonSdk(projectPath: String, sdkHome: String?): Pair<Project?, Sdk?> {
-  val sdkProducer = createPythonSdkProducer(sdkHome)
+fun openProjectWithPythonSdk(projectPath: String, sdkHome: String?): Pair<Project, Sdk?> {
+  val sdkProducer = if (sdkHome == null) {_,_->null} else createPythonSdkProducer(sdkHome)
   return openProjectWithSdk(projectPath, PythonModuleTypeBase.PYTHON_MODULE, sdkProducer)
 }
 
-fun createPythonSdkProducer(sdkHome: String?): (Project, Module) -> Sdk? {
+fun createPythonSdkProducer(sdkHome: String): (Project, Module) -> Sdk {
   return { project: Project, module: Module ->
-    if (sdkHome != null) {
+    run {
       val sdk = createSdkForPerformance(module, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, sdkHome)
       UIUtil.invokeAndWaitIfNeeded(Runnable {
         ApplicationManager.getApplication().runWriteAction({ PythonSdkUpdater.update(sdk, null, project, null) })
       })
       sdk
-    }
-    else {
-      null
     }
   }
 }

@@ -25,6 +25,10 @@ import junit.framework.TestCase
 import org.jdom.Element
 
 class GitBranchContextTest: GitSingleRepoTest() {
+  override fun setUp() {
+    super.setUp()
+    WorkingContextManager.getInstance(project).enableUntil(testRootDisposable)
+  }
 
   fun testBranchListener() {
     var fromBranch = ""

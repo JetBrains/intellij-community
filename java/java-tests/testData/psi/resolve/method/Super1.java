@@ -5,6 +5,6 @@ class A{
 
 class Super1 extends A{
  {
-  super.<ref>askdh();
+  super.<caret>askdh();
  }
 }

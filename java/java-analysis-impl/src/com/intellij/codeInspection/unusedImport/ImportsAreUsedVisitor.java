@@ -71,7 +71,13 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     }
     // during typing there can be incomplete code
     final JavaResolveResult resolveResult = reference.advancedResolve(true);
-    final PsiElement element = resolveResult.getElement();
+    PsiElement element = resolveResult.getElement();
+    if (element == null) {
+      JavaResolveResult[] results = reference.multiResolve(false);
+      if (results.length > 0) {
+        element = results[0].getElement();
+      }
+    }
     if (!(element instanceof PsiMember)) {
       return;
     }

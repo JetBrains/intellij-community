@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -10,6 +10,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -17,6 +18,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -29,10 +31,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import git4idea.DialogManager;
+import git4idea.GitProtectedBranchesKt;
 import git4idea.branch.GitRebaseParams;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
+import git4idea.history.GitHistoryUtils;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitDefaultMergeDialogCustomizerKt;
 import git4idea.merge.GitMergeProvider;
@@ -53,6 +59,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static com.intellij.openapi.ui.Messages.getWarningIcon;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.*;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -114,7 +121,9 @@ public class GitRebaseProcess {
   }
 
   public void rebase() {
-    new GitFreezingProcess(myProject, "rebase", this::doRebase).execute();
+    if (checkForRebasingPublishedCommits()) {
+      new GitFreezingProcess(myProject, "rebase", this::doRebase).execute();
+    }
   }
 
   /**
@@ -549,6 +558,55 @@ public class GitRebaseProcess {
       if (status instanceof GitSuccessfulRebase) map.put(repository, (GitSuccessfulRebase)status);
     }
     return map;
+  }
+
+  private boolean checkForRebasingPublishedCommits() {
+    if (myCustomMode != null || myRebaseSpec.getOngoingRebase() != null) {
+      return true;
+    }
+    if (myRebaseSpec.getParams() == null) {
+      LOG.error("Shouldn't happen. Spec: " + myRebaseSpec);
+      return true;
+    }
+
+    String upstream = myRebaseSpec.getParams().getUpstream();
+    for (GitRepository repository : myRebaseSpec.getAllRepositories()) {
+      if (repository.getCurrentBranchName() == null) {
+        LOG.error("No current branch in " + repository);
+        return true;
+      }
+      String rebasingBranch = notNull(myRebaseSpec.getParams().getBranch(), repository.getCurrentBranchName());
+      if (isRebasingPublishedCommit(repository, upstream, rebasingBranch)) {
+        return askIfShouldRebasePublishedCommit();
+      }
+    }
+    return true;
+  }
+
+  private boolean isRebasingPublishedCommit(@NotNull GitRepository repository,
+                                            @NotNull String baseBranch,
+                                            @NotNull String rebasingBranch) {
+    try {
+      List<? extends TimedVcsCommit> commits = GitHistoryUtils.collectTimedCommits(myProject, repository.getRoot(),
+                                                                                   baseBranch + ".." + rebasingBranch);
+      return exists(commits, commit -> GitProtectedBranchesKt.isCommitPublished(repository, commit.getId()));
+    }
+    catch (VcsException e) {
+      LOG.error("Couldn't collect commits", e);
+      return true;
+    }
+  }
+
+  private static boolean askIfShouldRebasePublishedCommit() {
+    String title = "Rebasing Published Commit";
+    String message = "<html>You're trying to rebase some commits already pushed to a protected branch.<br/>" +
+                     "Rebasing them would duplicate commits, which is not recommended and most likely unwanted.</html>";
+    Ref<Boolean> rebaseAnyway = Ref.create(false);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      int answer = DialogManager.showMessage(message, title, new String[]{"Rebase Anyway", "Cancel"}, 1, 1, getWarningIcon(), null);
+      rebaseAnyway.set(answer == 0);
+    });
+    return rebaseAnyway.get();
   }
 
   private class RebaseConflictResolver extends GitConflictResolver {

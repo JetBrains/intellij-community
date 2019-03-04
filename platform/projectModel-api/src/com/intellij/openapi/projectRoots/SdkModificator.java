@@ -16,9 +16,10 @@ import org.jetbrains.annotations.Nullable;
  * Last, you must call {@link #commitChanges()}
  */
 public interface SdkModificator {
+  @NotNull
   String getName();
 
-  void setName(String name);
+  void setName(@NotNull String name);
 
   String getHomePath();
 

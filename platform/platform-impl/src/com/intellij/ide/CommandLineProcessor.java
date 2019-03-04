@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.impl.ProjectUtil;
@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -38,11 +40,12 @@ public class CommandLineProcessor {
   private CommandLineProcessor() { }
 
   @Nullable
-  private static Project doOpenFileOrProject(VirtualFile file, String path) {
+  private static Project doOpenFileOrProject(VirtualFile file) {
+    String path = file.getPath();
     if (ProjectKt.isValidProjectPath(path) || ProjectOpenProcessor.getImportProvider(file) != null) {
       Project project = ProjectUtil.openOrImport(path, null, true);
       if (project == null) {
-        Messages.showErrorDialog("Cannot open project '" + path + "'", "Cannot Open Project");
+        Messages.showErrorDialog("Cannot open project '" + FileUtil.toSystemDependentName(path) + "'", "Cannot Open Project");
       }
       return project;
     }
@@ -62,7 +65,7 @@ public class CommandLineProcessor {
       return project;
     }
     else {
-      NonProjectFileWritingAccessProvider.allowWriting(file);
+      NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
       Project project = findBestProject(file, projects);
       (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)).navigate(true);
       return project;
@@ -102,14 +105,13 @@ public class CommandLineProcessor {
         if (starter instanceof ApplicationStarterEx && ((ApplicationStarterEx)starter).canProcessExternalCommandLine()) {
           LOG.info("Processing command with " + starter);
           ((ApplicationStarterEx)starter).processExternalCommandLine(ArrayUtil.toStringArray(args), currentDirectory);
-          return null;
         }
         else {
           String title = "Cannot execute command '" + command + "'";
           String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
           Messages.showErrorDialog(message, title);
-          return null;
         }
+        return null;
       }
     }
     if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
@@ -158,7 +160,7 @@ public class CommandLineProcessor {
         arg = StringUtil.unquoteString(arg);
       }
       if (!new File(arg).isAbsolute()) {
-        arg = currentDirectory != null ? new File(currentDirectory, arg).getAbsolutePath() : new File(arg).getAbsolutePath();
+        arg = (currentDirectory != null ? new File(currentDirectory, arg) : new File(arg)).getAbsolutePath();
       }
 
       VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);
@@ -172,7 +174,7 @@ public class CommandLineProcessor {
       }
       else {
         if (file != null) {
-          lastOpenedProject = doOpenFileOrProject(file, arg);
+          lastOpenedProject = doOpenFileOrProject(file);
         }
         else {
           Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot Find File");

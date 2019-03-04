@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
@@ -43,6 +45,7 @@ class FindFirstMigration extends BaseStreamApiMigration {
       if (statements.length != 2) return null;
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statements[0]);
       if (assignment == null ||
+          isQualified(assignment.getLExpression()) ||
           (tb.getVariable().getType() instanceof PsiPrimitiveType &&
            !ExpressionUtils.isReferenceTo(assignment.getRExpression(), tb.getVariable()))) {
         // if we found an assignment with primitive stream variable, then we are not assigning to local variable
@@ -81,11 +84,17 @@ class FindFirstMigration extends BaseStreamApiMigration {
     }
   }
 
+  private static boolean isQualified(PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    return expression instanceof PsiReferenceExpression && !ExpressionUtil.isEffectivelyUnqualified((PsiReferenceExpression)expression) ||
+           expression instanceof PsiArrayAccessExpression;
+  }
+
   private static String generateOptionalUnwrap(CommentTracker ct, TerminalBlock tb,
                                                PsiExpression trueExpression, PsiExpression falseExpression,
                                                PsiType targetType) {
     String qualifier = tb.generate(ct) + ".findFirst()";
-    return OptionalUtil.generateOptionalUnwrap(
+    return OptionalRefactoringUtil.generateOptionalUnwrap(
       qualifier, tb.getVariable(), ct.markUnchanged(trueExpression), ct.markUnchanged(falseExpression), targetType, false);
   }
 }

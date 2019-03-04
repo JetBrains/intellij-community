@@ -70,7 +70,7 @@ public class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
       return new PathCellRenderer() {
         @Override
         protected Icon getItemIcon(Object value) {
-          return isJrtRoot(value) ? AllIcons.Nodes.JavaModuleRoot : super.getItemIcon(value);
+          return isJrtRoot(value) ? AllIcons.Nodes.Module : super.getItemIcon(value);
         }
       };
     }

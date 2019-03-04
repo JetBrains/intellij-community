@@ -21,6 +21,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -33,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -269,8 +269,8 @@ public class EquivalenceChecker {
 
   private static boolean whileStatementsAreEquivalent(@NotNull GrWhileStatement statement1,
                                                       @NotNull GrWhileStatement statement2) {
-    final GrExpression condition1 = (GrExpression) statement1.getCondition();
-    final GrExpression condition2 = (GrExpression) statement2.getCondition();
+    final GrExpression condition1 = statement1.getCondition();
+    final GrExpression condition2 = statement2.getCondition();
     final GrStatement body1 = statement1.getBody();
     final GrStatement body2 = statement2.getBody();
     return expressionsAreEquivalent(condition1, condition2) &&
@@ -712,8 +712,8 @@ public class EquivalenceChecker {
 
   private static boolean rangeExpressionsAreEquivalent(@NotNull GrRangeExpression rangeExp1,
                                                        @NotNull GrRangeExpression rangeExp2) {
-    return expressionsAreEquivalent(rangeExp1.getLeftOperand(), rangeExp2.getLeftOperand()) &&
-           expressionsAreEquivalent(rangeExp1.getRightOperand(), rangeExp2.getRightOperand()) &&
+    return expressionsAreEquivalent(rangeExp1.getFrom(), rangeExp2.getFrom()) &&
+           expressionsAreEquivalent(rangeExp1.getTo(), rangeExp2.getTo()) &&
            isInclusive(rangeExp1) == isInclusive(rangeExp2);
   }
 

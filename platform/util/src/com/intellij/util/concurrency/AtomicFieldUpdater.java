@@ -47,17 +47,17 @@ public class AtomicFieldUpdater<ContainingClass, FieldType> {
 
   @NotNull
   public static <T, V> AtomicFieldUpdater<T, V> forFieldOfType(@NotNull Class<T> ownerClass, @NotNull Class<V> fieldType) {
-    return new AtomicFieldUpdater<T, V>(ownerClass, fieldType);
+    return new AtomicFieldUpdater<>(ownerClass, fieldType);
   }
 
   @NotNull
   public static <T> AtomicFieldUpdater<T, Long> forLongFieldIn(@NotNull Class<T> ownerClass) {
-    return new AtomicFieldUpdater<T, Long>(ownerClass, long.class);
+    return new AtomicFieldUpdater<>(ownerClass, long.class);
   }
 
   @NotNull
   public static <T> AtomicFieldUpdater<T, Integer> forIntFieldIn(@NotNull Class<T> ownerClass) {
-    return new AtomicFieldUpdater<T, Integer>(ownerClass, int.class);
+    return new AtomicFieldUpdater<>(ownerClass, int.class);
   }
 
   private AtomicFieldUpdater(@NotNull Class<ContainingClass> ownerClass, @NotNull Class<FieldType> fieldType) {

@@ -4,12 +4,12 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.Document;
@@ -31,7 +31,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
@@ -45,6 +44,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
+import com.intellij.util.IntIntFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +108,7 @@ public class BraceHighlightingHandler {
               PsiFile injected = psiFile instanceof PsiBinaryFile || !isValidFile(psiFile)
                                  ? null
                                  : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
-              ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+              ApplicationManager.getApplication().invokeLater(() -> {
                 try {
                   if (isValidEditor(editor) && isValidFile(injected)) {
                     EditorEx newEditor = (EditorEx)InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);
@@ -191,7 +191,7 @@ public class BraceHighlightingHandler {
   }
 
   @NotNull
-  static EditorHighlighter getLazyParsableHighlighterIfAny(Project project, Editor editor, PsiFile psiFile) {
+  public static EditorHighlighter getLazyParsableHighlighterIfAny(Project project, Editor editor, PsiFile psiFile) {
     if (!PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument())) {
       return ((EditorEx)editor).getHighlighter();
     }
@@ -425,7 +425,7 @@ public class BraceHighlightingHandler {
       final int startLine = myEditor.offsetToLogicalPosition(lBrace.getStartOffset()).line;
       final int endLine = myEditor.offsetToLogicalPosition(rBrace.getEndOffset()).line;
       if (endLine - startLine > 0) {
-        lineMarkFragment(startLine, endLine, matched);
+        lineMarkFragment(myEditor, myDocument, startLine, endLine, matched);
       }
 
       if (!scopeHighlighting) {
@@ -466,31 +466,54 @@ public class BraceHighlightingHandler {
   }
 
   private void showScopeHint(final int lbraceStart, final int lbraceEnd) {
-    LogicalPosition bracePosition = myEditor.offsetToLogicalPosition(lbraceStart);
-    Point braceLocation = myEditor.logicalPositionToXY(bracePosition);
+    showScopeHint(myEditor, myAlarm, lbraceStart, lbraceEnd, it -> {
+      if (!(myPsiFile instanceof PsiPlainTextFile) && myPsiFile.isValid()) {
+        return BraceMatchingUtil.getBraceMatcher(getFileTypeByOffset(it), PsiUtilCore
+          .getLanguageAtOffset(myPsiFile, it)).getCodeConstructStart(myPsiFile, it);
+      }
+      return it;
+    });
+  }
+
+  /**
+   * Schedules with {@code alarm} displaying of the scope start in the {@code editor}
+   *
+   * @param startComputation optional adjuster for the brace start offset
+   */
+  public static void showScopeHint(@NotNull Editor editor,
+                                   @NotNull Alarm alarm,
+                                   int leftBraceStart,
+                                   int leftBraceEnd,
+                                   @Nullable IntIntFunction startComputation) {
+    Project project = editor.getProject();
+    if (project == null) {
+      return;
+    }
+    LogicalPosition bracePosition = editor.offsetToLogicalPosition(leftBraceStart);
+    Point braceLocation = editor.logicalPositionToXY(bracePosition);
     final int y = braceLocation.y;
-    myAlarm.addRequest(() -> {
-      if (myProject.isDisposed()) return;
-      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
-        if (myEditor.isDisposed() || !myEditor.getComponent().isShowing()) return;
-        Rectangle viewRect = myEditor.getScrollingModel().getVisibleArea();
-        if (y < viewRect.y) {
-          int start = lbraceStart;
-          if (!(myPsiFile instanceof PsiPlainTextFile) && myPsiFile.isValid()) {
-            start = BraceMatchingUtil.getBraceMatcher(getFileTypeByOffset(lbraceStart), PsiUtilCore
-              .getLanguageAtOffset(myPsiFile, lbraceStart)).getCodeConstructStart(myPsiFile, lbraceStart);
-          }
-          TextRange range = new TextRange(start, lbraceEnd);
-          int line1 = myDocument.getLineNumber(range.getStartOffset());
-          int line2 = myDocument.getLineNumber(range.getEndOffset());
-          line1 = Math.max(line1, line2 - EditorFragmentComponent.getAvailableVisualLinesAboveEditor(myEditor) + 1);
-          range = new TextRange(myDocument.getLineStartOffset(line1), range.getEndOffset());
-          HintManager.getInstance().hideAllHints();
-          LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(myEditor, range, true, true);
-          myEditor.putUserData(HINT_IN_EDITOR_KEY, hint);
+    alarm.addRequest(() -> ReadAction.run(() -> {
+      if (project.isDisposed()) {
+        return;
+      }
+      PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(() -> {
+        if (editor.isDisposed() || !editor.getComponent().isShowing()) {
+          return;
         }
+        Rectangle viewRect = editor.getScrollingModel().getVisibleArea();
+        if (y >= viewRect.y) {
+          return;
+        }
+        TextRange range = new TextRange(startComputation == null ? leftBraceStart : startComputation.fun(leftBraceStart), leftBraceEnd);
+        Document document = editor.getDocument();
+        int line1 = document.getLineNumber(range.getStartOffset());
+        int line2 = document.getLineNumber(range.getEndOffset());
+        line1 = Math.max(line1, line2 - EditorFragmentComponent.getAvailableVisualLinesAboveEditor(editor) + 1);
+        range = new TextRange(document.getLineStartOffset(line1), range.getEndOffset());
+        LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(editor, range, true, true);
+        editor.putUserData(HINT_IN_EDITOR_KEY, hint);
       });
-    }, 300, ModalityState.stateForComponent(myEditor.getComponent()));
+    }), 300, ModalityState.stateForComponent(editor.getComponent()));
   }
 
   void clearBraceHighlighters() {
@@ -505,33 +528,37 @@ public class BraceHighlightingHandler {
       hint.hide();
       myEditor.putUserData(HINT_IN_EDITOR_KEY, null);
     }
-    removeLineMarkers();
+    removeLineMarkers(myEditor);
   }
 
-  private void lineMarkFragment(int startLine, int endLine, boolean matched) {
-    removeLineMarkers();
+  /**
+   * Draws a vertical line on the gutter of {@code editor}, covering lines of the {@code document} from the {@code startLine} to the
+   * {@code endLine}
+   */
+  public static void lineMarkFragment(@NotNull EditorEx editor, @NotNull Document document, int startLine, int endLine, boolean matched) {
+    removeLineMarkers(editor);
 
-    if (startLine >= endLine || endLine >= myDocument.getLineCount()) return;
+    if (startLine >= endLine || endLine >= document.getLineCount()) return;
 
-    int startOffset = myDocument.getLineStartOffset(startLine);
-    int endOffset = myDocument.getLineEndOffset(endLine);
+    int startOffset = document.getLineStartOffset(startLine);
+    int endOffset = document.getLineEndOffset(endLine);
 
     LineMarkerRenderer renderer = createLineMarkerRenderer(matched);
     if (renderer == null) return;
 
-    RangeHighlighter highlighter = myEditor.getMarkupModel()
+    RangeHighlighter highlighter = editor.getMarkupModel()
       .addRangeHighlighterAndChangeAttributes(startOffset, endOffset, 0, null, HighlighterTargetArea.LINES_IN_RANGE, false,
                                               h -> h.setLineMarkerRenderer(renderer));
-    myEditor.putUserData(LINE_MARKER_IN_EDITOR_KEY, highlighter);
+    editor.putUserData(LINE_MARKER_IN_EDITOR_KEY, highlighter);
   }
 
-  private void removeLineMarkers() {
+  private static void removeLineMarkers(@NotNull EditorEx editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    RangeHighlighter marker = myEditor.getUserData(LINE_MARKER_IN_EDITOR_KEY);
-    if (marker != null && myEditor.getMarkupModel().containsHighlighter(marker)) {
+    RangeHighlighter marker = editor.getUserData(LINE_MARKER_IN_EDITOR_KEY);
+    if (marker != null && editor.getMarkupModel().containsHighlighter(marker)) {
       marker.dispose();
     }
-    myEditor.putUserData(LINE_MARKER_IN_EDITOR_KEY, null);
+    editor.putUserData(LINE_MARKER_IN_EDITOR_KEY, null);
   }
 
   @Nullable

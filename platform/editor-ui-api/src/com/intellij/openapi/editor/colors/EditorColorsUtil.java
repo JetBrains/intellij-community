@@ -70,4 +70,11 @@ public class EditorColorsUtil {
     }
     return globalScheme;
   }
+
+  @NotNull
+  public static EditorColorsScheme getColorSchemeForPrinting() {
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    return colorsManager.isDarkEditor() ? colorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME)
+                                        : colorsManager.getGlobalScheme();
+  }
 }

@@ -13,11 +13,10 @@ Groovy script
       PsiElement(GDOC_TAG_NAME)('@param')
       PsiWhiteSpace(' ')
       PsiElement(GDOC_TAG_VALUE_LT)('<')
-      PsiElement(BAD_CHARACTER)(' ')
+      PsiElement(GDOC_COMMENT_DATA)(' ')
       GrDocTagValueToken
         PsiElement(GDOC_TAG_VALUE_TOKEN)('T')
-      PsiElement(BAD_CHARACTER)(' ')
-      PsiElement(BAD_CHARACTER)(' ')
+      PsiElement(GDOC_COMMENT_DATA)('  ')
       PsiElement(GDOC_TAG_VALUE_GT)('>')
       PsiElement(GDOC_COMMENT_DATA)('     the type of the element')
       PsiWhiteSpace('\n')

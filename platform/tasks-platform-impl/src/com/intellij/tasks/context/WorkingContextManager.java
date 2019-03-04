@@ -1,21 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.context;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
-import com.intellij.util.JdomKt;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,6 +51,7 @@ public class WorkingContextManager {
   @NonNls private static final String TASK_XML_POSTFIX = ".task.xml";
   private static final String CONTEXT_ZIP_POSTFIX = ".contexts.zip";
   private static final Comparator<JBZipEntry> ENTRY_COMPARATOR = (o1, o2) -> Long.signum(o2.getTime() - o1.getTime());
+  private boolean ENABLED;
 
   public static WorkingContextManager getInstance(Project project) {
     return ServiceManager.getService(project, WorkingContextManager.class);
@@ -55,6 +59,13 @@ public class WorkingContextManager {
 
   public WorkingContextManager(Project project) {
     myProject = project;
+    ENABLED = !ApplicationManager.getApplication().isUnitTestMode();
+  }
+
+  @TestOnly
+  public void enableUntil(@NotNull Disposable disposable) {
+    ENABLED = true;
+    Disposer.register(disposable, ()-> ENABLED = false);
   }
 
   public void loadContext(Element fromElement) {
@@ -105,6 +116,7 @@ public class WorkingContextManager {
 
 
   private synchronized void saveContext(@Nullable String entryName, String zipPostfix, @Nullable String comment) {
+    if (!ENABLED) return;
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       if (entryName == null) {
         int i = archive.getEntries().size();
@@ -164,11 +176,13 @@ public class WorkingContextManager {
   private boolean loadContext(String zipPostfix, String entryName) {
     return doEntryAction(zipPostfix, entryName, entry -> {
       String s = new String(entry.getData(), CharsetToolkit.UTF8_CHARSET);
-      loadContext(JdomKt.loadElement(s));
+      loadContext(JDOMUtil.load(s));
     });
   }
 
   private synchronized boolean doEntryAction(String zipPostfix, String entryName, ThrowableConsumer<JBZipEntry, Exception> action) {
+    if (!ENABLED) return false;
+
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       JBZipEntry entry = archive.getEntry(StringUtil.startsWithChar(entryName, '/') ? entryName : "/" + entryName);
       if (entry != null) {
@@ -187,6 +201,7 @@ public class WorkingContextManager {
   }
 
   private synchronized List<ContextInfo> getContextHistory(String zipPostfix) {
+    if (!ENABLED) return Collections.emptyList();
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       List<JBZipEntry> entries = archive.getEntries();
       return ContainerUtil.mapNotNull(entries, (NullableFunction<JBZipEntry, ContextInfo>)entry -> entry.getName().startsWith("/context") ? new ContextInfo(entry.getName(), entry.getTime(), entry.getComment()) : null);
@@ -210,6 +225,7 @@ public class WorkingContextManager {
   }
 
   private void removeContext(String name, String postfix) {
+    if (!ENABLED) return;
     try (JBZipFile archive = getTasksArchive(postfix)) {
       JBZipEntry entry = archive.getEntry(name);
       if (entry != null) {
@@ -227,6 +243,7 @@ public class WorkingContextManager {
   }
 
   private synchronized void pack(int max, int delta, String zipPostfix) {
+    if (!ENABLED) return;
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       List<JBZipEntry> entries = archive.getEntries();
       if (entries.size() > max + delta) {

@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="intellij.tasks" />
     <orderEntry type="module" module-name="intellij.tasks.core" />
     <orderEntry type="module" module-name="intellij.tasks.java" />
+    <orderEntry type="module" module-name="intellij.tasks.compatibility" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
@@ -25,7 +26,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tasks" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="http-client-3.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="library" scope="TEST" name="http-client" level="project" />
   </component>

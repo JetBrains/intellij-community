@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.isEmpty
 import org.jdom.Element
@@ -29,7 +31,7 @@ fun <S : Any> createStateGetter(isUseLoadedStateAsExisting: Boolean, storage: St
       return storage.getState(component, componentName, stateClass, mergeInto, reloadData)
     }
 
-    override fun close() : S? {
+    override fun archiveState() : S? {
       return null
     }
   }
@@ -38,7 +40,7 @@ fun <S : Any> createStateGetter(isUseLoadedStateAsExisting: Boolean, storage: St
 interface StateGetter<S : Any> {
   fun getState(mergeInto: S? = null): S?
 
-  fun close(): S?
+  fun archiveState(): S?
 }
 
 private class StateGetterImpl<S : Any, T : Any>(private val component: PersistentStateComponent<S>,
@@ -55,7 +57,7 @@ private class StateGetterImpl<S : Any, T : Any>(private val component: Persisten
     return storage.deserializeState(serializedState, stateClass, mergeInto)
   }
 
-  override fun close() : S? {
+  override fun archiveState() : S? {
     if (serializedState == null) {
       return null
     }
@@ -63,8 +65,11 @@ private class StateGetterImpl<S : Any, T : Any>(private val component: Persisten
     val stateAfterLoad = try {
       component.state
     }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
     catch (e: Throwable) {
-      LOG.error("Cannot get state after load", e)
+      PluginException.logPluginError(LOG, "Cannot get state after load", e, component.javaClass)
       null
     }
 

@@ -4,7 +4,7 @@ class Test <T>{
         {
              test.put("");
             {
-                test.get().get().get().<ref>get();
+                test.get().get().get().<caret>get();
             }
         }
     }

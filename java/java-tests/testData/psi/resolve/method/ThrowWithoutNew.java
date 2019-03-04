@@ -1,5 +1,5 @@
 class A{
  void foo() throws Exception{
-  throw <ref>Exception();
+  throw <caret>Exception();
  }
 }

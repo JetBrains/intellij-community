@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.application.options.CodeStyle;
@@ -12,10 +12,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalStateComponent;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
@@ -49,13 +53,16 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinBuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.service.settings.GradleProjectSettingsControl;
+import org.jetbrains.plugins.gradle.settings.DefaultGradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
@@ -108,15 +115,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     final String originModuleFilePath = getModuleFilePath();
     LOG.assertTrue(originModuleFilePath != null);
 
-    String moduleName;
-    if (myProjectId == null) {
-      moduleName = getName();
-    }
-    else {
-      moduleName = getExternalProjectSettings().isUseQualifiedModuleNames() && StringUtil.isNotEmpty(myProjectId.getGroupId())
-                   ? (myProjectId.getGroupId() + '.' + myProjectId.getArtifactId())
-                   : myProjectId.getArtifactId();
-    }
+    String moduleName = myProjectId == null ? getName() : myProjectId.getArtifactId();
     Project contextProject = myWizardContext.getProject();
     String projectFileDirectory = null;
     if (myWizardContext.isCreatingNewProject() || contextProject == null || contextProject.getBasePath() == null) {
@@ -143,7 +142,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   }
 
   @Override
-  public void setupRootModel(final ModifiableRootModel modifiableRootModel) throws ConfigurationException {
+  public void setupRootModel(@NotNull final ModifiableRootModel modifiableRootModel) throws ConfigurationException {
     String contentEntryPath = getContentEntryPath();
     if (StringUtil.isEmpty(contentEntryPath)) {
       return;
@@ -222,15 +221,28 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     }
 
     // it will be set later in any case, but save is called immediately after project creation, so, to ensure that it will be properly saved as external system module
-    ExternalSystemModulePropertyManager.getInstance(module).setExternalId(GradleConstants.SYSTEM_ID);
+    ExternalSystemModulePropertyManager modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module);
+    modulePropertyManager.setExternalId(GradleConstants.SYSTEM_ID);
+    // set linked project path to be able to map the module with the module data obtained from the import
+    ExternalStateComponent moduleState = modulePropertyManager.getState();
+    moduleState.setRootProjectPath(rootProjectPath);
+    moduleState.setLinkedProjectPath(rootProjectPath);
 
     final Project project = module.getProject();
     if (myWizardContext.isCreatingNewProject()) {
+      preventOldSettingsMigration(project);
+
       getExternalProjectSettings().setExternalProjectPath(rootProjectPath);
       AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID);
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);
       //noinspection unchecked
       settings.linkProject(getExternalProjectSettings());
+      // update external projects data to be able to add child modules before the initial import finish
+      ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, project.getName(), myWizardContext.getProjectFileDirectory(),
+                                                getExternalProjectSettings().getExternalProjectPath());
+      DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
+      ExternalProjectsManagerImpl.getInstance(project).updateExternalProjectData(
+        new InternalExternalProjectInfo(GradleConstants.SYSTEM_ID, getExternalProjectSettings().getExternalProjectPath(), projectDataNode));
     }
     else {
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -263,6 +275,15 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
       // execute when current dialog is closed
       ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, runnable);
     }
+  }
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
+  private static void preventOldSettingsMigration(Project project) {
+    DefaultGradleProjectSettings.MyState state = new DefaultGradleProjectSettings.MyState();
+    state.isMigrated = true;
+    state.delegatedBuild = true;
+    state.testRunner = TestRunner.GRADLE;
+    DefaultGradleProjectSettings.getInstance(project).loadState(state);
   }
 
   @Override

@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.net.NetUtils;
 import gnu.trove.THashMap;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -106,20 +107,16 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
   }
 
   @Override
-  public void patchParameters(final SimpleJavaParameters parameters, XsltRunConfiguration configuration, UserDataHolder extensionData)
-    throws CantRunException {
-    final XsltRunConfiguration.OutputType outputType = configuration.getOutputType();
-
+  public void patchParameters(SimpleJavaParameters parameters, XsltRunConfiguration configuration, UserDataHolder extensionData) throws CantRunException {
     final Sdk jdk = configuration.getEffectiveJDK();
     assert jdk != null;
-
-    final String ver = jdk.getVersionString();
-    if (ver == null || (ver.contains("1.0") || ver.contains("1.1") || ver.contains("1.2") || ver.contains("1.3") || ver.contains("1.4"))) {
-      throw new CantRunException("The XSLT Debugger can only be used with JDK 1.5+");
+    final JavaVersion version = JavaVersion.tryParse(jdk.getVersionString());
+    if (version == null || version.feature < 5 || version.feature > 8) {  // todo: get rid of PortableRemoteObject usages in debugger
+      throw new CantRunException("The XSLT Debugger requires Java 1.5 - 1.8 to run");
     }
 
     // TODO: fix and remove
-    if (outputType != XsltRunConfiguration.OutputType.CONSOLE) {
+    if (configuration.getOutputType() != XsltRunConfiguration.OutputType.CONSOLE) {
       throw new CantRunException("XSLT Debugger requires Output Type == CONSOLE");
     }
 
@@ -135,15 +132,16 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     final char c = File.separatorChar;
 
     final PluginId pluginId = PluginManagerCore.getPluginByClassName(getClass().getName());
-    assert pluginId != null || System.getProperty("xslt-debugger.plugin.path") != null;
+    assert pluginId != null || System.getProperty("xslt-debugger.plugin.path") != null
+      : "PluginId not found - development builds need to specify -Dxslt-debugger.plugin.path=../out/classes/production/intellij.xslt.debugger.engine";
 
     final File pluginPath;
     if (pluginId != null) {
       final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(pluginId);
       assert descriptor != null;
       pluginPath = descriptor.getPath();
-    } else {
-      // -Dxslt-debugger.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\intellij.xslt.debugger.engine
+    }
+    else {
       pluginPath = new File(System.getProperty("xslt-debugger.plugin.path"));
     }
 
@@ -272,9 +270,9 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
   }
 
   private static void addXalan(SimpleJavaParameters parameters, File pluginPath) {
-    final File xalan = findTransformerJar(pluginPath, "xalan.jar");
+    final File xalan = findTransformerJar(pluginPath, "xalan-2.7.2.jar");
     parameters.getClassPath().addTail(xalan.getAbsolutePath());
-    parameters.getClassPath().addTail(new File(xalan.getParentFile(), "serializer.jar").getAbsolutePath());
+    parameters.getClassPath().addTail(new File(xalan.getParentFile(), "serializer-2.7.2.jar").getAbsolutePath());
   }
 
   private static void addSaxon(SimpleJavaParameters parameters, File pluginPath, final String saxonJar) {

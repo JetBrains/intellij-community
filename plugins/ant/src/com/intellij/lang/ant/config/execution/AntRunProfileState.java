@@ -16,7 +16,6 @@
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
@@ -37,7 +36,7 @@ public class AntRunProfileState implements RunProfileState {
 
   @Nullable
   @Override
-  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) {
     final RunProfile profile = myEnvironment.getRunProfile();
     if (profile instanceof AntRunConfiguration) {
       final AntRunConfiguration runConfig = (AntRunConfiguration)profile;

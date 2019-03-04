@@ -1,13 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.WindowMoveListener;
-import com.intellij.ui.WindowResizeListener;
-import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -65,10 +62,10 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
   @Override
   public void installUI(JComponent c) {
+    myRootPane = (JRootPane)c;
     super.installUI(c);
 
     if (isCustomDecoration()) {
-      myRootPane = (JRootPane)c;
       int style = myRootPane.getWindowDecorationStyle();
       if (style != JRootPane.NONE) {
         installClientDecorations(myRootPane);
@@ -95,7 +92,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   }
 
   private static boolean isCustomDecoration() {
-    return Registry.is("ide.win.frame.decoration");
+    return IdeFrameDecorator.isCustomDecoration();
   }
 
   public void installBorder(JRootPane root) {
@@ -114,98 +111,13 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     LookAndFeel.uninstallBorder(root);
   }
 
-  /**
-   * When enabled, move/resize events for the window are processed not on EDT, but directly on Toolkit thread,
-   * providing much better response close to the native experience.
-   */
-  private static boolean isSmoothMoveResizeEnabled() {
-    return SystemInfo.isJetBrainsJvm && Registry.is("ide.win.frame.decoration.smooth_move_resize");
-  }
-
   private void installWindowListeners(JRootPane root, Component parent) {
-    myWindow = parent == null ? null : UIUtil.getWindow(parent);
 
-    if (myWindow != null) {
-      if (myMouseInputListener == null) {
-        if (isSmoothMoveResizeEnabled()) {
-          myMouseInputListener = new WindowResizeListener.ToolkitListener(parent, JBUI.insets(11), null) {
-            @Override
-            protected Insets getResizeOffset(Component view) {
-              return getResizeBorder(view);
-            }
-          };
-          ((WindowResizeListener.ToolkitListener)myMouseInputListener).addTo(myWindow);
-        } else {
-          myMouseInputListener = new WindowResizeListener(parent, JBUI.insets(11), null) {
-            @Override
-            protected Insets getResizeOffset(Component view) {
-              return getResizeBorder(view);
-            }
-          };
-          myWindow.addMouseListener(myMouseInputListener);
-          myWindow.addMouseMotionListener(myMouseInputListener);
-        }
-      }
-
-      if (myTitlePane != null) {
-        if (myTitleMouseInputListener == null) {
-          Function<Component, Boolean> func = (view) -> {
-            if (view instanceof RootPaneContainer) {
-              RootPaneContainer container = (RootPaneContainer)view;
-              JRootPane pane = container.getRootPane();
-              if (pane != null && JRootPane.NONE == pane.getWindowDecorationStyle()) return true;
-            }
-            return false;
-          };
-
-          if (isSmoothMoveResizeEnabled()) {
-            myTitleMouseInputListener = new WindowMoveListener.ToolkitListener(myTitlePane) {
-              @Override
-              protected boolean isDisabled(Component view) {
-                if (func.fun(view)) return true;
-                return super.isDisabled(view);
-              }
-            };
-            ((WindowMoveListener.ToolkitListener)myTitleMouseInputListener).addTo(myTitlePane);
-          }
-          else {
-            myTitleMouseInputListener = new WindowMoveListener(myTitlePane) {
-              @Override
-              protected boolean isDisabled(Component view) {
-                if (func.fun(view)) return true;
-                return super.isDisabled(view);
-              }
-            };
-          }
-          myTitlePane.addMouseMotionListener(myTitleMouseInputListener);
-          myTitlePane.addMouseListener(myTitleMouseInputListener);
-        }
-      }
-      setMaximized();
-    }
   }
 
   private void uninstallWindowListeners(JRootPane root) {
-    if (myWindow != null) {
-      if (isSmoothMoveResizeEnabled()) {
-        if (myMouseInputListener != null) ((WindowResizeListener.ToolkitListener)myMouseInputListener).removeFrom(myWindow);
-      }
-      else {
-        myWindow.removeMouseListener(myMouseInputListener);
-        myWindow.removeMouseMotionListener(myMouseInputListener);
-      }
-    }
-    if (myTitlePane != null) {
-      if (isSmoothMoveResizeEnabled()) {
-        if (myTitleMouseInputListener != null) ((WindowMoveListener.ToolkitListener)myTitleMouseInputListener).removeFrom(myTitlePane);
-      }
-      else {
-        myTitlePane.removeMouseListener(myTitleMouseInputListener);
-        myTitlePane.removeMouseMotionListener(myTitleMouseInputListener);
-      }
-    }
-  }
 
+  }
   private void installLayout(JRootPane root) {
     if (myLayoutManager == null) {
       myLayoutManager = createLayoutManager();
@@ -456,15 +368,15 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         installClientDecorations(root);
       }
     }
-    if (propertyName.equals("ancestor")) {
+/*    if (propertyName.equals("ancestor")) {
       uninstallWindowListeners(myRootPane);
       if (e.getNewValue() != null && ((JRootPane)e.getSource()).getWindowDecorationStyle() != JRootPane.NONE) {
         installWindowListeners(myRootPane, myRootPane.getParent());
       }
-    }
+    }*/
   }
 
-  protected class DarculaRootLayout implements LayoutManager2 {
+  protected static class DarculaRootLayout implements LayoutManager2 {
     @Override
     public Dimension preferredLayoutSize(Container parent) {
       Dimension cpd, mbd, tpd;

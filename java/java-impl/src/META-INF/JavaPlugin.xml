@@ -22,6 +22,10 @@
     <component>
       <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
+      <implementation-class>com.intellij.openapi.projectRoots.impl.JavaSdkImpl</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -37,6 +41,9 @@
     </component>
     <component>
       <implementation-class>com.intellij.lang.java.JavaModuleRenameListener</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationSearcher</implementation-class>
     </component>
   </project-components>
 
@@ -94,6 +101,13 @@
     <extensionPoint qualifiedName="com.intellij.debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
     <extensionPoint qualifiedName="com.intellij.externalAnnotationsArtifactsResolver"
                     interface="com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver"/>
+    <extensionPoint qualifiedName="com.intellij.java.externalAnnotation.locationProvider"
+                    interface="com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider"/>
+
+    <extensionPoint qualifiedName="com.intellij.vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
+    <extensionPoint qualifiedName="com.intellij.languageCompilerRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter"/>
+    <extensionPoint qualifiedName="com.intellij.framework.type" interface="com.intellij.framework.FrameworkTypeEx"/>
+    <extensionPoint qualifiedName="com.intellij.runConfigurationExtension" interface="com.intellij.execution.RunConfigurationExtension"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -185,6 +199,7 @@
     <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.StreamChainCallExtractor"/>
     <java.inspection.bulkMethodInfo implementation="com.intellij.codeInspection.bulkOperation.JdkBulkMethodInfoProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.DeprecationAnnotationProvider"/>
+    <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.NotNullAnnotationProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.NullableAnnotationProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.UnmodifiableAnnotationProvider"/>
@@ -227,6 +242,15 @@
     <lang.treePatcher language="JAVA" implementationClass="com.intellij.psi.templateLanguages.MiddleTreePatcher"/>
     <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.JavaFactoryProvider"/>
     <dom.uiControlsProvider implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.JvmPsiTypeConverter"
+                   implementationClass="com.intellij.util.xml.JvmPsiTypeConverterImpl"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.CanonicalPsiTypeConverter"
+                   implementationClass="com.intellij.util.xml.CanonicalPsiTypeConverterImpl"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.converters.values.ClassValueConverter"
+                   implementationClass="com.intellij.util.xml.converters.ClassValueConverterImpl"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.converters.values.ClassArrayConverter"
+                   implementationClass="com.intellij.util.xml.converters.ClassArrayConverterImpl"/>
+
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
     <psiViewerExtension implementation="com.intellij.internal.psiView.PsiViewerExpressionExtension"/>
     <psiViewerExtension implementation="com.intellij.internal.psiView.PsiViewerCodeFragmentExtension"/>
@@ -347,7 +371,7 @@
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveMembers.MoveMembersHandler"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.JavaMoveFilesOrDirectoriesHandler" id="moveJavaFileOrDir"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler" order="before moveJavaFileOrDir"/>
-    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyClassesHandler" order="before copyJavaFilesOrPackages"/>
+    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyClassesHandler" order="before copyFilesOrDirectories"/>
     <saveFileAsTemplateHandler implementation="com.intellij.ide.fileTemplates.SaveJavaAsTemplateHandler"/>
     <exceptionFilter implementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilterFactory"/>
     <packageDependencies.visitor language="JAVA" implementationClass="com.intellij.packageDependencies.JavaDependencyVisitorFactory"/>
@@ -471,7 +495,7 @@
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavadocTypedHandler" id="javadoc"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavaTypedHandler" id="java"/>
     <quoteHandler fileType="JAVA" className="com.intellij.codeInsight.editorActions.JavaQuoteHandler"/>
-    <constructorBodyGenerator language="JAVA" implementationClass="com.intellij.codeInsight.generation.NewJavaConstructorBodyWithSuperCallGenerator"/>
+    <constructorBodyGenerator language="JAVA" implementationClass="com.intellij.codeInsight.generation.JavaConstructorBodyWithSuperCallGenerator"/>
     <lang.sliceProvider language="JAVA" implementationClass="com.intellij.slicer.JavaSliceProvider"/>
     <lang.lineWrapStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.java.JavaLineWrapPositionStrategy"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
@@ -488,6 +512,7 @@
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.DeclarationMover" id="declaration" order="before xml"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.StatementMover" id="statement" order="before declaration"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.CaseBlockMover" id="caseBlock" order="before statement"/>
+    <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.CatchBlockMover" id="catchBlock" order="before statement"/>
     <regExpModifierProvider language="JAVA" implementationClass="com.intellij.codeInsight.JavaRegExpModifierProvider" />
     <colorProvider implementation="com.intellij.codeInsight.daemon.impl.JavaColorProvider" />
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider"/>
@@ -609,6 +634,10 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      displayName="Condition is covered by further condition"
                      implementationClass="com.siyeh.ig.controlflow.ConditionCoveredByFurtherConditionInspection"/>
+    <localInspection language="JAVA" shortName="ExcessiveRangeCheck" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     displayName="Excessive range check"
+                     implementationClass="com.siyeh.ig.controlflow.ExcessiveRangeCheckInspection"/>
     <localInspection language="JAVA" shortName="IdempotentLoopBody" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
                      bundle="messages.InspectionsBundle" key="inspection.idempotent.loop.body"
@@ -740,6 +769,11 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids11" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ReadWriteStringCanBeUsedInspection"
                      displayName="'Files.readString()' or 'Files.writeString()' can be used"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="StringRepeatCanBeUsed"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids11" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.StringRepeatCanBeUsedInspection"
+                     displayName="String.repeat() can be used"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8MapForEach"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
@@ -935,6 +969,31 @@
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.OverflowingLoopIndexInspection" />
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="EnhancedSwitchMigration"
+                     key="inspection.switch.expression.migration.inspection.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids12" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.EnhancedSwitchMigrationInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantLabeledSwitchRuleCodeBlock"
+                     key="inspection.labeled.switch.rule.redundant.code.block.display.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.enhancedSwitch.RedundantLabeledSwitchRuleCodeBlockInspection" />
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="EnhancedSwitchBackwardMigration"
+                     key="inspection.switch.expression.backward.migration.inspection.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids12" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.EnhancedSwitchBackwardMigrationInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="SwitchLabeledRuleCanBeCodeBlock"
+                     key="inspection.switch.labeled.rule.can.be.code.block.display.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.enhancedSwitch.SwitchLabeledRuleCanBeCodeBlockInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantOperationOnEmptyContainer"
+                     key="inspection.redundant.operation.on.empty.container.display.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.redundancy.RedundantOperationOnEmptyContainerInspection" />
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"/>
@@ -1159,6 +1218,11 @@
       <descriptionDirectoryName>EditContractIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInspection.dataFlow.EditRangeIntention</className>
+      <category>Java/Annotations</category>
+      <descriptionDirectoryName>EditRangeIntention</descriptionDirectoryName>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AnnotateIntentionAction</className>
       <category>Java/Annotations</category>
     </intentionAction>
@@ -1198,7 +1262,18 @@
       <className>com.intellij.codeInsight.intention.impl.ChangeUIDAction</className>
       <category>Serialization</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.SplitSwitchBranchWithSeveralCaseValuesAction</className>
+      <category>Java/Control Flow</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.WrapWithUnmodifiableAction</className>
+      <category>Java/Other</category>
+    </intentionAction>
     <externalAnnotationsArtifactsResolver implementation="com.intellij.jarRepository.ExternalAnnotationsRepositoryResolver"/>
     <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaErrorQuickFixProvider"/>
+    <fileTypeDetector implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeDetector"/>
+
+    <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.JavaClassAndFileEqualityProvider"/>
   </extensions>
 </idea-plugin>

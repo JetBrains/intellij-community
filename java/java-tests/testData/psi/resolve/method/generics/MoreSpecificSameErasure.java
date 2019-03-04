@@ -14,7 +14,7 @@ class SSS {
         return null;
     }
     void f() {
-        <ref>x(any(Long.class));
+        <caret>x(any(Long.class));
     }
 
 }

@@ -60,10 +60,6 @@ public abstract class RefJavaUtil {
     throw new UnsupportedOperationException();
   }
 
-  public static boolean isDeprecated(PsiElement psiResolved) {
-    return psiResolved instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)psiResolved).isDeprecated();
-  }
-
   @Nullable
   public static RefPackage getPackage(RefEntity refEntity) {
     while (refEntity != null && !(refEntity instanceof RefPackage)) refEntity = refEntity.getOwner();

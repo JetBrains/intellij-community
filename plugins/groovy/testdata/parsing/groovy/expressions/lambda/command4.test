@@ -1,0 +1,21 @@
+m a -> {a}
+-----
+Groovy script
+  Call expression
+    Reference expression
+      PsiElement(identifier)('m')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Reference expression
+        PsiElement(identifier)('a')
+  PsiWhiteSpace(' ')
+  PsiErrorElement:',' expected, got '->'
+    PsiElement(->)('->')
+  PsiWhiteSpace(' ')
+  Closable block
+    PsiElement({)('{')
+    Parameter list
+      <empty list>
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiElement(})('}')

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.psi.PsiElement;
@@ -69,15 +69,6 @@ public class CountFilter extends FilterAction {
       private final JLabel myMinLabel = new JLabel("min=");
       private final JLabel myMaxLabel = new JLabel("max=");
 
-      {
-        myMinField.getValueEditor().addListener(newValue -> {
-          if (myMinField.getValueEditor().isValid(newValue) && myMaxField.getValue() < newValue) myMaxField.setValue(newValue);
-        });
-        myMaxField.getValueEditor().addListener(newValue -> {
-          if (myMaxField.getValueEditor().isValid(newValue) && myMinField.getValue() > newValue) myMinField.setValue(newValue);
-        });
-      }
-
       @Override
       protected void layoutComponents() {
         final GroupLayout layout = new GroupLayout(this);
@@ -99,6 +90,12 @@ public class CountFilter extends FilterAction {
                 .addComponent(myMaxLabel)
                 .addComponent(myMaxField)
         );
+        myMinField.getValueEditor().addListener(newValue -> {
+          if (myMinField.getValueEditor().isValid(newValue) && myMaxField.getValue() < newValue) myMaxField.setValue(newValue);
+        });
+        myMaxField.getValueEditor().addListener(newValue -> {
+          if (myMaxField.getValueEditor().isValid(newValue) && myMinField.getValue() > newValue) myMinField.setValue(newValue);
+        });
       }
 
       @Override

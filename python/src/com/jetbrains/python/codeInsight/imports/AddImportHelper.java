@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
@@ -212,6 +213,10 @@ public class AddImportHelper {
       else if (PsiTreeUtil.instanceOf(feeler, PsiWhiteSpace.class, PsiComment.class)) {
         seeker = feeler;
         feeler = feeler.getNextSibling();
+      }
+      else if (PsiTreeUtil.instanceOf(feeler, OuterLanguageElement.class)) {
+        feeler = feeler.getNextSibling();
+        seeker = feeler;
       }
       // maybe we arrived at the doc comment stmt; skip over it, too
       else if (!skippedOverImports && !skippedOverDoc && insertParent instanceof PyFile) {

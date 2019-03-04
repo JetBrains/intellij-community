@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -38,24 +37,10 @@ public abstract class XDebuggerTestCase extends PlatformTestCase {
   @Override
   protected void initApplication() throws Exception {
     super.initApplication();
-    final ExtensionPoint<XBreakpointType> point = getBreakpointTypes();
-    point.registerExtension(MY_LINE_BREAKPOINT_TYPE);
-    point.registerExtension(MY_SIMPLE_BREAKPOINT_TYPE);
-  }
 
-  private static ExtensionPoint<XBreakpointType> getBreakpointTypes() {
-    return Extensions.getRootArea().getExtensionPoint(XBreakpointType.EXTENSION_POINT_NAME);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      getBreakpointTypes().unregisterExtension(MY_LINE_BREAKPOINT_TYPE);
-      getBreakpointTypes().unregisterExtension(MY_SIMPLE_BREAKPOINT_TYPE);
-    }
-    finally {
-      super.tearDown();
-    }
+    final ExtensionPoint<XBreakpointType> point = XBreakpointType.EXTENSION_POINT_NAME.getPoint(null);
+    point.registerExtension(MY_LINE_BREAKPOINT_TYPE, getTestRootDisposable());
+    point.registerExtension(MY_SIMPLE_BREAKPOINT_TYPE, getTestRootDisposable());
   }
 
   public static class MyLineBreakpointType extends XLineBreakpointType<MyBreakpointProperties> {

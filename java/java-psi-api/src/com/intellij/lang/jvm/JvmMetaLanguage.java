@@ -16,9 +16,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * @since 2018.2
- */
 public class JvmMetaLanguage extends MetaLanguage {
 
   private static final Logger LOG = Logger.getInstance(JvmMetaLanguage.class);

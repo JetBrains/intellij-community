@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -50,10 +50,9 @@ import java.util.*;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public class JBTabsImpl extends JComponent
-  implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
+  implements JBTabsEx, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
              UISettingsListener, QuickActionProvider, Accessible {
 
-  public static final DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
   @NonNls public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
   static final int MIN_TAB_WIDTH = JBUI.scale(75);
   public static final int DEFAULT_MAX_TAB_WIDTH = JBUI.scale(300);
@@ -128,7 +127,7 @@ public class JBTabsImpl extends JComponent
   private boolean myPaintBlocked;
   private BufferedImage myImage;
   private IdeFocusManager myFocusManager;
-  private final boolean myAdjustBorders = true;
+  private static final boolean myAdjustBorders = true;
 
   boolean myAddNavigationGroup = true;
 
@@ -170,6 +169,9 @@ public class JBTabsImpl extends JComponent
   private Runnable myDeferredFocusRequest;
   private boolean myAlwaysPaintSelectedTab;
   private int myFirstTabOffset;
+  private boolean myAlphabeticalMode = false;
+  private boolean mySupportsCompression = false;
+  private String myEmptyText = null;
 
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
@@ -355,12 +357,13 @@ public class JBTabsImpl extends JComponent
     return ACTIVE_TAB_UNDERLINE_HEIGHT.get();
   }
 
+  @Override
   public boolean isEditorTabs() {
     return false;
   }
 
   public boolean supportsCompression() {
-    return false;
+    return mySupportsCompression;
   }
 
   @Override
@@ -535,8 +538,15 @@ public class JBTabsImpl extends JComponent
     return myFirstTabOffset;
   }
 
+  @Override
   public void setFirstTabOffset(int firstTabOffset) {
     myFirstTabOffset = firstTabOffset;
+  }
+
+  @Override
+  public JBTabsPresentation setEmptyText(@Nullable String text) {
+    myEmptyText = text;
+    return this;
   }
 
   public int tabMSize() {
@@ -596,6 +606,7 @@ public class JBTabsImpl extends JComponent
     updateTabActions(false);
   }
 
+  @Override
   public void updateTabActions(final boolean validateNow) {
     final Ref<Boolean> changed = new Ref<>(Boolean.FALSE);
     for (final TabInfo eachInfo : myInfo2Label.keySet()) {
@@ -614,11 +625,13 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  @Override
   public boolean canShowMorePopup() {
     final SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
     return lastLayout != null && lastLayout.moreRect != null;
   }
 
+  @Override
   public void showMorePopup(@Nullable final MouseEvent e) {
     final SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
     if (lastLayout == null) {
@@ -699,14 +712,10 @@ public class JBTabsImpl extends JComponent
   public void requestFocus() {
     final JComponent toFocus = getToFocus();
     if (toFocus != null) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(toFocus, true);
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(toFocus, true));
     }
     else {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        super.requestFocus();
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> super.requestFocus());
     }
   }
 
@@ -728,6 +737,7 @@ public class JBTabsImpl extends JComponent
     return addTab(info, index, false, true);
   }
 
+  @Override
   public TabInfo addTabSilently(TabInfo info, int index) {
     return addTab(info, index, false, false);
   }
@@ -791,6 +801,7 @@ public class JBTabsImpl extends JComponent
     return addTab(info, -1);
   }
 
+  @Override
   public TabLabel getTabLabel(TabInfo info) {
     return myInfo2Label.get(info);
   }
@@ -810,6 +821,7 @@ public class JBTabsImpl extends JComponent
     return setPopupGroup(() -> popupGroup, place, addNavigationGroup);
   }
 
+  @Override
   @NotNull
   public JBTabs setPopupGroup(@NotNull final Getter<? extends ActionGroup> popupGroup,
                               @NotNull final String place,
@@ -976,9 +988,7 @@ public class JBTabsImpl extends JComponent
     if (toFocus == null) return ActionCallback.DONE;
 
     if (myTestMode) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(toFocus, true);
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(toFocus, true));
       return ActionCallback.DONE;
     }
 
@@ -1246,8 +1256,9 @@ public class JBTabsImpl extends JComponent
     return mySelectedInfo != null ? mySelectedInfo : !myVisibleInfos.isEmpty() ? myVisibleInfos.get(0) : null;
   }
 
+  @Override
   @Nullable
-  private TabInfo getToSelectOnRemoveOf(TabInfo info) {
+  public TabInfo getToSelectOnRemoveOf(TabInfo info) {
     if (!myVisibleInfos.contains(info)) return null;
     if (mySelectedInfo != info) return null;
 
@@ -1287,7 +1298,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public boolean isAlphabeticalMode() {
-    return false;
+    return myAlphabeticalMode;
   }
 
   @Nullable
@@ -1319,8 +1330,10 @@ public class JBTabsImpl extends JComponent
     return getTabs().get(tabIndex);
   }
 
+  @Override
   @NotNull
   public List<TabInfo> getTabs() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myAllTabs != null) return myAllTabs;
 
     ArrayList<TabInfo> result = new ArrayList<>(myVisibleInfos);
@@ -1648,7 +1661,13 @@ public class JBTabsImpl extends JComponent
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
 
-    if (myVisibleInfos.isEmpty()) return;
+    if (myVisibleInfos.isEmpty()) {
+      if (myEmptyText != null) {
+        UISettings.setupAntialiasing(g);
+        UIUtil.drawCenteredString((Graphics2D)g, getBounds(), myEmptyText);
+      }
+      return;
+    }
 
     Graphics2D g2d = (Graphics2D)g;
 
@@ -1771,8 +1790,8 @@ public class JBTabsImpl extends JComponent
 
 
       g2d.setPaint(UIUtil.getGradientPaint((float)gradientLine.getX1(), (float)gradientLine.getY1(),
-                                     shapeInfo.fillPath.transformY1(shapeInfo.from, shapeInfo.to), (float)gradientLine.getX2(),
-                                     (float)gradientLine.getY2(), shapeInfo.fillPath.transformY1(shapeInfo.to, shapeInfo.from)));
+                                           shapeInfo.fillPath.transformY1(shapeInfo.from, shapeInfo.to), (float)gradientLine.getX2(),
+                                           (float)gradientLine.getY2(), shapeInfo.fillPath.transformY1(shapeInfo.to, shapeInfo.from)));
       g2d.fill(shapeInfo.fillPath.getShape());
     }
 
@@ -2036,7 +2055,7 @@ public class JBTabsImpl extends JComponent
 
       UIUtil.drawImage(g2d, img,
                        new Rectangle(x, y, width, height),
-                       new Rectangle(0, 0, width, height),null);
+                       new Rectangle(0, 0, width, height), null);
 
       label.setInactiveStateImage(img);
     }
@@ -2170,13 +2189,13 @@ public class JBTabsImpl extends JComponent
 
     final Paint gp = UIUtil.isUnderDarcula()
                              ? UIUtil.getGradientPaint(gradientLine.x1, gradientLine.y1,
-                                                 shape.transformY1(backgroundColor, backgroundColor),
-                                                 gradientLine.x2, gradientLine.y2,
-                                                 shape.transformY1(backgroundColor, backgroundColor))
+                                                       shape.transformY1(backgroundColor, backgroundColor),
+                                                       gradientLine.x2, gradientLine.y2,
+                                                       shape.transformY1(backgroundColor, backgroundColor))
                              : UIUtil.getGradientPaint(gradientLine.x1, gradientLine.y1,
-                                                 shape.transformY1(backgroundColor.brighter().brighter(), backgroundColor),
-                                                 gradientLine.x2, gradientLine.y2,
-                                                 shape.transformY1(backgroundColor, backgroundColor.brighter().brighter()));
+                                                       shape.transformY1(backgroundColor.brighter().brighter(), backgroundColor),
+                                                       gradientLine.x2, gradientLine.y2,
+                                                       shape.transformY1(backgroundColor, backgroundColor.brighter().brighter()));
 
     final Paint old = g2d.getPaint();
     g2d.setPaint(gp);
@@ -2477,6 +2496,7 @@ public class JBTabsImpl extends JComponent
     return removeTab(info, null, true);
   }
 
+  @Override
   @NotNull
   public ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus) {
     return removeTab(info, forcedSelectionTransfer, transferFocus, false);
@@ -2556,6 +2576,7 @@ public class JBTabsImpl extends JComponent
     myLastPaintedSelection = null;
   }
 
+  @Override
   @Nullable
   public TabInfo findInfo(Component component) {
     for (TabInfo each : getTabs()) {
@@ -2851,7 +2872,7 @@ public class JBTabsImpl extends JComponent
 
     @Override
     public final void update(@NotNull final AnActionEvent e) {
-      JBTabsImpl tabs = e.getData(NAVIGATION_ACTIONS_KEY);
+      JBTabsImpl tabs = (JBTabsImpl)e.getData(NAVIGATION_ACTIONS_KEY);
       e.getPresentation().setVisible(tabs != null);
       if (tabs == null) return;
 
@@ -2895,7 +2916,7 @@ public class JBTabsImpl extends JComponent
 
     @Override
     public final void actionPerformed(@NotNull final AnActionEvent e) {
-      JBTabsImpl tabs = e.getData(NAVIGATION_ACTIONS_KEY);
+      JBTabsImpl tabs = (JBTabsImpl)e.getData(NAVIGATION_ACTIONS_KEY);
       tabs = findNavigatableTabs(tabs);
       if (tabs == null) return;
 
@@ -3107,6 +3128,7 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  @Override
   public void sortTabs(Comparator<? super TabInfo> comparator) {
     Collections.sort(myVisibleInfos, comparator);
 
@@ -3161,6 +3183,7 @@ public class JBTabsImpl extends JComponent
     return myDataProvider;
   }
 
+  @Override
   public JBTabsImpl setDataProvider(@NotNull final DataProvider dataProvider) {
     myDataProvider = dataProvider;
     return this;
@@ -3260,6 +3283,18 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
+  @Override
+  public JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode) {
+    myAlphabeticalMode = alphabeticalMode;
+    return this;
+  }
+
+  @Override
+  public JBTabsPresentation setSupportsCompression(boolean supportsCompression) {
+    mySupportsCompression = supportsCompression;
+    return this;
+  }
+
   public boolean isTabDraggingEnabled() {
     return myTabDraggingEnabled && !mySplitter.isDragging();
   }
@@ -3339,10 +3374,12 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  @Override
   public int getDropInfoIndex() {
     return myDropInfoIndex;
   }
 
+  @Override
   public boolean isEmptyVisible() {
     return myVisibleInfos.isEmpty();
   }
@@ -3496,7 +3533,8 @@ public class JBTabsImpl extends JComponent
       initAccessibleContext();
     }
 
-    private @NotNull TabInfo getTabInfo() {
+    private @NotNull
+    TabInfo getTabInfo() {
       return myTabInfo;
     }
 

@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Konstantin Bulenkov
  * @see FileChooserFactory
- * @since 9.0
  */
 public interface FileSaverDialog {
   @Nullable

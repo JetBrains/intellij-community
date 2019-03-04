@@ -5,7 +5,7 @@
     </CLASSES>
     <JAVADOC/>
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/ant/src/bundled_ant_src.zip!/bundled_ant_src/main"/>
+      <root url="jar://$PROJECT_DIR$/lib/ant/src.zip!/"/>
     </SOURCES>
     <jarDirectory url="file://$PROJECT_DIR$/lib/ant/lib" recursive="false"/>
   </library>

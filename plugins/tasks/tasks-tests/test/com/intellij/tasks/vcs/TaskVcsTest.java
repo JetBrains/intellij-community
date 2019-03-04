@@ -15,7 +15,6 @@
  */
 package com.intellij.tasks.vcs;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,18 +26,24 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
-import com.intellij.openapi.vcs.changes.ui.CommitHelper;
+import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tasks.*;
 import com.intellij.tasks.actions.OpenTaskDialog;
-import com.intellij.tasks.impl.*;
+import com.intellij.tasks.impl.LocalTaskImpl;
+import com.intellij.tasks.impl.TaskChangelistSupport;
+import com.intellij.tasks.impl.TaskCheckinHandlerFactory;
+import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl;
 import icons.TasksIcons;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +81,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
-    activateAndCreateChangelist(task);
+    runOpenTaskDialog(task);
 
     assertEquals(2, myTaskManager.getLocalTasks().size());
 
@@ -95,7 +100,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(2, myChangeListManager.getChangeListsCopy().size());
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(myChangeListManager.getChangeListsCopy().get(0)));
 
-    activateAndCreateChangelist(localTask);
+    myTaskManager.activateTask(localTask, false);
 
     assertEquals(1, localTask.getChangeLists().size());
     assertEquals(1, defaultTask.getChangeLists().size());
@@ -132,12 +137,12 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   public void testAddChangeListViaCreateChangeListAction() {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
-    activateAndCreateChangelist(task);
+    runOpenTaskDialog(task);
     myChangeListManager.waitUntilRefreshed();
 
     LocalTask defaultTask = myTaskManager.findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     assertNotNull(defaultTask);
-    activateAndCreateChangelist(defaultTask);
+    myTaskManager.activateTask(defaultTask, false);
     myChangeListManager.waitUntilRefreshed();
     assertEquals(defaultTask, myTaskManager.getActiveTask());
 
@@ -171,12 +176,12 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   public void testRemoveChangelistViaVcsAction() {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
-    activateAndCreateChangelist(task);
+    runOpenTaskDialog(task);
     myChangeListManager.waitUntilRefreshed();
 
     LocalTask defaultTask = myTaskManager.findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     assertNotNull(defaultTask);
-    activateAndCreateChangelist(defaultTask);
+    myTaskManager.activateTask(defaultTask, false);
     myChangeListManager.waitUntilRefreshed();
     assertEquals(defaultTask, myTaskManager.getActiveTask());
 
@@ -197,23 +202,15 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(LocalChangeList.DEFAULT_NAME, defaultChangeList.getName());
   }
 
-  private void activateAndCreateChangelist(Task task) {
-    LocalTaskImpl localTask = new LocalTaskImpl(task);
-    if (localTask.getChangeLists().isEmpty()) {
-      myTaskManager.createChangeList(localTask, myTaskManager.getChangelistName(localTask));
-    }
-    myTaskManager.activateTask(task, false);
-  }
-
   public void testAddChangeListViaVcsAction() {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
-    activateAndCreateChangelist(task);
+    runOpenTaskDialog(task);
     myChangeListManager.waitUntilRefreshed();
 
     LocalTask defaultTask = myTaskManager.findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     assertNotNull(defaultTask);
-    activateAndCreateChangelist(defaultTask);
+    myTaskManager.activateTask(defaultTask, false);
     myChangeListManager.waitUntilRefreshed();
     assertEquals(defaultTask, myTaskManager.getActiveTask());
 
@@ -264,7 +261,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     myRepository.setCommitMessageFormat("{id} {summary} {number} {project}");
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
-    activateAndCreateChangelist(task);
+    runOpenTaskDialog(task);
     myChangeListManager.waitUntilRefreshed();
     LocalTask localTask = myTaskManager.getActiveTask();
     assertNotNull(localTask);
@@ -282,7 +279,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
     assertEquals(1, myChangeListManager.getChangeListsCopy().size());  // default change list should be here
-    activateAndCreateChangelist(task);
+    runOpenTaskDialog(task);
     myChangeListManager.waitUntilRefreshed();
 
     assertEquals(2, myTaskManager.getLocalTasks().size());
@@ -334,9 +331,11 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     CheckinHandler checkinHandler = new TaskCheckinHandlerFactory().createHandler(panel, new CommitContext());
 
     List<CheckinHandler> handlers = ContainerUtil.list(checkinHandler);
-    CommitHelper helper = new CommitHelper(getProject(), changeList, changes, "Commit", commitMessage, handlers, false, true,
-                                           new PseudoMap<>(), null);
-    helper.doCommit();
+    SingleChangeListCommitter committer =
+      new SingleChangeListCommitter(getProject(), changeList, changes, commitMessage, handlers, FunctionUtil.nullConstant(), null, "Commit",
+                                    false);
+
+    committer.runCommit("Commit", true);
   }
 
   private LocalChangeList addChangeList(String title) {
@@ -393,34 +392,34 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   public void testIds() {
     LocalTaskImpl task = new LocalTaskImpl("", "");
     assertEquals("", task.getNumber());
-    assertEquals(null, task.getProject());
+    assertNull(task.getProject());
 
     task = new LocalTaskImpl("-", "");
     assertEquals("-", task.getNumber());
-    assertEquals(null, task.getProject());
+    assertNull(task.getProject());
 
     task = new LocalTaskImpl("foo", "");
     assertEquals("foo", task.getNumber());
-    assertEquals(null, task.getProject());
+    assertNull(task.getProject());
 
     task = new LocalTaskImpl("112", "");
     assertEquals("112", task.getNumber());
-    assertEquals(null, task.getProject());
+    assertNull(task.getProject());
   }
 
   public void testRestoreChangelist() {
     final LocalTaskImpl task = new LocalTaskImpl("foo", "bar");
-    activateAndCreateChangelist(task);
-    activateAndCreateChangelist(new LocalTaskImpl("next", ""));
+    runOpenTaskDialog(task);
+    runOpenTaskDialog(new LocalTaskImpl("next", ""));
 
+    myChangeListManager.ensureUpToDate();
     final String changelistName = myTaskManager.getChangelistName(task);
     myChangeListManager.removeChangeList(changelistName);
 
-    myChangeListManager.invokeAfterUpdate(() -> {
-      assertTrue(myTaskManager.isLocallyClosed(task));
-      activateAndCreateChangelist(task);
-      assertNotNull(myChangeListManager.findChangeList(changelistName));
-    }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "foo", ModalityState.NON_MODAL);
+    myChangeListManager.waitUntilRefreshed();
+    assertTrue(myTaskManager.isLocallyClosed(task));
+    myTaskManager.activateTask(task, false);
+    assertNotNull(myChangeListManager.findChangeList(changelistName));
   }
 
   public void testSuggestBranchName() {
@@ -449,36 +448,51 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     myTaskManager.getState().shelveChanges = true;
     LocalTaskImpl task = new LocalTaskImpl("id", "summary");
-    OpenTaskDialog dialog = new OpenTaskDialog(getProject(), task);
-    try {
-      dialog.createTask();
-      assertEquals(dumpChangeListManager(), activeTask.getSummary(), activeTask.getShelfName());
+    runOpenTaskDialog(task);
 
-      List<ShelvedChangeList> lists = ShelveChangesManager.getInstance(getProject()).getShelvedChangeLists();
-      assertTrue(lists.stream().anyMatch(list -> list.DESCRIPTION.equals(activeTask.getShelfName())));
+    assertEquals(dumpChangeListManager(), activeTask.getSummary(), activeTask.getShelfName());
 
-      assertEmpty(myChangeListManager.getDefaultChangeList().getChanges());
-      myTaskManager.activateTask(activeTask, true);
-      Collection<Change> changes = myChangeListManager.getDefaultChangeList().getChanges();
-      assertNotEmpty(changes);
-    }
-    finally {
-      dialog.close(DialogWrapper.OK_EXIT_CODE);
-    }
-    UIUtil.dispatchAllInvocationEvents();
+    List<ShelvedChangeList> lists = ShelveChangesManager.getInstance(getProject()).getShelvedChangeLists();
+    assertTrue(lists.stream().anyMatch(list -> list.DESCRIPTION.equals(activeTask.getShelfName())));
+
+    assertEmpty(myChangeListManager.getDefaultChangeList().getChanges());
+    myTaskManager.activateTask(activeTask, true);
+    Collection<Change> changes = myChangeListManager.getDefaultChangeList().getChanges();
+    assertNotEmpty(changes);
   }
 
   public void testAssociatedChangelist() {
-    ChangeListManager changeListManager = ChangeListManager.getInstance(getProject());
-    LocalChangeList changeList = changeListManager.getDefaultChangeList();
+    LocalChangeList changeList = myChangeListManager.getDefaultChangeList();
     assertNotNull(changeList);
     assertEquals(myTaskManager.getActiveTask(), myTaskManager.getAssociatedTask(changeList));
     LocalTaskImpl bond = new LocalTaskImpl("007", "Bond");
     TestRepository repository = new TestRepository();
     repository.setShouldFormatCommitMessage(true);
     bond.setRepository(repository);
-    myTaskManager.activateTask(bond, false);
-    assertEquals("007 Bond", new TaskCommitMessageProvider().getCommitMessage(changeList, getProject()));
+
+    myTaskManager.getState().createChangelist = false;
+    runOpenTaskDialog(bond);
+    assertEquals(1, bond.getChangeLists().size());
+    assertEquals(changeList.getId(), bond.getChangeLists().get(0).id);
+    assertEquals("007 Bond", myChangeListManager.getDefaultChangeList().getComment());
+  }
+
+  public void testOpenTask() {
+    LocalTaskImpl task = new LocalTaskImpl("id", "summary");
+    runOpenTaskDialog(task);
+    List<ChangeListInfo> lists = task.getChangeLists();
+    assertEquals(1, lists.size());
+  }
+
+  private void runOpenTaskDialog(Task task) {
+    OpenTaskDialog dialog = new OpenTaskDialog(getProject(), task);
+    try {
+      dialog.createTask();
+    }
+    finally {
+      dialog.close(DialogWrapper.OK_EXIT_CODE);
+    }
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   @Override
@@ -504,24 +518,23 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      myTaskManager.setRepositories(Collections.emptyList());
-      AllVcses.getInstance(getProject()).unregisterManually(myVcs);
-    }
-    finally {
-      myTaskManager = null;
-      myVcs = null;
-      myChangeListManager = null;
-
-      super.tearDown();
-    }
+    new RunAll()
+      .append(() -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed())
+      .append(() -> myTaskManager.setRepositories(Collections.emptyList()))
+      .append(() -> AllVcses.getInstance(getProject()).unregisterManually(myVcs))
+      .append(() -> {
+        myTaskManager = null;
+        myVcs = null;
+        myChangeListManager = null;
+      })
+      .append(() -> super.tearDown())
+      .run();
   }
 
   @NotNull
   private String dumpChangeListManager() {
-    return StringUtil.join(myChangeListManager.getChangeLists(), list -> {
-      return String.format("list: %s (%s) changes: %s", list.getName(), list.getId(), StringUtil.join(list.getChanges(), ", "));
-    }, "\n");
+    return StringUtil.join(myChangeListManager.getChangeLists(), list -> String
+      .format("list: %s (%s) changes: %s", list.getName(), list.getId(), StringUtil.join(list.getChanges(), ", ")), "\n");
   }
 
   private static class MyMockChangeProvider implements ChangeProvider {

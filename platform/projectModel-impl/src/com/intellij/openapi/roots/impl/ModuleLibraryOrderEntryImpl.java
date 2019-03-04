@@ -150,7 +150,7 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
   }
 
   @Override
-  public void writeExternal(Element rootElement) throws WriteExternalException {
+  public void writeExternal(@NotNull Element rootElement) throws WriteExternalException {
     final Element element = OrderEntryFactory.createOrderEntryElement(ENTRY_TYPE);
     if (myExported) {
       element.setAttribute(EXPORTED_ATTR, "");

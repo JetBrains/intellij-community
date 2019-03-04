@@ -14,7 +14,6 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
@@ -329,7 +328,7 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
     }
 
     if((ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace()))
-        && DebuggerUtilsEx.isInJavaSession(e)) {
+        && isInJavaSession(e)) {
       e.getPresentation().setEnabled(enable);
     }
     else {

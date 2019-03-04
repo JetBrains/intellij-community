@@ -21,16 +21,15 @@ import com.intellij.openapi.compiler.Compiler;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author nik
- *
- * @deprecated this interface is part of the obsolete build system which runs as part of the IDE process. Since IDEA 12 plugins need to
- * integrate into 'external build system' instead (https://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
- * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
+ * @deprecated this class is part of the old deprecated build infrastructure; plug into the external build process instead
+ * (see {@link org.jetbrains.jps.incremental.TargetBuilder})
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "192.0")
 public abstract class GenericCompiler<Key, SourceState, OutputState> implements Compiler {
   protected static final KeyDescriptor<String> STRING_KEY_DESCRIPTOR = EnumeratorStringDescriptor.INSTANCE;
   private final String myId;

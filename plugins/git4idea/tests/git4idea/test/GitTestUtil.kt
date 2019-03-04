@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.PlatformTestCase
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
@@ -103,6 +104,14 @@ fun createRepository(project: Project, root: String, makeInitialCommit: Boolean)
   val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(root, GitUtil.DOT_GIT))
   assertNotNull(gitDir)
   return registerRepo(project, root)
+}
+
+fun GitRepository.createSubRepository(name: String): GitRepository {
+  val childRoot = File(this.root.path, name)
+  PlatformTestCase.assertTrue(childRoot.mkdir())
+  val repo = createRepository(this.project, childRoot.path)
+  this.tac(".gitignore", name)
+  return repo
 }
 
 fun registerRepo(project: Project, root: String): GitRepository {

@@ -58,7 +58,7 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
     ArrayList<File> resultFiles = new ArrayList<>();
     File outputPath = FileUtil.createTempDirectory("inspection", "results");
 
-    GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)im.createNewGlobalContext(true);
+    GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)im.createNewGlobalContext();
 
     InspectionProfileImpl profile = new InspectionProfileImpl("test", () -> getTools().collect(Collectors.toList()), (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
     getTools().forEach(t -> profile.enableTool(t.getShortName(), getProject()));

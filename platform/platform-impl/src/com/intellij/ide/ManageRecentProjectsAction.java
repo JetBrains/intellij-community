@@ -40,6 +40,8 @@ public class ManageRecentProjectsAction extends DumbAwareAction {
       .setRequestFocus(true)
       .setMayBeParent(true)
       .setMovable(true)
+      .setResizable(true)
+      .setNormalWindowLevel(true)
       .createPopup();
     Disposer.register(popup, disposable);
 

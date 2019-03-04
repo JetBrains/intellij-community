@@ -91,7 +91,7 @@ public class SelectCvsElementStep extends WizardStep {
     }
     final boolean logged = isLogged(selectedConfiguration);
     if (logged) {
-      myCvsTree.setCvsRootConfiguration((CvsRootConfiguration)selectedConfiguration.clone());
+      myCvsTree.setCvsRootConfiguration(selectedConfiguration.clone());
     }
     return logged;
   }

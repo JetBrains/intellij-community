@@ -7,8 +7,11 @@ import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.toPrintable
+import com.intellij.testGuiFramework.impl.GuiRobotHolder.robot
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
+import com.intellij.testGuiFramework.util.logInfo
+import com.intellij.testGuiFramework.util.step
 import com.intellij.ui.EngravedLabel
 import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
@@ -25,6 +28,7 @@ import org.fest.swing.timing.Wait
 import java.awt.Component
 import java.awt.Container
 import java.awt.Window
+import java.lang.IllegalStateException
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.JCheckBox
@@ -159,22 +163,26 @@ object GuiTestUtilKt {
                                                     text: String,
                                                     componentType: Class<BoundedComponent>,
                                                     timeout: Timeout = Timeouts.seconds30): BoundedComponent {
-    val componentWithText = findComponentByText(robot, container, text, timeout)
-    if (componentWithText is JLabel && componentWithText.labelFor != null) {
-      val labeledComponent = componentWithText.labelFor
-      if (componentType.isInstance(labeledComponent)) return labeledComponent as BoundedComponent
-      return robot.finder().find(labeledComponent as Container) { component -> componentType.isInstance(component) } as BoundedComponent
-    }
-    try {
-      return withPauseWhenNull(timeout = timeout) {
-        val componentsOfInstance = robot.finder().findAll(container, ComponentMatcher { component -> componentType.isInstance(component) })
-        componentsOfInstance.filter { it.isShowing && it.onHeightCenter(componentWithText, true) }
-          .sortedBy { it.bounds.x }
-          .firstOrNull()
-      } as BoundedComponent
-    }
-    catch (e: WaitTimedOutError) {
-      throw ComponentLookupException("Unable to find component of type: ${componentType.simpleName} in $container by text: $text")
+    return step("search component by nearby '$text' text") {
+      val componentWithText = findComponentByText(robot, container, text, timeout)
+      logInfo("found component '${componentWithText::class.java.canonicalName}': '$componentWithText'")
+      if (componentWithText is JLabel && componentWithText.labelFor != null) {
+        val labeledComponent = componentWithText.labelFor
+        if (componentType.isInstance(labeledComponent)) return@step labeledComponent as BoundedComponent
+        return@step robot.finder().find(labeledComponent as Container) { component -> componentType.isInstance(component) } as BoundedComponent
+      }
+      try {
+        return@step withPauseWhenNull(timeout = timeout) {
+          val componentsOfInstance = robot.finder().findAll(container,
+                                                            ComponentMatcher { component -> componentType.isInstance(component) })
+          componentsOfInstance.filter { it.isShowing && it.onHeightCenter(componentWithText, true) }
+            .sortedBy { it.bounds.x }
+            .firstOrNull()
+        } as BoundedComponent
+      }
+      catch (e: WaitTimedOutError) {
+        throw ComponentLookupException("Unable to find component of type: ${componentType.simpleName} in $container by text: $text")
+      }
     }
   }
 
@@ -204,7 +212,7 @@ object GuiTestUtilKt {
    *
    * @throws WaitTimedOutError with the text: "Timed out waiting for $timeout second(s) until {@code conditionText} will be not null"
    */
-  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will",
+  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe",
                                             timeout: Timeout = Timeouts.defaultTimeout,
                                             functionProbeToNull: () -> ReturnType?): ReturnType {
     var result: ReturnType? = null
@@ -216,9 +224,11 @@ object GuiTestUtilKt {
   }
 
   fun waitUntil(condition: String, timeout: Timeout = Timeouts.defaultTimeout, conditionalFunction: () -> Boolean) {
-    Pause.pause(object : Condition("${timeout.toPrintable()} until $condition") {
-      override fun test() = conditionalFunction()
-    }, timeout)
+    step("wait until $condition") {
+      Pause.pause(object : Condition("${timeout.toPrintable()} until $condition") {
+        override fun test() = conditionalFunction()
+      }, timeout)
+    }
   }
 
   fun <R> tryWithPause(exceptionClass: Class<out Exception>,
@@ -254,6 +264,23 @@ object GuiTestUtilKt {
     catch (ignore: WaitTimedOutError) {
     }
   }
+
+  fun repeatUntil(condition: () -> Boolean, action: () -> Unit, maxAttempts: Int = 3) {
+    var remainingAttempts = maxAttempts
+    while (!condition() && remainingAttempts-- > 0) {
+      try {
+        action()
+      } catch (e: Exception) {
+        // ignore
+      }
+    }
+    if (!condition()) {
+      throw IllegalStateException("the condition is not satisfied")
+    }
+  }
+
+  fun <T : Component> isComponentShowing(componentClass: Class<T>): Boolean =
+    robot.finder().findAll(typeMatcher(componentClass) { it.isShowing }).isNotEmpty()
 
   fun <ComponentType : Component> findAllWithBFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
     val result = LinkedList<ComponentType>()
@@ -295,18 +322,18 @@ object GuiTestUtilKt {
                                   predicate: FinderPredicate = Predicate.equality,
                                   timeoutToAppear: Timeout = Timeouts.seconds30,
                                   timeoutToGone: Timeout = Timeouts.defaultTimeout) {
-    //wait dialog appearance. In a bad case we could pass dialog appearance.
-    var dialog: JDialog? = null
-    try {
-      waitUntil("progress dialog with title $progressTitle will appear", timeoutToAppear) {
-        dialog = findProgressDialog(robot, progressTitle, predicate)
-        dialog != null
+    step("search and wait for '$progressTitle' progress dialog disappearing") {
+      //wait dialog appearance. In a bad case we could pass dialog appearance.
+      var dialog: JDialog? = null
+      try {
+        waitUntil("progress dialog with title $progressTitle will appear", timeoutToAppear) {
+          dialog = findProgressDialog(robot, progressTitle, predicate)
+          dialog != null
+        }
       }
+      catch (ignoredTimeoutError: WaitTimedOutError) {}
+      waitUntil("progress dialog with title $progressTitle will gone", timeoutToGone) { dialog == null || !dialog!!.isShowing }
     }
-    catch (timeoutError: WaitTimedOutError) {
-      return
-    }
-    waitUntil("progress dialog with title $progressTitle will gone", timeoutToGone) { dialog == null || !dialog!!.isShowing }
   }
 
   fun findProgressDialog(robot: Robot, progressTitle: String, predicate: FinderPredicate = Predicate.equality): JDialog? {

@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author anna
  * @see LocalInspectionTool
- * @since 6.0
  */
 public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   @NotNull

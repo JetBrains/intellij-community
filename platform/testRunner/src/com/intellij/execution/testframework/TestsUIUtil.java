@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.AppIconScheme;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -47,6 +48,11 @@ public class TestsUIUtil {
 
   public static final Color PASSED_COLOR = new Color(0, 128, 0);
   private static final String TESTS = "tests";
+
+  static {
+    //pre-register notification group for Run ToolWindow to show it in notifications settings
+    NotificationGroup.toolWindowGroup(getTestResultsNotificationDisplayId(ToolWindowId.RUN), ToolWindowId.RUN);
+  }
 
   private TestsUIUtil() {
   }
@@ -145,11 +151,20 @@ public class TestsUIUtil {
     final MessageType type = testResultPresentation.getType();
 
     if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), windowId)) {
-      toolWindowManager.notifyByBalloon(windowId, type, balloonText, null, null);
+      String displayId = getTestResultsNotificationDisplayId(windowId);
+      NotificationGroup group = NotificationGroup.findRegisteredGroup(displayId);
+      if (group == null) {
+        group = NotificationGroup.toolWindowGroup(displayId, windowId);
+      }
+      group.createNotification(balloonText, type).notify(project);
     }
 
     NOTIFICATION_GROUP.createNotification(balloonText, type).notify(project);
     SystemNotifications.getInstance().notify("TestRunner", title, text);
+  }
+
+  private static String getTestResultsNotificationDisplayId(@NotNull String toolWindowId) {
+    return "Test Results: " + toolWindowId;
   }
 
   public static String getTestSummary(AbstractTestProxy proxy) {

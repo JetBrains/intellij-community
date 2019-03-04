@@ -35,9 +35,6 @@ public abstract class MethodSignatureBase implements MethodSignature {
     myParameterTypes = PsiType.createArray(parameterTypes.length);
     for (int i = 0; i < parameterTypes.length; i++) {
       PsiType type = parameterTypes[i];
-      if (type != null) {
-        PsiUtil.ensureValidType(type);
-      }
       if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType) type).toArrayType();
       myParameterTypes[i] = substitutor.substitute(type);
     }

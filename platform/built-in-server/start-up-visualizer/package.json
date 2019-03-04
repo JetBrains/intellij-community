@@ -1,0 +1,36 @@
+{
+  "name": "start-up-visualizer",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build"
+  },
+  "dependencies": {
+    "@amcharts/amcharts4": "4.1.14",
+    "element-ui": "^2.6.0",
+    "vue": "^2.6.7",
+    "vue-class-component": "^7.0.1",
+    "vue-property-decorator": "^7.3.0",
+    "vue-router": "^3.0.2",
+    "vuex": "^3.1.0",
+    "vuex-persist": "^2.0.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-typescript": "^3.4.1",
+    "@vue/cli-service": "^3.4.1",
+    "typescript": "^3.3.3333",
+    "vue-template-compiler": "^2.6.7",
+    "vuex-module-decorators": "^0.9.8"
+  },
+  "postcss": {
+    "plugins": {
+      "autoprefixer": {}
+    }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
+}

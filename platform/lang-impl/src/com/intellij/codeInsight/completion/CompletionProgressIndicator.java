@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
@@ -190,7 +189,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   void duringCompletion(CompletionInitializationContext initContext, CompletionParameters parameters) {
     if (isAutopopupCompletion() && shouldPreselectFirstSuggestion(parameters)) {
-      myLookup.setFocusDegree(CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS
+      myLookup.setFocusDegree(CodeInsightSettings.getInstance().isSelectAutopopupSuggestionsByChars()
                               ? LookupImpl.FocusDegree.FOCUSED
                               : LookupImpl.FocusDegree.SEMI_FOCUSED);
     }
@@ -237,7 +236,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     advertiseTabReplacement(parameters);
     if (isAutopopupCompletion()) {
-      if (shouldPreselectFirstSuggestion(parameters) && !CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS) {
+      if (shouldPreselectFirstSuggestion(parameters) && !CodeInsightSettings.getInstance().isSelectAutopopupSuggestionsByChars()) {
         advertiseCtrlDot();
       }
       advertiseCtrlArrows();
@@ -448,6 +447,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher())) {
       return;
     }
+
+    myArranger.setLastLookupPrefix(myLookup.getAdditionalPrefix());
+
     //noinspection NonAtomicOperationOnVolatileField
     myCount++; // invoked from a single thread
 
@@ -491,12 +493,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     Disposer.dispose(myQueue);
     LookupManager.getInstance(getProject()).removePropertyChangeListener(myLookupManagerListener);
 
-    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
-    LOG.assertTrue(currentCompletion == this, currentCompletion + "!=" + this);
-
     CompletionServiceImpl
       .assertPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.Synchronous.class,
                    CompletionPhase.CommittingDocuments.class);
+
+    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
+    LOG.assertTrue(currentCompletion == this, currentCompletion + "!=" + this);
+
     CompletionPhase oldPhase = CompletionServiceImpl.getCompletionPhase();
     if (oldPhase instanceof CompletionPhase.CommittingDocuments) {
       LOG.assertTrue(((CompletionPhase.CommittingDocuments)oldPhase).isRestartingCompletion(), oldPhase);
@@ -594,8 +597,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
       else {
-        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(this));
         updateLookup(myIsUpdateSuppressed);
+        if (CompletionServiceImpl.getCompletionPhase() != CompletionPhase.NoCompletion) {
+          CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(this));
+        }
       }
     }, myQueue.getModalityState());
   }
@@ -671,6 +676,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myInvocationCount == 0;
   }
 
+  int getInvocationCount() {
+    return myInvocationCount;
+  }
+
   @Override
   @NotNull
   public Project getProject() {
@@ -682,6 +691,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myRestartingPrefixConditions.add(Pair.create(startOffset, restartCondition));
   }
 
+  @Override
   public void prefixUpdated() {
     final int caretOffset = myEditor.getCaretModel().getOffset();
     if (caretOffset < myStartCaret) {
@@ -693,7 +703,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final CharSequence text = myEditor.getDocument().getCharsSequence();
     for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {
       int start = pair.first;
-      if (caretOffset >= start && start >= 0) {
+      if (caretOffset >= start && start >= 0 && caretOffset <= text.length()) {
         final String newPrefix = text.subSequence(start, caretOffset).toString();
         if (pair.second.accepts(newPrefix)) {
           scheduleRestart();
@@ -706,6 +716,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     hideAutopopupIfMeaningless();
   }
 
+  @Override
   public void scheduleRestart() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
@@ -729,18 +740,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       ((CompletionPhase.CommittingDocuments)oldPhase).replaced = true;
     }
 
-    final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(this, myEditor);
-    CompletionServiceImpl.setCompletionPhase(phase);
-    phase.ignoreCurrentDocumentChange();
-
-    final Project project = getProject();
-    AutoPopupController.runTransactionWithEverythingCommitted(project, () -> {
-      if (phase.checkExpired()) return;
-
-      CompletionAutoPopupHandler.invokeCompletion(myCompletionType,
-                                                  isAutopopupCompletion(), project, myEditor, myInvocationCount,
-                                                  true);
-    });
+    CompletionPhase.CommittingDocuments.scheduleAsyncCompletion(myEditor, myCompletionType, null, getProject(), this);
   }
 
   @Override

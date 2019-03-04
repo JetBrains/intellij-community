@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
@@ -49,7 +49,6 @@ public class QuickDocOnMouseOverManager {
   @NotNull private final CaretListener             myCaretListener       = new MyCaretListener();
   @NotNull private final DocumentListener          myDocumentListener    = new MyDocumentListener();
   @NotNull private final Alarm                     myAlarm;
-  @NotNull private final Runnable                  myHintCloseCallback   = new MyCloseDocCallback();
   @NotNull private final Map<Document, Boolean>    myMonitoredDocuments  = ContainerUtil.createWeakMap();
 
   private final Map<Editor, Reference<PsiElement> /* PSI element which is located under the current mouse position */> myActiveElements
@@ -155,7 +154,7 @@ public class QuickDocOnMouseOverManager {
     }
 
     Editor editor = e.getEditor();
-    if (editor.getComponent().getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING) != null) {
+    if (EditorMouseHoverPopupControl.arePopupsDisabled(editor)) {
       return;
     }
 
@@ -236,17 +235,10 @@ public class QuickDocOnMouseOverManager {
   private void closeQuickDocIfPossible() {
     myAlarm.cancelAllRequests();
     DocumentationManager docManager = getDocManager();
-    if (docManager == null) {
-      return;
+    if (docManager != null) {
+      JBPopup hint = docManager.getDocInfoHint();
+      if (hint != null) hint.cancel();
     }
-
-    JBPopup hint = docManager.getDocInfoHint();
-    if (hint == null) {
-      return;
-    }
-
-    hint.cancel();
-    myDocumentationManager = null;
   }
 
   private void allowUpdateFromContext(Project project, boolean allow) {
@@ -330,22 +322,23 @@ public class QuickDocOnMouseOverManager {
         }
 
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION,
-                                editor.offsetToVisualPosition(originalElement.getTextRange().getStartOffset()));
-        try {
-          docManager.showJavaDocInfo(editor, targetElement, originalElement, myHintCloseCallback, documentation, true);
-          myDocumentationManager = new WeakReference<>(docManager);
-        }
-        finally {
-          editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null);
-        }
+                           editor.offsetToVisualPosition(originalElement.getTextRange().getStartOffset()));
+        docManager.showJavaDocInfo(editor, targetElement, originalElement, new MyCloseDocCallback(editor), documentation, true);
+        myDocumentationManager = new WeakReference<>(docManager);
       }, ApplicationManager.getApplication().getNoneModalityState());
     }
   }
 
   private class MyCloseDocCallback implements Runnable {
+    @NotNull
+    private final Editor myEditor;
+
+    private MyCloseDocCallback(@NotNull Editor editor) {myEditor = editor;}
+
     @Override
     public void run() {
       myActiveElements.clear();
+      myEditor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null);
       myDocumentationManager = null;
     }
   }

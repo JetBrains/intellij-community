@@ -161,6 +161,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testIntInGenerics2() { doTest(2, "int", "char", "final"); }
   public void testBreakInLabeledBlock() { doTest(1, "break label", "continue"); }
   public void testPrimitiveInForLoop() { doTest(1, "int"); }
+  public void testPrimitiveInEnumConstructorCast() { doTest(1, "int"); }
   public void testNoStatementInForLoopCondition() { doTest(0, "synchronized", "if"); }
   public void testNoStatementInForLoopUpdate() { doTest(0, "synchronized", "if"); }
   public void testPrivateInJava9Interface() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
@@ -184,6 +185,11 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     configureFromFileText("package-info.java", "@Anno <caret>");
     complete();
     testByCount(1, "package");
+  }
+
+  public void testAfterWildcard() {
+    configureByTestName();
+    assertStringItems("extends", "super");
   }
 
   private void doTest() {

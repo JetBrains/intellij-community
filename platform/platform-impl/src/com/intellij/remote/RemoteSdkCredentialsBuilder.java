@@ -23,9 +23,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RemoteSdkCredentialsBuilder {
   private String myInterpreterPath = null;
-  private final String myHelpersPath = null;
+  private static final String myHelpersPath = null;
   private RemoteCredentials myRemoteCredentials = null;
-  private final String myHelpersDefaultDirName = ".idea_helpers";
+  private static final String myHelpersDefaultDirName = ".idea_helpers";
 
 
   public RemoteSdkCredentials build() {
@@ -51,6 +51,7 @@ public class RemoteSdkCredentialsBuilder {
     copyCredentials(data, copyTo);
 
     copyTo.setInterpreterPath(data.getInterpreterPath());
+    copyTo.setRunAsRootViaSudo(data.isRunAsRootViaSudo());
     copyTo.setHelpersPath(data.getHelpersPath());
 
     copyTo.setHelpersVersionChecked(data.isHelpersVersionChecked());

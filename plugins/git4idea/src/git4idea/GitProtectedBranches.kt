@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea
 
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.branch.GitBranchUtil
@@ -35,7 +35,7 @@ fun findProtectedRemoteBranchContainingCommit(repository: GitRepository, hash: H
   val root = repository.root
   val branchesGetter = VcsProjectLog.getInstance(repository.project).dataManager?.containingBranchesGetter
   val branches = if (branchesGetter != null) {
-    invokeAndWaitIfNeed { branchesGetter.getContainingBranchesQuickly(root, hash) } ?:
+    invokeAndWaitIfNeeded { branchesGetter.getContainingBranchesQuickly(root, hash) } ?:
     branchesGetter.getContainingBranchesSynchronously(root, hash)
   }
   else {

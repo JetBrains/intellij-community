@@ -22,7 +22,7 @@ public class ThemeJsonSchemaProviderFactory implements JsonSchemaProviderFactory
     return Collections.singletonList(new JsonSchemaFileProvider() {
       @Override
       public boolean isAvailable(@NotNull VirtualFile file) {
-        return isAllowedFileName(file.getName());
+        return ThemeJsonUtil.isThemeFilename(file.getName());
       }
 
       @NotNull
@@ -43,10 +43,5 @@ public class ThemeJsonSchemaProviderFactory implements JsonSchemaProviderFactory
         return SchemaType.embeddedSchema;
       }
     });
-  }
-
-
-  public static boolean isAllowedFileName(@NotNull String fileName) {
-    return fileName.endsWith(".theme.json");
   }
 }

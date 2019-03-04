@@ -15,30 +15,28 @@
  */
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
+import org.jetbrains.annotations.NotNull;
 
-public class RemoteServerDisconnectAction extends ServersTreeAction<ServersTreeStructure.RemoteServerNode> {
+import static com.intellij.remoteServer.impl.runtime.ui.tree.actions.ServersTreeActionUtils.getRemoteServerTarget;
 
-  public RemoteServerDisconnectAction() {
-    super("Disconnect", "Disconnect from the selected remote server", AllIcons.Actions.Suspend);
+public class RemoteServerDisconnectAction extends DumbAwareAction {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    ServersTreeStructure.RemoteServerNode node = getRemoteServerTarget(e);
+    boolean visible = node != null;
+    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabled(visible && node.isConnected());
   }
 
   @Override
-  protected Class<ServersTreeStructure.RemoteServerNode> getTargetNodeClass() {
-    return ServersTreeStructure.RemoteServerNode.class;
-  }
-
-  @Override
-  protected boolean isEnabled4(ServersTreeStructure.RemoteServerNode node) {
-    return node.isConnected();
-  }
-
-  @Override
-  protected void doActionPerformed(ServersTreeStructure.RemoteServerNode node) {
-    ServerConnection<?> connection = ServerConnectionManager.getInstance().getConnection(node.getValue());
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    ServersTreeStructure.RemoteServerNode node = getRemoteServerTarget(e);
+    ServerConnection<?> connection = node == null ? null : ServerConnectionManager.getInstance().getConnection(node.getValue());
     if (connection != null) {
       connection.disconnect();
     }

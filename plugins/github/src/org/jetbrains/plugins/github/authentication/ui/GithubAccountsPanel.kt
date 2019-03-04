@@ -232,9 +232,7 @@ internal class GithubAccountsPanel(private val project: Project,
       override fun onSuccess() {
         accountListModel.contentsChanged(accountData.apply {
           details = loadedDetails
-          iconProvider = CachingGithubAvatarIconsProvider(avatarLoader, imageResizer, executor, accountIconSize, accountList).apply {
-            Disposer.register(this@GithubAccountsPanel, this)
-          }
+          iconProvider = CachingGithubAvatarIconsProvider(avatarLoader, imageResizer, executor, accountIconSize, accountList)
           loadingError = null
           showLoginLink = false
         })

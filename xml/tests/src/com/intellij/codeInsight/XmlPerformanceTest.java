@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * @by Maxim.Mossienko
+ * @author Maxim.Mossienko
  */
 public class XmlPerformanceTest extends LightQuickFixTestCase {
   private final Set<String> ourTestsWithFolding = new HashSet<>(Arrays.asList("IndentUnindent2"));

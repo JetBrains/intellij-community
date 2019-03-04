@@ -40,7 +40,7 @@ public abstract class VcsIntegrationEnabler {
     myVcs = vcs;
   }
 
-  public void enable(@NotNull Collection<VcsRoot> vcsRoots) {
+  public void enable(@NotNull Collection<? extends VcsRoot> vcsRoots) {
     Collection<VirtualFile> roots = vcsRoots.stream().
       filter(root -> {
         AbstractVcs vcs = root.getVcs();
@@ -54,7 +54,7 @@ public abstract class VcsIntegrationEnabler {
     if (roots.isEmpty()) {
       boolean succeeded = initOrNotifyError(projectDir);
       if (succeeded) {
-        VcsImplUtil.generateIgnoreFileIfNeeded(myProject, myVcs, projectDir);
+        VcsImplUtil.proposeUpdateIgnoreFile(myProject, myVcs, projectDir);
         addVcsRoots(Collections.singleton(projectDir));
       }
     }
@@ -83,7 +83,7 @@ public abstract class VcsIntegrationEnabler {
     VcsNotifier.getInstance(myProject).notifySuccess(message);
   }
 
-  private void addVcsRoots(@NotNull Collection<VirtualFile> roots) {
+  private void addVcsRoots(@NotNull Collection<? extends VirtualFile> roots) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     List<VirtualFile> currentVcsRoots = Arrays.asList(vcsManager.getRootsUnderVcs(myVcs));
 

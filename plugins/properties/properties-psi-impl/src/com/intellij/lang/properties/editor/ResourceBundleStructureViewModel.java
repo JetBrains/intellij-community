@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public class ResourceBundleStructureViewModel implements PropertiesGroupingStructureViewModel {
   private final ResourceBundle myResourceBundle;
   private final GroupByWordPrefixes myByWordPrefixesGrouper;
+  private volatile boolean myGrouped = true;
   private final ResourceBundleFileStructureViewElement myRoot;
 
   public ResourceBundleStructureViewModel(ResourceBundle root) {
@@ -39,7 +40,7 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
     String separator = PropertiesSeparatorManager.getInstance(root.getProject()).
       getSeparator(myResourceBundle);
     myByWordPrefixesGrouper = new GroupByWordPrefixes(separator);
-    myRoot = new ResourceBundleFileStructureViewElement(myResourceBundle);
+    myRoot = new ResourceBundleFileStructureViewElement(myResourceBundle, () -> myGrouped);
   }
 
   @Override
@@ -59,6 +60,11 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
   @Override
   public String getSeparator() {
     return myByWordPrefixesGrouper.getSeparator();
+  }
+
+  @Override
+  public void setGroupingActive(boolean state) {
+    myGrouped = state;
   }
 
   @Override
@@ -127,6 +133,6 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
 
   @Override
   public boolean isAlwaysLeaf(final StructureViewTreeElement element) {
-    return element instanceof ResourceBundlePropertyStructureViewElement;
+    return element instanceof PropertyStructureViewElement;
   }
 }

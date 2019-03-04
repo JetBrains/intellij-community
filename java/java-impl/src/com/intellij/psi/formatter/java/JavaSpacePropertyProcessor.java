@@ -157,7 +157,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private void init(ASTNode child) {
     if (child == null) return;
     ASTNode treePrev = child.getTreePrev();
-    while (treePrev != null && (treePrev.getElementType() == TokenType.WHITE_SPACE || treePrev.getTextLength() == 0)) {
+    while (treePrev != null && FormatterUtil.containsWhiteSpacesOnly(treePrev)) {
       treePrev = treePrev.getTreePrev();
     }
     if (treePrev == null) {
@@ -223,7 +223,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.LBRACE || isEndOfLineCommentAfterLBrace(myChild1)) {
       if (aClass.isEnum()) {
-        createSpacingForEnumBraces();
+        createSpacingForEnumBraces(true);
       }
       else if (myRole2 == ChildRole.RBRACE && mySettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE) {
         int spaces = mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
@@ -245,7 +245,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
     }
     else if (myRole2 == ChildRole.RBRACE && aClass.isEnum()) {
-      createSpacingForEnumBraces();
+      createSpacingForEnumBraces(false);
     }
     else if (myRole1 == ChildRole.COMMA && aClass.isEnum() && isJavadocHoldingEnumConstant(myChild2)) {
       createParenthSpace(true, true);
@@ -274,16 +274,18 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
-  private void createSpacingForEnumBraces() {
-    // Ignore comments in front of enum for dependent spacing
-    PsiElement first = myParent.getFirstChild();
-    while (first instanceof PsiDocComment) {
-      first = first.getNextSibling();
+  private void createSpacingForEnumBraces(boolean isLbrace) {
+    ASTNode node = myParent.getNode().findChildByType(JavaTokenType.LBRACE);
+    final int startOffset;
+    if (node == null) {
+      startOffset = myParent.getTextOffset();
+    } else {
+      startOffset = node.getTextRange().getStartOffset();
     }
     int spaces = myJavaSettings.SPACE_INSIDE_ONE_LINE_ENUM_BRACES ? 1 : 0;
-    TextRange textRange = new TextRange(first.getTextOffset(), myParent.getTextRange().getEndOffset());
-    myResult = Spacing.createDependentLFSpacing(spaces, spaces, textRange, mySettings.KEEP_LINE_BREAKS,
-                                                mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+    TextRange textRange = new TextRange(startOffset, myParent.getTextRange().getEndOffset());
+    int blankLinesCount = isLbrace ? mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS : mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE;
+    myResult = Spacing.createDependentLFSpacing(spaces, spaces, textRange, mySettings.KEEP_LINE_BREAKS, blankLinesCount);
   }
 
   private static boolean isJavadocHoldingEnumConstant(@NotNull ASTNode node) {
@@ -824,8 +826,21 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+  public void visitBreakStatement(PsiBreakStatement statement) {
+    if (myType1 == JavaTokenType.BREAK_KEYWORD && ElementType.EXPRESSION_BIT_SET.contains(myType2)) {
+      createSpaceProperty(true, false, 0);
+    }
+  }
 
+  @Override
+  public void visitContinueStatement(PsiContinueStatement statement) {
+    if (myType1 == JavaTokenType.CONTINUE_KEYWORD && myType2 == JavaTokenType.IDENTIFIER) {
+      createSpaceProperty(true, false, 0);
+    }
+  }
+
+  @Override
+  public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
     if (myRole1 == ChildRole.LPARENTH) {
       createParenthSpace(mySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP, mySettings.SPACE_WITHIN_PARENTHESES);
     }
@@ -1224,15 +1239,15 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myType2 == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
       createSpaceProperty(false, true, 0);
     }
-    else if ((myType1 == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || myType1 == JavaDocElementType.DOC_TAG_VALUE_ELEMENT) &&
-             (myType2 == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || myType2 == JavaDocElementType.DOC_TAG_VALUE_ELEMENT)) {
-      createSpaceInCode(true);
-    }
     else if (myRole1 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
     }
     else if (myRole2 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
+    }
+    else if ((myType1 == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || myType1 == JavaDocElementType.DOC_TAG_VALUE_ELEMENT) &&
+             (myType2 == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || myType2 == JavaDocElementType.DOC_TAG_VALUE_ELEMENT)) {
+      createSpaceInCode(true);
     }
   }
 
@@ -1321,13 +1336,22 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitSwitchStatement(PsiSwitchStatement statement) {
-    if (myRole1 == ChildRole.SWITCH_KEYWORD && myRole2 == ChildRole.LPARENTH) {
-      createSpaceInCode(mySettings.SPACE_BEFORE_SWITCH_PARENTHESES);
+    processSwitchBlock();
+  }
+
+  @Override
+  public void visitSwitchExpression(PsiSwitchExpression expression) {
+    processSwitchBlock();
+  }
+
+  private void processSwitchBlock() {
+    if (myType1 == JavaTokenType.SWITCH_KEYWORD && myType2 == JavaTokenType.LPARENTH) {
+      createSpaceProperty(mySettings.SPACE_BEFORE_SWITCH_PARENTHESES, false, 0);
     }
-    else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
+    else if (myType1 == JavaTokenType.LPARENTH || myType2 == JavaTokenType.RPARENTH) {
       createSpaceInCode(mySettings.SPACE_WITHIN_SWITCH_PARENTHESES);
     }
-    else if (myRole2 == ChildRole.SWITCH_BODY) {
+    else if (myType2 == JavaElementType.CODE_BLOCK) {
       myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_SWITCH_LBRACE, null);
     }
   }
@@ -1335,26 +1359,15 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override
   public void visitLambdaExpression(PsiLambdaExpression expression) {
     boolean spaceAroundArrow = mySettings.SPACE_AROUND_LAMBDA_ARROW;
+    int braceStyle = mySettings.LAMBDA_BRACE_STYLE;
 
-    if (myRole1 == ChildRole.PARAMETER_LIST && myRole2 == ChildRole.ARROW) {
-      createSpaceInCode(spaceAroundArrow);
+    if (myType1 == JavaTokenType.ARROW && myType2 == JavaElementType.CODE_BLOCK &&
+        (braceStyle == NEXT_LINE || braceStyle == NEXT_LINE_SHIFTED || braceStyle == NEXT_LINE_SHIFTED2)) {
+      int space = spaceAroundArrow ? 1 : 0;
+      myResult = Spacing.createSpacing(space, space, 1, mySettings.KEEP_LINE_BREAKS, 0);
     }
-    else if (myRole1 == ChildRole.ARROW) {
-      if (myRole2 == ChildRole.LBRACE) {
-        switch (mySettings.LAMBDA_BRACE_STYLE) {
-          case NEXT_LINE:
-          case NEXT_LINE_SHIFTED:
-          case NEXT_LINE_SHIFTED2:
-            int space = spaceAroundArrow ? 1 : 0;
-            myResult = Spacing.createSpacing(space, space, 1, mySettings.KEEP_LINE_BREAKS, 0);
-            break;
-          default:
-            createSpaceInCode(spaceAroundArrow);
-        }
-      }
-      else if (myRole2 == ChildRole.EXPRESSION) {
-        createSpaceInCode(spaceAroundArrow);
-      }
+    else if (myType1 == JavaTokenType.ARROW || myType2 == JavaTokenType.ARROW) {
+      createSpaceInCode(spaceAroundArrow);
     }
   }
 
@@ -1383,9 +1396,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
-    if ((myRole1 == ChildRole.DOUBLE_COLON && myRole2 == ChildRole.REFERENCE_NAME) ||
-        (myRole1 == ChildRole.EXPRESSION && myRole2 == ChildRole.DOUBLE_COLON) ||
-        (myRole1 == ChildRole.CLASS_REFERENCE && myRole2 == ChildRole.DOUBLE_COLON)) {
+    if (myType1 == JavaTokenType.DOUBLE_COLON || myType2 == JavaTokenType.DOUBLE_COLON) {
       createSpaceInCode(mySettings.SPACE_AROUND_METHOD_REF_DBL_COLON);
     }
   }

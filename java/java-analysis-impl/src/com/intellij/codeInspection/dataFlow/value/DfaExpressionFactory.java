@@ -26,10 +26,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -41,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -65,13 +64,14 @@ public class DfaExpressionFactory {
   }
 
   private final DfaValueFactory myFactory;
-  private final Map<Integer, ArrayElementSource> myMockIndices = ContainerUtil.newHashMap();
+  private final Map<Integer, ArrayElementDescriptor> myArrayIndices = ContainerUtil.newHashMap();
 
   DfaExpressionFactory(DfaValueFactory factory) {
     myFactory = factory;
   }
 
   @Nullable
+  @Contract("null -> null")
   public DfaValue getExpressionDfaValue(@Nullable PsiExpression expression) {
     if (expression == null) return null;
 
@@ -138,43 +138,21 @@ public class DfaExpressionFactory {
   }
 
   private DfaValue createReferenceValue(@NotNull PsiReferenceExpression refExpr) {
-    DfaValue specialValue = createFromSpecialField(refExpr);
-    if (specialValue != null) {
-      return specialValue;
+    PsiElement target = refExpr.resolve();
+    if (target instanceof PsiVariable) {
+      PsiVariable variable = (PsiVariable)target;
+      if (variable.hasModifierProperty(PsiModifier.FINAL) && !PsiUtil.isAccessedForWriting(refExpr)) {
+        DfaValue constValue = myFactory.getConstFactory().create(variable);
+        if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, variable)) return constValue;
+      }
     }
-    DfaVariableSource var = getAccessedVariableOrGetter(refExpr.resolve());
+    VariableDescriptor var = getAccessedVariableOrGetter(target);
     if (var == null) {
       return null;
     }
 
-    PsiModifierListOwner psiElement = var.getPsiElement();
-    boolean isVolatile = psiElement != null && psiElement.hasModifierProperty(PsiModifier.VOLATILE);
-    if (isVolatile) {
-      PsiType type = refExpr.getType();
-      return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, psiElement));
-    }
-    if (psiElement instanceof PsiVariable && ((PsiVariable)psiElement).getType().equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
-      return myFactory.getConstFactory().getNull();
-    }
-    if (psiElement instanceof PsiVariable && psiElement.hasModifierProperty(PsiModifier.FINAL) && !PsiUtil.isAccessedForWriting(refExpr)) {
-      DfaValue constValue = myFactory.getConstFactory().create((PsiVariable)psiElement);
-      if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, psiElement)) return constValue;
-    }
-    if (psiElement instanceof PsiLocalVariable || psiElement instanceof PsiParameter ||
-        (psiElement instanceof PsiField &&
-         psiElement.hasModifierProperty(PsiModifier.STATIC) &&
-         !psiElement.hasModifierProperty(PsiModifier.FINAL)) ||
-        isStaticFinalConstantWithoutInitializationHacks(psiElement) ||
-        (psiElement instanceof PsiMethod && psiElement.hasModifierProperty(PsiModifier.STATIC))) {
-      return myFactory.getVarFactory().createVariableValue(var, refExpr.getType());
-    }
     DfaVariableValue qualifier = getQualifierOrThisVariable(refExpr);
-    PsiType type = refExpr.getType();
-    if (qualifier != null) {
-      return myFactory.getVarFactory().createVariableValue(var, type, qualifier);
-    }
-
-    return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, psiElement));
+    return var.createValue(myFactory, qualifier, true);
   }
 
   /**
@@ -235,41 +213,29 @@ public class DfaExpressionFactory {
     return PsiTreeUtil.getTopmostParentOfType(refExpr, PsiClass.class) == PsiTreeUtil.getTopmostParentOfType(var, PsiClass.class);
   }
 
-  private static boolean isStaticFinalConstantWithoutInitializationHacks(PsiModifierListOwner var) {
-    return (var instanceof PsiField && var.hasModifierProperty(PsiModifier.FINAL) && var.hasModifierProperty(PsiModifier.STATIC)) &&
-           !DfaUtil.hasInitializationHacks((PsiField)var);
-  }
-
-  @Nullable
-  private DfaValue createFromSpecialField(PsiReferenceExpression refExpr) {
-    PsiElement target = refExpr.resolve();
-    if (!(target instanceof PsiModifierListOwner)) return null;
-    SpecialField sf = SpecialField.findSpecialField(target);
-    if (sf == null) return null;
-    DfaVariableValue qualifier = getQualifierOrThisVariable(refExpr);
-    if (qualifier == null) return null;
-    return sf.createValue(myFactory, qualifier);
-  }
-
   @Contract("null -> null")
   @Nullable
-  public static DfaVariableSource getAccessedVariableOrGetter(final PsiElement target) {
+  public static VariableDescriptor getAccessedVariableOrGetter(final PsiElement target) {
+    SpecialField sf = SpecialField.findSpecialField(target);
+    if (sf != null) {
+      return sf;
+    }
     if (target instanceof PsiVariable) {
-      return new PlainSource((PsiVariable)target);
+      return new PlainDescriptor((PsiVariable)target);
     }
     if (target instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)target;
       if (PropertyUtilBase.isSimplePropertyGetter(method) && isContractAllowedForGetter(method)) {
         String qName = PsiUtil.getMemberQualifiedName(method);
         if (qName == null || !FALSE_GETTERS.value(qName)) {
-          return new GetterSource(method);
+          return new GetterDescriptor(method);
         }
       }
       if (method.getParameterList().isEmpty()) {
         if ((JavaMethodContractUtil.isPure(method) ||
             AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) &&
             isContractAllowedForGetter(method)) {
-          return new GetterSource(method);
+          return new GetterDescriptor(method);
         }
       }
     }
@@ -298,7 +264,12 @@ public class DfaExpressionFactory {
     }
     PsiType type = expression.getType();
     if (type instanceof PsiPrimitiveType) return DfaUnknownValue.getInstance();
-    return DfaUtil.boxUnbox(myFactory.createTypeValue(type, NullabilityUtil.getExpressionNullability(expression)), targetType);
+    DfaValue typeValue = myFactory.createTypeValue(type, NullabilityUtil.getExpressionNullability(expression));
+    if (expression instanceof PsiArrayInitializerExpression) {
+      int length = ((PsiArrayInitializerExpression)expression).getInitializers().length;
+      return myFactory.withFact(typeValue, DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.ARRAY_LENGTH.withValue(myFactory.getInt(length)));
+    }
+    return DfaUtil.boxUnbox(typeValue, targetType);
   }
 
   @NotNull
@@ -335,31 +306,42 @@ public class DfaExpressionFactory {
     DfaVariableValue arrayDfaVar = (DfaVariableValue)array;
     PsiType type = arrayDfaVar.getType();
     if (!(type instanceof PsiArrayType)) return null;
-    PsiType componentType = ((PsiArrayType)type).getComponentType();
     PsiModifierListOwner arrayPsiVar = arrayDfaVar.getPsiVariable();
     if (arrayPsiVar instanceof PsiVariable) {
       PsiExpression constantArrayElement = ExpressionUtils.getConstantArrayElement((PsiVariable)arrayPsiVar, index);
       if (constantArrayElement != null) {
-        return getAdvancedExpressionDfaValue(constantArrayElement, componentType);
+        return getAdvancedExpressionDfaValue(constantArrayElement, ((PsiArrayType)type).getComponentType());
       }
     }
-    ArrayElementSource indexVariable = getArrayIndexVariable(index);
+    ArrayElementDescriptor indexVariable = getArrayIndexVariable(index);
     if (indexVariable == null) return null;
-    return myFactory.getVarFactory().createVariableValue(indexVariable, componentType, arrayDfaVar);
+    return indexVariable.createValue(myFactory, arrayDfaVar);
   }
 
   @Nullable
-  private ArrayElementSource getArrayIndexVariable(int index) {
+  private ArrayElementDescriptor getArrayIndexVariable(int index) {
     if (index >= 0) {
-      return myMockIndices.computeIfAbsent(index, ArrayElementSource::new);
+      return myArrayIndices.computeIfAbsent(index, ArrayElementDescriptor::new);
     }
     return null;
   }
 
-  static final class PlainSource implements DfaVariableSource {
+  @NotNull
+  private static PsiSubstitutor getSubstitutor(PsiElement member, @Nullable DfaVariableValue qualifier) {
+    if (member instanceof PsiMember && qualifier != null) {
+      PsiClass fieldClass = ((PsiMember)member).getContainingClass();
+      PsiClassType classType = ObjectUtils.tryCast(qualifier.getType(), PsiClassType.class);
+      if (classType != null && InheritanceUtil.isInheritorOrSelf(classType.resolve(), fieldClass, true)) {
+        return TypeConversionUtil.getSuperClassSubstitutor(fieldClass, classType);
+      }
+    }
+    return PsiSubstitutor.EMPTY;
+  }
+
+  static final class PlainDescriptor implements VariableDescriptor {
     private final @NotNull PsiVariable myVariable;
 
-    PlainSource(@NotNull PsiVariable variable) {
+    PlainDescriptor(@NotNull PsiVariable variable) {
       myVariable = variable;
     }
 
@@ -367,6 +349,15 @@ public class DfaExpressionFactory {
     @Override
     public String toString() {
       return String.valueOf(myVariable.getName());
+    }
+
+    @Override
+    public PsiType getType(@Nullable DfaVariableValue qualifier) {
+      PsiType type = myVariable.getType();
+      if (type instanceof PsiEllipsisType) {
+        type = ((PsiEllipsisType)type).toArrayType();
+      }
+      return getSubstitutor(myVariable, qualifier).substitute(type);
     }
 
     @Override
@@ -381,23 +372,55 @@ public class DfaExpressionFactory {
              myVariable.hasModifierProperty(PsiModifier.FINAL);
     }
 
+    @NotNull
+    @Override
+    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
+      if (myVariable.getType().equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
+        return factory.getConstFactory().getNull();
+      }
+      if (myVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
+        PsiType type = getType(ObjectUtils.tryCast(qualifier, DfaVariableValue.class));
+        return factory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, myVariable));
+      }
+      if (myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter ||
+          (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC) &&
+           (!myVariable.hasModifierProperty(PsiModifier.FINAL) || !DfaUtil.hasInitializationHacks((PsiField)myVariable)))) {
+        return factory.getVarFactory().createVariableValue(this);
+      }
+      return VariableDescriptor.super.createValue(factory, qualifier, forAccessor);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(myVariable.getName());
+    }
+
     @Override
     public boolean equals(Object obj) {
-      return obj == this || obj instanceof PlainSource && ((PlainSource)obj).myVariable == myVariable;
+      return obj == this || obj instanceof PlainDescriptor && ((PlainDescriptor)obj).myVariable == myVariable;
     }
   }
 
-  private static final class GetterSource implements DfaVariableSource {
+  private static final class GetterDescriptor implements VariableDescriptor {
     private final @NotNull PsiMethod myGetter;
+    private final boolean myStable;
 
-    GetterSource(@NotNull PsiMethod getter) {
+    GetterDescriptor(@NotNull PsiMethod getter) {
       myGetter = getter;
+      PsiField field = PsiUtil.canBeOverridden(getter) ? null : PropertyUtil.getFieldOfGetter(getter);
+      myStable = field != null && field.hasModifierProperty(PsiModifier.FINAL);
     }
 
     @NotNull
     @Override
     public String toString() {
       return myGetter.getName();
+    }
+
+    @Nullable
+    @Override
+    public PsiType getType(@Nullable DfaVariableValue qualifier) {
+      return getSubstitutor(myGetter, qualifier).substitute(myGetter.getReturnType());
     }
 
     @NotNull
@@ -408,7 +431,7 @@ public class DfaExpressionFactory {
 
     @Override
     public boolean isStable() {
-      return false;
+      return myStable;
     }
 
     @Override
@@ -416,17 +439,39 @@ public class DfaExpressionFactory {
       return true;
     }
 
+    @NotNull
+    @Override
+    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
+      if (myGetter.hasModifierProperty(PsiModifier.STATIC)) {
+        return factory.getVarFactory().createVariableValue(this);
+      }
+      return VariableDescriptor.super.createValue(factory, qualifier, forAccessor);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(myGetter.getName());
+    }
+
     @Override
     public boolean equals(Object obj) {
-      return obj == this || (obj instanceof GetterSource && ((GetterSource)obj).myGetter == myGetter);
+      return obj == this || (obj instanceof GetterDescriptor && ((GetterDescriptor)obj).myGetter == myGetter);
     }
   }
 
-  private static final class ArrayElementSource implements DfaVariableSource {
+  private static final class ArrayElementDescriptor implements VariableDescriptor {
     private final int myIndex;
 
-    ArrayElementSource(int index) {
+    ArrayElementDescriptor(int index) {
       myIndex = index;
+    }
+
+    @Nullable
+    @Override
+    public PsiType getType(@Nullable DfaVariableValue qualifier) {
+      if (qualifier == null) return null;
+      PsiType qualifierType = qualifier.getType();
+      return qualifierType instanceof PsiArrayType ? ((PsiArrayType)qualifierType).getComponentType() : null;
     }
 
     @NotNull
@@ -441,11 +486,11 @@ public class DfaExpressionFactory {
     }
   }
 
-  public static final class ThisSource implements DfaVariableSource {
+  public static final class ThisDescriptor implements VariableDescriptor {
     @NotNull
     private final PsiClass myQualifier;
 
-    ThisSource(@NotNull PsiClass qualifier) {
+    ThisDescriptor(@NotNull PsiClass qualifier) {
       myQualifier = qualifier;
     }
 
@@ -453,6 +498,12 @@ public class DfaExpressionFactory {
     @Override
     public String toString() {
       return myQualifier.getName() + ".this";
+    }
+
+    @NotNull
+    @Override
+    public PsiType getType(@Nullable DfaVariableValue qualifier) {
+      return new PsiImmediateClassType(myQualifier, PsiSubstitutor.EMPTY);
     }
 
     @Override
@@ -466,8 +517,13 @@ public class DfaExpressionFactory {
     }
 
     @Override
+    public int hashCode() {
+      return Objects.hashCode(myQualifier.getQualifiedName());
+    }
+
+    @Override
     public boolean equals(Object obj) {
-      return this == obj || obj instanceof ThisSource && ((ThisSource)obj).myQualifier == myQualifier;
+      return this == obj || obj instanceof ThisDescriptor && ((ThisDescriptor)obj).myQualifier == myQualifier;
     }
   }
 }

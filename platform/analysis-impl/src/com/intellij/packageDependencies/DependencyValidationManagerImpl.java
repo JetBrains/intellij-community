@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies;
 
 import com.intellij.icons.AllIcons;
@@ -58,10 +58,11 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NonNls private static final String UNNAMED_SCOPE = "unnamed_scope";
   @NonNls private static final String VALUE = "value";
 
-  public DependencyValidationManagerImpl(final Project project, NamedScopeManager namedScopeManager) {
+  public DependencyValidationManagerImpl(@NotNull Project project, @NotNull NamedScopeManager namedScopeManager) {
     super(project);
+
     myNamedScopeManager = namedScopeManager;
-    namedScopeManager.addScopeListener(() -> reloadScopes());
+    namedScopeManager.addScopeListener(() -> reloadScopes(), project);
   }
 
   @Override
@@ -70,7 +71,12 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     final List<NamedScope> predefinedScopes = new ArrayList<>();
     final CustomScopesProvider[] scopesProviders = CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject);
     for (CustomScopesProvider scopesProvider : scopesProviders) {
-      predefinedScopes.addAll(scopesProvider.getFilteredScopes());
+      List<NamedScope> customScopes = scopesProvider.getFilteredScopes();
+      if (ArrayUtil.contains(null, customScopes)) {
+        throw new IllegalStateException("Provider.getFilteredScopes() must not return null scopes, got: " + customScopes+"; provider: "+scopesProvider + " ("+scopesProvider.getClass()+")");
+      }
+
+      predefinedScopes.addAll(customScopes);
     }
     return predefinedScopes;
   }
@@ -175,6 +181,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return IdeBundle.message("shared.scopes.node.text");
@@ -370,7 +377,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   @Override
-  public void setScopes(NamedScope[] scopes) {
+  public void setScopes(@NotNull NamedScope[] scopes) {
     super.setScopes(scopes);
     final List<String> order = myNamedScopeManager.myOrderState.myOrder;
     order.clear();

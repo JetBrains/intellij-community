@@ -88,6 +88,8 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
     public SearchScope getEffectiveSearchScope () {
       SearchScope scope = myEffectiveScope;
       if (scope == null) {
+        if (!myMethod.isValid()) return GlobalSearchScope.EMPTY_SCOPE;
+
         myEffectiveScope = scope = myScope.intersectWith(PsiSearchHelper.getInstance(myMethod.getProject()).getUseScope(myMethod));
       }
       return scope;

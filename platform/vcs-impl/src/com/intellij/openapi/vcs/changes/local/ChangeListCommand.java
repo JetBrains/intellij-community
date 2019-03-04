@@ -21,5 +21,5 @@ import com.intellij.util.EventDispatcher;
 
 public interface ChangeListCommand {
   void apply(final ChangeListWorker worker);
-  void doNotify(final EventDispatcher<ChangeListListener> dispatcher);
+  void doNotify(final EventDispatcher<? extends ChangeListListener> dispatcher);
 }

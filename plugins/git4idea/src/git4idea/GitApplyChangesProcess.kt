@@ -8,8 +8,6 @@ import com.intellij.notification.NotificationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.pluralize
@@ -33,9 +31,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitUntrackedFilesHelper
 import java.util.*
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Semaphore
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.event.HyperlinkEvent
 
@@ -68,16 +64,14 @@ class GitApplyChangesProcess(private val project: Project,
     val successfulCommits = mutableListOf<VcsFullCommitDetails>()
     val skippedCommits = mutableListOf<VcsFullCommitDetails>()
 
-    DvcsUtil.workingTreeChangeStarted(project, operationName).use {
-      for ((repository, value) in commitsInRoots) {
-        val result = executeForRepo(repository, value, successfulCommits, skippedCommits)
-        repository.update()
-        if (!result) {
-          return
-        }
+    for ((repository, value) in commitsInRoots) {
+      val result = executeForRepo(repository, value, successfulCommits, skippedCommits)
+      repository.update()
+      if (!result) {
+        return
       }
-      notifyResult(successfulCommits, skippedCommits)
     }
+    notifyResult(successfulCommits, skippedCommits)
   }
 
   // return true to continue with other roots, false to break execution
@@ -106,7 +100,7 @@ class GitApplyChangesProcess(private val project: Project,
           }
           else {
             refreshVfsAndMarkDirty(repository)
-            waitForChangeListManagerUpdate()
+            changeListManager.waitForUpdate(operationName)
             val committed = commit(repository, commit, commitMessage, changeList, successfulCommits,
                                    alreadyPicked)
             if (!committed) return false
@@ -117,7 +111,7 @@ class GitApplyChangesProcess(private val project: Project,
                                                 commit.id.toShortString(), VcsUserUtil.getShortPresentation(commit.author),
                                                 commit.subject, operationName).merge()
           refreshVfsAndMarkDirty(repository)
-          waitForChangeListManagerUpdate()
+          changeListManager.waitForUpdate(operationName)
 
           if (mergeCompleted) {
             LOG.debug("All conflicts resolved, will show commit dialog. Current default changelist is [$changeList]")
@@ -187,7 +181,7 @@ class GitApplyChangesProcess(private val project: Project,
     val committed = showCommitDialogAndWaitForCommit(repository, changeList, commitMessage, changes)
     if (committed) {
       refreshVfsAndMarkDirty(changes)
-      waitForChangeListManagerUpdate()
+      changeListManager.waitForUpdate(operationName)
 
       successfulCommits.add(commit)
       return true
@@ -200,25 +194,6 @@ class GitApplyChangesProcess(private val project: Project,
 
   private fun getAllChangesInLogFriendlyPresentation(changeListManagerEx: ChangeListManagerEx) =
     changeListManagerEx.changeLists.map { it -> "[${it.name}] ${it.changes}" }
-
-  private fun waitForChangeListManagerUpdate() {
-    val waiter = CountDownLatch(1)
-    changeListManager.invokeAfterUpdate({
-      waiter.countDown()
-    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, operationName.capitalize(), ModalityState.NON_MODAL)
-
-    var success = false
-    while (!success) {
-      ProgressManager.checkCanceled()
-      try {
-        success = waiter.await(50, TimeUnit.MILLISECONDS)
-      }
-      catch (e: InterruptedException) {
-        LOG.warn(e)
-        throw ProcessCanceledException(e)
-      }
-    }
-  }
 
   private fun refreshVfsAndMarkDirty(repository: GitRepository) {
     VfsUtil.markDirtyAndRefresh(false, true, false, repository.root)

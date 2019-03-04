@@ -58,9 +58,7 @@ public class GenerateDomElementAction extends CodeInsightAction {
         };
         
         if (GenerateDomElementAction.this.startInWriteAction()) {
-          WriteCommandAction.writeCommandAction(project, file).run(() -> {
-            runnable.run();
-          });
+          WriteCommandAction.writeCommandAction(project, file).run(() -> runnable.run());
         }
         else {
           runnable.run();

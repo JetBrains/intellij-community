@@ -22,6 +22,8 @@ import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.core.EditorConfigException;
+import org.editorconfig.core.ParserCallback;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -39,6 +41,10 @@ public class SettingsProviderComponent extends SimpleModificationTracker {
   }
 
   public List<OutPair> getOutPairs(Project project, VirtualFile file) {
+    return getOutPairs(project, file, null);
+  }
+
+  public List<OutPair> getOutPairs(Project project, VirtualFile file, @Nullable ParserCallback callback) {
     final String filePath = Utils.getFilePath(project, file);
     if (filePath == null) return Collections.emptyList();
     CachedValue<List<OutPair>> cache = file.getUserData(CACHED_PAIRS);
@@ -47,7 +53,7 @@ public class SettingsProviderComponent extends SimpleModificationTracker {
       cache = new CachedValueImpl<>(() -> {
         final List<OutPair> outPairs;
         try {
-          outPairs = editorConfig.getProperties(filePath, rootDirs);
+          outPairs = editorConfig.getProperties(filePath, rootDirs, callback);
           return CachedValueProvider.Result.create(outPairs, this);
         }
         catch (EditorConfigException error) {

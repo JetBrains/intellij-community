@@ -24,7 +24,6 @@ import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -131,9 +130,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
       Change selectedChange = changes.get(0);
       List<Change> changelistChanges = changesView.getAllChangesFromSameChangelist(selectedChange);
       if (changelistChanges != null) {
-        int selectedIndex = ContainerUtil.indexOf(changelistChanges, (Condition<Change>)it -> {
-          return ChangeListChange.HASHING_STRATEGY.equals(selectedChange, it);
-        });
+        int selectedIndex = ContainerUtil.indexOf(changelistChanges, it -> ChangeListChange.HASHING_STRATEGY.equals(selectedChange, it));
         if (selectedIndex != -1) {
           showChangesDiff(project, ListSelection.createAt(changelistChanges, selectedIndex));
         }

@@ -370,6 +370,27 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     return presentation;
   }
 
+  /**
+   * Processes conflicts (possibly shows UI). In case we're running in unit test mode this method will
+   * throw {@link BaseRefactoringProcessor.ConflictsInTestsException} that can be handled inside a test.
+   * Thrown exception would contain conflicts' messages.
+   *
+   * @param project   project
+   * @param conflicts map with conflict messages and locations
+   * @return true if refactoring could proceed or false if refactoring should be cancelled
+   */
+  public static boolean processConflicts(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflicts) {
+    if (conflicts.isEmpty()) return true;
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) return true;
+      throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
+    }
+
+    ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
+    return conflictsDialog.showAndGet();
+  }
+
   private void showUsageView(@NotNull final UsageViewDescriptor viewDescriptor, final Factory<UsageSearcher> factory, @NotNull final UsageInfo[] usageInfos) {
     UsageViewManager viewManager = UsageViewManager.getInstance(myProject);
 

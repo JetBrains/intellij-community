@@ -5,14 +5,23 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.execution.util.ListTableWithButtons;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
+import com.intellij.openapi.ui.ComponentValidator;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.cellvalidators.CellComponentProvider;
+import com.intellij.openapi.ui.cellvalidators.CellTooltipManager;
+import com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper;
+import com.intellij.openapi.ui.cellvalidators.ValidationUtils;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -22,20 +31,26 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
 class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
   private static final Pattern ourPackagePattern = Pattern.compile("([\\w*]+\\.)*[\\w*]+");
+
+  private static final BiFunction<Object, JComponent, ValidationInfo> validationInfoProducer = (value, component) ->
+    (value == null || StringUtil.isEmpty(value.toString()) || ourPackagePattern.matcher(value.toString()).matches()) ?
+      null : new ValidationInfo("Illegal name: " + value.toString(), component);
+
+  private static final Disposable validatorsDisposable = Disposer.newDisposable();
   private static final ColumnInfo<Item, String> NAME_COLUMN = new ColumnInfo<Item, String>("Class/package/member qualified name mask") {
+
     @Nullable
     @Override
     public String valueOf(Item pair) {
@@ -44,35 +59,28 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
 
     @Override
     public TableCellEditor getEditor(Item pair) {
-      final JTextField field = GuiUtils.createUndoableTextField();
-      field.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          field.putClientProperty("JComponent.outline",
-                                  ourPackagePattern.matcher(field.getText()).matches() ? null : "error");
-        }
-      });
-      return new DefaultCellEditor(field);
+      ExtendableTextField cellEditor = new ExtendableTextField();
+      cellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
+
+      new ComponentValidator(validatorsDisposable).withValidator(() -> {
+        String text = cellEditor.getText();
+        boolean hasError = !StringUtil.isEmpty(text) && !ourPackagePattern.matcher(text).matches();
+        ValidationUtils.setExtension(cellEditor, ValidationUtils.ERROR_EXTENSION, hasError);
+
+        return validationInfoProducer.apply(text, cellEditor);
+      }).andRegisterOnDocumentListener(cellEditor).installOn(cellEditor);
+
+      return new DefaultCellEditor(cellEditor);
     }
 
     @Override
     public TableCellRenderer getRenderer(Item pair) {
-      return new DefaultTableCellRenderer() {
-        @NotNull
-        @Override
-        public Component getTableCellRendererComponent(JTable table,
-                                                       Object value,
-                                                       boolean isSelected,
-                                                       boolean hasFocus,
-                                                       int row,
-                                                       int column) {
-          Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-          if (!ourPackagePattern.matcher((String)value).matches()) {
-            component.setForeground(JBColor.RED);
-          }
-          return component;
-        }
-      };
+      JTextField cellEditor = new JTextField();
+      cellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
+
+      return new ValidatingTableCellRendererWrapper(new DefaultTableCellRenderer()).
+        withCellValidator((value, row, column) -> validationInfoProducer.apply(value, null)).
+        bindToEditorSize(cellEditor::getPreferredSize);
     }
 
     @Override
@@ -85,6 +93,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
       item.exclude = value;
     }
   };
+
   private static final ColumnInfo<Item, ExclusionScope> SCOPE_COLUMN = new ColumnInfo<Item, ExclusionScope>("Scope") {
     @Nullable
     @Override
@@ -126,7 +135,13 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
 
   ExcludeTable(@NotNull Project project) {
     myProject = project;
-    getTableView().getEmptyText().setText(ApplicationBundle.message("exclude.from.imports.no.exclusions"));
+
+    JBTable table = getTableView();
+    table.getEmptyText().setText(ApplicationBundle.message("exclude.from.imports.no.exclusions"));
+    table.setStriped(false);
+    new CellTooltipManager(myProject).withCellComponentProvider(CellComponentProvider.forTable(table)).installOn(table);
+
+    Disposer.register(project, validatorsDisposable);
   }
 
   @Override
@@ -175,7 +190,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
   }
 
   void reset() {
-    java.util.List<Item> rows = ContainerUtil.newArrayList();
+    List<Item> rows = ContainerUtil.newArrayList();
     for (String s : CodeInsightSettings.getInstance().EXCLUDED_PACKAGES) {
       rows.add(new Item(s, ExclusionScope.IDE));
     }

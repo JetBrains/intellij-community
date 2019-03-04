@@ -24,8 +24,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.lang.Math.min;
 import static java.util.Comparator.comparing;
 import static org.jetbrains.idea.svn.SvnBundle.message;
@@ -167,7 +167,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
       return;
     }
 
-    RootUrlInfo wcRoot = SvnVcs.getInstance(project).getSvnFileUrlMapping().getWcRootForFilePath(virtualToIoFile(file));
+    RootUrlInfo wcRoot = SvnVcs.getInstance(project).getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(file));
     if (wcRoot == null) {
       return;
     }

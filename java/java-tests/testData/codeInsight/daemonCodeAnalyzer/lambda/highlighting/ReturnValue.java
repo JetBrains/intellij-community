@@ -38,7 +38,7 @@ class Test1 {
         return Option.option(1);
       } else {
         return <error descr="Incompatible types. Required Option<Integer> but 'option' was inferred to Option<T>:
-no instance(s) of type variable(s)  exist so that String conforms to Integer
+no instance(s) of type variable(s) exist so that String conforms to Integer
 inference variable T has incompatible bounds:
  equality constraints: Integer
 lower bounds: String">Option.option("2");</error>

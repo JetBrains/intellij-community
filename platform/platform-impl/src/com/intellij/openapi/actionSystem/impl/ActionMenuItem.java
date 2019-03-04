@@ -222,11 +222,16 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         if (action instanceof ToggleAction && ((ToggleAction)action).isSelected(myEvent)) {
           icon = new PoppedIcon(icon, 16, 16);
         }
-        setIcon(icon);
-        Icon selected = myPresentation.getSelectedIcon();
-        setSelectedIcon(selected != null ? selected : icon);
         Icon disabled = myPresentation.getDisabledIcon();
-        setDisabledIcon(disabled != null ? disabled : IconLoader.getDisabledIcon(icon));
+        if (disabled == null)
+          disabled = IconLoader.getDisabledIcon(icon);
+        Icon selected = myPresentation.getSelectedIcon();
+        if (selected == null)
+          selected = icon;
+
+        setIcon(myPresentation.isEnabled() ? icon : disabled);
+        setSelectedIcon(selected != null ? selected : icon);
+        setDisabledIcon(disabled);
       }
     }
   }

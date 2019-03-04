@@ -8,8 +8,6 @@
   </description>
   <vendor email="support@jetbrains.com" url="https://www.jetbrains.com">JetBrains</vendor>
 
-  <idea-version since-build="143.381"/>
-
   <depends>com.intellij.modules.java</depends>
 
   <resource-bundle>messages.Decompiler</resource-bundle>

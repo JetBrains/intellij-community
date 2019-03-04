@@ -1,6 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.ide.fileTemplates.impl
 
+import com.intellij.ide.fileTemplates.CreateFromTemplateHandler
+import com.intellij.ide.fileTemplates.DefaultCreateFromTemplateHandler
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.FileTemplateUtil
@@ -9,6 +11,7 @@ import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
 import com.intellij.ide.fileTemplates.impl.FTManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -20,6 +23,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.IdeaTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.PathKt
 import com.intellij.util.properties.EncodingAwareProperties
@@ -80,7 +84,7 @@ class FileTemplatesTest extends IdeaTestCase {
         properties.load(propFile, FileTemplate.ourEncoding)
         properties.put(FileTemplateManager.PROJECT_NAME_VARIABLE, getProject().getName())
 
-        System.out.println(resultFile.getName())
+        LOG.debug(resultFile.getName())
         doTestTemplate(inputText, properties, outputText)
       }
     }
@@ -158,6 +162,21 @@ class FileTemplatesTest extends IdeaTestCase {
     assertEquals("idea_test_; foo.txt", element.getText())
   }
 
+  void testFileNameTrimming() {
+    CreateFromTemplateHandler handler = new DefaultCreateFromTemplateHandler()
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), CreateFromTemplateHandler.EP_NAME, handler, getTestRootDisposable())
+    FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(name, "txt")
+    disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)
+    template.setText('${FILE_NAME}')
+
+    File temp = createTempDirectory(false)
+    VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp)
+    def directory = PsiManager.getInstance(project).findDirectory(tempDir)
+    def element = FileTemplateUtil.createFromTemplate(template, "foo.txt", new Properties(), directory)
+
+    assertEquals("foo.txt", element.getText())
+  }
+
   private FileTemplate addTestTemplate(String name, String text) {
     FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(name, "java")
     disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)
@@ -225,5 +244,11 @@ class FileTemplatesTest extends IdeaTestCase {
     catch (IOException ignored) {
       return false
     }
+  }
+
+  void 'test StringUtils special variable works and has removeAndHump method'() {
+    FileTemplate template = addTestTemplate("my_class", 'prefix ${StringUtils.removeAndHump("foo_barBar")} suffix')
+    def evaluated = template.getText([:])
+    assert evaluated == 'prefix FooBarBar suffix'
   }
 }

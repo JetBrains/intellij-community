@@ -29,7 +29,11 @@ public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
     try {
       LookupManager.hideActiveLookup(myProject);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
+
       super.tearDown();
     }
   }

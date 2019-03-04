@@ -57,15 +57,13 @@ public abstract class LineStatusActionBase extends DumbAwareAction {
     doAction(tracker, editor);
   }
 
-  private static boolean isSomeChangeSelected(@NotNull Editor editor, @NotNull LineStatusTrackerBase<?> tracker) {
-    return DiffUtil.isSomeRangeSelected(editor, lines -> {
-      return !ContainerUtil.isEmpty(tracker.getRangesForLines(lines));
-    });
+  private static boolean isSomeChangeSelected(@NotNull Editor editor, @NotNull LineStatusTrackerI<?> tracker) {
+    return DiffUtil.isSomeRangeSelected(editor, lines -> !ContainerUtil.isEmpty(tracker.getRangesForLines(lines)));
   }
 
-  protected boolean isEnabled(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Editor editor) {
+  protected boolean isEnabled(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor) {
     return true;
   }
 
-  protected abstract void doAction(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Editor editor);
+  protected abstract void doAction(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor);
 }

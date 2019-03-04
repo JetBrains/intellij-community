@@ -16,11 +16,12 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
@@ -344,20 +345,20 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     for (String actionId : myIconCustomizations.keySet()) {
       AnAction anAction = actionManager.getAction(actionId);
       if (anAction != null) {
-        Icon icon;
-        String iconPath = myIconCustomizations.get(actionId);
-        if (iconPath != null && new File(FileUtil.toSystemDependentName(iconPath)).exists()) {
-          Image image = null;
-          try {
-            image = ImageLoader.loadFromStream(VfsUtilCore.convertToURL(VfsUtil.pathToUrl(iconPath)).openStream());
+        Icon icon = AllIcons.Toolbar.Unknown;
+        final String iconPath = myIconCustomizations.get(actionId);
+        if (iconPath != null) {
+          final File f = new File(FileUtil.toSystemDependentName(iconPath));
+          if (f.exists()) {
+            Image image = null;
+            try {
+              image = ImageLoader.loadCustomIcon(f);
+            } catch (IOException e) {
+              LOG.debug(e);
+            }
+            if (image != null)
+              icon = new JBImageIcon(image);
           }
-          catch (IOException e) {
-            LOG.debug(e);
-          }
-          icon = image == null ? null : new JBImageIcon(image);
-        }
-        else {
-          icon = AllIcons.Toolbar.Unknown;
         }
         anAction.getTemplatePresentation().setIcon(icon);
         anAction.getTemplatePresentation().setDisabledIcon(IconLoader.getDisabledIcon(icon));

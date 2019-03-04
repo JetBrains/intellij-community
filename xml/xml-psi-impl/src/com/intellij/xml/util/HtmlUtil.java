@@ -57,7 +57,7 @@ public class HtmlUtil {
   @NonNls private static final String JSFC = "jsfc";
   @NonNls private static final String CHARSET = "charset";
   @NonNls private static final String CHARSET_PREFIX = CHARSET+"=";
-  @NonNls private static final String HTML5_DATA_ATTR_PREFIX = "data-";
+  @NonNls public static final String HTML5_DATA_ATTR_PREFIX = "data-";
 
   public static final String SCRIPT_TAG_NAME = "script";
   public static final String STYLE_TAG_NAME = "style";
@@ -189,6 +189,10 @@ public class HtmlUtil {
 
     if (name != null && isOptionalEndForHtmlTag(name)) {
       PsiElement parent = element.getParent();
+
+      if (parent instanceof XmlTag && XmlChildRole.CLOSING_TAG_START_FINDER.findChild(parent.getNode()) != null) {
+        return;
+      }
 
       if (parent != null) {
         // we need grand parent since completion already uses parent's descriptor

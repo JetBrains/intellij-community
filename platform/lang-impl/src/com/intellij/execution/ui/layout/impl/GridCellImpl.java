@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.ui.layout.impl;
 
@@ -16,15 +16,13 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsListener;
-import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.impl.JBEditorTabs;
-import com.intellij.ui.tabs.impl.TabLabel;
-import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
-import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
+import com.intellij.ui.tabs.*;
+import com.intellij.ui.tabs.newImpl.JBEditorTabs;
+import com.intellij.ui.tabs.newImpl.TabLabel;
+import com.intellij.ui.tabs.newImpl.singleRow.ScrollableSingleRowLayout;
+import com.intellij.ui.tabs.newImpl.singleRow.SingleRowLayout;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,59 +55,9 @@ public class GridCellImpl implements GridCell {
 
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
-    myTabs = new JBEditorTabs(myContext.getProject(), myContext.getActionManager(), myContext.getFocusManager(), container) {
-      {
-        myDefaultPainter.setDefaultTabColor(JBColor.namedColor("DebuggerTabs.active.background", new JBColor(0xC6CFDF, 0x424D5F)));
-      }
-
-      @Override
-      public boolean useSmallLabels() {
-        return true;
-      }
-
-      @Override
-      protected SingleRowLayout createSingleRowLayout() {
-        return new ScrollableSingleRowLayout(this);
-      }
-
-      @Override
-      public int tabMSize() {
-        return 12;
-      }
-
-      @Override
-      protected void paintBorder(Graphics2D g2d, ShapeInfo shape, Color borderColor) {
-        if (UIUtil.isUnderDarcula()) {
-          return;
-        }
-        super.paintBorder(g2d, shape, borderColor);
-      }
-
-      @Override
-      public void processDropOver(TabInfo over, RelativePoint point) {
-        ((RunnerContentUi)myContext).myTabs.processDropOver(over, point);
-      }
-
-      @Override
-      public Image startDropOver(TabInfo tabInfo, RelativePoint point) {
-        return ((RunnerContentUi)myContext).myTabs.startDropOver(tabInfo, point);
-      }
-
-      @Override
-      public void resetDropOver(TabInfo tabInfo) {
-        ((RunnerContentUi)myContext).myTabs.resetDropOver(tabInfo);
-      }
-
-      @Override
-      protected TabLabel createTabLabel(TabInfo info) {
-        return new TabLabel(this, info) {
-          @Override
-          public void setAlignmentToCenter(boolean toCenter) {
-            super.setAlignmentToCenter(false);
-          }
-        };
-      }
-    }.setDataProvider(new DataProvider() {
+    myPlaceholder.setContentProvider(() -> getContents());
+    myTabs = JBTabsFactory.getUseNewTabs() ? new GridCellTabs(context, container) : new GridCellTabsOld(context, container);
+    myTabs.setDataProvider(new DataProvider() {
       @Override
       @Nullable
       public Object getData(@NotNull @NonNls final String dataId) {
@@ -130,10 +78,10 @@ public class GridCellImpl implements GridCell {
       @Override
       @NotNull
       public UiDecoration getDecoration() {
-        return new UiDecoration(null, new Insets(1, -1, 1, -1));
+        return new UiDecoration(null, JBTabsFactory.getUseNewTabs()? JBUI.insets(4, 5, 4, 9) : new Insets(1, -1, 1, -1));
       }
     }).setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
-      .setStealthTabMode(true).setFocusCycle(false).setPaintFocus(true)
+      .setStealthTabMode(!JBTabsFactory.getUseNewTabs()).setFocusCycle(false).setPaintFocus(true)
       .setTabDraggingEnabled(true).setSideComponentOnTabs(false);
 
     myTabs.addTabMouseListener(new MouseAdapter() {
@@ -498,5 +446,112 @@ public class GridCellImpl implements GridCell {
   ActionCallback restore(Content content) {
     myMinimizedContents.remove(content);
     return ActionCallback.DONE;
+  }
+
+  private static class GridCellTabs extends JBEditorTabs {
+    private final ViewContextEx myContext;
+
+    private GridCellTabs(ViewContextEx context, GridImpl container) {
+      super(context.getProject(), context.getActionManager(), context.getFocusManager(), container);
+      myContext = context;
+    }
+
+    @Override
+    public boolean useSmallLabels() {
+      return true;
+    }
+
+    @Override
+    protected SingleRowLayout createSingleRowLayout() {
+      return new ScrollableSingleRowLayout(this);
+    }
+
+    @Override
+    public int tabMSize() {
+      return 12;
+    }
+
+    @Override
+    public void processDropOver(TabInfo over, RelativePoint point) {
+      ((RunnerContentUi)myContext).myTabs.processDropOver(over, point);
+    }
+
+    @Override
+    public Image startDropOver(TabInfo tabInfo, RelativePoint point) {
+      return ((RunnerContentUi)myContext).myTabs.startDropOver(tabInfo, point);
+    }
+
+    @Override
+    public void resetDropOver(TabInfo tabInfo) {
+      ((RunnerContentUi)myContext).myTabs.resetDropOver(tabInfo);
+    }
+
+    @Override
+    protected TabLabel createTabLabel(TabInfo info) {
+      return new TabLabel(this, info) {
+        @Override
+        public void setAlignmentToCenter(boolean toCenter) {
+          super.setAlignmentToCenter(false);
+        }
+      };
+    }
+  }
+
+  private static class GridCellTabsOld extends com.intellij.ui.tabs.impl.JBEditorTabs {
+    private final ViewContextEx myContext;
+
+    private GridCellTabsOld(ViewContextEx context, GridImpl container) {
+      super(context.getProject(), context.getActionManager(), context.getFocusManager(), container);
+      myContext = context;
+      myDefaultPainter.setDefaultTabColor(JBColor.namedColor("DebuggerTabs.selectedBackground", new JBColor(0xC6CFDF, 0x424D5F)));
+    }
+
+    @Override
+    public boolean useSmallLabels() {
+      return true;
+    }
+
+    @Override
+    protected com.intellij.ui.tabs.impl.singleRow.SingleRowLayout createSingleRowLayout() {
+      return new com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout(this);
+    }
+
+    @Override
+    public int tabMSize() {
+      return 12;
+    }
+
+    @Override
+    public void processDropOver(TabInfo over, RelativePoint point) {
+      ((RunnerContentUi)myContext).myTabs.processDropOver(over, point);
+    }
+
+    @Override
+    public Image startDropOver(TabInfo tabInfo, RelativePoint point) {
+      return ((RunnerContentUi)myContext).myTabs.startDropOver(tabInfo, point);
+    }
+
+    @Override
+    public void resetDropOver(TabInfo tabInfo) {
+      ((RunnerContentUi)myContext).myTabs.resetDropOver(tabInfo);
+    }
+
+    @Override
+    protected com.intellij.ui.tabs.impl.TabLabel createTabLabel(TabInfo info) {
+      return new com.intellij.ui.tabs.impl.TabLabel(this, info) {
+        @Override
+        public void setAlignmentToCenter(boolean toCenter) {
+          super.setAlignmentToCenter(false);
+        }
+      };
+    }
+
+    @Override
+    protected void paintBorder(Graphics2D g2d, ShapeInfo shape, Color borderColor) {
+      if (UIUtil.isUnderDarcula()) {
+        return;
+      }
+      super.paintBorder(g2d, shape, borderColor);
+    }
   }
 }

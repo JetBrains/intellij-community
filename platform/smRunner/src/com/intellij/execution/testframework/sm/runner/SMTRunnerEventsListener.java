@@ -18,8 +18,16 @@ public interface SMTRunnerEventsListener {
    * @param testsRoot
    */
   void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot);
+
   /**
-   * After test framework finish testing
+   * Called before {@link #onTestingFinished(SMTestProxy.SMRootTestProxy)}
+   */
+  default void onBeforeTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
+
+  }
+  /**
+   * After test framework finish testing.
+   * @see #onBeforeTestingFinished(SMTestProxy.SMRootTestProxy)
    * @param testsRoot
    */
   void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
@@ -13,7 +13,8 @@ import com.intellij.psi.stubs.EmptyStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
@@ -38,7 +39,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
   }
 
   public GrParameterListImpl(EmptyStub stub) {
-    super(stub, GroovyElementTypes.PARAMETERS_LIST);
+    super(stub, GroovyEmptyStubElementTypes.PARAMETER_LIST);
   }
 
   @Override
@@ -78,7 +79,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
   @Override
   @NotNull
   public GrParameter[] getParameters() {
-    return getStubOrPsiChildren(GroovyElementTypes.PARAMETER, GrParameter.ARRAY_FACTORY);
+    return getStubOrPsiChildren(GroovyStubElementTypes.PARAMETER, GrParameter.ARRAY_FACTORY);
   }
 
   @Override

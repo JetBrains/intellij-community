@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.impl.PatchProjectUtil;
@@ -38,6 +39,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * @author max
@@ -76,6 +78,8 @@ public class InspectionApplication {
       logError("Profile to inspect with is not defined");
       printHelp();
     }
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
+    LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors() + "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() + "; factory: " + ForkJoinPool.commonPool().getFactory());
 
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     application.runReadAction(() -> {
@@ -140,7 +144,8 @@ public class InspectionApplication {
 
       final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(myProject);
 
-      im.createNewGlobalContext(true).setExternalProfile(inspectionProfile);
+      GlobalInspectionContextImpl context = im.createNewGlobalContext();
+      context.setExternalProfile(inspectionProfile);
       im.setProfile(inspectionProfile.getName());
 
       final AnalysisScope scope;
@@ -199,7 +204,7 @@ public class InspectionApplication {
           gracefulExit();
           return;
         }
-        im.createNewGlobalContext(true).launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
+        context.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
         logMessageLn(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
         if (!myErrorCodeRequired) {
           closeProject();
@@ -253,7 +258,7 @@ public class InspectionApplication {
       // convert report
       if (reportConverter != null) {
         try {
-          reportConverter.convert(resultsDataPath, myOutPath, im.createNewGlobalContext(true).getTools(), inspectionsResults);
+          reportConverter.convert(resultsDataPath, myOutPath, context.getTools(), inspectionsResults);
         }
         catch (InspectionsReportConverter.ConversionException e) {
           logError("\n" + e.getMessage());

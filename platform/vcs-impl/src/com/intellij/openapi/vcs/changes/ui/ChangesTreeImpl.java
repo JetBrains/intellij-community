@@ -47,7 +47,7 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
 
 
   @NotNull
-  protected abstract DefaultTreeModel buildTreeModel(@NotNull List<T> changes);
+  protected abstract DefaultTreeModel buildTreeModel(@NotNull List<? extends T> changes);
 
   @Override
   public void rebuildTree() {
@@ -88,7 +88,7 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
 
     @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel(@NotNull List<Change> changes) {
+    protected DefaultTreeModel buildTreeModel(@NotNull List<? extends Change> changes) {
       return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), changes, null);
     }
   }
@@ -109,7 +109,7 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
 
     @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel(@NotNull List<FilePath> changes) {
+    protected DefaultTreeModel buildTreeModel(@NotNull List<? extends FilePath> changes) {
       return TreeModelBuilder.buildFromFilePaths(myProject, getGrouping(), changes);
     }
   }
@@ -130,7 +130,7 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
 
     @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel(@NotNull List<VirtualFile> changes) {
+    protected DefaultTreeModel buildTreeModel(@NotNull List<? extends VirtualFile> changes) {
       return TreeModelBuilder.buildFromVirtualFiles(myProject, getGrouping(), changes);
     }
   }

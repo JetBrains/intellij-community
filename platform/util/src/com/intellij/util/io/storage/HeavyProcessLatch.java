@@ -34,7 +34,7 @@ public class HeavyProcessLatch {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.HeavyProcessLatch");
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
-  private final Set<String> myHeavyProcesses = new THashSet<String>();
+  private final Set<String> myHeavyProcesses = new THashSet<>();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
 
   private final EventDispatcher<HeavyProcessListener> myUIProcessDispatcher = EventDispatcher.create(HeavyProcessListener.class);
@@ -46,7 +46,7 @@ public class HeavyProcessLatch {
   private static final int MAX_PRIORITIZATION_MILLIS = 12 * 1000;
   private volatile long myPrioritizingStarted;
 
-  private final List<Runnable> toExecuteOutOfHeavyActivity = new ArrayList<Runnable>();
+  private final List<Runnable> toExecuteOutOfHeavyActivity = new ArrayList<>();
 
   private HeavyProcessLatch() {
   }
@@ -76,7 +76,7 @@ public class HeavyProcessLatch {
         toRunNow = Collections.emptyList();
       }
       else {
-        toRunNow = new ArrayList<Runnable>(toExecuteOutOfHeavyActivity);
+        toRunNow = new ArrayList<>(toExecuteOutOfHeavyActivity);
         toExecuteOutOfHeavyActivity.clear();
       }
     }
@@ -136,7 +136,9 @@ public class HeavyProcessLatch {
 
   /**
    * Gives current event processed on Swing thread higher priority
-   * by letting other threads to sleep a bit whenever they call checkCanceled.
+   * by letting other threads to sleep a bit whenever they call checkCanceled.<p></p>
+   *
+   * Don't call this method unless you're deep in Swing event dispatching internals.
    * @see #stopThreadPrioritizing()
    */
   public void prioritizeUiActivity() {
@@ -153,9 +155,11 @@ public class HeavyProcessLatch {
   }
 
   /**
-   * Removes priority from Swing thread, if present. Should be invoked before a thread starts waiting for other threads in idle mode,
-   * to ensure those other threads complete ASAP.
-   * @see #prioritizeUiActivity()
+   * Removes priority from Swing thread, if present. Should be invoked before UI thread starts waiting for other threads in idle mode,
+   * to ensure those other threads complete ASAP.<p></p>
+   *
+   * If possible, instead of calling this method prefer to move activity into background threads,
+   * so that UI thread doesn't need to block and wait.
    */
   public void stopThreadPrioritizing() {
     if (myUiActivityThread == null) return;

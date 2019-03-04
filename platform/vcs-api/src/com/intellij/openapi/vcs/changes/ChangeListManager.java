@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -27,11 +13,11 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
@@ -156,7 +142,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public abstract List<CommitExecutor> getRegisteredExecutors();
 
-  public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<Change> changes);
+  public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes);
 
 
   public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list);
@@ -164,16 +150,53 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list, boolean silently);
 
   @NotNull
+  public abstract Set<IgnoredFileDescriptor> getPotentiallyIgnoredFiles();
+
+  /**
+   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
+   * To get all potentially ignored files use {@link #getPotentiallyIgnoredFiles()} instead.
+   */
+  @Deprecated
+  @NotNull
   public abstract IgnoredFileBean[] getFilesToIgnore();
 
+  /**
+   * Check if the file ignored by matching any ignore defined by {@link IgnoredFileProvider}
+   * @param file file to check if ignored
+   * @return true if file ignored
+   * @deprecated Deprecated since idea level ignores will be substituted by corresponding VCS native ignore (e.g. .gitignore, .hgignore).
+   * Use {@link #isVcsIgnoredFile(VirtualFile)} to check if the file already ignored
+   * or use {@link #isPotentiallyIgnoredFile(VirtualFile)} to check if the file/directory should be always ignored (but may not ignored with specific VCS ignore yet).
+   */
+  @Deprecated
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
 
+  public abstract boolean isPotentiallyIgnoredFile(@NotNull VirtualFile file);
+
+  public abstract boolean isVcsIgnoredFile(@NotNull VirtualFile file);
+
+  /**
+   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
+   */
+  @Deprecated
   public abstract void setFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles);
 
+  /**
+   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
+   */
+  @Deprecated
   public abstract void addFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles);
 
+  /**
+   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
+   */
+  @Deprecated
   public abstract void addDirectoryToIgnoreImplicitly(@NotNull String path);
 
+  /**
+   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
+   */
+  @Deprecated
   public abstract void removeImplicitlyIgnoredDirectory(@NotNull String path);
 
 
@@ -191,8 +214,6 @@ public abstract class ChangeListManager implements ChangeListModification {
 
 
   @Deprecated // used in TeamCity
-  public abstract void reopenFiles(@NotNull List<FilePath> paths);
+  public abstract void reopenFiles(@NotNull List<? extends FilePath> paths);
 
-  @TestOnly
-  public abstract boolean ensureUpToDate(boolean canBeCanceled);
 }

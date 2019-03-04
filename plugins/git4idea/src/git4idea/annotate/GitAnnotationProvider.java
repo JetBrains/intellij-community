@@ -203,26 +203,24 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
 
   private void loadFileHistoryInBackground(@NotNull GitFileAnnotation fileAnnotation) {
     List<VcsFileRevision> fileRevisions = BackgroundTaskUtil.computeInBackgroundAndTryWait(
-      () -> {
-        return BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-          try {
-            VirtualFile file = fileAnnotation.getFile();
-            FilePath filePath = VcsUtil.getFilePath(file);
-            VcsRevisionNumber currentRevision = fileAnnotation.getCurrentRevision();
+      () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+        try {
+          VirtualFile file = fileAnnotation.getFile();
+          FilePath filePath = VcsUtil.getFilePath(file);
+          VcsRevisionNumber currentRevision = fileAnnotation.getCurrentRevision();
 
-            if (file.isInLocalFileSystem() || currentRevision == null) {
-              return loadFileHistory(filePath);
-            }
-            else {
-              return GitFileHistory.collectHistoryForRevision(myProject, filePath, currentRevision);
-            }
+          if (file.isInLocalFileSystem() || currentRevision == null) {
+            return loadFileHistory(filePath);
           }
-          catch (VcsException e) {
-            LOG.error(e);
-            return null;
+          else {
+            return GitFileHistory.collectHistoryForRevision(myProject, filePath, currentRevision);
           }
-        });
-      },
+        }
+        catch (VcsException e) {
+          LOG.error(e);
+          return null;
+        }
+      }),
       (revisions) -> {
         if (revisions == null) return;
         ApplicationManager.getApplication().invokeLater(() -> {

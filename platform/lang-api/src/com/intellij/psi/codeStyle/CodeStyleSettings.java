@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.UnknownElementCollector;
 import com.intellij.configurationStore.UnknownElementWriter;
 import com.intellij.lang.Language;
@@ -78,6 +79,8 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   private final ExcludedFiles myExcludedFiles = new ExcludedFiles();
 
   private int myVersion = CURR_VERSION;
+
+  private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
   public CodeStyleSettings() {
     this(true);
@@ -321,10 +324,10 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   //----------------- FUNCTIONAL EXPRESSIONS -----
 
-  /** @deprecated Use JavaCodeStyleSettings.REPLACE_INSTANCE_OF */
+  /** @deprecated Use JavaCodeStyleSettings.REPLACE_INSTANCEOF_AND_CAST */
   @Deprecated
   public boolean REPLACE_INSTANCEOF;
-  /** @deprecated Use JavaCodeStyleSettings.REPLACE_CAST */
+  /** @deprecated Use JavaCodeStyleSettings.REPLACE_INSTANCEOF_AND_CAST */
   @Deprecated
   public boolean REPLACE_CAST;
   /** @deprecated Use JavaCodeStyleSettings.REPLACE_NULL_CHECK */
@@ -476,6 +479,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    * @deprecated Use get/setRightMargin() methods instead.
    */
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
+  @Property(externalName = "max_line_length")
   public int RIGHT_MARGIN = 120;
   /**
    * <b>Do not use this field directly since it doesn't reflect a setting for a specific language which may
@@ -483,6 +487,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    *
    * @see CommonCodeStyleSettings#WRAP_ON_TYPING
    */
+  @Property(externalName = "wrap_on_typing")
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
 
 // endregion
@@ -907,7 +912,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   @Override
-  @Nullable
+  @NotNull
   public IndentOptions getIndentOptions() {
     return OTHER_INDENT_OPTIONS;
   }
@@ -1026,7 +1031,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   private static boolean isFileFullyCoveredByRange(@NotNull PsiFile file, @Nullable TextRange formatRange) {
-    return file.getTextRange().equals(formatRange);
+    return formatRange != null && formatRange.equals(file.getTextRange());
   }
 
   private static void logIndentOptions(@NotNull PsiFile file,
@@ -1484,4 +1489,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public ExcludedFiles getExcludedFiles() {
     return myExcludedFiles;
   }
+
+  public SimpleModificationTracker getModificationTracker() {
+    return myModificationTracker;
+  }
+
 }

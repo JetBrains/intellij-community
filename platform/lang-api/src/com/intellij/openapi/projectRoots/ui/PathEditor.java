@@ -3,13 +3,12 @@ package com.intellij.openapi.projectRoots.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -17,7 +16,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ListUtil;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
@@ -27,8 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author MYakovlev
@@ -98,35 +100,19 @@ public class PathEditor {
 
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList)
       .disableUpDownActions()
-      .setAddActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          return myEnabled;
+      .setAddActionUpdater(e -> myEnabled)
+      .setRemoveActionUpdater(e -> isRemoveActionEnabled(PathEditor.this.getSelectedRoots()))
+      .setAddAction(button -> {
+        final VirtualFile[] added = doAddItems();
+        if (added.length > 0) {
+          setModified(true);
         }
+        requestDefaultFocus();
+        setSelectedRoots(added);
       })
-      .setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          return isRemoveActionEnabled(PathEditor.this.getSelectedRoots());
-        }
-      })
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          final VirtualFile[] added = doAddItems();
-          if (added.length > 0) {
-            setModified(true);
-          }
-          requestDefaultFocus();
-          setSelectedRoots(added);
-        }
-      })
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          int[] indices = myList.getSelectedIndices();
-          doRemoveItems(indices, myList);
-        }
+      .setRemoveAction(button -> {
+        int[] indices = myList.getSelectedIndices();
+        doRemoveItems(indices, myList);
       });
 
     addToolbarButtons(toolbarDecorator);
@@ -315,7 +301,7 @@ public class PathEditor {
         tempFile = LocalFileSystem.getInstance().findFileByPath(path);
       }
       if (tempFile != null && !tempFile.isDirectory()) {
-        return Boolean.valueOf(tempFile.getFileType().equals(FileTypes.ARCHIVE));
+        return Boolean.valueOf(tempFile.getFileType().equals(ArchiveFileType.INSTANCE));
       }
       return Boolean.FALSE;
     }).booleanValue();

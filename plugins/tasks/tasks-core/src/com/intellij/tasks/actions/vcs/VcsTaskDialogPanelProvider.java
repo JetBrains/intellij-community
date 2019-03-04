@@ -31,6 +31,12 @@ public class VcsTaskDialogPanelProvider extends TaskDialogPanelProvider {
   @Nullable
   @Override
   public TaskDialogPanel getOpenTaskPanel(@NotNull Project project, @NotNull Task task) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public TaskDialogPanel getOpenTaskPanel(@NotNull Project project, @NotNull LocalTask task) {
     return TaskManager.getManager(project).isVcsEnabled() ? new VcsOpenTaskPanel(project, task) : null;
   }
 

@@ -33,37 +33,49 @@ object FeatureUsageLogger {
   }
 
   /**
-   * Records that in a group with 'recorderId' (e.g. 'dialogs', 'intentions') a new event occurred.
+   * Records that in a group (e.g. 'dialogs', 'intentions') a new event occurred.
    */
-  fun log(recorderId: String, action: String) {
-    return ourLogger.log(recorderId, action, false)
+  fun log(group: FeatureUsageGroup, action: String) {
+    return ourLogger.log(group, action, false)
   }
 
   /**
-   * Records that in a group with 'recorderId' (e.g. 'dialogs', 'intentions') a new event occurred.
+   * Records that in a group (e.g. 'dialogs', 'intentions') a new event occurred.
    * Adds context information to the event, e.g. source and shortcut for an action.
    */
-  fun log(recorderId: String, action: String, data: Map<String, Any>) {
-    return ourLogger.log(recorderId, action, data, false)
+  fun log(group: FeatureUsageGroup, action: String, data: Map<String, Any>) {
+    return ourLogger.log(group, action, data, false)
   }
 
   /**
-   * Records a new state event in a group with 'recorderId' (e.g. 'run.configuration.type').
+   * Records a new state event in a group (e.g. 'run.configuration.type').
    */
-  fun logState(recorderId: String, action: String) {
-    return ourLogger.log(recorderId, action, true)
+  fun logState(group: FeatureUsageGroup, action: String) {
+    return ourLogger.log(group, action, true)
   }
 
   /**
-   * Records a new state event in a group with 'recorderId' (e.g. 'run.configuration.type').
+   * Records a new state event in a group (e.g. 'run.configuration.type').
    * Adds context information to the event, e.g. if configuration is stored on project or on IDE level.
    */
-  fun logState(recorderId: String, action: String, data: Map<String, Any>) {
-    return ourLogger.log(recorderId, action, data, true)
+  fun logState(group: FeatureUsageGroup, action: String, data: Map<String, Any>) {
+    return ourLogger.log(group, action, data, true)
+  }
+
+  /**
+   * use [log] with FeatureUsageGroup instead
+   * @deprecated
+   */
+  fun log(groupId: String, action: String) {
+    return ourLogger.log(FeatureUsageGroup(groupId, 1), action, true)
   }
 
   fun getLogFiles() : List<File> {
     return ourLogger.getLogFiles()
+  }
+
+  fun cleanup() {
+    ourLogger.cleanup()
   }
 
   fun isEnabled() : Boolean {

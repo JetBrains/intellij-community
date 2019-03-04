@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 
@@ -60,7 +61,7 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
    */
   public Promise<Boolean> configureTask(@NotNull DataContext context, @NotNull RunConfiguration configuration, @NotNull T task) {
     //noinspection deprecation
-    return Promise.resolve(configureTask(configuration, task));
+    return Promises.resolvedPromise(configureTask(configuration, task));
   }
 
   public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull T task) {

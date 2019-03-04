@@ -103,14 +103,14 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
           if (hasFocus) {
             paintOutlineBorder(g2, r.width, r.height, 0, true, true, Outline.focus);
           }
+
+          Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+          border.append(outer, false);
+          border.append(new Rectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2), false);
+
+          g2.setColor(getOutlineColor(editorTextField.isEnabled(), hasFocus));
+          g2.fill(border);
         }
-
-        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-        border.append(outer, false);
-        border.append(new Rectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2), false);
-
-        g2.setColor(getOutlineColor(editorTextField.isEnabled(), hasFocus));
-        g2.fill(border);
       } finally {
         g2.dispose();
       }
@@ -119,8 +119,8 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return isTableCellEditor(c) || isCompact(c) ? JBUI.insets(2).asUIResource() :
-           isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(6, 8).asUIResource();
+    return isTableCellEditor(c) || isCompact(c) || isComboBoxEditor(c) ?
+           JBUI.insets(2, 3).asUIResource() : JBUI.insets(6, 8).asUIResource();
   }
 
   @Override

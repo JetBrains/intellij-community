@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.util.ThrowableRunnable
@@ -109,11 +110,11 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   /**
    * Clones the given source repository into a bare parent.git and adds the remote origin.
    */
-  protected fun prepareRemoteRepo(source: GitRepository, target: File = File(testRoot, "parent.git")): File {
+  protected fun prepareRemoteRepo(source: GitRepository, target: File = File(testRoot, "parent.git"), remoteName: String = "origin"): File {
     cd(testRoot)
     git("clone --bare '${source.root.path}' ${target.path}")
     cd(source)
-    git("remote add origin '${target.path}'")
+    git("remote add ${remoteName} '${target.path}'")
     return target
   }
 
@@ -212,6 +213,12 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected fun readDetails(hashes: List<String>): List<VcsFullCommitDetails> = VcsLogUtil.getDetails(logProvider, projectRoot, hashes)
 
   protected fun readDetails(hash: String) = readDetails(listOf(hash)).first()
+
+  protected fun commit(changes: Collection<Change>) {
+    val exceptions = vcs.checkinEnvironment!!.commit(changes.toList(), "comment")
+    exceptions?.forEach { fail("Exception during executing the commit: " + it.message) }
+    updateChangeListManager()
+  }
 
   protected fun `do nothing on merge`() {
     vcsHelper.onMerge {}

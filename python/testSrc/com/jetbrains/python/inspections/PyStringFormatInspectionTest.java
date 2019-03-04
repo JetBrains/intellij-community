@@ -219,6 +219,11 @@ public class PyStringFormatInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-33218
+  public void testNoTypeMismatchOnElementsOfTupleDeclaration() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

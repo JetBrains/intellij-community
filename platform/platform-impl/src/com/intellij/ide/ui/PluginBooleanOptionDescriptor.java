@@ -24,6 +24,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -209,7 +210,9 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
       }
 
       Notification next = PLUGINS_LIST_CHANGED_GROUP
-        .createNotification(IdeBundle.message("plugins.changed.notification.content"), NotificationType.INFORMATION)
+        .createNotification(
+          IdeBundle.message("plugins.changed.notification.content", ApplicationNamesInfo.getInstance().getFullProductName()),
+          NotificationType.INFORMATION)
         .setTitle(IdeBundle.message("plugins.changed.notification.title"));
 
       if (prevNotification.compareAndSet(prev, next)) {

@@ -40,6 +40,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -123,23 +124,10 @@ public class CheckRegExpForm {
 
         IdeFocusManager.getGlobalInstance().requestFocus(mySampleText, true);
 
-        final AnAction sampleTextFocusAction = new AnAction() {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            IdeFocusManager.findInstance().requestFocus(myRegExp.getFocusTarget(), true);
-          }
-        };
-        sampleTextFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), mySampleText);
-        sampleTextFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), mySampleText);
-
-        final AnAction regExpFocusAction = new AnAction() {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            IdeFocusManager.findInstance().requestFocus(mySampleText.getFocusTarget(), true);
-          }
-        };
-        regExpFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), myRegExp);
-        regExpFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), myRegExp);
+        registerFocusShortcut(myRegExp, "shift TAB", mySampleText);
+        registerFocusShortcut(myRegExp, "TAB", mySampleText);
+        registerFocusShortcut(mySampleText, "shift TAB", myRegExp);
+        registerFocusShortcut(mySampleText, "TAB", myRegExp);
 
         updater = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
         DocumentListener documentListener = new DocumentListener() {
@@ -153,6 +141,16 @@ public class CheckRegExpForm {
 
         update();
         mySampleText.selectAll();
+      }
+
+      private void registerFocusShortcut(JComponent source, String shortcut, EditorTextField target) {
+        AnAction action = new AnAction() {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            IdeFocusManager.findInstance().requestFocus(target.getFocusTarget(), true);
+          }
+        };
+        action.registerCustomShortcutSet(CustomShortcutSet.fromString(shortcut), source);
       }
 
       public void update() {
@@ -191,6 +189,11 @@ public class CheckRegExpForm {
       case BAD_REGEXP:
         myMessage.setText("Bad pattern");
         break;
+      case INCOMPLETE:
+        myMessage.setText("More input expected");
+        break;
+      default:
+        throw new AssertionError();
     }
     myRootPanel.revalidate();
     Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(myRootPanel);
@@ -243,10 +246,18 @@ public class CheckRegExpForm {
 
     try {
       //noinspection MagicConstant
-      return Pattern.compile(regExp, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000)).matches()
-             ? RegExpMatchResult.MATCHES
-             : RegExpMatchResult.NO_MATCH;
-    } catch (ProcessCanceledException pc) {
+      final Matcher matcher = Pattern.compile(regExp, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000));
+      if (matcher.matches()) {
+        return RegExpMatchResult.MATCHES;
+      }
+      else if (matcher.hitEnd()) {
+        return RegExpMatchResult.INCOMPLETE;
+      }
+      else {
+        return RegExpMatchResult.NO_MATCH;
+      }
+    }
+    catch (ProcessCanceledException ignore) {
       return RegExpMatchResult.TIMEOUT;
     }
     catch (Exception ignore) {}

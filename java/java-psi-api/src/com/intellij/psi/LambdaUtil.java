@@ -122,6 +122,21 @@ public class LambdaUtil {
         return isValidLambdaContext(parentContext);
       }
     }
+    if (context instanceof PsiBreakStatement) {
+      PsiElement element = ((PsiBreakStatement)context).findExitedElement();
+      if (element instanceof PsiSwitchExpression) {
+        return isValidLambdaContext(element.getParent());
+      }
+    }
+    if (context instanceof PsiExpressionStatement) {
+      PsiElement parent = context.getParent();
+      if (parent instanceof PsiSwitchLabeledRuleStatement) {
+        PsiSwitchBlock switchBlock = ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock();
+        if (switchBlock != null) {
+          return isValidLambdaContext(switchBlock.getParent());
+        }
+      }
+    }
     return false;
   }
 
@@ -408,6 +423,10 @@ public class LambdaUtil {
     }
     else if (parent instanceof PsiLambdaExpression) {
       return getFunctionalInterfaceTypeByContainingLambda((PsiLambdaExpression)parent);
+    }
+    PsiSwitchExpression switchExpression = PsiTreeUtil.getParentOfType(element, PsiSwitchExpression.class);
+    if (switchExpression != null && PsiUtil.getSwitchResultExpressions(switchExpression).contains(element)) {
+      return getFunctionalInterfaceType(switchExpression, tryToSubstitute);
     }
     return null;
   }
@@ -722,6 +741,7 @@ public class LambdaUtil {
                                                     PsiExpressionList.class,
                                                     PsiLambdaExpression.class,
                                                     PsiConditionalExpression.class,
+                                                    PsiSwitchExpression.class,
                                                     PsiCodeBlock.class,
                                                     PsiCall.class);
     while (true) {
@@ -750,7 +770,7 @@ public class LambdaUtil {
         }
       }
 
-      if (parent instanceof PsiConditionalExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
+      if ((parent instanceof PsiConditionalExpression || parent instanceof PsiSwitchExpression) && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
         break;
       }
 
@@ -1057,7 +1077,7 @@ public class LambdaUtil {
         // variable/parameter/field/method/class are always PsiModifierListOwners
         if (target instanceof PsiModifierListOwner &&
             !((PsiModifierListOwner)target).hasModifierProperty(PsiModifier.STATIC) &&
-            !PsiTreeUtil.isAncestor(body, target, true)) {
+            !PsiTreeUtil.isAncestor(lambda, target, true)) {
           if (target instanceof PsiClass && ((PsiClass)target).getContainingClass() == null) return;
           capturing = true;
           stopWalking();
@@ -1079,5 +1099,23 @@ public class LambdaUtil {
     CapturingLambdaVisitor visitor = new CapturingLambdaVisitor();
     body.accept(visitor);
     return visitor.capturing;
+  }
+
+  /**
+   * Resolves a functional interface class for given functional expression
+   * 
+   * @param expression functional expression
+   * @return resolved class or null if cannot be resolved
+   */
+  @Nullable
+  public static PsiClass resolveFunctionalInterfaceClass(@NotNull PsiFunctionalExpression expression) {
+    // First try to avoid substitution
+    PsiType type = expression.getGroundTargetType(getFunctionalInterfaceType(expression, false));
+    PsiClass actualClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (actualClass instanceof PsiTypeParameter) {
+      // Rare case when function is resolved to a type parameter: perform substitution then
+      return PsiUtil.resolveClassInClassTypeOnly(expression.getFunctionalInterfaceType());
+    }
+    return actualClass;
   }
 }

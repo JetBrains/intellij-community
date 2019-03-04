@@ -32,8 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
@@ -891,21 +889,12 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     Object copy;
     try {
       BufferExposingByteArrayOutputStream baos = new BufferExposingByteArrayOutputStream();
-      ObjectOutputStream os = new ObjectOutputStream(baos);
-      try {
+      try (ObjectOutputStream os = new ObjectOutputStream(baos)) {
         os.writeObject(original);
       }
-      finally {
-        os.close();
-      }
 
-      InputStream bais = new ByteArrayInputStream(baos.getInternalBuffer(), 0, baos.size());
-      ObjectInputStream is = new ObjectInputStream(bais);
-      try {
+      try (ObjectInputStream is = new ObjectInputStream(baos.toInputStream())) {
         copy = is.readObject();
-      }
-      finally {
-        is.close();
       }
     }
     catch (Exception e) {

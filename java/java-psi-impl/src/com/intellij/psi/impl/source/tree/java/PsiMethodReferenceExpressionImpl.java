@@ -53,7 +53,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   private static final MethodReferenceResolver RESOLVER = new MethodReferenceResolver();
 
   public PsiMethodReferenceExpressionImpl(@NotNull FunctionalExpressionStub<PsiMethodReferenceExpression> stub) {
-    super(stub, JavaStubElementTypes.METHOD_REFERENCE);
+    super(stub, JavaStubElementTypes.METHOD_REF_EXPRESSION);
   }
 
   public PsiMethodReferenceExpressionImpl(@NotNull ASTNode node) {

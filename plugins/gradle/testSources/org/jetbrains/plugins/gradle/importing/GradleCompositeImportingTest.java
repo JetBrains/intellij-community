@@ -67,20 +67,20 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     importProject();
 
     assertModules("adhoc",
-                  "org.sample.my-app", "org.sample.my-app.main", "org.sample.my-app.test",
+                  "my-app", "my-app.main", "my-app.test",
                   "my-utils",
-                  "org.sample.string-utils", "org.sample.string-utils.test", "org.sample.string-utils.main",
-                  "org.sample.number-utils", "org.sample.number-utils.main", "org.sample.number-utils.test");
+                  "my-utils.string-utils", "my-utils.string-utils.test", "my-utils.string-utils.main",
+                  "my-utils.number-utils", "my-utils.number-utils.main", "my-utils.number-utils.test");
 
-    String[] rootModules = new String[]{"adhoc", "org.sample.my-app", "my-utils", "org.sample.string-utils", "org.sample.number-utils"};
+    String[] rootModules = new String[]{"adhoc", "my-app", "my-utils", "my-utils.string-utils", "my-utils.number-utils"};
     for (String rootModule : rootModules) {
       assertModuleLibDeps(rootModule);
       assertModuleModuleDeps(rootModule);
     }
-    assertModuleModuleDeps("org.sample.my-app.main", "org.sample.number-utils.main", "org.sample.string-utils.main");
-    assertModuleModuleDepScope("org.sample.my-app.main", "org.sample.number-utils.main", COMPILE);
-    assertModuleModuleDepScope("org.sample.my-app.main", "org.sample.string-utils.main", COMPILE);
-    assertModuleLibDepScope("org.sample.my-app.main", "Gradle: org.apache.commons:commons-lang3:3.4", COMPILE);
+    assertModuleModuleDeps("my-app.main", "my-utils.number-utils.main", "my-utils.string-utils.main");
+    assertModuleModuleDepScope("my-app.main", "my-utils.number-utils.main", COMPILE);
+    assertModuleModuleDepScope("my-app.main", "my-utils.string-utils.main", COMPILE);
+    assertModuleLibDepScope("my-app.main", "Gradle: org.apache.commons:commons-lang3:3.4", COMPILE);
   }
 
   @Test
@@ -104,9 +104,9 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     assertModules("app", "app.main", "app.test",
                   "lib",
                   "lib.runtime",
-                  "my.group.runtime-mod", "my.group.runtime-mod.main", "my.group.runtime-mod.test");
+                  "lib.runtime.runtime-mod", "lib.runtime.runtime-mod.main", "lib.runtime.runtime-mod.test");
 
-    assertModuleModuleDepScope("app.main", "my.group.runtime-mod.main", COMPILE);
+    assertModuleModuleDepScope("app.main", "lib.runtime.runtime-mod.main", COMPILE);
   }
 
 
@@ -131,9 +131,9 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     assertModules("app",
                   "lib",
                   "lib.runtime",
-                  "my.group.runtime-mod");
+                  "lib.runtime.runtime-mod");
 
-    assertMergedModuleCompileModuleDepScope("app", "my.group.runtime-mod");
+    assertMergedModuleCompileModuleDepScope("app", "lib.runtime.runtime-mod");
   }
 
 
@@ -171,12 +171,12 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                                                   "}");
 
     assertModules("app", "app.runtime",
-                  "lib1", "my.group.lib_1.runtime",
-                  "lib2", "my.group.lib_2.runtime");
+                  "lib1", "lib1.runtime",
+                  "lib2", "lib2.runtime");
 
     assertMergedModuleCompileModuleDepScope("app", "app.runtime");
-    assertMergedModuleCompileModuleDepScope("app", "my.group.lib_1.runtime");
-    assertMergedModuleCompileModuleDepScope("app", "my.group.lib_2.runtime");
+    assertMergedModuleCompileModuleDepScope("app", "lib1.runtime");
+    assertMergedModuleCompileModuleDepScope("app", "lib2.runtime");
   }
 
 

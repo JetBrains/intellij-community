@@ -1,31 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.Pair
 import com.intellij.util.PathUtilRt
 import org.apache.tools.ant.BuildException
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.MacHostProperties
-import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+
+import static com.intellij.openapi.util.Pair.pair
 
 class MacDmgBuilder {
   private final BuildContext buildContext
@@ -49,11 +35,11 @@ class MacDmgBuilder {
     dmgBuilder.doSignBinaryFiles(macDistPath)
   }
 
-  static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath) {
+  static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath, String secondJreArchive = null) {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
-    def jreArchivePath = buildContext.bundledJreManager.findMacJreArchive()
+    def jreArchivePath = (secondJreArchive == null) ? buildContext.bundledJreManager.findMacJreArchive() : secondJreArchive
     if (jreArchivePath != null) {
-      dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath)
+      dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, secondJreArchive)
     }
     else {
       buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
@@ -97,7 +83,7 @@ class MacDmgBuilder {
 
       ftpAction("get", true, null, 3) {
         ant.fileset(dir: signedFilesDir) {
-          ant.include(name: fileName)
+          ant.include(name: '**/' + fileName)
         }
       }
       if (new File(signedFilesDir, fileName).exists()) {
@@ -114,23 +100,37 @@ class MacDmgBuilder {
     }
   }
 
-  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath) {
-    def suffix = jreArchivePath != null ? buildContext.bundledJreManager.jreSuffix() : "-no-jdk"
+  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, String secondJreArchive = null) {
+    def zipRoot = MacDistributionBuilder.getZipRoot(buildContext, customizer)
+
+    String suffix = "-no-jdk", javaExePath = null
+    if (secondJreArchive != null) {
+      suffix = "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}"
+      javaExePath = "../jdk/Contents/Home/bin/java"
+    }
+    else if (jreArchivePath != null) {
+      suffix = buildContext.bundledJreManager.jreSuffix()
+      javaExePath = "../jdk/Contents/Home/${buildContext.isBundledJreModular() ? '' : 'jre/'}bin/java"
+    }
     def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.dmg$suffix").absolutePath
-    MacDistributionBuilder.generateProductJson(buildContext, productJsonDir,
-                                               jreArchivePath != null ? "../jdk/Contents/Home/${buildContext.isBundledJreModular() ? '' : 'jre/'}bin/java" : null)
-    def installationArchives = [Pair.create(macZipPath, MacDistributionBuilder.getZipRoot(buildContext, customizer))]
+    MacDistributionBuilder.generateProductJson(buildContext, productJsonDir, javaExePath)
+
+    def installationArchives = [pair(macZipPath, zipRoot)]
     if (jreArchivePath != null) {
-      installationArchives.add(Pair.create(jreArchivePath, ""))
+      installationArchives += pair(jreArchivePath, "")
     }
     new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "Resources/", [], installationArchives)
 
-    String targetFileName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + suffix
-    def sitFilePath = "$artifactsPath/${targetFileName}.sit"
-    ant.copy(file: macZipPath, tofile: sitFilePath)
+    def targetName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + suffix
+    def sitFile = new File(artifactsPath, "${targetName}.sit")
+    ant.copy(file: macZipPath, tofile: sitFile.path)
+    ant.zip(destfile: sitFile.path, update: true) {
+      zipfileset(dir: productJsonDir, prefix: zipRoot)
+    }
+
     ftpAction("mkdir") {}
-    signMacZip(sitFilePath, targetFileName, jreArchivePath, new File(productJsonDir, "Resources/$ProductInfoGenerator.FILE_NAME").absolutePath)
-    buildDmg(targetFileName)
+    signMacZip(sitFile, jreArchivePath)
+    buildDmg(targetName)
   }
 
   private void buildDmg(String targetFileName) {
@@ -153,7 +153,7 @@ class MacDmgBuilder {
     sshExec("$remoteDir/makedmg.sh ${targetFileName} ${buildContext.fullBuildNumber}", "makedmg.log")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
-        include(name: "${targetFileName}.dmg")
+        include(name: "**/${targetFileName}.dmg")
       }
     }
     deleteRemoteDir()
@@ -177,38 +177,43 @@ class MacDmgBuilder {
     }
   }
 
-  private def signMacZip(String sitFilePath, String targetFileName, String jreArchivePath, String productJsonFilePath) {
-    buildContext.messages.progress("Signing ${targetFileName}.sit")
-
-    if (jreArchivePath != null) {
+  private def signMacZip(File targetFile, String jreArchivePath) {
+    buildContext.messages.block("Signing ${targetFile.name}") {
+      buildContext.messages.progress("Uploading ${targetFile} to ${macHostProperties.host}")
       ftpAction("put") {
-        ant.fileset(file: jreArchivePath)
+        ant.fileset(file: targetFile.path)
+        if (jreArchivePath != null) {
+          ant.fileset(file: jreArchivePath)
+        }
       }
-    }
+      ftpAction("put", false, "777") {
+        ant.fileset(dir: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {
+          include(name: "signapp.sh")
+        }
+      }
 
-    buildContext.messages.progress("Sending $sitFilePath to ${this.macHostProperties.host}")
-    ftpAction("put") {
-      ant.fileset(file: sitFilePath)
-      ant.fileset(file: productJsonFilePath)
-    }
-    ant.delete(file: sitFilePath)
-    ftpAction("put", false, "777") {
-      ant.fileset(dir: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {
-        include(name: "signapp.sh")
+      buildContext.messages.progress("Signing ${targetFile.name} on ${macHostProperties.host}")
+      List<String> args = [targetFile.name,
+                           buildContext.fullBuildNumber,
+                           macHostProperties.userName,
+                           macHostProperties.password,
+                           "\"${macHostProperties.codesignString}\"",
+                           (customizer.helpId != null ? "${customizer.helpId}.help" : "no-help")]
+      if (jreArchivePath != null) {
+        args += '"' + PathUtilRt.getFileName(jreArchivePath) + '"'
       }
-    }
+      sshExec("$remoteDir/signapp.sh ${args.join(" ")}", "signapp.log")
 
-    String helpFileName = customizer.helpId != null ? "${customizer.helpId}.help" : "no-help"
-    String jreFileNameArgument = jreArchivePath != null ? " \"${PathUtilRt.getFileName(jreArchivePath)}\"" : ""
-    sshExec("$remoteDir/signapp.sh ${targetFileName} ${buildContext.fullBuildNumber} ${this.macHostProperties.userName}"
-              + " ${this.macHostProperties.password} \"${this.macHostProperties.codesignString}\" $helpFileName$jreFileNameArgument", "signapp.log")
-    ftpAction("get", true, null, 3) {
-      ant.fileset(dir: artifactsPath) {
-        include(name: "${targetFileName}.sit")
+      buildContext.messages.progress("Downloading signed ${targetFile.name} from ${macHostProperties.host}")
+      ant.delete(file: targetFile.path)
+      ftpAction("get", true, null, 3) {
+        ant.fileset(dir: artifactsPath) {
+          include(name: "**/${targetFile.name}")
+        }
       }
-    }
-    if (!new File(sitFilePath).exists()) {
-      buildContext.messages.error("Failed to build .sit file")
+      if (!targetFile.exists()) {
+        buildContext.messages.error("Failed to sign ${targetFile.name}")
+      }
     }
   }
 
@@ -226,7 +231,7 @@ class MacDmgBuilder {
       buildContext.messages.info("SSH command failed, retrieving log file")
       ftpAction("get", true, null, 3) {
         ant.fileset(dir: artifactsPath) {
-          include(name: logFileName)
+          include(name: '**/' + logFileName)
         }
       }
       buildContext.notifyArtifactBuilt(new File(artifactsPath, logFileName).absolutePath)

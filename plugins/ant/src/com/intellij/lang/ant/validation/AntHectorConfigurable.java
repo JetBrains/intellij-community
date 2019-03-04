@@ -19,7 +19,6 @@ import com.intellij.lang.ant.AntImportsIndex;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.dom.AntDomFileDescription;
 import com.intellij.openapi.editor.HectorComponentPanel;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.io.FileUtil;
@@ -102,7 +101,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     }
 
     final List<String> paths = new ArrayList<>(myPathToFileMap.keySet());
-    Collections.sort(paths, (o1, o2) -> o1.compareTo(o2));
+    Collections.sort(paths, Comparator.naturalOrder());
 
     myCombo.addItem(NONE);
     for (String path : paths) {
@@ -132,7 +131,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     applyItem((String)myCombo.getSelectedItem());
   }
 

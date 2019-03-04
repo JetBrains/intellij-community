@@ -70,6 +70,12 @@ private fun GeneralCommandLine.initializePydevConsoleScriptGroup(pythonSdkFlavor
   }
   group.addParameter(PythonHelper.CONSOLE.asParamString())
 
+  // fix `AttributeError` when running Python Console on IronPython
+  pythonSdkFlavor?.extraDebugOptions?.let { extraDebugOptions ->
+    val exeGroup = parametersList.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS)
+    extraDebugOptions.forEach { exeGroup?.addParameter(it) }
+  }
+
   return group
 }
 

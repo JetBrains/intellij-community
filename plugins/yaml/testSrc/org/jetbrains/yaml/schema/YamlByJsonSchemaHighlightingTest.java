@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLLanguage;
 
 import java.io.File;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
+  @NotNull
   @Override
   public String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data/highlighting";
@@ -93,8 +95,8 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                                    "  }\n" +
                                                    "}");
     doTest(schema, "prop:\n - 101\n - 102");
-    doTest(schema, "prop:\n - <warning descr=\"Schema validation: Less than a minimum 18.0\">16</warning>");
-    doTest(schema, "prop:\n - <warning descr=\"Schema validation: Type is not allowed. Expected: number.\">test</warning>");
+    doTest(schema, "prop:\n - <warning descr=\"Schema validation: Less than a minimum 18\">16</warning>");
+    doTest(schema, "prop:\n - <warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: string.\">test</warning>");
   }
 
   public void testTopLevelArray() throws Exception {
@@ -114,7 +116,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                             "    \"type\": \"object\", \"properties\": {\"a\": {\"type\": \"number\"}}" +
                                             "  }\n" +
                                             "}";
-    doTest(schema, "- a: <warning descr=\"Schema validation: Type is not allowed. Expected: number.\">true</warning>");
+    doTest(schema, "- a: <warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: boolean.\">true</warning>");
     doTest(schema, "- a: 18");
   }
 
@@ -125,7 +127,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                                    "    \"type\": \"number\", \"minimum\": 18" +
                                                    "  }, {\"type\" : \"string\"}]\n" +
                                                    "}");
-    doTest(schema, "prop:\n - 101\n - 102");
+    doTest(schema, "prop:\n - 101\n - <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: integer.\">102</warning>");
 
     @Language("JSON") final String schema2 = schema("{\n" +
                                                     "  \"type\": \"array\",\n" +
@@ -133,7 +135,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                                     "    \"type\": \"number\", \"minimum\": 18" +
                                                     "  }, {\"type\" : \"string\"}],\n" +
                                                     "\"additionalItems\": false}");
-    doTest(schema2, "prop:\n - 101\n - 102\n - <warning descr=\"Schema validation: Additional items are not allowed\">additional</warning>");
+    doTest(schema2, "prop:\n - 101\n - <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: integer.\">102</warning>\n - <warning descr=\"Schema validation: Additional items are not allowed\">additional</warning>");
   }
 
   public void testArrayLength() throws Exception {
@@ -186,7 +188,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
   public void testAdditionalPropertiesSchema() throws Exception {
     @Language("JSON") final String schema = "{\"type\": \"object\", \"properties\": {\"a\": {}}," +
                                             "\"additionalProperties\": {\"type\": \"number\"}}";
-    doTest(schema, "a: moo\nb: 5\nc: <warning descr=\"Schema validation: Type is not allowed. Expected: number.\">foo</warning>");
+    doTest(schema, "a: moo\nb: 5\nc: <warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: string.\">foo</warning>");
   }
 
   public void testMinMaxProperties() throws Exception {
@@ -203,7 +205,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     @Language("JSON") final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
     doTest(schema, "prop: 5");
     doTest(schema, "prop: true");
-    doTest(schema, "prop: <warning descr=\"Schema validation: Type is not allowed. Expected one of: boolean, number.\">aaa</warning>");
+    doTest(schema, "prop: <warning descr=\"Schema validation: Incompatible types.\n Required one of: boolean, number. Actual: string.\">aaa</warning>");
   }
 
   public void testOneOfForTwoMatches() throws Exception {
@@ -308,9 +310,9 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                             "  }\n" +
                                             "}";
     doTest(schema, "Abezjana: 2\n" +
-                   "Auto: <warning descr=\"Schema validation: Type is not allowed. Expected: number.\">no</warning>\n" +
-                   "BAe: <warning descr=\"Schema validation: Type is not allowed. Expected: boolean.\">22</warning>\n" +
-                   "Boloto: <warning descr=\"Schema validation: Type is not allowed. Expected: boolean.\">2</warning>\n" +
+                   "Auto: <warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: string.\">no</warning>\n" +
+                   "BAe: <warning descr=\"Schema validation: Incompatible types.\n Required: boolean. Actual: integer.\">22</warning>\n" +
+                   "Boloto: <warning descr=\"Schema validation: Incompatible types.\n Required: boolean. Actual: integer.\">2</warning>\n" +
                    "Cyan: <warning descr=\"Schema validation: Value should be one of: \\\"test\\\", \\\"em\\\"\">me</warning>\n");
   }
 
@@ -328,8 +330,8 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                             "  }\n" +
                                             "}";
     doTest(schema,
-                   "p1: 1\n" +
-                   "p2: 3\n" +
+                   "p1: <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: integer.\">1</warning>\n" +
+                   "p2: <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: integer.\">3</warning>\n" +
                    "a2: auto!\n" +
                    "a1: <warning descr=\"Schema validation: Value should be one of: \\\"auto!\\\"\">moto!</warning>\n"
                    );
@@ -388,10 +390,10 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                             "}";
     doTest(schema,
                    "size: \n" +
-                   " a: <warning descr=\"Schema validation: Type is not allowed. Expected: boolean.\">1</warning>\n" +
+                   " a: <warning descr=\"Schema validation: Incompatible types.\n Required: boolean. Actual: integer.\">1</warning>\n" +
                    " b: 3\n" +
                    " c: 4\n" +
-                   " a: <warning descr=\"Schema validation: Type is not allowed. Expected: boolean.\">5</warning>" +
+                   " a: <warning descr=\"Schema validation: Incompatible types.\n Required: boolean. Actual: integer.\">5</warning>" +
                    "\n");
   }
 
@@ -682,6 +684,13 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                    "  IsDev: !Equals [!Ref AccountType, dev]");
   }
 
+  public void testGitlabSchema() throws Exception {
+    @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/gitlab-ci.schema.json"));
+    doTest(schema, "a:\n" +
+                   "  extends: .b\n" +
+                   "  script: echo");
+  }
+
   @Language("JSON")
   private static final String SCHEMA_FOR_REFS  = "{\n" +
                                                  "  \"type\": \"object\",\n" +
@@ -709,7 +718,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     // no warning about missing required property - it should be discovered in referenced object
     // no warning about extra 'property' with name '<<' with additionalProperties=false
     doTest(SCHEMA_FOR_REFS, "a: &a\n" +
-                            "  a: <warning descr=\"Schema validation: Type is not allowed. Expected: array.\">7</warning>\n" +
+                            "  a: <warning descr=\"Schema validation: Incompatible types.\n Required: array. Actual: integer.\">7</warning>\n" +
                             "\n" +
                             "bar:\n" +
                             "  <<: *a\n" +
@@ -731,7 +740,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
   }
 
   public void testRefRefInvalid() throws Exception {
-    doTest(SCHEMA_FOR_REFS, "x: &b <warning descr=\"Schema validation: Type is not allowed. Expected: array.\">7</warning>\n" +
+    doTest(SCHEMA_FOR_REFS, "x: &b <warning descr=\"Schema validation: Incompatible types.\n Required: array. Actual: number.\">7</warning>\n" +
                             "\n" +
                             "a: &a\n" +
                             "  a: *b\n" +
@@ -748,13 +757,13 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                             "\n" +
                             "bar:\n" +
                             "  <<: *a\n" +
-                            "  a: <warning descr=\"Schema validation: Type is not allowed. Expected: array.\">5</warning>");
+                            "  a: <warning descr=\"Schema validation: Incompatible types.\n Required: array. Actual: integer.\">5</warning>");
   }
 
   public void testInlineRef() throws Exception {
     doTest(SCHEMA_FOR_REFS, "bar:\n" +
                             "  <<: &q\n" +
-                            "    a: <warning descr=\"Schema validation: Type is not allowed. Expected: array.\">5</warning>\n" +
+                            "    a: <warning descr=\"Schema validation: Incompatible types.\n Required: array. Actual: integer.\">5</warning>\n" +
                             "  b: 5");
   }
 
@@ -782,5 +791,114 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "    }\n" +
            "  }\n" +
            "}\n";
+  }
+
+  public void testTravisPythonVersion() throws Exception {
+    @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/travis.schema.json"));
+    doTest(schema, "python: 3.5"); // validates as 'number'
+    doTest(schema, "python: 3.50"); // validates as 'number'
+    doTest(schema, "python: 3.50a"); // validates as 'string'
+    doTest(schema, "python: <warning descr=\"Schema validation: Incompatible types.\n Required one of: array, number, string. Actual: null.\">null</warning>");
+  }
+
+  public void testTravisNode() throws Exception {
+    @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/travis.schema.json"));
+    doTest(schema, "node_js: \n" +
+                   "  - <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: number.\">2.10</warning>");
+  }
+
+  public void testExpNumberNotation() throws Exception {
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"type\": \"number\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "x: 2.99792458e8");
+  }
+
+  public void testTreatEmptyValueAsNull() throws Exception {
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"type\": \"number\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "x:<warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: null.\"> </warning>");
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"type\": \"null\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "x: ");
+  }
+
+  public void testEmptyValueInArray() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"array\",\n" +
+           "      \"items\": {\n" +
+           "        \"type\": \"string\"\n" +
+           "      }\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "versionAsStringArray:\n" +
+                "  -<warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: null.\"> </warning>\n" +
+                "  <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: null.\">-</warning>\n" +
+                "  - a");
+  }
+
+  public void testEmptyFile() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"array\"\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"required\": [\"versionAsStringArray\"]\n" +
+           "}", "<warning descr=\"Schema validation: Missing required property 'versionAsStringArray'\"></warning>");
+  }
+
+  public void testEmptyValueBetweenProps() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"object\",\n" +
+           "      \"properties\": {\n" +
+           "        \"xxx\": {\n" +
+           "          \"type\": \"number\"\n" +
+           "        },\n" +
+           "        \"yyy\": {\n" +
+           "          \"type\": \"string\"\n" +
+           "        },\n" +
+           "        \"zzz\": {\n" +
+           "          \"type\": \"number\"\n" +
+           "        }\n" +
+           "      },\n" +
+           "      \"required\": [\"xxx\", \"yyy\", \"zzz\"]\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"required\": [\"versionAsStringArray\"]\n" +
+           "}", "versionAsStringArray:\n" +
+                "  zzz: 0\n" +
+                "  yyy:<warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: null.\">  </warning>\n" +
+                "  xxx: 0");
+  }
+
+  public void testDeprecation() throws Exception {
+    doTest("{\"properties\": {\n" +
+           "    \"myPropertyXxx\": {\n" +
+           "      \"deprecationMessage\": \"Baz\",\n" +
+           "      \"description\": \"Foo bar\"\n" +
+           "    }\n" +
+           "  }}", "<weak_warning descr=\"Key 'myPropertyXxx' is deprecated: Baz\">myPropertyXxx</weak_warning>: a");
   }
 }

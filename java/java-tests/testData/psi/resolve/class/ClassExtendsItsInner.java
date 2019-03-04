@@ -1,4 +1,4 @@
-class A extends A.<ref>Foo, B{
+class A extends A.<caret>Foo, B{
 }
 
 interface B{

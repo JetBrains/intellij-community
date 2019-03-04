@@ -286,6 +286,26 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     );
   }
 
+  public void testCustomRegionsIdea205350() {
+    doTest(
+      "// region Test\n" +
+      "package com.company;\n" +
+      "\n" +
+      "class CustRegionTest {\n" +
+      "   // region Another\n" +
+      "   void foo () { }\n" +
+      "   // endregion\n" +
+      "}\n" +
+      "//endregion",
+
+      "-Test.java\n" +
+      " -Test\n" +
+      "  -CustRegionTest\n" +
+      "   -Another\n" +
+      "    foo(): void"
+    );
+  }
+
   public void testRecursive() {
     myFixture.configureByText("I.java", "interface I {" +
                                         "  class Impl implements I {" +
@@ -552,6 +572,49 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                                        "   wait(long, int): void\n" +
                                        "  getY(): int\n" +
                                        "  setY(int): void");
+    });
+  }
+
+  public void testInheritedEnumMembers() {
+    myFixture.configureByText("a.java", "enum F { A,B,C}");
+
+    myFixture.testStructureView(svc -> {
+      svc.setActionActive(InheritedMembersNodeProvider.ID, true);
+      svc.setActionActive(PropertiesGrouper.ID, false);
+      svc.setActionActive(SuperTypesGrouper.ID, true);
+      svc.setActionActive(Sorter.ALPHA_SORTER_ID, true);
+
+      JTree tree = svc.getTree();
+      PlatformTestUtil.expandAll(tree);
+      PlatformTestUtil.assertTreeEqual(tree,
+                                       "-a.java\n" +
+                                       " -F\n" +
+                                       "  -Comparable\n" +
+                                       "   compareTo(T): int\n" +
+                                       "  -Enum\n" +
+                                       "   clone(): Object\n" +
+                                       "   compareTo(E): int\n" +
+                                       "   equals(Object): boolean\n" +
+                                       "   finalize(): void\n" +
+                                       "   getDeclaringClass(): Class<E>\n" +
+                                       "   hashCode(): int\n" +
+                                       "   name(): String\n" +
+                                       "   ordinal(): int\n" +
+                                       "   toString(): String\n" +
+                                       "   valueOf(Class<T>, String): T\n" +
+                                       "  -F\n" +
+                                       "   valueOf(String): F\n" +
+                                       "   values(): F[]\n" +
+                                       "  -Object\n" +
+                                       "   getClass(): Class<?>\n" +
+                                       "   notify(): void\n" +
+                                       "   notifyAll(): void\n" +
+                                       "   wait(): void\n" +
+                                       "   wait(long): void\n" +
+                                       "   wait(long, int): void\n" +
+                                       "  A: F\n" +
+                                       "  B: F\n" +
+                                       "  C: F");
     });
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,15 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
 
   @Override
   protected void tearDown() throws Exception {
-    CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = myPrevValue;
-    super.tearDown();
+    try {
+      CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = myPrevValue;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testWOSelection() {

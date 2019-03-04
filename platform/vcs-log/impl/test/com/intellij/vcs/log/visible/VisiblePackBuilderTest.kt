@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible
 
 import com.intellij.mock.MockVirtualFile
@@ -29,11 +15,11 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import kotlin.test.assertNull
 
 class VisiblePackBuilderTest {
 
@@ -44,7 +30,7 @@ class VisiblePackBuilderTest {
       3(4)
       4()
     }
-    val visiblePack = graph.build(noFilters())
+    val visiblePack = graph.build(VcsLogFilterObject.collection())
     assertEquals(4, visiblePack.visibleGraph.visibleCommitCount)
   }
 
@@ -55,7 +41,7 @@ class VisiblePackBuilderTest {
       3(4)
       4()
     }
-    val visiblePack = graph.build(filters(branch = listOf("master")))
+    val visiblePack = graph.build(VcsLogFilterObject.collection(VcsLogFilterObject.fromBranch("master")))
     val visibleGraph = visiblePack.visibleGraph
     assertEquals(3, visibleGraph.visibleCommitCount)
     assertDoesNotContain(visibleGraph, 2)
@@ -71,7 +57,7 @@ class VisiblePackBuilderTest {
       6(7)
       7()
     }
-    val visiblePack = graph.build(filters(user = DEFAULT_USER))
+    val visiblePack = graph.build(VcsLogFilterObject.collection(VcsLogFilterObject.fromUser(DEFAULT_USER)))
     val visibleGraph = visiblePack.visibleGraph
     assertEquals(6, visibleGraph.visibleCommitCount)
     assertDoesNotContain(visibleGraph, 3)
@@ -84,7 +70,8 @@ class VisiblePackBuilderTest {
       3(4)
       4()
     }
-    val visiblePack = graph.build(filters(VcsLogBranchFilterImpl.fromTextPresentation(setOf("-master"), setOf("master"))))
+    val visiblePack = graph.build(VcsLogFilterObject.collection(VcsLogFilterObject.fromBranchPatterns(setOf("-master"),
+                                                                                                      setOf("master"))))
     val visibleGraph = visiblePack.visibleGraph
     assertEquals(3, visibleGraph.visibleCommitCount)
     assertDoesNotContain(visibleGraph, 1)
@@ -99,17 +86,16 @@ class VisiblePackBuilderTest {
     }
 
     val func = Function<VcsLogFilterCollection, MutableList<TimedVcsCommit>> {
-      ArrayList(listOf(2, 3, 4).map {
-        val id = it
-        val commit = graph.commits.firstOrNull {
-          it.id == id
-        }
-        commit!!.toVcsCommit(graph.hashMap)
+      ArrayList(listOf(2, 3, 4).map { commitId ->
+        graph.commits.firstOrNull { commit ->
+          commit.id == commitId
+        }!!.toVcsCommit(graph.hashMap)
       })
     }
 
     graph.providers.entries.iterator().next().value.setFilteredCommitsProvider(func)
-    val visiblePack = graph.build(filters(VcsLogBranchFilterImpl.fromTextPresentation(setOf("-master"), setOf("master")), userFilter(DEFAULT_USER)))
+    val visiblePack = graph.build(VcsLogFilterObject.collection(VcsLogFilterObject.fromBranchPatterns(setOf("-master"), setOf("master")),
+                                                                VcsLogFilterObject.fromUser((DEFAULT_USER))))
     val visibleGraph = visiblePack.visibleGraph
     assertEquals(3, visibleGraph.visibleCommitCount)
     assertDoesNotContain(visibleGraph, 1)
@@ -117,8 +103,8 @@ class VisiblePackBuilderTest {
 
   private fun GraphCommit<Int>.toVcsCommit(storage: VcsLogStorage) = TimedVcsCommitImpl(storage.getCommitId(this.id)!!.hash, storage.getHashes(this.parents), 1)
 
-  fun assertDoesNotContain(graph: VisibleGraph<Int>, id: Int) {
-    assertTrue(null == (1..graph.visibleCommitCount).firstOrNull { graph.getRowInfo(it - 1).commit == id })
+  private fun assertDoesNotContain(graph: VisibleGraph<Int>, id: Int) {
+    assertNull((1..graph.visibleCommitCount).firstOrNull { graph.getRowInfo(it - 1).commit == id })
   }
 
   data class Ref(val name: String, val commit: Int)
@@ -148,8 +134,8 @@ class VisiblePackBuilderTest {
         }
 
         override fun loadCommitsData(hashes: MutableList<Int>,
-                                     consumer: Consumer<MutableList<VcsFullCommitDetails>>,
-                                     errorConsumer: Consumer<Throwable>,
+                                     consumer: Consumer<in MutableList<VcsFullCommitDetails>>,
+                                     errorConsumer: Consumer<in Throwable>,
                                      indicator: ProgressIndicator?) {
         }
 
@@ -162,14 +148,14 @@ class VisiblePackBuilderTest {
       return builder.filter(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }
 
-    fun generateHashMap(num: Int, refs: Set<Ref>, root: VirtualFile): ConstantVcsLogStorage {
+    private fun generateHashMap(num: Int, refs: Set<Ref>, root: VirtualFile): ConstantVcsLogStorage {
       val hashes = HashMap<Int, Hash>()
       for (i in 1..num) {
-        hashes.put(i, HashImpl.build(i.toString()))
+        hashes[i] = HashImpl.build(i.toString())
       }
-      val vcsRefs = refs.mapTo(ArrayList<VcsRef>(), {
+      val vcsRefs = refs.mapTo(ArrayList<VcsRef>()) {
         VcsRefImpl(hashes[it.commit]!!, it.name, BRANCH_TYPE, root)
-      })
+      }
       return ConstantVcsLogStorage(hashes, vcsRefs.indices.map { Pair(it, vcsRefs[it]) }.toMap(), root)
     }
 
@@ -177,23 +163,7 @@ class VisiblePackBuilderTest {
 
   fun VcsLogStorage.getHashes(ids: List<Int>) = ids.map { getCommitId(it)!!.hash }
 
-  fun noFilters(): VcsLogFilterCollection = VcsLogFilterCollectionBuilder().build()
-
-  fun filters(branch: VcsLogBranchFilter? = null, user: VcsLogUserFilter? = null)
-      = VcsLogFilterCollectionBuilder(branch, user).build()
-
-  fun filters(branch: List<String>? = null, user: VcsUser? = null)
-      = VcsLogFilterCollectionBuilder(branchFilter(branch), userFilter(user)).build()
-
-  fun branchFilter(branch: List<String>?): VcsLogBranchFilterImpl? {
-    return if (branch != null) VcsLogBranchFilterImpl.fromTextPresentation(branch, branch.toHashSet()) else null
-  }
-
-  fun userFilter(user: VcsUser?): VcsLogUserFilter? {
-    return if (user != null) VcsLogUserFilterImpl(listOf(user.name), emptyMap(), setOf(user)) else null
-  }
-
-  fun graph(f: GraphBuilder.() -> Unit): Graph {
+  private fun graph(f: GraphBuilder.() -> Unit): Graph {
     val builder = GraphBuilder()
     builder.f()
     return builder.done()
@@ -242,7 +212,7 @@ class VisiblePackBuilderTest {
 
     override fun getRefIndex(ref: VcsRef): Int = refsReversed[ref]!!
 
-    override fun iterateCommits(consumer: Function<CommitId, Boolean>) = throw UnsupportedOperationException()
+    override fun iterateCommits(consumer: Function<in CommitId, Boolean>) = throw UnsupportedOperationException()
 
     override fun flush() {
     }

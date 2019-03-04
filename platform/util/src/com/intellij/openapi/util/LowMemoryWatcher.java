@@ -32,7 +32,7 @@ public class LowMemoryWatcher {
     ONLY_AFTER_GC
   }
 
-  private static final WeakList<LowMemoryWatcher> ourListeners = new WeakList<LowMemoryWatcher>();
+  private static final WeakList<LowMemoryWatcher> ourListeners = new WeakList<>();
   private final Runnable myRunnable;
   private final LowMemoryWatcherType myType;
 
@@ -62,12 +62,12 @@ public class LowMemoryWatcher {
    *                         When ALWAYS, then the runnable also will be invoked when the low-memory condition is detected before GC.
    *
    */
-  @Contract(pure = true)
+  @Contract(pure = true) // to avoid ignoring the result
   public static LowMemoryWatcher register(@NotNull Runnable runnable, @NotNull LowMemoryWatcherType notificationType) {
     return new LowMemoryWatcher(runnable, notificationType);
   }
 
-  @Contract(pure = true)
+  @Contract(pure = true) // to avoid ignoring the result
   public static LowMemoryWatcher register(@NotNull Runnable runnable) {
     return new LowMemoryWatcher(runnable, LowMemoryWatcherType.ALWAYS);
   }

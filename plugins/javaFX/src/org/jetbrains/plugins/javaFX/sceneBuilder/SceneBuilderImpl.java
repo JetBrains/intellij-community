@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.openapi.application.ReadAction;
@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.oracle.javafx.scenebuilder.kit.editor.EditorController;
 import com.oracle.javafx.scenebuilder.kit.editor.panel.content.ContentPanelController;
@@ -132,10 +133,6 @@ public class SceneBuilderImpl implements SceneBuilder {
 
     loadFile();
     startChangeListener();
-
-    if (myProject.isDisposed()) {
-      return;
-    }
   }
 
   private static void logUncaughtException(Thread t, Throwable e) {
@@ -421,7 +418,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     myEditorController.getSelection().select(newSelection);
   }
 
-  private FXOMObject getSelectedComponent(FXOMObject component, List<SelectionNode> path, int step) {
+  private static FXOMObject getSelectedComponent(FXOMObject component, List<SelectionNode> path, int step) {
     if (step >= path.size()) return null;
     SelectionNode node = new SelectionNode(component);
     if (node.equals(path.get(step))) {
@@ -490,7 +487,7 @@ public class SceneBuilderImpl implements SceneBuilder {
       final List<String> imports = new ArrayList<>();
       final Map<String, String> attributes = new THashMap<>();
       final Ref<Boolean> rootTagProcessed = new Ref<>(false);
-      NanoXmlUtil.parse(new StringReader(item.getFxmlText()), new NanoXmlUtil.IXMLBuilderAdapter() {
+      NanoXmlUtil.parse(new StringReader(item.getFxmlText()), new NanoXmlBuilder() {
         @Override
         public void newProcessingInstruction(String target, Reader reader) throws Exception {
           if ("import".equals(target)) {
@@ -500,7 +497,7 @@ public class SceneBuilderImpl implements SceneBuilder {
         }
 
         @Override
-        public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
+        public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) {
           if (rootTagProcessed.get()) return;
           if (key != null && value != null && StringUtil.isEmpty(nsPrefix)) {
             attributes.put(key, value);
@@ -508,12 +505,12 @@ public class SceneBuilderImpl implements SceneBuilder {
         }
 
         @Override
-        public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
+        public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) {
           rootTagProcessed.set(true);
         }
 
         @Override
-        public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
+        public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) {
           if (rootTagProcessed.get()) return;
           for (String imported : imports) {
             if (imported.equals(name) || imported.endsWith("." + name)) {

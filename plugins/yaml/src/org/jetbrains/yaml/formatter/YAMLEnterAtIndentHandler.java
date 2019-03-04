@@ -15,12 +15,15 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLFile;
+import org.jetbrains.yaml.psi.YAMLSequenceItem;
 
 import java.util.Objects;
 
@@ -95,10 +98,21 @@ public class YAMLEnterAtIndentHandler extends EnterHandlerDelegateAdapter {
         return Result.Continue;
       }
     }
+    else {
+      // don't insert a second '-' before already existing '-'
+      if (isEmptySequenceItem(element.getPrevSibling())) {
+        return Result.Continue;
+      }
+    }
     editor.getDocument().insertString(caretOffset, "- ");
     editor.getCaretModel().moveToOffset(caretOffset + 2);
 
     return Result.Stop;
+  }
+
+  @Contract("null -> false")
+  private static boolean isEmptySequenceItem(@Nullable PsiElement prevSibling) {
+    return prevSibling instanceof YAMLSequenceItem && "-".equals(prevSibling.getText());
   }
 
   private static boolean shouldInsertAutomaticHyphen(@NotNull PsiFile file) {

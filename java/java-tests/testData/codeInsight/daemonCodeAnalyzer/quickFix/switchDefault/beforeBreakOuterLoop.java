@@ -1,4 +1,4 @@
-// "Unwrap 'switch' statement" "true"
+// "Unwrap 'switch'" "true"
 class X {
   String test(char c) {
     for(int i=0; i<10; i++)

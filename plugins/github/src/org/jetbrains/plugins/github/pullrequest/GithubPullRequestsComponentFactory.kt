@@ -16,12 +16,18 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTrackerImpl
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataServiceImpl
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityServiceImpl
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateServiceImpl
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestChangesComponent
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestDetailsComponent
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestPreviewComponent
@@ -29,6 +35,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListCompone
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelectionModel.SelectionChangedListener
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
+import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 import javax.swing.JComponent
 
 
@@ -39,29 +46,45 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                                   private val avatarLoader: CachingGithubUserAvatarLoader,
                                                   private val imageResizer: GithubImageResizer,
                                                   private val actionManager: ActionManager,
-                                                  private val autoPopupController: AutoPopupController) {
+                                                  private val autoPopupController: AutoPopupController,
+                                                  private val sharedProjectSettings: GithubSharedProjectSettings,
+                                                  private val pullRequestUiSettings: GithubPullRequestsProjectUISettings) {
 
   fun createComponent(requestExecutor: GithubApiRequestExecutor,
                       repository: GitRepository, remote: GitRemote,
-                      repoDetails: GithubRepoDetailed,
+                      accountDetails: GithubAuthenticatedUser, repoDetails: GithubRepoDetailed,
                       account: GithubAccount): JComponent? {
     val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, requestExecutor)
-    return GithubPullRequestsComponent(requestExecutor, avatarIconsProviderFactory, repository, remote, repoDetails, account)
+    return GithubPullRequestsComponent(requestExecutor, avatarIconsProviderFactory, pullRequestUiSettings,
+                                       repository, remote,
+                                       accountDetails, repoDetails, account)
   }
 
   inner class GithubPullRequestsComponent(private val requestExecutor: GithubApiRequestExecutor,
                                           avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                                          pullRequestUiSettings: GithubPullRequestsProjectUISettings,
                                           private val repository: GitRepository, private val remote: GitRemote,
+                                          accountDetails: GithubAuthenticatedUser,
                                           private val repoDetails: GithubRepoDetailed,
                                           private val account: GithubAccount)
     : OnePixelSplitter("Github.PullRequests.Component", 0.33f), Disposable, DataProvider {
 
-    private val dataLoader = GithubPullRequestsDataLoader(project, progressManager, git, requestExecutor, repository, remote)
+    private val dataLoader = GithubPullRequestsDataLoader(project, progressManager, git, requestExecutor, repository, remote,
+                                                          account.server, repoDetails.fullPath)
+    private val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, accountDetails, repoDetails)
+    private val busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
 
-    private val changes = GithubPullRequestChangesComponent(project).apply {
+    private val metadataService = GithubPullRequestsMetadataServiceImpl(project, progressManager, dataLoader, busyStateTracker,
+                                                                        requestExecutor,
+                                                                        avatarIconsProviderFactory, account.server, repoDetails.fullPath)
+    private val stateService = GithubPullRequestsStateServiceImpl(project, progressManager, dataLoader, busyStateTracker, requestExecutor,
+                                                                  account.server, repoDetails.fullPath)
+
+    private val changes = GithubPullRequestChangesComponent(project, pullRequestUiSettings).apply {
       diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
     }
-    private val details = GithubPullRequestDetailsComponent(avatarIconsProviderFactory)
+    private val details = GithubPullRequestDetailsComponent(dataLoader, securityService, busyStateTracker, metadataService, stateService,
+                                                            avatarIconsProviderFactory)
     private val preview = GithubPullRequestPreviewComponent(changes, details)
 
     private val listLoader = GithubPullRequestsLoader(progressManager, requestExecutor, account.server, repoDetails.fullPath)
@@ -79,7 +102,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
 
       list.selectionModel.addChangesListener(object : SelectionChangedListener {
         override fun selectionChanged() {
-          val dataProvider = list.selectionModel.current?.let(dataLoader::getDataProvider)
+          val dataProvider = list.selectionModel.current?.number?.let(dataLoader::getDataProvider)
           preview.setPreviewDataProvider(dataProvider)
         }
       }, preview)
@@ -90,7 +113,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
             if (Disposer.isDisposed(preview)) return@runInEdt
             val selection = list.selectionModel.current
             if (selection != null && selection.number == pullRequestNumber) {
-              preview.setPreviewDataProvider(dataLoader.getDataProvider(selection))
+              preview.setPreviewDataProvider(dataLoader.getDataProvider(pullRequestNumber))
             }
           }
         }
@@ -120,7 +143,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
         GithubPullRequestKeys.PULL_REQUESTS_COMPONENT.`is`(dataId) -> this
         GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> list.selectionModel.current
         GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER.`is`(dataId) ->
-          list.selectionModel.current?.let(dataLoader::getDataProvider)
+          list.selectionModel.current?.number?.let(dataLoader::getDataProvider)
         else -> null
       }
     }

@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.github.util
 
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import java.util.concurrent.*
@@ -12,41 +12,41 @@ import java.util.function.BiFunction
 
 object GithubAsyncUtil {
 
-  /**
-   * Run [consumer] on EDT with the result of [future]
-   * If future is cancelled, [consumer] will not be executed
-   *
-   * This is a naive implementation with timeout waiting
-   */
   @JvmStatic
-  fun <R : Future<T>, T> awaitFutureAndRunOnEdt(future: R,
-                                                project: Project, title: String, errorTitle: String,
-                                                consumer: (T) -> Unit) {
-    object : Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
-      var result: T? = null
-
-      override fun run(indicator: ProgressIndicator) {
-        while (true) {
-          try {
-            result = future.get(50, TimeUnit.MILLISECONDS)
-            break
-          }
-          catch (e: TimeoutException) {
-            indicator.checkCanceled()
-          }
-        }
-        indicator.checkCanceled()
+  fun <T> awaitFuture(progressIndicator: ProgressIndicator, future: Future<T>): T {
+    var result: T
+    while (true) {
+      try {
+        result = future.get(50, TimeUnit.MILLISECONDS)
+        break
       }
-
-      override fun onSuccess() {
-        result?.let(consumer)
+      catch (e: TimeoutException) {
+        progressIndicator.checkCanceled()
       }
-
-      override fun onThrowable(error: Throwable) {
-        if (isCancellation(error)) return
-        GithubNotifications.showError(project, errorTitle, error)
+      catch (e: Exception) {
+        if (isCancellation(e)) throw ProcessCanceledException()
+        if (e is ExecutionException) throw e.cause ?: e
+        throw e
       }
-    }.queue()
+    }
+    return result
+  }
+
+  @JvmStatic
+  fun <T> futureOfMutable(futureSupplier: () -> CompletableFuture<T>): CompletableFuture<T> {
+    val result = CompletableFuture<T>()
+    handleToOtherIfCancelled(futureSupplier, result)
+    return result
+  }
+
+  private fun <T> handleToOtherIfCancelled(futureSupplier: () -> CompletableFuture<T>, other: CompletableFuture<T>) {
+    futureSupplier().handle { result, error ->
+      if (result != null) other.complete(result)
+      if (error != null) {
+        if (isCancellation(error)) handleToOtherIfCancelled(futureSupplier, other)
+        other.completeExceptionally(error.cause)
+      }
+    }
   }
 
   fun isCancellation(error: Throwable): Boolean {
@@ -55,6 +55,28 @@ object GithubAsyncUtil {
            || error is InterruptedException
            || error.cause?.let(::isCancellation) ?: false
   }
+}
+
+fun <T> ProgressManager.submitBackgroundTask(project: Project,
+                                             title: String,
+                                             canBeCancelled: Boolean,
+                                             progressIndicator: ProgressIndicator,
+                                             process: (indicator: ProgressIndicator) -> T): CompletableFuture<T> {
+  val future = CompletableFuture<T>()
+  runProcessWithProgressAsynchronously(object : Task.Backgroundable(project, title, canBeCancelled) {
+    override fun run(indicator: ProgressIndicator) {
+      future.complete(process(indicator))
+    }
+
+    override fun onCancel() {
+      future.cancel(true)
+    }
+
+    override fun onThrowable(error: Throwable) {
+      future.completeExceptionally(error)
+    }
+  }, progressIndicator)
+  return future
 }
 
 fun <T> CompletableFuture<T>.handleOnEdt(handler: (T?, Throwable?) -> Unit): CompletableFuture<Unit> =

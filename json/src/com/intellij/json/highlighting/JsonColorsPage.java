@@ -3,12 +3,13 @@ package com.intellij.json.highlighting;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonLanguage;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
-import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.*;
 /**
  * @author Mikhail Golubev
  */
-public class JsonColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
+public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable {
   private static final Map<String, TextAttributesKey> ourAdditionalHighlighting = ImmutableMap.of("propertyKey", JSON_PROPERTY_KEY);
 
   private static final AttributesDescriptor[] ourAttributeDescriptors = new AttributesDescriptor[]{
@@ -101,5 +102,21 @@ public class JsonColorsPage implements ColorSettingsPage, DisplayPrioritySortabl
   @Override
   public DisplayPriority getPriority() {
     return DisplayPriority.LANGUAGE_SETTINGS;
+  }
+
+  @Override
+  public boolean isRainbowType(TextAttributesKey type) {
+    return JSON_PROPERTY_KEY.equals(type)
+      || JSON_BRACES.equals(type)
+      || JSON_BRACKETS.equals(type)
+      || JSON_STRING.equals(type)
+      || JSON_NUMBER.equals(type)
+      || JSON_KEYWORD.equals(type);
+  }
+
+  @Nullable
+  @Override
+  public Language getLanguage() {
+    return JsonLanguage.INSTANCE;
   }
 }

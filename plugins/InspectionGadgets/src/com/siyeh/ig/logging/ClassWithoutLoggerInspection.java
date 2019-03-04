@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,22 @@
  */
 package com.siyeh.ig.logging;
 
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.JavaLoggingUtils;
+import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -34,6 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class ClassWithoutLoggerInspection extends BaseInspection {
 
@@ -42,28 +49,39 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
    * @noinspection PublicField
    */
   @NonNls
-  public String loggerNamesString = "java.util.logging.Logger" + ',' +
-                                    "org.slf4j.Logger" + ',' +
-                                    "org.apache.commons.logging.Log" + ',' +
-                                    "org.apache.log4j.Logger";
+  public String loggerNamesString = StringUtil.join(JavaLoggingUtils.DEFAULT_LOGGERS, ",");
   /**
    * @noinspection PublicField
    */
   public boolean ignoreSuperLoggers = false;
 
+  @SuppressWarnings("PublicField") public final ExternalizableStringSet annotations = new ExternalizableStringSet();
+  @SuppressWarnings("PublicField") public final ExternalizableStringSet ignoredClasses = new ExternalizableStringSet("java.lang.Throwable");
+
   public ClassWithoutLoggerInspection() {
-    parseString(this.loggerNamesString, this.loggerNames);
+    parseString(loggerNamesString, loggerNames);
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    final JComponent panel = new JPanel(new BorderLayout());
-    final ListTable table = new ListTable(new ListWrappingTableModel(loggerNames, InspectionGadgetsBundle.message("logger.class.name")));
-    final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.logger.class"));
+    final JPanel loggerPanel = UiUtils.createTreeClassChooserList(loggerNames, InspectionGadgetsBundle.message("logger.class.name"),
+                                                                 InspectionGadgetsBundle.message("choose.logger.class"));
+    final JPanel annotationsListControl =
+      SpecialAnnotationsUtil.createSpecialAnnotationsListControl(annotations,
+                                                                 InspectionGadgetsBundle.message("ignore.classes.annotated.by"));
+    final JPanel ignoredClassesPanel =
+      UiUtils.createTreeClassChooserList(ignoredClasses, InspectionGadgetsBundle.message("ignored.class.hierarchies.border.title"),
+                                         InspectionGadgetsBundle.message("choose.class.hierarchy.to.ignore.title"));
     final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message("super.class.logger.option"), this, "ignoreSuperLoggers");
-    panel.add(tablePanel, BorderLayout.CENTER);
+
+    final JComponent panel = new JPanel(new BorderLayout());
+    panel.add(ignoredClassesPanel, BorderLayout.CENTER);
     panel.add(checkBox, BorderLayout.SOUTH);
-    return panel;
+    final JBTabbedPane tabs = new JBTabbedPane(SwingConstants.TOP);
+    tabs.add("Loggers", ScrollPaneFactory.createScrollPane(loggerPanel, true));
+    tabs.add("Ignored classes", ScrollPaneFactory.createScrollPane(panel, true));
+    tabs.add("Annotations", ScrollPaneFactory.createScrollPane(annotationsListControl, true));
+    return tabs;
   }
 
   @Override
@@ -87,7 +105,9 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
   @Override
   public void writeSettings(@NotNull Element element) throws WriteExternalException {
     loggerNamesString = formatString(loggerNames);
-    super.writeSettings(element);
+    defaultWriteSettings(element, "annotations", "ignoredClasses");
+    annotations.writeSettings(element, "annotations");
+    ignoredClasses.writeSettings(element, "ignoredClasses");
   }
 
   @Override
@@ -99,31 +119,21 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      //no recursion to avoid drilldown
-      if (aClass.isInterface() || aClass.isEnum() ||
-          aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType() || aClass.getContainingClass() != null) {
         return;
       }
-      if (aClass instanceof PsiTypeParameter ||
-          aClass instanceof PsiAnonymousClass) {
+      if (aClass instanceof PsiTypeParameter || aClass instanceof PsiAnonymousClass) {
         return;
       }
-      if (aClass.getContainingClass() != null) {
+      if (ignoredClasses.stream().anyMatch(ignoredClass -> InheritanceUtil.isInheritor(aClass, ignoredClass))) {
         return;
       }
-      final PsiField[] fields;
-      if (ignoreSuperLoggers) {
-        fields = aClass.getAllFields();
+      if (AnnotationUtil.isAnnotated(aClass, annotations, AnnotationUtil.CHECK_EXTERNAL | AnnotationUtil.CHECK_HIERARCHY)) {
+        return;
       }
-      else {
-        fields = aClass.getFields();
-      }
-      for (PsiField field : fields) {
-        if (isLogger(field)) {
-          if (PsiUtil.isAccessible(field, aClass, aClass)) {
-            return;
-          }
-        }
+      final PsiField[] fields = ignoreSuperLoggers ? aClass.getAllFields() : aClass.getFields();
+      if (Stream.of(fields).anyMatch(field -> isLogger(field) && PsiUtil.isAccessible(field, aClass, aClass))) {
+        return;
       }
       registerClassError(aClass);
     }

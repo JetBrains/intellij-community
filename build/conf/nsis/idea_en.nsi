@@ -1,5 +1,10 @@
+; Installation pages headers
+LangString choose_install_location  ${LANG_ENGLISH} "  Choose Install Location"
+LangString choose_start_menu_folder ${LANG_ENGLISH} "  Choose Start Menu Folder"
+LangString installing_product ${LANG_ENGLISH} "  Installing"
+
 ; Installation Options page
-LangString installation_options ${LANG_ENGLISH} "Installation Options"
+LangString installation_options ${LANG_ENGLISH} "  Installation Options"
 LangString installation_options_prompt ${LANG_ENGLISH} "Configure your ${MUI_PRODUCT} installation"
 LangString create_desktop_shortcut ${LANG_ENGLISH} "Create Desktop Shortcut"
 LangString create_quick_launch_shortcut ${LANG_ENGLISH} "Create Quick Launch Shortcut"
@@ -21,3 +26,4 @@ LangString uninstall_previous_installations_prompt ${LANG_ENGLISH} "Select the $
 LangString uninstaller_relocated ${LANG_ENGLISH} "Uninstall hasn't detected folder of ${MUI_PRODUCT} installation. Probably uninstall.exe was moved from the installation folder."
 LangString empty_or_upgrade_folder ${LANG_ENGLISH} "Please select an empty folder."
 LangString application_running ${LANG_ENGLISH} "$INSTDIR is running. Close the application and retry the installation."
+LangString download_jre_32bit_version ${LANG_ENGLISH} "Download and install JBR x86"

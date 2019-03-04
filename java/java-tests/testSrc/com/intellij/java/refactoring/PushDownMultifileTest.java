@@ -20,27 +20,19 @@ import com.intellij.JavaTestUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
 //push first method from class a.A to class b.B
-public class PushDownMultifileTest extends MultiFileTestCase {
-  @NotNull
-  @Override
-  protected String getTestRoot() {
-    return "/refactoring/pushDown/";
-  }
-
+public class PushDownMultifileTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/pushDown/";
   }
 
   private void doTest() {
@@ -53,11 +45,11 @@ public class PushDownMultifileTest extends MultiFileTestCase {
 
   private void doTest(final boolean fail, final String sourceClassName, final String targetClassName) {
     try {
-      doTest((rootDir, rootAfter) -> {
-        final PsiClass srcClass = myJavaFacade.findClass(sourceClassName, GlobalSearchScope.allScope(myProject));
+      doTest(() -> {
+        final PsiClass srcClass = myFixture.findClass(sourceClassName);
         assertTrue("Source class not found", srcClass != null);
 
-        final PsiClass targetClass = myJavaFacade.findClass(targetClassName, GlobalSearchScope.allScope(myProject));
+        final PsiClass targetClass = myFixture.findClass(targetClassName);
         assertTrue("Target class not found", targetClass != null);
 
         final PsiMethod[] methods = srcClass.getMethods();
@@ -103,11 +95,11 @@ public class PushDownMultifileTest extends MultiFileTestCase {
 
   public void testUsagesInXml() {
     try {
-      doTest((rootDir, rootAfter) -> {
-        final PsiClass srcClass = myJavaFacade.findClass("a.A", GlobalSearchScope.allScope(myProject));
+      doTest(() -> {
+        final PsiClass srcClass = myFixture.findClass("a.A");
         assertTrue("Source class not found", srcClass != null);
 
-        final PsiClass targetClass = myJavaFacade.findClass("b.B", GlobalSearchScope.allScope(myProject));
+        final PsiClass targetClass = myFixture.findClass("b.B");
         assertTrue("Target class not found", targetClass != null);
 
         final PsiField[] fields = srcClass.getFields();

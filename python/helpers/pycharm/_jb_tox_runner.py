@@ -91,7 +91,7 @@ class _Unit2(object):
 
 class _PyTest(object):
     def fix(self, command, bin):
-        if command[0] != "pytest":
+        if command[0] not in ["pytest", "py.test"]:
             return None
         return [bin, os.path.join(helpers_dir, "pytestrunner.py"), "-p", "pytest_teamcity"] + command[1:]
 

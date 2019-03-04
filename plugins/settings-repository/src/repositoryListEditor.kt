@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.ComponentStoreImpl
@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.ComboBoxModelEditor
 import com.intellij.util.ui.ListItemEditor
+import kotlinx.coroutines.runBlocking
 import java.util.*
 import javax.swing.JButton
 
@@ -28,8 +29,8 @@ internal fun createRepositoryListEditor(icsManager: IcsManager): ConfigurableUiE
 
   val deleteButton = JButton("Delete")
   deleteButton.addActionListener {
-    editor.model.selected?.let {
-      editor.model.remove(it)
+    editor.model.selected?.let { selected ->
+      editor.model.remove(selected)
       deleteButton.isEnabled = editor.model.selected != null
     }
   }
@@ -94,7 +95,7 @@ private fun deleteRepository(icsManager: IcsManager) {
       val updater = repositoryManager.fetch(indicator)
       indicator.checkCanceled()
       // ignore result, we don't need to apply it
-      updater.merge()
+      runBlocking { updater.merge() }
       indicator.checkCanceled()
       if (!updater.definitelySkipPush) {
         repositoryManager.push(indicator)

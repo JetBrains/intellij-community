@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.DiffUtil
@@ -38,11 +24,23 @@ import java.awt.Point
 import java.awt.event.MouseEvent
 import java.util.*
 
-abstract class LineStatusTracker<R : Range> constructor(override val project: Project,
-                                                        document: Document,
-                                                        override val virtualFile: VirtualFile,
-                                                        mode: Mode
-) : LineStatusTrackerBase<R>(project, document) {
+interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
+  val project: Project
+  override val virtualFile: VirtualFile
+
+  fun isAvailableAt(editor: Editor): Boolean
+
+  fun scrollAndShowHint(range: Range, editor: Editor)
+  fun showHint(range: Range, editor: Editor)
+
+  fun <T> readLock(task: () -> T): T
+}
+
+abstract class LocalLineStatusTracker<R : Range> constructor(override val project: Project,
+                                                             document: Document,
+                                                             override val virtualFile: VirtualFile,
+                                                             mode: Mode
+) : LineStatusTrackerBase<R>(project, document), LineStatusTracker<R> {
   enum class Mode {
     DEFAULT, SMART, SILENT
   }
@@ -60,7 +58,7 @@ abstract class LineStatusTracker<R : Range> constructor(override val project: Pr
 
 
   @CalledInAwt
-  fun isAvailableAt(editor: Editor): Boolean {
+  override fun isAvailableAt(editor: Editor): Boolean {
     return mode != Mode.SILENT && editor.settings.isLineMarkerAreaShown && !DiffUtil.isDiffEditor(editor)
   }
 
@@ -89,15 +87,15 @@ abstract class LineStatusTracker<R : Range> constructor(override val project: Pr
   }
 
 
-  fun scrollAndShowHint(range: Range, editor: Editor) {
+  override fun scrollAndShowHint(range: Range, editor: Editor) {
     renderer.scrollAndShow(editor, range)
   }
 
-  fun showHint(range: Range, editor: Editor) {
+  override fun showHint(range: Range, editor: Editor) {
     renderer.showAfterScroll(editor, range)
   }
 
-  protected open class LocalLineStatusMarkerRenderer(open val tracker: LineStatusTracker<*>)
+  protected open class LocalLineStatusMarkerRenderer(open val tracker: LocalLineStatusTracker<*>)
     : LineStatusMarkerPopupRenderer(tracker) {
     override fun getEditorFilter(): MarkupEditorFilter? = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
@@ -144,5 +142,9 @@ abstract class LineStatusTracker<R : Range> constructor(override val project: Pr
   internal fun unfreeze() {
     documentTracker.unfreeze(Side.LEFT)
     documentTracker.unfreeze(Side.RIGHT)
+  }
+
+  override fun <T> readLock(task: () -> T): T {
+    return documentTracker.readLock(task)
   }
 }

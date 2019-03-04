@@ -84,7 +84,7 @@ public class QualifyThisArgumentFix extends QualifyThisOrSuperArgumentFix{
           if (!TypeConversionUtil.isAssignable(parameterType, exprType)) {
             final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(parameterType);
             if (psiClass != null && containingClasses.contains(psiClass)) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new QualifyThisArgumentFix((PsiThisExpression)expression, psiClass));
+              QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new QualifyThisArgumentFix(expression, psiClass));
             }
           }
         }

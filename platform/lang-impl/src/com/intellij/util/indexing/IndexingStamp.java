@@ -411,7 +411,7 @@ public class IndexingStamp {
   }
 
   public static void flushCaches() {
-    flushCache((Integer)null);
+    flushCache(null);
   }
 
   public static void flushCache(@Nullable Integer finishedFile) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
@@ -22,6 +22,8 @@ import static com.intellij.util.ObjectUtils.notNull;
  */
 @SuppressWarnings("UseJBColor")
 public class JBColor extends Color {
+  public static final Color PanelBackground = namedColor("Panel.background", 0xffffff);
+
   private static class Lazy {
     private static volatile boolean DARK = UIUtil.isUnderDarcula();
   }
@@ -45,33 +47,30 @@ public class JBColor extends Color {
     func = function;
   }
 
+  @NotNull
   public static JBColor namedColor(@NotNull String propertyName, int defaultValueRGB) {
     return namedColor(propertyName, new Color(defaultValueRGB));
   }
 
 
+  @NotNull
   public static JBColor namedColor(@NotNull final String propertyName, @NotNull final Color defaultColor) {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        Color color = notNull(UIManager.getColor(propertyName),
-                              notNull(findPatternMatch(propertyName), defaultColor));
-        if (UIManager.get(propertyName) == null) {
-          UIManager.put(propertyName, color);
-        }
-        return color;
+    return new JBColor(() -> {
+      Color color = notNull(UIManager.getColor(propertyName),
+                            notNull(findPatternMatch(propertyName), defaultColor));
+      if (UIManager.get(propertyName) == null) {
+        UIManager.put(propertyName, color);
       }
+      return color;
     });
   }
 
   // Let's find if namedColor can be overridden by *.propertyName rule in ui theme and apply it
   // We need to cache calculated results. Cache and rules will be reset after LaF change
-  private static Color findPatternMatch(String name) {
+  private static Color findPatternMatch(@NotNull String name) {
     Object value = UIManager.get("*");
 
     if (value instanceof Map) {
-      Color color = null;
       Map<?,?> map = (Map<?, ?>)value;
       Object o = UIManager.get("*cache");
       if (! (o instanceof Map)) {
@@ -82,8 +81,9 @@ public class JBColor extends Color {
       if (cache.containsKey(name)) {
         return cache.get(name);
       }
+      Color color = null;
       for (Map.Entry<?, ?> entry : map.entrySet()) {
-        if (entry.getKey() instanceof String && name.endsWith(((String)entry.getKey()))) {
+        if (entry.getKey() instanceof String && name.endsWith((String)entry.getKey())) {
           Object result = map.get(entry.getKey());
           if (result instanceof Color) {
             color = (Color)result;
@@ -129,7 +129,7 @@ public class JBColor extends Color {
     return !Lazy.DARK;
   }
 
-  Color getDarkVariant() {
+  private Color getDarkVariant() {
     return darkColor;
   }
 
@@ -172,13 +172,7 @@ public class JBColor extends Color {
   @NotNull
   public Color brighter() {
     if (func != null) {
-      return new JBColor(new NotNullProducer<Color>() {
-        @NotNull
-        @Override
-        public Color produce() {
-          return func.produce().brighter();
-        }
-      });
+      return new JBColor(() -> func.produce().brighter());
     }
     return new JBColor(super.brighter(), getDarkVariant().brighter());
   }
@@ -187,13 +181,7 @@ public class JBColor extends Color {
   @NotNull
   public Color darker() {
     if (func != null) {
-      return new JBColor(new NotNullProducer<Color>() {
-        @NotNull
-        @Override
-        public Color produce() {
-          return func.produce().darker();
-        }
-      });
+      return new JBColor(() -> func.produce().darker());
     }
     return new JBColor(super.darker(), getDarkVariant().darker());
   }
@@ -319,24 +307,12 @@ public class JBColor extends Color {
 
   @NotNull
   public static Color foreground() {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return UIUtil.getLabelForeground();
-      }
-    });
+    return new JBColor(UIUtil::getLabelForeground);
   }
 
   @NotNull
   public static Color background() {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return UIUtil.getListBackground();
-      }
-    });
+    return new JBColor(UIUtil::getListBackground);
   }
 
   @NotNull
@@ -344,22 +320,18 @@ public class JBColor extends Color {
     return namedColor("Borders.color", new JBColor(Gray._192, Gray._50));
   }
 
-  private static final Map<String, Color> defaultThemeColors = new HashMap<String, Color>();
+  private static final Map<String, Color> defaultThemeColors = new HashMap<>();
 
   @NotNull 
   public static Color get(@NotNull final String colorId, @NotNull final Color defaultColor) {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        Color color = defaultThemeColors.get(colorId);
-        if (color != null) {
-          return color;
-        }
-
-        defaultThemeColors.put(colorId, defaultColor);
-        return defaultColor;
+    return new JBColor(() -> {
+      Color color = defaultThemeColors.get(colorId);
+      if (color != null) {
+        return color;
       }
+
+      defaultThemeColors.put(colorId, defaultColor);
+      return defaultColor;
     });
   }
 }

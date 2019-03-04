@@ -26,7 +26,7 @@ import org.jetbrains.jps.model.module.JpsSdkDependency;
  * @author nik
  */
 public class JpsModuleSdkOrderEntry extends JpsSdkOrderEntryBase implements ModuleJdkOrderEntry {
-  public JpsModuleSdkOrderEntry(JpsRootModel rootModel, JpsSdkDependency dependencyElement) {
+  public JpsModuleSdkOrderEntry(@NotNull JpsRootModel rootModel, @NotNull JpsSdkDependency dependencyElement) {
     super(rootModel, dependencyElement);
   }
 

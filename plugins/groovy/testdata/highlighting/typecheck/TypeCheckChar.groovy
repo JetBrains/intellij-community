@@ -34,7 +34,7 @@ class FooChar {
     <error descr="Cannot cast 'Object[]' to 'char'">(char)new Object[0]</error>
     <error descr="Cannot cast 'Closure<Integer>' to 'char'">(char){ int a, int b -> a + b }</error>
     <error descr="Cannot cast 'Matcher' to 'char'">(char) ("aaa" =~ /aaa/)</error>
-    <error descr="Cannot cast 'List' to 'char'">(char)[]</error>
+    <error descr="Cannot cast 'List<Object>' to 'char'">(char)[]</error>
     <error descr="Cannot cast 'String' to 'char'">(char)s</error>
     <error descr="Cannot cast 'String' to 'char'">(char)s1</error>
     <error descr="Cannot cast 'GString' to 'char'">(char)gs</error>
@@ -65,7 +65,7 @@ class FooChar {
     <error descr="Cannot assign 'Object[]' to 'char'">c</error> = new Object[0]
     <error descr="Cannot assign 'Closure<Integer>' to 'char'">c</error> = { int a, int b -> a + b }
     <error descr="Cannot assign 'Matcher' to 'char'">c</error> = "aaa" =~ /aaa/
-    <warning descr="Cannot assign 'List' to 'char'">c</warning> = []
+    <warning descr="Cannot assign 'List<Object>' to 'char'">c</warning> = []
     <error descr="Cannot assign 'String' to 'char'">c</error> = s
     <error descr="Cannot assign 'String' to 'char'">c</error> = s1
     <error descr="Cannot assign 'GString' to 'char'">c</error> = gs
@@ -95,7 +95,7 @@ class FooChar {
     char <error descr="Cannot assign 'Object[]' to 'char'">c18</error> = new Object[0]
     char <error descr="Cannot assign 'Closure<Integer>' to 'char'">c19</error> = { int a, int b -> a + b }
     char <error descr="Cannot assign 'Matcher' to 'char'">c20</error> = "aaa" =~ /aaa/
-    char <warning descr="Cannot assign 'List' to 'char'">c21</warning> = []
+    char <warning descr="Cannot assign 'List<Object>' to 'char'">c21</warning> = []
     char <error descr="Cannot assign 'String' to 'char'">c22</error> = s
     char <error descr="Cannot assign 'String' to 'char'">c23</error> = s1
     char <error descr="Cannot assign 'GString' to 'char'">c24</error> = gs
@@ -126,7 +126,7 @@ class FooChar {
       case 18: <error descr="Cannot return 'Object[]' from method returning 'char'">return</error> new Object[0]
       case 19: <error descr="Cannot return 'Closure<Integer>' from method returning 'char'">return</error> { int a, int b -> a + b }
       case 20: <error descr="Cannot return 'Matcher' from method returning 'char'">return</error> "aaa" =~ /aaa/
-      case 21: <error descr="Cannot return 'List' from method returning 'char'">return</error> []
+      case 21: <error descr="Cannot return 'List<Object>' from method returning 'char'">return</error> []
       case 22: <error descr="Cannot return 'String' from method returning 'char'">return</error> s
       case 23: <error descr="Cannot return 'String' from method returning 'char'">return</error> s1
       case 24: <error descr="Cannot return 'GString' from method returning 'char'">return</error> gs

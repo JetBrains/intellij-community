@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.google.gson.stream.JsonWriter;
@@ -23,6 +9,7 @@ import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Ivan Chirkov
@@ -60,11 +47,9 @@ public class BundledPluginsLister extends ApplicationStarterEx {
         IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
 
         List<String> modules = Arrays.stream(plugins)
-                                     .filter(IdeaPluginDescriptorImpl.class::isInstance)
-                                     .filter(plugin -> ((IdeaPluginDescriptorImpl)plugin).getModules() != null)
-                                     .flatMap(plugin -> ((IdeaPluginDescriptorImpl)plugin).getModules().stream())
-                                     .sorted()
-                                     .collect(Collectors.toList());
+          .flatMap(it -> it instanceof IdeaPluginDescriptorImpl ? ((IdeaPluginDescriptorImpl)it).getModules().stream() : Stream.empty())
+          .sorted()
+          .collect(Collectors.toList());
 
         List<String> pluginIds = Arrays.stream(plugins)
                                        .map(plugin -> plugin.getPluginId().getIdString())

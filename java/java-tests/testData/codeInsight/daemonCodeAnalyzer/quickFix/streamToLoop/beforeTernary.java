@@ -1,4 +1,4 @@
-// "Replace Stream API chain with loop" "false"
+// "Replace Stream API chain with loop" "true"
 
 import java.util.Arrays;
 import java.util.List;

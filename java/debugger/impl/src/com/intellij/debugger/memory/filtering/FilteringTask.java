@@ -16,9 +16,9 @@
 package com.intellij.debugger.memory.filtering;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.memory.ui.JavaReferenceInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XExpression;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -54,18 +54,18 @@ public class FilteringTask implements Runnable {
     myCallback.started(myValues.size());
     int proceedCount;
     for (proceedCount = 0; proceedCount < myValues.size() && !myIsCancelled; proceedCount++) {
-      Value value = myValues.get(proceedCount);
-      CheckingResult result = myChecker.check(value);
+      JavaReferenceInfo info = myValues.get(proceedCount);
+      CheckingResult result = myChecker.check(info.getObjectReference());
       FilteringTaskCallback.Action action = FilteringTaskCallback.Action.CONTINUE;
       switch (result.getResult()) {
         case MATCH:
-          action = myCallback.matched(value);
+          action = myCallback.matched(info);
           break;
         case NO_MATCH:
-          action = myCallback.notMatched(value);
+          action = myCallback.notMatched(info);
           break;
         case ERROR:
-          action = myCallback.error(value, result.getFailureDescription());
+          action = myCallback.error(info, result.getFailureDescription());
           break;
       }
 
@@ -85,6 +85,7 @@ public class FilteringTask implements Runnable {
 
   public interface ValuesList {
     int size();
-    Value get(int index);
+
+    JavaReferenceInfo get(int index);
   }
 }

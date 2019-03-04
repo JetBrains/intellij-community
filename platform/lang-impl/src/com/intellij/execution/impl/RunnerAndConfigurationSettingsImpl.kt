@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.SerializableScheme
 import com.intellij.configurationStore.deserializeAndLoadState
 import com.intellij.configurationStore.serializeStateInto
+import com.intellij.diagnostic.PluginException
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.configuration.PersistentAwareRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.ide.plugins.PluginManagerCore
@@ -183,16 +185,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       configuration.name = element.getAttributeValue(NAME_ATTR) ?: return
     }
 
-    wasSingletonSpecifiedExplicitly = false
-    val singletonStr = element.getAttributeValue(SINGLETON)
-    if (singletonStr.isNullOrEmpty()) {
-      configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
-    }
-    else {
-      wasSingletonSpecifiedExplicitly = true
-      configuration.isAllowRunningInParallel = !singletonStr!!.toBoolean()
-    }
-
     _configuration = configuration
     uniqueId = null
 
@@ -206,7 +198,19 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       }
     }
 
-    deserializeConfigurationFrom(configuration, element)
+    deserializeConfigurationFrom(configuration, element, isTemplate)
+
+    // must be after deserializeConfigurationFrom
+    wasSingletonSpecifiedExplicitly = false
+    val singletonStr = element.getAttributeValue(SINGLETON)
+    if (singletonStr.isNullOrEmpty()) {
+      configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
+    }
+    else {
+      wasSingletonSpecifiedExplicitly = true
+      @Suppress("PlatformExtensionReceiverOfInline")
+      configuration.isAllowRunningInParallel = !singletonStr.toBoolean()
+    }
 
     runnerSettings.loadState(element)
     configurationPerRunnerSettings.loadState(element)
@@ -297,8 +301,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
-    configuration.checkConfiguration()
+    var warning: RuntimeConfigurationWarning?
+
+    warning = doCheck { configuration.checkConfiguration() }
     if (configuration !is RunConfigurationBase<*>) {
+      if (warning != null) {
+        throw warning
+      }
       return
     }
 
@@ -307,11 +316,26 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     runners.addAll(configurationPerRunnerSettings.settings.keys)
     for (runner in runners) {
       if (executor == null || runner.canRun(executor.id, configuration)) {
-        configuration.checkRunnerSettings(runner, runnerSettings.settings.get(runner), configurationPerRunnerSettings.settings.get(runner))
+        val runnerWarning = doCheck { configuration.checkRunnerSettings(runner, runnerSettings.settings[runner], configurationPerRunnerSettings.settings[runner]) }
+        if (warning == null && runnerWarning != null) warning = runnerWarning
       }
     }
     if (executor != null) {
-      configuration.checkSettingsBeforeRun()
+      val beforeRunWarning = doCheck { configuration.checkSettingsBeforeRun() }
+      if (warning == null && beforeRunWarning != null) warning = beforeRunWarning
+    }
+
+    if (warning != null) {
+      throw warning
+    }
+  }
+
+  private inline fun doCheck(crossinline check: () -> Unit): RuntimeConfigurationWarning? {
+    try {
+      check()
+      return null
+    } catch (ex: RuntimeConfigurationWarning) {
+      return ex
     }
   }
 
@@ -385,6 +409,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       else -> null
     }
   }
+
+  fun needsToBeMigrated(): Boolean = (_configuration as? PersistentAwareRunConfiguration)?.needsToBeMigrated() ?: false
 
   private abstract inner class RunnerItem<T>(private val childTagName: String) {
     val settings = THashMap<ProgramRunner<*>, T>()
@@ -483,7 +509,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
         return settings.getOrPut(runner) { createSettings(runner) }
       }
       catch (e: AbstractMethodError) {
-        RunManagerImpl.LOG.error(PluginManagerCore.createPluginException("Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", e, runner.javaClass))
+        PluginException.logPluginError(RunManagerImpl.LOG, "Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", e, runner.javaClass)
         return null
       }
     }
@@ -495,19 +521,17 @@ private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
   get() = ApplicationManager.getApplication().isUnitTestMode || !isShared
 
 fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
-  if (configuration is PersistentStateComponent<*>) {
-    serializeStateInto(configuration, element)
-  }
-  else {
-    configuration.writeExternal(element)
+  when (configuration) {
+    is PersistentStateComponent<*> -> serializeStateInto(configuration, element)
+    is PersistentAwareRunConfiguration -> configuration.writePersistent(element)
+    else -> configuration.writeExternal(element)
   }
 }
 
-fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element) {
-  if (configuration is PersistentStateComponent<*>) {
-    deserializeAndLoadState(configuration, element)
-  }
-  else {
-    configuration.readExternal(element)
+fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element, isTemplate: Boolean = false) {
+  when (configuration) {
+    is PersistentStateComponent<*> -> deserializeAndLoadState(configuration, element)
+    is PersistentAwareRunConfiguration -> configuration.readPersistent(element, isTemplate)
+    else -> configuration.readExternal(element)
   }
 }

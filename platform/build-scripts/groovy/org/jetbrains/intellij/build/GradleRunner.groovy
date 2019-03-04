@@ -68,12 +68,17 @@ class GradleRunner {
     def gradleScript = SystemInfo.isWindows ? 'gradlew.bat' : 'gradlew'
     List<String> command = new ArrayList()
     command.add("${projectDir.absolutePath}/$gradleScript".toString())
+    command.add("-Djava.io.tmpdir=${System.getProperty('java.io.tmpdir')}".toString())
     command.addAll(tasks)
     command.add('--stacktrace')
     if (System.getProperty("intellij.build.use.gradle.daemon", "false").toBoolean()) {
       command.add('--daemon')
     } else {
       command.add('--no-daemon')
+    }
+    def additionalParams = System.getProperty('intellij.build.additional.gradle.parameters')
+    if (additionalParams != null && !additionalParams.isEmpty()) {
+      command.addAll(additionalParams.split(" "))
     }
     def processBuilder = new ProcessBuilder(command).directory(projectDir)
     processBuilder.environment().put("JAVA_HOME", javaHome)

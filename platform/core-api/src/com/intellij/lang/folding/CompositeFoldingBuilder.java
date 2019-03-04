@@ -23,7 +23,6 @@ import java.util.Set;
  *
  * @author Konstantin Bulenkov
  * @see LanguageFolding
- * @since 9.0
  */
 public class CompositeFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
   public static final Key<FoldingBuilder> FOLDING_BUILDER = new Key<>("FOLDING_BUILDER");
@@ -40,7 +39,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
     final Set<TextRange> rangesCoveredByDescriptors = ContainerUtil.newHashSet();
 
     for (FoldingBuilder builder : DumbService.getInstance(root.getProject()).filterByDumbAwareness(myBuilders)) {
-      for (FoldingDescriptor descriptor : LanguageFolding.buildFoldingDescriptors(builder, root, document, quick)) {
+      for (FoldingDescriptor descriptor : LanguageFolding.buildFoldingDescriptorsNoPlaceholderCaching(builder, root, document, quick)) {
         if (rangesCoveredByDescriptors.add(descriptor.getRange())) {
           descriptor.getElement().putUserData(FOLDING_BUILDER, builder);
           descriptors.add(descriptor);

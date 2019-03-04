@@ -1,7 +1,7 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
-  <version major="2019" minor="1" eap="true"/>
+  <version major="2019" minor="2" eap="true"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com" copyrightStart="2010"/>
   <build number="PC-__BUILD__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_core_logo.png" textcolor="ffffff" progressColor="ffffff" progressX="114" progressY="278" progressHeight="3"/>
@@ -10,7 +10,7 @@
   <icon size32="/PyCharmCore32.png" size16="/PyCharmCore16.png" ico="PyCharmCore.ico" svg="/PyCharmCore.svg"/>
   <icon-eap svg="/PyCharmCore-eap.svg"/>
   <package code="__PACKAGE_CODE__"/>
-  <names product="PyCharm" edition="Community Edition" script="charm" motto="Python IDE for Professional Developers"/>
+  <names product="PyCharm" edition="Community Edition" script="pycharm" default-launcher-name="charm" motto="Python IDE for Professional Developers"/>
 
   <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png"/>
   <customize-ide-wizard provider="com.jetbrains.python.PyCharmCustomizeIDEWizardStepsProvider"/>
@@ -22,7 +22,7 @@
   <help webhelp-url="https://www.jetbrains.com/pycharm/webhelp"/>
   <documentation url="https://www.jetbrains.com/pycharm/documentation"/>
   <support url="https://intellij-support.jetbrains.com/hc/en-us/requests/new?ticket_form_id=66731&amp;product=PyCharm&amp;build=$BUILD&amp;os=$OS&amp;timezone=$TIMEZONE"/>
-  <youtrack url="https://youtrack.jetbrains.com/newissue?project=PY&amp;clearDraft=true&amp;c=Affected+versions+$BUILD&amp;description=$DESCR"/>
+  <youtrack url="https://youtrack.jetbrains.com/newissue?project=PY&amp;clearDraft=true&amp;description=$DESCR"/>
   <feedback url="https://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
   <whatsnew url="https://www.jetbrains.com/pycharm/whatsnew/index.html"/>
   <jetbrains-tv url="https://www.youtube.com/playlist?list=PLQ176FUIyIUY5Ii58pzoZhS_3qIBL80nz"/>

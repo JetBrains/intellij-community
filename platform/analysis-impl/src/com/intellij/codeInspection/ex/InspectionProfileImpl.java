@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -116,6 +117,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return inspectionTool;
   }
 
+  @NotNull
   @Override
   public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element) {
     Project project = element == null ? null : element.getProject();
@@ -185,11 +187,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @Override
   @NotNull
   public Element writeScheme() {
-    return writeScheme(true);
-  }
-
-  @NotNull
-  private Element writeScheme(boolean setSchemeStateToUnchanged) {
     if (myDataHolder != null) {
       return myDataHolder.read();
     }
@@ -203,9 +200,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       return new Element("component").setAttribute("name", "InspectionProjectProfileManager").addContent(element);
     }
 
-    if (setSchemeStateToUnchanged) {
-      schemeState = SchemeState.UNCHANGED;
-    }
+    schemeState = SchemeState.UNCHANGED;
     return element;
   }
 
@@ -278,19 +273,19 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  private boolean areSettingsMerged(String toolName, Element inspectionElement) {
+  private boolean areSettingsMerged(@NotNull String toolName, @NotNull Element inspectionElement) {
     //skip merged settings as they could be restored from already provided data
     final InspectionElementsMergerBase merger = getMerger(toolName);
     return merger != null && merger.areSettingsMerged(myUninitializedSettings, inspectionElement);
   }
 
   public void collectDependentInspections(@NotNull InspectionToolWrapper toolWrapper,
-                                          @NotNull Set<InspectionToolWrapper<?, ?>> dependentEntries,
+                                          @NotNull Set<? super InspectionToolWrapper<?, ?>> dependentEntries,
                                           Project project) {
     String mainToolId = toolWrapper.getMainToolId();
 
     if (mainToolId != null) {
-      InspectionToolWrapper dependentEntryWrapper = getInspectionTool(mainToolId, project);
+      InspectionToolWrapper<?,?> dependentEntryWrapper = getInspectionTool(mainToolId, project);
       if (dependentEntryWrapper == null) {
         LOG.error("Can't find main tool: '" + mainToolId+"' which was specified in "+toolWrapper);
         return;
@@ -321,7 +316,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return (T) getUnwrappedTool(shortNameKey.toString(), element);
   }
 
-  public void modifyProfile(@NotNull Consumer<InspectionProfileModifiableModel> modelConsumer) {
+  public void modifyProfile(@NotNull Consumer<? super InspectionProfileModifiableModel> modelConsumer) {
     InspectionProfileModifiableModelKt.edit(this, it -> {
       modelConsumer.consume(it);
       return null;
@@ -351,7 +346,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @Nullable
   public InspectionToolWrapper getInspectionTool(@NotNull String shortName, Project project) {
     final ToolsImpl tools = getToolsOrNull(shortName, project);
-    return tools != null ? tools.getTool() : null;
+    return tools == null ? null : tools.getTool();
   }
 
   public InspectionToolWrapper getToolById(@NotNull String id, @NotNull PsiElement element) {
@@ -363,10 +358,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return null;
   }
 
-  @Nullable
+  @NotNull
   public List<InspectionToolWrapper> findToolsById(@NotNull String id, @NotNull PsiElement element) {
-    List<InspectionToolWrapper> result = null;
     initInspectionTools(element.getProject());
+    List<InspectionToolWrapper> result = null;
     for (Tools toolList : myTools.values()) {
       final InspectionToolWrapper tool = toolList.getInspectionTool(element);
       if (id.equals(tool.getID())) {
@@ -376,7 +371,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         result.add(tool);
       }
     }
-    return result;
+    return ContainerUtil.notNullize(result);
   }
 
   @Nullable
@@ -581,12 +576,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Nullable
-  private static InspectionElementsMergerBase getMerger(String shortName) {
+  private static InspectionElementsMergerBase getMerger(@NotNull String shortName) {
     final InspectionElementsMerger merger = InspectionElementsMerger.getMerger(shortName);
     if (merger instanceof InspectionElementsMergerBase) {
       return (InspectionElementsMergerBase)merger;
     }
-    return merger != null ? new InspectionElementsMergerBase() {
+    return merger == null ? null : new InspectionElementsMergerBase() {
       @NotNull
       @Override
       public String getMergedToolName() {
@@ -598,7 +593,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       public String[] getSourceToolNames() {
         return merger.getSourceToolNames();
       }
-    } : null;
+    };
   }
 
   @Nullable
@@ -607,11 +602,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return myScopesOrder;
   }
 
-  public void setScopesOrder(String[] scopesOrder) {
+  public void setScopesOrder(@NotNull String[] scopesOrder) {
     myScopesOrder = scopesOrder;
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
+  @NotNull
   private HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, @Nullable Project project) {
     return getTools(key.toString(), project).getLevel();
   }
@@ -638,18 +634,18 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     setToolEnabled(toolShortName, true, project);
   }
 
-  public void enableTool(@NotNull String inspectionTool, @NotNull NamedScope namedScope, Project project) {
+  public void enableTool(@NotNull String inspectionTool, @NotNull NamedScope namedScope, @NotNull Project project) {
     getTools(inspectionTool, project).enableTool(namedScope, project);
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
-  public void enableTools(@NotNull List<String> inspectionTools, @NotNull NamedScope namedScope, Project project) {
+  public void enableTools(@NotNull List<String> inspectionTools, @NotNull NamedScope namedScope, @NotNull Project project) {
     for (String inspectionTool : inspectionTools) {
       enableTool(inspectionTool, namedScope, project);
     }
   }
 
-  public void disableTools(@NotNull List<String> inspectionTools, NamedScope namedScope, @NotNull Project project) {
+  public void disableTools(@NotNull List<String> inspectionTools, @NotNull NamedScope namedScope, @NotNull Project project) {
     for (String inspectionTool : inspectionTools) {
       getTools(inspectionTool, project).disableTool(namedScope, project);
     }
@@ -689,8 +685,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
-  public void resetToBase(String toolId, NamedScope scope, Project project) {
-    ToolsImpl tools = myBaseProfile.getToolsOrNull(toolId, null);
+  public void resetToBase(@NotNull String toolId, NamedScope scope, @NotNull Project project) {
+    ToolsImpl tools = myBaseProfile.getToolsOrNull(toolId, project);
     if (tools == null) return;
     InspectionToolWrapper baseDefaultWrapper = tools.getDefaultState().getTool();
     ScopeToolState state = myTools.get(toolId).getTools().stream().filter(s -> scope == s.getScope(project)).findFirst().orElseThrow(IllegalStateException::new);
@@ -863,6 +859,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   public void enableAllTools(Project project) {
     for (InspectionToolWrapper entry : getInspectionTools(null)) {
       enableTool(entry.getShortName(), project);
+    }
+  }
+
+  public void disableAllTools(Project project) {
+    for (InspectionToolWrapper entry : getInspectionTools(null)) {
+      setToolEnabled(entry.getShortName(), false, project);
     }
   }
 }

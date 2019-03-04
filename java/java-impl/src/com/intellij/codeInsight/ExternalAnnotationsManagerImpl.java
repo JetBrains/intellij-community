@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -344,7 +344,13 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     XmlElementFactory elementFactory = XmlElementFactory.getInstance(myPsiManager.getProject());
     XmlTag newItemTag = elementFactory.createTagFromText(createItemTag(ownerName, annotation));
 
-    PsiElement addedElement = rootTag.addAfter(newItemTag, anchor);
+    PsiElement addedElement;
+    if (anchor != null) {
+      addedElement = rootTag.addAfter(newItemTag, anchor);
+    } else {
+      addedElement = rootTag.addSubTag(newItemTag, true);
+    }
+
     if (!(addedElement instanceof XmlTag)) {
       throw new IncorrectOperationException("Failed to add annotation " + annotation + " after " + anchor);
     }
@@ -490,7 +496,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   }
 
   @Override
-  public void elementRenamedOrMoved(@NotNull PsiModifierListOwner element, @NotNull String oldExternalName) { 
+  public void elementRenamedOrMoved(@NotNull PsiModifierListOwner element, @NotNull String oldExternalName) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     try {
       final List<XmlFile> files = findExternalAnnotationsXmlFiles(element);
@@ -535,7 +541,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     }
   }
 
-  
+
   @Override
   public boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner,
                                         @NotNull final String annotationFQN,
@@ -563,7 +569,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           continue;
         }
         if (ReadonlyStatusHandler.getInstance(myPsiManager.getProject())
-          .ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) {
+          .ensureFilesWritable(Collections.singletonList(file.getVirtualFile())).hasReadonlyFiles()) {
           continue;
         }
         final XmlDocument document = file.getDocument();

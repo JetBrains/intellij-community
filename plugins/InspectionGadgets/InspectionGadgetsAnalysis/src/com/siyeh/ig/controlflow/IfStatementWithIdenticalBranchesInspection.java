@@ -192,7 +192,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getName() {
-      return myType.getMessage(myMayChangeSemantics);
+      return myType.getFixMessage(myMayChangeSemantics);
     }
 
     @Override
@@ -444,22 +444,30 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
 
 
   private enum CommonPartType {
-    VARIABLES_ONLY("inspection.common.if.parts.message.variables.only"),
-    WITH_VARIABLES_EXTRACT("inspection.common.if.parts.message.with.variables.extract"),
-    WITHOUT_VARIABLES_EXTRACT("inspection.common.if.parts.message.without.variables.extract"),
-    WHOLE_BRANCH("inspection.common.if.parts.message.whole.branch"),
-    COMPLETE_DUPLICATE("inspection.common.if.parts.message.complete.duplicate"),
-    EXTRACT_SIDE_EFFECTS("inspection.common.if.parts.message.complete.duplicate.side.effect");
+    VARIABLES_ONLY("inspection.common.if.parts.message.variables.only", "inspection.common.if.parts.description.variables.only"),
+    WITH_VARIABLES_EXTRACT("inspection.common.if.parts.message.with.variables.extract", "inspection.common.if.parts.description.with.variables.extract"),
+    WITHOUT_VARIABLES_EXTRACT("inspection.common.if.parts.message.without.variables.extract", "inspection.common.if.parts.description.without.variables.extract"),
+    WHOLE_BRANCH("inspection.common.if.parts.message.whole.branch", "inspection.common.if.parts.description.whole.branch"),
+    COMPLETE_DUPLICATE("inspection.common.if.parts.message.complete.duplicate", "inspection.common.if.parts.description.complete.duplicate"),
+    EXTRACT_SIDE_EFFECTS("inspection.common.if.parts.message.complete.duplicate.side.effect", "inspection.common.if.parts.description.complete.duplicate.side.effect");
 
-    private @NotNull final String myBundleKey;
+    private @NotNull final String myBundleFixKey;
+    private @NotNull final String myBundleDescriptionKey;
 
     @NotNull
-    private String getMessage(boolean mayChangeSemantics) {
+    private String getFixMessage(boolean mayChangeSemantics) {
       String mayChangeSemanticsText = mayChangeSemantics ? " (may change semantics)" : "";
-      return InspectionsBundle.message(myBundleKey, mayChangeSemanticsText);
+      return InspectionsBundle.message(myBundleFixKey, mayChangeSemanticsText);
+    }
+    @NotNull
+    private String getDescriptionMessage(boolean mayChangeSemantics) {
+      String mayChangeSemanticsText = mayChangeSemantics ? " (may change semantics)" : "";
+      return InspectionsBundle.message(myBundleDescriptionKey, mayChangeSemanticsText);
     }
 
-    CommonPartType(@NotNull String key) {myBundleKey = key;}
+    CommonPartType(@NotNull String key, @NotNull String bundleDescriptionKey) {myBundleFixKey = key;
+      myBundleDescriptionKey = bundleDescriptionKey;
+    }
   }
 
   @Nullable
@@ -628,7 +636,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       if (implicitElse == null) return null;
       CommonPartType type = implicitElse.getType();
       ExtractCommonIfPartsFix fix = new ExtractCommonIfPartsFix(type, false, isOnTheFly);
-      return new IfInspectionResult(ifStatement.getFirstChild(), true, fix, type.getMessage(false));
+      return new IfInspectionResult(ifStatement.getFirstChild(), true, fix, type.getDescriptionMessage(false));
     }
   }
 
@@ -806,13 +814,15 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
                                                 boolean isOnTheFly) {
       ThenElse thenElse = from(ifStatement, thenBranch, elseBranch, isOnTheFly);
       if (thenElse == null) return null;
+      boolean isNotInCodeBlock = !(ifStatement.getParent() instanceof PsiCodeBlock);
       boolean mayChangeSemantics = thenElse.myMayChangeSemantics;
       CommonPartType type = thenElse.myCommonPartType;
       ExtractCommonIfPartsFix fix = new ExtractCommonIfPartsFix(type, mayChangeSemantics, isOnTheFly);
-      PsiElement elementToHighlight = mayChangeSemantics ? ifStatement : ifStatement.getFirstChild();
+      boolean isInfoLevel = mayChangeSemantics || isNotInCodeBlock;
+      PsiElement elementToHighlight = isInfoLevel ? ifStatement : ifStatement.getFirstChild();
       if (type == CommonPartType.VARIABLES_ONLY && !isOnTheFly) return null;
-      return new IfInspectionResult(elementToHighlight, type != CommonPartType.WITH_VARIABLES_EXTRACT && !mayChangeSemantics, fix,
-                                    type.getMessage(mayChangeSemantics));
+      return new IfInspectionResult(elementToHighlight, type != CommonPartType.WITH_VARIABLES_EXTRACT && !isInfoLevel, fix,
+                                    type.getDescriptionMessage(mayChangeSemantics));
     }
 
     private static void tryAppendHeadPartsToTail(List<? extends ExtractionUnit> headCommonParts,
@@ -1031,7 +1041,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
                                                 boolean isOnTheFly) {
       ElseIf elseIf = from(ifStatement, thenBranch);
       if (elseIf == null) return null;
-      String message = InspectionsBundle.message("inspection.common.if.parts.family.else.if");
+      String message = InspectionsBundle.message("inspection.common.if.parts.family.else.if.description");
       return new IfInspectionResult(ifStatement.getFirstChild(), false, new MergeElseIfsFix(), message);
     }
   }
@@ -1042,7 +1052,6 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     final Map<PsiLocalVariable, String> mySubstitutionTable = new HashMap<>(0); // supposed to use rare
 
     private LocalEquivalenceChecker(Set<PsiLocalVariable> variables) {
-      super(false);
       myLocalVariables = variables;
     }
 

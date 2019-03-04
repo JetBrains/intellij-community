@@ -30,7 +30,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class AnnotateIntentionAction extends BaseIntentionAction implements LowPriorityAction {
-  private static final AnnotationProvider[] PROVIDERS = AnnotationProvider.KEY.getExtensions();
   private AnnotationProvider myAnnotationProvider;
   private boolean mySingleMode;
 
@@ -41,7 +40,7 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
   }
 
   private static StreamEx<AnnotationProvider> availableAnnotations(PsiModifierListOwner owner, Project project) {
-    return StreamEx.of(PROVIDERS)
+    return StreamEx.of(AnnotationProvider.KEY.getExtensionList())
                    .filter(p -> p.isAvailable(owner))
                    .filter(p -> !alreadyAnnotated(owner, p, project));
   }
@@ -105,8 +104,7 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
     assert owner != null;
     if (myAnnotationProvider != null) {
       if (alreadyAnnotated(owner, myAnnotationProvider, project)) return;
-      AddAnnotationFix fix =
-        new AddAnnotationFix(myAnnotationProvider.getName(project), owner, myAnnotationProvider.getAnnotationsToRemove(project));
+      AddAnnotationFix fix = myAnnotationProvider.createFix(owner);
       fix.invoke(project, editor, file);
     }
     else {
@@ -116,9 +114,7 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
         new BaseListPopupStep<AnnotationProvider>(CodeInsightBundle.message("annotate.intention.chooser.title"), annotations) {
           @Override
           public PopupStep onChosen(final AnnotationProvider selectedValue, final boolean finalChoice) {
-            return doFinalStep(() -> {
-              new AddAnnotationFix(selectedValue.getName(project), owner, selectedValue.getAnnotationsToRemove(project)).invoke(project, editor, file);
-            });
+            return doFinalStep(() -> selectedValue.createFix(owner).invoke(project, editor, file));
           }
 
           @Override

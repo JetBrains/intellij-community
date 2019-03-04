@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -25,7 +11,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.tabs.JBEditorTabsBase;
 import com.intellij.ui.tabs.JBTabsPosition;
+import com.intellij.ui.tabs.JBTabsPresentation;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
@@ -37,13 +25,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author pegov
  */
-public class JBEditorTabs extends JBTabsImpl {
+public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
   protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
+  private boolean myAlphabeticalModeChanged = false;
+  @Nullable
+  private Supplier<Color> myEmptySpaceColorCallback;
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
@@ -57,6 +49,7 @@ public class JBEditorTabs extends JBTabsImpl {
         });
       }
     }, parent);
+    setSupportsCompression(true);
   }
 
   @Override
@@ -68,11 +61,6 @@ public class JBEditorTabs extends JBTabsImpl {
       return new ScrollableSingleRowLayout(this);
     }
     return super.createSingleRowLayout();
-  }
-
-  @Override
-  public boolean supportsCompression() {
-    return true;
   }
 
   @Nullable
@@ -170,10 +158,24 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public boolean isAlphabeticalMode() {
+    if (myAlphabeticalModeChanged) {
+      return super.isAlphabeticalMode();
+    }
     return Registry.is(TABS_ALPHABETICAL_KEY);
   }
 
-  public static void setAlphabeticalMode(boolean on) {
+  @Override
+  public JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode) {
+    myAlphabeticalModeChanged = true;
+    return super.setAlphabeticalMode(alphabeticalMode);
+  }
+
+  @Override
+  public void setEmptySpaceColorCallback(@NotNull Supplier<Color> callback) {
+    myEmptySpaceColorCallback = callback;
+  }
+
+  public static void setEditorTabsAlphabeticalMode(boolean on) {
     Registry.get(TABS_ALPHABETICAL_KEY).setValue(on);
   }
 
@@ -206,23 +208,28 @@ public class JBEditorTabs extends JBTabsImpl {
     Rectangle beforeTabs;
     Rectangle afterTabs;
     if (vertical) {
+      int x = r2.x + insets.left;
       int width = maxLength - insets.left - insets.right;
-      beforeTabs = new Rectangle(insets.left, insets.top, width, minOffset - insets.top);
-      afterTabs = new Rectangle(insets.left, maxOffset, width,
-                                r2.height - maxOffset - insets.top - insets.bottom);
+
+      if (getTabsPosition() == JBTabsPosition.right) {
+        x = r2.width - width - insets.left + getActiveTabUnderlineHeight();
+      } else {
+        width -= getActiveTabUnderlineHeight();
+      }
+
+      beforeTabs = new Rectangle(x, insets.top, width, minOffset - insets.top);
+      afterTabs = new Rectangle(x, maxOffset, width, r2.height - maxOffset - insets.top - insets.bottom);
     } else {
       int y = r2.y + insets.top;
       int height = maxLength - insets.top - insets.bottom;
       if (getTabsPosition() == JBTabsPosition.bottom) {
         y = r2.height - height - insets.top + getActiveTabUnderlineHeight();
       } else {
-        height++;
         height -= getActiveTabUnderlineHeight();
       }
-      y--;
 
+      beforeTabs = new Rectangle(insets.left, y, minOffset, height);
       afterTabs = new Rectangle(maxOffset, y, r2.width - maxOffset - insets.left - insets.right, height);
-      beforeTabs = new Rectangle(0, y, minOffset, height);
     }
 
     getPainter().doPaintBackground(g2d, clip, vertical, afterTabs);
@@ -232,6 +239,9 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   protected Color getEmptySpaceColor() {
+    if (myEmptySpaceColorCallback != null) {
+      return myEmptySpaceColorCallback.get();
+    }
     return getPainter().getEmptySpaceColor();
   }
 

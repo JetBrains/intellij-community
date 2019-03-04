@@ -24,8 +24,10 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
+@CompileStatic
 class CopyReferenceActionTest extends LightCodeInsightFixtureTestCase {
   private int oldSetting
 

@@ -1,1 +1,4 @@
+deprecated: antInstallation -> /icons/build.svg; to be removed in IDEA 2020 - use AntIcons.Build
+deprecated: message.png -> com.intellij.icons.AllIcons@/general/information.svg; to be removed in IDEA 2020 - use AllIcons.General.Information
 deprecated: properties.png -> com.intellij.icons.AllIcons@/actions/properties.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Properties
+deprecated: target.png -> com.intellij.icons.AllIcons@/nodes/target.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Target

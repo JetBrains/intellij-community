@@ -56,6 +56,10 @@ public class Messages {
     if (application != null) {
       LOG.assertTrue(application.isUnitTestMode(), "This method is available for tests only");
     }
+    if (newValue == null) {
+      ourTestImplementation = TestDialog.DEFAULT;
+      throw new IllegalArgumentException("Attempt to set TestDialog to null: default implementation was restored instead");
+    }
     TestDialog oldValue = ourTestImplementation;
     ourTestImplementation = newValue;
     return oldValue;
@@ -66,6 +70,10 @@ public class Messages {
     Application application = ApplicationManager.getApplication();
     if (application != null) {
       LOG.assertTrue(application.isUnitTestMode(), "This method is available for tests only");
+    }
+    if (newValue == null) {
+      ourTestInputImplementation = TestInputDialog.DEFAULT;
+      throw new IllegalArgumentException("Attempt to set TestInputDialog to null: default implementation was restored instead");
     }
     TestInputDialog oldValue = ourTestInputImplementation;
     ourTestInputImplementation = newValue;
@@ -177,7 +185,8 @@ public class Messages {
   @NotNull
   public static Runnable createMessageDialogRemover(@Nullable Project project) {
     Window projectWindow = project == null ? null : WindowManager.getInstance().suggestParentWindow(project);
-    return () -> UIUtil.invokeLaterIfNeeded(() -> makeCurrentMessageDialogGoAway(
+    //noinspection SSBasedInspection
+    return () -> SwingUtilities.invokeLater(() -> makeCurrentMessageDialogGoAway(
       projectWindow != null ? projectWindow.getOwnedWindows() : Window.getWindows()));
   }
 
@@ -1513,6 +1522,24 @@ public class Messages {
     @Override
     protected JComponent createScrollableTextComponent() {
       return new JBScrollPane(myField);
+    }
+
+    @Override
+    protected JComponent createNorthPanel() {
+      return null;
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      JPanel messagePanel = new JPanel(new BorderLayout());
+      if (myMessage != null) {
+        JComponent textComponent = createTextComponent();
+        messagePanel.add(textComponent, BorderLayout.NORTH);
+      }
+
+      myField = createTextFieldComponent();
+      messagePanel.add(createScrollableTextComponent(), BorderLayout.CENTER);
+      return messagePanel;
     }
   }
 

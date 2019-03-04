@@ -83,10 +83,6 @@ public class TreeConflictRefreshablePanel implements Disposable {
   }
 
   public static boolean descriptionsEqual(TreeConflictDescription d1, TreeConflictDescription d2) {
-    if (d1.isPropertyConflict() != d2.isPropertyConflict()) return false;
-    if (d1.isTextConflict() != d2.isTextConflict()) return false;
-    if (d1.isTreeConflict() != d2.isTreeConflict()) return false;
-
     if (!d1.getOperation().equals(d2.getOperation())) return false;
     if (!d1.getConflictAction().equals(d2.getConflictAction())) return false;
     if (!Comparing.equal(d1.getConflictReason(), d2.getConflictReason())) return false;
@@ -100,7 +96,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
   private static boolean compareConflictVersion(ConflictVersion v1, ConflictVersion v2) {
     if (v1 == null && v2 == null) return true;
     if (v1 == null || v2 == null) return false;
-    if (!v1.getKind().equals(v2.getKind())) return false;
+    if (!v1.getNodeKind().equals(v2.getNodeKind())) return false;
     if (!v1.getPath().equals(v2.getPath())) return false;
     if (v1.getPegRevision() != v2.getPegRevision()) return false;
     if (!Comparing.equal(v1.getRepositoryRoot(), v2.getRepositoryRoot())) return false;

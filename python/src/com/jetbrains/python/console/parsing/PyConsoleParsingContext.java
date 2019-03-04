@@ -6,7 +6,6 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
-import com.jetbrains.python.parsing.ParsingScope;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +20,8 @@ public class PyConsoleParsingContext extends ParsingContext {
   public PyConsoleParsingContext(final PsiBuilder builder,
                                  LanguageLevel languageLevel,
                                  StatementParsing.FUTURE futureFlag,
-                                 PythonConsoleData pythonConsoleData, boolean startsWithIPythonSymbol) {
+                                 PythonConsoleData pythonConsoleData,
+                                 boolean startsWithIPythonSymbol) {
     super(builder, languageLevel, futureFlag);
     stmtParser = new ConsoleStatementParsing(this, futureFlag, startsWithIPythonSymbol, pythonConsoleData);
     if (pythonConsoleData.isIPythonEnabled()) {
@@ -59,7 +59,10 @@ public class PyConsoleParsingContext extends ParsingContext {
 
     @Override
     public void parseStatement() {
-      if (myStartsWithIPythonSymbol) {
+      if (parseIPythonHelp()) {
+        return;
+      }
+      if (shouldParseIPythonCommand()) {
         parseIPythonCommand();
       }
       else {
@@ -79,49 +82,76 @@ public class PyConsoleParsingContext extends ParsingContext {
       }
     }
 
+    private boolean parseIPythonHelp() {
+      return parseIPythonGlobalHelp() ||
+             parseIPythonSuffixHelp();
+    }
+
+    /**
+     * Parse statements consisting of the single question mark.
+     */
+    private boolean parseIPythonGlobalHelp() {
+      PsiBuilder.Marker ipythonHelp = myBuilder.mark();
+      if (myBuilder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
+        myBuilder.advanceLexer();
+        if (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK || myBuilder.eof()) {
+          myBuilder.advanceLexer();
+          ipythonHelp.done(PyElementTypes.EMPTY_EXPRESSION);
+          return true;
+        }
+      }
+      ipythonHelp.rollbackTo();
+      return false;
+    }
+
+    /**
+     * Parse statements ending with a question mark.
+     */
+    private boolean parseIPythonSuffixHelp() {
+      PsiBuilder.Marker ipythonHelp = myBuilder.mark();
+      while (myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK &&
+             myBuilder.getTokenType() != PyTokenTypes.LINE_BREAK &&
+             !myBuilder.eof()
+      ) {
+        myBuilder.advanceLexer();
+      }
+      if (myBuilder.rawLookup(-1) != PyConsoleTokenTypes.QUESTION_MARK) {
+        ipythonHelp.rollbackTo();
+        return false;
+      }
+      int lookupIndex = -2;
+      if (myBuilder.rawLookup(lookupIndex) == PyConsoleTokenTypes.QUESTION_MARK) {
+        --lookupIndex;
+      }
+      if (myBuilder.rawLookup(lookupIndex) == PyTokenTypes.MULT) {
+        ipythonHelp.rollbackTo();
+        parseIPythonCommand();
+        return true;
+      }
+      if (myBuilder.rawLookup(lookupIndex) != PyTokenTypes.IDENTIFIER) {
+        myBuilder.error("Help request must follow the name");
+      }
+      ipythonHelp.done(PyElementTypes.EMPTY_EXPRESSION);
+      myBuilder.advanceLexer();
+      return true;
+    }
+
+    protected boolean shouldParseIPythonCommand() {
+      return myStartsWithIPythonSymbol;
+    }
+
+    protected boolean continueParseIPythonCommand() {
+      return !myBuilder.eof();
+    }
+
     private void parseIPythonCommand() {
       PsiBuilder.Marker ipythonCommand = myBuilder.mark();
-      while (!myBuilder.eof()) {
+      while (continueParseIPythonCommand()) {
         myBuilder.advanceLexer();
       }
       ipythonCommand.done(PyElementTypes.EMPTY_EXPRESSION);
     }
 
-    @Override
-    protected void checkEndOfStatement() {
-      if (myPythonConsoleData.isIPythonEnabled()) {
-        PsiBuilder builder = myContext.getBuilder();
-        if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
-          builder.advanceLexer();
-        }
-        else if (builder.getTokenType() == PyTokenTypes.SEMICOLON) {
-          final ParsingScope scope = getParsingContext().getScope();
-          if (!scope.isSuite()) {
-            builder.advanceLexer();
-            if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
-              builder.advanceLexer();
-            }
-          }
-        }
-        else if (builder.eof()) {
-          return;
-        }
-        else {
-          if (builder.getTokenType() == PyConsoleTokenTypes.PLING || builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
-            builder.advanceLexer();
-            if (builder.getTokenType() == PyConsoleTokenTypes.PLING || builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
-              builder.advanceLexer();
-            }
-
-            return;
-          }
-          builder.error("End of statement expected");
-        }
-      }
-      else {
-        super.checkEndOfStatement();
-      }
-    }
   }
 
   public static class ConsoleExpressionParsing extends ExpressionParsing {
@@ -138,6 +168,10 @@ public class PyConsoleParsingContext extends ParsingContext {
         PsiBuilder.Marker command = myBuilder.mark();
 
         myBuilder.advanceLexer();
+
+        if (myBuilder.getTokenType() == PyConsoleTokenTypes.PLING) {
+          myBuilder.advanceLexer();
+        }
 
         if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
           myBuilder.advanceLexer();
@@ -158,6 +192,39 @@ public class PyConsoleParsingContext extends ParsingContext {
       else {
         return super.parseExpressionOptional();
       }
+    }
+
+    @Override
+    public boolean parseYieldOrTupleExpression(boolean isTargetExpression) {
+      if (parseIPythonCaptureExpression()) {
+        return true;
+      }
+      else {
+        return super.parseYieldOrTupleExpression(isTargetExpression);
+      }
+    }
+
+    private boolean parseIPythonCaptureExpression() {
+      if (myBuilder.getTokenType() == PyConsoleTokenTypes.PLING) {
+        captureIPythonExpression();
+        return true;
+      }
+      if (myBuilder.getTokenType() == PyTokenTypes.PERC) {
+        if (myBuilder.lookAhead(1) == PyTokenTypes.PERC) {
+          myBuilder.error("Multiline magic can't be used as an expression");
+        }
+        captureIPythonExpression();
+        return true;
+      }
+      return false;
+    }
+
+    private void captureIPythonExpression() {
+      PsiBuilder.Marker mark = myBuilder.mark();
+      while (myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK) {
+        myBuilder.advanceLexer();
+      }
+      mark.done(PyElementTypes.EMPTY_EXPRESSION);
     }
   }
 }

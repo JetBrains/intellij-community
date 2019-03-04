@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.application.options.schemes.SimpleSchemesPanel;
@@ -13,10 +14,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
@@ -27,6 +25,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -40,18 +39,33 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
 
-/*
- * @author: MYakovlev
- */
-
-public class AllFileTemplatesConfigurable implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll,
+public final class AllFileTemplatesConfigurable implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll,
                                                      Configurable.VariableProjectAppLevel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable");
+  private static final Logger LOG = Logger.getInstance(AllFileTemplatesConfigurable.class);
 
   private static final String TEMPLATES_TITLE = IdeBundle.message("tab.filetemplates.templates");
   private static final String INCLUDES_TITLE = IdeBundle.message("tab.filetemplates.includes");
   private static final String CODE_TITLE = IdeBundle.message("tab.filetemplates.code");
   private static final String OTHER_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
+
+  final static class Provider extends ConfigurableProvider {
+    private final Project myProject;
+
+    Provider(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @NotNull
+    @Override
+    public Configurable createConfigurable() {
+      return new AllFileTemplatesConfigurable(myProject);
+    }
+
+    @Override
+    public boolean canCreateConfigurable() {
+      return !PlatformUtils.isDataGrip();
+    }
+  }
 
   private final Project myProject;
   private final FileTemplateManager myManager;
@@ -93,14 +107,14 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   private void onAdd() {
     String ext = "java";
     final List<FileTemplateDefaultExtension> defaultExtensions = FileTemplateDefaultExtension.EP_NAME.getExtensionList();
-    if (defaultExtensions.size() > 0) {
+    if (!defaultExtensions.isEmpty()) {
       ext = defaultExtensions.get(0).value;
     }
     createTemplate(IdeBundle.message("template.unnamed"), ext, "");
   }
 
   @NotNull
-  private FileTemplate createTemplate(@NotNull final String prefName, @NotNull final String extension, @NotNull final String content) {
+  FileTemplate createTemplate(@NotNull final String prefName, @NotNull final String extension, @NotNull final String content) {
     final FileTemplate[] templates = myCurrentTab.getTemplates();
     final FileTemplate newTemplate = FileTemplateUtil.createTemplate(prefName, extension, content, templates);
     myCurrentTab.addTemplate(newTemplate);
@@ -194,7 +208,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     final List<FileTemplateTab> allTabs = new ArrayList<>(Arrays.asList(myTemplatesList, myIncludesList, myCodeTemplatesList));
 
     final List<FileTemplateGroupDescriptorFactory> factories = FileTemplateGroupDescriptorFactory.EXTENSION_POINT_NAME.getExtensionList();
-    if (factories.size() != 0) {
+    if (!factories.isEmpty()) {
       myOtherTemplatesList = new FileTemplateTabAsTree(OTHER_TITLE) {
         @Override
         public void onTemplateSelected() {
@@ -342,7 +356,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     FileTemplate selected = myCurrentTab.getSelectedTemplate();
     if (selected instanceof BundledFileTemplate) {
       if (Messages.showOkCancelDialog(IdeBundle.message("prompt.reset.to.original.template"),
-                                      IdeBundle.message("title.reset.template"), Messages.getQuestionIcon()) !=
+                                      IdeBundle.message("title.reset.template"), "Reset", CommonBundle.getCancelButtonText(), Messages.getQuestionIcon()) !=
           Messages.OK) {
         return;
       }
@@ -606,11 +620,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     myOtherTemplatesList = null;
   }
 
-  @NotNull
-  FileTemplate createNewTemplate(@NotNull String preferredName, @NotNull String extension, @NotNull String text) {
-    return createTemplate(preferredName, extension, text);
-  }
-
   @Override
   @NotNull
   public String getId() {
@@ -631,7 +640,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     });
   }
 
-  void changeScheme(FileTemplatesScheme scheme) {
+  void changeScheme(@NotNull FileTemplatesScheme scheme) {
     if (myEditor != null && myEditor.isModified()) {
       myModified = true;
       try {
@@ -664,6 +673,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     }
   }
 
+  @NotNull
   public FileTemplateManager getManager() {
     return myManager;
   }
@@ -679,7 +689,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   }
 
   private final class SchemesPanel extends SimpleSchemesPanel<FileTemplatesScheme> implements SchemesModel<FileTemplatesScheme> {
-
+    @NotNull
     @Override
     protected AbstractSchemeActions<FileTemplatesScheme> createSchemeActions() {
       return new AbstractSchemeActions<FileTemplatesScheme>(this) {
@@ -703,6 +713,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
           throw new UnsupportedOperationException();
         }
 
+        @NotNull
         @Override
         protected Class<FileTemplatesScheme> getSchemeType() {
           return FileTemplatesScheme.class;

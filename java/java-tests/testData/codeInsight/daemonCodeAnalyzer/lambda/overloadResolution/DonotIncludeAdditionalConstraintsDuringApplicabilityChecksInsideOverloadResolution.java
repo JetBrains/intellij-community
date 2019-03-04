@@ -12,7 +12,7 @@ import java.util.function.Function;
 
 class Test {
   {
-    valueOf(processFirst(<error descr="no instance(s) of type variable(s)  exist so that Integer conforms to char[]">x -> x</error>));
+    valueOf(processFirst(<error descr="no instance(s) of type variable(s) exist so that Integer conforms to char[]">x -> x</error>));
   }
 
   public static <V> V processFirst(Function<Integer,V> f){

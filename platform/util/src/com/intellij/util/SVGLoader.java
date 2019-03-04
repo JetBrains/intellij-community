@@ -2,16 +2,13 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI.ScaleContext;
-import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
-import org.apache.batik.anim.dom.SVGDOMImplementation;
-import org.apache.batik.anim.dom.SVGOMAnimatedLength;
-import org.apache.batik.anim.dom.SVGOMRectElement;
+import org.apache.batik.anim.dom.*;
+import org.apache.batik.bridge.BridgeContext;
+import org.apache.batik.bridge.GVTBuilder;
 import org.apache.batik.bridge.UserAgent;
 import org.apache.batik.dom.AbstractDocument;
 import org.apache.batik.transcoder.SVGAbstractTranscoder;
@@ -20,6 +17,7 @@ import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.ImageTranscoder;
 import org.apache.batik.util.XMLResourceDescriptor;
+import org.apache.xmlgraphics.java2d.Dimension2DDouble;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
@@ -28,14 +26,11 @@ import org.w3c.dom.svg.SVGDocument;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 
@@ -46,7 +41,9 @@ public class SVGLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.SVGLoader");
   private static SvgColorPatcher ourColorPatcher = null;
 
-  public static final NotNullValue<Double> MAX_SIZE = new NotNullValue<Double>() {
+  public static final int ICON_DEFAULT_SIZE = 16;
+
+  public static final NotNullValue<Double> ICON_MAX_SIZE = new NotNullValue<Double>() {
     @NotNull
     @Override
     public Double initialize() {
@@ -61,89 +58,29 @@ public class SVGLoader {
     }
   };
 
-  private final TranscoderInput myInput;
-  private final Size mySize;
+  private final TranscoderInput myTranscoderInput;
+  private final double myScale;
+  private final double myOverridenWidth;
+  private final double myOverridenHeight;
   private BufferedImage myImage;
-
-  private static class Size {
-    final double width;
-    final double height;
-
-    static final int FALLBACK_SIZE = 16;
-
-    Size(double width, double height) {
-      this.width = width;
-      this.height = height;
-    }
-
-    Size scale(double scale) {
-      return new Size(width * scale, height * scale);
-    }
-
-    Size scaleToMaxSize() {
-      double w = width;
-      double h = height;
-      if (w > MAX_SIZE.get() || h > MAX_SIZE.get()) {
-        double k = w >= h ? w / MAX_SIZE.get() : h / MAX_SIZE.get();
-        w /= k;
-        h /= k;
-      }
-      return new Size(w, h);
-    }
-
-    @NotNull
-    public static Size parse(@NotNull Document document) {
-      Float width = parseSize(document, "width");
-      Float height = parseSize(document, "height");
-      if (width != null && height != null) {
-        return new Size(width, height);
-      }
-      Size viewBox = parseViewBox(document);
-      if (viewBox != null) {
-        return viewBox;
-      }
-      return new Size(FALLBACK_SIZE, FALLBACK_SIZE);
-    }
-
-    @Nullable
-    private static Float parseSize(@NotNull Document document, @NotNull String sizeName) {
-      String value = document.getDocumentElement().getAttribute(sizeName);
-      if (value.endsWith("px")) {
-        try {
-          return Float.parseFloat(value.substring(0, value.length() - 2));
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-      return null;
-    }
-
-    @Nullable
-    private static Size parseViewBox(@NotNull Document document) {
-      String value = document.getDocumentElement().getAttribute("viewBox");
-      if (value == null || value.isEmpty()) {
-        return null;
-      }
-      List<String> values = new ArrayList<String>(4);
-      for (String token : StringUtil.tokenize(value, ", ")) {
-        values.add(token);
-      }
-
-      if (values.size() == 4) {
-        try {
-          return new Size(Float.parseFloat(values.get(2)),
-                          Float.parseFloat(values.get(3)));
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-      LOG.warn("SVG file " + ObjectUtils.notNull(document.getBaseURI(), "") +
-               " 'viewBox' expected in format: 'x y width height' or 'x, y, width, height'");
-      return null;
-    }
-  }
+  private MyTranscoder myTranscoder;
 
   private class MyTranscoder extends ImageTranscoder {
+    float myOrigDocWidth;
+    float myOrigDocHeight;
+
+    protected MyTranscoder() {
+      width = ICON_DEFAULT_SIZE;
+      height = ICON_DEFAULT_SIZE;
+    }
+
+    @Override
+    protected void setImageSize(float docWidth, float docHeight) {
+      myOrigDocWidth = docWidth;
+      myOrigDocHeight = docHeight;
+      super.setImageSize((float)(docWidth * myScale), (float)(docHeight * myScale));
+    }
+
     @Override
     public BufferedImage createImage(int w, int h) {
       //noinspection UndesirableClassUsage
@@ -165,6 +102,11 @@ public class SVGLoader {
         }
       };
     }
+
+    @Override
+    public BridgeContext createBridgeContext(SVGOMDocument doc) {
+      return super.createBridgeContext(doc);
+    }
   }
 
   public static Image load(@NotNull URL url, float scale) throws IOException {
@@ -176,8 +118,33 @@ public class SVGLoader {
   }
 
   public static Image load(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
+    return load(url, stream, scale, null);
+  }
+
+  static Image load(@Nullable URL url, @NotNull InputStream stream , double scale, @Nullable Dimension2D docSize /*OUT*/)
+    throws IOException
+  {
     try {
-      return new SVGLoader(url, stream, scale).createImage();
+      SVGLoader loader = new SVGLoader(url, stream, scale);
+      Image img = loader.createImage();
+      if (docSize != null) {
+        docSize.setSize(loader.myTranscoder.myOrigDocWidth, loader.myTranscoder.myOrigDocHeight);
+      }
+      return img;
+    }
+    catch (TranscoderException ex) {
+      if (docSize != null) docSize.setSize(0, 0);
+      throw new IOException(ex);
+    }
+  }
+
+  /**
+   * Loads an image with the specified {@code width} and {@code height} (in user space). Size specified in svg file is ignored.
+   */
+  public static Image load(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx, double width, double height) throws IOException {
+    try {
+      double s = ctx.getScale(PIX_SCALE);
+      return new SVGLoader(url, stream, width * s, height * s, 1).createImage();
     }
     catch (TranscoderException ex) {
       throw new IOException(ex);
@@ -185,31 +152,52 @@ public class SVGLoader {
   }
 
   /**
-   * Loads an image with the specified {@code width} and {@code height}. Size specified in svg file is ignored.
+   * Loads a HiDPI-aware image with the specified {@code width} and {@code height} (in user space). Size specified in svg file is ignored.
    */
-  public static Image load(@Nullable URL url, @NotNull InputStream stream, double width, double height) throws IOException {
-    try {
-      return new SVGLoader(url, stream, width, height, 1).createImage();
-    }
-    catch (TranscoderException ex) {
-      throw new IOException(ex);
-    }
+  public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream , ScaleContext ctx, double width, double height) throws IOException {
+    BufferedImage image = (BufferedImage)load(url, stream, ctx, width, height);
+    //noinspection unchecked
+    return (T)ImageUtil.ensureHiDPI(image, ctx);
   }
 
+  /**
+   * Loads a HiDPI-aware image of the size specified in the svg file.
+   */
   public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream , ScaleContext ctx) throws IOException {
     BufferedImage image = (BufferedImage)load(url, stream, ctx.getScale(PIX_SCALE));
     //noinspection unchecked
     return (T)ImageUtil.ensureHiDPI(image, ctx);
   }
 
-  public static Couple<Integer> loadInfo(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
-    SVGLoader loader = new SVGLoader(url, stream, scale);
-    return Couple.of((int)loader.mySize.width, (int)loader.mySize.height);
+  @SuppressWarnings("SSBasedInspection")
+  public static Dimension2D getDocumentSize(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
+    // In order to get the size we parse the whole document and build a tree ("GVT"), what might be too expensive.
+    // So, to optimize we extract the svg header (possibly prepended with <?xml> header) and parse only it.
+    StringBuilder builder = new StringBuilder(100);
+    byte[] bytes = new byte[3];
+    boolean checkClosingBracket = false;
+    int ch;
+    while((ch = stream.read()) != -1) {
+      builder.append((char)ch);
+      if (ch == '<') {
+        if (stream.read(bytes, 0, 3) == -1) {
+          break;
+        }
+        String str = new String(bytes);
+        builder.append(str);
+        checkClosingBracket = "svg".equals(str);
+      }
+      else if (checkClosingBracket && ch == '>') {
+        return new SVGLoader(url, new ByteArrayInputStream(builder.append("</svg>").toString().getBytes()), scale).getDocumentSize();
+      }
+    }
+    return new Dimension2DDouble(ICON_DEFAULT_SIZE * scale, ICON_DEFAULT_SIZE * scale);
   }
 
   public static double getMaxZoomFactor(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx) throws IOException {
     SVGLoader loader = new SVGLoader(url, stream, ctx.getScale(PIX_SCALE));
-    return Math.min(MAX_SIZE.get() / loader.mySize.width, MAX_SIZE.get() / loader.mySize.height);
+    Dimension2D size = loader.getDocumentSize();
+    return Math.min(ICON_MAX_SIZE.get() / size.getWidth(), ICON_MAX_SIZE.get() / size.getHeight());
   }
 
   private SVGLoader(@Nullable URL url, InputStream stream, double scale) throws IOException {
@@ -234,8 +222,10 @@ public class SVGLoader {
       throw new IOException("document not created");
     }
     patchColors(document);
-    myInput = new TranscoderInput(document);
-    mySize = (width < 0 || height < 0 ? Size.parse(document) : new Size(width, height)).scale(scale);
+    myTranscoderInput = new TranscoderInput(document);
+    myOverridenWidth = width;
+    myOverridenHeight = height;
+    myScale = scale;
   }
 
   private static void patchColors(Document document) {
@@ -250,12 +240,26 @@ public class SVGLoader {
   }
 
   private BufferedImage createImage() throws TranscoderException {
-    Size size = mySize.scaleToMaxSize();
-    MyTranscoder r = new MyTranscoder();
-    r.addTranscodingHint(SVGAbstractTranscoder.KEY_WIDTH, new Float(size.width));
-    r.addTranscodingHint(SVGAbstractTranscoder.KEY_HEIGHT, new Float(size.height));
-    r.transcode(myInput, null);
+    myTranscoder = new MyTranscoder();
+    if (myOverridenWidth != -1) {
+      myTranscoder.addTranscodingHint(SVGAbstractTranscoder.KEY_WIDTH, new Float(myOverridenWidth));
+    }
+    if (myOverridenHeight != -1) {
+      myTranscoder.addTranscodingHint(SVGAbstractTranscoder.KEY_HEIGHT, new Float(myOverridenHeight));
+    }
+    myTranscoder.addTranscodingHint(SVGAbstractTranscoder.KEY_MAX_WIDTH, new Float(ICON_MAX_SIZE.get()));
+    myTranscoder.addTranscodingHint(SVGAbstractTranscoder.KEY_MAX_HEIGHT, new Float(ICON_MAX_SIZE.get()));
+    myTranscoder.transcode(myTranscoderInput, null);
     return myImage;
+  }
+
+  private Dimension2D getDocumentSize() {
+    SVGOMDocument document = (SVGOMDocument)myTranscoderInput.getDocument();
+    BridgeContext ctx = new MyTranscoder().createBridgeContext(document);
+    new GVTBuilder().build(ctx, document);
+    Dimension2D size = ctx.getDocumentSize();
+    size.setSize(size.getWidth() * myScale, size.getHeight() * myScale);
+    return size;
   }
 
   @NotNull

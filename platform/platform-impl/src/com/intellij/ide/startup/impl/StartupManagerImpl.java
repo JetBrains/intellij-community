@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startup.impl;
 
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.internal.statistic.collectors.fus.project.ProjectFsStatsCollector;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -32,6 +34,7 @@ import com.intellij.project.ProjectKt;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
@@ -86,7 +89,8 @@ public class StartupManagerImpl extends StartupManagerEx {
   public synchronized void registerPostStartupActivity(@NotNull Runnable runnable) {
     checkNonDefaultProject();
     LOG.assertTrue(!myPostStartupActivitiesPassed, "Registering post-startup activity that will never be run:" +
-                                                   " disposed=" + myProject.isDisposed() + "; open=" + myProject.isOpen() + "; passed=" + myStartupActivitiesPassed);
+                                                   " disposed=" + myProject.isDisposed() + "; open=" + myProject.isOpen() +
+                                                   "; passed=" + myStartupActivitiesPassed);
     (DumbService.isDumbAware(runnable) ? myDumbAwarePostStartupActivities : myNotDumbAwarePostStartupActivities).add(runnable);
   }
 
@@ -110,7 +114,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     ApplicationManager.getApplication().runReadAction(() -> {
       AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Running Startup Activities");
       try {
-        runActivities(myPreStartupActivities);
+        runActivities(myPreStartupActivities, StartUpMeasurer.Phases.PROJECT_PRE_STARTUP);
 
         // to avoid atomicity issues if runWhenProjectIsInitialized() is run at the same time
         synchronized (this) {
@@ -118,7 +122,7 @@ public class StartupManagerImpl extends StartupManagerEx {
           myStartupActivitiesRunning = true;
         }
 
-        runActivities(myStartupActivities);
+        runActivities(myStartupActivities, StartUpMeasurer.Phases.PROJECT_STARTUP);
 
         synchronized (this) {
           myStartupActivitiesRunning = false;
@@ -147,22 +151,17 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   private void logActivityDuration(AtomicBoolean uiFreezeWarned, StartupActivity extension) {
-    long duration = runAndMeasure(extension);
+    long duration = TimeoutUtil.measureExecutionTime(() -> extension.runActivity(myProject));
 
     Application app = ApplicationManager.getApplication();
     if (duration > 100 && !app.isUnitTestMode()) {
       boolean edt = app.isDispatchThread();
       if (edt && uiFreezeWarned.compareAndSet(false, true)) {
-        LOG.info("Some post-startup activities freeze UI for noticeable time. Please consider making them DumbAware to do them in background under modal progress, or just making them faster to speed up project opening.");
+        LOG.info("Some post-startup activities freeze UI for noticeable time. Please consider making them DumbAware to run them in background" +
+                 " under modal progress, or just making them faster to speed up project opening.");
       }
       LOG.info(extension.getClass().getSimpleName() + " run in " + duration + "ms " + (edt ? "on UI thread" : "under project opening modal progress"));
     }
-  }
-
-  private long runAndMeasure(StartupActivity extension) {
-    long start = System.currentTimeMillis();
-    extension.runActivity(myProject);
-    return System.currentTimeMillis() - start;
   }
 
   // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish
@@ -182,7 +181,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       checkProjectRoots();
     }
 
-    runActivities(myDumbAwarePostStartupActivities);
+    runActivities(myDumbAwarePostStartupActivities, StartUpMeasurer.Phases.PROJECT_DUMB_POST_STARTUP);
 
     DumbService dumbService = DumbService.getInstance(myProject);
     dumbService.runWhenSmart(new Runnable() {
@@ -191,7 +190,7 @@ public class StartupManagerImpl extends StartupManagerEx {
         app.assertIsDispatchThread();
 
         // myDumbAwarePostStartupActivities might be non-empty if new activities were registered during dumb mode
-        runActivities(myDumbAwarePostStartupActivities);
+        runActivities(myDumbAwarePostStartupActivities, StartUpMeasurer.Phases.PROJECT_DUMB_POST_STARTUP);
 
         while (true) {
           List<Runnable> dumbUnaware = takeDumbUnawareStartupActivities();
@@ -268,6 +267,8 @@ public class StartupManagerImpl extends StartupManagerEx {
           new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, text, NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER),
           myProject);
       }
+
+      ProjectFsStatsCollector.caseSensitivity(myProject, actual);
     }
     catch (FileNotFoundException e) {
       LOG.warn(e);
@@ -280,7 +281,10 @@ public class StartupManagerImpl extends StartupManagerEx {
     LocalFileSystem fs = LocalFileSystem.getInstance();
     if (!(fs instanceof LocalFileSystemImpl)) return;
     FileWatcher watcher = ((LocalFileSystemImpl)fs).getFileWatcher();
-    if (!watcher.isOperational()) return;
+    if (!watcher.isOperational()) {
+      ProjectFsStatsCollector.watchedRoots(myProject, -1);
+      return;
+    }
 
     PooledThreadExecutor.INSTANCE.submit(() -> {
       LOG.debug("FW/roots waiting started");
@@ -292,6 +296,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       LOG.debug("FW/roots waiting finished");
 
       Collection<String> manualWatchRoots = watcher.getManualWatchRoots();
+      int pctNonWatched = 0;
       if (!manualWatchRoots.isEmpty()) {
         List<String> nonWatched = new SmartList<>();
         for (VirtualFile root : roots) {
@@ -308,8 +313,11 @@ public class StartupManagerImpl extends StartupManagerEx {
           watcher.notifyOnFailure(message, null);
           LOG.info("unwatched roots: " + nonWatched);
           LOG.info("manual watches: " + manualWatchRoots);
+          pctNonWatched = (int)(100.0 * nonWatched.size() / roots.length);
         }
       }
+
+      ProjectFsStatsCollector.watchedRoots(myProject, pctNonWatched);
     });
   }
 
@@ -343,17 +351,21 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  private static void runActivities(@NotNull List<? extends Runnable> activities) {
+  private static void runActivities(@NotNull List<? extends Runnable> activities, @NotNull String phaseName) {
+    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(phaseName);
     while (!activities.isEmpty()) {
       runActivity(activities.remove(0));
     }
+    measureToken.end();
   }
 
-  private static void runActivity(Runnable runnable) {
+  public static void runActivity(Runnable runnable) {
     ProgressManager.checkCanceled();
-
     try {
       runnable.run();
+    }
+    catch (ServiceNotReadyException e) {
+      LOG.error(new Exception(e));
     }
     catch (ProcessCanceledException e) {
       throw e;

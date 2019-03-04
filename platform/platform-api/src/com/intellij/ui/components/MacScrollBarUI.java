@@ -21,12 +21,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.Alarm;
-import com.intellij.util.Producer;
-import com.intellij.util.ui.RegionPainter;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,7 +50,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   private boolean myTrackHovered;
 
   MacScrollBarUI() {
-    super(14, 15, 11);
+    super(14, 14, 11);
   }
 
   @Override
@@ -60,13 +59,8 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   }
 
   @Override
-  boolean isBorderNeeded(JComponent c) {
-    return !isOpaque(c) && myTrackAnimator.myValue > 0 && myThumbAnimator.myValue > 0;
-  }
-
-  @Override
   boolean isTrackClickable() {
-    return isOpaque(myScrollBar) || (myTrackAnimator.myValue > 0 && myThumbAnimator.myValue > 0);
+    return isOpaque(myScrollBar) || (myTrack.animator.myValue > 0 && myThumb.animator.myValue > 0);
   }
 
   @Override
@@ -78,14 +72,14 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   void onTrackHover(boolean hover) {
     myTrackHovered = hover;
     if (myScrollBar != null && isOpaque(myScrollBar)) {
-      myTrackAnimator.start(hover);
-      myThumbAnimator.start(hover);
+      myTrack.animator.start(hover);
+      myThumb.animator.start(hover);
     }
     else if (hover) {
-      myTrackAnimator.start(true);
+      myTrack.animator.start(true);
     }
     else {
-      myThumbAnimator.start(false);
+      myThumb.animator.start(false);
     }
   }
 
@@ -94,30 +88,28 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   }
 
   @Override
-  void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    if (isBorderNeeded(c)) super.paintTrack(g, x, y, width, height, c);
+  void paintTrack(Graphics2D g, JComponent c) {
+    if (myTrack.animator.myValue > 0 && myThumb.animator.myValue > 0 || isOpaque(c)) super.paintTrack(g, c);
   }
 
   @Override
-  void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
+  void paintThumb(Graphics2D g, JComponent c) {
     if (isOpaque(c)) {
-      RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Thumb.Mac.DARCULA : ScrollPainter.Thumb.Mac.DEFAULT;
-      paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, true);
+      paint(myThumb, g, c, true);
     }
-    else if (myThumbAnimator.myValue > 0) {
-      RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Thumb.Mac.Overlay.DARCULA : ScrollPainter.Thumb.Mac.Overlay.DEFAULT;
-      paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, false);
+    else if (myThumb.animator.myValue > 0) {
+      paint(myThumb, g, c, false);
     }
   }
 
   @Override
   void onThumbMove() {
     if (myScrollBar != null && myScrollBar.isShowing() && !isOpaque(myScrollBar)) {
-      if (!myTrackHovered && myThumbAnimator.myValue == 0) myTrackAnimator.rewind(false);
-      myThumbAnimator.rewind(true);
+      if (!myTrackHovered && myThumb.animator.myValue == 0) myTrack.animator.rewind(false);
+      myThumb.animator.rewind(true);
       myAlarm.cancelAllRequests();
       if (!myTrackHovered) {
-        myAlarm.addRequest(() -> myThumbAnimator.start(false), 700);
+        myAlarm.addRequest(() -> myThumb.animator.start(false), 700);
       }
     }
   }
@@ -165,7 +157,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
       Object object = bar == null ? null : bar.getUI();
       if (object instanceof MacScrollBarUI) {
         MacScrollBarUI ui = (MacScrollBarUI)object;
-        if (0 < ui.myThumbAnimator.myValue) ui.onThumbMove();
+        if (0 < ui.myThumb.animator.myValue) ui.onThumbMove();
       }
     }
   });
@@ -220,7 +212,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     return invoke(name, "new");
   }
 
-  private static <T> T callMac(Producer<? extends T> producer) {
+  private static <T> T callMac(NotNullProducer<? extends T> producer) {
     if (SystemInfo.isMac) {
       NSAutoreleasePool pool = new NSAutoreleasePool();
       try {
@@ -240,7 +232,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     NextPage, JumpToSpot;
 
     private static final Native<Behavior> CURRENT = new Native<Behavior>() {
-      @Nullable
+      @NotNull
       @Override
       public Behavior produce() {
         ID defaults = invoke("NSUserDefaults", "standardUserDefaults");
@@ -288,7 +280,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
         }
       }
 
-      @Nullable
+      @NotNull
       @Override
       public Style produce() {
         ID style = invoke(getObjcClass("NSScroller"), "preferredScrollerStyle");
@@ -315,7 +307,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     };
   }
 
-  private static abstract class Native<T> implements Callback, Runnable, Producer<T> {
+  private static abstract class Native<T> implements Callback, Runnable, NotNullProducer<T> {
     private T myValue;
 
     Native() {

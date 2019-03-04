@@ -1,6 +1,7 @@
 UFile (package = )
     UImportStatement (isOnDemand = false)
     UImportStatement (isOnDemand = false)
+    UImportStatement (isOnDemand = false)
     UClass (name = External)
         UMethod (name = foo)
             UBlockExpression

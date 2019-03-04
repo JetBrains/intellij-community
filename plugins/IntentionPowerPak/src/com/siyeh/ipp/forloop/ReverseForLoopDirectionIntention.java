@@ -20,8 +20,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.JavaPsiMathUtil;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +108,7 @@ public class ReverseForLoopDirectionIntention extends Intention {
     final String negatedSign = ComparisonUtils.getNegatedComparison(sign);
     final StringBuilder conditionText = new StringBuilder();
     final StringBuilder newInitializerText = new StringBuilder();
-    if (VariableAccessUtils.evaluatesToVariable(lhs, variable)) {
+    if (ExpressionUtils.isReferenceTo(lhs, variable)) {
       conditionText.append(variableName);
       conditionText.append(negatedSign);
       if (sign == JavaTokenType.GE) {
@@ -130,7 +130,7 @@ public class ReverseForLoopDirectionIntention extends Intention {
         newInitializerText.append(rhs.getText());
       }
     }
-    else if (VariableAccessUtils.evaluatesToVariable(rhs, variable)) {
+    else if (ExpressionUtils.isReferenceTo(rhs, variable)) {
       if (sign == JavaTokenType.LE) {
         conditionText.append(incrementExpression(initializer, true));
       }

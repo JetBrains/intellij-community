@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.PlatformLayout
@@ -9,18 +9,30 @@ import java.util.function.Consumer
  * @author nik
  */
 abstract class BaseIdeaProperties extends ProductProperties {
-  protected static final List<String> JAVA_API_MODULES = [
+  public static final List<String> JAVA_API_MODULES = [
     "intellij.java.compiler",
     "intellij.java.debugger",
     "intellij.xml.dom",
     "intellij.java.execution",
     "intellij.java.remoteServers",
     "intellij.java.testFramework",
-    "intellij.platform.testFramework.core"
+    "intellij.platform.testFramework.core",
+    "intellij.platform.uast.tests"
   ]
-  protected static final List<String> JAVA_IMPLEMENTATION_MODULES = [
+  public static final List<String> MAIN_JAVA_API_MODULES = [
+    "intellij.java.analysis",
+    "intellij.jvm.analysis",
+    "intellij.java.indexing",
+    "intellij.java.psi",
+    "intellij.java",
+    "intellij.jsp.base",
+    "intellij.jsp",
+    "intellij.platform.uast"
+  ]
+  public static final List<String> JAVA_IMPLEMENTATION_MODULES = [
     "intellij.java.compiler.impl",
     "intellij.java.debugger.impl",
+    "intellij.java.debugger.memory.agent",
     "intellij.xml.dom.impl",
     "intellij.java.execution.impl",
     "intellij.platform.externalSystem.impl",
@@ -31,6 +43,15 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.platform.testFramework",
     "intellij.tools.testsBootstrap",
     "intellij.uiDesigner"
+  ]
+  public static final List<String> MAIN_JAVA_IMPLEMENTATION_MODULES = [
+    "intellij.java.analysis.impl",
+    "intellij.jvm.analysis.impl",
+    "intellij.java.indexing.impl",
+    "intellij.java.psi.impl",
+    "intellij.java.impl",
+    "intellij.jsp.spi",
+    "intellij.java.uast"
   ]
   protected static final List<String> BUNDLED_PLUGIN_MODULES = [
     "intellij.copyright",
@@ -50,7 +71,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.vcs.svn",
     "intellij.vcs.hg",
     "intellij.vcs.github",
-    "intellij.vcs.cvs",
     "intellij.groovy",
     "intellij.junit",
     "intellij.testng",
@@ -72,12 +92,43 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.java.langInjection.jps",
     "intellij.java.debugger.streams",
     "intellij.android.smali",
-    "intellij.statsCollector"
+    "intellij.statsCollector",
+    "intellij.vcs.changeReminder"
+  ]
+  protected static final Map<String, String> CE_CLASS_VERSIONS = [
+    "": "1.8",
+    "lib/idea_rt.jar": "1.3",
+    "lib/forms_rt.jar": "1.4",
+    "lib/annotations.jar": "1.5",
+    "lib/util.jar": "1.8",
+    "lib/rt/debugger-agent.jar": "1.6",
+    "lib/rt/debugger-agent-storage.jar": "1.6",
+    "lib/external-system-rt.jar": "1.6",
+    "lib/jshell-frontend.jar": "1.9",
+    "lib/sa-jdwp": "",  // ignored
+    "plugins/Groovy/lib/groovy_rt.jar": "1.5",
+    "plugins/Groovy/lib/groovy-rt-constants.jar": "1.5",
+    "plugins/coverage/lib/coverage_rt.jar": "1.5",
+    "plugins/junit/lib/junit-rt.jar": "1.3",
+    "plugins/gradle/lib/gradle-tooling-extension-api.jar": "1.6",
+    "plugins/gradle/lib/gradle-tooling-extension-impl.jar": "1.6",
+    "plugins/maven/lib/maven-server-api.jar": "1.6",
+    "plugins/maven/lib/maven2-server-impl.jar": "1.6",
+    "plugins/maven/lib/maven3-server-common.jar": "1.6",
+    "plugins/maven/lib/maven30-server-impl.jar": "1.6",
+    "plugins/maven/lib/maven3-server-impl.jar": "1.6",
+    "plugins/maven/lib/artifact-resolver-m2.jar": "1.6",
+    "plugins/maven/lib/artifact-resolver-m3.jar": "1.6",
+    "plugins/maven/lib/artifact-resolver-m31.jar": "1.6",
+    "plugins/xpath/lib/rt/xslt-rt.jar": "1.4",
+    "plugins/xslt-debugger/lib/xslt-debugger-engine.jar": "1.5",
+    "plugins/xslt-debugger/lib/rt/xslt-debugger-engine-impl.jar": "1.5",
+    "plugins/cucumber-java/lib/cucumber-jvmFormatter.jar": "1.6"
   ]
 
   BaseIdeaProperties() {
     productLayout.mainJarName = "idea.jar"
-    productLayout.searchableOptionsModule = "intellij.java.resources.en"
+    productLayout.moduleExcludes.put("intellij.java.resources.en", "search/searchableOptions.xml")
 
     productLayout.additionalPlatformJars.put("external-system-rt.jar", "intellij.platform.externalSystem.rt")
     productLayout.additionalPlatformJars.put("external-system-impl.jar", "intellij.platform.externalSystem.impl")
@@ -90,33 +141,18 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.
       putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8", "intellij.java.jps.javacRefScanner8"])
 
-    def JAVA_API_JAR = "java-api.jar"
-    def JAVA_IMPL_JAR = "java-impl.jar"
-    productLayout.additionalPlatformJars.putAll(JAVA_API_JAR, [])
-    productLayout.additionalPlatformJars.putAll(JAVA_IMPL_JAR, [])
-
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
-        def JAVA_RESOURCES_JAR = "java_resources_en.jar"
-        withModule("intellij.java.analysis", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.jvm.analysis", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.java.indexing", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.java.psi", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.java", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.jsp.base", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.jsp", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.platform.uast", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-
-        withModule("intellij.java.analysis.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.jvm.analysis.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.java.indexing.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.java.psi.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.java.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.jsp.spi", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.java.uast", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        MAIN_JAVA_API_MODULES.each {
+          withModule(it, "java-api.jar", "java_resources_en.jar")
+        }
+        MAIN_JAVA_IMPLEMENTATION_MODULES.each {
+          withModule(it, "java-impl.jar", "java_resources_en.jar")
+        }
 
         withModule("intellij.java.rt", "idea_rt.jar", null)
         withArtifact("debugger-agent", "rt")
+        withArtifact("debugger-agent-storage", "rt")
         withProjectLibrary("Eclipse")
         withProjectLibrary("jgoodies-common")
         withProjectLibrary("commons-net")
@@ -125,6 +161,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
         withoutProjectLibrary("Ant")
         withoutProjectLibrary("Gradle")
         removeVersionFromProjectLibraryJarNames("jetbrains-annotations")
+        withProjectLibrary("JUnit3")
         removeVersionFromProjectLibraryJarNames("JUnit3") //for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
       }
     } as Consumer<PlatformLayout>
@@ -137,9 +174,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     context.ant.jar(destfile: "$targetDirectory/lib/jdkAnnotations.jar") {
       fileset(dir: "$context.paths.communityHome/java/jdkAnnotations")
-    }
-    context.ant.copy(todir: "$targetDirectory/lib") {
-      fileset(file: "$context.paths.communityHome/jps/lib/optimizedFileManager.jar")
     }
     context.ant.copy(todir: "$targetDirectory/lib/ant") {
       fileset(dir: "$context.paths.communityHome/lib/ant") {

@@ -61,7 +61,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
   }
 
   @Override
-  protected void fillIcons(List<AdditionalIcon> icons) {
+  protected void fillIcons(@NotNull List<? super AdditionalIcon> icons) {
     icons.add(new AdditionalIcon(new ActiveIcon(JBUI.CurrentTheme.ToolWindow.comboTabIcon(true),
                                                 JBUI.CurrentTheme.ToolWindow.comboTabIcon(false))) {
       @NotNull

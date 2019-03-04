@@ -85,15 +85,19 @@ public class InspectionNodeInfo extends JPanel {
     add(StatelessCardLayout.wrap(pane),
         new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                new JBInsets(0, 10, 0, 0), 0, 0));
-    JButton enableButton = new JButton((enabled ? "Disable" : "Enable") + " inspection");
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        InspectionsConfigTreeTable.setToolEnabled(!enabled, currentProfile, toolWrapper.getShortName(), project);
-        tree.getContext().getView().profileChanged();
-        return true;
-      }
-    }.installOn(enableButton);
+
+    JButton enableButton = null;
+    if (currentProfile.getSingleTool() != null) {
+      enableButton = new JButton((enabled ? "Disable" : "Enable") + " inspection");
+      new ClickListener() {
+        @Override
+        public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+          InspectionsConfigTreeTable.setToolEnabled(!enabled, currentProfile, toolWrapper.getShortName(), project);
+          tree.getContext().getView().profileChanged();
+          return true;
+        }
+      }.installOn(enableButton);
+    }
 
     JButton runInspectionOnButton = new JButton(InspectionsBundle.message("run.inspection.on.file.intention.text"));
     new ClickListener() {
@@ -106,7 +110,9 @@ public class InspectionNodeInfo extends JPanel {
 
     JPanel buttons = new JPanel();
     buttons.setLayout(new BoxLayout(buttons, BoxLayout.LINE_AXIS));
-    buttons.add(enableButton);
+    if (enableButton != null) {
+      buttons.add(enableButton);
+    }
     buttons.add(Box.createHorizontalStrut(JBUI.scale(3)));
     buttons.add(runInspectionOnButton);
 

@@ -52,6 +52,10 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
+    if (!EditorModificationUtil.requestWriting(editor)) {
+      return;
+    }
+
     int caretOffset = editor.getCaretModel().getOffset();
     if (editor.isViewer() || editor.getDocument().getRangeGuard(caretOffset, caretOffset) != null) {
       editor.getDocument().fireReadOnlyModificationAttempt();
@@ -84,7 +88,11 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     }
 
     CompletionVariant nextVariant = computeNextVariant(editor, oldPrefix, lastProposedVariant, data, file, fromOtherFiles, false);
-    if (nextVariant == null) return;
+    if (nextVariant == null) {
+      insertStringForEachCaret(editor, oldPrefix, caretOffset - data.startOffset);
+      editor.putUserData(KEY_STATE, null);
+      return;
+    }
 
     RangeMarker start = editor.getDocument().createRangeMarker(data.startOffset, data.startOffset);
     nextVariant.fastenBelts();

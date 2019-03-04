@@ -15,17 +15,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Krasilschikov
@@ -63,8 +62,8 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
     }
 
     // scan folder's children
-    final List<AbstractTreeNode> children = Arrays.stream(directory.getSubdirectories())
-      .map(this::createFolderNode).collect(Collectors.toList());
+    final List<AbstractTreeNode> children =
+      ContainerUtil.map(directory.getSubdirectories(), this::createFolderNode);
 
     for (PsiFile file : directory.getFiles()) {
       processNotDirectoryFile(children, file);

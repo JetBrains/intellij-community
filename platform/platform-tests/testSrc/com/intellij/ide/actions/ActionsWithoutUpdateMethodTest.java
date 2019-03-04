@@ -21,19 +21,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ActionsWithoutUpdateMethodTest extends PlatformTestCase {
+public class ActionsWithoutUpdateMethodTest extends LightPlatformTestCase {
   private static final List<String> PLATFORM_WIDE_ACTIONS = Arrays.asList(
     "TestGestureAction",
     "Synchronize",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,15 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
 
   @Override
   public void tearDown() throws Exception {
-    getUndoManager().setEditorProvider(mySavedCurrentEditorProvider);
-    super.tearDown();
+    try {
+      getUndoManager().setEditorProvider(mySavedCurrentEditorProvider);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override

@@ -7,15 +7,14 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
 /**
  * @author ilyas
  */
-public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParameterListOwner {
+public interface GrClosableBlock extends GrFunctionalExpression, GrCodeBlock {
   GrClosableBlock[] EMPTY_ARRAY = new GrClosableBlock[0];
 
   String OWNER_NAME = "owner";
@@ -33,11 +32,15 @@ public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParameterL
 
   boolean hasParametersSection();
 
+  @Override
   @Nullable
   PsiType getReturnType();
 
+  @NotNull
+  @Override
   GrParameter[] getAllParameters();
 
+  @Override
   @Nullable
   PsiElement getArrow();
 
@@ -49,6 +52,7 @@ public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParameterL
                                      @Nullable final PsiElement lastParent,
                                      @NotNull final PsiElement place);
 
+  @Override
   @Nullable
   PsiType getOwnerType();
 }

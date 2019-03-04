@@ -18,9 +18,9 @@ public class DirectoryInfoImpl extends DirectoryInfo {
   private final VirtualFile sourceRoot;
   private final SourceFolder sourceRootFolder;
 
-  protected final boolean myInModuleSource;
-  protected final boolean myInLibrarySource;
-  protected final boolean myExcluded;
+  private final boolean myInModuleSource;
+  private final boolean myInLibrarySource;
+  private final boolean myExcluded;
   private final String myUnloadedModuleName;
 
   DirectoryInfoImpl(@NotNull VirtualFile root, Module module, VirtualFile contentRoot,
@@ -51,7 +51,7 @@ public class DirectoryInfoImpl extends DirectoryInfo {
     return myRoot.hashCode();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Override
   public String toString() {
     return "DirectoryInfo{" +
            "module=" + getModule() +

@@ -16,7 +16,6 @@
 
 package com.intellij.history.integration;
 
-
 import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;

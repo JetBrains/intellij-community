@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
@@ -10,10 +9,9 @@ import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
@@ -25,7 +23,7 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
   implements GrAnnotationNameValuePair, StubBasedPsiElement<GrNameValuePairStub> {
 
   public GrAnnotationNameValuePairImpl(@NotNull GrNameValuePairStub stub) {
-    super(stub, GroovyElementTypes.ANNOTATION_MEMBER_VALUE_PAIR);
+    super(stub, GroovyStubElementTypes.ANNOTATION_MEMBER_VALUE_PAIR);
   }
 
   public GrAnnotationNameValuePairImpl(@NotNull ASTNode node) {
@@ -83,14 +81,14 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
     GrNameValuePairStub stub = getStub();
     if (stub != null) {
       String text = stub.getValue();
+      if (text == null) {
+        return null;
+      }
       PsiAnnotationMemberValue result = SoftReference.dereference(myDetachedValue);
       if (result == null) {
-        GrAnnotation annotation = GroovyPsiElementFactory.getInstance(getProject()).createAnnotationFromText(
-          "@F(" + text + ")", this
-        );
-        ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
-        PsiAnnotationMemberValue value = annotation.findAttributeValue(null);
-        myDetachedValue = new SoftReference<>(result = value);
+        GrAnnotationNameValuePair attribute = GroovyPsiElementFactory.getInstance(getProject()).createAnnotationAttribute(text, this);
+        ((LightVirtualFile)attribute.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
+        myDetachedValue = new SoftReference<>(result = attribute.getValue());
       }
       return result;
     }

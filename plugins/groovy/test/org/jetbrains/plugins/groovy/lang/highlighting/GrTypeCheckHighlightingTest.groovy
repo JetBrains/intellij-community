@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -67,5 +67,17 @@ def test(MavenArtifactRepository m) {
 
   void 'test parameter with single-character string initializer'() {
     testHighlighting "@groovy.transform.CompileStatic def ff(char c = '\\n') {}"
+  }
+
+  void 'test ambiguous call @CS'() {
+    testHighlighting '''\
+def ff(String s, Object o) {}
+def ff(Object o, String s) {}
+
+@groovy.transform.CompileStatic
+def usage() {
+  ff<error descr="Method call is ambiguous">("", "")</error>
+}
+'''
   }
 }

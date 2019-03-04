@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -43,6 +44,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogDiffHandler;
 import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.changes.GitChangeUtils;
@@ -57,8 +59,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
-import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
-import static com.intellij.diff.DiffRequestFactoryImpl.getTitle;
+import static com.intellij.diff.DiffRequestFactoryImpl.*;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class GitLogDiffHandler implements VcsLogDiffHandler {
@@ -80,7 +81,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
     if (leftPath == null && rightPath == null) return;
 
     if (chooseNotNull(leftPath, rightPath).isDirectory()) {
-      showDiffForDirectory(root, chooseNotNull(leftPath, rightPath), leftHash, rightHash);
+      showDiffForPaths(root, Collections.singleton(chooseNotNull(leftPath, rightPath)), leftHash, rightHash);
     }
     else {
       loadDiffAndShow(new ThrowableComputable<DiffRequest, VcsException>() {
@@ -103,7 +104,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
   public void showDiffWithLocal(@NotNull VirtualFile root, @Nullable FilePath revisionPath, @NotNull Hash revisionHash,
                                 @NotNull FilePath localPath) {
     if (localPath.isDirectory()) {
-      showDiffForDirectory(root, localPath, revisionHash, null);
+      showDiffForPaths(root, Collections.singleton(localPath), revisionHash, null);
     }
     else {
       loadDiffAndShow(new ThrowableComputable<DiffRequest, VcsException>() {
@@ -118,6 +119,33 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
                       },
                       request -> DiffManager.getInstance().showDiff(myProject, request), "Calculating Diff for " + localPath.getName());
     }
+  }
+
+  @Override
+  public void showDiffForPaths(@NotNull VirtualFile root,
+                               @Nullable Collection<FilePath> affectedPaths,
+                               @NotNull Hash leftRevision,
+                               @Nullable Hash rightRevision) {
+    Collection<FilePath> filePaths = affectedPaths != null ? affectedPaths : Collections.singleton(VcsUtil.getFilePath(root));
+    loadDiffAndShow(() -> getDiff(root, filePaths, leftRevision, rightRevision),
+                    (diff) -> {
+                      String dialogTitle = "Changes between " +
+                                           leftRevision.toShortString() +
+                                           " and " +
+                                           (rightRevision == null ? "local version" : rightRevision.toShortString()) +
+                                           " in " +
+                                           getTitleForPaths(root, affectedPaths);
+                      VcsDiffUtil.showChangesDialog(myProject, dialogTitle, ContainerUtil.newArrayList(diff));
+                    },
+                    "Calculating Diff for " +
+                    StringUtil.shortenTextWithEllipsis(StringUtil.join(filePaths, FilePath::getName, ", "), 100, 0));
+  }
+
+  @NotNull
+  private static String getTitleForPaths(@NotNull VirtualFile root, @Nullable Collection<FilePath> filePaths) {
+    if (filePaths == null) return getContentTitle(VcsUtil.getFilePath(root));
+    String joinedPaths = StringUtil.join(filePaths, path -> VcsFileUtil.relativePath(root, path), ", ");
+    return StringUtil.shortenTextWithEllipsis(joinedPaths, 100, 0);
   }
 
   @NotNull
@@ -135,28 +163,15 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
     }
   }
 
-  private void showDiffForDirectory(@NotNull VirtualFile root,
-                                    @NotNull FilePath directoryPath,
-                                    @NotNull Hash leftRevision, @Nullable Hash rightRevision) {
-    loadDiffAndShow(() -> getDiff(root, directoryPath, leftRevision, rightRevision),
-                    (diff) -> {
-                      String dialogTitle = "Changes between " +
-                                           leftRevision.asString() +
-                                           " and " +
-                                           (rightRevision == null ? "local version" : rightRevision.asString()) +
-                                           " in " +
-                                           getTitle(directoryPath, directoryPath, DIFF_TITLE_RENAME_SEPARATOR);
-                      VcsDiffUtil.showChangesDialog(myProject, dialogTitle, ContainerUtil.newArrayList(diff));
-                    }, "Calculating Diff for " + directoryPath.getName());
-  }
-
   @NotNull
-  private Collection<Change> getDiff(@NotNull VirtualFile root, @NotNull FilePath directoryPath,
-                                     @NotNull Hash leftRevision, @Nullable Hash rightRevision) throws VcsException {
+  private Collection<Change> getDiff(@NotNull VirtualFile root,
+                                     @NotNull Collection<FilePath> filePaths,
+                                     @NotNull Hash leftRevision,
+                                     @Nullable Hash rightRevision) throws VcsException {
     if (rightRevision == null) {
-      return GitChangeUtils.getDiffWithWorkingDir(myProject, root, leftRevision.asString(), Collections.singleton(directoryPath), false);
+      return GitChangeUtils.getDiffWithWorkingDir(myProject, root, leftRevision.asString(), filePaths, false);
     }
-    return GitChangeUtils.getDiff(myProject, root, leftRevision.asString(), rightRevision.asString(), Collections.singleton(directoryPath));
+    return GitChangeUtils.getDiff(myProject, root, leftRevision.asString(), rightRevision.asString(), filePaths);
   }
 
   private <T> void loadDiffAndShow(@NotNull ThrowableComputable<T, VcsException> load,

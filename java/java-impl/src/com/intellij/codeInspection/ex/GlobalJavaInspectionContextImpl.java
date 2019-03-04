@@ -4,10 +4,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.GlobalJavaInspectionContext;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
@@ -28,6 +25,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -142,9 +140,20 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
           else if (entry instanceof LibraryOrderEntry) {
             final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
             final Library library = libraryOrderEntry.getLibrary();
-            if (library == null || library.getFiles(OrderRootType.CLASSES).length < library.getUrls(OrderRootType.CLASSES).length) {
+            if (library == null) {
               System.err.println(InspectionsBundle.message("offline.inspections.library.was.not.resolved",
                                                            libraryOrderEntry.getPresentableName(), module.getName()));
+            }
+            else {
+              Set<String> detectedUrls =
+                Arrays.stream(library.getFiles(OrderRootType.CLASSES)).map(file -> file.getUrl()).collect(Collectors.toSet());
+              HashSet<String> declaredUrls = new HashSet<>(Arrays.asList(library.getUrls(OrderRootType.CLASSES)));
+              declaredUrls.removeAll(detectedUrls);
+              if (!declaredUrls.isEmpty()) {
+                System.err.println(InspectionsBundle.message("offline.inspections.library.urls.were.not.resolved",
+                                                             StringUtil.join(declaredUrls, ", "),
+                                                             libraryOrderEntry.getPresentableName(), module.getName()));
+              }
             }
           }
         }
@@ -314,7 +323,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
           };
 
           final DelegatingGlobalSearchScope globalSearchScope = new DelegatingGlobalSearchScope(projectScope) {
-            Set<FileType> fileTypes = javaManager.getLanguages().stream().map(l -> l.getAssociatedFileType()).collect(Collectors.toSet());
+            final Set<FileType> fileTypes = javaManager.getLanguages().stream().map(l -> l.getAssociatedFileType()).collect(Collectors.toSet());
 
             @Override
             public boolean contains(@NotNull VirtualFile file) {
@@ -419,7 +428,12 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   public void performPreRunActivities(@NotNull final List<Tools> globalTools,
                                       @NotNull final List<Tools> localTools,
                                       @NotNull final GlobalInspectionContext context) {
-    getEntryPointsManager(context.getRefManager()).resolveEntryPoints(context.getRefManager());
+    if (globalTools.stream().anyMatch(tools -> {
+      InspectionProfileEntry tool = tools.getTool().getTool();
+      return tool instanceof GlobalInspectionTool && ((GlobalInspectionTool)tool).isGraphNeeded();
+    })) {
+      getEntryPointsManager(context.getRefManager()).resolveEntryPoints(context.getRefManager());
+    }
     // UnusedDeclarationInspection should run first
     for (int i = 0; i < globalTools.size(); i++) {
       InspectionToolWrapper toolWrapper = globalTools.get(i).getTool();

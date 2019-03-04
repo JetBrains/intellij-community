@@ -166,9 +166,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
             (key, value, inputId1) -> {
             },
             (key, value, inputId1) -> {},
-            (key, inputId1) -> {
-              diskKeySet.add(key);
-            }
+            (key, inputId1) -> diskKeySet.add(key)
           );
           removeTransientDataForKeys(inputId, diskKeySet);
         }
@@ -188,7 +186,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   }
 
   @Override
-  public boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException {
+  public boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException {
     final Lock lock = getReadLock();
     lock.lock();
     try {
@@ -279,13 +277,15 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       }
     }
 
+    @NotNull
     @Override
-    protected InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, Map<Key, Value> map) throws IOException {
+    protected InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable Map<Key, Value> map) {
       return new MapInputDataDiffBuilder<>(inputId, map);
     }
 
+    @NotNull
     @Override
-    protected Map<Key, Value> convertToMapValueType(int inputId, Map<Key, Value> map) throws IOException {
+    protected Map<Key, Value> convertToMapValueType(int inputId, @NotNull Map<Key, Value> map) {
       return map;
     }
   }

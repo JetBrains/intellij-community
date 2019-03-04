@@ -63,6 +63,9 @@ public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
       myProcessHandler.destroyProcess();
       Disposer.dispose(myConsole);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

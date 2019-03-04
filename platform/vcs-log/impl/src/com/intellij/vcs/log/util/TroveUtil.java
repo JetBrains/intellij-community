@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.IntIntFunction;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.*;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,8 +43,8 @@ public class TroveUtil {
     return IntStream.range(0, list.size()).map(list::get);
   }
 
-  @NotNull
-  public static Set<Integer> intersect(@NotNull TIntHashSet... sets) {
+  @Nullable
+  public static TIntHashSet intersect(@NotNull TIntHashSet... sets) {
     TIntHashSet result = null;
 
     Arrays.sort(sets, (set1, set2) -> {
@@ -68,8 +56,7 @@ public class TroveUtil {
       result = intersect(result, set);
     }
 
-    if (result == null) return ContainerUtil.newHashSet();
-    return createJavaSet(result);
+    return result;
   }
 
   public static boolean intersects(@NotNull TIntHashSet set1, @NotNull TIntHashSet set2) {
@@ -84,8 +71,9 @@ public class TroveUtil {
     return intersects(set2, set1);
   }
 
+  @Contract("null, null -> null; !null, _ -> !null; _, !null -> !null")
   @Nullable
-  private static TIntHashSet intersect(@Nullable TIntHashSet set1, @Nullable TIntHashSet set2) {
+  public static TIntHashSet intersect(@Nullable TIntHashSet set1, @Nullable TIntHashSet set2) {
     if (set1 == null) return set2;
     if (set2 == null) return set1;
 
@@ -111,7 +99,9 @@ public class TroveUtil {
   }
 
   @NotNull
-  private static Set<Integer> createJavaSet(@NotNull TIntHashSet set) {
+  public static Set<Integer> createJavaSet(@Nullable TIntHashSet set) {
+    if (set == null) return ContainerUtil.newHashSet();
+
     Set<Integer> result = ContainerUtil.newHashSet(set.size());
     set.forEach(value -> {
       result.add(value);
@@ -119,6 +109,16 @@ public class TroveUtil {
     });
     return result;
   }
+
+  @NotNull
+  public static TIntHashSet createTroveSet(@NotNull Set<Integer> set) {
+    TIntHashSet result = new TIntHashSet(set.size());
+    for (int i : set) {
+      result.add(i);
+    }
+    return result;
+  }
+
 
   public static void addAll(@NotNull TIntHashSet where, @NotNull TIntHashSet what) {
     what.forEach(value -> {
@@ -128,6 +128,10 @@ public class TroveUtil {
   }
 
   public static void addAll(@NotNull TIntHashSet where, @NotNull Collection<Integer> what) {
+    what.forEach(value -> where.add(value));
+  }
+
+  public static void addAll(@NotNull Collection<Integer> where, @NotNull TIntHashSet what) {
     what.forEach(value -> where.add(value));
   }
 
@@ -145,8 +149,18 @@ public class TroveUtil {
   }
 
   @NotNull
-  public static <T> List<T> map(@NotNull TIntHashSet set, @NotNull IntFunction<? extends T> function) {
+  public static <T> List<T> map2List(@NotNull TIntHashSet set, @NotNull IntFunction<? extends T> function) {
     return stream(set).mapToObj(function).collect(Collectors.toList());
+  }
+
+  @NotNull
+  public static TIntHashSet map2IntSet(@NotNull TIntHashSet set, @NotNull IntIntFunction function) {
+    TIntHashSet result = new TIntHashSet();
+    set.forEach(it -> {
+      result.add(function.fun(it));
+      return true;
+    });
+    return result;
   }
 
   @NotNull
@@ -168,6 +182,22 @@ public class TroveUtil {
     for (T t : set) {
       result.add(function.applyAsInt(t));
     }
+    return result;
+  }
+
+  @NotNull
+  public static <T> Map<T, TIntHashSet> group(@NotNull TIntHashSet set, @NotNull IntFunction<? extends T> function) {
+    Map<T, TIntHashSet> result = ContainerUtil.newHashMap();
+    set.forEach(it -> {
+      T key = function.apply(it);
+      TIntHashSet values = result.get(key);
+      if (values == null) {
+        values = new TIntHashSet();
+        result.put(key, values);
+      }
+      values.add(it);
+      return true;
+    });
     return result;
   }
 
@@ -220,5 +250,26 @@ public class TroveUtil {
       targetMap.put(key, set);
     }
     set.add(value);
+  }
+
+  public static boolean removeAll(@NotNull TIntHashSet fromWhere, @NotNull TIntHashSet what) {
+    Ref<Boolean> result = new Ref<>(false);
+    what.forEach(it -> {
+      if (fromWhere.remove(it)) {
+        result.set(true);
+      }
+      return true;
+    });
+    return result.get();
+  }
+
+  public static boolean removeAll(@NotNull TIntHashSet fromWhere, @NotNull Set<Integer> what) {
+    boolean result = false;
+    for (int i : what) {
+      if (fromWhere.remove(i)) {
+        result = true;
+      }
+    }
+    return result;
   }
 }

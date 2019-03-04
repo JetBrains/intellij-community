@@ -6,6 +6,6 @@
 
 class A{
   {
-    Foo.<ref>foo();
+    Foo.<caret>foo();
   }
 }

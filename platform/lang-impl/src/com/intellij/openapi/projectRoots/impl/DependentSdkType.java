@@ -19,19 +19,20 @@ import java.util.Arrays;
  */
 public abstract class DependentSdkType extends SdkType {
 
-  public DependentSdkType(@NonNls String name) {
+  public DependentSdkType(@NonNls @NotNull String name) {
     super(name);
   }
 
   /**
    * Checks if dependencies satisfied.
    */
-  protected boolean checkDependency(SdkModel sdkModel) {
+  protected boolean checkDependency(@NotNull SdkModel sdkModel) {
     return ContainerUtil.find(sdkModel.getSdks(), sdk -> isValidDependency(sdk)) != null;
   }
 
-  protected abstract boolean isValidDependency(Sdk sdk);
+  protected abstract boolean isValidDependency(@NotNull Sdk sdk);
 
+  @NotNull
   public abstract String getUnsatisfiedDependencyMessage();
 
   @Override
@@ -54,15 +55,16 @@ public abstract class DependentSdkType extends SdkType {
   }
 
   @Override
+  @NotNull
   public abstract SdkType getDependencyType();
 
-  protected Sdk fixDependency(SdkModel sdkModel, Consumer<Sdk> sdkCreatedCallback) {
+  protected Sdk fixDependency(@NotNull SdkModel sdkModel, @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
     return createSdkOfType(sdkModel, getDependencyType(), sdkCreatedCallback);
   }
 
-  protected static Sdk createSdkOfType(final SdkModel sdkModel,
-                                  final SdkType sdkType,
-                                  final Consumer<? super Sdk> sdkCreatedCallback) {
+  protected static Sdk createSdkOfType(@NotNull SdkModel sdkModel,
+                                       @NotNull SdkType sdkType,
+                                       @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
     final Ref<Sdk> result = new Ref<>(null);
     SdkConfigurationUtil.selectSdkHome(sdkType, home -> {
       String newSdkName = SdkConfigurationUtil.createUniqueSdkName(sdkType, home, Arrays.asList(sdkModel.getSdks()));

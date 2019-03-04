@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup;
 
@@ -12,6 +12,9 @@ import java.util.EventListener;
  * @see Lookup#addLookupListener(LookupListener)
  */
 public interface LookupListener extends EventListener {
+  default void lookupShown(@NotNull LookupEvent event) {
+  }
+
   /*
    * Note: this event comes inside the command that performs inserting of text into the editor and is
    * called before the lookup string is inserted into the document. If any listener returns false,
@@ -38,5 +41,8 @@ public interface LookupListener extends EventListener {
    * background calculation, selection moved by the user, etc.)
    */
   default void uiRefreshed() {
+  }
+
+  default void focusDegreeChanged() {
   }
 }

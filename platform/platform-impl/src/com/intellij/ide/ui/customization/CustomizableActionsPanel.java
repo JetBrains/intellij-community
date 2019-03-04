@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
@@ -30,7 +29,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -246,7 +244,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
@@ -321,18 +319,13 @@ public class CustomizableActionsPanel {
       if (StringUtil.isNotEmpty(path)) {
         Image image = null;
         try {
-          image = ImageLoader.loadFromStream(VfsUtilCore.convertToURL(VfsUtilCore.pathToUrl(path.replace(File.separatorChar,
-                                                                                                         '/'))).openStream());
+          image = ImageLoader.loadCustomIcon(new File(path.replace(File.separatorChar,'/')));
         }
         catch (IOException e) {
           LOG.debug(e);
         }
-        Icon icon = new File(path).exists() && image != null ? new JBImageIcon(image) : null;
+        Icon icon = image != null ? new JBImageIcon(image) : null;
         if (icon != null) {
-          if (icon.getIconWidth() >  EmptyIcon.ICON_18.getIconWidth() || icon.getIconHeight() > EmptyIcon.ICON_18.getIconHeight()) {
-            Messages.showErrorDialog(component, IdeBundle.message("custom.icon.validation.message"), IdeBundle.message("title.choose.action.icon"));
-            return false;
-          }
           node.setUserObject(Pair.create(actionId, icon));
           mySelectedSchema.addIconCustomization(actionId, path);
         }
@@ -358,7 +351,7 @@ public class CustomizableActionsPanel {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
         //noinspection HardCodedStringLiteral
-        return file.getName().endsWith(".png");
+        return file.getName().endsWith(".png") || file.getName().endsWith(".svg");
       }
     };
     textField.addBrowseFolderListener(IdeBundle.message("title.browse.icon"), IdeBundle.message("prompt.browse.icon.for.selected.action"), null,
@@ -657,17 +650,6 @@ public class CustomizableActionsPanel {
       if (e.getPresentation().isEnabled()) {
         e.getPresentation().setEnabled(isSingleSelection());
       }
-    }
-  }
-
-  private class AddGroupAction extends TreeSelectionAction {
-    private AddGroupAction() {
-      super(IdeBundle.message("button.add.group"));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      //todo
     }
   }
 

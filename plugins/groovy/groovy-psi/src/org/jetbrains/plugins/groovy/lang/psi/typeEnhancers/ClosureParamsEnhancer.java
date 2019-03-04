@@ -7,18 +7,18 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,15 +29,15 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
   @Nullable
   @Override
-  protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
-    if (!GroovyConfigUtils.getInstance().isVersionAtLeast(closure, GroovyConfigUtils.GROOVY2_3)) return null;
+  protected PsiType getClosureParameterType(@NotNull GrFunctionalExpression expression, int index) {
+    if (!GroovyConfigUtils.getInstance().isVersionAtLeast(expression, GroovyConfigUtils.GROOVY2_3)) return null;
 
-    final GrParameter[] parameters = closure.getAllParameters();
+    final GrParameter[] parameters = expression.getAllParameters();
     if (containsParametersWithDeclaredType(parameters)) {
       return null;
     }
 
-    List<PsiType[]> fittingSignatures = findFittingSignatures(closure);
+    List<PsiType[]> fittingSignatures = findFittingSignatures(expression);
 
     if (fittingSignatures.size() == 1) {
       PsiType[] expectedSignature = fittingSignatures.get(0);
@@ -48,21 +48,21 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
   }
 
   @NotNull
-  public static List<PsiType[]> findFittingSignatures(GrClosableBlock closure) {
-    GrMethodCall call = findCall(closure);
+  public static List<PsiType[]> findFittingSignatures(@NotNull GrFunctionalExpression expression) {
+    GrMethodCall call = findCall(expression);
     if (call == null) return Collections.emptyList();
 
     GroovyResolveResult variant = call.advancedResolve();
 
-    List<PsiType[]> expectedSignatures = inferExpectedSignatures(variant, call, closure);
+    List<PsiType[]> expectedSignatures = inferExpectedSignatures(variant, call, expression);
 
-    final GrParameter[] parameters = closure.getAllParameters();
+    final GrParameter[] parameters = expression.getAllParameters();
     return ContainerUtil.findAll(expectedSignatures, types -> types.length == parameters.length);
   }
 
   private static List<PsiType[]> inferExpectedSignatures(@NotNull GroovyResolveResult variant,
                                                          @NotNull GrMethodCall call,
-                                                         @NotNull GrClosableBlock closure) {
+                                                         @NotNull GrFunctionalExpression expression) {
     PsiElement element = variant.getElement();
 
     while (element instanceof PsiMirrorElement) element = ((PsiMirrorElement)element).getPrototype();
@@ -70,19 +70,19 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
     PsiParameter param = null;
     if (variant instanceof GroovyMethodResult) {
-      MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
+      GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
       if (candidate != null) {
-        Pair<PsiParameter, PsiType> pair = candidate.getArgumentMapping().get(new ExpressionArgument(closure));
-        if (pair != null) {
-          param = pair.first;
+        ArgumentMapping mapping = candidate.getArgumentMapping();
+        if (mapping != null) {
+          param = mapping.targetParameter(new ExpressionArgument(expression));
         }
       }
     } else {
-      List<Pair<PsiParameter, PsiType>> params = ResolveUtil.collectExpectedParamsByArg(closure, //TODO:Replace with new api
+      List<Pair<PsiParameter, PsiType>> params = ResolveUtil.collectExpectedParamsByArg(expression, //TODO:Replace with new api
                                                                                         new GroovyResolveResult[]{variant},
                                                                                         call.getNamedArguments(),
                                                                                         call.getExpressionArguments(),
-                                                                                        call.getClosureArguments(), closure);
+                                                                                        call.getClosureArguments(), expression);
       if (params.isEmpty()) return Collections.emptyList();
 
       Pair<PsiParameter, PsiType> pair = params.get(0);
@@ -108,10 +108,10 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
     PsiSubstitutor substitutor = null;
     if (variant instanceof GroovyMethodResult) {
-      MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
+      GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
       if (candidate != null) {
         substitutor =
-          new GroovyInferenceSessionBuilder((GrReferenceExpression)call.getInvokedExpression(), candidate)
+          new GroovyInferenceSessionBuilder(call, candidate, variant.getContextSubstitutor())
             .skipClosureIn(call)
             .resolveMode(false)
             .build().inferSubst();

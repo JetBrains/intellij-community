@@ -12,6 +12,22 @@ public class ParameterizedParametersStaticCollectionInspectionTest extends Light
     return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/junit/parameterized";
   }
 
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.addClass("package org.junit.runner;\n" +
+                       "public @interface RunWith {\n" +
+                       "    Class value();\n" +
+                       "}\n");
+    myFixture.addClass("package org.junit.runners;\n" +
+                       "public class Parameterized {" +
+                       "    public @interface Parameters {\n" +
+                       "        String name() default \"{index}\";\n" +
+                       "    }" +
+                       "} ");
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
@@ -27,8 +43,8 @@ public class ParameterizedParametersStaticCollectionInspectionTest extends Light
     doTest();
   }
 
-  public void testWrongsignature() {
-    doTest();
-  }
+  public void testWrongsignature() { doTest(); }
+  public void testWrongsignature1() { doTest(); }
+  public void testWrongsignature2() { doTest(); }
 
 }

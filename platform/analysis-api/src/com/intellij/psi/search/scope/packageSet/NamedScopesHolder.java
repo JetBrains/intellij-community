@@ -1,10 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
@@ -19,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class NamedScopesHolder implements PersistentStateComponent<Element> {
-  private List<NamedScope> myScopes = new ArrayList<>();
+  private NamedScope[] myScopes = NamedScope.EMPTY_ARRAY;
   @NonNls private static final String SCOPE_TAG = "scope";
   @NonNls private static final String NAME_ATT = "name";
   @NonNls private static final String PATTERN_ATT = "pattern";
@@ -31,6 +34,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     myProject = project;
   }
 
+  @NotNull
   public abstract String getDisplayName();
 
   public abstract Icon getIcon();
@@ -49,10 +53,17 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
 
   private final List<ScopeListener> myScopeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  @Deprecated
   public void addScopeListener(@NotNull ScopeListener scopeListener) {
     myScopeListeners.add(scopeListener);
   }
 
+  public void addScopeListener(@NotNull ScopeListener scopeListener, @NotNull Disposable parentDisposable) {
+    myScopeListeners.add(scopeListener);
+    Disposer.register(parentDisposable, () -> myScopeListeners.remove(scopeListener));
+  }
+
+  @Deprecated
   public void removeScopeListener(@NotNull ScopeListener scopeListener) {
     myScopeListeners.remove(scopeListener);
   }
@@ -65,30 +76,33 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
 
   @NotNull
   public NamedScope[] getScopes() {
-    List<NamedScope> scopes = new ArrayList<>();
     List<NamedScope> list = getPredefinedScopes();
+    List<NamedScope> scopes = new ArrayList<>(list.size() + myScopes.length);
     scopes.addAll(list);
-    scopes.addAll(myScopes);
-    return scopes.toArray(new NamedScope[0]);
+    Collections.addAll(scopes, myScopes);
+    return scopes.toArray(NamedScope.EMPTY_ARRAY);
   }
 
   @NotNull
   public NamedScope[] getEditableScopes() {
-    return myScopes.toArray(new NamedScope[0]);
+    return myScopes;
   }
 
   public void removeAllSets() {
-    myScopes.clear();
+    myScopes = NamedScope.EMPTY_ARRAY;
     fireScopeListeners();
   }
 
-  public void setScopes(NamedScope[] scopes) {
-    myScopes = new ArrayList<>(Arrays.asList(scopes));
+  public void setScopes(@NotNull NamedScope[] scopes) {
+    if (ArrayUtil.contains(null, scopes)) {
+      throw new IllegalArgumentException("Must not pass null scopes, got: " + Arrays.toString(scopes));
+    }
+    myScopes = scopes.clone();
     fireScopeListeners();
   }
 
-  public void addScope(NamedScope scope) {
-    myScopes.add(scope);
+  public void addScope(@NotNull NamedScope scope) {
+    myScopes = ArrayUtil.append(myScopes, scope);
     fireScopeListeners();
   }
 
@@ -123,7 +137,8 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return defaultHolder;
   }
 
-  private static Element writeScope(NamedScope scope) {
+  @NotNull
+  private static Element writeScope(@NotNull NamedScope scope) {
     Element setElement = new Element(SCOPE_TAG);
     setElement.setAttribute(NAME_ATT, scope.getName());
     PackageSet packageSet = scope.getValue();
@@ -131,7 +146,8 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return setElement;
   }
 
-  private NamedScope readScope(Element setElement) {
+  @NotNull
+  private NamedScope readScope(@NotNull Element setElement) {
     String name = setElement.getAttributeValue(NAME_ATT);
     PackageSet set;
     String attributeValue = setElement.getAttributeValue(PATTERN_ATT);
@@ -146,10 +162,11 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
 
   @Override
   public void loadState(@NotNull Element state) {
-    myScopes.clear();
     List<Element> sets = state.getChildren(SCOPE_TAG);
-    for (Element set : sets) {
-      myScopes.add(readScope(set));
+    myScopes = new NamedScope[sets.size()];
+    for (int i = 0; i < sets.size(); i++) {
+      Element set = sets.get(i);
+      myScopes[i] = readScope(set);
     }
     fireScopeListeners();
   }

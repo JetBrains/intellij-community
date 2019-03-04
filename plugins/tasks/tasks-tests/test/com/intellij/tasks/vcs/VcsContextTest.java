@@ -3,7 +3,8 @@ package com.intellij.tasks.vcs;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tasks.LocalTask;
@@ -21,8 +22,25 @@ import java.io.IOException;
 import static com.intellij.tasks.vcs.GitTaskBranchesTest.createRepository;
 
 public class VcsContextTest extends FileEditorManagerTestCase {
-
   private TaskManagerImpl myTaskManager;
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
+    WorkingContextManager.getInstance(getProject()).enableUntil(getTestRootDisposable());
+    WorkingContextManager.getInstance(getProject()).getContextFile().delete();
+    WorkingContextManager.getInstance(getProject()).getTaskFile().delete();
+  }
+
+  @Override
+  protected void tearDown() {
+    new RunAll()
+      .append(() -> ChangeListManagerImpl.getInstanceImpl(getProject()).forceStopInTestMode())
+      .append(() -> ChangeListManagerImpl.getInstanceImpl(getProject()).waitEverythingDoneInTestMode())
+      .append(() -> super.tearDown())
+      .run();
+  }
 
   public void testBranchWorkspace() throws IOException {
     GitRepository repository = (GitRepository)createRepository("fooBar", getProject());
@@ -32,22 +50,27 @@ public class VcsContextTest extends FileEditorManagerTestCase {
 
     LocalTaskImpl first = createTask("first");
     assertEquals("first", first.getBranches(false).get(0).name);
-    FileEditorManager manager = FileEditorManager.getInstance(getProject());
-    manager.openFile(firstFile, true);
+    FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(getProject());
+    try {
+      manager.openFile(firstFile, true);
 
-    LocalTaskImpl second = createTask("second");
-    manager.openFile(secondFile, true);
+      LocalTaskImpl second = createTask("second");
+      manager.openFile(secondFile, true);
 
-    myTaskManager.activateTask(first, true);
-    UIUtil.dispatchAllInvocationEvents();
-    assertEquals(1, manager.getOpenFiles().length);
-    assertEquals("first.txt", manager.getOpenFiles()[0].getName());
+      myTaskManager.activateTask(first, true);
+      UIUtil.dispatchAllInvocationEvents();
+      assertEquals(1, manager.getOpenFiles().length);
+      assertEquals("first.txt", manager.getOpenFiles()[0].getName());
 
-    myTaskManager.activateTask(second, true);
-    UIUtil.dispatchAllInvocationEvents();
-    assertEquals(1, manager.getOpenFiles().length);
-    assertEquals("second.txt", manager.getOpenFiles()[0].getName());
-
+      myTaskManager.activateTask(second, true);
+      UIUtil.dispatchAllInvocationEvents();
+      assertEquals(1, manager.getOpenFiles().length);
+      assertEquals("second.txt", manager.getOpenFiles()[0].getName());
+    }
+    finally {
+      manager.closeAllFiles();
+      EditorHistoryManager.getInstance(getProject()).removeAllFiles();
+    }
   }
 
   private VirtualFile createFile(Repository repository, String name) throws IOException {
@@ -64,22 +87,5 @@ public class VcsContextTest extends FileEditorManagerTestCase {
     myTaskManager.createBranch(localTask, defaultTask, name, null);
     UIUtil.dispatchAllInvocationEvents();
     return task;
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
-    WorkingContextManager.getInstance(getProject()).getContextFile().delete();
-    WorkingContextManager.getInstance(getProject()).getTaskFile().delete();
-  }
-
-  @Override
-  protected void tearDown() {
-    new RunAll()
-      .append(() -> ChangeListManagerImpl.getInstanceImpl(getProject()).forceStopInTestMode())
-      .append(() -> ChangeListManagerImpl.getInstanceImpl(getProject()).waitEverythingDoneInTestMode())
-      .append(() -> super.tearDown())
-      .run();
   }
 }

@@ -570,7 +570,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   private static String findLiteralText(@NotNull PsiExpression expr) {
     final PsiElement[] literals = PsiTreeUtil.collectElements(expr, new PsiElementFilter() {
       @Override
-      public boolean isAccepted(PsiElement element) {
+      public boolean isAccepted(@NotNull PsiElement element) {
         if (isStringPsiLiteral(element) && isNameSupplier(element)) {
           final PsiElement exprList = element.getParent();
           if (exprList instanceof PsiExpressionList) {
@@ -946,7 +946,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       answer.add(correctKeywords ? changeIfNotIdentifier(suggestion) : suggestion);
     }
 
-    ContainerUtil.addIfNotNull(answer, getWordByPreposition(name, prefix, suffix, upperCaseStyle));
+    String wordByPreposition = getWordByPreposition(name, prefix, suffix, upperCaseStyle);
+    if (wordByPreposition != null && (!correctKeywords || isIdentifier(wordByPreposition))) {
+      answer.add(wordByPreposition);
+    }
     return answer;
   }
 
@@ -977,7 +980,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   @Override
   public String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, boolean lookForward) {
-    return suggestUniqueVariableName(baseName, place, lookForward, false, v -> false);
+    return suggestUniqueVariableName(baseName, place, lookForward, false, v -> place instanceof PsiParameter && !PsiTreeUtil.isAncestor(((PsiParameter)place).getDeclarationScope(), v, false));
   }
 
   @NotNull
@@ -1066,6 +1069,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             if (name.equals(variable.getName()) && !canBeReused.test(variable)) {
               throw new CancelException();
             }
+            super.visitVariable(variable);
           }
         });
       }

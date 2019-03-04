@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.branch.GitRebaseParams;
@@ -69,6 +70,12 @@ public interface Git {
 
   @NotNull
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
+  Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<FilePath> paths) throws VcsException;
+
+  @NotNull
+  Set<VirtualFile> ignoredFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths) throws VcsException;
 
   @NotNull
   Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,

@@ -92,7 +92,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     e.presentation.isEnabledAndVisible = true
   }
 
-  override fun actionPerformed(e: AnActionEvent) {
+  final override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
     val data = e.getRequiredData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData
     val log = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
@@ -113,7 +113,11 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
       Messages.showErrorDialog(project, commitPushedToProtectedBranchError(protectedBranch), getFailureTitle())
       return
     }
+
+    actionPerformedAfterChecks(e)
   }
+
+  abstract fun actionPerformedAfterChecks(e: AnActionEvent)
 
   protected fun getLog(e: AnActionEvent): VcsLog = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
 
@@ -140,18 +144,25 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
 
   protected fun prohibitRebaseDuringRebase(e: AnActionEvent, operation: String, allowRebaseIfHeadCommit: Boolean = false) {
     if (e.presentation.isEnabledAndVisible) {
-      val state = getRepository(e).state
-      if (state == NORMAL || state == DETACHED) return
-      if (state == REBASING && allowRebaseIfHeadCommit && isHeadCommit(e)) return
+      val message = getProhibitedStateMessage(e, operation, allowRebaseIfHeadCommit)
+      if (message != null) {
+        e.presentation.isEnabled = false
+        e.presentation.description = message
+      }
+    }
+  }
 
-      e.presentation.isEnabled = false
-      e.presentation.description = when (state) {
-        REBASING -> "Can't $operation during rebase"
-        MERGING -> "Can't $operation during merge"
-        else -> {
-          LOG.error(IllegalStateException("Unexpected state: $state"))
-          "Can't $operation during $state"
-        }
+  protected fun getProhibitedStateMessage(e: AnActionEvent, operation: String, allowRebaseIfHeadCommit: Boolean = false): String? {
+    val state = getRepository(e).state
+    if (state == NORMAL || state == DETACHED) return null
+    if (state == REBASING && allowRebaseIfHeadCommit && isHeadCommit(e)) return null
+
+    return when (state) {
+      REBASING -> "Can't $operation during rebase"
+      MERGING -> "Can't $operation during merge"
+      else -> {
+        LOG.error(IllegalStateException("Unexpected state: $state"))
+        "Can't $operation during $state"
       }
     }
   }

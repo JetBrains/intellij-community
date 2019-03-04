@@ -50,6 +50,9 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
       Disposer.dispose(myEventsProcessor);
       Disposer.dispose(myConsole);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

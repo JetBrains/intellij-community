@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.ExtensionPoints;
@@ -198,7 +198,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = new JavaParameters();
     Project project = getConfiguration().getProject();
-    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
     final Module module = getConfiguration().getConfigurationModule().getModule();
 
     Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
@@ -220,9 +219,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       ((JUnitPatcher)patcher).patchJavaParameters(project, module, javaParameters);
     }
 
-    // Append coverage parameters if appropriate
     for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
-      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings());
+      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings(), getEnvironment().getExecutor());
     }
 
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
@@ -232,6 +230,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     if (ConsoleBuffer.useCycleBuffer()) {
       javaParameters.getVMParametersList().addProperty("idea.test.cyclic.buffer.size", String.valueOf(ConsoleBuffer.getCycleBufferSize()));
     }
+
+    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
 
     return javaParameters;
   }
@@ -260,7 +260,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return settings != null && !(settings instanceof GenericDebuggerRunnerSettings);
   }
 
-  protected void appendForkInfo(Executor executor) throws ExecutionException {
+  public void appendForkInfo(Executor executor) throws ExecutionException {
     final String forkMode = getForkMode();
     if (Comparing.strEqual(forkMode, "none")) {
       if (forkPerModule()) {
@@ -409,8 +409,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
   }
 
-  protected void writeClassesPerModule(String packageName, JavaParameters javaParameters, Map<Module, List<String>> perModule)
-    throws FileNotFoundException, UnsupportedEncodingException, CantRunException {
+  protected void writeClassesPerModule(String packageName,
+                                       JavaParameters javaParameters,
+                                       Map<Module, List<String>> perModule,
+                                       @NotNull String filters) throws FileNotFoundException, UnsupportedEncodingException {
     if (perModule != null) {
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
                                ? null : javaParameters.getClassPath().getPathsString();
@@ -429,11 +431,15 @@ public abstract class JavaTestFrameworkRunnableState<T extends
           if (classpath == null) {
             final JavaParameters parameters = new JavaParameters();
             parameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
-            configureRTClasspath(parameters);
-            JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                                               getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration()
-                                                 .getAlternativeJrePath() : null);
-            wWriter.println(parameters.getClassPath().getPathsString());
+             try {
+               configureRTClasspath(parameters);
+               JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
+                                                 getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null);
+              wWriter.println(parameters.getClassPath().getPathsString());
+            }
+            catch (CantRunException e) {
+              wWriter.println(javaParameters.getClassPath().getPathsString());
+            }
           }
           else {
             wWriter.println(classpath);
@@ -444,6 +450,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
           for (String className : classNames) {
             wWriter.println(className);
           }
+          wWriter.println(filters);
         }
       }
     }

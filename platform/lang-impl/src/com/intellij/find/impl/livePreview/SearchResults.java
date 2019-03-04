@@ -141,11 +141,11 @@ public class SearchResults implements DocumentListener {
 
     void updateFinished();
   }
-  public void addListener(SearchResultsListener srl) {
+  public void addListener(@NotNull SearchResultsListener srl) {
     myListeners.add(srl);
   }
 
-  public void removeListener(SearchResultsListener srl) {
+  public void removeListener(@NotNull SearchResultsListener srl) {
     myListeners.remove(srl);
   }
 
@@ -329,7 +329,7 @@ public class SearchResults implements DocumentListener {
     updateCursor(oldCursorRange, next);
     updateExcluded();
     notifyChanged();
-    if (oldCursorRange == null || myCursor == null || !myCursor.equals(oldCursorRange)) {
+    if (myCursor == null || !myCursor.equals(oldCursorRange)) {
       if (toChangeSelection) {
         mySelectionManager.updateSelection(true, true);
       }

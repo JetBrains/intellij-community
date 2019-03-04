@@ -26,7 +26,7 @@ import java.io.File
 
 class RealDataValidation {
 
-    lateinit var separator: InputSessionValidator
+    private lateinit var separator: InputSessionValidator
     val sessionStatuses = hashMapOf<String, Boolean>()
 
     @Before
@@ -60,7 +60,7 @@ class RealDataValidation {
         val validSessions = sessionStatuses.count { it.value }
 
         Assert.assertEquals(7, validSessions)
-        Assert.assertEquals(3, invalidSessions)
+        Assert.assertEquals(6, invalidSessions)
     }
 
     private fun file(path: String): File {

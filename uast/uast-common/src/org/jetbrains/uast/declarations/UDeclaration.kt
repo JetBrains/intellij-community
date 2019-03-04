@@ -23,7 +23,7 @@ import org.jetbrains.uast.visitor.UastTypedVisitor
 /**
  * A [PsiElement] declaration wrapper.
  */
-interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
+interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated, UAnchorOwner {
   /**
    * Returns the original declaration (which is *always* unwrapped, never a [UDeclaration]).
    */
@@ -37,7 +37,7 @@ interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
    *
    * It is useful for putting gutters and inspection reports.
    */
-  val uastAnchor: UElement?
+  override val uastAnchor: UIdentifier?
 
   /**
    * Returns `true` if this declaration has a [PsiModifier.STATIC] modifier.
@@ -60,16 +60,10 @@ interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitDeclaration(this, data)
 }
 
-/**
- * @since 2018.2
- */
 interface UDeclarationEx : UDeclaration {
   override val javaPsi: PsiModifierListOwner
 }
 
-/**
- * @since 2018.3
- */
 fun UElement?.getContainingDeclaration(): UDeclaration? = this?.withContainingElements?.drop(1)?.filterIsInstance<UDeclaration>()?.firstOrNull()
 
 fun <T : UElement> UElement?.getContainingDeclaration(cls: Class<out T>): T? {
@@ -87,8 +81,6 @@ fun UDeclaration?.getAnchorPsi():PsiElement? {
 
 /**
  * A base interface for every [UElement] which have a name identifier. As analogy to [PsiNameIdentifierOwner]
- *
- * Note: [UDeclaration] and [UAnnotation] will extend this interface after all implementations will do
  */
 interface UAnchorOwner : UElement {
 

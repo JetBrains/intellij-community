@@ -2,10 +2,13 @@
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$" />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/config" />
+      <excludeFolder url="file://$MODULE_DIR$/system" />
+    </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.android" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.ant" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.boot" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="RUNTIME" />
@@ -57,7 +60,6 @@
     <orderEntry type="module" module-name="intellij.idea.community.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.copyright" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.vcs.cvs" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.guiForms.designer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit" scope="RUNTIME" />
@@ -127,5 +129,6 @@
     <orderEntry type="module" module-name="intellij.devkit.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.testng.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.editorconfig" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.changeReminder" scope="RUNTIME" />
   </component>
 </module>

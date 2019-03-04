@@ -16,6 +16,8 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.*;
+import org.jetbrains.yaml.psi.YAMLDocument;
+import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 
@@ -23,7 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
-  private final static String CONFIG_KEY_SEQUENCE_PATTERN = "([\\w$-]+\\.)+[\\w$-]+:?\\s*";
+  private final static String CONFIG_KEY_SEQUENCE_PATTERN = "\\.*([^\\s{}\\[\\].][^\\s.]*\\.)+[^\\s{}\\[\\].][^\\s.]*:?\\s*";
 
   @Nullable
   @Override
@@ -190,7 +192,22 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
                                                          int caretOffset, int indent) {
     while (true) {
       // TODO: RUBY-22437 support JSON-like mappings
-      YAMLBlockMappingImpl blockMapping = PsiTreeUtil.getParentOfType(element, YAMLBlockMappingImpl.class);
+      YAMLBlockMappingImpl blockMapping;
+      if (element.getParent() instanceof YAMLFile) {
+        // We are at the end of the file
+        PsiElement prev = element.getPrevSibling();
+        if (!(prev instanceof YAMLDocument)) {
+          return null;
+        }
+        element = ((YAMLDocument)prev).getTopLevelValue();
+        if (!(element instanceof YAMLBlockMappingImpl)) {
+          return null;
+        }
+        blockMapping = ((YAMLBlockMappingImpl)element);
+      }
+      else {
+        blockMapping = PsiTreeUtil.getParentOfType(element, YAMLBlockMappingImpl.class);
+      }
       if (blockMapping == null) {
         return null;
       }
@@ -224,6 +241,13 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
   private static List<String> separateCompositeKey(@NotNull String text) {
     text = text.trim();
     text = StringUtil.trimEnd(text, ':');
-    return StringUtil.split(text, ".");
+    int leadingDotsNumber = StringUtil.countChars(text, '.', 0, true);
+    String dotPrefix = text.substring(0, leadingDotsNumber);
+    text = text.substring(leadingDotsNumber);
+    List<String> sequence = StringUtil.split(text, ".");
+    if (!dotPrefix.isEmpty() && sequence.size() > 0) {
+      sequence.set(0, dotPrefix + sequence.get(0));
+    }
+    return sequence;
   }
 }

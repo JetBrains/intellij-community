@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.IdeErrorsDialog;
@@ -21,13 +21,13 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.StartUpMeasurer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,14 +47,15 @@ import java.util.stream.Collectors;
 public class PluginManager extends PluginManagerCore {
   public static final String INSTALLED_TXT = "installed.txt";
 
-  @SuppressWarnings("StaticNonFinalField") public static long startupStart;
+  @SuppressWarnings("StaticNonFinalField")
+  public static StartUpMeasurer.MeasureToken startupStart;
 
   /**
    * Called via reflection
    */
   @SuppressWarnings({"UnusedDeclaration", "HardCodedStringLiteral"})
   protected static void start(final String mainClass, final String methodName, final String[] args) {
-    startupStart = System.nanoTime();
+    startupStart = StartUpMeasurer.start(StartUpMeasurer.Phases.PREPARE_TO_INIT_APP);
 
     Main.setFlags(args);
 
@@ -183,9 +184,8 @@ public class PluginManager extends PluginManagerCore {
 
           String description = event.getDescription();
           if (EDIT.equals(description)) {
-            PluginManagerConfigurable configurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
             IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
-            ShowSettingsUtil.getInstance().editConfigurable((JFrame)ideFrame, configurable);
+            PluginManagerConfigurableProxy.showPluginConfigurable((JFrame)ideFrame, null);
             return;
           }
 

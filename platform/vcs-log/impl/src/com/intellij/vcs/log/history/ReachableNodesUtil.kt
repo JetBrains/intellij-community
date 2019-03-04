@@ -29,7 +29,7 @@ fun findVisibleAncestorRow(commitId: Int, visiblePack: VisiblePack): Int? {
   val dataPack = visiblePack.dataPack
   val visibleGraph = visiblePack.visibleGraph
   if (dataPack is DataPack && dataPack.permanentGraph is PermanentGraphInfo<*> && visibleGraph is VisibleGraphImpl) {
-    return findVisibleAncestorRow(commitId, visibleGraph.linearGraph, dataPack.permanentGraph as PermanentGraphInfo<Int>) { _ -> true }
+    return findVisibleAncestorRow(commitId, visibleGraph.linearGraph, dataPack.permanentGraph as PermanentGraphInfo<Int>) { true }
   }
   return null
 }

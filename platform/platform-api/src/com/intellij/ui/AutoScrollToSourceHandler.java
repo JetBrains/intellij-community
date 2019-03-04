@@ -30,13 +30,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 
 public abstract class AutoScrollToSourceHandler {
-  private Alarm myAutoScrollAlarm;
-
-  protected AutoScrollToSourceHandler() {
-  }
+  private final Alarm myAutoScrollAlarm = new Alarm();
 
   public void install(final JTree tree) {
-    myAutoScrollAlarm = new Alarm();
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -69,7 +65,6 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   public void install(final JTable table) {
-    myAutoScrollAlarm = new Alarm();
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -101,7 +96,6 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   public void install(final JList jList) {
-    myAutoScrollAlarm = new Alarm();
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -125,9 +119,7 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   public void cancelAllRequests(){
-    if (myAutoScrollAlarm != null) {
-      myAutoScrollAlarm.cancelAllRequests();
-    }
+    myAutoScrollAlarm.cancelAllRequests();
   }
 
   public void onMouseClicked(final Component component) {
@@ -138,24 +130,19 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   private void onSelectionChanged(final Component component) {
-    if (component != null && !component.isShowing()) return;
-
-    if (!isAutoScrollMode()) {
-      return;
+    if (component != null && component.isShowing() && isAutoScrollMode()) {
+      myAutoScrollAlarm.cancelAllRequests();
+      myAutoScrollAlarm.addRequest(
+        () -> {
+          if (component.isShowing()) { //for tests
+            if (!needToCheckFocus() || component.hasFocus()) {
+              scrollToSource(component);
+            }
+          }
+        },
+        500
+      );
     }
-    if (needToCheckFocus() && !component.hasFocus()) {
-      return;
-    }
-
-    myAutoScrollAlarm.cancelAllRequests();
-    myAutoScrollAlarm.addRequest(
-      () -> {
-        if (component.isShowing()) { //for tests
-          scrollToSource(component);
-        }
-      },
-      500
-    );
   }
 
   protected boolean needToCheckFocus(){

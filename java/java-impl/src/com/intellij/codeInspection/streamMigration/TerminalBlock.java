@@ -7,6 +7,7 @@ import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.IntArrayList;
@@ -468,6 +469,8 @@ class TerminalBlock {
    * @param factory factory to use to create new element if necessary
    */
   void replaceContinueWithReturn(PsiElementFactory factory) {
+    PsiLoopStatement currentLoop = PsiTreeUtil.getParentOfType(myStatements[0], PsiLoopStatement.class);
+    if (currentLoop == null) return;
     for (int i = 0, length = myStatements.length; i < length; i++) {
       PsiStatement statement = myStatements[i];
       if(statement instanceof PsiContinueStatement) {
@@ -476,6 +479,7 @@ class TerminalBlock {
       }
       StreamEx.ofTree(statement, (PsiElement s) -> StreamEx.of(s.getChildren()))
         .select(PsiContinueStatement.class)
+        .filter(stmt -> stmt.findContinuedStatement() == currentLoop)
         .forEach(stmt -> new CommentTracker().replaceAndRestoreComments(stmt, "return;"));
     }
   }

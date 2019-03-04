@@ -138,11 +138,15 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
       ((FileTemplateManagerImpl)FileTemplateManager.getDefaultInstance()).setTestDate(null);
       PropertiesComponent.getInstance().unsetValue(ProjectTemplateParameterFactory.IJ_BASE_PACKAGE);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
   }
 
+  @NotNull
   @Override
   protected Project doCreateProject(@NotNull Path projectFile) throws Exception {
     FileUtil.ensureExists(projectFile.getParent().resolve(Project.DIRECTORY_STORE_FOLDER).toFile());

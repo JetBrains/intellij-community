@@ -810,7 +810,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   public void testRandomStressEdit_NoCommand() {
     final Random gen = new Random();
     int N_TRIES = Timings.adjustAccordingToMySpeed(7000, false);
-    System.out.println("N_TRIES = " + N_TRIES);
+    LOG.debug("N_TRIES = " + N_TRIES);
     DocumentEx document = null;
     final int N = 100;
     for (int tryn = 0; tryn < N_TRIES; tryn++) {
@@ -1339,9 +1339,10 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       markers.add(marker);
     }
     PlatformTestUtil.startPerformanceTest(getTestName(false), 2000, ()->{
+      List<RangeMarker> overlaps = new ArrayList<>(10);
       for (int it=0;it<50;it++) {
         for (int i=1; i<doc.getTextLength()-1;i++) {
-          List<RangeMarker> overlaps = new ArrayList<>();
+          overlaps.clear();
           doc.processRangeMarkersOverlappingWith(i,i+1, rm->{
             overlaps.add(rm);
             return true;

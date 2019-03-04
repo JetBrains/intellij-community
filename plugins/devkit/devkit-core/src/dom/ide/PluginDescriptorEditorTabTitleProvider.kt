@@ -15,8 +15,6 @@ class PluginDescriptorEditorTabTitleProvider : EditorTabTitleProvider {
   override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
     if (PluginDescriptorConstants.META_DATA.fileName != file.name) return null
 
-    if (!PsiUtil.isPluginProject(project)) return null
-
     val xmlFile = PsiManager.getInstance(project).findFile(file) as? XmlFile ?: return null
 
     val ideaPlugin = DescriptorUtil.getIdeaPlugin(xmlFile) ?: return null

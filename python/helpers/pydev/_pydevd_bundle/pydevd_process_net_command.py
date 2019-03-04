@@ -18,7 +18,7 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
     CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, InternalLoadFullValue, \
-    CMD_LOAD_FULL_VALUE
+    CMD_LOAD_FULL_VALUE, CMD_PROCESS_CREATED_MSG_RECEIVED
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN, \
     NEXT_VALUE_SEPARATOR
 
@@ -292,13 +292,13 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                     file = file.encode(file_system_encoding)
 
-                file = pydevd_file_utils.norm_file_to_server(file)
+                if pydevd_file_utils.is_real_file(file):
+                    file = pydevd_file_utils.norm_file_to_server(file)
 
-                if not pydevd_file_utils.exists(file):
-                    sys.stderr.write('pydev debugger: warning: trying to add breakpoint'\
-                        ' to file that does not exist: %s (will have no effect)\n' % (file,))
-                    sys.stderr.flush()
-
+                    if not pydevd_file_utils.exists(file):
+                        sys.stderr.write('pydev debugger: warning: trying to add breakpoint'\
+                            ' to file that does not exist: %s (will have no effect)\n' % (file,))
+                        sys.stderr.flush()
 
                 if len(condition) <= 0 or condition is None or condition == "None":
                     condition = None
@@ -324,7 +324,10 @@ def process_net_command(py_db, cmd_id, seq, text):
                         supported_type = False
 
                 if not supported_type:
-                    raise NameError(type)
+                    if type == 'jupyter-line':
+                        return
+                    else:
+                        raise NameError(type)
 
                 if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                     pydev_log.debug('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name.encode('utf-8')))
@@ -339,6 +342,8 @@ def process_net_command(py_db, cmd_id, seq, text):
                 py_db.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
                 if py_db.plugin is not None:
                     py_db.has_plugin_line_breaks = py_db.plugin.has_line_breaks()
+                    if py_db.has_plugin_line_breaks:
+                        py_db.frame_eval_func = None
 
                 py_db.set_tracing_for_untraced_contexts_if_not_frame_eval(overwrite_prev_trace=True)
                 py_db.enable_tracing_in_frames_while_running_if_frame_eval()
@@ -351,7 +356,8 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                     file = file.encode(file_system_encoding)
 
-                file = pydevd_file_utils.norm_file_to_server(file)
+                if pydevd_file_utils.is_real_file(file):
+                    file = pydevd_file_utils.norm_file_to_server(file)
 
                 try:
                     breakpoint_id = int(breakpoint_id)
@@ -708,6 +714,14 @@ def process_net_command(py_db, cmd_id, seq, text):
 
                     mode = text.strip() == true_str
                     pydevd_dont_trace.trace_filter(mode)
+
+            elif cmd_id == CMD_PROCESS_CREATED_MSG_RECEIVED:
+                original_seq = int(text)
+
+                event = py_db.process_created_msg_received_events.pop(original_seq, None)
+
+                if event:
+                    event.set()
 
             else:
                 #I have no idea what this is all about

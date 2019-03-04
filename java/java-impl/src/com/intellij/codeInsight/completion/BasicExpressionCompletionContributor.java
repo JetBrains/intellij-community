@@ -71,16 +71,16 @@ public class BasicExpressionCompletionContributor {
           }
         }
 
-        processDataflowExpressionTypes(position, expectedType, matcher, result);
+        processDataflowExpressionTypes(parameters, expectedType, matcher, result);
     }
 
   }
 
-  public static void processDataflowExpressionTypes(PsiElement position, @Nullable PsiType expectedType, final PrefixMatcher matcher, Consumer<? super LookupElement> consumer) {
-    final PsiExpression context = PsiTreeUtil.getParentOfType(position, PsiExpression.class);
+  static void processDataflowExpressionTypes(JavaSmartCompletionParameters parameters, @Nullable PsiType expectedType, final PrefixMatcher matcher, Consumer<? super LookupElement> consumer) {
+    final PsiExpression context = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiExpression.class);
     if (context == null) return;
 
-    MultiMap<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject()).getControlFlowExpressionTypes(context);
+    MultiMap<PsiExpression,PsiType> map = GuessManager.getInstance(context.getProject()).getControlFlowExpressionTypes(context, parameters.getParameters().getInvocationCount() > 1);
     if (map.isEmpty()) {
       return;
     }

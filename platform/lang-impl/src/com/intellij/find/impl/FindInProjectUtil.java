@@ -2,7 +2,6 @@
 
 package com.intellij.find.impl;
 
-import com.intellij.BundleBase;
 import com.intellij.find.*;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.icons.AllIcons;
@@ -330,10 +329,19 @@ public class FindInProjectUtil {
   }
 
   @NotNull
+  public static UsageViewPresentation setupViewPresentation(@NotNull FindModel findModel) {
+    return setupViewPresentation(FindSettings.getInstance().isShowResultsInSeparateView(), findModel);
+  }
+
+  @NotNull
   public static UsageViewPresentation setupViewPresentation(final boolean toOpenInNewTab, @NotNull FindModel findModel) {
     final UsageViewPresentation presentation = new UsageViewPresentation();
     setupViewPresentation(presentation, toOpenInNewTab, findModel);
     return presentation;
+  }
+
+  public static void setupViewPresentation(UsageViewPresentation presentation, @NotNull FindModel findModel) {
+    setupViewPresentation(presentation, FindSettings.getInstance().isShowResultsInSeparateView(), findModel);
   }
 
   public static void setupViewPresentation(UsageViewPresentation presentation, boolean toOpenInNewTab, @NotNull FindModel findModel) {
@@ -342,7 +350,7 @@ public class FindInProjectUtil {
     presentation.setScopeText(scope);
     if (stringToFind.isEmpty()) {
       presentation.setTabText("Files");
-      presentation.setToolwindowTitle(BundleBase.format("Files in {0}", scope));
+      presentation.setToolwindowTitle("Files in " + scope);
       presentation.setUsagesString("files");
     }
     else {
@@ -374,6 +382,13 @@ public class FindInProjectUtil {
       presentation.setReplacePattern(null);
     }
     presentation.setReplaceMode(findModel.isReplaceState());
+  }
+
+  @NotNull
+  public static FindUsagesProcessPresentation setupProcessPresentation(@NotNull final Project project,
+
+                                                                       @NotNull final UsageViewPresentation presentation) {
+    return setupProcessPresentation(project, !FindSettings.getInstance().isSkipResultsWithOneUsage(), presentation);
   }
 
   @NotNull

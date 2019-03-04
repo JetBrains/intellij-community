@@ -1,25 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +19,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Set;
-import java.util.concurrent.Future;
 
 public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
+  private static final Set<String> REPORTED_EXECUTIONS = ContainerUtil.newConcurrentSet();
+  private static final long ALLOWED_TIMEOUT_THRESHOLD = 10;
 
   public static final Key<Set<File>> DELETE_FILES_ON_TERMINATION = Key.create("OSProcessHandler.FileToDelete");
 
@@ -53,6 +45,42 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     catch (ExecutionException | RuntimeException | Error e) {
       deleteTempFiles(commandLine.getUserData(DELETE_FILES_ON_TERMINATION));
       throw e;
+    }
+  }
+
+  @Override
+  public boolean waitFor() {
+    checkEdtAndReadAction(this);
+    return super.waitFor();
+  }
+
+  @Override
+  public boolean waitFor(long timeoutInMilliseconds) {
+    if (timeoutInMilliseconds > ALLOWED_TIMEOUT_THRESHOLD) {
+      checkEdtAndReadAction(this);
+    }
+    return super.waitFor(timeoutInMilliseconds);
+  }
+
+  /**
+   * Checks if we are going to wait for {@code processHandler} to finish on EDT or under ReadAction. Logs error if we do so.
+   *
+   * @apiNote works only in internal mode with UI. Reports once per running session per stacktrace per cause.
+   */
+  public static void checkEdtAndReadAction(@NotNull ProcessHandler processHandler) {
+    Application application = ApplicationManager.getApplication();
+    if (application == null || !application.isInternal() || application.isHeadlessEnvironment()) {
+      return;
+    }
+    String message = null;
+    if (application.isDispatchThread()) {
+      message = "Synchronous execution on EDT: ";
+    }
+    else if (application.isReadAccessAllowed()) {
+      message = "Synchronous execution under ReadAction: ";
+    }
+    if (message != null && REPORTED_EXECUTIONS.add(ExceptionUtil.currentStackTrace())) {
+      LOG.error(message + processHandler);
     }
   }
 
@@ -99,12 +127,6 @@ public class OSProcessHandler extends BaseOSProcessHandler {
       c = c.getSuperclass();
     }
     return false;
-  }
-
-  @NotNull
-  @Override
-  protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
-    return super.executeOnPooledThread(task);  // to maintain binary compatibility?
   }
 
   @Override

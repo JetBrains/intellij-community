@@ -87,6 +87,9 @@ public class PersistencePerformanceTest extends LightPlatformCodeInsightFixtureT
       myEnumerator = null;
       myMaps.clear();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

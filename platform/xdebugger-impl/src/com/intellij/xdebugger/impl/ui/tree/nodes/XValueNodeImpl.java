@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -120,7 +120,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
           final Document document = FileDocumentManager.getInstance().getDocument(file);
           if (document == null) return;
 
-          XVariablesView.InlineVariablesInfo data = XVariablesView.InlineVariablesInfo.get(XDebugView.getSession(getTree()));
+          XVariablesView.InlineVariablesInfo data = XVariablesView.InlineVariablesInfo.get(session);
           if (data == null) {
             return;
           }
@@ -185,7 +185,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         myText.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
       }
     }
-    appendName();
+    if (myValuePresentation.isShowName()) {
+      appendName();
+    }
     buildText(myValuePresentation, myText);
   }
 

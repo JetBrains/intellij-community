@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsState;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -33,14 +32,12 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.SizedIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,32 +64,6 @@ public class EditorWindow {
   protected JPanel myPanel;
   private EditorTabbedContainer myTabbedPane;
   private final EditorsSplitters myOwner;
-  private static final Icon MODIFIED_ICON = !UISettings.getInstance().getHideTabsIfNeed() ? new Icon() {
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      Font oldFont = g.getFont();
-      try {
-        g.setFont(UIUtil.getLabelFont());
-        g.setColor(JBColor.foreground());
-        g.drawString("*", 0, 10);
-      } finally {
-        config.restore();
-        g.setFont(oldFont);
-      }
-    }
-
-    @Override
-    public int getIconWidth() {
-      return 9;
-    }
-
-    @Override
-    public int getIconHeight() {
-      return 9;
-    }
-  } : AllIcons.General.Modified;
-  private static final Icon GAP_ICON = EmptyIcon.create(MODIFIED_ICON);
 
   private boolean myIsDisposed;
   public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
@@ -330,14 +301,14 @@ public class EditorWindow {
     dispose();
   }
 
-  private int calcIndexToSelect(VirtualFile fileBeingClosed, final int fileIndex) {
+  int calcIndexToSelect(VirtualFile fileBeingClosed, final int fileIndex) {
     final int currentlySelectedIndex = myTabbedPane.getSelectedIndex();
     if (currentlySelectedIndex != fileIndex) {
       // if the file being closed is not currently selected, keep the currently selected file open
       return currentlySelectedIndex;
     }
-    UISettingsState uiSettings = UISettings.getInstance().getState();
-    if (uiSettings.getActiveMruEditorOnClose()) {
+    UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.getState().getActiveMruEditorOnClose()) {
       // try to open last visited file
       final List<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFileList();
       for (int idx = histFiles.size() - 1; idx >= 0; idx--) {
@@ -796,9 +767,7 @@ public class EditorWindow {
           res.setFilePinned (nextFile, isFilePinned (file));
           if (!focusNew) {
             res.setSelectedEditor(selectedEditor, true);
-            getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              getGlobalInstance().requestFocus(selectedEditor.getComponent(), true);
-            });
+            getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(selectedEditor.getComponent(), true));
           }
           panel.revalidate();
         }
@@ -935,7 +904,8 @@ public class EditorWindow {
     final Icon modifiedIcon;
     UISettings settings = UISettings.getInstance();
     if (settings.getMarkModifiedTabsWithAsterisk() || !settings.getHideTabsIfNeed()) {
-      modifiedIcon = settings.getMarkModifiedTabsWithAsterisk() && composite != null && composite.isModified() ? MODIFIED_ICON : GAP_ICON;
+      Icon crop = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
+      modifiedIcon = settings.getMarkModifiedTabsWithAsterisk() && composite != null && composite.isModified() ? crop : new EmptyIcon(7, 7);
       count++;
     }
     else {

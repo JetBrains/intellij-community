@@ -60,7 +60,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     final SearchScope searchScope = parameters.getScope();
     Project project = PsiUtilCore.getProjectInReadAction(baseClass);
     if (isJavaLangObject(baseClass)) {
-      AllClassesSearch.search(searchScope, project, parameters.getNameCondition()).forEach(aClass -> {
+      AllClassesSearch.search(searchScope, project, parameters.getNameCondition()).allowParallelProcessing().forEach(aClass -> {
         ProgressManager.checkCanceled();
         return isJavaLangObject(aClass) || consumer.process(aClass);
       });
@@ -105,7 +105,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       boolean isPhysical = ReadAction.compute(baseClass::isPhysical);
       SearchScope scopeToUse = isPhysical ? GlobalSearchScope.allScope(project) : searchScopeForNonPhysical;
       LazyConcurrentCollection.MoreElementsGenerator<PsiAnchor, PsiClass> generator = (candidate, processor) ->
-        DirectClassInheritorsSearch.search(candidate, scopeToUse).forEach(subClass -> {
+        DirectClassInheritorsSearch.search(candidate, scopeToUse).allowParallelProcessing().forEach(subClass -> {
           ProgressManager.checkCanceled();
           PsiAnchor pointer = ReadAction.compute(() -> PsiAnchor.create(subClass));
           // append found result to subClasses as early as possible to allow other waiting threads to continue

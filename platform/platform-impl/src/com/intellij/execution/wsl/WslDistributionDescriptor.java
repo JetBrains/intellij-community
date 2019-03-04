@@ -1,10 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -13,6 +18,8 @@ import java.util.Objects;
  */
 @Tag("descriptor")
 final class WslDistributionDescriptor {
+  private static final Logger LOG = Logger.getInstance(WSLDistribution.class);
+
   @Tag("id")
   private String myId;
   @Tag("microsoft-id")
@@ -24,6 +31,8 @@ final class WslDistributionDescriptor {
   private String myExecutablePath;
   @Tag("presentable-name")
   private String myPresentableName;
+
+  private final AtomicNotNullLazyValue<String> myMntRootProvider = AtomicNotNullLazyValue.createValue(this::computeMntRoot);
 
   /**
    * Necessary for serializer
@@ -90,5 +99,71 @@ final class WslDistributionDescriptor {
            "id='" + myId + '\'' +
            ", msId='" + myMsId + '\'' +
            '}';
+  }
+
+  /**
+   * @return the mount point for current distribution. Default value of {@code /mnt/} may be overriden with {@code /etc/wsl.conf}
+   * @apiNote caches value per IDE run. Meaning - reconfiguring of this option in WSL requires IDE restart.
+   */
+  @NotNull
+  final String getMntRoot() {
+    return myMntRootProvider.getValue();
+  }
+
+  /**
+   * @see #getMntRoot()
+   */
+  @NotNull
+  private String computeMntRoot() {
+    String windowsCurrentDirectory = System.getProperty("user.dir");
+
+    if (StringUtil.isEmpty(windowsCurrentDirectory) || windowsCurrentDirectory.length() < 3) {
+      LOG.warn("Could not obtain current directory from user.dir (or path is too short): " + windowsCurrentDirectory);
+      return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
+    }
+
+    WSLDistribution distribution = WSLUtil.getDistributionById(getId());
+    if (distribution == null) {
+      return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
+    }
+    ProcessOutput pwdOutput;
+    try {
+      pwdOutput = distribution.executeOnWsl(-1, "pwd");
+    }
+    catch (ExecutionException e) {
+      LOG.warn("Error reading pwd output for " + getId(), e);
+      return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
+    }
+
+    if (pwdOutput.getExitCode() != 0) {
+      LOG.info("Non-zero exit code while fetching pwd: " +
+               "[id=" + getId() + "; " +
+               "[exitCode=" + pwdOutput.getExitCode() + "; " +
+               "[stderr=" + pwdOutput.getStderr() + "; " +
+               "[stdout=" + pwdOutput.getStdout() + "]");
+      return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
+    }
+
+    List<String> pwdOutputLines = pwdOutput.getStdoutLines();
+
+    if (pwdOutputLines.size() != 1) {
+      LOG.warn("One line response expected from `pwd`: " +
+               "[id=" + getId() + "; " +
+               "exitCode=" + pwdOutput.getExitCode() + "; " +
+               "stderr=" + pwdOutput.getStderr() + "; " +
+               "stdout=" + pwdOutput.getStdout() + "]");
+      return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
+    }
+
+    String wslCurrentDirectory = pwdOutputLines.get(0).trim();
+
+    String currentPathSuffix = WSLDistribution.convertWindowsPath(windowsCurrentDirectory);
+    if (wslCurrentDirectory.endsWith(currentPathSuffix)) {
+      return StringUtil.trimEnd(wslCurrentDirectory, currentPathSuffix);
+    }
+    LOG.warn("Wsl current directory does not ens with windows converted suffix: " +
+             "[pwd=" + wslCurrentDirectory + "; " +
+             "suffix=" + currentPathSuffix + "]");
+    return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
   }
 }

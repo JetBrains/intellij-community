@@ -15,9 +15,11 @@
  */
 package com.intellij.testGuiFramework.framework
 
+import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.remote.IdeControl
 import org.junit.AfterClass
 import org.junit.BeforeClass
+import java.io.File
 
 open class GuiTestSuite {
 
@@ -31,6 +33,17 @@ open class GuiTestSuite {
     @JvmStatic
     fun tearDown() {
       IdeControl.closeIde()
+      collectJvmErrors()
+      GuiTestOptions.projectsDir.deleteRecursively()
+    }
+
+    private fun collectJvmErrors() {
+      GuiTestOptions.projectsDir.walk()
+        .maxDepth(3)
+        .filter { it.name.startsWith("hs_err") }
+        .forEach {
+          it.copyTo(File(GuiTestPaths.failedTestScreenshotDir, it.name))
+        }
     }
   }
 }

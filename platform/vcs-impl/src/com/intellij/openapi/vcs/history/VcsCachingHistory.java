@@ -181,7 +181,7 @@ public class VcsCachingHistory {
   public static void collectInBackground(@NotNull AbstractVcs vcs,
                                          @NotNull FilePath filePath,
                                          @NotNull VcsBackgroundableActions actionKey,
-                                         @NotNull Consumer<VcsHistorySession> consumer) {
+                                         @NotNull Consumer<? super VcsHistorySession> consumer) {
     VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
     CollectingHistoryPartner partner = new CollectingHistoryPartner(vcs.getProject(), filePath, consumer);
     BackgroundableActionLock lock = getHistoryLock(vcs, actionKey, filePath, null);
@@ -249,13 +249,13 @@ public class VcsCachingHistory {
   private static class CollectingHistoryPartner implements VcsHistorySessionConsumer {
     @NotNull private final Project myProject;
     @NotNull private final FilePath myFilePath;
-    @NotNull private final Consumer<VcsHistorySession> myContinuation;
+    @NotNull private final Consumer<? super VcsHistorySession> myContinuation;
     @NotNull private final LimitHistoryCheck myCheck;
 
     private VcsAbstractHistorySession mySession;
 
     private CollectingHistoryPartner(@NotNull Project project, @NotNull FilePath path,
-                                     @NotNull Consumer<VcsHistorySession> continuation) {
+                                     @NotNull Consumer<? super VcsHistorySession> continuation) {
       myProject = project;
       myFilePath = path;
       myContinuation = continuation;
@@ -291,10 +291,10 @@ public class VcsCachingHistory {
 
   private static class HistoryPartnerProxy implements VcsHistorySessionConsumer {
     @NotNull private final VcsHistorySessionConsumer myPartner;
-    @NotNull private final Consumer<VcsAbstractHistorySession> myFinish;
+    @NotNull private final Consumer<? super VcsAbstractHistorySession> myFinish;
     private VcsAbstractHistorySession myCopy;
 
-    private HistoryPartnerProxy(@NotNull VcsHistorySessionConsumer partner, @NotNull Consumer<VcsAbstractHistorySession> finish) {
+    private HistoryPartnerProxy(@NotNull VcsHistorySessionConsumer partner, @NotNull Consumer<? super VcsAbstractHistorySession> finish) {
       myPartner = partner;
       myFinish = finish;
     }

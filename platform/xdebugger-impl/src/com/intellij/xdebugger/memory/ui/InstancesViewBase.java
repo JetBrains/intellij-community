@@ -73,7 +73,16 @@ public abstract class InstancesViewBase extends JBPanel implements Disposable {
 
     @Override
     public void sessionPaused() {
-      ApplicationManager.getApplication().invokeLater(() -> getInstancesTree().rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES, myTreeState));
+      ApplicationManager.getApplication().invokeLater(() -> {
+        XDebuggerTreeState state = myTreeState;
+        InstancesTree tree = getInstancesTree();
+        if (state == null) {
+          tree.rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES);
+        }
+        else {
+          tree.rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES, state);
+        }
+      });
     }
   }
 
@@ -85,7 +94,7 @@ public abstract class InstancesViewBase extends JBPanel implements Disposable {
     }
 
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
       if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == getInstancesTree() &&
         (isAddToWatchesAction(action) || isEvaluateExpressionAction(action))) {
         XValueNodeImpl selectedNode = XDebuggerTreeActionBase.getSelectedNode(dataContext);

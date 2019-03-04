@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.stubs.IndexSink;
@@ -8,7 +8,7 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
@@ -34,7 +34,8 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
   @Override
   public GrFieldStub createStub(@NotNull GrEnumConstant psi, StubElement parentStub) {
     String[] annNames = GrStubUtils.getAnnotationNames(psi);
-    return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, ArrayUtil.EMPTY_STRING_ARRAY, GroovyElementTypes.ENUM_CONSTANT, GrFieldStub.buildFlags(psi), null);
+    return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, ArrayUtil.EMPTY_STRING_ARRAY,
+                           GroovyStubElementTypes.ENUM_CONSTANT, GrFieldStub.buildFlags(psi), null);
   }
 
   @Override

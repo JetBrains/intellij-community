@@ -73,9 +73,8 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     }
 
     List<Node.Method> testMethods = myTests.get(myTestClasses.get(idx));
-    int methodIdx = ReadAction.compute(() -> Collections.binarySearch(testMethods,
-                                                                      methodNode,
-                                                                      (o1, o2) -> Comparing.compare(o1.getName(), o2.getName())));
+    int methodIdx = methodNode != null ? ReadAction.compute(() -> Collections.binarySearch(testMethods, methodNode, (o1, o2) -> Comparing.compare(o1.getName(), o2.getName()))) 
+                                       : -1;
 
     Node.Method actualMethodNode;
     if (methodIdx < 0) {

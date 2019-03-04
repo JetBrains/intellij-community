@@ -5,7 +5,9 @@ import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.util.Url
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.socketConnection.ConnectionStatus
@@ -54,6 +56,7 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
   @Volatile protected var isForceStep: Boolean = false
   @Volatile protected var disableDoNotStepIntoLibraries: Boolean = false
 
+  // todo: file resolving: check that urlToFileCache still needed
   protected val urlToFileCache: ConcurrentMap<Url, VirtualFile> = ContainerUtil.newConcurrentMap<Url, VirtualFile>()
 
   var processBreakpointConditionsAtIdeSide: Boolean = false
@@ -101,7 +104,7 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
         }
 
         ConnectionStatus.CONNECTION_FAILED -> {
-          getSession().reportError(it.message)
+          getSession().reportMessage(it.message, MessageType.ERROR, BrowserHyperlinkListener.INSTANCE)
           getSession().stop()
         }
 

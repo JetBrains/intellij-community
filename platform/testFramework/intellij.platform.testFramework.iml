@@ -22,10 +22,10 @@
     <orderEntry type="module" module-name="intellij.xml.dom.impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.images" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.regexp" exported="" scope="RUNTIME" />
-    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="library" exported="" name="jetCheck" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" exported="" />
-    <orderEntry type="library" name="KotlinTest" level="project" />
+    <orderEntry type="library" name="kotlin-test" level="project" />
   </component>
 </module>
