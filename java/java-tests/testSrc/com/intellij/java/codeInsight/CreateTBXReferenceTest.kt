@@ -31,9 +31,9 @@ class CreateTBXReferenceTest : LightPlatformCodeInsightFixtureTestCase() {
       "jetbrains://idea/navigate/reference?project=light_temp&path=MultipleSelections.java:11:5&selection1=2:5-4:5&selection2=5:5-7:5&selection3=8:5-10:5&selection4=11:5-13:5")
   }
 
-  fun testRubyClassReference() {
-    doTest("jetbrains://idea/navigate/reference?project=light_temp&path=RubyClassReference.rb:2:20",
-           getTestName(false) + ".rb")
+  fun testGroovyConstantReference() {
+    doTest("jetbrains://idea/navigate/reference?project=light_temp&fqn=BuildOptions#USE_COMPILED_CLASSES_PROPERTY",
+           getTestName(false) + ".groovy")
   }
 
   fun testPathWithLocation() {
