@@ -583,9 +583,17 @@ public class CompileDriver {
         progressIndicator.setText(
           CompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks"));
         for (CompileTask task : tasks) {
-          if (!task.execute(context)) {
+          try {
+            if (!task.execute(context)) {
+              return false;
+            }
+          }
+          catch (Throwable t) {
+            LOG.error("Error executing task", t);
+            context.addMessage(CompilerMessageCategory.ERROR, t.getMessage(), null, -1, -1);
             return false;
           }
+
         }
       }
     }
