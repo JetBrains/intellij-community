@@ -410,6 +410,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     final String s85 = "class X {{ int a; a=1; a=1; return a; }}";
     assertEquals("two the same statements search", 1, findMatchesCount(s85, "'T; 'T;"));
+    assertEquals("simple statement search (ignoring whitespace)", 4, findMatchesCount(s85, "'T ;"));
 
     final String s87 = "class X {{ getSomething(\"2\"); getSomething(\"1\"); a.call(); }}";
     assertEquals("search for simple call", 1, findMatchesCount(s87, " '_Instance.'Call('_*); "));
