@@ -267,7 +267,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @Nullable
   public List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner) {
     final PsiFile containingFile = PsiUtil.preferCompiledElement(listOwner).getContainingFile();
-    if (!(containingFile instanceof PsiJavaFile)) return null;
+    if (!(containingFile instanceof PsiClassOwner)) return null;
 
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return null;
@@ -289,7 +289,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
 
     Set<PsiFile> possibleAnnotationXmls = new THashSet<>();
-    String relativePath = ((PsiJavaFile)containingFile).getPackageName().replace('.', '/') + '/' + ANNOTATIONS_XML;
+    String relativePath = ((PsiClassOwner)containingFile).getPackageName().replace('.', '/') + '/' + ANNOTATIONS_XML;
     for (VirtualFile root : getExternalAnnotationsRoots(virtualFile)) {
       VirtualFile ext = root.findFileByRelativePath(relativePath);
       if (ext != null && ext.isValid()) {
