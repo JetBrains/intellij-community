@@ -16,12 +16,6 @@
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
 
-    <extensionPoint name="moduleConfigurable"
-                    beanClass="com.intellij.openapi.options.ModuleConfigurableEP"
-                    area="IDEA_MODULE">
-      <with attribute="instance" implements="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleConfigurable"/>
-    </extensionPoint>
-
     <extensionPoint name="indexPatternProvider"
                     interface="com.intellij.psi.search.IndexPatternProvider"/>
 
@@ -379,7 +373,6 @@
     <extensionPoint name="liveTemplatePreprocessor" interface="com.intellij.codeInsight.template.impl.TemplatePreprocessor"/>
     <extensionPoint name="liveTemplateSubstitutor" interface="com.intellij.codeInsight.template.TemplateSubstitutor"/>
     <extensionPoint name="customLiveTemplate" interface="com.intellij.codeInsight.template.CustomLiveTemplate"/>
-    <extensionPoint name="variableTypeCalculator" interface="com.intellij.codeInsight.template.macro.VariableTypeCalculator"/>
 
     <extensionPoint name="fileTemplateGroup"
                     interface="com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory"/>
@@ -477,9 +470,6 @@
 
     <extensionPoint name="executionTargetProvider"
                     interface="com.intellij.execution.ExecutionTargetProvider"/>
-
-    <extensionPoint name="jreProvider"
-                    interface="com.intellij.execution.ui.JreProvider"/>
 
     <extensionPoint name="stepsBeforeRunProvider"
                     interface="com.intellij.execution.BeforeRunTaskProvider"
@@ -975,7 +965,6 @@
     <extensionPoint name="importTestOutput"
                     interface="com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension"/>
 
-    <extensionPoint name="sdkEditorAdditionalOptionsProvider" interface="com.intellij.openapi.SdkEditorAdditionalOptionsProvider"/>
     <extensionPoint name="metaLanguage" interface="com.intellij.lang.MetaLanguage"/>
 
     <extensionPoint name="longLineInspectionPolicy" interface="com.intellij.codeInspection.longLine.LongLineInspectionPolicy"/>
