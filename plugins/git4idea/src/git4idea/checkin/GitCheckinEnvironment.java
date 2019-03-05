@@ -189,7 +189,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                    @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
     GitRepositoryManager manager = getRepositoryManager(myProject);
     List<VcsException> exceptions = new ArrayList<>();
-    Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
+    Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(myProject, changes, exceptions);
     LOG.assertTrue(!sortedChanges.isEmpty(), "Trying to commit an empty list of changes: " + changes);
 
     List<GitRepository> repositories = manager.sortByDependency(getRepositoriesFromRoots(manager, sortedChanges.keySet()));
@@ -1095,28 +1095,26 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull List<? extends Change> changes, List<? super VcsException> exceptions) {
+  @NotNull
+  private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull Project project,
+                                                                           @NotNull List<? extends Change> changes,
+                                                                           @NotNull List<? super VcsException> exceptions) {
     Map<VirtualFile, Collection<Change>> result = new HashMap<>();
     for (Change change : changes) {
-      // note that any path will work, because changes could happen within single vcs root
-      final FilePath filePath = getFilePath(change);
-      final VirtualFile vcsRoot;
       try {
+        // note that any path will work, because changes could happen within single vcs root
+        final FilePath filePath = getFilePath(change);
+
         // the parent paths for calculating roots in order to account for submodules that contribute
         // to the parent change. The path "." is never is valid change, so there should be no problem
         // with it.
-        vcsRoot = getGitRoot(filePath.getParentPath());
+        GitRepository repository = getRepositoryFor(project, assertNotNull(filePath.getParentPath()));
+        Collection<Change> changeList = result.computeIfAbsent(repository.getRoot(), key -> new ArrayList<>());
+        changeList.add(change);
       }
       catch (VcsException e) {
         exceptions.add(e);
-        continue;
       }
-      Collection<Change> changeList = result.get(vcsRoot);
-      if (changeList == null) {
-        changeList = new ArrayList<>();
-        result.put(vcsRoot, changeList);
-      }
-      changeList.add(change);
     }
     return result;
   }
