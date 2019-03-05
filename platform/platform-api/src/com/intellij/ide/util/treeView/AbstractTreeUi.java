@@ -20,7 +20,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.LockToken;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.enumeration.EnumerationCopy;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -4729,9 +4728,10 @@ public class AbstractTreeUi {
   }
 
   private void removeChildren(@NotNull DefaultMutableTreeNode node) {
-    EnumerationCopy copy = new EnumerationCopy(node.children());
-    while (copy.hasMoreElements()) {
-      disposeNode((DefaultMutableTreeNode)copy.nextElement());
+    //noinspection unchecked
+    Enumeration<DefaultMutableTreeNode> children = node.children();
+    for (DefaultMutableTreeNode child : Collections.list(children)) {
+      disposeNode(child);
     }
     node.removeAllChildren();
     nodeStructureChanged(node);
