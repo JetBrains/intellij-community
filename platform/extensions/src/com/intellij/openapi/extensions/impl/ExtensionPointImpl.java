@@ -10,6 +10,8 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.StartUpMeasurer;
+import com.intellij.util.StartUpMeasurer.Activities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import org.jdom.Element;
@@ -24,6 +26,8 @@ import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import static com.intellij.util.pico.DefaultPicoContainer.getMeasureTokenLevel;
 
 /**
  * @author AKireyev
@@ -272,6 +276,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
     assertNotReadOnlyMode();
 
+    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(Activities.EXTENSION, getMeasureTokenLevel(myPicoContainer));
+
     int totalSize = myAdapters.size();
     Class<T> extensionClass = getExtensionClass();
     T[] result = ArrayUtil.newArray(extensionClass, totalSize);
@@ -281,7 +287,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
     // check before to avoid any "restore" work if already cancelled
     CHECK_CANCELED.run();
-
     processingAdaptersNow = true;
     try {
       List<ExtensionComponentAdapter> adapters = myAdapters;
@@ -332,6 +337,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       if (extensionIndex != result.length) {
         result = Arrays.copyOf(result, extensionIndex);
       }
+
+      // don't count ProcessCanceledException as valid action to measure (later special category can be introduced if needed)
+      measureToken.endWithThreshold(extensionClass);
       return result;
     }
     finally {

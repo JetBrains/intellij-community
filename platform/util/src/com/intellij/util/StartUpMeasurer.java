@@ -42,13 +42,27 @@ public final class StartUpMeasurer {
     public static final String LOAD_MODULES = "module loading";
   }
 
+  // ExtensionAreas not available for ExtensionPointImpl
+  public enum Level {
+    APPLICATION("app"), PROJECT("project"), MODULE("module");
+
+    private final String jsonFieldNamePrefix;
+
+    Level(@NotNull String jsonFieldNamePrefix) {
+      this.jsonFieldNamePrefix = jsonFieldNamePrefix;
+    }
+
+    @NotNull
+    public String getJsonFieldNamePrefix() {
+      return jsonFieldNamePrefix;
+    }
+  }
+
   // non-sequential and repeated items
   public static final class Activities {
-    public static final String APP_COMPONENT = "_appComponent";
-    public static final String PROJECT_COMPONENT = "_projectComponent";
-
-    public static final String APP_SERVICE = "_appService";
-    public static final String PROJECT_SERVICE = "_projectService";
+    public static final String COMPONENT = "component";
+    public static final String SERVICE = "service";
+    public static final String EXTENSION = "extension";
 
     public static final String PRELOAD_ACTIVITY = "_preloadActivity";
 
@@ -66,12 +80,17 @@ public final class StartUpMeasurer {
 
   @NotNull
   public static MeasureToken start(@NotNull String name, @Nullable String description) {
-    return new Item(name, description);
+    return new Item(name, description, null);
   }
 
   @NotNull
   public static MeasureToken start(@NotNull String name) {
-    return new Item(name, null);
+    return new Item(name, null, null);
+  }
+
+  @NotNull
+  public static MeasureToken start(@NotNull String name, @NotNull Level level) {
+    return new Item(name, null, level);
   }
 
   public static void processAndClear(@NotNull Consumer<Item> consumer) {
@@ -95,15 +114,19 @@ public final class StartUpMeasurer {
     // null doesn't mean root - not obligated to set parent, only as hint
     private final Item parent;
 
-    private Item(@Nullable String name, @Nullable String description) {
-      this(name, description, System.nanoTime(), null);
+    @Nullable
+    private final Level myLevel;
+
+    private Item(@Nullable String name, @Nullable String description, @Nullable Level level) {
+      this(name, description, System.nanoTime(), null, level);
     }
 
-    private Item(@Nullable String name, @Nullable String description, long start, @Nullable Item parent) {
+    private Item(@Nullable String name, @Nullable String description, long start, @Nullable Item parent, @Nullable Level level) {
       this.name = name;
       this.description = StringUtil.nullize(description);
       this.start = start;
       this.parent = parent;
+      myLevel = level;
     }
 
     @Nullable
@@ -111,12 +134,17 @@ public final class StartUpMeasurer {
       return parent;
     }
 
+    @Nullable
+    public Level getLevel() {
+      return myLevel;
+    }
+
     // and how do we can sort correctly, when parent item equals to child (start and end) and also there is another child with start equals to end?
     // so, parent added to API but as it was not enough, decided to measure time in nanoseconds instead of ms to mitigate such situations
     @Override
     @NotNull
     public Item startChild(@NotNull String name) {
-      return new Item(name, null, System.nanoTime(), this);
+      return new Item(name, null, System.nanoTime(), this, null);
     }
 
     @NotNull

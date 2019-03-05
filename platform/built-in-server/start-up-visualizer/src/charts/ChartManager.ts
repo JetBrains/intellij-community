@@ -5,6 +5,8 @@ import {DataManager} from "@/state/DataManager"
 
 export interface ChartManager {
   render(data: DataManager): void
+
+  dispose(): void
 }
 
 function configureCommonChartSettings(chart: am4charts.XYChart) {
@@ -15,7 +17,6 @@ function configureCommonChartSettings(chart: am4charts.XYChart) {
   const cursor = new am4charts.XYCursor()
   cursor.lineY.disabled = true
   cursor.lineX.disabled = true
-  // todo y axis for ItemChart doesn't work as expected (not scaled according to current data) because of 2 series for axis (and so, no chart data is set)
   cursor.behavior = "zoomXY"
   chart.cursor = cursor
 }
@@ -30,30 +31,10 @@ export abstract class XYChartManager implements ChartManager {
     // this.addDisposeHandler(childHot)
   }
 
+  /** @override */
   dispose(): void {
     this.chart.dispose()
   }
-
-  // module.hot must be passed here explicitly, because module in this context related only to this module
-  // private addDisposeHandler(hot: __WebpackModuleApi.Hot | null | undefined) {
-  //   if (hot == null) {
-  //     return
-  //   }
-  //
-  //   hot.dispose(_data => {
-  //     const chart = this.chart
-  //     if (chart == null) {
-  //       return
-  //     }
-  //
-  //     (this as any).chart = null
-  //     chart.dispose()
-  //     // const exportingMenu = chart.exporting.menu
-  //     // if (exportingMenu != null) {
-  //     //   exportingMenu.dispose()
-  //     // }
-  //   })
-  // }
 
   abstract render(data: DataManager): void
 }

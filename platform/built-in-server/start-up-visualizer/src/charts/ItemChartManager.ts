@@ -5,13 +5,18 @@ import {XYChartManager} from "@/charts/ChartManager"
 import {DataManager} from "@/state/DataManager"
 import {Item} from "@/state/data"
 
-export type ComponentProviderSourceNames = "appComponents" | "projectComponents"
-export type ServiceProviderSourceNames = "appServices" | "projectServices"
+export type ComponentProviderSourceNames = "appComponents" | "projectComponents" | "moduleComponents"
+export type ServiceProviderSourceNames = "appServices" | "projectServices" | "moduleServices"
+export type ExtensionProviderSourceNames = "appExtensions" | "projectExtensions" | "moduleExtensions"
 export type TopHitProviderSourceNames = "appOptionsTopHitProviders" | "projectOptionsTopHitProviders"
 
-export abstract class ItemChartManager extends XYChartManager {
+export class ItemChartManager extends XYChartManager {
   // isUseYForName - if true, names are more readable, but not possible to see all components because layout from top to bottom (so, opposite from left to right some data can be out of current screen)
-  protected constructor(container: HTMLElement, private readonly sourceNames: Array<ComponentProviderSourceNames> | Array<TopHitProviderSourceNames> | Array<ServiceProviderSourceNames>) {
+  constructor(container: HTMLElement,
+              private readonly sourceNames: Array<ComponentProviderSourceNames>
+                | Array<TopHitProviderSourceNames>
+                | Array<ServiceProviderSourceNames>
+                | Array<ExtensionProviderSourceNames>) {
     super(container, module.hot)
 
     this.configureNameAxis()
@@ -50,14 +55,21 @@ export abstract class ItemChartManager extends XYChartManager {
   private configureDurationAxis(): void {
     const durationAxis = this.chart.yAxes.push(new am4charts.DurationAxis())
     durationAxis.title.text = "Duration"
+    durationAxis.baseUnit = "millisecond"
     // base unit the values are in (https://www.amcharts.com/docs/v4/reference/durationformatter/)
     durationAxis.durationFormatter.baseUnit = "millisecond"
     durationAxis.durationFormatter.durationFormat = "S"
     // do not set strictMinMax because otherwise zooming will not work
     // (axis will not reflect currently selected items, but always the whole set and so, will be not convenient to see items with small values)
+    // durationAxis.strictMinMax = true
 
     // cursor tooltip is distracting
     durationAxis.cursorTooltipEnabled = false
+
+    // https://www.amcharts.com/docs/v4/concepts/axes/positioning-axis-elements/#Setting_the_density_of_the_the_grid_labels
+    // default value 40 makes distribution not good
+    // but for other charts default value suits better...
+    // decided to not do anything - if you don't like that extremes makes chart not readable - fix these extremes or select desired area (cursor is supported)
   }
 
   protected configureSeries(): void {
@@ -69,7 +81,7 @@ export abstract class ItemChartManager extends XYChartManager {
   }
 
   // https://www.amcharts.com/docs/v4/concepts/series/#Note_about_Series_data_and_Category_axis
-  render(data: DataManager) {
+  render(data: DataManager): void {
     const concatenatedData: Array<ClassItem> = []
     let colorIndex = 0
     const legendData: Array<LegendItem> = []
@@ -83,17 +95,21 @@ export abstract class ItemChartManager extends XYChartManager {
         stroke: color,
       }
 
+      // generate color before - even if no data for this type of items, still color should be the same regardless of current data set
+      // so, if currently no data for project, but there is data for modules, color for modules should use index 3 and not 2
+      const items = data.data[sourceName]
+      if (items == null || items.length === 0) {
+        continue
+      }
+
       const legendItem: LegendItem = {
-        name: (sourceName.startsWith("app") ? "Application" : "Project") + "-level",
+        name: this.sourceNameToLegendName(sourceName, items.length),
         fill: color,
         sourceName,
       }
       legendData.push(legendItem)
       applicableSources.add(sourceName)
 
-      // generate color before - even if no data for this type of items, still color should be the same regardless of current data set
-      // so, if currently no data for project, but there is data for modules, color for modules should use index 3 and not 2
-      const items = data.data[sourceName] || []
       for (const item of items) {
         concatenatedData.push({
           ...item,
@@ -123,7 +139,21 @@ export abstract class ItemChartManager extends XYChartManager {
     this.chart.data = concatenatedData
   }
 
-  protected computeRangeMarkers(data: DataManager, items: Array<ClassItem>) {
+  private sourceNameToLegendName(sourceName: string, itemCount: number): string {
+    let prefix
+    if (sourceName.startsWith("app")) {
+      prefix = "Application"
+    }
+    else if (sourceName.startsWith("project")) {
+      prefix = "Project"
+    }
+    else if (sourceName.startsWith("module")) {
+      prefix = "Module"
+    }
+    return `${prefix}-level (${itemCount})`
+  }
+
+  protected computeRangeMarkers(data: DataManager, items: Array<ClassItem>): void {
     const nameAxis = this.nameAxis
     nameAxis.axisRanges.clear()
     for (const guideLineDescriptor of data.computeGuides(items)) {
@@ -131,7 +161,7 @@ export abstract class ItemChartManager extends XYChartManager {
     }
   }
 
-  private createRangeMarker(axis: am4charts.CategoryAxis, item: ClassItem, label: string) {
+  private createRangeMarker(axis: am4charts.CategoryAxis, item: ClassItem, label: string): void {
     const range = axis.axisRanges.create()
     range.category = item.shortName
     range.label.inside = true
@@ -160,24 +190,12 @@ function getShortName(item: Item): string {
 
 export class ComponentChartManager extends ItemChartManager {
   constructor(container: HTMLElement) {
-    super(container, ["appComponents", "projectComponents"])
+    super(container, ["appComponents", "projectComponents", "moduleComponents"])
   }
 
   // doesn't make sense for components - cannot be outside of ready, and app initialized is clear
   // because color for app/project bars is different
   protected computeRangeMarkers(_data: DataManager) {
-  }
-}
-
-export class ServiceChartManager extends ItemChartManager {
-  constructor(container: HTMLElement) {
-    super(container, ["appServices", "projectServices"])
-  }
-}
-
-export class TopHitProviderChart extends ItemChartManager {
-  constructor(container: HTMLElement) {
-    super(container, ["appOptionsTopHitProviders", "projectOptionsTopHitProviders"])
   }
 }
 

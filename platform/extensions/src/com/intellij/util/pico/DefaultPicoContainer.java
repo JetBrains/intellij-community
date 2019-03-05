@@ -3,6 +3,7 @@ package com.intellij.util.pico;
 
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import gnu.trove.THashSet;
@@ -402,5 +403,19 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   @Override
   public String toString() {
     return "DefaultPicoContainer" + (getParent() == null ? " (root)" : " (parent="+getParent()+")");
+  }
+
+  @NotNull
+  public static StartUpMeasurer.Level getMeasureTokenLevel(@NotNull PicoContainer picoContainer) {
+    PicoContainer parent = picoContainer.getParent();
+    if (parent == null) {
+      return StartUpMeasurer.Level.APPLICATION;
+    }
+    else if (parent.getParent() == null) {
+      return StartUpMeasurer.Level.PROJECT;
+    }
+    else {
+      return  StartUpMeasurer.Level.MODULE;
+    }
   }
 }
