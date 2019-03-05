@@ -756,7 +756,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     public boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass) throws PrepareFailedException {
       final boolean prepare = super.prepare(pass);
       if (prepare) {
-        if (myNotNullConditionalCheck || myNullConditionalCheck) {
+        if (hasConditionalCheck()) {
           return false;
         }
       }

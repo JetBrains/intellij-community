@@ -106,11 +106,9 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected PsiVariable[] myOutputVariables; // output variables
   protected PsiVariable myOutputVariable; // the only output variable
   protected PsiVariable myArtificialOutputVariable;
-  private Collection<PsiStatement> myExitStatements;
+  private ExitStatements myExitStatements;
 
-  private boolean myHasReturnStatement; // there is a return statement
-  private boolean myHasReturnStatementOutput; // there is a return statement and its type is not void
-  protected boolean myHasExpressionOutput; // extracted code is an expression with non-void type
+  private ExitPoints myExitPoints;
   private boolean myNeedChangeContext; // target class is not immediate container of the code to be extracted
 
   private boolean myShowErrorDialogs = true;
@@ -123,13 +121,9 @@ public class ExtractMethodProcessor implements MatchProvider {
   private ParametrizedDuplicates myParametrizedDuplicates;
   private ParametrizedDuplicates myExactDuplicates;
   @PsiModifier.ModifierConstant protected String myMethodVisibility = PsiModifier.PRIVATE;
-  protected boolean myGenerateConditionalExit;
-  protected PsiStatement myFirstExitStatementCopy;
   protected PsiMethod myExtractedMethod;
   private PsiMethodCallExpression myMethodCall;
   private PsiBlockStatement myAddedToMethodCallLocation;
-  protected boolean myNullConditionalCheck;
-  protected boolean myNotNullConditionalCheck;
   protected Nullability myNullability;
 
   private final CodeStyleSettings myStyleSettings;
@@ -243,19 +237,16 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     myControlFlowWrapper = new ControlFlowWrapper(myProject, codeFragment, myElements);
 
+    myExitStatements = new ExitStatements();
     try {
-      myExitStatements = myControlFlowWrapper.prepareExitStatements(myElements, codeFragment);
-      if (myControlFlowWrapper.isGenerateConditionalExit()) {
-        myGenerateConditionalExit = true;
-      } else {
-        myHasReturnStatement = myExpression == null && myControlFlowWrapper.isReturnPresentBetween();
-      }
-      myFirstExitStatementCopy = myControlFlowWrapper.getFirstExitStatementCopy();
+      myExitStatements.myExitStatements = myControlFlowWrapper.prepareExitStatements(myElements, codeFragment);
+      myExitStatements.myFirstExitStatementCopy = myControlFlowWrapper.getFirstExitStatementCopy();
     }
     catch (ControlFlowWrapper.ExitStatementsNotSameException e) {
-      myExitStatements = myControlFlowWrapper.getExitStatements();
-      myNotNullConditionalCheck = areAllExitPointsNotNull(getExpectedReturnType());
-      if (!myNotNullConditionalCheck) {
+      myExitStatements.myExitStatements = myControlFlowWrapper.getExitStatements();
+      myExitStatements.myAreNotSame = true;
+      boolean notNullConditionalCheck = areAllExitPointsNotNull(getExpectedReturnType());
+      if (!notNullConditionalCheck) {
         showMultipleExitPointsMessage();
         return false;
       }
@@ -270,7 +261,37 @@ public class ExtractMethodProcessor implements MatchProvider {
     return chooseTargetClass(codeFragment, pass, defaultTargetClass);
   }
 
-  private boolean checkExitPoints() throws PrepareFailedException {
+  private static class ExitStatements {
+    private Collection<PsiStatement> myExitStatements;
+    private PsiStatement myFirstExitStatementCopy;
+    private boolean myAreNotSame;
+
+    public boolean isEmpty() {
+      return myExitStatements == null || myExitStatements.isEmpty();
+    }
+
+    public Collection<PsiStatement> getExitStatements() {
+      return myExitStatements != null ? myExitStatements : Collections.emptyList();
+    }
+  }
+
+  protected static class ExitPoints {
+    boolean myHasReturnStatement;
+    boolean myHasExpressionOutput;
+    boolean myHasReturnStatementOutput;
+    boolean myGenerateConditionalExit;
+    boolean myNullConditionalCheck;
+    boolean myNotNullConditionalCheck;
+  }
+
+  private ExitPoints checkExitPoints() throws PrepareFailedException {
+    ExitPoints ep = new ExitPoints();
+    if (myControlFlowWrapper.isGenerateConditionalExit()) {
+      ep.myGenerateConditionalExit = true;
+    } else {
+      ep.myHasReturnStatement = myExpression == null && myControlFlowWrapper.isReturnPresentBetween();
+    }
+
     PsiType expressionType = null;
     if (myExpression != null) {
       if (myForcedReturnType != null) {
@@ -286,34 +307,37 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (expressionType == null) {
       expressionType = PsiType.VOID;
     }
-    myHasExpressionOutput = !PsiType.VOID.equals(expressionType);
+    ep.myHasExpressionOutput = !PsiType.VOID.equals(expressionType);
 
     final PsiType returnStatementType = getExpectedReturnType();
-    myHasReturnStatementOutput = myHasReturnStatement && returnStatementType != null && !PsiType.VOID.equals(returnStatementType);
+    ep.myHasReturnStatementOutput = ep.myHasReturnStatement && returnStatementType != null && !PsiType.VOID.equals(returnStatementType);
 
-    if (myGenerateConditionalExit && myOutputVariables.length == 1) {
+    if (ep.myGenerateConditionalExit && myOutputVariables.length == 1) {
       if (!(myOutputVariables[0].getType() instanceof PsiPrimitiveType)) {
-        myNullConditionalCheck = isNullInferred(myOutputVariables[0].getName()) && getReturnsNullability(true);
+        ep.myNullConditionalCheck = isNullInferred(myOutputVariables[0].getName()) && getReturnsNullability(true);
       }
-      myNotNullConditionalCheck = areAllExitPointsNotNull(returnStatementType);
+      ep.myNotNullConditionalCheck = areAllExitPointsNotNull(returnStatementType);
+    }
+    else if (myExitStatements.myAreNotSame) {
+      ep.myNotNullConditionalCheck = areAllExitPointsNotNull(returnStatementType);
     }
 
-    if (!myHasReturnStatementOutput && checkOutputVariablesCount() && !myNullConditionalCheck && !myNotNullConditionalCheck) {
-      showMultipleOutputMessage(expressionType);
-      return false;
+    if (!ep.myHasReturnStatementOutput && checkOutputVariablesCount(ep) && !ep.myNullConditionalCheck && !ep.myNotNullConditionalCheck) {
+      showMultipleOutputMessage(expressionType, ep);
+      return null;
     }
 
     myOutputVariable = myOutputVariables.length > 0 ? myOutputVariables[0] : null;
-    if (myNotNullConditionalCheck) {
+    if (ep.myNotNullConditionalCheck) {
       myReturnType = returnStatementType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)returnStatementType).getBoxedType(myCodeFragmentMember)
                                                                      : returnStatementType;
-    } else if (myHasReturnStatementOutput) {
+    } else if (ep.myHasReturnStatementOutput) {
       myReturnType = returnStatementType;
     }
     else if (myOutputVariable != null) {
       myReturnType = myOutputVariable.getType();
     }
-    else if (myGenerateConditionalExit) {
+    else if (ep.myGenerateConditionalExit) {
       myReturnType = PsiType.BOOLEAN;
     }
     else {
@@ -343,7 +367,22 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (container instanceof PsiMethod) {
       checkLocalClasses((PsiMethod) container);
     }
-    return true;
+    return ep;
+  }
+
+  protected boolean generatesConditionalExit() {
+    LOG.assertTrue(myExitPoints != null, "myExitPoints in generatesConditionalExit");
+    return myExitPoints.myGenerateConditionalExit;
+  }
+
+  protected boolean hasConditionalCheck() {
+    LOG.assertTrue(myExitPoints != null, "myExitPoints in hasConditionalCheck");
+    return myExitPoints.myNotNullConditionalCheck || myExitPoints.myNullConditionalCheck;
+  }
+
+  protected PsiStatement getFirstExitStatementCopy() {
+    LOG.assertTrue(myExitStatements != null, "myExitStatements in getFirstExitStatementCopy");
+    return myExitStatements.myFirstExitStatementCopy;
   }
 
   private PsiType getExpectedReturnType() {
@@ -409,7 +448,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     if (body == null) return false;
 
-    Set<PsiExpression> returnedExpressions = StreamEx.of(myExitStatements)
+    Set<PsiExpression> returnedExpressions = StreamEx.of(myExitStatements.getExitStatements())
       .select(PsiReturnStatement.class)
       .map(PsiReturnStatement::getReturnValue)
       .nonNull()
@@ -484,8 +523,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     return false;
   }
 
-  protected boolean checkOutputVariablesCount() {
-    int outputCount = (myHasExpressionOutput ? 1 : 0) + (myGenerateConditionalExit ? 1 : 0) + myOutputVariables.length;
+  protected boolean checkOutputVariablesCount(ExitPoints ep) {
+    int outputCount = (ep.myHasExpressionOutput ? 1 : 0) + (ep.myGenerateConditionalExit ? 1 : 0) + myOutputVariables.length;
     return outputCount > 1;
   }
 
@@ -698,12 +737,13 @@ public class ExtractMethodProcessor implements MatchProvider {
                                : PsiTreeUtil.findCommonParent(myElements);
       return CodeInsightUtil.findReferenceExpressions(scope, myOutputVariable);
     }
-    final List<PsiStatement> filter = ContainerUtil.filter(myExitStatements, statement -> statement instanceof PsiReturnStatement && ((PsiReturnStatement)statement).getReturnValue() != null);
+    final List<PsiStatement> filter = ContainerUtil.filter(myExitStatements.getExitStatements(), statement -> statement instanceof PsiReturnStatement && ((PsiReturnStatement)statement).getReturnValue() != null);
     final List<PsiExpression> map = ContainerUtil.map(filter, statement -> ((PsiReturnStatement)statement).getReturnValue());
     return map.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
   private Nullability initNullability() {
+    LOG.assertTrue(myExitPoints != null, "myExitPoints in initNullability");
     if (!PsiUtil.isLanguageLevel5OrHigher(myElements[0]) || PsiUtil.resolveClassInType(myReturnType) == null) return null;
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     final PsiClass nullableAnnotationClass = JavaPsiFacade.getInstance(myProject)
@@ -716,7 +756,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
       final PsiMethod emptyMethod = (PsiMethod)classCopy.addAfter(generateEmptyMethod("name", null), classCopy.getLBrace());
       prepareMethodBody(emptyMethod, false);
-      if (myNotNullConditionalCheck || myNullConditionalCheck) {
+      if (hasConditionalCheck()) {
         return Nullability.NULLABLE;
       }
       return DfaUtil.inferMethodNullability(emptyMethod);
@@ -935,6 +975,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public void doExtract() throws IncorrectOperationException {
+    LOG.assertTrue(myExitPoints != null, "myExitPoints in doExtract");
 
     PsiMethod newMethod = generateEmptyMethod();
 
@@ -957,7 +998,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
       }
 
-      if (myNullConditionalCheck) {
+      if (myExitPoints.myNullConditionalCheck) {
         final String varName = myOutputVariable.getName();
         if (isDeclaredInside(myOutputVariable)) {
           declareVariableAtMethodCallLocation(varName);
@@ -971,10 +1012,10 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
         declareNecessaryVariablesAfterCall(myOutputVariable);
         PsiIfStatement ifStatement;
-        if (myHasReturnStatementOutput) {
+        if (myExitPoints.myHasReturnStatementOutput) {
           ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
         }
-        else if (myGenerateConditionalExit) {
+        else if (myExitPoints.myGenerateConditionalExit) {
           ifStatement = generateConditionalExitStatement(varName);
         }
         else {
@@ -983,17 +1024,17 @@ public class ExtractMethodProcessor implements MatchProvider {
         ifStatement = (PsiIfStatement)addToMethodCallLocation(ifStatement);
         CodeStyleManager.getInstance(myProject).reformat(ifStatement);
       }
-      else if (myNotNullConditionalCheck) {
+      else if (myExitPoints.myNotNullConditionalCheck) {
         String varName = myOutputVariable != null ? myOutputVariable.getName() : "x";
         varName = declareVariableAtMethodCallLocation(varName, myReturnType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)myReturnType).getBoxedType(myCodeFragmentMember) : myReturnType);
         addToMethodCallLocation(generateNotNullConditionalStatement(varName));
         declareVariableReusedAfterCall(myOutputVariable);
       }
-      else if (myGenerateConditionalExit) {
+      else if (myExitPoints.myGenerateConditionalExit) {
         PsiIfStatement ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (a) b;", null);
         ifStatement = (PsiIfStatement)addToMethodCallLocation(ifStatement);
         myMethodCall = (PsiMethodCallExpression)ifStatement.getCondition().replace(myMethodCall);
-        myFirstExitStatementCopy = (PsiStatement)ifStatement.getThenBranch().replace(myFirstExitStatementCopy);
+        myExitStatements.myFirstExitStatementCopy = (PsiStatement)ifStatement.getThenBranch().replace(myExitStatements.myFirstExitStatementCopy);
         CodeStyleManager.getInstance(myProject).reformat(ifStatement);
       }
       else if (myOutputVariable != null || isArtificialOutputUsed()) {
@@ -1010,7 +1051,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           declareVariableAtMethodCallLocation(name);
         }
       }
-      else if (myHasReturnStatementOutput) {
+      else if (myExitPoints.myHasReturnStatementOutput) {
         PsiStatement statement = myElementFactory.createStatementFromText("return x;", null);
         statement = (PsiStatement)addToMethodCallLocation(statement);
         myMethodCall = (PsiMethodCallExpression)((PsiReturnStatement)statement).getReturnValue().replace(myMethodCall);
@@ -1020,15 +1061,15 @@ public class ExtractMethodProcessor implements MatchProvider {
         statement = (PsiStatement)addToMethodCallLocation(statement);
         myMethodCall = (PsiMethodCallExpression)((PsiExpressionStatement)statement).getExpression().replace(myMethodCall);
       }
-      if (myHasReturnStatement && !myHasReturnStatementOutput && !hasNormalExit()) {
+      if (myExitPoints.myHasReturnStatement && !myExitPoints.myHasReturnStatementOutput && !hasNormalExit()) {
         PsiStatement statement = myElementFactory.createStatementFromText("return;", null);
         addToMethodCallLocation(statement);
       }
-      else if (!myGenerateConditionalExit && exitStatementCopy != null) {
+      else if (!myExitPoints.myGenerateConditionalExit && exitStatementCopy != null) {
         addToMethodCallLocation(exitStatementCopy);
       }
 
-      if (!myNullConditionalCheck && !myNotNullConditionalCheck) {
+      if (!hasConditionalCheck()) {
         declareNecessaryVariablesAfterCall(myOutputVariable);
       }
 
@@ -1093,10 +1134,10 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   @NotNull
   private PsiIfStatement generateConditionalExitStatement(String varName) {
-    if (myFirstExitStatementCopy instanceof PsiReturnStatement && ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null) {
+    if (myExitStatements.myFirstExitStatementCopy instanceof PsiReturnStatement && ((PsiReturnStatement)myExitStatements.myFirstExitStatementCopy).getReturnValue() != null) {
       return (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
     }
-    return (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) " + myFirstExitStatementCopy.getText(), null);
+    return (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) " + myExitStatements.myFirstExitStatementCopy.getText(), null);
   }
 
   @NotNull
@@ -1117,10 +1158,12 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   @Nullable
   private PsiStatement prepareMethodBody(PsiMethod newMethod, boolean doExtract) {
+    LOG.assertTrue(myExitPoints != null, "myExitPoints in prepareMethodBody");
     PsiCodeBlock body = newMethod.getBody();
+    LOG.assertTrue(body != null, "body in prepareMethodBody");
     if (myExpression != null) {
       declareNecessaryVariablesInsideBody(body);
-      if (myHasExpressionOutput) {
+      if (myExitPoints.myHasExpressionOutput) {
         PsiReturnStatement returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return x;", null);
         final PsiExpression returnValue = RefactoringUtil.convertInitializerToNormalExpression(myExpression, myForcedReturnType);
         returnStatement.getReturnValue().replace(returnValue);
@@ -1137,34 +1180,34 @@ public class ExtractMethodProcessor implements MatchProvider {
     final boolean hasNormalExit = hasNormalExit();
     String outVariableName = myOutputVariable != null ? getNewVariableName(myOutputVariable) : null;
     PsiReturnStatement returnStatement;
-    if (myNullConditionalCheck) {
+    if (myExitPoints.myNullConditionalCheck) {
       returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return null;", null);
     } else if (myOutputVariable != null) {
       returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return " + outVariableName + ";", null);
     }
-    else if (myGenerateConditionalExit) {
+    else if (myExitPoints.myGenerateConditionalExit) {
       returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return true;", null);
     }
     else {
       returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return;", null);
     }
 
-    PsiStatement exitStatementCopy = !doExtract || myNotNullConditionalCheck ? null : myControlFlowWrapper.getExitStatementCopy(returnStatement, myElements);
+    PsiStatement exitStatementCopy = !doExtract || myExitPoints.myNotNullConditionalCheck ? null : myControlFlowWrapper.getExitStatementCopy(returnStatement, myElements);
 
 
     declareNecessaryVariablesInsideBody(body);
 
     body.addRange(myElements[0], myElements[myElements.length - 1]);
-    if (myNullConditionalCheck) {
+    if (myExitPoints.myNullConditionalCheck) {
       body.add(myElementFactory.createStatementFromText("return " + myOutputVariable.getName() + ";", null));
     }
-    else if (myNotNullConditionalCheck) {
+    else if (myExitPoints.myNotNullConditionalCheck) {
       body.add(myElementFactory.createStatementFromText("return null;", null));
     }
-    else if (myGenerateConditionalExit) {
+    else if (myExitPoints.myGenerateConditionalExit) {
       body.add(myElementFactory.createStatementFromText("return false;", null));
     }
-    else if (!myHasReturnStatement && hasNormalExit && myOutputVariable != null) {
+    else if (!myExitPoints.myHasReturnStatement && hasNormalExit && myOutputVariable != null) {
       final PsiReturnStatement insertedReturnStatement = (PsiReturnStatement)body.add(returnStatement);
       if (myOutputVariables.length == 1) {
         final PsiExpression returnValue = insertedReturnStatement.getReturnValue();
@@ -1422,14 +1465,14 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private PsiElement addNotNullConditionalCheck(Match match, PsiElement replacedMatch) {
-    if ((myNotNullConditionalCheck || myGenerateConditionalExit) && myOutputVariable != null) {
+    if ((myExitPoints.myNotNullConditionalCheck || myExitPoints.myGenerateConditionalExit) && myOutputVariable != null) {
       ReturnValue returnValue = match.getOutputVariableValue(myOutputVariable);
       if (returnValue instanceof VariableReturnValue) {
         String varName = ((VariableReturnValue)returnValue).getVariable().getName();
         LOG.assertTrue(varName != null, "returned variable name is null");
         PsiStatement statement = PsiTreeUtil.getParentOfType(replacedMatch, PsiStatement.class, false);
         if (statement != null) {
-          PsiStatement conditionalExit = myNotNullConditionalCheck ?
+          PsiStatement conditionalExit = myExitPoints.myNotNullConditionalCheck ?
                                          generateNotNullConditionalStatement(varName) : generateConditionalExitStatement(varName);
           return statement.getParent().addAfter(conditionalExit, statement);
         }
@@ -1954,7 +1997,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   protected void declareNecessaryVariablesAfterCall(PsiVariable outputVariable) throws IncorrectOperationException {
-    if (myHasExpressionOutput) return;
+    if (myExitPoints.myHasExpressionOutput) return;
     List<PsiVariable> usedVariables = myControlFlowWrapper.getUsedVariables();
     Collection<ControlFlowUtil.VariableInfo> reassigned = myControlFlowWrapper.getInitializedTwice();
     for (PsiVariable variable : usedVariables) {
@@ -2023,7 +2066,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), isFoldingApplicable());
     myInputVariables.setUsedInstanceFields(fields);
 
-    if (!checkExitPoints()){
+    myExitPoints = checkExitPoints();
+    if (myExitPoints == null) {
       return false;
     }
 
@@ -2093,7 +2137,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private void showMultipleExitPointsMessage() {
     if (myShowErrorDialogs) {
       HighlightManager highlightManager = HighlightManager.getInstance(myProject);
-      PsiStatement[] exitStatementsArray = myExitStatements.toArray(PsiStatement.EMPTY_ARRAY);
+      PsiStatement[] exitStatementsArray = myExitStatements.getExitStatements().toArray(PsiStatement.EMPTY_ARRAY);
       EditorColorsManager manager = EditorColorsManager.getInstance();
       TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       highlightManager.addOccurrenceHighlights(myEditor, exitStatementsArray, attributes, true, null);
@@ -2104,9 +2148,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  protected void showMultipleOutputMessage(PsiType expressionType) throws PrepareFailedException {
+  protected void showMultipleOutputMessage(PsiType expressionType, ExitPoints rs) throws PrepareFailedException {
     if (myShowErrorDialogs) {
-      String message = buildMultipleOutputMessageError(expressionType) + "\nWould you like to Extract Method Object?";
+      String message = buildMultipleOutputMessageError(expressionType, rs) + "\nWould you like to Extract Method Object?";
 
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(myRefactoringName, message, myHelpId, "OptionPane.errorIcon", true,
@@ -2118,17 +2162,17 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  protected String buildMultipleOutputMessageError(PsiType expressionType) {
+  protected String buildMultipleOutputMessageError(PsiType expressionType, ExitPoints ep) {
     StringBuilder buffer = new StringBuilder();
     buffer.append(RefactoringBundle.getCannotRefactorMessage(
       RefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
     buffer.append("\n");
-    if (myHasExpressionOutput) {
+    if (ep.myHasExpressionOutput) {
       buffer.append("    ").append(RefactoringBundle.message("expression.result")).append(": ");
       buffer.append(PsiFormatUtil.formatType(expressionType, 0, PsiSubstitutor.EMPTY));
       buffer.append(",\n");
     }
-    if (myGenerateConditionalExit) {
+    if (ep.myGenerateConditionalExit) {
       buffer.append("    ").append(RefactoringBundle.message("boolean.method.result"));
       buffer.append(",\n");
     }

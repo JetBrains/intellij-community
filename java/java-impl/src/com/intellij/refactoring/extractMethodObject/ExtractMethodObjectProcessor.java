@@ -793,8 +793,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    protected boolean checkOutputVariablesCount() {
-      myMultipleExitPoints = super.checkOutputVariablesCount();
+    protected boolean checkOutputVariablesCount(ExitPoints ep) {
+      myMultipleExitPoints = super.checkOutputVariablesCount(ep);
       myOutputFields = new PsiField[myOutputVariables.length];
       for (int i = 0; i < myOutputVariables.length; i++) {
         PsiVariable variable = myOutputVariables[i];
@@ -905,7 +905,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     private void rebindExitStatement(final String objectName) {
-      final PsiStatement exitStatementCopy = myExtractProcessor.myFirstExitStatementCopy;
+      final PsiStatement exitStatementCopy = myExtractProcessor.getFirstExitStatementCopy();
       if (exitStatementCopy != null) {
         myExtractProcessor.myDuplicates = new ArrayList<>();
         final Map<String, PsiVariable> outVarsNames = new HashMap<>();
@@ -936,8 +936,14 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    public boolean generatesConditionalExit() {
-      return myGenerateConditionalExit;
+    @Override
+    protected boolean generatesConditionalExit() {
+      return super.generatesConditionalExit();
+    }
+
+    @Override
+    protected PsiStatement getFirstExitStatementCopy() {
+      return super.getFirstExitStatementCopy();
     }
   }
 }

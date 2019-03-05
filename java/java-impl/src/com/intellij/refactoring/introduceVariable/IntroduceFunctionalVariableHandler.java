@@ -224,8 +224,8 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     }
 
     @Override
-    protected void showMultipleOutputMessage(PsiType expressionType) throws PrepareFailedException {
-      throw new PrepareFailedException(buildMultipleOutputMessageError(expressionType), myElements[0]);
+    protected void showMultipleOutputMessage(PsiType expressionType, ExitPoints ep) throws PrepareFailedException {
+      throw new PrepareFailedException(buildMultipleOutputMessageError(expressionType, ep), myElements[0]);
     }
 
     @Override
@@ -289,7 +289,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     public boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass) throws PrepareFailedException {
       final boolean prepare = super.prepare(pass);
       if (prepare) {
-        if (myNotNullConditionalCheck || myNullConditionalCheck) {
+        if (hasConditionalCheck()) {
           return false;
         }
       }
