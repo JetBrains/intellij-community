@@ -549,7 +549,8 @@ public class RemoteDebugger implements ProcessDebugger {
         onProcessCreatedEvent(frame.getSequence());
       }
       else if (AbstractCommand.isShowWarningCommand(frame.getCommand())) {
-        myDebugProcess.showCythonWarning();
+        final String warningId = ProtocolParser.parseWarning(frame.getPayload());
+        myDebugProcess.showWarning(warningId);
       }
       else {
         placeResponse(frame.getSequence(), frame);

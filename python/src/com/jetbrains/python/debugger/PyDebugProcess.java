@@ -81,7 +81,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.debugger.PyDebugProcess");
   private static final int CONNECTION_TIMEOUT = 60000;
 
-  private static final NotificationGroup NOTIFICATION_GROUP =
+  public static final NotificationGroup NOTIFICATION_GROUP =
     NotificationGroup.toolWindowGroup(PyBundle.message("debug.notification.group"), ToolWindowId.DEBUG);
 
   private final ProcessDebugger myDebugger;
@@ -388,10 +388,15 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void showCythonWarning() {
-    if (!isCythonWarningShown) {
-      PyCythonExtensionWarning.showCythonExtensionWarning(getSession().getProject());
-      isCythonWarningShown = true;
+  public void showCythonWarning() { }
+
+  @Override
+  public void showWarning(String warningId) {
+    if (warningId.equals("cython")) {
+      if (!isCythonWarningShown) {
+        PyCythonExtensionWarning.showCythonExtensionWarning(getSession().getProject());
+        isCythonWarningShown = true;
+      }
     }
   }
 
