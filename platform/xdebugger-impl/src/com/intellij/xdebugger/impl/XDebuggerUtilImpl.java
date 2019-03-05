@@ -43,7 +43,6 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.*;
@@ -587,12 +586,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Nullable
   public static Editor createEditor(@NotNull OpenFileDescriptor descriptor) {
-    if (descriptor.canNavigate()) {
-      FileEditorManager fileEditorManager = FileEditorManager.getInstance(descriptor.getProject());
-      Editor editor = fileEditorManager.getSelectedTextEditor();
-      return fileEditorManager.openTextEditor(descriptor, editor != null && IJSwingUtilities.hasFocus(editor.getContentComponent()));
-    }
-    return null;
+    return descriptor.canNavigate() ? FileEditorManager.getInstance(descriptor.getProject()).openTextEditor(descriptor, false) : null;
   }
 
   public static void rebuildAllSessionsViews(@Nullable Project project) {
