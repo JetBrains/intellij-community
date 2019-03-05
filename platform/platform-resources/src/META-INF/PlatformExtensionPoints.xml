@@ -348,6 +348,6 @@
 
     <extensionPoint qualifiedName="com.intellij.search.traverseUiHelper" interface="com.intellij.ide.ui.search.TraverseUIHelper"/>
 
-    <extensionPoint name="stalledStorage" beanClass="com.intellij.configurationStore.StalledStorageBean"/>
+    <extensionPoint name="obsoleteStorage" beanClass="com.intellij.configurationStore.ObsoleteStorageBean"/>
   </extensionPoints>
 </idea-plugin>
