@@ -380,6 +380,7 @@ public class LambdaRefactoringUtil {
    * @return true if method reference can be converted to lambda
    */
   public static boolean canConvertToLambdaWithoutSideEffects(PsiMethodReferenceExpression methodReferenceExpression) {
+    if (!canConvertToLambda(methodReferenceExpression)) return false;
     final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
     return qualifierExpression == null || !SideEffectChecker.mayHaveSideEffects(qualifierExpression);
   }
