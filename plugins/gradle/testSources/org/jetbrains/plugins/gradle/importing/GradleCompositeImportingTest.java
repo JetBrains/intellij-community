@@ -358,4 +358,114 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope(myUtilsApiMainModuleName, "Gradle: junit:junit:4.11", COMPILE);
     //assertModuleLibDepScope("my-utils-api_main", "Gradle: org.hamcrest:hamcrest-core:1.3", COMPILE);
   }
+
+  @Test
+  @TargetVersions("5.2+")
+  public void testApiDependenciesAreImported() throws Exception {
+    createSettingsFile("rootProject.name = \"project-b\"\n" +
+                       "includeBuild 'project-a'");
+
+    createProjectSubFile("project-a/settings.gradle",
+                                                      "rootProject.name = \"project-a\"\n" +
+                                                      "include 'core', 'ext'");
+
+    createProjectSubFile("project-a/core/build.gradle",
+                         new GradleBuildScriptBuilderEx()
+                          .addPrefix("apply plugin: 'java-library'").generate());
+
+    createProjectSubFile("project-a/ext/build.gradle",
+                         new GradleBuildScriptBuilderEx()
+                           .addPrefix(
+                             "apply plugin: 'java-library'",
+                             "group = 'myGroup.projectA'",
+                             "version = '1.0-SNAPSHOT'",
+                             "dependencies {",
+                             " api project(':core')",
+                             "}"
+                         ).generate());
+
+    createProjectSubFile("project-a/build.gradle", "");
+
+    importProject(new GradleBuildScriptBuilderEx()
+                    .withIdeaPlugin()
+                    .addPostfix("apply plugin: 'java-library'",
+                                "group = 'myGroup'",
+                                "version = '1.0-SNAPSHOT'",
+                                "dependencies {",
+                                "    api group: 'myGroup.projectA', name: 'ext', version: '1.0-SNAPSHOT'",
+                                "}"
+                    )
+                    .generate());
+
+    assertModules("project-a",
+                  "project-a.core", "project-a.core.main", "project-a.core.test",
+                  "project-a.ext", "project-a.ext.main", "project-a.ext.test",
+                  "project-b", "project-b.main", "project-b.test");
+
+    assertModuleModuleDeps("project-b.main", "project-a.ext.main", "project-a.core.main");
+  }
+
+
+  @Test
+  // todo should this be fixed for Gradle versions [3.1, 4.9)?
+  @TargetVersions("4.9+")
+  public void testTransitiveSourceSetDependenciesAreImported() throws Exception {
+    createSettingsFile("rootProject.name = \"project-b\"\n" +
+                       "includeBuild 'project-a'");
+
+    createProjectSubFile("project-a/settings.gradle", "rootProject.name = \"project-a\"");
+    createProjectSubFile("project-a/build.gradle",
+                         new GradleBuildScriptBuilderEx()
+                           .withIdeaPlugin()
+                           .withJavaPlugin()
+                           .addPostfix(
+                             "group = 'myGroup'",
+                             "version = '1.0-SNAPSHOT'",
+                             "repositories {",
+                             "    mavenCentral()",
+                             "}",
+                             "sourceSets {",
+                             "    util {",
+                             "        java.srcDir 'src/util/java'",
+                             "        resources.srcDir 'src/util/resources'",
+                             "    }",
+                             "}",
+                             "configurations {",
+                             "  compile {",
+                             "    extendsFrom utilCompile",
+                             "  }",
+                             "}",
+                             "dependencies {",
+                             "   compile sourceSets.util.output",
+                             "}",
+                             "jar {",
+                             "  from sourceSets.util.output",
+                             "}",
+                             "compileJava {",
+                             "    dependsOn(compileUtilJava)",
+                             "}").generate());
+    createProjectSubFile("project-a/src/main/java/my/pack/Clazz.java", "package my.pack; public class Clazz{};");
+    createProjectSubFile("project-a/src/main/util/my/pack/Util.java", "package my.pack; public class Util{};");
+
+    createProjectSubFile("src/main/java/my/pack/ClazzB.java", "package my.pack; public class CLazzB{};");
+    importProject(new GradleBuildScriptBuilderEx()
+                    .withIdeaPlugin()
+                    .withJavaPlugin()
+                    .addPostfix("group = 'myGroup'",
+                                "version = '1.0-SNAPSHOT'",
+                                "repositories {",
+                                "    mavenCentral()",
+                                "}",
+                                "dependencies {",
+                                "    compile group: 'myGroup', name: 'project-a', version: '1.0-SNAPSHOT'",
+                                "}"
+                                )
+                    .generate());
+
+    assertModules("project-a",
+                  "project-a.main", "project-a.test", "project-a.util",
+                  "project-b", "project-b.main", "project-b.test");
+
+    assertModuleModuleDeps("project-b.main", "project-a.util", "project-a.main");
+  }
 }
