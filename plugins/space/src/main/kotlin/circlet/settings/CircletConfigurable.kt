@@ -33,6 +33,8 @@ class CircletConfigurable : SearchableConfigurable {
 
     var state = mutableProperty<LoginState>(LoginState.Disconnected("", null))
 
+    var intendedSettings : CircletServerSettings = circletSettings.settings.value
+
     private val panel = JPanel(FlowLayout())
 
     init {
@@ -54,6 +56,7 @@ class CircletConfigurable : SearchableConfigurable {
                                 addActionListener {
                                     connectButton.isEnabled = false
                                     val servername = server.text
+                                    intendedSettings = CircletServerSettings(true, servername)
                                     connect(servername, { it.authTokenInteractive() }, false)
                                 }
                             })
@@ -74,6 +77,7 @@ class CircletConfigurable : SearchableConfigurable {
                                 addActionListener {
                                     st.lt.terminate()
                                     state.value = LoginState.Disconnected(st.server, null)
+                                    intendedSettings = CircletServerSettings(false, st.server)
                                 }
                             })
                         }
@@ -87,6 +91,7 @@ class CircletConfigurable : SearchableConfigurable {
                             add(connectButton.apply {
                                 addActionListener {
                                     state.value = LoginState.Disconnected(st.server, null)
+                                    intendedSettings = CircletServerSettings(false, st.server)
                                 }
                             })
                         }
@@ -117,9 +122,9 @@ class CircletConfigurable : SearchableConfigurable {
                                 val client = KCircletClient(probleLt, wsConfig.server, ps)
                                 client.start(accessToken.toTokenInfo())
                                 val nState = fetchState(client)
+                                intendedSettings = CircletServerSettings(true, servername)
                                 state.value = LoginState.Connected(servername, nState)
                             }
-
                         }
                         is OAuthTokenResponse.Error -> {
                             if (expectErrorToken) {
@@ -146,9 +151,7 @@ class CircletConfigurable : SearchableConfigurable {
 
     override fun isModified(): Boolean {
         val stateFromSettings = circletSettings.settings.value
-        val stateFromUi = settingsFromUi(state.value)
-        return stateFromSettings.server != stateFromUi.server ||
-            stateFromSettings.enabled != stateFromUi.enabled
+        return intendedSettings.server != stateFromSettings.server || intendedSettings.enabled != stateFromSettings.enabled
     }
 
     private fun settingsFromUi(state: LoginState): CircletServerSettings {
@@ -164,11 +167,11 @@ class CircletConfigurable : SearchableConfigurable {
 
     override fun apply() {
         launch(Lifetime.Eternal, Ui) {
+            log.info { "Apply configurable" }
             val st = state.value
 
             // 1. save workspace settings
-            val settings = settingsFromUi(st)
-            circletSettings.applySettings(settings)
+            circletSettings.applySettings(intendedSettings)
 
             // 2. apply login information
             val state = if (st is LoginState.Connected) st.workspaceState else null
@@ -194,7 +197,7 @@ class CircletConfigurable : SearchableConfigurable {
     }
 }
 
-class CircletServerSettings(
+data class CircletServerSettings(
     var enabled: Boolean = false,
     var server: String = ""
 )
