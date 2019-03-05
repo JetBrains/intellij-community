@@ -16,6 +16,7 @@ import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,9 +47,9 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   private static VirtualFile getDefaultRoot(@NotNull Project project, @NotNull List<VirtualFile> roots, @Nullable VirtualFile[] vFiles) {
     if (vFiles != null) {
       for (VirtualFile file : vFiles) {
-        VirtualFile root = GitUtil.gitRootOrNull(file);
-        if (root != null) {
-          return root;
+        GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
+        if (repository != null) {
+          return repository.getRoot();
         }
       }
     }
