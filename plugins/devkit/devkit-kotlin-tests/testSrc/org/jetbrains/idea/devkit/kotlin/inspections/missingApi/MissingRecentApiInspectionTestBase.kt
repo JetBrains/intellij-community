@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.inspections.missingApi
+package org.jetbrains.idea.devkit.kotlin.inspections.missingApi
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.openapi.roots.JavaModuleExternalPaths
@@ -9,8 +9,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase
-import org.jetbrains.idea.devkit.inspections.missingApi.project.PluginProjectWithIdeaJdkDescriptor
-import org.jetbrains.idea.devkit.inspections.missingApi.project.PluginProjectWithIdeaLibraryDescriptor
+import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection
+import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiVisitor
+import org.jetbrains.idea.devkit.kotlin.inspections.missingApi.project.PluginProjectWithIdeaJdkDescriptor
+import org.jetbrains.idea.devkit.kotlin.inspections.missingApi.project.PluginProjectWithIdeaLibraryDescriptor
 
 /**
  * Base class for tests of [MissingRecentApiInspection] on Java and Kotlin sources.
