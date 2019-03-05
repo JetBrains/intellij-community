@@ -17,15 +17,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.TasksToRun;
-
-import java.util.List;
 
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.getSourceFile;
@@ -57,7 +54,7 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
     configuration.getSettings().setTaskNames(tasksToRun);
     String filter = createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/false);
     configuration.getSettings().setScriptParameters(filter);
-    configuration.setName(suggestName(configurationData.psiPackage, configurationData.module));
+    configuration.setName(suggestName(configurationData));
     return true;
   }
 
@@ -89,7 +86,7 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
       performRunnable.run();
       return;
     }
-    String locationName = String.format("'%s'", extractLocationName(configurationData.psiPackage, configurationData.module));
+    String locationName = String.format("'%s'", configurationData.getLocationName());
     DataContext dataContext = TestTasksChooser.contextWithLocationName(context.getDataContext(), locationName);
     PsiElement[] sourceElements = ArrayUtil.toObjectArray(PsiElement.class, configurationData.sourceElement);
     getTestTasksChooser().chooseTestTasks(context.getProject(), dataContext, sourceElements, tasks -> {
@@ -101,7 +98,7 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
           performRunnable.run();
           return;
         }
-        configuration.setName(suggestName(configurationData.psiPackage, configurationData.module));
+      configuration.setName(suggestName(configurationData));
         performRunnable.run();
     });
   }
@@ -112,7 +109,7 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
     if (module == null) return null;
     PsiElement contextLocation = context.getPsiLocation();
     if (contextLocation == null) return null;
-    PsiPackage psiPackage = extractPackage(module, contextLocation);
+    PsiPackage psiPackage = extractPackage(contextLocation);
     if (psiPackage == null) return null;
     String projectPath = resolveProjectPath(module);
     if (projectPath == null) return null;
@@ -146,30 +143,16 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
   }
 
   @Nullable
-  private static PsiPackage extractPackage(@NotNull Module module, @NotNull PsiElement location) {
+  /*internal*/ public static PsiPackage extractPackage(@NotNull PsiElement location) {
     PsiPackage psiPackage = JavaRuntimeConfigurationProducerBase.checkPackage(location);
     if (psiPackage == null) return null;
-    if (!isTruePackage(module, location, psiPackage)) return null;
+    if (psiPackage.getQualifiedName().isEmpty()) return null;
     return psiPackage;
   }
 
-  private static boolean isTruePackage(@NotNull Module module, @NotNull PsiElement location, @NotNull PsiPackage psiPackage) {
-    VirtualFile locationFile = getSourceFile(location);
-    if (locationFile == null) return true;
-    String locationPath = locationFile.getPath();
-    GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(module);
-    PsiDirectory[] packageDirs = psiPackage.getDirectories(moduleScope);
-    List<VirtualFile> packageFiles = ContainerUtil.mapNotNull(packageDirs, it -> getSourceFile(it));
-    List<String> packagePaths = ContainerUtil.map(packageFiles, it -> it.getPath());
-    return packagePaths.stream().anyMatch(locationPath::equals);
-  }
-
-  private static String extractLocationName(@NotNull PsiPackage aPackage, @NotNull Module module) {
-    return aPackage.getQualifiedName().isEmpty() ? module.getName() : aPackage.getQualifiedName();
-  }
-
-  private static String suggestName(@NotNull PsiPackage aPackage, @NotNull Module module) {
-    return ExecutionBundle.message("test.in.scope.presentable.text", extractLocationName(aPackage, module));
+  @NotNull
+  private static String suggestName(@NotNull ConfigurationData configurationData) {
+    return ExecutionBundle.message("test.in.scope.presentable.text", configurationData.getLocationName());
   }
 
   private static class ConfigurationData {
@@ -189,6 +172,11 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
       this.sourceElement = sourceElement;
       this.source = source;
       this.projectPath = projectPath;
+    }
+
+    @NotNull
+    public String getLocationName() {
+      return psiPackage.getQualifiedName();
     }
   }
 }
