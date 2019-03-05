@@ -4,10 +4,14 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
 import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
 import com.intellij.configurationStore.schemeManager.useSchemeLoader
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -16,13 +20,13 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectReloadState
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -41,10 +45,7 @@ import java.util.concurrent.atomic.AtomicReference
 private val CHANGED_FILES_KEY = Key<MultiMap<ComponentStoreImpl, StateStorage>>("CHANGED_FILES_KEY")
 private val CHANGED_SCHEMES_KEY = Key<MultiMap<SchemeChangeApplicator, SchemeChangeEvent>>("CHANGED_SCHEMES_KEY")
 
-/**
- * Should be a separate service, not closely related to ProjectManager, but it requires some cleanup/investigation.
- */
-class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressManager: ProgressManager) : ProjectManagerImpl(progressManager), ConfigurationStorageReloader {
+internal class StoreAwareProjectManager : Disposable, StoreReloadManager, BaseComponent {
   private val reloadBlockCount = AtomicInteger()
   private val blockStackTrace = AtomicReference<String?>()
   private val changedApplicationFiles = LinkedHashSet<StateStorage>()
@@ -55,7 +56,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     }
 
     val projectsToReload = THashSet<Project>()
-    for (project in openProjects) {
+    for (project in ProjectManager.getInstance().openProjects) {
       if (project.isDisposed) {
         continue
       }
@@ -98,10 +99,10 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     }
   }, delay = 300, parentDisposable = this)
 
-  init {
+  override fun initComponent() {
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(STORAGE_TOPIC, object : StorageManagerListener {
       override fun storageFileChanged(event: VFileEvent, storage: StateStorage, componentManager: ComponentManager) {
-        if (event.requestor is ProjectManagerEx) {
+        if (event.requestor is StoreReloadManager) {
           return
         }
 
@@ -109,7 +110,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
       }
     })
 
-    virtualFileManager.addVirtualFileManagerListener(object : VirtualFileManagerListener {
+    VirtualFileManager.getInstance().addVirtualFileManagerListener(object : VirtualFileManagerListener {
       override fun beforeRefreshStart(asynchronous: Boolean) {
         blockReloadingProjectOnExternalChanges()
       }
@@ -154,6 +155,9 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     changedFilesAlarm.request()
   }
 
+  /**
+   * Internal use only. Force reload changed project files. Must be called before save otherwise saving maybe not performed (because storage saving is disabled).
+   */
   override fun flushChangedProjectFileAlarm() {
     changedFilesAlarm.drainRequestsInTest()
   }
@@ -169,7 +173,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
 
   override fun reloadProject(project: Project) {
     CHANGED_FILES_KEY.set(project, null)
-    super.reloadProject(project)
+    doReloadProject(project)
   }
 
   private fun registerChangedStorage(storage: StateStorage, componentManager: ComponentManager) {
@@ -233,6 +237,9 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     changedApplicationFiles.clear()
 
     return reloadAppStore(changes)
+  }
+
+  override fun dispose() {
   }
 }
 
@@ -330,4 +337,27 @@ private fun <T : Any> Key<T>.getAndClear(holder: UserDataHolderEx): T? {
   val value = holder.getUserData(this) ?: return null
   holder.replace(this, value, null)
   return value
+}
+
+private fun doReloadProject(project: Project) {
+  val projectRef = Ref.create(project)
+  ProjectReloadState.getInstance(project).onBeforeAutomaticProjectReload()
+  ApplicationManager.getApplication().invokeLater({
+    LOG.debug("Reloading project.")
+    val project1 = projectRef.get()
+    // Let it go
+    projectRef.set(null)
+
+    if (project1.isDisposed) {
+      return@invokeLater
+    }
+
+    // must compute here, before project dispose
+    val presentableUrl = project1.presentableUrl
+    if (!ProjectUtil.closeAndDispose(project1)) {
+      return@invokeLater
+    }
+
+    ProjectUtil.openProject(Objects.requireNonNull<String>(presentableUrl), null, true)
+  }, ModalityState.NON_MODAL)
 }

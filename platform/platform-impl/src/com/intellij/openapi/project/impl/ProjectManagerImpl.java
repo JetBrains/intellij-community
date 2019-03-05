@@ -2,6 +2,7 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StorageUtilKt;
+import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
@@ -71,7 +72,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   // we cannot use the same approach to migrate to message bus as CompilerManagerImpl because of method canCloseProject
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private final ProgressManager myProgressManager;
   private volatile boolean myDefaultProjectWasDisposed;
   private final ProjectManagerListener myBusPublisher;
 
@@ -82,8 +82,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return array;
   }
 
-  public ProjectManagerImpl(ProgressManager progressManager) {
-    myProgressManager = progressManager;
+  public ProjectManagerImpl() {
     MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
     myBusPublisher = messageBus.syncPublisher(TOPIC);
     messageBus.connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
@@ -268,8 +267,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).count();
   }
 
-  private void initProject(@NotNull ProjectEx project, @Nullable Project template) {
-    ProgressIndicator indicator = myProgressManager.getProgressIndicator();
+  private static void initProject(@NotNull ProjectEx project, @Nullable Project template) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null && !project.isDefault()) {
       indicator.setIndeterminate(false);
       indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
@@ -434,8 +433,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return true;
   }
 
-  private boolean loadProjectUnderProgress(@NotNull Project project, @NotNull Runnable performLoading) {
-    ProgressIndicator indicator = myProgressManager.getProgressIndicator();
+  private static boolean loadProjectUnderProgress(@NotNull Project project, @NotNull Runnable performLoading) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (!ApplicationManager.getApplication().isDispatchThread() && indicator != null) {
       indicator.setText("Preparing workspace...");
       try {
@@ -447,7 +446,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }
     }
 
-    return myProgressManager.runProcessWithProgressSynchronously(performLoading, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
+    return ProgressManager.getInstance()
+      .runProcessWithProgressSynchronously(performLoading, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
   }
 
   private boolean addToOpened(@NotNull Project project) {
@@ -494,7 +494,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     else {
       project = createProject(null, filePath, false);
-      myProgressManager.run(new Task.WithResult<Project, IOException>(project, ProjectBundle.message("project.load.progress"), true) {
+      ProgressManager.getInstance()
+        .run(new Task.WithResult<Project, IOException>(project, ProjectBundle.message("project.load.progress"), true) {
         @Override
         protected Project compute(@NotNull ProgressIndicator indicator) throws IOException {
           if (!loadProjectWithProgress(project)) {
@@ -546,14 +547,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return project;
   }
 
-  private boolean loadProjectWithProgress(ProjectEx project) throws IOException {
+  private static boolean loadProjectWithProgress(ProjectEx project) throws IOException {
     try {
       if (!ApplicationManager.getApplication().isDispatchThread() &&
-          myProgressManager.getProgressIndicator() != null) {
+          ProgressManager.getInstance().getProgressIndicator() != null) {
         initProject(project, null);
         return true;
       }
-      myProgressManager.runProcessWithProgressSynchronously((ThrowableComputable<Object, RuntimeException>)() -> {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously((ThrowableComputable<Object, RuntimeException>)() -> {
         initProject(project, null);
         return project;
       }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
@@ -595,30 +596,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public void reloadProject(@NotNull Project project) {
-    doReloadProject(project);
-  }
-
-  protected static void doReloadProject(@NotNull Project project) {
-    final Ref<Project> projectRef = Ref.create(project);
-    ProjectReloadState.getInstance(project).onBeforeAutomaticProjectReload();
-    ApplicationManager.getApplication().invokeLater(() -> {
-      LOG.debug("Reloading project.");
-      Project project1 = projectRef.get();
-      // Let it go
-      projectRef.set(null);
-
-      if (project1.isDisposed()) {
-        return;
-      }
-
-      // must compute here, before project dispose
-      String presentableUrl = project1.getPresentableUrl();
-      if (!ProjectUtil.closeAndDispose(project1)) {
-        return;
-      }
-
-      ProjectUtil.openProject(Objects.requireNonNull(presentableUrl), null, true);
-    }, ModalityState.NON_MODAL);
+    StoreReloadManager.getInstance().reloadProject(project);
   }
 
   @Override
@@ -913,17 +891,5 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       myProject = null;
       super.expire();
     }
-  }
-
-  @Override
-  public void saveChangedProjectFile(@NotNull VirtualFile file, @NotNull Project project) {
-  }
-
-  @Override
-  public void blockReloadingProjectOnExternalChanges() {
-  }
-
-  @Override
-  public void unblockReloadingProjectOnExternalChanges() {
   }
 }

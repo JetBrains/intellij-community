@@ -926,7 +926,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
     }
 
-    ProjectManagerEx projectManager = (ProjectManagerEx)ProjectManager.getInstance();
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project[] projects = projectManager.getOpenProjects();
     for (Project project : projects) {
       if (!projectManager.canClose(project)) {

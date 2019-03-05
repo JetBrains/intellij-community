@@ -2,6 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.configurationStore.StateStorageManagerKt;
+import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -621,7 +622,7 @@ public class PlatformTestUtil {
   }
 
   public static void saveProject(@NotNull Project project, boolean isForceSavingAllSettings) {
-    ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
+    StoreReloadManager.getInstance().flushChangedProjectFileAlarm();
     StateStorageManagerKt.saveComponentManager(project, isForceSavingAllSettings);
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.ex;
 
+import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -45,10 +46,23 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   public abstract boolean canClose(@NotNull Project project);
 
-  public abstract void saveChangedProjectFile(@NotNull VirtualFile file, @NotNull Project project);
+  /**
+   * @deprecated Use {@link StoreReloadManager#blockReloadingProjectOnExternalChanges()}
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  @Deprecated
+  public final void blockReloadingProjectOnExternalChanges() {
+    StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
+  }
 
-  public abstract void blockReloadingProjectOnExternalChanges();
-  public abstract void unblockReloadingProjectOnExternalChanges();
+  /**
+   * @deprecated Use {@link StoreReloadManager#blockReloadingProjectOnExternalChanges()}
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  @Deprecated
+  public final void unblockReloadingProjectOnExternalChanges() {
+    StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+  }
 
   @TestOnly
   public abstract void openTestProject(@NotNull Project project);
@@ -87,11 +101,4 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   @Nullable
   public abstract Project convertAndLoadProject(@NotNull VirtualFile path) throws IOException;
-
-  /**
-   * Internal use only. Force reload changed project files. Must be called before save otherwise saving maybe not performed (because storage saving is disabled).
-   */
-  @TestOnly
-  public void flushChangedProjectFileAlarm() {
-  }
 }

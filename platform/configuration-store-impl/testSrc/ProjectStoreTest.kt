@@ -6,7 +6,6 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.SystemInfo
@@ -74,7 +73,7 @@ internal class ProjectStoreTest {
       file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
       LocalFileSystem.getInstance().findFileByPath(project.basePath!!)!!.refresh(false, true)
-      (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
+      StoreReloadManager.getInstance().reloadChangedStorageFiles()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
 

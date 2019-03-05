@@ -15,7 +15,6 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectMacrosUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -97,7 +96,7 @@ private fun checkUnknownMacros(project: Project,
     }
     else if (Messages.showYesNoDialog(project, "Component could not be reloaded. Reload project?", "Configuration Changed",
                                       Messages.getQuestionIcon()) == Messages.YES) {
-      ProjectManagerEx.getInstanceEx().reloadProject(project)
+      StoreReloadManager.getInstance().reloadProject(project)
     }
   }
 }
