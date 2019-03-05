@@ -503,7 +503,7 @@
     <frameEditorComponentProvider implementation="com.intellij.openapi.wm.ex.DefaultFrameEditorComponentProvider"/>
 
     <editorNotificationProviderApp implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
-    <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
+    <editorNotificationProviderApp implementation="com.intellij.ide.FileChangedNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider"/>
 
     <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.ide.impl.dataRules.ProjectFileDirectoryRule"/>
