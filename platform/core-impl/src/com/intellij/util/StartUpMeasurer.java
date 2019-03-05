@@ -5,8 +5,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -76,9 +74,7 @@ public final class StartUpMeasurer {
     return new Item(name, null);
   }
 
-  @NotNull
-  public static List<Item> processAndClear(@NotNull Consumer<Item> consumer) {
-    ArrayList<Item> list = new ArrayList<>();
+  public static void processAndClear(@NotNull Consumer<Item> consumer) {
     while (true) {
       Item item = items.poll();
       if (item == null) {
@@ -87,7 +83,6 @@ public final class StartUpMeasurer {
 
       consumer.accept(item);
     }
-    return list;
   }
 
   public final static class Item implements MeasureToken, AutoCloseable {
