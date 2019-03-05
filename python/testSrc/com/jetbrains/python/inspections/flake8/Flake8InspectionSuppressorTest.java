@@ -35,6 +35,20 @@ public class Flake8InspectionSuppressorTest extends PyInspectionTestCase {
                  "    <weak_warning descr=\"Local variable 'x' value is not used\">x</weak_warning> = 1 # noq");
   }
 
+  public void testUnrelatedCommentContainingFlake8() {
+    doTestByText("# Mentioning flake8\n" +
+                 "\n" +
+                 "def foo():\n" +
+                 "    <weak_warning descr=\"Local variable 'x' value is not used\">x</weak_warning> = 1\n");
+  }
+
+  public void testUnrelatedCommentContainingNoqa() {
+    doTestByText("# noqa\n" +
+                 "\n" +
+                 "def foo():\n" +
+                 "    <weak_warning descr=\"Local variable 'x' value is not used\">x</weak_warning> = 1\n");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

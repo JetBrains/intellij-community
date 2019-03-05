@@ -5,8 +5,9 @@ import com.intellij.codeInspection.InspectionSuppressor;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import org.jetbrains.annotations.NotNull;
@@ -60,29 +61,10 @@ public class FlakeInspectionSuppressor implements InspectionSuppressor {
    * @return {@code true} if the highlighting should be suppressed, {@code false} otherwise
    */
   private boolean isSuppressedByLineComment(PsiElement element) {
-    // we'll iterate top to bottom. It's easier to implement and markers at the beginning of a file are more likely
-    PsiFile file = element.getContainingFile();
-
-    return isContainingFlakeLineMarker(file);
-  }
-
-  private boolean isContainingFlakeLineMarker(PsiElement element) {
-    // we assume that markers are most likely at the top-level of a file, i.e. not nested in other elements like functions or classes
-    // therefore we iterate the child first to see if top-level child element is a marker element
-    // if that failed then we iterate the children again and check if they contain the line marker in the sub-elements
-    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (isFlakeLineMarker(child, "# flake8: noqa")) {
-        return true;
-      }
-    }
-
-    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (isContainingFlakeLineMarker(child)) {
-        return true;
-      }
-    }
-
-    return false;
+    final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(element.getContainingFile().getProject());
+    final GlobalSearchScope fileScope = GlobalSearchScope.fileScope(element.getContainingFile());
+    return !searchHelper.processCommentsContainingIdentifier("flake8", fileScope,
+                                                             comment -> !isFlakeLineMarker(comment, "# flake8: noqa"));
   }
 
   /**
