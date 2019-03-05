@@ -206,23 +206,28 @@ public class Extensions {
       return true;
     }
 
-    if (os.equals("mac")) {
+    if (os.equals(OS.mac.name())) {
       return SystemInfoRt.isMac;
     }
-    else if (os.equals("linux")) {
+    else if (os.equals(OS.linux.name())) {
       return SystemInfoRt.isLinux;
     }
-    else if (os.equals("windows")) {
+    else if (os.equals(OS.windows.name())) {
       return SystemInfoRt.isWindows;
     }
-    else if (os.equals("unix")) {
+    else if (os.equals(OS.unix.name())) {
       return SystemInfoRt.isUnix;
     }
-    else if (os.equals("freebsd")) {
+    else if (os.equals(OS.freebsd.name())) {
       return SystemInfoRt.isFreeBSD;
     }
     else {
-      throw new IllegalArgumentException("Unknown OS " + os);
+      throw new IllegalArgumentException("Unknown OS '" + os + "'");
     }
   }
+
+  public enum OS {
+    mac, linux, windows, unix, freebsd
+  }
+
 }

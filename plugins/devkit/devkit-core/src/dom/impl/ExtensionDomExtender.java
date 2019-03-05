@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -36,9 +36,14 @@ import java.util.*;
  * @author mike
  */
 public class ExtensionDomExtender extends DomExtender<Extensions> {
+
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
   private static final Converter LANGUAGE_CONVERTER = new LanguageResolvingConverter();
+
   private static final DomExtender EXTENSION_EXTENDER = new DomExtender() {
+
+    private final XmlName OS_XML_NAME = new XmlName("os");
+
     @Override
     public void registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
       final ExtensionPoint extensionPoint = (ExtensionPoint)domElement.getChildDescription().getDomDeclaration();
@@ -55,7 +60,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         final PsiClass interfaceClass = extensionPoint.getInterface().getValue();
         if (interfaceClass != null) {
           implementationAttribute.setDeclaringElement(interfaceClass);
-        } else {
+        }
+        else {
           implementationAttribute.setDeclaringElement(extensionPoint);
         }
 
@@ -65,6 +71,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
         registerXmlb(registrar, beanClass, extensionPoint.getWithElements());
       }
+
+      registrar.registerGenericAttributeValueChildExtension(OS_XML_NAME, com.intellij.openapi.extensions.Extensions.OS.class);
     }
   };
 
