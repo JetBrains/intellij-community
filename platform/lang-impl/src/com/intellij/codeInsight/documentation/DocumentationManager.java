@@ -805,7 +805,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           callback.setDone();
           return;
         }
-
+        PsiManager psiManager = PsiManager.getInstance(myProject);
         String currentText = component.getText();
         PsiElement currentElement = component.getElement();
         if (finalText == null) {
@@ -814,7 +814,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         else if (finalText.isEmpty()) {
           component.setText(currentText, element, collector.provider);
         }
-        else if (currentElement != null && currentElement.getManager().areElementsEquivalent(currentElement, element)) {
+        else if (currentElement != null && psiManager.areElementsEquivalent(currentElement, element)) {
           Diff.Change change = null;
           try {
             change = Diff.buildChanges(currentText, finalText);
