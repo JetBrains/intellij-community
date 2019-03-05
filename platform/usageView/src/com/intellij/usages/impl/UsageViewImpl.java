@@ -49,7 +49,6 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
@@ -219,7 +218,7 @@ public class UsageViewImpl implements UsageViewEx {
             // hack to avoid quadratic expandAll()
             @Override
             public Enumeration<TreePath> getExpandedDescendants(TreePath parent) {
-              return myExpandingCollapsing ? EmptyEnumeration.getInstance() : super.getExpandedDescendants(parent);
+              return myExpandingCollapsing ? Collections.emptyEnumeration() : super.getExpandedDescendants(parent);
             }
           };
           myTree.setName("UsageViewTree");

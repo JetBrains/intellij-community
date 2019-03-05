@@ -18,7 +18,6 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +79,7 @@ public abstract class XDebuggerTreeNode implements TreeNode {
   @Override
   public Enumeration children() {
     if (isLeaf()) {
-      return EmptyEnumeration.INSTANCE;
+      return Collections.emptyEnumeration();
     }
     return Collections.enumeration(getChildren());
   }
