@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -23,8 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -35,6 +38,7 @@ import com.intellij.vcs.log.history.FileHistoryKt;
 import com.intellij.vcs.log.history.FileHistoryUtil;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -57,6 +61,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTE
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
 public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
+  private static final Logger LOG = Logger.getInstance(VcsLogChangesBrowser.class);
   @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
   @NotNull private final Project myProject;
   @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
@@ -229,6 +234,12 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       maxSize = Math.max(size, maxSize);
     }
     return maxSize;
+  }
+
+  @NotNull
+  @Override
+  protected ChangesBrowserTreeList createTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+    return new MyChangesTree(project, showCheckboxes, highlightProblems);
   }
 
   @NotNull
@@ -493,6 +504,28 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     @Override
     public int hashCode() {
       return Objects.hash(myCommit);
+    }
+  }
+
+  protected class MyChangesTree extends ChangesBrowserTreeList {
+    MyChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+      super(VcsLogChangesBrowser.this, project, showCheckboxes, highlightProblems);
+    }
+
+    @Override
+    protected void resetTreeState() {
+      long start = System.currentTimeMillis();
+      if (isShowChangesFromParents()) {
+        TreeUtil.expand(this, path -> {
+          if (path.getLastPathComponent() instanceof ChangesBrowserParentNode) return TreeVisitor.Action.SKIP_CHILDREN;
+          return TreeVisitor.Action.CONTINUE;
+        }, path -> {
+        });
+      }
+      else {
+        TreeUtil.expandAll(this);
+      }
+      LOG.debug("Resetting changes tree state took " + StopWatch.formatTime(System.currentTimeMillis() - start));
     }
   }
 }
