@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtilCore;
@@ -38,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class JavaTestFinder implements TestFinder {
   @Override
@@ -102,26 +102,28 @@ public class JavaTestFinder implements TestFinder {
     return TestFinderHelper.getSortedElements(classesWithProximities, true);
   }
 
-  private boolean collectTests(PsiClass klass, Processor<Pair<? extends PsiNamedElement, Integer>> processor) {
+  private void collectTests(PsiClass klass, Processor<Pair<? extends PsiNamedElement, Integer>> processor) {
     GlobalSearchScope scope = getSearchScope(klass, false);
 
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(klass.getProject());
 
     String klassName = klass.getName();
-    Pattern pattern = Pattern.compile(".*" + StringUtil.escapeToRegexp(klassName) + ".*", Pattern.CASE_INSENSITIVE);
-
+    assert klassName != null;
+    klassName = StringUtil.trimStart(klassName, JavaCodeStyleSettings.getInstance(klass.getContainingFile()).SUBCLASS_NAME_PREFIX);
+    klassName = StringUtil.trimEnd(klassName, JavaCodeStyleSettings.getInstance(klass.getContainingFile()).SUBCLASS_NAME_SUFFIX);
+    if (klassName.isEmpty()) {
+      klassName = klass.getName();
+    }
+    MinusculeMatcher matcher = NameUtil.buildMatcher(klassName, NameUtil.MatchingCaseSensitivity.NONE);
     for (String eachName : ContainerUtil.newHashSet(cache.getAllClassNames())) {
-      if (pattern.matcher(eachName).matches()) {
+      if (matcher.matches(eachName)) {
         for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {
-          if (isTestClass(eachClass, klass)) {
-            if (!processor.process(Pair.create(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)))) {
-              return true;
-            }
+          if (isTestClass(eachClass, klass) && !processor.process(Pair.create(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)))) {
+            return;
           }
         }
       }
     }
-    return false;
   }
 
   protected boolean isTestClass(PsiClass eachClass, PsiClass klass) {
