@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -76,7 +75,7 @@ public class FileWatcher {
 
   private volatile CanonicalPathMap myPathMap = new CanonicalPathMap();
   private volatile List<Collection<String>> myManualWatchRoots = Collections.emptyList();
-  
+
   private final ExecutorService myFileWatcherExecutor = Registry.is("vfs.filewatcher.works.in.async.way") ?
                                                         AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) :
                                                         MoreExecutors.newDirectExecutorService();
@@ -95,11 +94,16 @@ public class FileWatcher {
   }
 
   public void dispose() {
-    waitForFuture(myFileWatcherExecutor.submit(() -> {
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.dispose();
-      }
-    }));
+    try {
+      myFileWatcherExecutor.submit(() -> {
+        for (PluggableFileWatcher watcher : myWatchers) {
+          watcher.dispose();
+        }
+      }).get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      LOG.error(e);
+    }
   }
 
   public boolean isOperational() {
@@ -117,14 +121,6 @@ public class FileWatcher {
       if (watcher.isSettingRoots()) return true;
     }
     return false;
-  }
-
-  private void waitForFuture(@NotNull Future<?> future) {
-    try {
-      future.get();
-    }
-    catch (InterruptedException | ExecutionException ignore) {
-    }
   }
 
   @NotNull
