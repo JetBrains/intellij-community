@@ -985,6 +985,7 @@ public class FSRecords {
           }
           else {
             int delta = childId - prevId;
+            assert prevId == id || delta > 0 : delta;
             DataInputOutputUtil.writeINT(record, delta);
             prevId = childId;
           }
