@@ -155,12 +155,12 @@ public class FileWatcher {
    * Clients should take care of not calling this method in parallel.
    */
   void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
-    CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
-
-    myPathMap = pathMap;
-    myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
-
     myFileWatcherExecutor.submit(() -> {
+      CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
+
+      myPathMap = pathMap;
+      myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
+
       for (PluggableFileWatcher watcher : myWatchers) {
         watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
       }
