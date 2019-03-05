@@ -103,7 +103,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     }
 
     for (PsiType type : expectedReturnTypes) {
-      if (type.equals(PsiType.VOID) || type.equals(PsiType.VOID.getBoxedType(closure))) return PsiType.VOID;
+      if (PsiType.VOID.equals(type) || PsiType.VOID.equals(PsiPrimitiveType.getUnboxedType(type))) return PsiType.VOID;
     }
     return TypesUtil.getLeastUpperBoundNullable(expectedReturnTypes, closure.getManager());
   }
