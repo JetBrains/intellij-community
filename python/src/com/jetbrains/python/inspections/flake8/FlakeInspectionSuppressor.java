@@ -3,13 +3,12 @@ package com.jetbrains.python.inspections.flake8;
 
 import com.intellij.codeInspection.InspectionSuppressor;
 import com.intellij.codeInspection.SuppressQuickFix;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyTokenTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,12 +74,7 @@ public class FlakeInspectionSuppressor implements InspectionSuppressor {
    * @return {@code true} if it's a comment starting with the prefix
    */
   private boolean isFlakeLineMarker(PsiElement element, String prefix) {
-    // this is equivalent to "element instanceof PsiComment && element.getText().startWidth(prefix)"
-    // for now we assume that the equality check is faster than the instanceof check
-    ASTNode node = element.getNode();
-    return node != null
-           && node.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT
-           && element.getText().startsWith(prefix);
+    return element instanceof PsiComment && element.getText().startsWith(prefix);
   }
 
   @NotNull
