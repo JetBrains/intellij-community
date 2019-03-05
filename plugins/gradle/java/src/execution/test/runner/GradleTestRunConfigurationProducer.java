@@ -28,12 +28,14 @@ import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
+import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.endsWithChar;
+import static org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings.PreferredTestRunner.PLATFORM_TEST_RUNNER;
 import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
 
 /**
@@ -71,6 +73,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
                                                   Ref<PsiElement> sourceElement) {
     if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
 
+    if (GradleSystemRunningSettings.getInstance().getDefaultTestRunner() == PLATFORM_TEST_RUNNER) return false;  // Android Studio: b/127403009
     if (sourceElement.isNull()) return false;
     TestRunner testRunner = getTestRunner(sourceElement.get());
     if (testRunner == PLATFORM) return false;
