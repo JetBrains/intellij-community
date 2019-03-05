@@ -150,7 +150,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(field.getProject()).getConstantEvaluationHelper();
     final PsiAnnotation attrAnno = findAnnotation(Attribute.class, field, getter, setter);
     if (attrAnno != null) {
-      final String attrName = getStringAttribute(attrAnno, "value", evalHelper);
+      final String attrName = getStringAttribute(attrAnno, "value", evalHelper, fieldName);
       if (attrName != null) {
         Class clazz = String.class;
         if (withElement != null && isClassField(fieldName)) {
@@ -171,7 +171,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     final PsiAnnotation propAnno = findAnnotation(Property.class, field, getter, setter);
     final PsiAnnotation collectionAnnotation = findAnnotation(XCollection.class, field, getter, setter);
     //final PsiAnnotation colAnno = modifierList.findAnnotation(Collection.class.getName()); // todo
-    final String tagName = tagAnno != null? getStringAttribute(tagAnno, "value", evalHelper) :
+    final String tagName = tagAnno != null ? getStringAttribute(tagAnno, "value", evalHelper, fieldName) :
                            propAnno != null && getBooleanAttribute(propAnno, "surroundWithTag", evalHelper)? Constants.OPTION : null;
     if (tagName != null) {
       if (collectionAnnotation == null) {
@@ -244,8 +244,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
                                                 PsiConstantEvaluationHelper evalHelper) {
     final boolean surroundWithTag = getBooleanAttribute(anno, "surroundWithTag", evalHelper);
     if (surroundWithTag) return; // todo Set, List, Array
-    final String tagName = getStringAttribute(anno, "elementTag", evalHelper);
-    final String attrName = getStringAttribute(anno, "elementValueAttribute", evalHelper);
+    final String tagName = getStringAttribute(anno, "elementTag", evalHelper, null);
+    final String attrName = getStringAttribute(anno, "elementValueAttribute", evalHelper, null);
     final PsiType elementType = getElementType(type);
     if (elementType == null || TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(elementType)
         || CommonClassNames.JAVA_LANG_STRING.equals(elementType.getCanonicalText())
@@ -267,7 +267,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       if (psiClass != null) {
         final PsiModifierList modifierList = psiClass.getModifierList();
         final PsiAnnotation tagAnno = modifierList == null? null : modifierList.findAnnotation(Tag.class.getName());
-        final String classTagName = tagAnno == null? psiClass.getName() : getStringAttribute(tagAnno, "value", evalHelper);
+        final String classTagName = tagAnno == null? psiClass.getName() : getStringAttribute(tagAnno, "value", evalHelper, null);
         if (classTagName != null) {
           registrar.registerCollectionChildrenExtension(new XmlName(classTagName), DomElement.class).addExtender(new DomExtender() {
             @Override
@@ -283,11 +283,14 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   @Nullable
   static String getStringAttribute(final PsiAnnotation annotation,
                                    final String name,
-                                   final PsiConstantEvaluationHelper evalHelper) {
+                                   final PsiConstantEvaluationHelper evalHelper, String defaultValueIfEmpty) {
     String value = getAttributeValue(annotation, name);
-    if (value != null) return value;
-    final Object o = evalHelper.computeConstantExpression(annotation.findAttributeValue(name), false);
-    return o instanceof String && StringUtil.isNotEmpty((String)o)? (String)o : null;
+    if (value != null) {
+      return value.isEmpty() ? defaultValueIfEmpty : value;
+    }
+    Object o = evalHelper.computeConstantExpression(annotation.findAttributeValue(name), false);
+    if (!(o instanceof String)) return null;
+    return StringUtil.isNotEmpty((String)o) ? (String)o : defaultValueIfEmpty;
   }
 
   private static boolean getBooleanAttribute(final PsiAnnotation annotation,
