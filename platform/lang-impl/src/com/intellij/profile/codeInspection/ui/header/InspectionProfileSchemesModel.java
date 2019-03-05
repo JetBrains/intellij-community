@@ -4,19 +4,21 @@ package com.intellij.profile.codeInspection.ui.header;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class InspectionProfileSchemesModel implements SchemesModel<InspectionProfileModifiableModel> {
+  private static final Logger LOG = Logger.getInstance(InspectionProfileSchemesModel.class);
   private final List<SingleInspectionProfilePanel> myProfilePanels = new ArrayList<>();
   private final List<InspectionProfileImpl> myDeletedProfiles = new SmartList<>();
 
@@ -130,14 +132,11 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
           return new InspectionProfileModifiableModel(source);
         }
         catch (Exception e) {
-          //noinspection ConstantConditions,InstanceofCatchParameter
-          if (e instanceof JDOMException) {
-            return null;
-          } else {
-            throw new RuntimeException(e);
-          }
+          LOG.error(e);
+          return null;
         }
       })
+      .filter(Objects::nonNull)
       .forEach(this::addProfile);
   }
 
