@@ -86,12 +86,16 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
   private fun logStats(end: Long, activationNumber: Int) {
     val items = mutableListOf<Item>()
     val activities = THashMap<String, MutableList<Item>>()
+
     StartUpMeasurer.processAndClear(Consumer { item ->
-      if (item.name.first() == '_') {
-        activities.getOrPut(item.name) { mutableListOf() }.add(item)
+      fun addActivity(name: String) {
+        activities.getOrPut(name) { mutableListOf() }.add(item)
       }
-      else {
-        items.add(item)
+
+      when {
+        item.name.first() == '_' -> addActivity(item.name)
+        item.level != null -> addActivity("${item.level!!.jsonFieldNamePrefix}${item.name.capitalize()}")
+        else -> items.add(item)
       }
     })
 
@@ -161,9 +165,10 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 }
 
 private fun activityNameToJsonFieldName(name: String): String {
+  val firstIndex = if (name.startsWith('_')) 1 else 0
   return when {
-    name.last() == 'y' -> name.substring(1, name.length - 1) + "ies"
-    else -> name.substring(1) + 's'
+    name.last() == 'y' -> name.substring(firstIndex, name.length - 1) + "ies"
+    else -> name.substring(firstIndex) + 's'
   }
 }
 

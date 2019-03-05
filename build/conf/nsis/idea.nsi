@@ -1536,10 +1536,8 @@ Function un.onInit
   Call un.UninstallFeedback
 
 ; Uninstallation was run from installation dir?
-  IfFileExists "$INSTDIR\IdeaWin32.dll" 0 end_of_uninstall
   IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
   IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE_64}" 0 end_of_uninstall
-  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" 0 end_of_uninstall
 
 get_reg_key:
   SetRegView 32

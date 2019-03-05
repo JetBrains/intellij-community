@@ -32,6 +32,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,7 +42,7 @@ import java.util.stream.Collectors;
  */
 public class MethodCandidateInfo extends CandidateInfo{
   public static final RecursionGuard ourOverloadGuard = RecursionManager.createGuard("overload.guard");
-  public static final ThreadLocal<Map<PsiElement,  CurrentCandidateProperties>> CURRENT_CANDIDATE = new ThreadLocal<>();
+  private static final ThreadLocal<Map<PsiElement, CurrentCandidateProperties>> CURRENT_CANDIDATE = ThreadLocal.withInitial(HashMap::new);
   @ApplicabilityLevelConstant private volatile int myApplicabilityLevel;
   @ApplicabilityLevelConstant private volatile int myPertinentApplicabilityLevel;
   private final PsiElement myArgumentList;

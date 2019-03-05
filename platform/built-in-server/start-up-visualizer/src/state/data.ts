@@ -16,9 +16,15 @@ export interface InputData {
 
   appComponents?: Array<Item>
   projectComponents?: Array<Item>
+  moduleComponents?: Array<Item>
 
   appServices?: Array<Item>
   projectServices?: Array<Item>
+  moduleServices?: Array<Item>
+
+  appExtensions?: Array<Item>
+  projectExtensions?: Array<Item>
+  moduleExtensions?: Array<Item>
 
   preloadActivities?: Array<Item>
   appOptionsTopHitProviders?: Array<Item>

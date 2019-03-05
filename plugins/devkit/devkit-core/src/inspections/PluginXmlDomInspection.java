@@ -208,6 +208,13 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     if (!hasRealPluginId(ideaPlugin)) return;
 
+    String id = ideaPlugin.getId().getStringValue();
+    if (id != null &&
+        (StringUtil.startsWith(id, "com.android.") ||
+         id.equals("org.jetbrains.android"))) {
+      return;
+    }
+
     XmlTag xmlTag = ideaPlugin.getXmlTag();
     if (xmlTag == null) return;
 

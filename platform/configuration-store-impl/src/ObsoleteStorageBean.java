@@ -7,7 +7,7 @@ import com.intellij.util.xmlb.annotations.XCollection;
 
 import java.util.List;
 
-final class StalledStorageBean {
+final class ObsoleteStorageBean {
   @Attribute
   public String file;
 

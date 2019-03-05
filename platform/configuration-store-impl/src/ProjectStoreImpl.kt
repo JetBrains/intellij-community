@@ -353,9 +353,9 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
 
   final override fun createSaveSessionProducerManager() = ProjectSaveSessionProducerManager(project)
 
-  final override fun commitStalledComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
+  final override fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
     if (isDirectoryBased) {
-      super.commitStalledComponents(session, true)
+      super.commitObsoleteComponents(session, true)
     }
   }
 }
