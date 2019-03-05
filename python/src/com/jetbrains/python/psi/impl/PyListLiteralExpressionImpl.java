@@ -24,30 +24,29 @@ public class PyListLiteralExpressionImpl extends PySequenceExpressionImpl implem
 
   @Override
   public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {
-    checkPyExpression(psiElement);
-    PyExpression element = (PyExpression)psiElement;
-    PyExpression[] els = getElements();
-    PyExpression lastArg = els.length == 0 ? null : els[els.length - 1];
-    return PyElementGenerator.getInstance(getProject()).insertItemIntoListRemoveRedundantCommas(this, lastArg, element);
-  }
-
-  private static void checkPyExpression(PsiElement psiElement) throws IncorrectOperationException {
-    if (!(psiElement instanceof PyExpression)) {
-      throw new IncorrectOperationException("Element must be PyExpression: " + psiElement);
+    if (psiElement instanceof PyExpression) {
+      PyExpression element = (PyExpression)psiElement;
+      PyExpression[] els = getElements();
+      PyExpression lastArg = els.length == 0 ? null : els[els.length - 1];
+      return PyElementGenerator.getInstance(getProject()).insertItemIntoListRemoveRedundantCommas(this, lastArg, element);
     }
+    return super.add(psiElement);
   }
 
   @Override
   public PsiElement addAfter(@NotNull PsiElement psiElement, PsiElement afterThis) throws IncorrectOperationException {
-    checkPyExpression(psiElement);
-    checkPyExpression(afterThis);
-    return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, (PyExpression)afterThis, (PyExpression)psiElement);
+    if (afterThis instanceof PyExpression && psiElement instanceof PyExpression) {
+      return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, (PyExpression)afterThis, (PyExpression)psiElement);
+    }
+    return super.addAfter(psiElement, afterThis);
   }
 
   @Override
   public PsiElement addBefore(@NotNull PsiElement psiElement, PsiElement beforeThis) throws IncorrectOperationException {
-    checkPyExpression(psiElement);
-    return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, null, (PyExpression)psiElement);
+    if (beforeThis instanceof PyExpression && psiElement instanceof PyExpression) {
+      return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, null, (PyExpression)psiElement);
+    }
+    return super.addBefore(psiElement, beforeThis);
   }
 
   @Override

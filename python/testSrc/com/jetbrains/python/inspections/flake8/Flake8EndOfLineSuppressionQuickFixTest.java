@@ -21,6 +21,17 @@ public class Flake8EndOfLineSuppressionQuickFixTest extends PyTestCase {
       "    x = 1  # noqa");
   }
 
+  public void testMultilineStatementWithWhitespaces() {
+    doTestSuppressQuickFix("def foo():\n" +
+                           "    <caret>x = [1,\n" +
+                           "         2,\n" +
+                           "         3]\n",
+                           "def foo():\n" +
+                           "    <caret>x = [1,  # noqa\n" +
+                           "         2,\n" +
+                           "         3]\n");
+  }
+
   private void doTestSuppressQuickFix(@NotNull String before, @NotNull String after) {
     myFixture.configureByText(PythonFileType.INSTANCE, before);
     myFixture.enableInspections(PyUnusedLocalInspection.class);
