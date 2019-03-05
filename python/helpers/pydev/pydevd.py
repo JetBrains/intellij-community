@@ -1031,7 +1031,7 @@ class PyDB:
         PyDBCommandThread(self).start()
 
         if show_tracing_warning or show_frame_eval_warning:
-            cmd = self.cmd_factory.make_show_cython_warning_message()
+            cmd = self.cmd_factory.make_show_warning_message("cython")
             self.writer.add_command(cmd)
 
 
