@@ -668,7 +668,7 @@
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageVersionUsagesCollector"/>
 
     <!-- flake8 -->
-    <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.flake8.FlakeInspectionSuppressor" />
+    <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.flake8.Flake8InspectionSuppressor"/>
   </extensions>
 
   <extensionPoints>

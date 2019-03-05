@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author jansorg
  */
-public class FlakeInspectionSuppressor implements InspectionSuppressor {
+public class Flake8InspectionSuppressor implements InspectionSuppressor {
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId) {
     // suppress Python inspections only
