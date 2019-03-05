@@ -33,7 +33,7 @@ class CircletConfigurable : SearchableConfigurable {
 
     var state = mutableProperty<LoginState>(LoginState.Disconnected("", null))
 
-    var intendedSettings : CircletServerSettings = circletSettings.settings.value
+    var intendedSettings: CircletServerSettings = circletSettings.settings.value
 
     private val panel = JPanel(FlowLayout())
 
@@ -57,7 +57,7 @@ class CircletConfigurable : SearchableConfigurable {
                                     connectButton.isEnabled = false
                                     val servername = server.text
                                     intendedSettings = CircletServerSettings(true, servername)
-                                    connect(servername, { it.authTokenInteractive() }, false)
+                                    connect(servername, { wsConfig, lt -> authTokenInteractive(lt, wsConfig) }, false)
                                 }
                             })
                             if (st.error != null) {
@@ -104,7 +104,7 @@ class CircletConfigurable : SearchableConfigurable {
         }
     }
 
-    private fun connect(servername: String, getToken: suspend (host: IdeaAuthenticator) -> OAuthTokenResponse, expectErrorToken: Boolean) {
+    private fun connect(servername: String, getToken: suspend (wsConfig: WorkspaceConfiguration, Lifetime: Lifetime) -> OAuthTokenResponse, expectErrorToken: Boolean) {
         launch(uiLifetime, Ui) {
             val connectLt = uiLifetime.nested()
             try {
@@ -112,14 +112,13 @@ class CircletConfigurable : SearchableConfigurable {
                     state.value = LoginState.Connecting(servername, connectLt)
 
                     val wsConfig = ideaConfig(servername)
-                    val host = IdeaAuthenticator(connectLt, wsConfig)
                     val ps = InMemoryPersistence()
-                    val accessToken = getToken(host)
+                    val accessToken = getToken(wsConfig, connectLt)
 
                     when (accessToken) {
                         is OAuthTokenResponse.Success -> {
                             connectLt.using { probleLt ->
-                                val client = KCircletClient(probleLt, wsConfig.server, ps)
+                                val client = KCircletClient(probleLt, wsConfig.server, ps, PersistenceConfiguration.nothing)
                                 client.start(accessToken.toTokenInfo())
                                 val nState = fetchState(client)
                                 intendedSettings = CircletServerSettings(true, servername)
@@ -154,13 +153,6 @@ class CircletConfigurable : SearchableConfigurable {
         return intendedSettings.server != stateFromSettings.server || intendedSettings.enabled != stateFromSettings.enabled
     }
 
-    private fun settingsFromUi(state: LoginState): CircletServerSettings {
-        return CircletServerSettings(
-            state is LoginState.Connected,
-            state.server
-        )
-    }
-
     override fun getId(): String = "circlet.settings.connection"
 
     override fun getDisplayName(): String = CircletBundle.message("connection-configurable.display-name")
@@ -183,11 +175,19 @@ class CircletConfigurable : SearchableConfigurable {
     override fun reset() {
         val st = circletSettings.settings.value
         if (st.enabled) {
-            connect(st.server, { it.localAuthToken() }, true)
+            connect(st.server, { wsConfig, lifetime -> appAuth(wsConfig) }, true)
         }
         else {
             state.value = LoginState.Disconnected(st.server, null)
         }
+    }
+
+    suspend private fun appAuth(wsConfig: WorkspaceConfiguration): OAuthTokenResponse {
+        // todo: handle nulls.
+        val workspaces = circletWorkspace.workspaces.value ?: error("workspaces is null")
+        val state = workspaces.workspaceStateFromPersistence() ?: error("state from persistence is null")
+        val refreshToken = state.token.refreshToken ?: error("refresh token is null")
+        return wsConfig.refreshTokenFlow(refreshToken)
     }
 
     override fun createComponent(): JComponent? = panel
