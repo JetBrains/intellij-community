@@ -34,6 +34,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.util.ui.JBUI.DerivedScaleType.*;
 import static com.intellij.util.ui.JBUI.ScaleType.*;
 
 /**
@@ -75,15 +76,12 @@ public class JBUI {
    * 1) The user scale factor: {@link #USR_SCALE}
    * 2) The system (monitor device) scale factor: {@link #SYS_SCALE}
    * 3) The object (UI instance specific) scale factor: {@link #OBJ_SCALE}
-   * 4) The pixel scale factor: {@link #PIX_SCALE}
    *
    * @see UIUtil#isJreHiDPIEnabled()
    * @see UIUtil#isJreHiDPI()
    * @see UIUtil#isJreHiDPI(GraphicsConfiguration)
    * @see UIUtil#isJreHiDPI(Graphics2D)
    * @see JBUI#isUsrHiDPI()
-   * @see JBUI#isPixHiDPI(GraphicsConfiguration)
-   * @see JBUI#isPixHiDPI(Graphics2D)
    * @see UIUtil#drawImage(Graphics, Image, Rectangle, Rectangle, ImageObserver)
    * @see UIUtil#createImage(Graphics, int, int, int)
    * @see UIUtil#createImage(GraphicsConfiguration, int, int, int)
@@ -131,12 +129,28 @@ public class JBUI {
      * to the user scale and the system scale factors. This scale factor affects the user space size of the object
      * and doesn't depend on the HiDPI mode. By default it is set to 1.0.
      */
-    OBJ_SCALE,
+    OBJ_SCALE;
+
+    @NotNull
+    public Scale of(double value) {
+      return Scale.create(value, this);
+    }
+  }
+
+  /**
+   * The scale factors derived from the {@link ScaleType} scale factors. Used for convenuence.
+   */
+  public enum DerivedScaleType {
     /**
-     * The effective user scale factor. Combines all the user space scale factors which are: {@code USR_SCALE} and {@code OBJ_SCALE}.
+     * The effective user scale factor "combines" all the user space scale factors which are: {@code USR_SCALE} and {@code OBJ_SCALE}.
      * So, basically it equals {@code USR_SCALE} * {@code OBJ_SCALE}.
      */
     EFF_USR_SCALE,
+    /**
+     * The device scale factor. In JRE-HiDPI mode equals {@link ScaleType#SYS_SCALE}, in IDE-HiDPI mode eqauls 1.0
+     * (in IDE-HiDPI the user space and the device space are equal and so the transform b/w the spaces is 1.0)
+     */
+    DEV_SCALE,
     /**
      * The pixel scale factor "combines" all the other scale factors (user, system and object) and defines the
      * effective scale of a particular UI object.
@@ -150,15 +164,9 @@ public class JBUI {
      * @see #pixScale(GraphicsConfiguration)
      * @see #pixScale(Graphics2D)
      * @see #pixScale(Component)
-     * @see #pixScale(GraphicsConfiguration, float)
      * @see #pixScale(float)
      */
-    PIX_SCALE;
-
-    @NotNull
-    public Scale of(double value) {
-      return Scale.create(value, this);
-    }
+    PIX_SCALE
   }
 
   /**
@@ -379,13 +387,6 @@ public class JBUI {
   }
 
   /**
-   * Returns "f" scaled by pixScale(gc).
-   */
-  public static float pixScale(@Nullable GraphicsConfiguration gc, float f) {
-    return pixScale(gc) * f;
-  }
-
-  /**
    * Returns the pixel scale factor, corresponding to the provided configuration.
    * In the IDE-managed HiDPI mode defaults to {@link #pixScale()}
    */
@@ -411,8 +412,7 @@ public class JBUI {
 
   public static <T extends BaseScaleContext> double pixScale(@Nullable T ctx) {
     if (ctx != null) {
-      double usrScale = ctx.getScale(USR_SCALE);
-      return UIUtil.isJreHiDPIEnabled() ? ctx.getScale(SYS_SCALE) * usrScale : usrScale;
+      return ctx.getScale(PIX_SCALE);
     }
     return pixScale();
   }
@@ -603,7 +603,7 @@ public class JBUI {
   }
 
   /**
-   * Returns whether the {@link ScaleType#PIX_SCALE} scale factor assumes HiDPI-awareness in the provided graphics config.
+   * Returns whether the {@link DerivedScaleType#PIX_SCALE} scale factor assumes HiDPI-awareness in the provided graphics config.
    * An equivalent of {@code isHiDPI(pixScale(gc))}
    */
   public static boolean isPixHiDPI(@Nullable GraphicsConfiguration gc) {
@@ -611,7 +611,7 @@ public class JBUI {
   }
 
   /**
-   * Returns whether the {@link ScaleType#PIX_SCALE} scale factor assumes HiDPI-awareness in the provided graphics.
+   * Returns whether the {@link DerivedScaleType#PIX_SCALE} scale factor assumes HiDPI-awareness in the provided graphics.
    * An equivalent of {@code isHiDPI(pixScale(g))}
    */
   public static boolean isPixHiDPI(@Nullable Graphics2D g) {
@@ -619,7 +619,7 @@ public class JBUI {
   }
 
   /**
-   * Returns whether the {@link ScaleType#PIX_SCALE} scale factor assumes HiDPI-awareness in the provided component's device.
+   * Returns whether the {@link DerivedScaleType#PIX_SCALE} scale factor assumes HiDPI-awareness in the provided component's device.
    * An equivalent of {@code isHiDPI(pixScale(comp))}
    */
   public static boolean isPixHiDPI(@Nullable Component comp) {
@@ -817,7 +817,7 @@ public class JBUI {
   public static class BaseScaleContext {
     protected Scale usrScale = USR_SCALE.of(scale(1f));
     protected Scale objScale = OBJ_SCALE.of(1d);
-    protected Scale pixScale = PIX_SCALE.of(usrScale.value);
+    protected double pixScale = usrScale.value;
 
     private List<UpdateListener> listeners;
 
@@ -872,31 +872,30 @@ public class JBUI {
         case USR_SCALE: return usrScale.value;
         case SYS_SCALE: return 1d;
         case OBJ_SCALE: return objScale.value;
+      }
+      return 1f; // unreachable
+    }
+
+    public double getScale(@NotNull DerivedScaleType type) {
+      switch (type) {
+        case DEV_SCALE: return 1;
         case PIX_SCALE:
         case EFF_USR_SCALE:
-          return pixScale.value;
+          return pixScale;
       }
       return 1f; // unreachable
     }
 
     /**
-     * Applies the provided {@code ScaleType}'s to the provided {@code value} and returns the result.
+     * Applies the scale of the provided type to {@code value} and returns the result.
      */
-    public double apply(double value, @NotNull ScaleType... types) {
-      for (ScaleType t : types) value *= getScale(t);
-      return value;
-    }
-
-    /**
-     * Applies {@code PIX_SCALE} to the provided {@code value} and returns the result.
-     */
-    public double apply(double value) {
-      return value * getScale(PIX_SCALE);
+    public double apply(double value, DerivedScaleType type) {
+      return value * getScale(type);
     }
 
     protected boolean onUpdated(boolean updated) {
       if (updated) {
-        update(pixScale, derivePixScale());
+        pixScale = derivePixScale();
         notifyUpdateListeners();
       }
       return updated;
@@ -922,10 +921,7 @@ public class JBUI {
       switch (scale.type) {
         case USR_SCALE: updated = update(usrScale, scale.value); break;
         case OBJ_SCALE: updated = update(objScale, scale.value); break;
-        case SYS_SCALE:
-        case PIX_SCALE:
-        case EFF_USR_SCALE:
-          break;
+        case SYS_SCALE: break;
       }
       return onUpdated(updated);
     }
@@ -997,8 +993,7 @@ public class JBUI {
       switch (scale.type) {
         case USR_SCALE: usrScale = newScale; break;
         case OBJ_SCALE: objScale = newScale; break;
-        case PIX_SCALE: pixScale = newScale; break;
-        case EFF_USR_SCALE: break;
+        case SYS_SCALE: break;
       }
       return true;
     }
@@ -1073,7 +1068,7 @@ public class JBUI {
     private WeakReference<Component> compRef;
 
     private ScaleContext() {
-      update(pixScale, derivePixScale());
+      pixScale = derivePixScale();
     }
 
     private ScaleContext(@NotNull Scale scale) {
@@ -1081,11 +1076,8 @@ public class JBUI {
         case USR_SCALE: update(usrScale, scale.value); break;
         case SYS_SCALE: update(sysScale, scale.value); break;
         case OBJ_SCALE: update(objScale, scale.value); break;
-        case PIX_SCALE:
-        case EFF_USR_SCALE:
-          break;
       }
-      update(pixScale, derivePixScale());
+      pixScale = derivePixScale();
     }
 
     /**
@@ -1189,7 +1181,7 @@ public class JBUI {
 
     @Override
     protected double derivePixScale() {
-      return UIUtil.isJreHiDPIEnabled() ? sysScale.value * super.derivePixScale() : super.derivePixScale();
+      return getScale(DEV_SCALE) * super.derivePixScale();
     }
 
     /**
@@ -1198,8 +1190,20 @@ public class JBUI {
     @Override
     public double getScale(@NotNull ScaleType type) {
       if (type == SYS_SCALE) return sysScale.value;
-      if (type == EFF_USR_SCALE) return usrScale.value * objScale.value;
       return super.getScale(type);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public double getScale(@NotNull DerivedScaleType type) {
+      switch (type) {
+        case DEV_SCALE: return UIUtil.isJreHiDPIEnabled() ? sysScale.value : 1;
+        case EFF_USR_SCALE: return usrScale.value * objScale.value;
+        case PIX_SCALE: return pixScale;
+      }
+      return 1f; // unreachable
     }
 
     /**
@@ -1321,6 +1325,11 @@ public class JBUI {
     double getScale(@NotNull ScaleType type);
 
     /**
+     * @return the scale of the provided type from the context
+     */
+    double getScale(@NotNull DerivedScaleType type);
+
+    /**
      * Updates the provided scale in the context
      *
      * @return whether the provided scale has been changed
@@ -1349,6 +1358,11 @@ public class JBUI {
 
     @Override
     public double getScale(@NotNull ScaleType type) {
+      return getScaleContext().getScale(type);
+    }
+
+    @Override
+    public double getScale(@NotNull DerivedScaleType type) {
       return getScaleContext().getScale(type);
     }
 
@@ -1485,10 +1499,21 @@ public class JBUI {
     protected double scaleVal(double value, @NotNull ScaleType type) {
       switch (type) {
         case USR_SCALE: return super.scaleVal(value);
-        case EFF_USR_SCALE: return super.scaleVal(value) * getScale(OBJ_SCALE);
         case SYS_SCALE: return value * getScale(SYS_SCALE);
         case OBJ_SCALE: return value * getScale(OBJ_SCALE);
-        case PIX_SCALE: return super.scaleVal(value * getScale(OBJ_SCALE));
+      }
+      return value; // unreachable
+    }
+
+    /**
+     * Returns the value scaled according to the provided scale type
+     */
+    protected double scaleVal(double value, @NotNull DerivedScaleType type) {
+      switch (type) {
+        case DEV_SCALE: return value * getScale(DEV_SCALE);
+        case EFF_USR_SCALE:
+        case PIX_SCALE:
+          return super.scaleVal(value) * getScale(OBJ_SCALE);
       }
       return value; // unreachable
     }

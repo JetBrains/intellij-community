@@ -13,7 +13,7 @@ import java.awt.*;
 import java.awt.geom.Line2D;
 import java.util.EnumSet;
 
-import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUI.DerivedScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUI.scale;
 import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 

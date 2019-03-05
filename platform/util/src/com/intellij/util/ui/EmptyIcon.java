@@ -14,7 +14,7 @@ import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUI.DerivedScaleType.PIX_SCALE;
 
 /**
  * @author max

@@ -32,7 +32,7 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUI.DerivedScaleType.PIX_SCALE;
 
 /**
  * @author tav

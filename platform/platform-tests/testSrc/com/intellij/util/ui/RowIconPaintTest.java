@@ -8,7 +8,7 @@ import com.intellij.util.ui.JBUI.ScaleContext;
 
 import javax.swing.*;
 
-import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUI.DerivedScaleType.PIX_SCALE;
 
 /**
  * Tests {@link com.intellij.ui.RowIcon} painting.

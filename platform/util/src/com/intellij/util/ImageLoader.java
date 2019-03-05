@@ -33,6 +33,8 @@ import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.util.ImageLoader.ImageDesc.Type.IMG;
 import static com.intellij.util.ImageLoader.ImageDesc.Type.SVG;
+import static com.intellij.util.ui.JBUI.DerivedScaleType.EFF_USR_SCALE;
+import static com.intellij.util.ui.JBUI.DerivedScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.*;
 
 public class ImageLoader implements Serializable {
@@ -297,8 +299,10 @@ public class ImageLoader implements Serializable {
       return with(new ImageConverter() {
         @Override
         public Image convert(Image source, ImageDesc desc) {
-          double effUsrScale = ctx.getScale(EFF_USR_SCALE);
-          return ImageUtil.ensureHiDPI(source, ctx, desc.origUsrSize.getWidth() * effUsrScale, desc.origUsrSize.getHeight() * effUsrScale);
+          double usrScale = ctx.getScale(EFF_USR_SCALE);
+          return ImageUtil.ensureHiDPI(source, ctx,
+                                       desc.origUsrSize.getWidth() * usrScale,
+                                       desc.origUsrSize.getHeight() * usrScale);
         }
       });
     }

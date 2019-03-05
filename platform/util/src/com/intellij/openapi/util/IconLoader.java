@@ -35,6 +35,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
+import static com.intellij.util.ui.JBUI.DerivedScaleType.DEV_SCALE;
+import static com.intellij.util.ui.JBUI.DerivedScaleType.EFF_USR_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.*;
 
 public final class IconLoader {
@@ -302,16 +305,15 @@ public final class IconLoader {
     else {
       BufferedImage image;
       if (GraphicsEnvironment.isHeadless()) { // for testing purpose
-        image = UIUtil.createImage(ctx, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB, RoundingMode.ROUND);
+        image = UIUtil.createImage(ctx, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB, ROUND);
       } else {
         if (ctx == null) ctx = ScaleContext.create();
-        boolean jreHiDPi = UIUtil.isJreHiDPI(ctx);
-        double sysScale = jreHiDPi ? ctx.getScale(SYS_SCALE) : 1;
         image = GraphicsEnvironment.getLocalGraphicsEnvironment()
                                    .getDefaultScreenDevice().getDefaultConfiguration()
-                                   .createCompatibleImage((int)Math.round(icon.getIconWidth() * sysScale),
-                                                          (int)Math.round(icon.getIconHeight() * sysScale), Transparency.TRANSLUCENT);
-        if (jreHiDPi) {
+                                   .createCompatibleImage(ROUND.round(ctx.apply(icon.getIconWidth(), DEV_SCALE)),
+                                                          ROUND.round(ctx.apply(icon.getIconHeight(), DEV_SCALE)),
+                                                          Transparency.TRANSLUCENT);
+        if (UIUtil.isJreHiDPI(ctx)) {
           image = (BufferedImage)ImageUtil.ensureHiDPI(image, ctx, icon.getIconWidth(), icon.getIconHeight());
         }
       }
@@ -726,7 +728,7 @@ public final class IconLoader {
         new FixedHashMap<>(SCALED_ICONS_CACHE_LIMIT));
 
       private Couple<Double> key(@NotNull ScaleContext ctx) {
-        return new Couple<>(ctx.getScale(USR_SCALE) * ctx.getScale(OBJ_SCALE), ctx.getScale(SYS_SCALE));
+        return new Couple<>(ctx.getScale(EFF_USR_SCALE), ctx.getScale(SYS_SCALE));
       }
 
       /**

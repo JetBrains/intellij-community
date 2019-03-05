@@ -16,7 +16,7 @@ import java.awt.geom.Rectangle2D;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.FLOOR;
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
-import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUI.DerivedScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
 
 /**

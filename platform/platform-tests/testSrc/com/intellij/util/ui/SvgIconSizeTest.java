@@ -16,7 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUI.DerivedScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 import static com.intellij.util.ui.TestScaleHelper.loadImage;
 import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;

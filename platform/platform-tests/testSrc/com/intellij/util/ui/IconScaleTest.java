@@ -26,6 +26,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.MalformedURLException;
 
+import static com.intellij.util.ui.JBUI.DerivedScaleType.DEV_SCALE;
+import static com.intellij.util.ui.JBUI.DerivedScaleType.EFF_USR_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
 import static com.intellij.util.ui.TestScaleHelper.*;
@@ -100,11 +102,9 @@ public class IconScaleTest extends BareTestFixtureTestCase {
 
     ScaleContext ctx = ScaleContext.create(bctx);
 
-    double sysScale = UIUtil.isJreHiDPI(ctx) ? ctx.getScale(SYS_SCALE) : 1;
-
-    double usrSize2D = ICON_BASE_SIZE * ctx.getScale(USR_SCALE);
+    double usrSize2D = ctx.apply(ICON_BASE_SIZE, EFF_USR_SCALE);
     int usrSize = (int)Math.round(usrSize2D);
-    int devSize = (int)Math.round(usrSize2D * sysScale);
+    int devSize = (int)Math.round(ctx.apply(usrSize2D, DEV_SCALE));
 
     assertEquals("unexpected icon user width " + bctx, usrSize, icon.getIconWidth());
     assertEquals("unexpected icon user height " + bctx, usrSize, icon.getIconHeight());
@@ -118,7 +118,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
 
     double scaledUsrSize2D = usrSize2D * ICON_OBJ_SCALE;
     int scaledUsrSize = (int)Math.round(scaledUsrSize2D);
-    int scaledDevSize = (int)Math.round(scaledUsrSize2D * sysScale);
+    int scaledDevSize = (int)Math.round(ctx.apply(scaledUsrSize2D, DEV_SCALE));
 
     assertEquals("unexpected scaled icon user width " + bctx, scaledUsrSize, scaledIcon.getIconWidth());
     assertEquals("unexpected scaled icon user height " + bctx, scaledUsrSize, scaledIcon.getIconHeight());
@@ -126,7 +126,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     assertEquals("unexpected scaled icon real height " + bctx, scaledDevSize, ImageUtil.getRealHeight(IconUtil.toImage(scaledIcon, ctx)));
 
     // Additionally check that the original image hasn't changed after scaling
-    Pair<BufferedImage, Graphics2D> pair = createImageAndGraphics(sysScale, icon.getIconWidth(), icon.getIconHeight());
+    Pair<BufferedImage, Graphics2D> pair = createImageAndGraphics(ctx.getScale(DEV_SCALE), icon.getIconWidth(), icon.getIconHeight());
     BufferedImage iconImage = pair.first;
     Graphics2D g2d = pair.second;
 
