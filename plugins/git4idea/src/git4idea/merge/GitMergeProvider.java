@@ -278,7 +278,7 @@ public class GitMergeProvider implements MergeProvider2 {
     MyMergeSession(List<VirtualFile> filesToMerge) {
       // get conflict type by the file
       try {
-        Map<VirtualFile, List<VirtualFile>> filesByRoot = GitUtil.sortFilesByGitRoot(filesToMerge);
+        Map<VirtualFile, List<VirtualFile>> filesByRoot = GitUtil.sortFilesByGitRoot(myProject, filesToMerge);
         for (Map.Entry<VirtualFile, List<VirtualFile>> e : filesByRoot.entrySet()) {
           Map<String, Conflict> cs = new HashMap<>();
           VirtualFile root = e.getKey();

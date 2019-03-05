@@ -174,91 +174,93 @@ public class GitUtil {
   }
 
   /**
-   * Sort files by Git root
-   *
-   * @param virtualFiles files to sort
-   * @return sorted files
    * @throws VcsException if non git files are passed
    */
   @NotNull
-  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Collection<? extends VirtualFile> virtualFiles) throws VcsException {
-    return sortFilesByGitRoot(virtualFiles, false);
+  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Project project,
+                                                                       @NotNull Collection<? extends VirtualFile> virtualFiles)
+    throws VcsException {
+    return sortFilesByGitRoot(project, virtualFiles, false);
+  }
+
+  @NotNull
+  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRootIgnoringMissing(@NotNull Project project,
+                                                                                      @NotNull Collection<? extends VirtualFile> filePaths) {
+    try {
+      return sortFilesByGitRoot(project, filePaths, true);
+    }
+    catch (VcsException e) {
+      LOG.error(new IllegalArgumentException(e));
+      return Collections.emptyMap();
+    }
   }
 
   /**
-   * Sort files by Git root
-   *
-   * @param virtualFiles files to sort
-   * @param ignoreNonGit if true, non-git files are ignored
-   * @return sorted files
-   * @throws VcsException if non git files are passed when {@code ignoreNonGit} is false
+   * @throws VcsException if non git files are passed
    */
-  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(Collection<? extends VirtualFile> virtualFiles, boolean ignoreNonGit)
+  @NotNull
+  public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(@NotNull Project project,
+                                                                        @NotNull Collection<? extends FilePath> filePaths)
     throws VcsException {
+    return sortFilePathsByGitRoot(project, filePaths, false);
+  }
+
+  @NotNull
+  public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRootIgnoringMissing(@NotNull Project project,
+                                                                                       @NotNull Collection<? extends FilePath> filePaths) {
+    try {
+      return sortFilePathsByGitRoot(project, filePaths, true);
+    }
+    catch (VcsException e) {
+      LOG.error(new IllegalArgumentException(e));
+      return Collections.emptyMap();
+    }
+  }
+
+  @NotNull
+  private static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Project project,
+                                                                        @NotNull Collection<? extends VirtualFile> virtualFiles,
+                                                                        boolean ignoreNonGit)
+    throws VcsException {
+    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
+
     Map<VirtualFile, List<VirtualFile>> result = new HashMap<>();
     for (VirtualFile file : virtualFiles) {
       // directory is reported only when it is a submodule or a mistakenly non-ignored nested root
       // => it should be treated in the context of super-root
-      final VirtualFile vcsRoot = gitRootOrNull(file.isDirectory() ? file.getParent() : file);
-      if (vcsRoot == null) {
-        if (ignoreNonGit) {
-          continue;
-        }
-        else {
-          throw new VcsException("The file " + file.getPath() + " is not under Git");
-        }
+      VirtualFile actualFile = file.isDirectory() ? file.getParent() : file;
+
+      GitRepository repository = manager.getRepositoryForFile(actualFile);
+      if (repository == null) {
+        if (ignoreNonGit) continue;
+        throw new GitRepositoryNotFoundException(file);
       }
-      List<VirtualFile> files = result.get(vcsRoot);
-      if (files == null) {
-        files = new ArrayList<>();
-        result.put(vcsRoot, files);
-      }
+
+      List<VirtualFile> files = result.computeIfAbsent(repository.getRoot(), key -> new ArrayList<>());
       files.add(file);
     }
     return result;
   }
 
-  /**
-   * Sort files by vcs root
-   *
-   * @param files files to sort.
-   * @return the map from root to the files under the root
-   * @throws VcsException if non git files are passed
-   */
-  public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(final Collection<? extends FilePath> files) throws VcsException {
-    return sortFilePathsByGitRoot(files, false);
-  }
-
-  /**
-   * Sort files by vcs root
-   *
-   * @param files        files to sort.
-   * @param ignoreNonGit if true, non-git files are ignored
-   * @return the map from root to the files under the root
-   * @throws VcsException if non git files are passed when {@code ignoreNonGit} is false
-   */
   @NotNull
-  public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(@NotNull Collection<? extends FilePath> files, boolean ignoreNonGit)
+  private static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(@NotNull Project project,
+                                                                         @NotNull Collection<? extends FilePath> filePaths,
+                                                                         boolean ignoreNonGit)
     throws VcsException {
-    Map<VirtualFile, List<FilePath>> rc = new HashMap<>();
-    for (FilePath p : files) {
-      VirtualFile root = getGitRootOrNull(p);
-      if (root == null) {
-        if (ignoreNonGit) {
-          continue;
-        }
-        else {
-          throw new VcsException("The file " + p.getPath() + " is not under Git");
-        }
+    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
+
+    Map<VirtualFile, List<FilePath>> result = new HashMap<>();
+    for (FilePath path : filePaths) {
+      GitRepository repository = manager.getRepositoryForFile(path);
+      if (repository == null) {
+        if (ignoreNonGit) continue;
+        throw new GitRepositoryNotFoundException(path);
       }
-      List<FilePath> l = rc.get(root);
-      if (l == null) {
-        l = new ArrayList<>();
-        rc.put(root, l);
-      }
-      l.add(p);
+
+      List<FilePath> paths = result.computeIfAbsent(repository.getRoot(), key -> new ArrayList<>());
+      paths.add(path);
     }
-    return rc;
+    return result;
   }
 
   /**
@@ -760,17 +762,6 @@ public class GitUtil {
       return null;
     }
     return GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
-  }
-
-  @NotNull
-  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRootsIgnoringOthers(@NotNull Collection<? extends VirtualFile> files) {
-    try {
-      return sortFilesByGitRoot(files, true);
-    }
-    catch (VcsException e) {
-      LOG.error("Should never happen, since we passed 'ignore non-git' parameter", e);
-      return Collections.emptyMap();
-    }
   }
 
   /**

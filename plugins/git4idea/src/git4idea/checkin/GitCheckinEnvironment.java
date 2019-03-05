@@ -1005,7 +1005,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
-      sortedFiles = sortFilePathsByGitRoot(files);
+      sortedFiles = sortFilePathsByGitRoot(myProject, files);
     }
     catch (VcsException e) {
       rc.add(e);
@@ -1060,7 +1060,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
-      sortedFiles = sortFilesByGitRoot(files);
+      sortedFiles = sortFilesByGitRoot(myProject, files);
     }
     catch (VcsException e) {
       rc.add(e);
