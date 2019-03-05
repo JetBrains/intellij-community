@@ -43,6 +43,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static final DomExtender EXTENSION_EXTENDER = new DomExtender() {
 
     private final XmlName OS_XML_NAME = new XmlName("os");
+    private final XmlName IMPLEMENTATION_XML_NAME = new XmlName("implementation");
 
     @Override
     public void registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
@@ -52,10 +53,10 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       final String interfaceName = extensionPoint.getInterface().getStringValue();
       if (interfaceName != null) {
         final DomExtension implementationAttribute =
-          registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class)
+          registrar.registerGenericAttributeValueChildExtension(IMPLEMENTATION_XML_NAME, PsiClass.class)
             .setConverter(CLASS_CONVERTER)
-            .addCustomAnnotation(new MyExtendClass(interfaceName))
-            .addCustomAnnotation(new MyRequired());
+            .addCustomAnnotation(new MyImplementationExtendClass(interfaceName))
+            .addCustomAnnotation(MyRequired.INSTANCE);
 
         final PsiClass interfaceClass = extensionPoint.getInterface().getValue();
         if (interfaceClass != null) {
@@ -398,6 +399,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
   @SuppressWarnings("ClassExplicitlyAnnotation")
   private static class MyRequired implements Required {
+
+    private static final MyRequired INSTANCE = new MyRequired();
+    
     @Override
     public boolean value() {
       return true;
@@ -419,10 +423,10 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     }
   }
 
-  private static class MyExtendClass extends ExtendClassImpl {
+  private static class MyImplementationExtendClass extends ExtendClassImpl {
     private final String myInterfaceName;
 
-    private MyExtendClass(String interfaceName) {
+    private MyImplementationExtendClass(String interfaceName) {
       myInterfaceName = interfaceName;
     }
 
