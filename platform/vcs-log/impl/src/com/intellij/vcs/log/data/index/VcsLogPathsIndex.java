@@ -69,6 +69,16 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
         return new PersistentHashMap<>(storageFile, EnumeratorIntegerDescriptor.INSTANCE, new IntCollectionDataExternalizer(),
                                        Page.PAGE_SIZE);
       }
+
+      @NotNull
+      @Override
+      protected Collection<Integer> convertToMapValueType(int inputId, @NotNull Map<Integer, List<ChangeKind>> map) {
+        if (!map.isEmpty()) {
+          List<ChangeKind> changesToParents = ContainerUtil.getFirstItem(map.values());
+          if (changesToParents.size() > 1) return Collections.emptySet();
+        }
+        return super.convertToMapValueType(inputId, map);
+      }
     };
   }
 
