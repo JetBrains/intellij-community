@@ -212,7 +212,9 @@ public class ReplaceInProjectManager {
           usageView.setRerunAction(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-              searchAndShowUsages(manager, usageSearcherFactory, findModelCopy, presentation, processPresentation);
+              UsageViewPresentation rerunPresentation = presentation.copy();
+              rerunPresentation.setOpenInNewTab(false);
+              searchAndShowUsages(manager, usageSearcherFactory, findModelCopy, rerunPresentation, processPresentation);
             }
           });
         }
