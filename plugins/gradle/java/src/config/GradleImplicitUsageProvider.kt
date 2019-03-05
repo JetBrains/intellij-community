@@ -6,14 +6,17 @@ import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
 import com.intellij.usages.impl.rules.UsageType
 import com.intellij.util.Processor
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASKS_ACTION
 
 /**
  * @author Vladislav.Soroka
  */
 class GradleImplicitUsageProvider : ImplicitUsageProvider {
   override fun isImplicitUsage(element: PsiElement): Boolean {
+    if (element is PsiMethod && element.modifierList.hasAnnotation(GRADLE_API_TASKS_ACTION)) return true
     return hasUsageOfType(element, null)
   }
 
@@ -40,8 +43,7 @@ class GradleImplicitUsageProvider : ImplicitUsageProvider {
       }
 
       val readWriteAccessDetector = ReadWriteAccessDetector.findDetector(element) ?: return@Processor true
-      val access = readWriteAccessDetector.getReferenceAccess(it.element, it)
-      when (access) {
+      when (readWriteAccessDetector.getReferenceAccess(it.element, it)) {
         ReadWriteAccessDetector.Access.ReadWrite -> {
           found.set(true)
           return@Processor false
