@@ -9,10 +9,12 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.ObjectUtils;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -55,6 +57,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
 
     private final ActionGroup myActionGroup;
     private AnAction selectedAction;
+    private boolean actionEnabled = true;
     private MousePressType mousePressType = MousePressType.None;
     private Disposable myDisposable;
 
@@ -63,7 +66,16 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
       myActionGroup = actionGroup;
 
       AnAction[] actions = myActionGroup.getChildren(null);
-      selectedAction = actions.length > 0 ? actions[0] : null;
+      if (actions.length > 0) {
+        selectedAction = actions[0];
+        copyPresentation(selectedAction.getTemplatePresentation());
+      }
+    }
+
+    private void copyPresentation(Presentation presentation) {
+      myPresentation.copyFrom(presentation);
+      actionEnabled = presentation.isEnabled();
+      myPresentation.setEnabled(true);
     }
 
     @Override
@@ -74,7 +86,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
     }
 
     private boolean selectedActionEnabled() {
-      return selectedAction != null && selectedAction.getTemplatePresentation().isEnabled();
+      return selectedAction != null && actionEnabled;
     }
 
     @Override
@@ -89,7 +101,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
       Rectangle baseRect = new Rectangle(getSize());
       JBInsets.removeFrom(baseRect, getInsets());
 
-      if (getPopState() == PUSHED && mousePressType != MousePressType.None || isToggleActionPushed()) {
+      if (getPopState() == PUSHED && mousePressType != MousePressType.None && selectedActionEnabled() || isToggleActionPushed()) {
         int arrowWidth = ARROW_DOWN.getIconWidth() + JBUI.scale(7);
 
         Shape clip = g.getClip();
@@ -118,9 +130,13 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
         g.fillRect(x, baseRect.y, JBUI.scale(1), baseRect.height);
       }
 
-      Icon actionIcon = selectedAction != null ? selectedAction.getTemplatePresentation().getIcon() : AllIcons.Actions.Stub;
+      Icon actionIcon = getIcon();
       if (!selectedActionEnabled()) {
-        actionIcon = ObjectUtils.notNull(IconLoader.getDisabledIcon(actionIcon));
+        Icon disabledIcon = myPresentation.getDisabledIcon();
+        actionIcon = disabledIcon != null ? disabledIcon : IconLoader.getDisabledIcon(actionIcon);
+        if (actionIcon == null) {
+          actionIcon = getFallbackIcon(false);
+        }
       }
 
       x -= JBUI.scale(3) + actionIcon.getIconWidth();
@@ -132,7 +148,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
 
     private boolean isToggleActionPushed() {
       return selectedAction instanceof Toggleable &&
-             selectedAction.getTemplatePresentation().getClientProperty(Toggleable.SELECTED_PROPERTY) == Boolean.TRUE;
+             myPresentation.getClientProperty(Toggleable.SELECTED_PROPERTY) == Boolean.TRUE;
     }
 
     @Override
@@ -151,13 +167,38 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
     }
 
     @Override
-    protected void actionPerformed(final AnActionEvent event) {
+    protected void actionPerformed(AnActionEvent event) {
       HelpTooltip.hide(this);
 
       if (mousePressType == MousePressType.Popup) {
         showPopupMenu(event, myActionGroup);
       } else if (selectedActionEnabled()) {
-        ActionUtil.performActionDumbAware(selectedAction, AnActionEvent.createFromAnAction(selectedAction, event.getInputEvent(), myPlace, getDataContext()));
+        AnActionEvent newEvent = AnActionEvent.createFromInputEvent(event.getInputEvent(), myPlace, event.getPresentation(), getDataContext());
+        ActionUtil.performActionDumbAware(selectedAction, newEvent);
+      }
+    }
+
+    @Override
+    protected void showPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
+      ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
+      ActionPopupMenu popupMenu = am.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {
+        @Override
+        protected void processPresentation(Presentation presentation) {
+          if (presentation != null &&
+              StringUtil.defaultIfEmpty(presentation.getText(), "").equals(myPresentation.getText()) &&
+              StringUtil.defaultIfEmpty(presentation.getDescription(), "").equals(myPresentation.getDescription())) {
+            presentation.setEnabled(selectedActionEnabled());
+            //presentation.putClientProperty(Toggleable.SELECTED_PROPERTY, myPresentation.getClientProperty(Toggleable.SELECTED_PROPERTY));
+          }
+        }
+      });
+      popupMenu.setTargetComponent(this);
+
+      if (event.isFromActionToolbar()) {
+        popupMenu.getComponent().show(this, 0, getHeight());
+      }
+      else {
+        popupMenu.getComponent().show(this, getWidth(), 0);
       }
     }
 
@@ -181,10 +222,16 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
     public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
       if (selectedAction != action && myAction != action) {
         selectedAction = action;
-        repaint();
-      } else if (action instanceof Toggleable) {
-        repaint();
+        copyPresentation(selectedAction.getTemplatePresentation());
       }
+      else if (myPresentation != event.getPresentation()) {
+        copyPresentation(event.getPresentation());
+      }
+      else if (!myPresentation.isEnabled()) {
+        actionEnabled = false;
+        myPresentation.setEnabled(true);
+      }
+      repaint();
     }
   }
 }
