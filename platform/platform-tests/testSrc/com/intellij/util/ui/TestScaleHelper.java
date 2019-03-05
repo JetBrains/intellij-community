@@ -6,8 +6,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.JBUI.BaseScaleContext;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale.UserScaleContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AfterClass;
@@ -24,7 +24,7 @@ import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.SYS_SCALE;
 
 /**
  * @author tav
@@ -144,7 +144,7 @@ public class TestScaleHelper {
     }
   }
 
-  public static String msg(BaseScaleContext ctx) {
+  public static String msg(UserScaleContext ctx) {
     return "[JRE-HiDPI " + UIUtil.isJreHiDPIEnabled() + "], " + ctx.toString();
   }
 

@@ -7,7 +7,7 @@ import com.intellij.openapi.util.IconLoader.DarkIconProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
+import com.intellij.util.ui.JBCachingScalableIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,10 +15,10 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
 import static java.lang.Math.ceil;
 
-public class RowIcon extends CachingScalableJBIcon<RowIcon> implements DarkIconProvider, CompositeIcon {
+public class RowIcon extends JBCachingScalableIcon<RowIcon> implements DarkIconProvider, CompositeIcon {
   private final Alignment myAlignment;
 
   private int myWidth;

@@ -18,6 +18,8 @@ package com.intellij.util;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.imgscalr.Scalr;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +88,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
   /**
    * @see #JBHiDPIScaledImage(GraphicsConfiguration, double, double, int)
    */
-  public JBHiDPIScaledImage(@Nullable JBUI.ScaleContext ctx, double width, double height, int type, @NotNull RoundingMode rm) {
+  public JBHiDPIScaledImage(@Nullable ScaleContext ctx, double width, double height, int type, @NotNull RoundingMode rm) {
     this(JBUI.sysScale(ctx), width, height, type, rm);
   }
 

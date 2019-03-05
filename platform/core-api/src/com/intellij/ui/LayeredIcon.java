@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconLoader.DarkIconProvider;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
+import com.intellij.util.ui.JBCachingScalableIcon;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,10 +27,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
-import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
-import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
 
-public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> implements DarkIconProvider, CompositeIcon {
+public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements DarkIconProvider, CompositeIcon {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
   private final Icon[] myIcons;
   private Icon[] myScaledIcons;

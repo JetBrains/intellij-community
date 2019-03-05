@@ -4,12 +4,12 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.OffsetIcon;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.junit.Test;
 
 import javax.swing.*;
 
-import static com.intellij.util.ui.JBUI.DerivedScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
 
 /**
  * Tests {@link com.intellij.ui.OffsetIcon} painting.

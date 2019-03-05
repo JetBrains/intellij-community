@@ -18,7 +18,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
@@ -492,7 +492,7 @@ public class UIUtil {
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided system scale context is HiDPI.
    */
-  public static boolean isJreHiDPI(@Nullable ScaleContext ctx) {
+  public static boolean isJreHiDPI(@Nullable JBUIScale.ScaleContext ctx) {
     return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(ctx));
   }
 
@@ -511,7 +511,7 @@ public class UIUtil {
    * Returns whether the JRE-managed HiDPI mode is enabled.
    * (True for macOS JDK >= 7.10 versions)
    *
-   * @see JBUI.ScaleType
+   * @see JBUIScale.ScaleType
    */
   public static boolean isJreHiDPIEnabled() {
     if (jreHiDPI.get() != null) return jreHiDPI.get();

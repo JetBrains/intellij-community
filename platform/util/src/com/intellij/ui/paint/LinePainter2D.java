@@ -4,8 +4,9 @@ package com.intellij.ui.paint;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.paint.PaintUtil.ParityMode;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale;
+import com.intellij.util.ui.JBUIScale.ScaleType;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ import static com.intellij.ui.paint.PaintUtil.getParityMode;
  * Draws a line with a stroke defined by {@link StrokeType}, provided that the graphics stroke is {@link BasicStroke}),
  * otherwise defaults to {@code Graphics2D.draw(Line2D.Double)}.
  * <p>
- * It's assumed that the {@link JBUI.ScaleType#USR_SCALE} factor is already applied to the values (given in the user space)
+ * It's assumed that the {@link ScaleType#USR_SCALE} factor is already applied to the values (given in the user space)
  * passed to the methods of this class. So the user scale factor is not taken into account.
  *
  * @author tav

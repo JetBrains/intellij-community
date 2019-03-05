@@ -11,9 +11,9 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.JBUI.BaseScaleContext;
-import com.intellij.util.ui.JBUI.ScaleContext;
-import com.intellij.util.ui.JBUI.ScaleContextAware;
+import com.intellij.util.ui.JBUIScale.UserScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContextAware;
 import com.intellij.util.ui.paint.ImageComparator;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -26,10 +26,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.MalformedURLException;
 
-import static com.intellij.util.ui.JBUI.DerivedScaleType.DEV_SCALE;
-import static com.intellij.util.ui.JBUI.DerivedScaleType.EFF_USR_SCALE;
-import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
-import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.DEV_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.EFF_USR_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.SYS_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
 import static com.intellij.util.ui.TestScaleHelper.*;
 
 /**
@@ -84,20 +84,20 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     // 2. DeferredIcon
     //
     CachedImageIcon icon = new CachedImageIcon(new File(getIconPath()).toURI().toURL());
-    test(new DeferredIconImpl<>(icon, new Object(), false, o -> icon), BaseScaleContext.create(ctx));
+    test(new DeferredIconImpl<>(icon, new Object(), false, o -> icon), UserScaleContext.create(ctx));
 
     //
     // 3. LayeredIcon
     //
-    test(new LayeredIcon(new CachedImageIcon(new File(getIconPath()).toURI().toURL())), BaseScaleContext.create(ctx));
+    test(new LayeredIcon(new CachedImageIcon(new File(getIconPath()).toURI().toURL())), UserScaleContext.create(ctx));
 
     //
     // 4. RowIcon
     //
-    test(new RowIcon(new CachedImageIcon(new File(getIconPath()).toURI().toURL())), BaseScaleContext.create(ctx));
+    test(new RowIcon(new CachedImageIcon(new File(getIconPath()).toURI().toURL())), UserScaleContext.create(ctx));
   }
 
-  private static void test(Icon icon, BaseScaleContext bctx) {
+  private static void test(Icon icon, UserScaleContext bctx) {
     ((ScaleContextAware)icon).updateScaleContext(bctx);
 
     ScaleContext ctx = ScaleContext.create(bctx);

@@ -7,17 +7,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
-import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FixedHashMap;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.BaseScaleContext.UpdateListener;
-import com.intellij.util.ui.JBUI.RasterJBIcon;
-import com.intellij.util.ui.JBUI.ScaleContext;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUIScale.ScaleContextSupport;
+import com.intellij.util.ui.JBUIScale.UserScaleContext.UpdateListener;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContextAware;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -36,9 +33,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
-import static com.intellij.util.ui.JBUI.DerivedScaleType.DEV_SCALE;
-import static com.intellij.util.ui.JBUI.DerivedScaleType.EFF_USR_SCALE;
-import static com.intellij.util.ui.JBUI.ScaleType.*;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.DEV_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.EFF_USR_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.*;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
@@ -394,8 +391,8 @@ public final class IconLoader {
       icon = ((CachedImageIcon)icon).createWithFilter(filterSupplier);
     } else {
       final float scale;
-      if (icon instanceof JBUI.ScaleContextAware) {
-        scale = (float)((JBUI.ScaleContextAware)icon).getScale(SYS_SCALE);
+      if (icon instanceof ScaleContextAware) {
+        scale = (float)((ScaleContextAware)icon).getScale(SYS_SCALE);
       }
       else {
         scale = UIUtil.isJreHiDPI() ? JBUI.sysScale(ancestor) : 1f;
@@ -496,7 +493,10 @@ public final class IconLoader {
   }
 
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
-  public static final class CachedImageIcon extends com.intellij.util.ui.JBUI.RasterJBIcon implements ScalableIcon, DarkIconProvider, MenuBarIconProvider {
+  public static final class CachedImageIcon
+    extends com.intellij.util.ui.JBUIScale.ScaleContextSupport /* do not modify this FQN */
+    implements CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider
+  {
     private final Object myLock = new Object();
     @Nullable private volatile Object myRealIcon;
     @Nullable private final String myOriginalPath;
@@ -623,7 +623,7 @@ public final class IconLoader {
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
       Graphics2D g2d = g instanceof Graphics2D ? (Graphics2D)g : null;
-      getRealIcon(ScaleContext.create(c, g2d)).paintIcon(c, g, x, y);
+      getRealIcon(ScaleContext.create(g2d)).paintIcon(c, g, x, y);
     }
 
     @Override
@@ -886,7 +886,7 @@ public final class IconLoader {
     }
   }
 
-  public abstract static class LazyIcon extends RasterJBIcon implements RetrievableIcon {
+  public abstract static class LazyIcon extends ScaleContextSupport implements CopyableIcon, RetrievableIcon {
     private boolean myWasComputed;
     private volatile Icon myIcon;
     private IconTransform myTransform = ourTransform.get();

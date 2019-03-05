@@ -3,7 +3,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
+import com.intellij.util.ui.JBCachingScalableIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
@@ -11,10 +11,10 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.util.Objects;
 
-import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
 import static java.lang.Math.ceil;
 
-public final class OffsetIcon extends CachingScalableJBIcon<OffsetIcon> {
+public final class OffsetIcon extends JBCachingScalableIcon<OffsetIcon> {
   private int myWidth;
   private int myHeight;
 

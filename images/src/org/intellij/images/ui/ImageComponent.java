@@ -19,7 +19,8 @@
 package org.intellij.images.ui;
 
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.options.GridOptions;
@@ -36,7 +37,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 
-import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleContext.*;
+import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
 
 /**
  * Image component is draw image box with effects.

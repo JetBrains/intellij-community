@@ -5,7 +5,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.ui.RestoreScaleRule;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.paint.ImageComparator;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
@@ -17,7 +17,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.util.function.BiFunction;
 
-import static com.intellij.util.ui.JBUI.ScaleType.*;
+import static com.intellij.util.ui.JBUIScale.ScaleType.*;
 import static com.intellij.util.ui.TestScaleHelper.*;
 
 /**

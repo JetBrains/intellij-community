@@ -5,7 +5,7 @@ import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -17,8 +17,8 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.util.ui.JBUI.DerivedScaleType.EFF_USR_SCALE;
-import static com.intellij.util.ui.JBUI.ScaleType.*;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.EFF_USR_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.*;
 
 public class TextToIconPaintTest extends CompositeIconPaintTestHelper {
   private static final String TEXT = "IDEA";

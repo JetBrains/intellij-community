@@ -4,7 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +15,7 @@ import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
 import java.awt.image.ImageObserver;
 
-import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.SYS_SCALE;
 
 /**
  * @author Konstantin Bulenkov
@@ -135,6 +135,15 @@ public class ImageUtil {
       return RetinaImage.createFrom(image, ctx.getScale(SYS_SCALE), null);
     }
     return image;
+  }
+
+  /**
+   * @deprecated Use {@link #ensureHiDPI(Image, ScaleContext)}.
+   */
+  @Deprecated
+  @Contract("null, _ -> null; !null, _ -> !null")
+  public static Image ensureHiDPI(@Nullable Image image, @NotNull JBUI.ScaleContext ctx) {
+    return ensureHiDPI(image, (ScaleContext)ctx);
   }
 
   /**

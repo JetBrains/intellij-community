@@ -27,6 +27,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +67,7 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
   private ImagePreviewComponent(@NotNull final BufferedImage image, final long imageFileSize) {
     setLayout(new BorderLayout());
 
-    myImage = (BufferedImage)ImageUtil.ensureHiDPI(image, JBUI.ScaleContext.create(this));
+    myImage = (BufferedImage)ImageUtil.ensureHiDPI(image, ScaleContext.create(this));
     add(new ImageComp(), BorderLayout.CENTER);
     add(createLabel(image, imageFileSize), BorderLayout.SOUTH);
 

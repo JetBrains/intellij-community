@@ -68,6 +68,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -356,7 +357,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                   BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                   Graphics2D graphics = image.createGraphics();
                   super.paint(graphics, new Rectangle(image.getWidth(), image.getHeight()));
-                  UIUtil.drawImage(g, ImageUtil.ensureHiDPI(image, JBUI.ScaleContext.create(myEditorPane)), bounds.x, bounds.y, null);
+                  UIUtil.drawImage(g, ImageUtil.ensureHiDPI(image, ScaleContext.create(myEditorPane)), bounds.x, bounds.y, null);
                 }
               };
             }
