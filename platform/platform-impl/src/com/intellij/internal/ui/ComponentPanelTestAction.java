@@ -683,7 +683,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           if (--counter == 0) {
-            getTemplatePresentation().setEnabled(false);
+            e.getPresentation().setEnabled(false);
           }
           System.out.println(e.getPresentation().getDescription() + ", counter = " + counter);
         }
@@ -713,7 +713,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
             actionsArray[1].getTemplatePresentation().setEnabled(false);
           }
 
-          getTemplatePresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, selected);
+          e.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, selected);
         }
       };
 
