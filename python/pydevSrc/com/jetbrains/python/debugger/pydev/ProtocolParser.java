@@ -397,6 +397,12 @@ public class ProtocolParser {
     return values;
   }
 
+  public static String parseWarning(final String text) throws PyDebuggerException {
+    final XppReader reader = openReader(text, true);
+    reader.moveDown();
+    return readString(reader, "id", null);
+  }
+
   private static XppReader openReader(final String text, final boolean checkForContent) throws PyDebuggerException {
     final XppReader reader = new XppReader(new StringReader(text), new MXParser(), new NoNameCoder());
     if (checkForContent && !reader.hasMoreChildren()) {
