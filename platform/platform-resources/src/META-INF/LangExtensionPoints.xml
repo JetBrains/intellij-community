@@ -526,7 +526,7 @@
     </extensionPoint>
 
     <extensionPoint name="psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean">
-      <with attribute="className" implements="com.intellij.psi.PsiReferenceProvider"/>
+      <with attribute="providerClass" implements="com.intellij.psi.PsiReferenceProvider"/>
     </extensionPoint>
     <extensionPoint name="patterns.patternClass" beanClass="com.intellij.patterns.compiler.PatternClassBean"/>
 
