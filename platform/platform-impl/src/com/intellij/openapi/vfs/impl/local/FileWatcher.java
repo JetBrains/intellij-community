@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -45,8 +44,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
@@ -93,10 +92,11 @@ public class FileWatcher {
 
   private volatile CanonicalPathMap myPathMap = new CanonicalPathMap();
   private volatile List<Collection<String>> myManualWatchRoots = Collections.emptyList();
-  
+
   private final ExecutorService myFileWatcherExecutor = Registry.is("vfs.filewatcher.works.in.async.way") ?
                                                         AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) :
                                                         MoreExecutors.newDirectExecutorService();
+  private final AtomicInteger myRootSettingOps = new AtomicInteger(0);
 
   FileWatcher(@NotNull ManagingFS managingFS) {
     myManagingFS = managingFS;
@@ -111,11 +111,16 @@ public class FileWatcher {
   }
 
   public void dispose() {
-    waitForFuture(myFileWatcherExecutor.submit(() -> {
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.dispose();
-      }
-    }));
+    try {
+      myFileWatcherExecutor.submit(() -> {
+        for (PluggableFileWatcher watcher : myWatchers) {
+          watcher.dispose();
+        }
+      }).get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      LOG.error(e);
+    }
   }
 
   public boolean isOperational() {
@@ -126,24 +131,13 @@ public class FileWatcher {
   }
 
   public boolean isSettingRoots() {
-    flushCommandQueue();
-    
+    if (myRootSettingOps.get() > 0) {
+      return true;
+    }
     for (PluggableFileWatcher watcher : myWatchers) {
       if (watcher.isSettingRoots()) return true;
     }
     return false;
-  }
-
-  private void flushCommandQueue() {
-    waitForFuture(myFileWatcherExecutor.submit(EmptyRunnable.getInstance()));
-  }
-
-  private void waitForFuture(Future<?> future) {
-    try {
-      future.get();
-    }
-    catch (InterruptedException | ExecutionException ignore) {
-    }
   }
 
   @NotNull
@@ -172,6 +166,8 @@ public class FileWatcher {
    * Clients should take care of not calling this method in parallel.
    */
   void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
+    myRootSettingOps.incrementAndGet();
+
     myFileWatcherExecutor.submit(() -> {
       CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
 
@@ -181,6 +177,8 @@ public class FileWatcher {
       for (PluggableFileWatcher watcher : myWatchers) {
         watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
       }
+
+      myRootSettingOps.decrementAndGet();
     });
   }
 
