@@ -35,7 +35,7 @@ public class JavaFxHtmlPanel implements Disposable {
   @NotNull
   private final List<Runnable> myInitActions = new ArrayList<>();
   @Nullable
-  private JFXPanel myPanel;
+  protected JFXPanel myPanel;
   @Nullable protected WebView myWebView;
   private Color background;
 
