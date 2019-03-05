@@ -839,7 +839,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testInstanceDunderClass() {
-    assertResolvesTo(PyClass.class, "A");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testInstanceDunderDoc() {
@@ -857,7 +857,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testInstanceDunderClassNewStyleClass() {
-    assertResolvesTo(PyClass.class, "A");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testInstanceDunderDocNewStyleClass() {
@@ -876,7 +876,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testInstanceDunderClassWithClassAttr() {
-    assertResolvesTo(PyClass.class, "A");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testInstanceDunderDocWithClassAttr() {
@@ -995,7 +995,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testTypeDunderClassNewStyleClass() {
-    assertResolvesTo(PyClass.class, "type");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testTypeDunderDocNewStyleClass() {
@@ -1047,7 +1047,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testTypeDunderClassWithClassAttrNewStyleClass() {
-    assertResolvesTo(PyClass.class, "type");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testTypeDunderDocWithClassAttrNewStyleClass() {
@@ -1076,7 +1076,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testTypeDunderClassWithInheritedClassAttr() {
-    assertResolvesTo(PyClass.class, "type");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testTypeDunderDocWithInheritedClassAttr() {
