@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.flake8;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.InspectionSuppressor;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -9,8 +11,16 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ReflectionUtil;
+import com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiser;
+import com.jetbrains.python.codeInsight.typing.PyStubPackagesCompatibilityInspection;
+import com.jetbrains.python.inspections.PyInterpreterInspection;
+import com.jetbrains.python.inspections.PyPackageRequirementsInspection;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * Suppress highlighting (errors, warning, unused, ...) which were added by Python inspections when either
@@ -22,11 +32,24 @@ import org.jetbrains.annotations.Nullable;
  * @author jansorg
  */
 public class Flake8InspectionSuppressor implements InspectionSuppressor {
+  private static final ImmutableSet<Class<? extends LocalInspectionTool>> INSPECTION_WHITELIST = ImmutableSet.of(
+    PyInterpreterInspection.class,
+    PyPackageRequirementsInspection.class,
+    PyStubPackagesAdvertiser.class,
+    PyStubPackagesCompatibilityInspection.class
+  );
+
+  private static final Set<String> ourWhitelistedInspectionIds =
+    StreamEx.of(INSPECTION_WHITELIST)
+      .map(ReflectionUtil::newInstance)
+      .map(LocalInspectionTool::getID)
+      .toImmutableSet();
+  
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId) {
     // suppress Python inspections only
     // this might be a bit too eager here, we'll see if there are use cases to also suppress other types of inspections
-    if (!toolId.startsWith("Py")) {
+    if (!toolId.startsWith("Py") || ourWhitelistedInspectionIds.contains(toolId)) {
       return false;
     }
 
