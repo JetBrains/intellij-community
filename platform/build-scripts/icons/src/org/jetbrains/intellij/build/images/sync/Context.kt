@@ -48,6 +48,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     val iconsRepoArg = "icons.repo"
     val devRepoArg = "dev.repo"
     val iconsRepoNameArg = "icons.repo.name"
+    val iconsRepoPathArg = "icons.repo.path"
     val devRepoNameArg = "dev.repo.name"
     val patternArg = "skip.dirs.pattern"
     val syncIconsArg = "sync.icons"
@@ -63,6 +64,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       |Options:
       |* `$iconsRepoArg` - designers' repo
       |* `$devRepoArg` - developers' repo
+      |* `$iconsRepoPathArg` - path in designers' repo
       |* `$iconsRepoNameArg` - designers' repo name (for report)
       |* `$devRepoNameArg` - developers' repo name (for report)
       |* `$patternArg` - regular expression for names of directories to skip
@@ -91,7 +93,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     fun File.isDir() = exists() && isDirectory && !list().isNullOrEmpty()
 
     devRepoDir = System.getProperty(devRepoArg)?.let(::ignoreCaseInDirName) ?: error(devRepoArg)
-    iconsRepoDir = System.getProperty(iconsRepoArg)?.let { path ->
+    val iconsRepoPath = System.getProperty(iconsRepoPathArg) ?: ""
+    iconsRepoDir = System.getProperty(iconsRepoArg)?.let { "$it/$iconsRepoPath" }?.let { path ->
       File(path).takeIf(File::isDir) ?: ignoreCaseInDirName(path)?.takeIf(File::isDir)
     } ?: {
       log("WARNING: $iconsRepoArg not found")
