@@ -397,6 +397,10 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     testHighlightingInIdeaProject("pluginWithJetBrainsAndMeAsVendor.xml")
   }
 
+  void testPluginXmlInIdeaProjectWithAndroidId() {
+    testHighlightingInIdeaProject("pluginWithAndroidIdVendor.xml")
+  }
+
   void testSpecifyJetBrainsAsVendorQuickFix() {
     PsiUtil.markAsIdeaProject(project, true)
     try {
