@@ -80,7 +80,7 @@ class AnnotationInvocationHandler implements InvocationHandler {
       }
 
       // todo arrays
-      return Pair.create(value, null);
+      return Pair.create(result, null);
     }
 
     if (attributeName == null) attributeName = "value";
