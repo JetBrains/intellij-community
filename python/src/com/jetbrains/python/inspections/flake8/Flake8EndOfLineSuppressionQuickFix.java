@@ -51,14 +51,23 @@ public class Flake8EndOfLineSuppressionQuickFix implements SuppressQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problemDescriptor) {
-    PsiElement endElement = problemDescriptor.getEndElement();
+    final PsiElement endElement = problemDescriptor.getEndElement();
 
     // find last leaf on the current line
     PsiElement anchor = endElement;
     while (anchor != null) {
-      PsiElement next = PsiTreeUtil.nextLeaf(anchor);
-      if (next == null || next instanceof PsiWhiteSpace && next.textContains('\n')) {
+      final PsiElement next = PsiTreeUtil.nextLeaf(anchor);
+      if (next == null) {
         break;
+      }
+      final boolean multiline = next.textContains('\n');
+      if (multiline) {
+        if (next instanceof PsiWhiteSpace) {
+          break;
+        }
+        else {
+          return;
+        }
       }
       anchor = next;
     }

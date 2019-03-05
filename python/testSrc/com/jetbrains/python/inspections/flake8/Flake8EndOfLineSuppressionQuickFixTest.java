@@ -32,6 +32,17 @@ public class Flake8EndOfLineSuppressionQuickFixTest extends PyTestCase {
                            "         3]\n");
   }
 
+  public void testCommentCannotBeInsertedAtSameLineBecauseOfMultilineStringLiteral() {
+    doTestSuppressQuickFix("def foo():\n" +
+                           "    <caret>x = \"\"\"\n" +
+                           "    bar\n" +
+                           "    \"\"\"",
+                           "def foo():\n" +
+                           "    <caret>x = \"\"\"\n" +
+                           "    bar\n" +
+                           "    \"\"\"");
+  }
+
   private void doTestSuppressQuickFix(@NotNull String before, @NotNull String after) {
     myFixture.configureByText(PythonFileType.INSTANCE, before);
     myFixture.enableInspections(PyUnusedLocalInspection.class);
