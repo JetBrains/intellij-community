@@ -2,7 +2,6 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -24,7 +23,7 @@ public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
 
   @Override
   protected boolean shouldRunTest() {
-    return super.shouldRunTest() && SystemInfo.isSymLinkCreationSupported;
+    return super.shouldRunTest() && IoTestUtil.isSymLinkCreationSupported;
   }
 
   @Override

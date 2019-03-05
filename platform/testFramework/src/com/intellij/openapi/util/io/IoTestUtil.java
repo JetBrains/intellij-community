@@ -31,6 +31,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class IoTestUtil {
+  public static final boolean isSymLinkCreationSupported = SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer && holdsEnoughPrivilegesToCreateSymlinks();
+
   private IoTestUtil() { }
 
   @SuppressWarnings("SpellCheckingInspection") private static final String[] UNICODE_PARTS = {"Юникоде", "Úñíçødê"};
@@ -85,7 +87,7 @@ public class IoTestUtil {
   }
 
   public static void assumeSymLinkCreationIsSupported() throws AssumptionViolatedException {
-    Assume.assumeTrue("Expected can create symlinks", SystemInfo.isSymLinkCreationSupported);
+    Assume.assumeTrue("Expected can create symlinks", isSymLinkCreationSupported);
   }
 
   @NotNull
@@ -318,5 +320,26 @@ public class IoTestUtil {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static boolean holdsEnoughPrivilegesToCreateSymlinks() {
+    try {
+      File src = File.createTempFile("tempSrc", ".txt");
+      src.delete();
+      File dest = File.createTempFile("tempDst", ".txt");
+      try {
+        Files.createSymbolicLink(src.toPath(), dest.toPath());
+      }
+      catch (IOException e) {
+        return false;
+      }
+      finally {
+        dest.delete();
+      }
+    }
+    catch (IOException e) {
+      return false;
+    }
+    return true;
   }
 }
