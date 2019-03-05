@@ -85,7 +85,7 @@ public final class StartUpMeasurer {
     }
   }
 
-  public final static class Item implements MeasureToken, AutoCloseable {
+  public final static class Item implements MeasureToken {
     private final String name;
     private String description;
 
@@ -155,7 +155,6 @@ public final class StartUpMeasurer {
       }
     }
 
-    @Override
     public void close() {
       end();
     }
@@ -166,7 +165,7 @@ public final class StartUpMeasurer {
     }
   }
 
-  public interface MeasureToken extends AutoCloseable {
+  public interface MeasureToken {
     void end(@Nullable String description);
 
     void endWithThreshold(@NotNull Class<?> clazz);
