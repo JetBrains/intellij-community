@@ -136,7 +136,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
     : CompletableFuture<CollectionDelta<T>> {
 
     val listModel = CollectionListModel<SelectableWrapper<T>>()
-    val list = JBList<SelectableWrapper<T>>(listModel).apply {
+    val list = JBList<SelectableWrapper<T>>().apply {
       visibleRowCount = 7
       isFocusable = false
       selectionMode = ListSelectionModel.SINGLE_SELECTION
@@ -145,10 +145,9 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
     list.cellRenderer = listCellRenderer
 
     val speedSearch = SpeedSearch()
-    val filteringListModel = NameFilteringListModel<SelectableWrapper<T>>(list,
-                                                                          { listCellRenderer.getText(it.value) },
-                                                                          speedSearch::shouldBeShowing,
-                                                                          speedSearch)
+    val filteringListModel = NameFilteringListModel<SelectableWrapper<T>>(
+      listModel, { listCellRenderer.getText(it.value) }, speedSearch::shouldBeShowing, { speedSearch.filter ?: "" })
+    list.model = filteringListModel
 
     speedSearch.addChangeListener {
       val prevSelection = list.selectedValue // save to restore the selection on filter drop

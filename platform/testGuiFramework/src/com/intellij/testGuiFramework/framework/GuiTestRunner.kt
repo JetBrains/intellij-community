@@ -84,15 +84,13 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
 
     val eachNotifier = EachTestNotifier(notifier, description)
 
+    val testName = runner.getTestName(method.name)
     if (testShouldBeIgnored(method)) {
-      eachNotifier.fireTestIgnored()
+      SERVER_LOG.info("Test $testName ignored by @DisabledOnOs annotation")
       return
     }
 
-    val testName = runner.getTestName(method.name)
-
     if (criticalError.get()) {
-      SERVER_LOG.info("Test $testName ignored by @DisabledOnOs annotation")
       eachNotifier.fireTestIgnored()
       return
     }

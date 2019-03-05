@@ -1,0 +1,5 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <myService serviceImplementation="foo.Foo$Fubar<caret>"/>
+    </extensions>
+</idea-plugin>
