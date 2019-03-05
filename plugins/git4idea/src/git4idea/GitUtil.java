@@ -2,6 +2,7 @@
 package git4idea;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -15,7 +16,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -78,8 +77,6 @@ public class GitUtil {
   public static final String COMMENT_CHAR = "\u0001";
 
   public static final String ORIGIN_HEAD = "origin/HEAD";
-
-  public static final Function<GitRepository, VirtualFile> REPOSITORY_TO_ROOT = repository -> repository.getRoot();
 
   public static final String HEAD = "HEAD";
   public static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
@@ -295,23 +292,6 @@ public class GitUtil {
   }
 
   /**
-   * Get git roots from content roots
-   *
-   * @param roots git content roots
-   * @return a content root
-   */
-  public static Set<VirtualFile> gitRootsForPaths(final Collection<? extends VirtualFile> roots) {
-    HashSet<VirtualFile> rc = new HashSet<>();
-    for (VirtualFile root : roots) {
-      VirtualFile gitRoot = getGitRootOrNull(VcsUtil.getFilePath(root));
-      if (gitRoot != null) {
-        rc.add(gitRoot);
-      }
-    }
-    return rc;
-  }
-
-  /**
    * Return a git root for the file path (the parent directory with ".git" subdirectory)
    *
    * @param filePath a file path
@@ -429,14 +409,24 @@ public class GitUtil {
     return getGitRootOrNull(path) != null;
   }
 
-  /**
-   * Get git roots for the selected paths
-   *
-   * @param filePaths the context paths
-   * @return a set of git roots
-   */
-  public static Set<VirtualFile> gitRoots(final Collection<? extends FilePath> filePaths) {
-    return filePaths.stream().map(GitUtil::getGitRootOrNull).filter(Objects::nonNull).collect(Collectors.toSet());
+  @NotNull
+  public static Set<VirtualFile> getRootsForFilePathsIfAny(@NotNull Project project, @NotNull Collection<? extends FilePath> filePaths) {
+    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
+    return filePaths.stream()
+      .map(path -> manager.getRepositoryForFile(path))
+      .filter(Objects::nonNull)
+      .map(Repository::getRoot)
+      .collect(Collectors.toSet());
+  }
+
+  @NotNull
+  public static Set<VirtualFile> getRootsForFilesIfAny(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files) {
+    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
+    return files.stream()
+      .map(file -> manager.getRepositoryForFile(file))
+      .filter(Objects::nonNull)
+      .map(Repository::getRoot)
+      .collect(Collectors.toSet());
   }
 
   /**
@@ -650,7 +640,7 @@ public class GitUtil {
 
   @NotNull
   public static Collection<VirtualFile> getRootsFromRepositories(@NotNull Collection<? extends GitRepository> repositories) {
-    return ContainerUtil.map(repositories, REPOSITORY_TO_ROOT);
+    return ContainerUtil.map(repositories, Repository::getRoot);
   }
 
   @NotNull

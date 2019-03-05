@@ -140,7 +140,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     LinkedHashSet<String> messages = newLinkedHashSet();
     GitRepositoryManager manager = getRepositoryManager(myProject);
-    for (VirtualFile root : gitRoots(asList(filesToCheckin))) {
+    for (VirtualFile root : getRootsForFilePathsIfAny(myProject, asList(filesToCheckin))) {
       GitRepository repository = manager.getRepositoryForRoot(root);
       if (repository == null) { // unregistered nested submodule found by GitUtil.getGitRoot
         LOG.warn("Unregistered repository: " + root);
@@ -1264,7 +1264,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       @NotNull
       @Override
       protected Set<VirtualFile> getVcsRoots(@NotNull Collection<? extends FilePath> files) {
-        return gitRoots(files);
+        return getRootsForFilePathsIfAny(myProject, files);
       }
 
       @Nullable
