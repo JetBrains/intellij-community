@@ -662,6 +662,10 @@
     <extensionPoint name="completionData"
                     beanClass="com.intellij.codeInsight.completion.CompletionDataEP"/>
 
+    <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.lang.WordCompletionElementFilter"/>
+    </extensionPoint>
+
     <extensionPoint name="usageFilteringRuleProvider"
                     interface="com.intellij.usages.rules.UsageFilteringRuleProvider"/>
     <extensionPoint name="importFilteringRule"
