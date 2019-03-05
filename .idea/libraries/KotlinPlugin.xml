@@ -23,6 +23,8 @@
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/jps-common-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-compiler-plugin.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-ide-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-scripting-idea.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-scripting-compiler.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
@@ -49,6 +51,8 @@
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/jps-common-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-compiler-plugin.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-ide-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-scripting-idea.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-scripting-compiler.jar!/" />
     </excluded>
   </library>
 </component>
