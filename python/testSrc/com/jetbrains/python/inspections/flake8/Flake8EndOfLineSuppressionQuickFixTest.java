@@ -43,6 +43,13 @@ public class Flake8EndOfLineSuppressionQuickFixTest extends PyTestCase {
                            "    \"\"\"");
   }
 
+  public void testExistingComment() {
+    doTestSuppressQuickFix("def foo():\n" +
+                           "    <caret>x = 1  # existing\n",
+                           "def foo():\n" +
+                           "    <caret>x = 1  # noqa # existing\n");
+  }
+
   private void doTestSuppressQuickFix(@NotNull String before, @NotNull String after) {
     myFixture.configureByText(PythonFileType.INSTANCE, before);
     myFixture.enableInspections(PyUnusedLocalInspection.class);

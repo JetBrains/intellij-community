@@ -55,9 +55,14 @@ public class Flake8EndOfLineSuppressionQuickFix implements SuppressQuickFix {
 
     // find last leaf on the current line
     PsiElement anchor = endElement;
+    PsiComment existing = null;
     while (anchor != null) {
       final PsiElement next = PsiTreeUtil.nextLeaf(anchor);
       if (next == null) {
+        break;
+      }
+      if (next instanceof PsiComment) {
+        existing = (PsiComment)next;
         break;
       }
       final boolean multiline = next.textContains('\n');
@@ -72,16 +77,22 @@ public class Flake8EndOfLineSuppressionQuickFix implements SuppressQuickFix {
       anchor = next;
     }
 
-    // we're reusing IntelliJ's code to create comments suitable for suppressions
-    PsiComment comment = SuppressionUtil.createComment(project, "noqa", endElement.getLanguage());
-    if (anchor == null) {
-      // e.g. when we're editing at the end of the file
-      endElement.getContainingFile().add(comment);
+    if (existing != null) {
+      final PsiComment combined = SuppressionUtil.createComment(project, "noqa " + existing.getText(), endElement.getLanguage());
+      existing.replace(combined);
     }
     else {
-      // insert right after our anchor element, this will still be on the same line.
-      // The whitespace with the newline is after our anchor element
-      anchor.getParent().addAfter(comment, anchor);
+      // we're reusing IntelliJ's code to create comments suitable for suppressions
+      final PsiComment comment = SuppressionUtil.createComment(project, "noqa", endElement.getLanguage());
+      if (anchor == null) {
+        // e.g. when we're editing at the end of the file
+        endElement.getContainingFile().add(comment);
+      }
+      else {
+        // insert right after our anchor element, this will still be on the same line.
+        // The whitespace with the newline is after our anchor element
+        anchor.getParent().addAfter(comment, anchor);
+      }  
     }
   }
 }
