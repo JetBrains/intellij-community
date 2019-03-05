@@ -202,7 +202,7 @@ internal fun filterDevIcon(file: File, testRoots: Set<File>, skipDirsRegex: Rege
          IconRobotsDataReader.isSyncForced(file)
 }
 
-private fun isValidIcon(file: Path) = muteStdErr {
+internal fun isValidIcon(file: Path) = muteStdErr {
   try {
     // image
     Files.exists(file) && isImage(file) && imageSize(file)?.let { size ->
