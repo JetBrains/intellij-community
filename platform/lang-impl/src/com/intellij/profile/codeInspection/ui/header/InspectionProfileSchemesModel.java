@@ -132,7 +132,7 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
           return new InspectionProfileModifiableModel(source);
         }
         catch (Exception e) {
-          LOG.error(e);
+          LOG.error("'" + source.getName() + "' profile is corrupted (project profile = " + source.isProjectLevel() + ")", e);
           return null;
         }
       })
