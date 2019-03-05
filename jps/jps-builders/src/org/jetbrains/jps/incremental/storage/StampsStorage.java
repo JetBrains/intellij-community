@@ -42,7 +42,8 @@ public interface StampsStorage<T extends Stamp> {
 
   T lastModified(File file) throws IOException; // todo: rename
 
-  T lastModified(File file, @NotNull BasicFileAttributes attrs) throws IOException; // todo: rename
+  // todo: rename
+  default T lastModified(File file, @NotNull BasicFileAttributes attrs) throws IOException { return lastModified(file); }
 
   boolean wipe();
 
