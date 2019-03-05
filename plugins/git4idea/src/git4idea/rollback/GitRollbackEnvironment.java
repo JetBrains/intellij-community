@@ -209,21 +209,15 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    * @param file       a file to register
    * @param exceptions the list of exceptions to update
    */
-  private static void registerFile(Map<VirtualFile, List<FilePath>> files, FilePath file, List<VcsException> exceptions) {
-    final VirtualFile root;
+  private void registerFile(Map<VirtualFile, List<FilePath>> files, FilePath file, List<VcsException> exceptions) {
     try {
-      root = GitUtil.getGitRoot(file);
+      VirtualFile root = GitUtil.getRepositoryFor(myProject, file).getRoot();
+      List<FilePath> paths = files.computeIfAbsent(root, key -> new ArrayList<>());
+      paths.add(file);
     }
     catch (VcsException e) {
       exceptions.add(e);
-      return;
     }
-    List<FilePath> paths = files.get(root);
-    if (paths == null) {
-      paths = new ArrayList<>();
-      files.put(root, paths);
-    }
-    paths.add(file);
   }
 
   public static void resetHardLocal(final Project project, final VirtualFile root) {

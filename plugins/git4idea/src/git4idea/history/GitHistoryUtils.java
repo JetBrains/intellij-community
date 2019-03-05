@@ -170,7 +170,7 @@ public class GitHistoryUtils {
   public static VcsRevisionNumber getCurrentRevision(@NotNull Project project, @NotNull FilePath filePath,
                                                      @Nullable String branch) throws VcsException {
     filePath = VcsUtil.getLastCommitPath(project, filePath);
-    GitLineHandler h = new GitLineHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
+    GitLineHandler h = new GitLineHandler(project, GitUtil.getRepositoryFor(project, filePath).getRoot(), GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
@@ -193,7 +193,7 @@ public class GitHistoryUtils {
   public static VcsRevisionDescription getCurrentRevisionDescription(@NotNull Project project, @NotNull FilePath filePath)
     throws VcsException {
     filePath = VcsUtil.getLastCommitPath(project, filePath);
-    GitLineHandler h = new GitLineHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
+    GitLineHandler h = new GitLineHandler(project, GitUtil.getRepositoryFor(project, filePath).getRoot(), GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME, AUTHOR_NAME, COMMITTER_NAME, SUBJECT, BODY, RAW_BODY);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
@@ -227,7 +227,7 @@ public class GitHistoryUtils {
    */
   @Nullable
   public static ItemLatestState getLastRevision(@NotNull Project project, @NotNull FilePath filePath) throws VcsException {
-    VirtualFile root = GitUtil.getGitRoot(filePath);
+    VirtualFile root = GitUtil.getRepositoryFor(project, filePath).getRoot();
     GitBranch c = GitBranchUtil.getCurrentBranch(project, root);
     GitBranch t = c == null ? null : GitBranchUtil.tracked(project, root, c.getName());
     if (t == null) {
@@ -305,7 +305,7 @@ public class GitHistoryUtils {
   @NotNull
   public static List<Pair<SHAHash, Date>> onlyHashesHistory(@NotNull Project project, @NotNull FilePath path, String... parameters)
     throws VcsException {
-    final VirtualFile root = GitUtil.getGitRoot(path);
+    final VirtualFile root = GitUtil.getRepositoryFor(project, path).getRoot();
     return onlyHashesHistory(project, path, root, parameters);
   }
 

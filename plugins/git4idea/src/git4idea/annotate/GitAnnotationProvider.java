@@ -145,7 +145,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
                                        @NotNull final VirtualFile file) throws VcsException {
     setProgressIndicatorText(GitBundle.message("computing.annotation", file.getName()));
 
-    VirtualFile root = GitUtil.getGitRoot(repositoryFilePath);
+    VirtualFile root = GitUtil.getRepositoryFor(myProject, repositoryFilePath).getRoot();
     GitBinaryHandler h = new GitBinaryHandler(myProject, root, GitCommand.BLAME);
     h.setStdoutSuppressed(true);
     h.addParameters("--porcelain", "-l", "-t");
@@ -367,7 +367,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
                                              @NotNull VirtualFile file,
                                              @Nullable VcsRevisionNumber revisionNumber,
                                              @NotNull CachedData data) throws VcsException {
-    VirtualFile root = GitUtil.getGitRoot(repositoryFilePath);
+    VirtualFile root = GitUtil.getRepositoryFor(myProject, repositoryFilePath).getRoot();
     GitFileAnnotation fileAnnotation = new GitFileAnnotation(myProject, file, revisionNumber, data.lines);
 
     loadFileHistoryInBackground(fileAnnotation);

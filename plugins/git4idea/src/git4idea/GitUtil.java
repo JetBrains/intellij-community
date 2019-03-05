@@ -160,7 +160,7 @@ public class GitUtil {
    * Makes 3 attempts to get the contents of the file. If all 3 fail with an IOException, rethrows the exception.
    */
   @NotNull
-  public static String readFile(@NotNull VirtualFile file) throws IOException {
+  private static String readFile(@NotNull VirtualFile file) throws IOException {
     final int ATTEMPTS = 3;
     int attempt = 1;
     while (true) {
@@ -729,13 +729,24 @@ public class GitUtil {
     return GitRepositoryManager.getInstance(project);
   }
 
+  @NotNull
+  public static GitRepository getRepositoryFor(@NotNull Project project, @NotNull VirtualFile file) throws VcsException {
+    GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
+    if (repository == null) throw new GitRepositoryNotFoundException(file);
+    return repository;
+  }
+
+  @NotNull
+  public static GitRepository getRepositoryFor(@NotNull Project project, @NotNull FilePath file) throws VcsException {
+    GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
+    if (repository == null) throw new GitRepositoryNotFoundException(file);
+    return repository;
+  }
+
   @Nullable
   public static GitRepository getRepositoryForRootOrLogError(@NotNull Project project, @NotNull VirtualFile root) {
-    GitRepositoryManager manager = getRepositoryManager(project);
-    GitRepository repository = manager.getRepositoryForRoot(root);
-    if (repository == null) {
-      LOG.error("Repository is null for root " + root);
-    }
+    GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+    if (repository == null) LOG.error(new GitRepositoryNotFoundException(root));
     return repository;
   }
 
@@ -761,12 +772,11 @@ public class GitUtil {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         try {
-          VirtualFile vcsRoot = getGitRoot(file);
+          VirtualFile vcsRoot = getRepositoryFor(project, file).getRoot();
           final CommittedChangeList changeList = GitChangeUtils.getRevisionChanges(project, vcsRoot, revision, true, local, revertable);
-          if (changeList != null) {
-            UIUtil.invokeLaterIfNeeded(() -> AbstractVcsHelper.getInstance(project).showChangesListBrowser(changeList,
-                                                                                                       GitBundle.message("paths.affected.title", revision)));
-          }
+          UIUtil.invokeLaterIfNeeded(
+            () -> AbstractVcsHelper.getInstance(project)
+              .showChangesListBrowser(changeList, GitBundle.message("paths.affected.title", revision)));
         }
         catch (final VcsException e) {
           UIUtil.invokeLaterIfNeeded(() -> GitUIUtil.showOperationError(project, e, "git show"));
@@ -1056,5 +1066,17 @@ public class GitUtil {
 
   public static void proposeUpdateGitignore(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
     VcsImplUtil.proposeUpdateIgnoreFile(project, GitVcs.getInstance(project), ignoreFileRoot);
+  }
+
+  private static class GitRepositoryNotFoundException extends VcsException {
+    private static final String MESSAGE = "Can't find configured git repository for %s";
+
+    private GitRepositoryNotFoundException(@NotNull VirtualFile file) {
+      super(String.format(MESSAGE, file.getPresentableUrl()));
+    }
+
+    private GitRepositoryNotFoundException(@NotNull FilePath filePath) {
+      super(String.format(MESSAGE, filePath.getPresentableUrl()));
+    }
   }
 }

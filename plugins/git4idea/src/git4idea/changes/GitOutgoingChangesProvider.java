@@ -111,7 +111,8 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
   public Date getRevisionDate(VcsRevisionNumber revision, FilePath file) {
     if (VcsRevisionNumber.NULL.equals(revision)) return null;
     try {
-      VirtualFile root = GitUtil.getGitRoot(VcsUtil.getLastCommitPath(myProject, file));
+      file = VcsUtil.getLastCommitPath(myProject, file);
+      VirtualFile root = GitUtil.getRepositoryFor(myProject, file).getRoot();
       return new Date(GitHistoryUtils.getAuthorTime(myProject, root, revision.asString()));
     }
     catch (VcsException e) {

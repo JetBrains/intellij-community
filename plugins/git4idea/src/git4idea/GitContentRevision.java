@@ -67,7 +67,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
   }
 
   private byte[] loadContent() throws VcsException {
-    VirtualFile root = GitUtil.getGitRoot(myFile);
+    VirtualFile root = GitUtil.getRepositoryFor(myProject, myFile).getRoot();
     return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myFile));
   }
 
