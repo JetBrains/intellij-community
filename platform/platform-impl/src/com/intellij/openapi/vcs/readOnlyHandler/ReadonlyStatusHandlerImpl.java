@@ -30,6 +30,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+
 @State(name = "ReadonlyStatusHandler", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements PersistentStateComponent<ReadonlyStatusHandlerImpl.State> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl");
@@ -89,7 +91,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
         denied = accessProvider.requestWriting(files);
       }
       if (!denied.isEmpty()) {
-        return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied));
+        return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied), accessProvider.getReadOnlyMessage());
       }
     }
 
@@ -188,9 +190,15 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
   private static class OperationStatusImpl extends OperationStatus {
 
     private final VirtualFile[] myReadonlyFiles;
+    @NotNull private final String myReadOnlyReason;
 
     OperationStatusImpl(@NotNull VirtualFile[] readonlyFiles) {
+      this(readonlyFiles,"");
+    }
+
+    private OperationStatusImpl(VirtualFile[] readonlyFiles, @NotNull String readOnlyReason) {
       myReadonlyFiles = readonlyFiles;
+      myReadOnlyReason = readOnlyReason;
     }
 
     @Override
@@ -208,6 +216,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     @NotNull
     public String getReadonlyFilesMessage() {
       if (hasReadonlyFiles()) {
+        if (!isEmpty(myReadOnlyReason)) return myReadOnlyReason;
         StringBuilder buf = new StringBuilder();
         if (myReadonlyFiles.length > 1) {
           for (VirtualFile file : myReadonlyFiles) {

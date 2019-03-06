@@ -375,8 +375,10 @@ public class EditorModificationUtil {
   }
 
   public static boolean requestWriting(@NotNull Editor editor) {
-    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
-      HintManager.getInstance().showInformationHint(editor, EditorBundle.message("editing.read.only.file.hint"));
+    FileDocumentManager.WriteAccessStatus writeAccess =
+      FileDocumentManager.getInstance().requestWritingStatus(editor.getDocument(), editor.getProject());
+    if (!writeAccess.hasWriteAccess()) {
+      HintManager.getInstance().showInformationHint(editor, writeAccess.getReadOnlyMessage());
       return false;
     }
     return true;
