@@ -88,6 +88,27 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
   }
 
   @Override
+  public int size() {
+    int size = 0;
+    Changes changes = myChanges.get();
+    if (changes instanceof UnparsedChanges) {
+      for (int i = 0; i < getParents().size(); i++) {
+        size += ((UnparsedChanges)changes).getChangesOutput().get(i).size();
+      }
+    }
+    else {
+      for (int i = 0; i < getParents().size(); i++) {
+        try {
+          size += changes.getChanges(i).size();
+        }
+        catch (VcsException ignored) {
+        }
+      }
+    }
+    return size;
+  }
+
+  @Override
   public boolean hasRenames() {
     return true;
   }
@@ -238,6 +259,11 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     @NotNull
     private List<MergedStatusInfo<VcsFileStatusInfo>> getMergedStatusInfo() {
       return myStatusMerger.merge(myChangesOutput);
+    }
+
+    @NotNull
+    protected List<List<VcsFileStatusInfo>> getChangesOutput() {
+      return myChangesOutput;
     }
 
     private class MyMergedChange extends MergedChange {

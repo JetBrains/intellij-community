@@ -222,10 +222,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     for (VcsFullCommitDetails details : detailsList) {
       int size = 0;
       if (details instanceof VcsIndexableDetails) {
-        for (int i = 0; i < details.getParents().size(); i++) {
-          size += ((VcsIndexableDetails)details).getModifiedPaths(i).size();
-          size += ((VcsIndexableDetails)details).getRenamedPaths(i).size();
-        }
+        size = ((VcsIndexableDetails)details).size();
       }
       else {
         for (int i = 0; i < details.getParents().size(); i++) {
