@@ -40,13 +40,15 @@ import org.jetbrains.idea.devkit.util.PsiUtil
 class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   private TempDirTestFixture myTempDirFixture
+  private PluginXmlDomInspection myInspection
 
   @Override
   protected void setUp() throws Exception {
     super.setUp()
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
     myTempDirFixture.setUp()
-    myFixture.enableInspections(new PluginXmlDomInspection())
+    myInspection = new PluginXmlDomInspection()
+    myFixture.enableInspections(myInspection)
   }
 
   @Override
@@ -523,7 +525,14 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   void testRegistrationCheck() {
     Module anotherModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "anotherModule",
                                                  myTempDirFixture.findOrCreateDir("../anotherModuleDir"))
+    Module additionalModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "additionalModule",
+                                                 myTempDirFixture.findOrCreateDir("../additionalModuleDir"))
     ModuleRootModificationUtil.addDependency(myModule, anotherModule)
+    ModuleRootModificationUtil.addDependency(myModule, additionalModule)
+    def moduleSet = new PluginXmlDomInspection.PluginModuleSet()
+    moduleSet.modules.add(myModule.name)
+    moduleSet.modules.add(additionalModule.name)
+    myInspection.PLUGINS_MODULES.add(moduleSet)
 
     def dependencyModuleClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClass.java",
                                                             "../anotherModuleDir/DependencyModuleClass.java")
@@ -531,6 +540,8 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                                                   "../anotherModuleDir/DependencyModuleClassWithEpName.java")
     def dependencyModulePlugin = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModulePlugin.xml",
                                                              "../anotherModuleDir/META-INF/DependencyModulePlugin.xml")
+    def additionalModuleClass = myFixture.copyFileToProject("registrationCheck/additionalModule/AdditionalModuleClass.java",
+                                                                "../additionalModuleDir/AdditionalModuleClass.java")
     def mainModuleClass = myFixture.copyFileToProject("registrationCheck/module/MainModuleClass.java",
                                                       "MainModuleClass.java")
     def mainModulePlugin = myFixture.copyFileToProject("registrationCheck/module/MainModulePlugin.xml",
@@ -539,6 +550,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.configureFromExistingVirtualFile(dependencyModuleClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleClassWithEp)
     myFixture.configureFromExistingVirtualFile(dependencyModulePlugin)
+    myFixture.configureFromExistingVirtualFile(additionalModuleClass)
     myFixture.configureFromExistingVirtualFile(mainModuleClass)
     myFixture.configureFromExistingVirtualFile(mainModulePlugin)
 
