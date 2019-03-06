@@ -196,12 +196,15 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
       });
       popupMenu.setTargetComponent(this);
 
+      JPopupMenu menu = popupMenu.getComponent();
       if (event.isFromActionToolbar()) {
-        popupMenu.getComponent().show(this, 0, getHeight());
+        menu.show(this, 0, getHeight());
       }
       else {
-        popupMenu.getComponent().show(this, getWidth(), 0);
+        menu.show(this, getWidth(), 0);
       }
+
+      HelpTooltip.setMasterPopupOpenCondition(this, () -> !menu.isVisible());
     }
 
     @Override
@@ -225,6 +228,10 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
       if (selectedAction != action && myAction != action) {
         selectedAction = action;
         copyPresentation(selectedAction.getTemplatePresentation());
+
+        if(selectedAction instanceof Toggleable) {
+          myPresentation.putClientProperty(Toggleable.SELECTED_PROPERTY, event.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
+        }
       }
       else if (myPresentation != event.getPresentation()) {
         copyPresentation(event.getPresentation());
