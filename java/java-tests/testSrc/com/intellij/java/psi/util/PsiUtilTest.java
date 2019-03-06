@@ -65,10 +65,10 @@ public class PsiUtilTest extends LightCodeInsightFixtureTestCase {
     assertTrue(hasDefaultConstructor(createTopLevelClass("public class A extends B { } class B { B(int i) {}}")));
 
     assertFalse(hasDefaultConstructor(createTopLevelClass("class A { A() {}}")));
-    assertTrue(hasDefaultConstructor(createTopLevelClass("class A { A() {}}"), false, false));
-    assertTrue(hasDefaultConstructor(createTopLevelClass("class A { A() {}}"), true, false));
-    assertFalse(hasDefaultConstructor(createTopLevelClass("class A { A() {}}"), true, true));
-    assertTrue(hasDefaultConstructor(createTopLevelClass("class A { protected A() {}}"), true, true));
+    assertTrue(hasDefaultConstructor(createTopLevelClass("class A { A() {}}"), false, true));
+    assertTrue(hasDefaultConstructor(createTopLevelClass("class A { A() {}}"), true, true));
+    assertFalse(hasDefaultConstructor(createTopLevelClass("class A { A() {}}"), true, false));
+    assertTrue(hasDefaultConstructor(createTopLevelClass("class A { protected A() {}}"), true, false));
   }
 
   private PsiClass createTopLevelClass(String text) {
