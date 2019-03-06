@@ -69,9 +69,16 @@ fun Path.createSymbolicLink(target: Path): Path {
   return this
 }
 
-fun Path.delete() {
-  val attributes = basicAttributesIfExists() ?: return
+@JvmOverloads
+fun Path.delete(deleteRecursively: Boolean = true) {
   try {
+    if (!deleteRecursively) {
+      // performance optimisation: try to delete regular file without any checks
+      Files.delete(this)
+      return
+    }
+
+    val attributes = basicAttributesIfExists() ?: return
     if (attributes.isDirectory) {
       deleteRecursively()
     }
@@ -198,14 +205,10 @@ fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
   return this
 }
 
+@JvmOverloads
 @Throws(IOException::class)
-fun Path.write(data: String): Path {
-  parent?.createDirectories()
-  return writeUnsafe(data)
-}
-
-@Throws(IOException::class)
-fun Path.writeUnsafe(data: String): Path {
+fun Path.write(data: String, createParentDirs: Boolean = true): Path {
+  if (createParentDirs) parent?.createDirectories()
   Files.write(this, data.toByteArray())
   return this
 }
@@ -312,12 +315,4 @@ fun isDirectory(attributes: BasicFileAttributes?): Boolean {
 
 fun isSymbolicLink(attributes: BasicFileAttributes?): Boolean {
   return attributes != null && attributes.isSymbolicLink
-}
-
-fun Path.deleteRegularFile() {
-  try {
-    Files.delete(this)
-  }
-  catch (ignore: Exception) {
-  }
 }
