@@ -39,6 +39,7 @@ import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -82,6 +83,7 @@ class ServiceView extends JPanel implements Disposable {
   private final Map<Object, ServiceViewContributor> myContributors = new HashMap<>();
   private final Map<ServiceViewContributor, ServiceViewContributor.ViewDescriptorRenderer> myRenderers = new HashMap<>();
   private final Map<Object, ServiceViewContributor.SubtreeDescriptor> mySubtrees = new HashMap<>();
+  private final Set<JComponent> myDetailsComponents = ContainerUtil.createWeakSet();
 
   private final MyTreeModel myTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
@@ -133,6 +135,9 @@ class ServiceView extends JPanel implements Disposable {
       }
       return null;
     });
+
+    UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() ->
+      JBIterable.from(myDetailsComponents).filter(component -> myDetailsPanel != component.getParent()).iterator());
 
     myProject.getMessageBus().connect(this).subscribe(ServiceViewContributor.TOPIC, myTreeModel::refresh);
   }
@@ -203,10 +208,11 @@ class ServiceView extends JPanel implements Disposable {
     if (newDescriptor != null) {
       newDescriptor.onNodeSelected();
     }
-    Component component = newDescriptor == null ? null : newDescriptor.getContentComponent();
-    Component newDetails = component == null ? myMessagePanel : component;
+    JComponent component = newDescriptor == null ? null : newDescriptor.getContentComponent();
+    JComponent newDetails = component == null ? myMessagePanel : component;
     if (newDetails.getParent() == myDetailsPanel) return;
 
+    myDetailsComponents.add(newDetails);
     myDetailsPanel.removeAll();
     myDetailsPanel.add(newDetails, BorderLayout.CENTER);
     myDetailsPanel.revalidate();
