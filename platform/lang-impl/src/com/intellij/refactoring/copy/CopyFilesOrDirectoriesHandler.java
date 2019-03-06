@@ -80,7 +80,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   private static PsiDirectory tryNotNullizeDirectory(@NotNull Project project, @Nullable PsiDirectory defaultTargetDirectory) {
     if (defaultTargetDirectory == null) {
       VirtualFile root = FileChooserUtil.getLastOpenedFile(project);
-      if (root == null) root = ProjectUtil.guessProjectDir(project);
+      if (root == null) root = project.isDefault() ? null : ProjectUtil.guessProjectDir(project);
       if (root == null) root = VfsUtil.getUserHomeDir();
       defaultTargetDirectory = root == null ? null :
                                root.isDirectory() ? PsiManager.getInstance(project).findDirectory(root) :
