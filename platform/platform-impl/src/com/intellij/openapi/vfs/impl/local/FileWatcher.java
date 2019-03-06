@@ -88,8 +88,13 @@ public class FileWatcher {
     myWatchers = PluggableFileWatcher.EP_NAME.getExtensions();
 
     myFileWatcherExecutor.submit(() -> {
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.initialize(myManagingFS, myNotificationSink);
+      try {
+        for (PluggableFileWatcher watcher : myWatchers) {
+          watcher.initialize(myManagingFS, myNotificationSink);
+        }
+      }
+      catch (RuntimeException | Error e) {
+        LOG.error(e);
       }
     });
   }
@@ -163,16 +168,21 @@ public class FileWatcher {
 
     clearQueue();
     myFileWatcherExecutor.submit(() -> {
-      CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
+      try {
+        CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
 
-      myPathMap = pathMap;
-      myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
+        myPathMap = pathMap;
+        myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
 
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
+        for (PluggableFileWatcher watcher : myWatchers) {
+          watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
+        }
+
+        myRootSettingOps.decrementAndGet();
       }
-
-      myRootSettingOps.decrementAndGet();
+      catch (RuntimeException | Error e) {
+        LOG.error(e);
+      }
     });
   }
 
