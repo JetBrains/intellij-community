@@ -1707,8 +1707,7 @@ public class PyUtil {
   }
 
   public static boolean isObjectClass(@NotNull PyClass cls) {
-    final String name = cls.getQualifiedName();
-    return PyNames.OBJECT.equals(name) || PyNames.TYPES_INSTANCE_TYPE.equals(name);
+    return PyNames.OBJECT.equals(cls.getQualifiedName());
   }
 
   public static boolean isInScratchFile(@NotNull PsiElement element) {

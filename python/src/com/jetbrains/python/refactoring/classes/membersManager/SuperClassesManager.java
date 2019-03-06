@@ -1,12 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes.membersManager;
 
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.NotNullPredicate;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.ui.PyClassCellRenderer;
@@ -20,8 +17,6 @@ import java.util.*;
  * @author Ilya.Kazakevich
  */
 class SuperClassesManager extends MembersManager<PyClass> {
-
-  private static final NoFakeSuperClasses NO_FAKE_SUPER_CLASSES = new NoFakeSuperClasses();
 
   SuperClassesManager() {
     super(PyClass.class);
@@ -49,7 +44,7 @@ class SuperClassesManager extends MembersManager<PyClass> {
   @NotNull
   @Override
   protected List<PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
-    return Lists.newArrayList(Collections2.filter(Arrays.asList(pyClass.getSuperClasses(null)), NO_FAKE_SUPER_CLASSES));
+    return Lists.newArrayList(Arrays.asList(pyClass.getSuperClasses(null)));
   }
 
   @Override
@@ -100,12 +95,5 @@ class SuperClassesManager extends MembersManager<PyClass> {
     final String name = RefactoringBundle.message("member.info.extends.0", PyClassCellRenderer.getClassText(input));
     //TODO: Check for "overrides"
     return new PyMemberInfo<>(input, false, name, false, this, false);
-  }
-
-  private static class NoFakeSuperClasses extends NotNullPredicate<PyClass> {
-    @Override
-    protected boolean applyNotNull(@NotNull final PyClass input) {
-      return !PyNames.TYPES_INSTANCE_TYPE.equals(input.getQualifiedName());
-    }
   }
 }
