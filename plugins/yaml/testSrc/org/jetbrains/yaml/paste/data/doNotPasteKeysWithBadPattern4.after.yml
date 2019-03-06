@@ -1,4 +1,4 @@
 top:
   next: value1
   key:
-    <caret>
+    'quoted.string'
