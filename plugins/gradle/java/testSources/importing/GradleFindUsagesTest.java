@@ -3,12 +3,14 @@ package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.usageView.UsageInfo;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.wrapper.PathAssembler;
 import org.jetbrains.annotations.NotNull;
@@ -242,6 +244,20 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   }
 
   private static void assertUsagesCount(int expectedUsagesCount, PsiElement resolved) throws Exception {
-    assertEquals(expectedUsagesCount, findUsages(resolved).size());
+    Collection<UsageInfo> usages = findUsages(resolved);
+    String message = "Found usges: " + runInEdtAndGet(() -> {
+      StringBuilder buf = new StringBuilder();
+      for (UsageInfo usage : usages) {
+        buf.append(usage).append(", from ").append(usage.getVirtualFile().getPath());
+        Segment navigationRange = usage.getNavigationRange();
+        if (navigationRange != null) {
+          buf.append(": ").append(usage.getNavigationRange().getStartOffset())
+            .append(",").append(usage.getNavigationRange().getEndOffset());
+        }
+      }
+
+      return buf.toString();
+    });
+    assertEquals(message, expectedUsagesCount, usages.size());
   }
 }
