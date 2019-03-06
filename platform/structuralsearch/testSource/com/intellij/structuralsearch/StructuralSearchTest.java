@@ -2490,6 +2490,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     options.fillSearchCriteria("void '_a:* ();");
     assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options));
+
+    options.fillSearchCriteria("if (true) '_st{0,0};");
+    assertEquals("MINIMUM ZERO not applicable for st", checkApplicableConstraints(options));
+
+    options.fillSearchCriteria("while (true) '_st+;");
+    assertEquals("MAXIMUM UNLIMITED not applicable for st", checkApplicableConstraints(options));
   }
 
   public void testFindInnerClass() {
@@ -3158,5 +3164,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                                                            "  @FindBy(name='_value)\n" +
                                                                            "  '_FieldType2 'field2 = '_init2?;\n" +
                                                                            "}"));
+  }
+
+  public void testForStatement() {
+    String in = "class X {{" +
+                "  for (int i = 0; i < 10; i++) {}" +
+                "  " +
+                "  for (;;) {}" +
+                "  for (int i = 0; ;) {}" +
+                "  for (int i = 0; true; ) {}" +
+                "}}";
+    assertEquals("find all for loops", 4, findMatchesCount(in, "for(;;) '_st;"));
+    assertEquals("find loops without initializers", 1, findMatchesCount(in, "for('_init{0,0};;) '_st;"));
+    assertEquals("find loops without condition", 2, findMatchesCount(in, "for(;'_cond{0,0};) '_st;"));
+    assertEquals("find loops without update", 3, findMatchesCount(in, "for(;;'_update{0,0}) '_st;"));
+    assertEquals("find all for loops 2", 4, findMatchesCount(in, "for('_init?;;) '_st;"));
+    assertEquals("find all for loops 3", 4, findMatchesCount(in, "for(;;'_update?) '_st;"));
+    assertEquals("find all for loops 4", 4, findMatchesCount(in, "for(;'_cond?;) '_st;"));
   }
 }
