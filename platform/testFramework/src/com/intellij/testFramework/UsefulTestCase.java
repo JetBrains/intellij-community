@@ -734,6 +734,7 @@ public abstract class UsefulTestCase extends TestCase {
     for (T v : values) {
       if (Objects.equals(value, v)) {
         found = true;
+        break;
       }
     }
     Assert.assertTrue(value + " should be equal to one of " + Arrays.toString(values), found);
