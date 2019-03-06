@@ -65,9 +65,13 @@ public class Flake8EndOfLineSuppressionQuickFix implements SuppressQuickFix {
         existing = (PsiComment)next;
         break;
       }
-      final boolean multiline = next.textContains('\n');
-      if (multiline) {
-        if (next instanceof PsiWhiteSpace) {
+      final boolean isWhitespace = next instanceof PsiWhiteSpace;
+      if (isWhitespace && next.textContains('\\')) {
+        return;
+      }
+      final boolean isMultiline = next.textContains('\n');
+      if (isMultiline) {
+        if (isWhitespace) {
           break;
         }
         else {

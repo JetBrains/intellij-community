@@ -43,6 +43,15 @@ public class Flake8EndOfLineSuppressionQuickFixTest extends PyTestCase {
                            "    \"\"\"");
   }
 
+  public void testCommentCannotBeInsertedAtSameLineBecauseContinuationBackslashes() {
+    doTestSuppressQuickFix("def foo():\n" +
+                           "    <caret>x = 'foo' \\\n" +
+                           "        'bar'",
+                           "def foo():\n" +
+                           "    <caret>x = 'foo' \\\n" +
+                           "        'bar'");
+  }
+
   public void testExistingComment() {
     doTestSuppressQuickFix("def foo():\n" +
                            "    <caret>x = 1  # existing\n",
