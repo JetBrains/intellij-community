@@ -49,9 +49,33 @@ configurations.myConfiguration {
 package org.buildsrc
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Classpath
+import org.gradle.api.tasks.Console
+import org.gradle.api.tasks.Destroys
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.LocalState
+import org.gradle.api.tasks.OutputDirectories
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.file.FileCollection
 
 class <warning>GrTask</warning> extends DefaultTask {
+    @Input String inputString
+    @InputFile File inputFile
+    @InputFiles FileCollection inputFiles
+    @InputDirectory File inputDirectory
+    @OutputDirectory File outputDirectory
+    @OutputDirectories FileCollection outputDirectories
+    @OutputFile File outputFile
+    @LocalState File localStateFile
+    @Destroys File destroyedFile
+    @Classpath FileCollection classpath
+    @Console String consoleString
+
     @TaskAction
     private void action() {
     }
