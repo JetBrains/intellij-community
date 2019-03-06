@@ -77,7 +77,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
   private static final CallMapper<OptionalSimplificationFix> ourMapper;
 
   static {
-    List<CallSimplificationCase<?>> cases = Arrays.asList(
+    List<ChainSimplificationCase<?>> cases = Arrays.asList(
       new IfPresentFoldedCase(),
       new MapUnwrappingCase(),
       new OrElseNonNullCase(OrElseType.OrElse),
@@ -92,7 +92,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       new MapOrElseCase(OrElseType.OrElse)
     );
     ourMapper = new CallMapper<>();
-    for (CallSimplificationCase<?> theCase : cases) {
+    for (ChainSimplificationCase<?> theCase : cases) {
       CallHandler<OptionalSimplificationFix> handler = CallHandler.of(theCase.getMatcher(), call -> getFix(call, theCase));
       ourMapper.register(handler);
     }
@@ -115,7 +115,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
   }
 
   @Nullable
-  private static <T> OptionalSimplificationFix getFix(PsiMethodCallExpression call, CallSimplificationCase<T> inspection) {
+  private static <T> OptionalSimplificationFix getFix(PsiMethodCallExpression call, ChainSimplificationCase<T> inspection) {
     T context = inspection.extractContext(call.getProject(), call);
     if (context == null) return null;
     String name = inspection.getName(context);
@@ -123,7 +123,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     return new OptionalSimplificationFix(inspection, name, description);
   }
 
-  private static <T> void handleSimplification(CallSimplificationCase<T> inspection, Project project, PsiMethodCallExpression call) {
+  private static <T> void handleSimplification(ChainSimplificationCase<T> inspection, Project project, PsiMethodCallExpression call) {
     if (!inspection.getMatcher().matches(call)) return;
     T context = inspection.extractContext(project, call);
     if (context != null) {
@@ -240,7 +240,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
    *
    * @param <C> context of the simplification
    */
-  interface CallSimplificationCase<C> {
+  private interface ChainSimplificationCase<C> {
     @NotNull
     String getName(@NotNull C context);
 
@@ -357,11 +357,11 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
   }
 
   static class OptionalSimplificationFix implements LocalQuickFix {
-    private final CallSimplificationCase<?> myInspection;
+    private final ChainSimplificationCase<?> myInspection;
     private final String myName;
     private final String myDescription;
 
-    OptionalSimplificationFix(CallSimplificationCase<?> inspection, String name, String description) {
+    OptionalSimplificationFix(ChainSimplificationCase<?> inspection, String name, String description) {
       myInspection = inspection;
       this.myName = name;
       myDescription = description;
@@ -387,7 +387,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
   }
 
   private abstract static class BasicSimplificationInspection
-    implements CallSimplificationCase<BasicSimplificationInspection.StringReplacement> {
+    implements ChainSimplificationCase<BasicSimplificationInspection.StringReplacement> {
     @NotNull
     @Override
     public String getName(@NotNull StringReplacement context) {
@@ -422,7 +422,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
   }
 
-  private static class RewrappingCase implements CallSimplificationCase<RewrappingCase.Context> {
+  private static class RewrappingCase implements ChainSimplificationCase<RewrappingCase.Context> {
     private final CallMatcher myWrapper;
     private final Type myType;
 
@@ -498,7 +498,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
   }
 
-  private static class OrElseReturnCase implements CallSimplificationCase<OrElseReturnCase.Context> {
+  private static class OrElseReturnCase implements ChainSimplificationCase<OrElseReturnCase.Context> {
     private final OrElseType myType;
 
     private OrElseReturnCase(OrElseType type) {myType = type;}
@@ -579,7 +579,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
   }
 
-  private static class FlipPresentOrEmptyCase implements CallSimplificationCase<FlipPresentOrEmptyCase.Context> {
+  private static class FlipPresentOrEmptyCase implements ChainSimplificationCase<FlipPresentOrEmptyCase.Context> {
     // Type of the inspection (may be either present or empty)
     private final boolean myIsPresent;
 
@@ -638,7 +638,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
   }
 
-  private static class OrElseNonNullCase implements CallSimplificationCase<OrElseNonNullCase.Context> {
+  private static class OrElseNonNullCase implements ChainSimplificationCase<OrElseNonNullCase.Context> {
     private final OrElseType myType;
 
     private OrElseNonNullCase(OrElseType type) {myType = type;}
@@ -744,7 +744,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
    * into
    * <pre>opt.flatMap(Fra::getOptional).ifPresent(System.out::println);</pre>
    */
-  private static class MapUnwrappingCase implements CallSimplificationCase<MapUnwrappingCase.Context> {
+  private static class MapUnwrappingCase implements ChainSimplificationCase<MapUnwrappingCase.Context> {
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
@@ -817,7 +817,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
   }
 
-  private static class IfPresentFoldedCase implements CallSimplificationCase<IfPresentFoldedCase.Context> {
+  private static class IfPresentFoldedCase implements ChainSimplificationCase<IfPresentFoldedCase.Context> {
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
