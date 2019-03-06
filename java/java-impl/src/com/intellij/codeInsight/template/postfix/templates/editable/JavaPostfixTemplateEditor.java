@@ -52,7 +52,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
 
   @NotNull
   private static Editor createEditor() {
-    return createEditor(null, createDocument(null));
+    return createEditor(null, createDocument(ProjectManager.getInstance().getDefaultProject()));
   }
 
   @NotNull
