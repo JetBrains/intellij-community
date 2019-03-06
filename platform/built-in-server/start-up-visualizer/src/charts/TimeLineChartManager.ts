@@ -5,9 +5,14 @@ import {disableGridButKeepBorderLines, TimeLineItem, transformToTimeLineItems} f
 import {XYChartManager} from "@/charts/ChartManager"
 import {DataManager} from "@/state/DataManager"
 import {Item} from "@/state/data"
+import * as semver from "semver"
+
+const statLabelSupportMinVersion = semver.coerce("3")!!
 
 export class TimelineChartManager extends XYChartManager {
   private maxRowIndex = 0
+
+  private readonly statLabel: am4core.Label
 
   constructor(container: HTMLElement) {
     super(container, module.hot)
@@ -16,6 +21,11 @@ export class TimelineChartManager extends XYChartManager {
     const levelAxis = this.configureLevelAxis()
     this.configureSeries()
     this.addHeightAdjuster(levelAxis)
+
+    this.statLabel = this.chart.createChild(am4core.Label)
+    this.statLabel.isMeasured = false
+    this.statLabel.x = 5
+    this.statLabel.y = 40
   }
 
   private configureLevelAxis() {
@@ -92,10 +102,38 @@ export class TimelineChartManager extends XYChartManager {
 
   render(data: DataManager) {
     const originalItems = data.data.items || []
+
+    this.setStatLabel(data)
     this.chart.data = this.transformIjData(originalItems)
 
     const durationAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
     durationAxis.max = originalItems.length === 0 ? 0 : originalItems[originalItems.length - 1].end
+  }
+
+  private setStatLabel(data: DataManager) {
+    const version = semver.coerce(data.data.version)
+    if (version == null || !semver.gte(version, statLabelSupportMinVersion)) {
+      this.statLabel.html = ""
+      return
+    }
+
+    const stats = data.data.stats
+    const itemStats = data.itemStats
+    const statLabelData = [
+      "Plugin count", stats.plugin, "",
+      "Component count", stats.component.app + stats.component.project + stats.component.module, `(${itemStats.reportedComponentCount})`,
+      "Service count", stats.service.app + stats.service.project + stats.service.module, `(${itemStats.reportedServiceCount})`,
+    ]
+
+    let result = "<table>"
+    for (let i = 0; i < statLabelData.length; i += 3) {
+      result += `<tr><td>${statLabelData[i]}:</td><td style="text-align: right">${statLabelData[i + 1]}</td>`
+      result += `<td>${statLabelData[i + 2]}</td>`
+      result += `</tr>`
+    }
+    result += "</table>"
+
+    this.statLabel.html = result
   }
 
   private transformIjData(originalItems: Array<Item>): Array<any> {

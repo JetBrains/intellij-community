@@ -4,11 +4,24 @@ import {markerNames} from "./StateStorageManager"
 
 const markerNameToRangeTitle = new Map<string, string>([["app initialized callback", "app initialized"], ["module loading", "project initialized"]])
 
+export interface ItemStats {
+  readonly reportedComponentCount: number
+  readonly reportedServiceCount: number
+}
+
 export class DataManager {
   constructor(readonly data: InputData) {
   }
 
   private _markerItems: Array<Item | null> | null = null
+
+  get itemStats(): ItemStats {
+    const data = this.data
+    return {
+      reportedServiceCount: getListLength(data.appComponents) + getListLength(data.projectComponents) + getListLength(data.moduleComponents),
+      reportedComponentCount: getListLength(data.appServices) + getListLength(data.projectServices) + getListLength(data.moduleServices),
+    }
+  }
 
   get markerItems(): Array<Item | null> {
     if (this._markerItems != null) {
@@ -97,4 +110,8 @@ export class DataManager {
 export interface GuideLineDescriptor {
   readonly item: Item
   readonly label: string
+}
+
+function getListLength(list: Array<any> | null | undefined): number {
+  return list == null ? 0 : list.length
 }

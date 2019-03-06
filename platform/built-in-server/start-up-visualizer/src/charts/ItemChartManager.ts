@@ -39,6 +39,8 @@ export class ItemChartManager extends XYChartManager {
     const nameAxisLabel = nameAxis.renderer.labels.template
     nameAxisLabel.selectable = true
     nameAxisLabel.fontSize = 12
+    // quite useful to have tooltips also on axis labels (user report: they're easy to target with mouse)
+    nameAxisLabel.tooltipText = "{name}: {duration} ms\nrange: {start}-{end}"
 
     // https://github.com/amcharts/amcharts4/issues/997
     nameAxisLabel.rotation = -45

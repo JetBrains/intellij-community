@@ -2,6 +2,8 @@
 package com.intellij.ide
 
 import com.google.gson.stream.JsonWriter
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAware
@@ -112,7 +114,8 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.setIndent("  ")
     writer.beginObject()
 
-    writer.name("version").value("2")
+    writer.name("version").value("3")
+    writeServiceStats(writer)
 
     val startTime = if (activationNumber == 0) StartUpMeasurer.getStartTime() else items.first().start
 
@@ -162,6 +165,45 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
       writeActivities(list, startTime, writer, activityNameToJsonFieldName(name))
     }
   }
+}
+
+private fun writeServiceStats(writer: JsonWriter) {
+  class StatItem(val name: String) {
+    var app = 0
+    var project = 0
+    var module = 0
+  }
+
+  // components can be inferred from data, but to verify that items reported correctly (and because for items threshold is applied (not all are reported))
+  val component = StatItem("component")
+  val service = StatItem("service")
+
+  val plugins = PluginManagerCore.getLoadedPlugins(null)
+  for (plugin in plugins) {
+    service.app += (plugin as IdeaPluginDescriptorImpl).appServices.size
+    service.project += plugin.projectServices.size
+    service.module += plugin.moduleServices.size
+
+    component.app += plugin.appComponents.size
+    component.project += plugin.projectComponents.size
+    component.module += plugin.moduleComponents.size
+  }
+
+  writer.name("stats")
+  writer.beginObject()
+
+  writer.name("plugin").value(plugins.size)
+
+  for (statItem in listOf(component, service)) {
+    writer.name(statItem.name)
+    writer.beginObject()
+    writer.name("app").value(statItem.app)
+    writer.name("project").value(statItem.project)
+    writer.name("module").value(statItem.module)
+    writer.endObject()
+  }
+
+  writer.endObject()
 }
 
 private fun activityNameToJsonFieldName(name: String): String {
