@@ -50,7 +50,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     return RunConfigurationProducer.getInstance(P::class.java)
   }
 
-  protected fun assertConfigurationsFromContext(
+  protected fun assertProducersFromContext(
     element: PsiElement,
     vararg producerTypes: String
   ) = runReadActionAndWait {

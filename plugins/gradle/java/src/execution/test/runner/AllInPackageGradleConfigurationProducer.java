@@ -143,7 +143,7 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
   }
 
   @Nullable
-  /*internal*/ public static PsiPackage extractPackage(@NotNull PsiElement location) {
+  static PsiPackage extractPackage(@NotNull PsiElement location) {
     PsiPackage psiPackage = JavaRuntimeConfigurationProducerBase.checkPackage(location);
     if (psiPackage == null) return null;
     if (psiPackage.getQualifiedName().isEmpty()) return null;
