@@ -78,6 +78,18 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
 
   @NotNull
   private XmlAttribute createAttribute(@NotNull String name, @NotNull String value, @NotNull FileType fileType) {
+    String quotedValue = quoteValue(value);
+    final XmlDocument document = createXmlDocument("<tag " + name + "=" + quotedValue + "/>",
+                                                   "dummy." + fileType.getDefaultExtension(), fileType);
+    XmlTag tag = document.getRootTag();
+    assert tag != null;
+    XmlAttribute[] attributes = tag.getAttributes();
+    LOG.assertTrue(attributes.length == 1, document.getText());
+    return attributes[0];
+  }
+
+  @NotNull
+  public static String quoteValue(@NotNull String value) {
     final char quoteChar;
     if (!value.contains("\"")) {
       quoteChar = '"';
@@ -89,13 +101,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
       quoteChar = '"';
       value = StringUtil.replace(value, "\"", "&quot;");
     }
-    final XmlDocument document = createXmlDocument("<tag " + name + "=" + quoteChar + value + quoteChar + "/>",
-                                                   "dummy." + fileType.getDefaultExtension(), fileType);
-    XmlTag tag = document.getRootTag();
-    assert tag != null;
-    XmlAttribute[] attributes = tag.getAttributes();
-    LOG.assertTrue(attributes.length == 1, document.getText());
-    return attributes[0];
+    return quoteChar + value + quoteChar;
   }
 
   @Override
