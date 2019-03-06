@@ -114,7 +114,7 @@ public class JavaTestFinder implements TestFinder {
     if (klassName.isEmpty()) {
       klassName = klass.getName();
     }
-    MinusculeMatcher matcher = NameUtil.buildMatcher(klassName, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + klassName, NameUtil.MatchingCaseSensitivity.NONE);
     for (String eachName : ContainerUtil.newHashSet(cache.getAllClassNames())) {
       if (matcher.matches(eachName)) {
         for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {
