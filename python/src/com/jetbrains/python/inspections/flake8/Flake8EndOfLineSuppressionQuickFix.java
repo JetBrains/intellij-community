@@ -7,6 +7,7 @@ import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
@@ -22,7 +23,7 @@ public class Flake8EndOfLineSuppressionQuickFix implements SuppressQuickFix {
   @Override
   public boolean isAvailable(@NotNull Project project, @NotNull PsiElement psiElement) {
     // always available because it's only added when we know we're suppressing something
-    return true;
+    return findSameLineCommentOrPrecedingAnchorElement(psiElement) != null;
   }
 
   @Override
@@ -76,6 +77,9 @@ public class Flake8EndOfLineSuppressionQuickFix implements SuppressQuickFix {
    */
   @Nullable
   static PsiElement findSameLineCommentOrPrecedingAnchorElement(@NotNull PsiElement elem) {
+    if (elem instanceof PsiFileSystemItem || elem instanceof PsiWhiteSpace || elem instanceof PsiComment) {
+      return null;
+    }
     PsiElement anchor = elem;
     while (true) {
       final PsiElement next = PsiTreeUtil.nextLeaf(anchor);

@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.inspections.PyInconsistentIndentationInspection;
 import com.jetbrains.python.inspections.PyUnusedLocalInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,23 +36,18 @@ public class Flake8EndOfLineSuppressionQuickFixTest extends PyTestCase {
   }
 
   public void testCommentCannotBeInsertedAtSameLineBecauseOfMultilineStringLiteral() {
-    doTest("def foo():\n" +
-           "    <caret>x = \"\"\"\n" +
-           "    bar\n" +
-           "    \"\"\"",
-           "def foo():\n" +
-           "    <caret>x = \"\"\"\n" +
-           "    bar\n" +
-           "    \"\"\"");
+    doNegativeTest("def foo():\n" +
+                   "    <caret>x = \"\"\"\n" +
+                   "    bar\n" +
+                   "    \"\"\"",
+                   PyUnusedLocalInspection.class);
   }
 
   public void testCommentCannotBeInsertedAtSameLineBecauseContinuationBackslashes() {
-    doTest("def foo():\n" +
-           "    <caret>x = 'foo' \\\n" +
-           "        'bar'",
-           "def foo():\n" +
-           "    <caret>x = 'foo' \\\n" +
-           "        'bar'");
+    doNegativeTest("def foo():\n" +
+                   "    <caret>x = 'foo' \\\n" +
+                   "        'bar'",
+                   PyUnusedLocalInspection.class); 
   }
 
   public void testExistingComment() {
@@ -63,6 +59,11 @@ public class Flake8EndOfLineSuppressionQuickFixTest extends PyTestCase {
 
   public void testNotAvailableForSpellchecker() {
     doNegativeTest("ms<caret>typed = 42", SpellCheckingInspection.class);
+  }
+
+  public void testNoAvailableOnWhitespace() {
+    doNegativeTest("def foo():\n" +
+                   "\t<caret>  x = 1", PyInconsistentIndentationInspection.class);
   }
 
   private void doTest(@NotNull String before, @NotNull String after) {
