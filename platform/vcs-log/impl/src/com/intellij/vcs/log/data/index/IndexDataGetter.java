@@ -118,6 +118,7 @@ public class IndexDataGetter {
     });
   }
 
+  @Deprecated
   @NotNull
   public Set<FilePath> getChangedPaths(int commit) {
     List<Hash> parents = getParents(commit);
