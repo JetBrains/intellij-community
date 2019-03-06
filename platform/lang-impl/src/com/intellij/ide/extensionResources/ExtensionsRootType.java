@@ -6,7 +6,9 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -21,6 +23,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DigestUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +36,7 @@ import java.security.MessageDigest;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p> Extensions root type provide a common interface for plugins to access resources that are modifiable by the user. </p>
@@ -198,18 +202,19 @@ public class ExtensionsRootType extends RootType {
     ClassLoader pluginClassLoader = plugin.getPluginClassLoader();
     final Enumeration<URL> resources = pluginClassLoader.getResources(resourcesPath);
     if (resources == null) return ContainerUtil.emptyList();
+    if (plugin.getUseIdeaClassLoader()) return ContainerUtil.toList(resources);
+
     final Set<URL> urls = ContainerUtil.newLinkedHashSet(ContainerUtil.toList(resources));
-
-    if (plugin.getUseIdeaClassLoader()) return ContainerUtil.newArrayList(urls);
-
     // exclude parent classloader resources from list
-    for (PluginId dependentPluginId :plugin.getDependentPluginIds()) {
-      final IdeaPluginDescriptor dependentPluginDescriptor = PluginManager.getPlugin(dependentPluginId);
-      if (dependentPluginDescriptor == null) continue;
-      ClassLoader dependentPluginClassLoader = dependentPluginDescriptor.getPluginClassLoader();
-      if (dependentPluginClassLoader != pluginClassLoader) {
-        urls.removeAll(ContainerUtil.toList(dependentPluginClassLoader.getResources(resourcesPath)));
-      }
+    final List<ClassLoader> dependentPluginClassLoaders = StreamEx.of(plugin.getDependentPluginIds())
+      .map(PluginManager::getPlugin)
+      .nonNull()
+      .map(PluginDescriptor::getPluginClassLoader)
+      .without(pluginClassLoader)
+      .collect(Collectors.toList());
+
+    for (ClassLoader classLoader : dependentPluginClassLoaders) {
+      urls.removeAll(ContainerUtil.toList(classLoader.getResources(resourcesPath)));
     }
     return ContainerUtil.newArrayList(urls);
   }
@@ -282,18 +287,19 @@ public class ExtensionsRootType extends RootType {
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     if (plugin == null || !ResourceVersions.getInstance().shouldUpdateResourcesOf(plugin)) return;
 
-    Task.Backgroundable extractResourcesInBackground = new Task.Backgroundable(null, "Extracting bundled extensions for plugin: " + pluginId.getIdString()) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          extractBundledResources(pluginId, "");
+    Task.Backgroundable extractResourcesInBackground =
+      new Task.Backgroundable(null, "Extracting bundled extensions for plugin: " + pluginId.getIdString()) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            extractBundledResources(pluginId, "");
+            ApplicationManager.getApplication().invokeLater(() -> ResourceVersions.getInstance().resourcesUpdated(plugin));
+          }
+          catch (IOException ex) {
+            LOG.warn("Failed to extract bundled extensions for plugin: " + plugin.getName(), ex);
+          }
         }
-        catch (IOException ex) {
-          LOG.warn("Failed to extract bundled extensions for plugin: " + plugin.getName(), ex);
-        }
-      }
-    };
+      };
     ProgressManager.getInstance().run(extractResourcesInBackground);
-    ResourceVersions.getInstance().resourcesUpdated(plugin);
   }
 }
