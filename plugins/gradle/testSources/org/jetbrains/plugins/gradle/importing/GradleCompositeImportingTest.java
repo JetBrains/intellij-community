@@ -391,7 +391,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     createProjectSubFile("project-a/build.gradle", "");
 
     importProject(new GradleBuildScriptBuilderEx()
-                    .withIdeaPlugin()
                     .addPostfix("apply plugin: 'java-library'",
                                 "group = 'myGroup'",
                                 "version = '1.0-SNAPSHOT'",
@@ -425,9 +424,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                            .addPostfix(
                              "group = 'myGroup'",
                              "version = '1.0-SNAPSHOT'",
-                             "repositories {",
-                             "    mavenCentral()",
-                             "}",
                              "sourceSets {",
                              "    util {",
                              "        java.srcDir 'src/util/java'",
@@ -457,9 +453,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                     .withJavaPlugin()
                     .addPostfix("group = 'myGroup'",
                                 "version = '1.0-SNAPSHOT'",
-                                "repositories {",
-                                "    mavenCentral()",
-                                "}",
                                 "dependencies {",
                                 "    compile group: 'myGroup', name: 'project-a', version: '1.0-SNAPSHOT'",
                                 "}"
