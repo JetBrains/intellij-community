@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -304,6 +305,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
         Messages.showErrorDialog(myProject, RefactoringBundle.message("cannot.create.directory"), RefactoringBundle.message("error.title"));
         return;
       }
+      FileChooserUtil.setLastOpenedFile(myProject, myTargetDirectory.getVirtualFile());
 
       try {
         for (PsiElement element : myElements) {
