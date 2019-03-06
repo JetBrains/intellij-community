@@ -62,7 +62,6 @@ import java.util.*;
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
 import static com.intellij.execution.services.ServiceViewManager.SERVICE_VIEW_MASTER_COMPONENT;
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
-import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
 
 class ServiceView extends JPanel implements Disposable {
   private static final ExtensionPointName<ServiceViewContributor> EP_NAME =
@@ -189,7 +188,7 @@ class ServiceView extends JPanel implements Disposable {
 
   private void setTreeVisible(boolean visible) {
     myTreePanel.setVisible(visible);
-    myToolbar.setBorder(visible ? null : BorderFactory.createMatteBorder(0, 0, 0, 1, CONTRAST_BORDER_COLOR));
+    myToolbar.setBorder(visible ? null : IdeBorderFactory.createBorder(SideBorder.RIGHT));
   }
 
   private void onSelectionChanged() {
@@ -228,7 +227,7 @@ class ServiceView extends JPanel implements Disposable {
 
   private JComponent createTreeToolBar() {
     JPanel toolBarPanel = new JPanel(new BorderLayout());
-    toolBarPanel.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 0, CONTRAST_BORDER_COLOR));
+    toolBarPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.BOTTOM));
 
     DefaultActionGroup treeGroup = new DefaultActionGroup();
 

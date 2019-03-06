@@ -61,7 +61,6 @@ import java.util.*;
 import static com.intellij.execution.dashboard.RunDashboardManagerImpl.getRunnerLayoutUi;
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
 import static com.intellij.execution.services.ServiceViewManager.SERVICE_VIEW_MASTER_COMPONENT;
-import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
 
 /**
  * @author konstantin.aleev
@@ -255,7 +254,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
   private void setTreeVisible(boolean visible) {
     myTreePanel.setVisible(visible);
-    myToolbar.setBorder(visible ? null : BorderFactory.createMatteBorder(0, 0, 0, 1, CONTRAST_BORDER_COLOR));
+    myToolbar.setBorder(visible ? null : IdeBorderFactory.createBorder(SideBorder.RIGHT));
     if (!visible && myContentManager.getContentCount() > 0) {
       showContentPanel();
     }
@@ -410,7 +409,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
   private JComponent createTreeToolBar() {
     JPanel toolBarPanel = new JPanel(new BorderLayout());
-    toolBarPanel.setBorder( BorderFactory.createMatteBorder(0, 1, 1, 0, CONTRAST_BORDER_COLOR));
+    toolBarPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.BOTTOM));
 
     DefaultActionGroup treeGroup = new DefaultActionGroup();
 
