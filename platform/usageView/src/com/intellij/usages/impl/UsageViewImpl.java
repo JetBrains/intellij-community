@@ -592,6 +592,7 @@ public class UsageViewImpl implements UsageViewEx {
       myPreviewSplitter.setSecondComponent(panel);
     }
     else {
+      myPreviewSplitter.setSecondComponent(null);
       myPreviewSplitter.setProportion(1);
     }
 
