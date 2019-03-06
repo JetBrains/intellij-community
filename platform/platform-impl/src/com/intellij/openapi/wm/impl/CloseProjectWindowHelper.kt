@@ -13,8 +13,11 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.util.SystemProperties
+import java.util.concurrent.atomic.AtomicBoolean
 
 open class CloseProjectWindowHelper {
+  private var isClosingInProgress = AtomicBoolean()
+
   protected open val isMacSystemMenu: Boolean
     get() = SystemProperties.getBooleanProperty("idea.test.isMacSystemMenu", SystemInfo.isMacSystemMenu)
 
@@ -40,18 +43,27 @@ open class CloseProjectWindowHelper {
   protected open fun getNumberOfOpenedProjects() = ProjectManager.getInstance().openProjects.size
 
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {
-    runInSaveOnFrameDeactivationDisabledMode {
-      if (project != null && project.isOpen) {
-        ProjectManagerEx.getInstanceEx().closeAndDispose(project)
-      }
-
-      val app = ApplicationManager.getApplication()
-      app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed()
-      // app must be not saved as part of project closing because app settings maybe modified as result - e.g. RecentProjectsManager state
-      SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(app)
+    if (!isClosingInProgress.compareAndSet(false, true)) {
+      return
     }
 
-    WelcomeFrame.showIfNoProjectOpened()
+    try {
+      runInSaveOnFrameDeactivationDisabledMode {
+        if (project != null && project.isOpen) {
+          ProjectManagerEx.getInstanceEx().closeAndDispose(project)
+        }
+
+        val app = ApplicationManager.getApplication()
+        app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed()
+        // app must be not saved as part of project closing because app settings maybe modified as result - e.g. RecentProjectsManager state
+        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(app)
+      }
+
+      WelcomeFrame.showIfNoProjectOpened()
+    }
+    finally {
+      isClosingInProgress.set(false)
+    }
   }
 
   protected open fun quitApp() {
