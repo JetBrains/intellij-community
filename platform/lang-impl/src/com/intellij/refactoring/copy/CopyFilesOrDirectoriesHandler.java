@@ -10,8 +10,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -24,7 +25,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,10 +79,12 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   @Nullable
   private static PsiDirectory tryNotNullizeDirectory(@NotNull Project project, @Nullable PsiDirectory defaultTargetDirectory) {
     if (defaultTargetDirectory == null) {
-      VirtualFile root = ArrayUtil.getFirstElement(ProjectRootManager.getInstance(project).getContentRoots());
-      if (root == null) root = project.getBaseDir();
+      VirtualFile root = FileChooserUtil.getLastOpenedFile(project);
+      if (root == null) root = ProjectUtil.guessProjectDir(project);
       if (root == null) root = VfsUtil.getUserHomeDir();
-      defaultTargetDirectory = root != null ? PsiManager.getInstance(project).findDirectory(root) : null;
+      defaultTargetDirectory = root == null ? null :
+                               root.isDirectory() ? PsiManager.getInstance(project).findDirectory(root) :
+                               PsiManager.getInstance(project).findDirectory(root.getParent());
 
       if (defaultTargetDirectory == null) {
         LOG.warn("No directory found for project: " + project.getName() +", root: " + root);
