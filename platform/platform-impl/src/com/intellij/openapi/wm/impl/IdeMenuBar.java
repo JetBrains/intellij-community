@@ -125,10 +125,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       return JBUI.Borders.emptyBottom(1);
     }
 
-    if (IdeFrameDecorator.isCustomDecoration() && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
-      return null;
-    }
-
     return UISettings.getInstance().getShowMainToolbar() || UISettings.getInstance().getShowNavigationBar() ? super.getBorder() : null;
   }
 
@@ -594,6 +590,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
           public void windowClosing(WindowEvent e) {
             frameMenuBar.myGlobalMenuLinux.unbindWindow(frame);
           }
+
           @Override
           public void windowOpened(WindowEvent e) {
             frameMenuBar.myGlobalMenuLinux.bindNewWindow(frame);

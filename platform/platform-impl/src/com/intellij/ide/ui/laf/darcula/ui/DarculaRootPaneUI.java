@@ -1,19 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
+import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.ui.Gray;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.JBColor;
 
 import javax.swing.*;
-import javax.swing.event.MouseInputListener;
+import javax.swing.border.LineBorder;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicRootPaneUI;
 import java.awt.*;
-import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -25,31 +23,20 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
   private JComponent myTitlePane;
 
-  private MouseInputListener myMouseInputListener;
-
-  private MouseInputListener myTitleMouseInputListener;
-
   private LayoutManager myLayoutManager;
 
   private LayoutManager myOldLayout;
 
-  protected JRootPane myRootPane;
+  private JRootPane myRootPane;
 
-  protected WindowListener myWindowListener;
+  private PropertyChangeListener myPropertyChangeListener;
 
-  protected Window myCurrentWindow;
+  private Window myCurrentWindow;
 
-  protected HierarchyListener myHierarchyListener;
-
-  protected ComponentListener myWindowComponentListener;
-
-  protected GraphicsConfiguration currentRootPaneGC;
-
-  protected PropertyChangeListener myPropertyChangeListener;
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent comp) {
-    return isCustomDecoration() ? new DarculaRootPaneUI() : createDefaultWindowsRootPaneUI();
+    return IdeFrameDecorator.isCustomDecoration() ? new DarculaRootPaneUI() : createDefaultWindowsRootPaneUI();
   }
 
   private static ComponentUI createDefaultWindowsRootPaneUI() {
@@ -65,46 +52,49 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     myRootPane = (JRootPane)c;
     super.installUI(c);
 
-    if (isCustomDecoration()) {
-      int style = myRootPane.getWindowDecorationStyle();
-      if (style != JRootPane.NONE) {
-        installClientDecorations(myRootPane);
-      }
+    installLayout(myRootPane);
+    installBorder(myRootPane);
+
+    updateState();
+  }
+
+  private void updateState() {
+    if (myRootPane == null) return;
+
+    JMenuBar bar = myRootPane.getJMenuBar();
+    if (bar != null) {
+      bar.setVisible(isInFullScreen());
+    }
+
+    if (isInFullScreen()) {
+      uninstallClientDecorations(myRootPane);
+      return;
+    }
+
+    int style = myRootPane.getWindowDecorationStyle();
+    if (style != JRootPane.NONE) {
+      installClientDecorations(myRootPane);
     }
   }
 
-  public void installMenuBar(JMenuBar menu) {
-    if (menu != null && isCustomDecoration()) {
-      getTitlePane().add(menu);
-    }
+  private boolean isInFullScreen() {
+    Window window = SwingUtilities.getWindowAncestor(myRootPane);
+    return window != null && (window instanceof IdeFrameEx && ((IdeFrameEx)window).isInFullScreen()) && myRootPane.getJMenuBar() != null;
   }
 
   @Override
   public void uninstallUI(JComponent c) {
     super.uninstallUI(c);
 
-    if (isCustomDecoration()) {
-      uninstallClientDecorations(myRootPane);
-      myLayoutManager = null;
-      myMouseInputListener = null;
-      myRootPane = null;
-    }
-  }
+    uninstallClientDecorations(myRootPane);
+    uninstallLayout(myRootPane);
 
-  private static boolean isCustomDecoration() {
-    return IdeFrameDecorator.isCustomDecoration();
+    myLayoutManager = null;
+    myRootPane = null;
   }
 
   public void installBorder(JRootPane root) {
-    int style = root.getWindowDecorationStyle();
-
-    if (style == JRootPane.NONE) {
-      LookAndFeel.uninstallBorder(root);
-    }
-    else {
-      root.setBorder(JBUI.Borders.customLine(Gray._73, 1, 1, 1, 1));
-      //LookAndFeel.installBorder(root, "RootPane.border");
-    }
+    root.setBorder(new LineBorder(JBColor.namedColor("MenuBar.borderColor", new JBColor(Gray.xCD, Gray.x51))));
   }
 
   private static void uninstallBorder(JRootPane root) {
@@ -118,6 +108,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   private void uninstallWindowListeners(JRootPane root) {
 
   }
+
   private void installLayout(JRootPane root) {
     if (myLayoutManager == null) {
       myLayoutManager = createLayoutManager();
@@ -129,123 +120,14 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   @Override
   protected void installListeners(final JRootPane root) {
     super.installListeners(root);
+    myPropertyChangeListener = evt -> updateState();
 
-    myHierarchyListener = new HierarchyListener() {
-      @Override
-      public void hierarchyChanged(HierarchyEvent e) {
-        Component parent = root.getParent();
-        if (parent == null) {
-          return;
-        }
-        if (parent.getClass().getName().startsWith("org.jdesktop.jdic.tray")
-            || (parent.getClass().getName().compareTo("javax.swing.Popup$HeavyWeightWindow") == 0)) {
-
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(() -> {
-            root.removeHierarchyListener(myHierarchyListener);
-            myHierarchyListener = null;
-          });
-        }
-
-        Window currWindow = UIUtil.getWindow(parent);
-        if (myWindowListener != null) {
-          myCurrentWindow.removeWindowListener(myWindowListener);
-          myWindowListener = null;
-        }
-        if (myWindowComponentListener != null) {
-          myCurrentWindow.removeComponentListener(myWindowComponentListener);
-          myWindowComponentListener = null;
-        }
-        if (currWindow != null) {
-          myWindowListener = new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent e) {
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(() -> {
-                Frame[] frames = Frame.getFrames();
-                for (Frame frame : frames) {
-                  if (frame.isDisplayable()) {
-                    return;
-                  }
-                }
-              });
-            }
-          };
-
-          if (!(parent instanceof JInternalFrame)) {
-            currWindow.addWindowListener(myWindowListener);
-          }
-
-          myWindowComponentListener = new ComponentAdapter() {
-            @Override
-            public void componentMoved(ComponentEvent e) {
-              processNewPosition();
-            }
-
-            @Override
-            public void componentResized(ComponentEvent e) {
-              processNewPosition();
-            }
-
-            private void processNewPosition() {
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(() -> {
-                if (myWindow == null) {
-                  return;
-                }
-
-                if (!myWindow.isShowing() || !myWindow.isDisplayable()) {
-                  currentRootPaneGC = null;
-                  return;
-                }
-
-                GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-                GraphicsDevice[] gds = ge.getScreenDevices();
-                if (gds.length == 1) {
-                  return;
-                }
-                Point midLoc = new Point(myWindow.getLocationOnScreen().x + myWindow.getWidth() / 2,
-                                         myWindow.getLocationOnScreen().y + myWindow.getHeight() / 2);
-
-                for (GraphicsDevice gd : gds) {
-                  GraphicsConfiguration gc = gd.getDefaultConfiguration();
-                  Rectangle bounds = gc.getBounds();
-                  if (bounds.contains(midLoc)) {
-                    if (gc != currentRootPaneGC) {
-                      currentRootPaneGC = gc;
-                      setMaximized();
-                    }
-                    break;
-                  }
-                }
-              });
-            }
-          };
-
-          if (parent instanceof JFrame) {
-            currWindow.addComponentListener(myWindowComponentListener);
-          }
-
-          myWindow = currWindow;
-        }
-        myCurrentWindow = currWindow;
-      }
-    };
-    root.addHierarchyListener(myHierarchyListener);
-    root.addPropertyChangeListener(myPropertyChangeListener);
+    root.addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, myPropertyChangeListener);
   }
+
 
   @Override
   protected void uninstallListeners(JRootPane root) {
-    if (myWindow != null) {
-      myWindow.removeWindowListener(myWindowListener);
-      myWindowListener = null;
-      myWindow.removeComponentListener(myWindowComponentListener);
-      myWindowComponentListener = null;
-    }
-    root.removeHierarchyListener(myHierarchyListener);
-    myHierarchyListener = null;
-
     root.removePropertyChangeListener(myPropertyChangeListener);
     myPropertyChangeListener = null;
 
@@ -277,29 +159,22 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     JComponent titlePane = createTitlePane(root);
 
     setTitlePane(root, titlePane);
-    //installWindowListeners(root, root.getParent()); // installed on ancestor change
-    installLayout(root);
-    if (myWindow != null) {
+    if (SwingUtilities.getWindowAncestor(myRootPane) != null) {
       root.revalidate();
       root.repaint();
     }
   }
 
   private void uninstallClientDecorations(JRootPane root) {
-    uninstallBorder(root);
+   // uninstallBorder(root);
     //uninstallWindowListeners(root);
     setTitlePane(root, null);
-    uninstallLayout(root);
+
     int style = root.getWindowDecorationStyle();
     if (style == JRootPane.NONE) {
       root.repaint();
       root.revalidate();
     }
-
-    if (myWindow != null) {
-      myWindow.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-    }
-    myWindow = null;
   }
 
   protected JComponent createTitlePane(JRootPane root) {
@@ -324,24 +199,6 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     myTitlePane = titlePane;
   }
 
-  public void setMaximized() {
-    if (Registry.is("darcula.fix.maximized.frame.bounds")) return;
-
-    Component tla = myRootPane.getTopLevelAncestor();
-    GraphicsConfiguration gc = (currentRootPaneGC != null) ? currentRootPaneGC : tla.getGraphicsConfiguration();
-    Rectangle screenBounds = gc.getBounds();
-    screenBounds.x = 0;
-    screenBounds.y = 0;
-    Insets screenInsets = ScreenUtil.getScreenInsets(gc);
-    Rectangle maxBounds = new Rectangle(screenBounds.x + screenInsets.left,
-                                        screenBounds.y + screenInsets.top,
-                                        screenBounds.width - (screenInsets.left + screenInsets.right),
-                                        screenBounds.height - (screenInsets.top + screenInsets.bottom));
-    if (tla instanceof JFrame) {
-      ((JFrame)tla).setMaximizedBounds(maxBounds);
-    }
-  }
-
   public JComponent getTitlePane() {
     return myTitlePane;
   }
@@ -360,13 +217,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     }
 
     if (propertyName.equals("windowDecorationStyle")) {
-      JRootPane root = (JRootPane)e.getSource();
-      int style = root.getWindowDecorationStyle();
-
-      uninstallClientDecorations(root);
-      if (style != JRootPane.NONE) {
-        installClientDecorations(root);
-      }
+      updateState();
     }
 /*    if (propertyName.equals("ancestor")) {
       uninstallWindowListeners(myRootPane);
@@ -398,14 +249,6 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
       if (cpd != null) {
         cpWidth = cpd.width;
         cpHeight = cpd.height;
-      }
-
-      if (root.getJMenuBar() != null) {
-        mbd = root.getJMenuBar().getPreferredSize();
-        if (mbd != null) {
-          mbWidth = mbd.width;
-          mbHeight = mbd.height;
-        }
       }
 
       if ((root.getWindowDecorationStyle() != JRootPane.NONE)
@@ -446,13 +289,6 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         cpHeight = cpd.height;
       }
 
-      if (root.getJMenuBar() != null) {
-        mbd = root.getJMenuBar().getMinimumSize();
-        if (mbd != null) {
-          mbWidth = mbd.width;
-          mbHeight = mbd.height;
-        }
-      }
       if ((root.getWindowDecorationStyle() != JRootPane.NONE) && (root.getUI() instanceof DarculaRootPaneUI)) {
         JComponent titlePane = ((DarculaRootPaneUI)root.getUI()).getTitlePane();
         if (titlePane != null) {
@@ -484,14 +320,6 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         if (cpd != null) {
           cpWidth = cpd.width;
           cpHeight = cpd.height;
-        }
-      }
-
-      if (root.getJMenuBar() != null) {
-        mbd = root.getJMenuBar().getMaximumSize();
-        if (mbd != null) {
-          mbWidth = mbd.width;
-          mbHeight = mbd.height;
         }
       }
 
@@ -536,6 +364,12 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         root.getGlassPane().setBounds(i.left, i.top, w, h);
       }
 
+      JMenuBar bar = root.getJMenuBar();
+      if (bar != null && bar.isVisible()) {
+        Dimension mbd = bar.getPreferredSize();
+        bar.setBounds(0, nextY, w, mbd.height);
+      }
+
       if ((root.getWindowDecorationStyle() != JRootPane.NONE) && (root.getUI() instanceof DarculaRootPaneUI)) {
         JComponent titlePane = ((DarculaRootPaneUI)root.getUI()).getTitlePane();
         if (titlePane != null) {
@@ -547,13 +381,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
           }
         }
       }
-      if (root.getJMenuBar() != null) {
-        Dimension mbd = root.getJMenuBar().getPreferredSize();
-        root.getJMenuBar().setBounds(0, nextY, w, mbd.height);
-        nextY += mbd.height;
-      }
-      if (root.getContentPane() != null) {
 
+      if (root.getContentPane() != null) {
         root.getContentPane().setBounds(0, nextY, w, h < nextY ? 0 : h - nextY);
       }
     }
@@ -585,7 +414,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     }
   }
 
-  private static int max(int a, int b, int...others) {
+  private static int max(int a, int b, int... others) {
     int result = Math.max(a, b);
     for (int other : others) {
       result = Math.max(result, other);

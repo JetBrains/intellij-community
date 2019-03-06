@@ -105,9 +105,7 @@ public abstract class IdeFrameDecorator implements Disposable {
           myFrame.getRootPane().putClientProperty("oldBounds", myFrame.getBounds());
         }
         myFrame.dispose();
-        if (!isCustomDecoration()) {
-          myFrame.setUndecorated(state);
-        }
+        myFrame.setUndecorated(state);
       }
       finally {
         if (state) {

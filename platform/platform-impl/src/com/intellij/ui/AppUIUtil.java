@@ -33,6 +33,7 @@ import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.SwingHelper;
@@ -105,6 +106,14 @@ public class AppUIUtil {
         ourMacDocIconSet = true;
       }
     }
+  }
+
+  public static Icon loadApplicationIcon(@NotNull Window window) {
+    Image image = loadApplicationIcon(window, 16, null);
+    image = ImageUtil.ensureHiDPI(image, JBUI.ScaleContext.create(window));
+    if (image == null) return null;
+
+    return new JBImageIcon(image);
   }
 
   @Nullable

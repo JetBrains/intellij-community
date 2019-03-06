@@ -9,7 +9,6 @@ import com.intellij.ide.actions.ViewToolbarAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaRootPaneUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -93,13 +92,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
 
     if (WindowManagerImpl.isFloatingMenuBarSupported()) {
-      if (!isDecoratedMenu()) {
         menuBar = new IdeMenuBar(actionManager, dataManager);
+        menuBar.setVisible(!isDecoratedMenu());
         getLayeredPane().add(menuBar, new Integer(JLayeredPane.DEFAULT_LAYER - 1));
         if (frame instanceof IdeFrameEx) {
           addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, __ -> myFullScreen = ((IdeFrameEx)frame).isInFullScreen());
         }
-      }
     }
     else {
       setJMenuBar(new IdeMenuBar(actionManager, dataManager));
@@ -370,7 +368,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
         rd = parent.getSize();
       }
       Dimension mbd;
-      if (menuBar != null && menuBar.isVisible() && !myFullScreen) {
+      if (menuBar != null && menuBar.isVisible() && !myFullScreen && !isDecoratedMenu()) {
         mbd = menuBar.getMinimumSize();
       }
       else {
@@ -384,7 +382,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     public Dimension maximumLayoutSize(Container target) {
       Dimension mbd;
       Insets i = getInsets();
-      if (menuBar != null && menuBar.isVisible() && !myFullScreen) {
+      if (menuBar != null && menuBar.isVisible() && !myFullScreen && !isDecoratedMenu()) {
         mbd = menuBar.getMaximumSize();
       }
       else {
@@ -419,7 +417,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
       if (menuBar != null && menuBar.isVisible()) {
         Dimension mbd = menuBar.getPreferredSize();
         menuBar.setBounds(0, 0, w, mbd.height);
-        if (!myFullScreen) {
+        if (!myFullScreen && !isDecoratedMenu()) {
           contentY += mbd.height;
         }
       }
@@ -430,6 +428,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
   }
 
   private boolean isDecoratedMenu() {
-    return getUI() instanceof DarculaRootPaneUI && IdeFrameDecorator.isCustomDecoration();
+    return IdeFrameDecorator.isCustomDecoration();
   }
 }

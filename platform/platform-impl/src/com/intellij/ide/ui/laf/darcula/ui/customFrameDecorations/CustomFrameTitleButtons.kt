@@ -6,20 +6,31 @@ import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.style.Component
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.style.ComponentStyleState
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.style.StyleManager
 import com.intellij.ui.JBColor
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUIScale
 import net.miginfocom.swing.MigLayout
 import java.awt.Color
+import java.awt.Dimension
 import javax.accessibility.AccessibleContext
 import javax.security.auth.Destroyable
 import javax.swing.*
 import javax.swing.plaf.basic.BasicButtonUI
 
-open class DarculaTitleButtons constructor(myCloseAction: Action) : Destroyable {
+open class CustomFrameTitleButtons constructor(myCloseAction: Action) : Destroyable {
   companion object {
-    fun create(myCloseAction: Action): DarculaTitleButtons {
-      val darculaTitleButtons = DarculaTitleButtons(myCloseAction)
+    private val closeIcon = freezeIconUserSize(AllIcons.Windows.CloseActive)
+    private val closeHoverIcon = freezeIconUserSize(AllIcons.Windows.CloseHover)
+    private val closeInactive = freezeIconUserSize(AllIcons.Windows.CloseInactive)
+
+    fun create(myCloseAction: Action): CustomFrameTitleButtons {
+      val darculaTitleButtons = CustomFrameTitleButtons(myCloseAction)
       darculaTitleButtons.createChildren()
       return darculaTitleButtons
+    }
+
+    fun freezeIconUserSize(icon: Icon): Icon {
+      return IconUtil.overrideScale(IconUtil.deepCopy(icon, null), JBUIScale.ScaleType.USR_SCALE.of(1.0))
     }
   }
 
@@ -40,27 +51,27 @@ open class DarculaTitleButtons constructor(myCloseAction: Action) : Destroyable 
   val closeStyleBuilder = ComponentStyle.ComponentStyleBuilder<JButton> {
     isOpaque = false
     border = JBUI.Borders.empty()
-    icon = AllIcons.Windows.CloseActive
+    icon = closeIcon
   }.apply {
     style(ComponentStyleState.HOVERED) {
       isOpaque = true
       background = Color(0xe81123)
-      icon = AllIcons.Windows.CloseHover
+      icon = closeHoverIcon
     }
     style(ComponentStyleState.PRESSED) {
       isOpaque = true
       background = Color(0xf1707a)
-      icon = AllIcons.Windows.CloseHover
+      icon = closeHoverIcon
     }
   }
   private val activeCloseStyle = closeStyleBuilder.build()
 
   private val inactiveCloseStyle = closeStyleBuilder
     .updateDefault() {
-      icon = AllIcons.Windows.CloseInactive
+      icon = closeInactive
     }.build()
 
-  protected val panel = JPanel(MigLayout("filly, ins 0, gap 0, hidemode 3, novisualpadding"))
+  protected val panel = JPanel(MigLayout("top, ins 0 5 0 0, gap 0, hidemode 3, novisualpadding"))
 
   private val myCloseButton: JButton = createButton("Close", myCloseAction)
 
@@ -96,7 +107,8 @@ open class DarculaTitleButtons constructor(myCloseAction: Action) : Destroyable 
   }
 
   protected fun addComponent(component: JComponent) {
-    panel.add(component, "growy, wmin ${JBUI.scale(39)}, hmin ${JBUI.scale(23)}")
+    component.preferredSize = Dimension(45, 23)
+    panel.add(component, "top")
   }
 
   protected fun getStyle(icon: Icon, hoverIcon : Icon): ComponentStyle<JComponent> {

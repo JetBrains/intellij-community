@@ -44,6 +44,7 @@ import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
@@ -97,6 +98,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     size.height= Math.min(1000, size.height - 40);
     setSize(size);
     setLocationRelativeTo(null);
+    setMinimumSize(new JBDimension(400, 300));
 
     if (Registry.is("suppress.focus.stealing") &&
         Registry.is("suppress.focus.stealing.auto.request.focus") &&
