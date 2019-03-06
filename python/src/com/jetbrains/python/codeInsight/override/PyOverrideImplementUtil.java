@@ -13,13 +13,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -268,7 +266,6 @@ public class PyOverrideImplementUtil {
     }
 
     if (implement ||
-        PyNames.TYPES_INSTANCE_TYPE.equals(baseClass.getQualifiedName()) ||
         baseFunction.onlyRaisesNotImplementedError() ||
         PyKnownDecoratorUtil.hasAbstractDecorator(baseFunction, context)) {
       statementBody.append(PyNames.PASS);
