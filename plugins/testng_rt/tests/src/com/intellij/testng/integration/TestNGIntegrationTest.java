@@ -6,6 +6,7 @@ import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EdtRule;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -23,7 +24,6 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 @RunsInEdt
 @RunWith(Parameterized.class)
@@ -84,14 +84,12 @@ public class TestNGIntegrationTest extends AbstractTestFrameworkCompilingIntegra
   public void simpleStart() throws ExecutionException {
     PsiClass psiClass = findClass(myModule, "a.Test1");
     assertNotNull(psiClass);
-    TestNGConfiguration configuration = createConfiguration(psiClass);
+    PsiMethod testMethod = psiClass.findMethodsByName("simple", false)[0];
+    TestNGConfiguration configuration = createConfiguration(testMethod);
     ProcessOutput processOutput = doStartTestsProcess(configuration);
     String testOutput = processOutput.out.toString();
     assertEmpty(processOutput.err);
     assertTrue(testOutput, testOutput.contains("sample output"));
-
-    String messages = processOutput.messages.stream().map(m -> m.asString()).collect(Collectors.joining("\n"));
-    assertTrue(messages, messages.contains("name='Test1.myName'"));
-    assertTrue(messages, messages.contains("name='Test1.simple2'"));
   }
+
 }
