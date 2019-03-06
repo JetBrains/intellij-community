@@ -888,6 +888,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon BalloonInformation = IconLoader.getIcon("/general/balloonInformation.svg");
     /** 16x16 */ public static final Icon BalloonWarning = IconLoader.getIcon("/general/balloonWarning.svg");
     /** 12x12 */ public static final Icon BalloonWarning12 = IconLoader.getIcon("/general/balloonWarning12.svg");
+    /** 8x4 */ public static final Icon ButtonDropTriangle = IconLoader.getIcon("/general/buttonDropTriangle.svg");
     /** 12x12 */ public static final Icon CollapseComponent = IconLoader.getIcon("/general/collapseComponent.svg");
     /** 12x12 */ public static final Icon CollapseComponentHover = IconLoader.getIcon("/general/collapseComponentHover.svg");
     /** 16x16 */ public static final Icon ContextHelp = IconLoader.getIcon("/general/contextHelp.svg");

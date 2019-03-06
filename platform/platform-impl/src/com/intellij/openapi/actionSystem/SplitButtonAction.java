@@ -55,7 +55,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
       Action, Popup, None
     }
 
-    private static final Icon ARROW_DOWN = AllIcons.General.ArrowDownSmall;
+    private static final Icon ARROW_DOWN = AllIcons.General.ButtonDropTriangle;
 
     private final ActionGroup myActionGroup;
     private AnAction selectedAction;
@@ -83,7 +83,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      size.width += ARROW_DOWN.getIconWidth() + JBUI.scale(10);
+      size.width += ARROW_DOWN.getIconWidth() + JBUI.scale(7);
       return size;
     }
 
@@ -123,7 +123,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
       }
 
       int x = baseRect.x + baseRect.width - JBUI.scale(3) - ARROW_DOWN.getIconWidth();
-      int y = baseRect.y + (baseRect.height - ARROW_DOWN.getIconHeight()) / 2;
+      int y = baseRect.y + (baseRect.height - ARROW_DOWN.getIconHeight()) / 2 + JBUI.scale(1);
       look.paintIconAt(g, ARROW_DOWN, x, y);
 
       x -= JBUI.scale(4);
@@ -141,11 +141,9 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
         }
       }
 
-      x -= JBUI.scale(3) + actionIcon.getIconWidth();
+      x = baseRect.x + (x -  actionIcon.getIconWidth()) / 2;
       y = baseRect.y + (baseRect.height - actionIcon.getIconHeight()) / 2;
-      x = x > baseRect.x ? x : baseRect.x;
       look.paintIconAt(g, actionIcon, x, y);
-      look.paintBorder(g, this);
     }
 
     private boolean isToggleActionPushed() {
@@ -198,7 +196,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
 
       JPopupMenu menu = popupMenu.getComponent();
       if (event.isFromActionToolbar()) {
-        menu.show(this, 0, getHeight());
+        menu.show(this, DEFAULT_MINIMUM_BUTTON_SIZE.width + getInsets().left, getHeight());
       }
       else {
         menu.show(this, getWidth(), 0);
