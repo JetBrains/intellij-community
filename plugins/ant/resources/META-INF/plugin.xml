@@ -49,7 +49,7 @@
     <dom.fileMetaData implementation="com.intellij.lang.ant.dom.AntlibDomFileDescription" rootTagName="antlib"/>
     <dom.extender domClass="com.intellij.lang.ant.dom.AntDomElement" extenderClass="com.intellij.lang.ant.dom.AntDomExtender"/>
     <pom.declarationSearcher implementation="com.intellij.lang.ant.dom.AntDomDeclarationSearcher"/>
-
+    
     <!--Type Presentation-->
     <typeName className="com.intellij.lang.ant.dom.AntDomMacroDef" name="macro definition"/>
     <typeName className="com.intellij.lang.ant.dom.AntDomMacrodefElement" name="macrodef nested element"/>
@@ -72,9 +72,17 @@
     <programRunner implementation="com.intellij.lang.ant.config.execution.AntRunner"/>
 
     <applicationService serviceImplementation="com.intellij.lang.ant.config.impl.GlobalAntConfiguration"/>
-
-    <applicationInitializedListener implementation="com.intellij.lang.ant.config.impl.AntToolwindowRegistrar"/>
   </extensions>
+
+  <application-components>
+  </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.lang.ant.config.impl.AntToolwindowRegistrar</implementation-class>
+      <headless-implementation-class/>
+    </component>
+  </project-components>
 
   <actions>
     <group id="AntBuildGroup" class="com.intellij.lang.ant.config.actions.AntBuildGroup">

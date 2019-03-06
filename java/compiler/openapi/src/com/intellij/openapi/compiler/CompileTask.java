@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.compiler;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * Describes a task to be executed before or after compilation in the IDE process. The implementation should be registered in plugin.xml file:
  *
@@ -28,5 +26,5 @@ public interface CompileTask {
    *         is aborted, and it's expected that the task adds a message defining the reason for the failure
    *         to the compile context.
    */
-  boolean execute(@NotNull CompileContext context);
+  boolean execute(CompileContext context);
 }
