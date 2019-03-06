@@ -519,6 +519,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   void testActionHighlighting() {
     configureByFile()
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
+    myFixture.addClass("""package foo; class PackagePrivateActionBase extends com.intellij.openapi.actionSystem.AnAction {
+                                        PackagePrivateActionBase() {}
+                                    } """)
+    myFixture.addClass("package foo; public class ActionWithDefaultConstructor extends PackagePrivateActionBase { }")
     myFixture.addClass("package foo.bar; public class BarGroup extends com.intellij.openapi.actionSystem.ActionGroup { }")
     myFixture.addClass("package foo.bar; public class GroupWithCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup { " +
                        "  public boolean canBePerformed(com.intellij.openapi.actionSystem.DataContext context) {" +
