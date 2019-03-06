@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +26,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -93,16 +94,25 @@ public class FileWatcher {
     });
   }
 
-  public void dispose() {
-    try {
-      myFileWatcherExecutor.submit(() -> {
-        for (PluggableFileWatcher watcher : myWatchers) {
-          watcher.dispose();
-        }
-      }).get();
+  private void clearQueue() {
+    if (myFileWatcherExecutor instanceof BoundedTaskExecutor) {
+      ((BoundedTaskExecutor)myFileWatcherExecutor).clearAndCancelAll();
     }
-    catch (InterruptedException | ExecutionException e) {
+  }
+
+  public void dispose() {
+    myFileWatcherExecutor.shutdown();
+    clearQueue();
+
+    try {
+      myFileWatcherExecutor.awaitTermination(1, TimeUnit.HOURS);
+    }
+    catch (InterruptedException e) {
       LOG.error(e);
+    }
+
+    for (PluggableFileWatcher watcher : myWatchers) {
+      watcher.dispose();
     }
   }
 
@@ -151,6 +161,7 @@ public class FileWatcher {
   void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
     myRootSettingOps.incrementAndGet();
 
+    clearQueue();
     myFileWatcherExecutor.submit(() -> {
       CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
 
