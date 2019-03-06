@@ -1,14 +1,13 @@
-// "Replace with 'switch' expression" "true"
+// "Replace with enhanced 'switch' statement" "true"
 import java.util.*;
 
 class SwitchExpressionMigration {
   private static void m() {
-    int result;
     switch<caret>(s) {
-      case "a": result = 1; break;
-      case "b":
+      case "a":
         throw new NullPointerException();
-      default: result = 0;
+      default:
+        throw new NullPointerException();
     }
   }
 }
