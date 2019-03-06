@@ -69,18 +69,20 @@ public class FileWatcher {
     }
   }
 
+  private static ExecutorService executor() {
+    boolean async = Registry.is("vfs.filewatcher.works.in.async.way");
+    return async ? AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) : MoreExecutors.newDirectExecutorService();
+  }
+
   private final ManagingFS myManagingFS;
   private final MyFileWatcherNotificationSink myNotificationSink;
   private final PluggableFileWatcher[] myWatchers;
   private final AtomicBoolean myFailureShown = new AtomicBoolean(false);
+  private final ExecutorService myFileWatcherExecutor = executor();
+  private final AtomicInteger myRootSettingOps = new AtomicInteger(0);
 
   private volatile CanonicalPathMap myPathMap = new CanonicalPathMap();
   private volatile List<Collection<String>> myManualWatchRoots = Collections.emptyList();
-
-  private final ExecutorService myFileWatcherExecutor = Registry.is("vfs.filewatcher.works.in.async.way") ?
-                                                        AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) :
-                                                        MoreExecutors.newDirectExecutorService();
-  private final AtomicInteger myRootSettingOps = new AtomicInteger(0);
 
   FileWatcher(@NotNull ManagingFS managingFS) {
     myManagingFS = managingFS;
