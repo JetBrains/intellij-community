@@ -969,10 +969,15 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       return null;
     }
     else {
-      PsiElement xmlAttribute = add(XmlElementFactory.getInstance(getProject()).createAttribute(qname, value, this));
+      PsiElement xmlAttribute = add(createAttribute(qname, value));
       while (!(xmlAttribute instanceof XmlAttribute)) xmlAttribute = xmlAttribute.getNextSibling();
       return (XmlAttribute)xmlAttribute;
     }
+  }
+
+  @NotNull
+  protected XmlAttribute createAttribute(String qname, String value) {
+    return XmlElementFactory.getInstance(getProject()).createAttribute(qname, value, this);
   }
 
   @Override
