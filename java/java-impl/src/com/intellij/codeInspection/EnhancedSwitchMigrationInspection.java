@@ -478,12 +478,13 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     }
     if (assignedVariable == null || !hasAssignedBranch) return null;
     PsiExpression initializer = assignedVariable.getInitializer();
-    if (!isExhaustive) {
-      if (initializer == null) return null;
+    if (initializer != null) {
       newBranches.add(new SwitchExpressionBranch(true,
                                                  Collections.emptyList(),
                                                  new SwitchRuleExpressionResult(initializer),
                                                  Collections.emptyList()));
+    } else {
+      if (!isExhaustive) return null;
     }
     return new SwitchExistingVariableReplacer(assignedVariable, statement, expressionBeingSwitched, newBranches, isRightAfterDeclaration);
   }
