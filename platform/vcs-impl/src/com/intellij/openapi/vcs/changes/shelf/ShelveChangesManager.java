@@ -37,6 +37,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -61,6 +62,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
@@ -81,6 +83,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   @NotNull private SchemeManager<ShelvedChangeList> mySchemeManager;
 
   private ScheduledFuture<?> myCleaningFuture;
+  private final ReentrantReadWriteLock SHELVED_FILES_LOCK = new ReentrantReadWriteLock(true);
+  @Nullable private Set<VirtualFile> myShelvingFiles;
 
   public static ShelveChangesManager getInstance(Project project) {
     return project.getComponent(ShelveChangesManager.class);
@@ -423,9 +427,17 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     if (progressIndicator != null) {
       progressIndicator.setText(VcsBundle.message("shelve.changes.progress.title"));
     }
-
-    ShelvedChangeList shelveList = createShelfFromChanges(changes, commitMessage, markToBeDeleted, honorExcludedFromCommit);
-    notifyStateChanged();
+    ShelvedChangeList shelveList;
+    try {
+      SHELVED_FILES_LOCK.writeLock().lock();
+      rememberShelvingFiles(changes);
+      shelveList = createShelfFromChanges(changes, commitMessage, markToBeDeleted, honorExcludedFromCommit);
+    }
+    finally {
+      cleanShelvingFiles();
+      SHELVED_FILES_LOCK.writeLock().unlock();
+      notifyStateChanged();
+    }
     if (rollback) {
       rollbackChangesAfterShelve(changes);
     }
@@ -836,16 +848,30 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   @CalledInAwt
   public void shelveSilentlyUnderProgress(@NotNull List<? extends Change> changes) {
     final List<ShelvedChangeList> result = newArrayList();
-    final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> result.addAll(shelveChangesInSeparatedLists(changes)),
-      VcsBundle.getString("shelve.changes.progress.title"), true, myProject);
-
-    if (completed) {
-      VcsNotifier.getInstance(myProject).notifySuccess("Changes shelved successfully");
-      if (result.size() == 1 && isShelfContentActive()) {
-        ShelvedChangesViewManager.getInstance(myProject).startEditing(result.get(0));
+    new Task.Backgroundable(myProject, VcsBundle.getString("shelve.changes.progress.title"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        result.addAll(shelveChangesInSeparatedLists(changes));
       }
-    }
+
+      @Override
+      public void onSuccess() {
+        VcsNotifier.getInstance(myProject).notifySuccess("Changes shelved successfully");
+        if (result.size() == 1 && isShelfContentActive()) {
+          ShelvedChangesViewManager.getInstance(myProject).startEditing(result.get(0));
+        }
+      }
+    }.queue();
+  }
+
+  private void rememberShelvingFiles(@NotNull Collection<? extends Change> changes) {
+    Set<VirtualFile> fileSet = newConcurrentSet();
+    fileSet.addAll(map2SetNotNull(changes, Change::getVirtualFile));
+    myShelvingFiles = fileSet;
+  }
+
+  private void cleanShelvingFiles() {
+    myShelvingFiles = null;
   }
 
   private boolean isShelfContentActive() {
@@ -859,38 +885,47 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     List<ShelvedChangeList> result = newArrayList();
     List<Change> shelvedChanges = newArrayList();
 
-    List<LocalChangeList> changeLists = ChangeListManager.getInstance(myProject).getChangeLists();
-    for (LocalChangeList list : changeLists) {
-      HashSet<Change> changeSet = new HashSet<>(list.getChanges());
+    try {
+      SHELVED_FILES_LOCK.writeLock().lock();
+      rememberShelvingFiles(changes);
+      List<LocalChangeList> changeLists = ChangeListManager.getInstance(myProject).getChangeLists();
+      for (LocalChangeList list : changeLists) {
+        HashSet<Change> changeSet = new HashSet<>(list.getChanges());
 
-      List<Change> changesForChangelist = new ArrayList<>();
-      for (Change change : changes) {
-        boolean inChangelist;
-        if (change instanceof ChangeListChange) {
-          inChangelist = ((ChangeListChange)change).getChangeListId().equals(list.getId());
-        }
-        else {
-          inChangelist = changeSet.contains(change);
+        List<Change> changesForChangelist = new ArrayList<>();
+        for (Change change : changes) {
+          boolean inChangelist;
+          if (change instanceof ChangeListChange) {
+            inChangelist = ((ChangeListChange)change).getChangeListId().equals(list.getId());
+          }
+          else {
+            inChangelist = changeSet.contains(change);
+          }
+
+          if (inChangelist) {
+            changesForChangelist.add(change);
+          }
         }
 
-        if (inChangelist) {
-          changesForChangelist.add(change);
-        }
-      }
-
-      if (!changesForChangelist.isEmpty()) {
-        try {
-          result.add(createShelfFromChanges(changesForChangelist, list.getName(), false, false));
-          shelvedChanges.addAll(changesForChangelist);
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-          failedChangeLists.add(list.getName());
+        if (!changesForChangelist.isEmpty()) {
+          try {
+            result.add(createShelfFromChanges(changesForChangelist, list.getName(), false, false));
+            shelvedChanges.addAll(changesForChangelist);
+          }
+          catch (Exception e) {
+            ProgressManager.checkCanceled();
+            LOG.warn(e);
+            failedChangeLists.add(list.getName());
+          }
         }
       }
     }
+    finally {
+      cleanShelvingFiles();
+      SHELVED_FILES_LOCK.writeLock().unlock();
+      notifyStateChanged();
+    }
 
-    notifyStateChanged();
     rollbackChangesAfterShelve(shelvedChanges);
 
     if (!failedChangeLists.isEmpty()) {
@@ -1131,6 +1166,11 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     if (updateView) {
       notifyStateChanged();
     }
+  }
+
+  @NotNull
+  public Collection<VirtualFile> getShelvingFiles() {
+    return newArrayList(ContainerUtil.notNullize(myShelvingFiles));
   }
 
   private void removeFromList(@NotNull final ShelvedChangeList listCopy,
