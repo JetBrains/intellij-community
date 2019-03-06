@@ -610,7 +610,8 @@
     <registryKey key="python.relative.import.depth" defaultValue="3" description="Specifies default acceptable number of dots in a relative import statement"/>
 
     <!-- flake8 -->
-    <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.flake8.FlakeInspectionSuppressor" />
+    <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.flake8.Flake8InspectionSuppressor"/>
+    <daemon.changeLocalityDetector implementation="com.jetbrains.python.inspections.flake8.Flake8SuppressingCommentLocalityDetector"/>
   </extensions>
 
   <extensionPoints>

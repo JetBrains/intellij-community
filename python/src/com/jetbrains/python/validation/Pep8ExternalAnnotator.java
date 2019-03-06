@@ -17,7 +17,6 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -30,10 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
@@ -42,25 +38,28 @@ import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.PyPep8Inspection;
+import com.jetbrains.python.inspections.flake8.Flake8InspectionSuppressor;
 import com.jetbrains.python.inspections.quickfix.PyFillParagraphFix;
 import com.jetbrains.python.inspections.quickfix.ReformatFix;
 import com.jetbrains.python.inspections.quickfix.RemoveTrailingBlankLinesFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.PreferredSdkComparator;
+import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author yole
@@ -263,7 +262,9 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         problemElement = file.findElementAt(Math.max(0, offset - 1));
       }
 
-      if (ignoreDueToSettings(file, problem, problemElement) || ignoredDueToProblemSuppressors(problem, file, problemElement)) {
+      if (ignoreDueToSettings(file, problem, problemElement) ||
+          ignoredDueToProblemSuppressors(problem, file, problemElement) ||
+          ignoredDueToNoqaComment(problem, file, document)) {
         continue;
       }
 
@@ -286,8 +287,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
           problemRange = new TextRange(offset, lineEndOffset);
         }
 
-        final boolean inInternalMode = ApplicationManager.getApplication().isInternal();
-        final String message = "PEP 8: " + (inInternalMode ? problem.myCode + " " : "") + problem.myDescription;
+        final String message = "PEP 8: " + problem.myCode + " " + problem.myDescription;
         HighlightSeverity severity;
         if (annotationResult.level == HighlightDisplayLevel.ERROR) {
           severity = HighlightSeverity.ERROR;
@@ -336,6 +336,22 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
                                                         @Nullable PsiElement element) {
     final Pep8ProblemSuppressor[] suppressors = Pep8ProblemSuppressor.EP_NAME.getExtensions();
     return Arrays.stream(suppressors).anyMatch(p -> p.isProblemSuppressed(problem, file, element));
+  }
+
+  private static boolean ignoredDueToNoqaComment(@NotNull Problem problem, @NotNull PsiFile file, @Nullable Document document) {
+    if (document == null) {
+      return false;
+    }
+    final int reportedLine = problem.myLine - 1;
+    final int lineLastOffset = Math.max(document.getLineStartOffset(reportedLine), document.getLineEndOffset(reportedLine) - 1);
+    final PsiComment comment = as(file.findElementAt(lineLastOffset), PsiComment.class);
+    if (comment != null) {
+      final Set<String> codes = Flake8InspectionSuppressor.extractNoqaCodes(comment);
+      if (codes != null) {
+        return codes.isEmpty() || ContainerUtil.exists(codes, code -> problem.myCode.startsWith(code));
+      }
+    }
+    return false;
   }
 
   private static boolean crossesLineBoundary(@Nullable Document document, String text, TextRange problemRange) {
