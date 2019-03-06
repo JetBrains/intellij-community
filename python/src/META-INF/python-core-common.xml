@@ -854,6 +854,8 @@
 
     <action id="PyRunFileInConsole" class="com.jetbrains.python.actions.PyRunFileInConsoleAction">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ExecuteInPyConsoleAction"/>
+      <!-- Turned ON temporary -->
+      <add-to-group group-id="RunnerActions"/>
     </action>
 
     <action id="NewPythonFile" class="com.jetbrains.python.actions.CreatePythonFileAction">

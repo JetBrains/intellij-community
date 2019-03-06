@@ -86,7 +86,7 @@
 
     <!-- Console -->
 
-    <toolWindow id="Python Console" anchor="bottom" icon="PythonIcons.Python.PythonConsoleToolWindow" canCloseContents="true"
+    <toolWindow id="Python Console" anchor="bottom" icon="PythonIcons.Python.PythonConsoleToolWindow" canCloseContents="false"
                 factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
 
     <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>

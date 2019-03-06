@@ -31,7 +31,7 @@ public class RunContentDescriptor implements Disposable {
   private RunContentDescriptorReusePolicy myReusePolicy = RunContentDescriptorReusePolicy.DEFAULT;
 
   private boolean myActivateToolWindowWhenAdded = true;
-  private boolean myReuseToolWindowActivation = false;
+  private boolean myReuseToolWindowActivation = true;
   private boolean mySelectContentWhenAdded = true;
   private long myExecutionId = 0;
   private Computable<JComponent> myFocusComputable = null;

@@ -81,8 +81,9 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       runContextAction = new RunContextAction(executor);
     }
     final Executor.ActionWrapper customizer = executor.runnerActionsGroupExecutorActionCustomizer();
-    registerAction(executor.getId(), customizer != null ? customizer.wrap(toolbarAction) : toolbarAction, RUNNERS_GROUP, myId2Action);
-    registerAction(executor.getContextActionId(), runContextAction, RUN_CONTEXT_GROUP, myContextActionId2Action);
+    // Turned OFF temporary
+    //registerAction(executor.getId(), customizer != null ? customizer.wrap(toolbarAction) : toolbarAction, RUNNERS_GROUP, myId2Action);
+    //registerAction(executor.getContextActionId(), runContextAction, RUN_CONTEXT_GROUP, myContextActionId2Action);
 
     myExecutors.add(executor);
     myId2Executor.put(executor.getId(), executor);
@@ -114,7 +115,11 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
     ActionManager actionManager = ActionManager.getInstance();
     final DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction(groupId);
     if (group != null) {
-      group.remove(actionManager.getAction(actionId));
+      final AnAction anAction = actionManager.getAction(actionId);
+      if (anAction == null) {
+        return;
+      }
+      group.remove(anAction);
       final AnAction action = map.get(actionId);
       if (action != null) {
         actionManager.unregisterAction(actionId);

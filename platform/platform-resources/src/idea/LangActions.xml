@@ -6,10 +6,11 @@
     <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddAllToFavoritesActionGroup" popup="true"/>
     <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.AddNewFavoritesListAction"/>
     <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.actions.SendToFavoritesGroup" popup="true"/>
-
-    <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
-    <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" text="Run..." description="Choose and run configuration" icon="AllIcons.Actions.Execute"/>
-    <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" text="Debug..." description="Choose and debug configuration" icon="AllIcons.Actions.StartDebugger"/>
+<!--   Turned OFF temporary-->
+    <action id="RunConfiguration" class="com.intellij.execution.actions.MockActionDeleteMe"/>
+    <action id="Stop" class="com.intellij.execution.actions.MockActionDeleteMe"/>
+    <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.MockActionDeleteMe" text="Run..."/>
+    <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.MockActionDeleteMe" text="Debug..."/>
 
     <group id="RunContextGroup" popup="false">
       <!-- A dynamic group filled with executor actions -->
@@ -370,7 +371,6 @@
       <reference ref="ChooseRunConfiguration"/>
       <reference ref="ChooseDebugConfiguration"/>
       <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
-      <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend"/>
       <action id="StopBackgroundProcesses" class="com.intellij.execution.actions.StopBackgroundProcessesAction"/>
       <action id="ShowLiveRunConfigurations" class="com.intellij.execution.actions.ShowRunningListAction"/>
 
@@ -423,7 +423,6 @@
     <group id="ToolbarRunGroup">
       <separator/>
       <reference ref="RunAnything"/>
-      <reference ref="RunConfiguration"/>
       <reference ref="RunnerActions"/>
       <reference ref="Stop"/>
       <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>

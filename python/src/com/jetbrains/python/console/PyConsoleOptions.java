@@ -46,7 +46,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
   }
 
   public boolean isShowVariableByDefault() {
-    return myState.myShowVariablesByDefault;
+    return true; //Forcred
   }
 
   public void setShowVariablesByDefault(boolean showVariableByDefault) {
@@ -93,7 +93,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myShowDebugConsoleByDefault = false;
     public boolean myShowVariablesByDefault = true;
     public boolean myIpythonEnabled = true;
-    public boolean myUseExistingConsole = false;
+    public boolean myUseExistingConsole = true; // Turned ON temporary
   }
 
   @Tag("console-settings")

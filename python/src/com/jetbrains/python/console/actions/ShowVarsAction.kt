@@ -13,18 +13,12 @@ import com.jetbrains.python.console.PythonConsoleView
  */
 class ShowVarsAction(private val consoleView: PythonConsoleView, private val consoleComm: PydevConsoleCommunication) : ToggleAction("Show Variables", "Shows active console variables", AllIcons.Debugger.Watch), DumbAware {
 
-  override fun isSelected(e: AnActionEvent): Boolean {
-    return consoleView.isShowVars
+  init {
+    templatePresentation.isVisible = false
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    consoleView.isShowVars = state
-
-    if (state) {
-      consoleView.showVariables(consoleComm)
-    }
-    else {
-      consoleView.restoreWindow()
-    }
   }
+
+  override fun isSelected(e: AnActionEvent) = true
 }
