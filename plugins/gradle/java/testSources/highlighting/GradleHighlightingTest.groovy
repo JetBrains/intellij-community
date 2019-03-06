@@ -81,5 +81,91 @@ class <warning>GrTask</warning> extends DefaultTask {
     }
 }
 """
+
+    testHighlighting "buildSrc/src/main/java/org/buildsrc/JavaTask.java", """
+package org.buildsrc;
+
+import org.gradle.api.DefaultTask;
+import org.gradle.api.tasks.*;
+import org.gradle.api.file.FileCollection;
+
+import java.io.File;
+
+public class JavaTask extends DefaultTask {
+    private String inputString;
+    private String unusedField;
+
+    @TaskAction
+    private void action() {
+    }
+
+    public String <warning>getUnusedField</warning>() {
+        return unusedField;
+    }
+
+    public void <warning>setUnusedField</warning>(String unusedField) {
+        this.unusedField = unusedField;
+    }
+
+    @Input
+    public String getInputString() {
+        return inputString;
+    }
+
+    public void setInputString(String inputString) {
+        this.inputString = inputString;
+    }
+
+    @InputFile
+    public File getInputFile() {
+        return null;
+    }
+
+    @InputFiles
+    public FileCollection getInputFiles() {
+        return null;
+    }
+
+    @InputDirectory
+    public File getInputDirectory() {
+        return null;
+    }
+
+    @OutputDirectory
+    public File getOutputDirectory() {
+        return null;
+    }
+
+    @OutputDirectories
+    public FileCollection getOutputDirectories() {
+        return null;
+    }
+
+    @OutputFile
+    public File getOutputFile() {
+        return null;
+    }
+
+    @LocalState
+    public File getLocalStateFile() {
+        return null;
+    }
+
+    @Destroys
+    public File getDestroyedFile() {
+        return null;
+    }
+
+    @Classpath
+    public FileCollection getClasspath() {
+        return null;
+    }
+
+    @Console
+    public String getConsoleString() {
+        return null;
+    }
+}
+"""
   }
 }
