@@ -63,7 +63,15 @@ abstract class MissingRecentApiInspectionTestBase : PluginModuleTestCase() {
       "library/RecentAnnotation.java",
       "library/OldClass.java",
       "library/OldClassWithDefaultConstructor.java",
-      "library/OldAnnotation.java"
+      "library/OldAnnotation.java",
+
+      "library/RecentKotlinClass.kt",
+      "library/RecentKotlinUtils.kt",
+      "library/RecentKotlinAnnotation.kt",
+
+      "library/OldKotlinClass.kt",
+      "library/OldKotlinAnnotation.kt",
+      "library/OldKotlinClassWithDefaultConstructor.kt"
     )
   }
 
@@ -76,9 +84,38 @@ abstract class MissingRecentApiInspectionTestBase : PluginModuleTestCase() {
         .setExternalAnnotationUrls(arrayOf(annotationsRoot))
     }
 
-    val psiClass = JavaPsiFacade.getInstance(project).findClass("library.RecentClass", GlobalSearchScope.allScope(project))!!
-    val annotations = AnnotationUtil.findAllAnnotations(psiClass, listOf(MissingRecentApiVisitor.AVAILABLE_SINCE_ANNOTATION), false)
-    assertSize(1, annotations)
+    assertAnnotationsFoundForClass("library.RecentClass")
+    assertAnnotationsFoundForClass("library.RecentKotlinClass")
   }
 
+  private fun assertAnnotationsFoundForClass(className: String) {
+    val psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project))!!
+    val annotations = AnnotationUtil.findAllAnnotations(psiClass, listOf(MissingRecentApiVisitor.AVAILABLE_SINCE_ANNOTATION), false)
+    assertNotEmpty(annotations)
+  }
+
+  fun `test highlighting of missing API usages in Java file`() {
+    myFixture.configureByFiles("plugin/missingApiUsages.java")
+    myFixture.checkHighlighting()
+  }
+
+  fun `test highlighting of missing API usages in Kotlin file`() {
+    myFixture.configureByFiles("plugin/missingApiUsages.kt")
+    myFixture.checkHighlighting()
+  }
+
+}
+
+/**
+ * Implementation of [MissingRecentApiInspectionTestBase] for sources with configured IDEA library.
+ */
+class MissingRecentApiWithIdeaLibraryInspectionTest : MissingRecentApiInspectionTestBase() {
+  override fun getProjectDescriptor() = PluginProjectWithIdeaLibraryDescriptor()
+}
+
+/**
+ * Implementation of [MissingRecentApiInspectionTestBase] for sources with configured IDEA JDK.
+ */
+class MissingRecentApiWithIdeaJdkInspectionTest : MissingRecentApiInspectionTestBase() {
+  override fun getProjectDescriptor() = PluginProjectWithIdeaJdkDescriptor()
 }

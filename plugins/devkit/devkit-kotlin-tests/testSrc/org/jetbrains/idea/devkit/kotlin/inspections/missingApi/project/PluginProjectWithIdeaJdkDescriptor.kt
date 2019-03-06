@@ -19,6 +19,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.util.PathUtil
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 import org.jetbrains.idea.devkit.projectRoots.Sandbox
@@ -64,6 +66,9 @@ class PluginProjectWithIdeaJdkDescriptor : LightProjectDescriptor() {
     super.configureModule(module, model, contentEntry)
     val moduleExtension = model.getModuleExtension(LanguageLevelModuleExtension::class.java)
     moduleExtension.languageLevel = LanguageLevel.HIGHEST
+
+    val kotlinStdlibJar = File(PathUtil.getJarPathForClass(Function::class.java))
+    PsiTestUtil.addLibrary(model, "kotlin-stdlib", kotlinStdlibJar.parent, kotlinStdlibJar.name)
   }
 
   private fun SdkModificator.setupInternalJdk(ideaSdk: Sdk, javaJdk: Sdk) {

@@ -1,4 +1,5 @@
 <root>
+  <!-- Java stuff -->
   <item name='library.RecentClass'>
     <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
       <val name="value" val="&quot;2.0&quot;"/>
@@ -40,6 +41,79 @@
     </annotation>
   </item>
   <item name='library.OldAnnotation int recentParam()'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+
+  <!-- Kotlin stuff  -->
+  <item name='library.RecentKotlinClass'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldKotlinClass recentField'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldKotlinClass int getRecentProperty()'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldKotlinClass void setRecentProperty(int)'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldKotlinClass OldKotlinClass()'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldKotlinClass OldKotlinClass(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldKotlinClass void recentMethod()'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldKotlinClass void recentStaticMethod()'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldKotlinClassWithDefaultConstructor OldKotlinClassWithDefaultConstructor()'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.RecentKotlinUtilsKt void recentTopLevelFunction()'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.RecentKotlinUtilsKt void recentExtensionFunction(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item
+      name='library.RecentKotlinUtilsKt void recentInlineExtensionFunction(java.lang.String, kotlin.jvm.functions.Function0&lt;java.lang.String&gt;)'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.RecentKotlinAnnotation'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldKotlinAnnotation int recentParam()'>
     <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
       <val name="value" val="&quot;2.0&quot;"/>
     </annotation>

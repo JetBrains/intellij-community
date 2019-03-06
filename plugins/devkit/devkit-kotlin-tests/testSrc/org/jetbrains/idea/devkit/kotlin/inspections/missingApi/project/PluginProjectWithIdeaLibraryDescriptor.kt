@@ -21,6 +21,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.util.PathUtil
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import java.io.File
 
@@ -54,6 +56,9 @@ class PluginProjectWithIdeaLibraryDescriptor : LightProjectDescriptor() {
 
     val library = createIdeaLibrary(module)
     model.addLibraryEntry(library)
+
+    val kotlinStdlibJar = File(PathUtil.getJarPathForClass(Function::class.java))
+    PsiTestUtil.addLibrary(model, "kotlin-stdlib", kotlinStdlibJar.parent, kotlinStdlibJar.name)
   }
 
   private fun createIdeaLibrary(module: Module): Library {
