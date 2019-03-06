@@ -54,7 +54,7 @@ public final class FileChooserUtil {
     VirtualFile result;
 
     if (toSelect == null && lastPath == null) {
-      result = project == null ? null : ProjectUtil.guessProjectDir(project);
+      result = project == null || project.isDefault() ? null : ProjectUtil.guessProjectDir(project);
     }
     else if (toSelect != null && lastPath != null) {
       if (Boolean.TRUE.equals(descriptor.getUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT))) {
