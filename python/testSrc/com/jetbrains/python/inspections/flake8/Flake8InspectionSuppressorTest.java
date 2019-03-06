@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import java.util.Set;
 
-public class FlakeInspectionSuppressorTest extends LightPlatformCodeInsightFixture4TestCase {
+public class Flake8InspectionSuppressorTest extends LightPlatformCodeInsightFixture4TestCase {
   private Set<String> excluded =
     Sets.newHashSet("PyInterpreterInspection", "PyMandatoryEncodingInspection", "PyMissingOrEmptyDocstringInspection");
 
