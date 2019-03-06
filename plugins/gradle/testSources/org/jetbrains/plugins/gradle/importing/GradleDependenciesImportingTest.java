@@ -885,9 +885,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  //@TargetVersions("5.2+")
   public void testDependencyOnDefaultConfigurationWithAdditionalArtifact() throws Exception {
-    //GradleSystemSettings.getInstance().setGradleVmOptions("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
     createSettingsFile("include 'project1', 'project2'");
     createProjectSubFile("project1/build.gradle",
                          new GradleBuildScriptBuilderEx()
