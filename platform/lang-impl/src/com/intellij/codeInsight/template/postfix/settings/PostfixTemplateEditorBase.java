@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.AnActionButton;
@@ -120,14 +119,13 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
   }
 
   @NotNull
-  protected static Editor createEditor(@NotNull Project project, @NotNull Document document) {
+  protected static Editor createEditor(@Nullable Project project, @NotNull Document document) {
     return TemplateEditorUtil.createEditor(false, document, project);
   }
 
   @NotNull
   private static Editor createSimpleEditor() {
-    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    return createEditor(defaultProject, EditorFactory.getInstance().createDocument(""));
+    return createEditor(null, EditorFactory.getInstance().createDocument(""));
   }
 
   protected final void showAddExpressionTypePopup(@NotNull AnActionButton button) {
