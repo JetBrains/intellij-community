@@ -888,6 +888,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon BalloonInformation = IconLoader.getIcon("/general/balloonInformation.svg");
     /** 16x16 */ public static final Icon BalloonWarning = IconLoader.getIcon("/general/balloonWarning.svg");
     /** 12x12 */ public static final Icon BalloonWarning12 = IconLoader.getIcon("/general/balloonWarning12.svg");
+    /** 8x4 */ public static final Icon ButtonDropTriangle = IconLoader.getIcon("/general/buttonDropTriangle.svg");
     /** 12x12 */ public static final Icon CollapseComponent = IconLoader.getIcon("/general/collapseComponent.svg");
     /** 12x12 */ public static final Icon CollapseComponentHover = IconLoader.getIcon("/general/collapseComponentHover.svg");
     /** 16x16 */ public static final Icon ContextHelp = IconLoader.getIcon("/general/contextHelp.svg");
@@ -1546,7 +1547,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Subtypes = IconLoader.getIcon("/hierarchy/subtypes.svg");
     /** 16x16 */ public static final Icon Supertypes = IconLoader.getIcon("/hierarchy/supertypes.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Modified */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Forward */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Base = AllIcons.General.Modified;
