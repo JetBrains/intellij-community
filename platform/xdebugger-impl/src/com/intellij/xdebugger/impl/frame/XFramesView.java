@@ -73,8 +73,9 @@ public class XFramesView extends XDebugView {
       }
     });
     myFramesList.addMouseListener(new MouseAdapter() {
+      // not mousePressed here, otherwise click in unfocused frames list transfers focus to the new opened editor
       @Override
-      public void mousePressed(final MouseEvent e) {
+      public void mouseReleased(final MouseEvent e) {
         if (myListenersEnabled) {
           int i = myFramesList.locationToIndex(e.getPoint());
           if (i != -1 && myFramesList.isSelectedIndex(i)) {
