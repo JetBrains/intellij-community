@@ -36,6 +36,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -47,6 +48,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.core.IsNot.not;
 
 @RunFirst
 public class ApplicationImplTest extends LightPlatformTestCase {
@@ -831,5 +835,29 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     readAction2.get();
     readAction1.get();
     if (exception != null) throw exception;
+  }
+
+  public void testPluginsHostProperty() {
+    String host = "IntellijIdeaRulezzz";
+
+    String oldHost = System.setProperty(ApplicationInfoImpl.IDEA_PLUGINS_HOST_PROPERTY, host);
+
+    ApplicationInfoImpl applicationInfo = new ApplicationInfoImpl();
+
+    Assert.assertThat(applicationInfo.getPluginManagerUrl(), containsString(host));
+    Assert.assertThat(applicationInfo.getPluginsListUrl(), containsString(host));
+    Assert.assertThat(applicationInfo.getPluginsDownloadUrl(), containsString(host));
+    Assert.assertThat(applicationInfo.getChannelsListUrl(), containsString(host));
+
+    Assert.assertThat(applicationInfo.getPluginManagerUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
+    Assert.assertThat(applicationInfo.getPluginsListUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
+    Assert.assertThat(applicationInfo.getPluginsDownloadUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
+    Assert.assertThat(applicationInfo.getChannelsListUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
+
+    if (oldHost == null) {
+      System.clearProperty(ApplicationInfoImpl.IDEA_PLUGINS_HOST_PROPERTY);
+    } else {
+      System.setProperty(ApplicationInfoImpl.IDEA_PLUGINS_HOST_PROPERTY, oldHost);
+    }
   }
 }
