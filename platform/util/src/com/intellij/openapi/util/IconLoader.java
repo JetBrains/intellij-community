@@ -738,7 +738,7 @@ public final class IconLoader {
         ScaleContext ctx = getScaleContext();
         if (scale != 1) {
           ctx = ctx.copy();
-          ctx.update(OBJ_SCALE.of(scale));
+          ctx.setScale(OBJ_SCALE.of(scale));
         }
 
         ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(key(ctx)));

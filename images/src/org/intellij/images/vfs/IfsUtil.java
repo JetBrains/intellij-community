@@ -31,7 +31,6 @@ import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
-import com.intellij.util.ui.JBUIScale;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.bytesource.ByteSourceArray;
 import org.apache.commons.imaging.formats.ico.IcoImageParser;
@@ -133,7 +132,7 @@ public final class IfsUtil {
             @Override
             public BufferedImage apply(Double zoom, Component ancestor) {
               ScaleContext ctx = ScaleContext.create(ancestor);
-              ctx.update(OBJ_SCALE.of(zoom));
+              ctx.setScale(OBJ_SCALE.of(zoom));
               return cache.getOrProvide(ctx);
             }
           }));
