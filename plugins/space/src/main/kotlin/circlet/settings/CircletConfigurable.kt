@@ -1,6 +1,7 @@
 package circlet.settings
 
 import circlet.auth.*
+import circlet.client.*
 import circlet.client.api.*
 import circlet.common.oauth.*
 import circlet.components.*
@@ -120,7 +121,7 @@ class CircletConfigurable : SearchableConfigurable {
                             connectLt.using { probleLt ->
                                 val client = KCircletClient(probleLt, wsConfig.server, ps, PersistenceConfiguration.nothing)
                                 client.start(accessToken.toTokenInfo())
-                                val nState = fetchState(client)
+                                val nState = client.me.info().toWorkspaceState(client.token)
                                 intendedSettings = CircletServerSettings(true, servername)
                                 state.value = LoginState.Connected(servername, nState)
                             }
