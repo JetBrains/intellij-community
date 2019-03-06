@@ -171,35 +171,35 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
     currentExternalProjectSettings.isResolveModulePerSourceSet = false
     currentExternalProjectSettings.testRunner = TestRunner.CHOOSE_PER_TEST
     val projectData = generateAndImportTemplateProject()
-    assertConfigurationsFromContext(
+    assertProducersFromContext(
       projectData["project"].root,
       "AllInPackageConfigurationProducer",
       "AllInDirectoryGradleConfigurationProducer"
     )
-    assertConfigurationsFromContext(
+    assertProducersFromContext(
       projectData["project"].root.subDirectory("src"),
       "AllInDirectoryGradleConfigurationProducer"
     )
-    assertConfigurationsFromContext(
+    assertProducersFromContext(
       projectData["project"].root.subDirectory("src", "test"),
       "AllInDirectoryGradleConfigurationProducer"
     )
-    assertConfigurationsFromContext(
+    assertProducersFromContext(
       projectData["project"].root.subDirectory("src", "test", "java"),
-      "AbstractAllInDirectoryConfigurationProducer", // ?
+      "AbstractAllInDirectoryConfigurationProducer",
       "AllInDirectoryGradleConfigurationProducer"
     )
-    assertConfigurationsFromContext(
+    assertProducersFromContext(
       projectData["project"].root.subDirectory("src", "test", "java", "pkg"),
-      "AbstractAllInDirectoryConfigurationProducer", // ?
+      "AbstractAllInDirectoryConfigurationProducer",
       "AllInPackageGradleConfigurationProducer"
     )
-    assertConfigurationsFromContext(
+    assertProducersFromContext(
       projectData["project"].root.subDirectory("automation"),
-      "AbstractAllInDirectoryConfigurationProducer", // ?
+      "AbstractAllInDirectoryConfigurationProducer",
       "AllInDirectoryGradleConfigurationProducer"
     )
-    assertConfigurationsFromContext(
+    assertProducersFromContext(
       projectData["module"].root,
       "AllInPackageConfigurationProducer",
       "AllInDirectoryGradleConfigurationProducer"
