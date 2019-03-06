@@ -27,7 +27,6 @@ import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -272,10 +271,6 @@ public class MethodCandidateInfo extends CandidateInfo{
                                               final PsiSubstitutor substitutor,
                                               boolean varargs, boolean applicabilityCheck) {
     Map<PsiElement, CurrentCandidateProperties> map = CURRENT_CANDIDATE.get();
-    if (map == null) {
-      map = ContainerUtil.createConcurrentWeakMap();
-      CURRENT_CANDIDATE.set(map);
-    }
     final PsiElement argumentList = getMarkerList();
     final CurrentCandidateProperties alreadyThere =
       map.put(argumentList, new CurrentCandidateProperties(this, substitutor, varargs, applicabilityCheck));
