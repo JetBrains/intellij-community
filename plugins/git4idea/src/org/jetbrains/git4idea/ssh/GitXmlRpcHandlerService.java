@@ -28,12 +28,12 @@ import static com.intellij.openapi.diagnostic.Logger.getInstance;
  *     <li>Get the script from {@link #getScriptPath()}.</li>
  *     <li>Set up proper environment variable
  *         (e.g. {@code GIT_SSH} for SSH connections, or {@code GIT_ASKPASS} for HTTP) pointing to the script.</li>
- *     <li>{@link #registerHandler(Object) Register} the handler of Git requests.</li>
+ *     <li>{@link #registerHandler(Object, Disposable) Register} the handler of Git requests.</li>
  *     <li>Call Git operation.</li>
  *     <li>If the operation requires user interaction, the registered handler is called via XML RPC protocol.
  *         It can show a dialog in the GUI and return the answer via XML RPC to the external application, that further provides
  *         this value to the Git process.</li>
- *     <li>{@link #unregisterHandler(int) Unregister} the handler after operation has completed.</li>
+ *     <li>{@link #unregisterHandler(UUID) Unregister} the handler after operation has completed.</li>
  *   </ol>
  * </p>
  */
@@ -48,7 +48,7 @@ public abstract class GitXmlRpcHandlerService<T> {
   @Nullable private File myShellScriptPath;
   @NotNull private final Object SCRIPT_FILE_LOCK = new Object();
 
-  @NotNull private final THashMap<UUID, T> handlers = new THashMap<>();
+  @NotNull private final THashMap<UUID, HandlerWrapper> handlers = new THashMap<>();
   @NotNull private final Object HANDLERS_LOCK = new Object();
 
   /**
@@ -108,7 +108,7 @@ public abstract class GitXmlRpcHandlerService<T> {
   protected abstract void customizeScriptGenerator(@NotNull ScriptGenerator generator);
 
   /**
-   * Register handler. Note that handlers must be unregistered using {@link #unregisterHandler(int)}.
+   * Register handler. Note that handlers must be unregistered using {@link #unregisterHandler(UUID)}.
    *
    * @param handler          a handler to register
    * @param parentDisposable a disposable to unregister the handler if it doesn't get unregistered manually
@@ -123,14 +123,18 @@ public abstract class GitXmlRpcHandlerService<T> {
       }
 
       final UUID key = UUID.randomUUID();
-      handlers.put(key, handler);
+      HandlerWrapper handlerWrapper = new HandlerWrapper(handler, key);
+      handlers.put(key, handlerWrapper);
+      Disposer.register(parentDisposable, handlerWrapper);
       return key;
     }
   }
 
   /**
    * Creates an implementation of the xml rpc handler, which methods will be called from the external application.
-   * This method should just delegate the call to the specific handler of type {@link T}, which can be achieved by {@link #getHandler(int)}.
+   * This method should just delegate the call to the specific handler of type {@link T}, which can be achieved by
+   * {@link #getHandler(UUID)}.
+   *
    * @return New instance of the xml rpc handler delegate.
    */
   @NotNull
@@ -143,13 +147,13 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @return the registered handler
    */
   @NotNull
-  protected T getHandler(UUID key) {
+  protected T getHandler(@NotNull UUID key) {
     synchronized (HANDLERS_LOCK) {
-      T rc = handlers.get(key);
-      if (rc == null) {
+      HandlerWrapper handlerWrapper = handlers.get(key);
+      if (handlerWrapper == null) {
         throw new IllegalStateException("No handler for the key " + key);
       }
-      return rc;
+      return handlerWrapper.handler;
     }
   }
 
@@ -158,12 +162,42 @@ public abstract class GitXmlRpcHandlerService<T> {
    *
    * @param key the key to unregister
    */
-  public void unregisterHandler(UUID key) {
+  public void unregisterHandler(@NotNull UUID key) {
+    HandlerWrapper handlerWrapper = removeHandlerWrapper(key); // Remove from handlers
+    handlerWrapper.onRemoved(); // Let the wrapper know that it has been removed from handlers to prevent second removal attempt.
+    Disposer.dispose(handlerWrapper); // Remove from the Disposer's tree.
+  }
+
+  @NotNull
+  private HandlerWrapper removeHandlerWrapper(@NotNull UUID key) {
     synchronized (HANDLERS_LOCK) {
-      if (handlers.remove(key) == null) {
-        LOG.error("The handler " + key + " is not registered");
+      HandlerWrapper handlerWrapper = handlers.remove(key);
+      if (handlerWrapper == null) {
+        throw new IllegalArgumentException("The handler " + key + " is not registered");
       }
+      return handlerWrapper;
     }
   }
 
+  private class HandlerWrapper implements Disposable {
+    @NotNull private final T handler;
+    @NotNull private final UUID key;
+    private boolean removed;
+
+    HandlerWrapper(@NotNull T handler, @NotNull UUID key) {
+      this.handler = handler;
+      this.key = key;
+    }
+
+    @Override
+    public void dispose() {
+      if (!removed) {
+        removeHandlerWrapper(key);
+      }
+    }
+
+    void onRemoved() {
+      removed = true;
+    }
+  }
 }
