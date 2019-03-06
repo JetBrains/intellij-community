@@ -818,6 +818,7 @@
       </group>
       <separator/>
       <reference ref="SearchEverywhere"/>
+      <reference ref="RunAnything"/>
     </group>
 
     <group id="NavBarVcsGroup"/>

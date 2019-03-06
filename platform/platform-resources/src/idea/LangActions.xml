@@ -422,7 +422,6 @@
 
     <group id="ToolbarRunGroup">
       <separator/>
-      <reference ref="RunAnything"/>
       <reference ref="RunConfiguration"/>
       <reference ref="RunnerActions"/>
       <reference ref="Stop"/>
@@ -438,6 +437,7 @@
       <reference id="NavBarToolBarOthers"/>
       <separator/>
       <reference ref="SearchEverywhere"/>
+      <reference ref="RunAnything"/>
     </group>
 
     <group id="Bookmarks" text="Bookmarks">
