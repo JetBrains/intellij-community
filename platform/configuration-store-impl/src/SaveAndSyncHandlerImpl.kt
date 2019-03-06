@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -42,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 private const val LISTEN_DELAY = 15
 
-internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, BaseComponent {
+internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
   private val refreshDelayAlarm = SingleAlarm(Runnable { this.doScheduledRefresh() }, delay = 300, parentDisposable = this)
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
@@ -58,6 +57,13 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
         processTasks()
       }
     }
+  }
+
+  init {
+    // add listeners after some delay - doesn't make sense to listen earlier
+    JobScheduler.getScheduler().schedule(Runnable {
+      ApplicationManager.getApplication().invokeLater { addListeners() }
+    }, LISTEN_DELAY.toLong(), TimeUnit.SECONDS)
   }
 
   private suspend fun processTasks() {
@@ -85,13 +91,6 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
         }
       }
     }
-  }
-
-  override fun initComponent() {
-    // add listeners after some delay - doesn't make sense to listen earlier
-    JobScheduler.getScheduler().schedule(Runnable {
-      ApplicationManager.getApplication().invokeLater { addListeners() }
-    }, LISTEN_DELAY.toLong(), TimeUnit.SECONDS)
   }
 
   @CalledInAwt

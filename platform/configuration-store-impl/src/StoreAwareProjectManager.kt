@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -45,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference
 private val CHANGED_FILES_KEY = Key<MultiMap<ComponentStoreImpl, StateStorage>>("CHANGED_FILES_KEY")
 private val CHANGED_SCHEMES_KEY = Key<MultiMap<SchemeChangeApplicator, SchemeChangeEvent>>("CHANGED_SCHEMES_KEY")
 
-internal class StoreAwareProjectManager : Disposable, StoreReloadManager, BaseComponent {
+internal class StoreAwareProjectManager : Disposable, StoreReloadManager {
   private val reloadBlockCount = AtomicInteger()
   private val blockStackTrace = AtomicReference<String?>()
   private val changedApplicationFiles = LinkedHashSet<StateStorage>()
@@ -99,7 +98,7 @@ internal class StoreAwareProjectManager : Disposable, StoreReloadManager, BaseCo
     }
   }, delay = 300, parentDisposable = this)
 
-  override fun initComponent() {
+  init {
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(STORAGE_TOPIC, object : StorageManagerListener {
       override fun storageFileChanged(event: VFileEvent, storage: StateStorage, componentManager: ComponentManager) {
         if (event.requestor is StoreReloadManager) {
