@@ -43,6 +43,7 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
 
   @Override
   protected void collectAllowedRoots(List<String> roots, PathAssembler.LocalDistribution distribution) {
+    super.collectAllowedRoots(roots, distribution);
     File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
     File generatedGradleJarsDir = new File(gradleUserHomeDir, "caches/" + gradleVersion + "/generated-gradle-jars");
     roots.add(generatedGradleJarsDir.getPath());
@@ -231,13 +232,15 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
     assertUsages(fqn, GlobalSearchScope.projectScope(myProject), count);
   }
 
-  private void assertUsages(Trinity<String, GlobalSearchScope, Integer>... classUsageCount) throws Exception {
+  @SafeVarargs
+  private final void assertUsages(Trinity<String, GlobalSearchScope, Integer>... classUsageCount) throws Exception {
     for (Trinity<String, GlobalSearchScope, Integer> trinity : classUsageCount) {
       assertUsages(trinity.first, trinity.second, trinity.third);
     }
   }
 
-  private void assertUsages(Pair<String, Integer>... classUsageCount) throws Exception {
+  @SafeVarargs
+  private final void assertUsages(Pair<String, Integer>... classUsageCount) throws Exception {
     for (Pair<String, Integer> pair : classUsageCount) {
       assertUsages(Trinity.create(pair.first, GlobalSearchScope.projectScope(myProject), pair.second));
     }
