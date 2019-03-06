@@ -1,7 +1,6 @@
 intellij.configurationScript
 intellij.copyright
 intellij.editorconfig
-intellij.markdown
 intellij.platform.langInjection
 intellij.platform.remoteServers.git
 intellij.properties

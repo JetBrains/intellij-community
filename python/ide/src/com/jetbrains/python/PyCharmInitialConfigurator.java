@@ -73,7 +73,7 @@ public class PyCharmInitialConfigurator {
     Registry.get("ide.ssh.one.time.password").setValue(true);
   }
 
-  private static void disableRunAnything() {
+  public static void disableRunAnything() {
     ApplicationManager.getApplication().invokeLater(() -> ActionManager.getInstance().unregisterAction("RunAnything"), ModalityState.any());
   }
 }
