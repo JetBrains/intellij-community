@@ -7,10 +7,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ReflectionUtil;
 import com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiser;
 import com.jetbrains.python.codeInsight.typing.PyStubPackagesCompatibilityInspection;
@@ -58,21 +56,8 @@ public class Flake8InspectionSuppressor implements InspectionSuppressor {
 
   private boolean isSuppressedByEndOfLine(PsiElement element) {
     // a comment token is always a leaf, the start element is never the comment which is suppressing our warning
-    for (PsiElement leaf = PsiTreeUtil.nextLeaf(element); leaf != null; leaf = PsiTreeUtil.nextLeaf(leaf)) {
-      // end of line reached without a comment before, returning false to not suppress
-      if (leaf instanceof PsiWhiteSpace && leaf.textContains('\n')) {
-        return false;
-      }
-
-      // the leaf is a comment and still on the same line
-      // return true to suppress if it's containing our marker text
-      if (isFlakeLineMarker(leaf, "# noqa")) {
-        return true;
-      }
-    }
-
-    // happens when the end of a file was reached, for example
-    return false;
+    final PsiElement commentOrAnchor = Flake8EndOfLineSuppressionQuickFix.findSameLineCommentOrPrecedingAnchorElement(element);
+    return commentOrAnchor instanceof PsiComment && isFlakeLineMarker(commentOrAnchor, "# noqa");
   }
 
   /**
