@@ -21,7 +21,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.io.*
 import com.intellij.vcs.log.VcsLogProvider
@@ -29,7 +28,6 @@ import com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE
 import com.intellij.vcs.log.util.PersistentUtil.deleteWithRenamingAllFilesStartingWith
 import java.io.File
 import java.io.IOException
-import java.util.*
 
 object PersistentUtil {
   @JvmField
@@ -47,8 +45,8 @@ object PersistentUtil {
   }
 
   private fun calcLogProvidersHash(logProviders: Map<VirtualFile, VcsLogProvider>): Int {
-    val sortedRoots = ContainerUtil.sorted(logProviders.keys, Comparator.comparing<VirtualFile, String> { it -> it.path })
-    return StringUtil.join(sortedRoots, { root -> root.path + "." + logProviders[root]!!.supportedVcs.name }, ".").hashCode()
+    val sortedRoots = logProviders.keys.sortedBy { it.path }
+    return StringUtil.join(sortedRoots, { root -> root.path + "." + logProviders.getValue(root).supportedVcs.name }, ".").hashCode()
   }
 
   @Throws(IOException::class)
