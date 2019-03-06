@@ -1,10 +1,14 @@
 <!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <template>
   <el-tabs v-model="activeName" @tab-click="navigate">
-    <!--  use v-once because `charts` is not going to be changed  -->
-    <el-tab-pane v-once v-for="item in charts" :key="item.name" :label="item.label" :name="item.name" lazy>
+    <el-tab-pane label="Timeline" name="timeline" lazy>
       <keep-alive>
-        <ItemChart :type="item.name"/>
+        <TimelineChart/>
+      </keep-alive>
+    </el-tab-pane>
+    <el-tab-pane label="Stats" name="stats" lazy>
+      <keep-alive>
+        <StatsChart/>
       </keep-alive>
     </el-tab-pane>
   </el-tabs>
@@ -12,15 +16,15 @@
 
 <script lang="ts">
   import {Component, Vue, Watch} from "vue-property-decorator"
-  import ItemChart from "@/charts/ItemChart.vue"
   import {Location} from "vue-router"
-  import {chartDescriptors, ItemChartType} from "@/charts/ItemChartDescriptor"
+  import TimelineChart from "@/views/TimelineChart.vue"
+  import StatsChart from "@/views/StatsChart.vue"
 
-  @Component({components: {ItemChart}})
-  export default class TabbedCharts extends Vue {
-    charts = chartDescriptors
+  const DEFAULT_ACTIVE_TAB = "timeline"
 
-    activeName: ItemChartType = this.charts[0].name
+  @Component({components: {TimelineChart, StatsChart}})
+  export default class TabbedInfoCharts extends Vue {
+    activeName: string = DEFAULT_ACTIVE_TAB
 
     created() {
       this.updateLocation(this.$route)
@@ -32,16 +36,16 @@
     }
 
     private updateLocation(location: Location): void {
-      const tab = location.query == null ? null : location.query.tab
+      const tab = location.query == null ? null : location.query.infoTab
       // do not check `location.path === "/"` because if component displayed, so, active
-      this.activeName = tab == null ? this.charts[0].name : tab as ItemChartType
+      this.activeName = tab == null ? DEFAULT_ACTIVE_TAB : tab as string
     }
 
     navigate(): void {
       this.$router.push({
         query: {
           ...this.$route.query,
-          tab: this.activeName,
+          infoTab: this.activeName,
         },
       })
     }

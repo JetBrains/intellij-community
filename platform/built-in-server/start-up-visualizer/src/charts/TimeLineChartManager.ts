@@ -5,9 +5,6 @@ import {disableGridButKeepBorderLines, TimeLineItem, transformToTimeLineItems} f
 import {XYChartManager} from "@/charts/ChartManager"
 import {DataManager} from "@/state/DataManager"
 import {Item} from "@/state/data"
-import * as semver from "semver"
-
-const statLabelSupportMinVersion = semver.coerce("3")!!
 
 export class TimelineChartManager extends XYChartManager {
   private maxRowIndex = 0
@@ -111,8 +108,7 @@ export class TimelineChartManager extends XYChartManager {
   }
 
   private setStatLabel(data: DataManager) {
-    const version = semver.coerce(data.data.version)
-    if (version == null || !semver.gte(version, statLabelSupportMinVersion)) {
+    if (!data.isStatSupported) {
       this.statLabel.html = ""
       return
     }

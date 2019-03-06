@@ -10,7 +10,6 @@ export interface ChartManager {
 }
 
 function configureCommonChartSettings(chart: am4charts.XYChart) {
-  chart.exporting.menu = new am4core.ExportMenu()
   chart.mouseWheelBehavior = "zoomX"
   chart.scrollbarX = new am4core.Scrollbar()
 
@@ -21,19 +20,26 @@ function configureCommonChartSettings(chart: am4charts.XYChart) {
   chart.cursor = cursor
 }
 
-export abstract class XYChartManager implements ChartManager {
-  protected readonly chart: am4charts.XYChart
-
-  protected constructor(container: HTMLElement, _childHot: __WebpackModuleApi.Hot | null | undefined) {
-    this.chart = am4core.create(container, am4charts.XYChart)
-    configureCommonChartSettings(this.chart)
-
-    // this.addDisposeHandler(childHot)
+export abstract class BaseChartManager<T extends am4charts.Chart> implements ChartManager {
+  protected constructor(protected readonly chart: T) {
+    chart.exporting.menu = new am4core.ExportMenu()
   }
+
+  abstract render(data: DataManager): void
 
   /** @override */
   dispose(): void {
     this.chart.dispose()
+  }
+}
+
+export abstract class XYChartManager extends BaseChartManager<am4charts.XYChart> {
+  protected constructor(container: HTMLElement, _childHot: __WebpackModuleApi.Hot | null | undefined) {
+    super(am4core.create(container, am4charts.XYChart))
+
+    configureCommonChartSettings(this.chart)
+
+    // this.addDisposeHandler(childHot)
   }
 
   abstract render(data: DataManager): void

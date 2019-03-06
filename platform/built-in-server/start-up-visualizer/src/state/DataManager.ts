@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import {InputData, Item} from "./data"
 import {markerNames} from "./StateStorageManager"
+import * as semver from "semver"
+import {SemVer} from "semver"
 
 const markerNameToRangeTitle = new Map<string, string>([["app initialized callback", "app initialized"], ["module loading", "project initialized"]])
 
@@ -9,11 +11,22 @@ export interface ItemStats {
   readonly reportedServiceCount: number
 }
 
+
+const statSupportMinVersion = semver.coerce("3")!!
+
 export class DataManager {
+  private readonly version: SemVer | null
+
   constructor(readonly data: InputData) {
+    this.version = semver.coerce(data.version)
   }
 
   private _markerItems: Array<Item | null> | null = null
+
+  get isStatSupported(): boolean {
+    const version = this.version
+    return version != null && semver.gte(version, statSupportMinVersion)
+  }
 
   get itemStats(): ItemStats {
     const data = this.data
