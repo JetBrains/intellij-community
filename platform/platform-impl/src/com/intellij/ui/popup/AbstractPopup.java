@@ -33,10 +33,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.Alarm;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
@@ -48,8 +45,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 import static java.awt.AWTEvent.MOUSE_EVENT_MASK;
@@ -122,6 +119,7 @@ public class AbstractPopup implements JBPopup {
   InputEvent myDisposeEvent;
 
   private Runnable myFinalRunnable;
+  private Runnable myOkHandler;
   @Nullable private BooleanFunction<KeyEvent> myKeyEventHandler;
 
   protected boolean myOk;
@@ -441,6 +439,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void show(@NotNull RelativePoint aPoint) {
+    if (UiInterceptors.tryIntercept(this)) return;
     HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
     Point screenPoint = aPoint.getScreenPoint();
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
@@ -541,6 +540,8 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showInBestPositionFor(@NotNull Editor editor) {
+    // Intercept before the following assert; otherwise assertion may fail
+    if (UiInterceptors.tryIntercept(this)) return;
     assert editor.getComponent().isShowing() : "Editor must be showing on the screen";
 
     // Set the accessible parent so that screen readers don't announce
@@ -664,6 +665,7 @@ public class AbstractPopup implements JBPopup {
   @Override
   public final void closeOk(@Nullable InputEvent e) {
     setOk(true);
+    myFinalRunnable = FunctionUtil.composeRunnables(myOkHandler, myFinalRunnable);
     cancel(e);
   }
 
@@ -1868,6 +1870,10 @@ public class AbstractPopup implements JBPopup {
       int height = Math.min(screenRectangle.height, myMinSize.height);
       myWindow.setMinimumSize(new Dimension(width, height));
     }
+  }
+  
+  public void setOkHandler(Runnable okHandler) {
+    myOkHandler = okHandler;
   }
 
   @Override

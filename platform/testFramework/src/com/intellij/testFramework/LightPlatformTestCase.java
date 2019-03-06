@@ -78,6 +78,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
+import com.intellij.ui.UiInterceptors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ReflectionUtil;
@@ -449,6 +450,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
+      append(() -> UiInterceptors.clear()).
       append(() -> ourTestCase = null).
       append(() -> CompletionProgressIndicator.cleanupForNextTest()).
       append(() -> {

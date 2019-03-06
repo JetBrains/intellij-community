@@ -5,8 +5,6 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -47,9 +45,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
 
     setText(context.getMessage());
 
-    Application application = ApplicationManager.getApplication();
-
-    if (catchSections.size() == 1 || application.isUnitTestMode()) {
+    if (catchSections.size() == 1) {
       PsiCatchSection selectedSection = catchSections.get(0);
       addTypeToCatch(unhandledExceptions, selectedSection);
     }
