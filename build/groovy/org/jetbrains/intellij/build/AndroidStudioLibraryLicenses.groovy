@@ -125,7 +125,7 @@ class AndroidStudioLibraryLicenses {
                        additionalLibraryNames: ["explainer.jar", "generator.jar", "shared.jar"],
                        license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "Instant run protos", libraryName: "libdeploy_java_proto.jar",
+    new LibraryLicense(name: "Instant run protos", libraryName: "deploy_java_proto.jar",
                        license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Instant run version", libraryName: "libjava_version.jar",
                        license: "Apache 2.0", url: "http://source.android.com/"),
