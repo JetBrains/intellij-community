@@ -229,12 +229,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   private void resolveLinksToBundledSchemes() {
+    List<EditorColorsScheme> brokenSchemesList = new ArrayList<>();
     for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
       if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
         try {
           ((AbstractColorsScheme)scheme).resolveParent(name -> mySchemeManager.findSchemeByName(name));
         }
         catch (InvalidDataException e) {
+          brokenSchemesList.add(scheme);
           String message = "Color scheme '" + scheme.getName() + "'" +
                            " points to incorrect or non-existent default (base) scheme " +
                            e.getMessage();
@@ -242,6 +244,9 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
             new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Incompatible color scheme", message, NotificationType.ERROR));
         }
       }
+    }
+    for (EditorColorsScheme brokenScheme : brokenSchemesList) {
+      mySchemeManager.removeScheme(brokenScheme);
     }
   }
 
