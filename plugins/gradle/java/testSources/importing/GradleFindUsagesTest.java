@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.wrapper.PathAssembler;
 import org.jetbrains.annotations.NotNull;
@@ -217,11 +218,11 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
     PsiClass aClass = psiClasses[0];
     if (methodName != null) {
       PsiMethod[] methods = runInEdtAndGet(() -> aClass.findMethodsByName(methodName, false));
-      int actualUsagesCount = 0;
+      List<UsageInfo> actualUsages = ContainerUtil.newArrayList();
       for (PsiMethod method : methods) {
-        actualUsagesCount += findUsages(method).size();
+        actualUsages.addAll(findUsages(method));
       }
-      assertEquals(count, actualUsagesCount);
+      assertUsagesCount(count, actualUsages);
     }
     else {
       assertUsagesCount(count, aClass);
@@ -246,8 +247,11 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
     }
   }
 
-  private static void assertUsagesCount(int expectedUsagesCount, PsiElement resolved) throws Exception {
-    Collection<UsageInfo> usages = findUsages(resolved);
+  private static void assertUsagesCount(int expectedUsagesCount, PsiElement element) throws Exception {
+    assertUsagesCount(expectedUsagesCount, findUsages(element));
+  }
+
+  private static void assertUsagesCount(int expectedUsagesCount, Collection<UsageInfo> usages) throws Exception {
     String message = "Found usges: " + runInEdtAndGet(() -> {
       StringBuilder buf = new StringBuilder();
       for (UsageInfo usage : usages) {
