@@ -16,7 +16,7 @@ import com.intellij.util.SystemProperties
 import java.util.concurrent.atomic.AtomicBoolean
 
 open class CloseProjectWindowHelper {
-  private var isClosingInProgress = AtomicBoolean()
+  private val isClosingInProgress = AtomicBoolean()
 
   protected open val isMacSystemMenu: Boolean
     get() = SystemProperties.getBooleanProperty("idea.test.isMacSystemMenu", SystemInfo.isMacSystemMenu)
@@ -28,42 +28,42 @@ open class CloseProjectWindowHelper {
     get() = GeneralSettings.getInstance().isShowWelcomeScreen
 
   fun windowClosing(project: Project?) {
-    val numberOfOpenedProjects = getNumberOfOpenedProjects()
-    // Exit on Linux and Windows if the only opened project frame is closed.
-    // On macOS behaviour is different - to exit app, quit action should be used, otherwise welcome frame is shown.
-    // If welcome screen is disabled, behaviour on all OS is the same.
-    if (numberOfOpenedProjects > 1 || (numberOfOpenedProjects == 1 && isShowWelcomeScreen)) {
-      closeProjectAndShowWelcomeFrameIfNoProjectOpened(project)
+    if (!isClosingInProgress.compareAndSet(false, true)) {
+      return
     }
-    else {
-      quitApp()
+
+    try {
+      val numberOfOpenedProjects = getNumberOfOpenedProjects()
+      // Exit on Linux and Windows if the only opened project frame is closed.
+      // On macOS behaviour is different - to exit app, quit action should be used, otherwise welcome frame is shown.
+      // If welcome screen is disabled, behaviour on all OS is the same.
+      if (numberOfOpenedProjects > 1 || (numberOfOpenedProjects == 1 && isShowWelcomeScreen)) {
+        closeProjectAndShowWelcomeFrameIfNoProjectOpened(project)
+      }
+      else {
+        quitApp()
+      }
+    }
+    finally {
+      isClosingInProgress.set(false)
     }
   }
 
   protected open fun getNumberOfOpenedProjects() = ProjectManager.getInstance().openProjects.size
 
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {
-    if (!isClosingInProgress.compareAndSet(false, true)) {
-      return
-    }
-
-    try {
-      runInSaveOnFrameDeactivationDisabledMode {
-        if (project != null && project.isOpen) {
-          ProjectManagerEx.getInstanceEx().closeAndDispose(project)
-        }
-
-        val app = ApplicationManager.getApplication()
-        app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed()
-        // app must be not saved as part of project closing because app settings maybe modified as result - e.g. RecentProjectsManager state
-        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(app)
+    runInSaveOnFrameDeactivationDisabledMode {
+      if (project != null && project.isOpen) {
+        ProjectManagerEx.getInstanceEx().closeAndDispose(project)
       }
 
-      WelcomeFrame.showIfNoProjectOpened()
+      val app = ApplicationManager.getApplication()
+      app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed()
+      // app must be not saved as part of project closing because app settings maybe modified as result - e.g. RecentProjectsManager state
+      SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(app)
     }
-    finally {
-      isClosingInProgress.set(false)
-    }
+
+    WelcomeFrame.showIfNoProjectOpened()
   }
 
   protected open fun quitApp() {
