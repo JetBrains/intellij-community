@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.ReflectionUtil;
@@ -14,6 +15,7 @@ import com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiser;
 import com.jetbrains.python.codeInsight.typing.PyStubPackagesCompatibilityInspection;
 import com.jetbrains.python.inspections.PyInterpreterInspection;
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection;
+import com.jetbrains.python.psi.PyFile;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,11 +49,15 @@ public class Flake8InspectionSuppressor implements InspectionSuppressor {
   public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId) {
     // suppress Python inspections only
     // this might be a bit too eager here, we'll see if there are use cases to also suppress other types of inspections
-    if (!toolId.startsWith("Py") || ourWhitelistedInspectionIds.contains(toolId)) {
+    if (!isForAllowedInspectionInPythonFile(element, toolId)) {
       return false;
     }
 
     return isSuppressedByEndOfLine(element) || isSuppressedByLineComment(element);
+  }
+
+  private boolean isForAllowedInspectionInPythonFile(@NotNull PsiElement element, @NotNull String toolId) {
+    return element.getContainingFile() instanceof PyFile && toolId.startsWith("Py") && !ourWhitelistedInspectionIds.contains(toolId);
   }
 
   private boolean isSuppressedByEndOfLine(PsiElement element) {
@@ -88,6 +94,10 @@ public class Flake8InspectionSuppressor implements InspectionSuppressor {
   @NotNull
   @Override
   public SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
+    if (element == null || element instanceof PsiFileSystemItem || !isForAllowedInspectionInPythonFile(element, toolId)) {
+      return SuppressQuickFix.EMPTY_ARRAY;
+    }
+    
     return new SuppressQuickFix[]{
       new Flake8EndOfLineSuppressionQuickFix()
     };

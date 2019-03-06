@@ -2,6 +2,8 @@
 package com.jetbrains.python.inspections.flake8;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyUnusedLocalInspection;
@@ -13,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public class Flake8EndOfLineSuppressionQuickFixTest extends PyTestCase {
 
   public void testInlineComment() {
-    doTestSuppressQuickFix(
+    doTest(
       "def foo():\n" +
       "    <caret>x = 1",
 
@@ -22,49 +24,60 @@ public class Flake8EndOfLineSuppressionQuickFixTest extends PyTestCase {
   }
 
   public void testMultilineStatementWithWhitespaces() {
-    doTestSuppressQuickFix("def foo():\n" +
-                           "    <caret>x = [1,\n" +
-                           "         2,\n" +
-                           "         3]\n",
-                           "def foo():\n" +
-                           "    <caret>x = [1,  # noqa\n" +
-                           "         2,\n" +
-                           "         3]\n");
+    doTest("def foo():\n" +
+           "    <caret>x = [1,\n" +
+           "         2,\n" +
+           "         3]\n",
+           "def foo():\n" +
+           "    <caret>x = [1,  # noqa\n" +
+           "         2,\n" +
+           "         3]\n");
   }
 
   public void testCommentCannotBeInsertedAtSameLineBecauseOfMultilineStringLiteral() {
-    doTestSuppressQuickFix("def foo():\n" +
-                           "    <caret>x = \"\"\"\n" +
-                           "    bar\n" +
-                           "    \"\"\"",
-                           "def foo():\n" +
-                           "    <caret>x = \"\"\"\n" +
-                           "    bar\n" +
-                           "    \"\"\"");
+    doTest("def foo():\n" +
+           "    <caret>x = \"\"\"\n" +
+           "    bar\n" +
+           "    \"\"\"",
+           "def foo():\n" +
+           "    <caret>x = \"\"\"\n" +
+           "    bar\n" +
+           "    \"\"\"");
   }
 
   public void testCommentCannotBeInsertedAtSameLineBecauseContinuationBackslashes() {
-    doTestSuppressQuickFix("def foo():\n" +
-                           "    <caret>x = 'foo' \\\n" +
-                           "        'bar'",
-                           "def foo():\n" +
-                           "    <caret>x = 'foo' \\\n" +
-                           "        'bar'");
+    doTest("def foo():\n" +
+           "    <caret>x = 'foo' \\\n" +
+           "        'bar'",
+           "def foo():\n" +
+           "    <caret>x = 'foo' \\\n" +
+           "        'bar'");
   }
 
   public void testExistingComment() {
-    doTestSuppressQuickFix("def foo():\n" +
-                           "    <caret>x = 1  # existing\n",
-                           "def foo():\n" +
-                           "    <caret>x = 1  # noqa # existing\n");
+    doTest("def foo():\n" +
+           "    <caret>x = 1  # existing\n",
+           "def foo():\n" +
+           "    <caret>x = 1  # noqa # existing\n");
   }
 
-  private void doTestSuppressQuickFix(@NotNull String before, @NotNull String after) {
+  public void testNotAvailableForSpellchecker() {
+    doNegativeTest("ms<caret>typed = 42", SpellCheckingInspection.class);
+  }
+
+  private void doTest(@NotNull String before, @NotNull String after) {
     myFixture.configureByText(PythonFileType.INSTANCE, before);
     myFixture.enableInspections(PyUnusedLocalInspection.class);
     myFixture.doHighlighting();
     final IntentionAction intentionAction = myFixture.findSingleIntention("Suppress with flake8 # noqa");
     myFixture.launchAction(intentionAction);
     myFixture.checkResult(after);
+  }
+
+  public void doNegativeTest(@NotNull String text, @NotNull Class<? extends LocalInspectionTool> cls) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    myFixture.enableInspections(cls);
+    myFixture.doHighlighting();
+    assertEmpty(myFixture.filterAvailableIntentions("Suppress with flake8 # noqa"));
   }
 }
