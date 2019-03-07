@@ -34,6 +34,8 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
         addBooleanUsage(properties, defaultProperties, usages, "details", CommonUiProperties.SHOW_DETAILS);
         addBooleanUsage(properties, defaultProperties, usages, "diffPreview", CommonUiProperties.SHOW_DIFF_PREVIEW);
+        addBooleanUsage(properties, defaultProperties, usages, "parentChanges", SHOW_CHANGES_FROM_PARENTS);
+        addBooleanUsage(properties, defaultProperties, usages, "onlyAffectedChanges", SHOW_ONLY_AFFECTED_CHANGES);
         addBooleanUsage(properties, defaultProperties, usages, "long.edges", SHOW_LONG_EDGES);
 
         addEnumUsage(properties, defaultProperties, usages, "sort", BEK_SORT_TYPE);
