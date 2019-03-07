@@ -11,6 +11,8 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -21,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @TestDataPath("$CONTENT_ROOT/../testData/completion")
 public class PythonCompletionTest extends PyTestCase {
@@ -57,6 +60,13 @@ public class PythonCompletionTest extends PyTestCase {
   private List<String> doTestByText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     myFixture.completeBasic();
+    return myFixture.getLookupElementStrings();
+  }
+
+  @Nullable
+  private List<String> doTestByText(@NotNull String text, int invocationCnt) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    myFixture.complete(CompletionType.BASIC, invocationCnt);
     return myFixture.getLookupElementStrings();
   }
 
@@ -1423,6 +1433,15 @@ public class PythonCompletionTest extends PyTestCase {
                                                 "bar['<caret>']");
     assertNotNull(suggested);
     assertContainsElements(suggested, "'k1'", "'k2'");
+  }
+
+  public void testPathCompletion() {
+    String newPath = myFixture.getTestDataPath() + "/pathCompletion/";
+    final List<String> suggested = doTestByText("read_csv(\"" + newPath + "<caret>\")", 2);
+    String trimmedPath = newPath.startsWith("/") ? newPath.substring(1) : newPath;
+    String[] strings = ArrayUtil.toStringArray(
+      ContainerUtil.map(new String[]{"first", "second"}, s -> trimmedPath + s));
+    assertContainsElements(suggested, strings);
   }
 
   private void assertNoVariantsInExtendedCompletion() {
