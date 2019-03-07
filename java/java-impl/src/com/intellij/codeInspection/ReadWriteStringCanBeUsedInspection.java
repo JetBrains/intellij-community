@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
@@ -138,7 +138,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
       if (!isUtf8Charset(charsetExpression)) {
         argumentList.addAfter(ct.markUnchanged(charsetExpression), bytesArg);
       }
-      PsiLocalVariable variable = ExpressionUtils.resolveLocalVariable(PsiUtil.skipParenthesizedExprDown(bytesArg));
+      PsiLocalVariable variable = ExpressionUtils.resolveLocalVariable(bytesArg);
       ct.replaceAndRestoreComments(bytesArg, stringExpression);
       if (variable != null) {
         ct = new CommentTracker();
