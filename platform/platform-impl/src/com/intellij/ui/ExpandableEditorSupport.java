@@ -59,7 +59,7 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
   @NotNull
   @Override
   protected Content prepare(@NotNull EditorTextField field, @NotNull Function<? super String, String> onShow) {
-    EditorTextField popup = new EditorTextField(onShow.fun(field.getText()), field.getProject(), field.getFileType());
+    EditorTextField popup = createPopupEditor(field, onShow.fun(field.getText()));
     Color background = field.getBackground();
     popup.setBackground(background);
     popup.setOneLineMode(false);
@@ -88,6 +88,11 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
         if (editor instanceof EditorEx) updateFieldFolding((EditorEx)editor);
       }
     };
+  }
+
+  @NotNull
+  protected EditorTextField createPopupEditor(@NotNull EditorTextField field, String text) {
+    return new EditorTextField(text, field.getProject(), field.getFileType());
   }
 
   private static void copyCaretPosition(@NotNull Editor destination, Editor source) {
