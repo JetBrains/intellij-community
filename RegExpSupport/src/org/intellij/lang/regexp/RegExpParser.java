@@ -492,7 +492,11 @@ public class RegExpParser implements PsiParser, LightPsiParser {
           builder.advanceLexer();
         }
         if (builder.getTokenType() == RegExpTT.NAME) {
-          builder.advanceLexer();
+          builder.advanceLexer(); //name
+          if (myCapabilities.contains(RegExpCapability.PROPERTY_VALUES) && builder.getTokenType() == RegExpTT.EQ) {
+            builder.advanceLexer(); //eq
+            checkMatches(builder, RegExpTT.NAME, "Property value expected");
+          }
           checkMatches(builder, RegExpTT.RBRACE, "Unclosed property");
         }
         else
