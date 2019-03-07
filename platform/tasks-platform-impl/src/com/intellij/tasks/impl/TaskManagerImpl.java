@@ -133,7 +133,9 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     project.getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
-        TaskManagerImpl.this.projectOpened();
+        if (myProject == project) {
+          TaskManagerImpl.this.projectOpened();
+        }
       }
     });
   }
