@@ -18,6 +18,7 @@ import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.command.impl.DummyProject;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -258,12 +259,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @TestOnly
   private Collection<Project> getLeakedProjects() {
-    myProjects.remove(getDefaultProject()); // process queue
+    myProjects.remove(DummyProject.getInstance()); // process queue
     return myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).collect(Collectors.toCollection(UnsafeWeakList::new));
   }
   @TestOnly
   private int getLeakedProjectsCount() {
-    myProjects.remove(getDefaultProject()); // process queue
+    myProjects.remove(DummyProject.getInstance()); // process queue
     return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).count();
   }
 
