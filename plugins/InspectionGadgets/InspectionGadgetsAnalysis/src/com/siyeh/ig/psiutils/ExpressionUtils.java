@@ -1466,9 +1466,8 @@ public class ExpressionUtils {
         case "printf":
         case "format":
           if (arguments.length < 1) return false;
-          final PsiParameterList parameterList = method.getParameterList();
-          if (parameterList.getParametersCount() < 1) return false;
-          final PsiParameter[] parameters = parameterList.getParameters();
+          final PsiParameter[] parameters = method.getParameterList().getParameters();
+          if (parameters.length == 0) return false;
           final PsiParameter parameter = parameters[0];
           final PsiType firstParameterType = parameter.getType();
           final int minArguments = firstParameterType.equalsToText("java.util.Locale") ? 4 : 3;
