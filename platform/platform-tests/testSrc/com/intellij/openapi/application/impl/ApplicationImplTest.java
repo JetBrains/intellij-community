@@ -842,22 +842,24 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
     String oldHost = System.setProperty(ApplicationInfoImpl.IDEA_PLUGINS_HOST_PROPERTY, host);
 
-    ApplicationInfoImpl applicationInfo = new ApplicationInfoImpl();
+    try {
+      ApplicationInfoImpl applicationInfo = new ApplicationInfoImpl();
 
-    Assert.assertThat(applicationInfo.getPluginManagerUrl(), containsString(host));
-    Assert.assertThat(applicationInfo.getPluginsListUrl(), containsString(host));
-    Assert.assertThat(applicationInfo.getPluginsDownloadUrl(), containsString(host));
-    Assert.assertThat(applicationInfo.getChannelsListUrl(), containsString(host));
+      Assert.assertThat(applicationInfo.getPluginManagerUrl(), containsString(host));
+      Assert.assertThat(applicationInfo.getPluginsListUrl(), containsString(host));
+      Assert.assertThat(applicationInfo.getPluginsDownloadUrl(), containsString(host));
+      Assert.assertThat(applicationInfo.getChannelsListUrl(), containsString(host));
 
-    Assert.assertThat(applicationInfo.getPluginManagerUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
-    Assert.assertThat(applicationInfo.getPluginsListUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
-    Assert.assertThat(applicationInfo.getPluginsDownloadUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
-    Assert.assertThat(applicationInfo.getChannelsListUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
-
-    if (oldHost == null) {
-      System.clearProperty(ApplicationInfoImpl.IDEA_PLUGINS_HOST_PROPERTY);
-    } else {
-      System.setProperty(ApplicationInfoImpl.IDEA_PLUGINS_HOST_PROPERTY, oldHost);
+      Assert.assertThat(applicationInfo.getPluginManagerUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
+      Assert.assertThat(applicationInfo.getPluginsListUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
+      Assert.assertThat(applicationInfo.getPluginsDownloadUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
+      Assert.assertThat(applicationInfo.getChannelsListUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
+    } finally {
+      if (oldHost == null) {
+        System.clearProperty(ApplicationInfoImpl.IDEA_PLUGINS_HOST_PROPERTY);
+      } else {
+        System.setProperty(ApplicationInfoImpl.IDEA_PLUGINS_HOST_PROPERTY, oldHost);
+      }
     }
   }
 }
