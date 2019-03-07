@@ -20,6 +20,7 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -69,7 +70,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   private static final Set<String> UNDECLARED_STD_TYPES = new HashSet<>();
   @NonNls private static final String INCLUDE_TAG_NAME = "include";
   @NonNls private static final String REDEFINE_TAG_NAME = "redefine";
-  private static final ThreadLocal<Set<PsiFile>> myRedefinedDescriptorsInProcessing = new ThreadLocal<>();
+  private static final RecursionGuard myRedefinedDescriptorsInProcessing = RecursionManager.createGuard("myRedefinedDescriptorsInProcessing");
   private final Map<QNameKey, CachedValue<XmlElementDescriptor>> myDescriptorsMap = Collections.synchronizedMap(new HashMap<QNameKey, CachedValue<XmlElementDescriptor>>());
   private final Map<Pair<QNameKey, XmlTag>, CachedValue<TypeDescriptor>> myTypesMap = Collections.synchronizedMap(new HashMap<Pair<QNameKey,XmlTag>, CachedValue<TypeDescriptor>>());
   private XmlFile myFile;
@@ -102,13 +103,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
           addDependency(xmlFile, visited);
         }
       } else if (equalsToSchemaName(tag, REDEFINE_TAG_NAME)) {
-        myRedefinedDescriptorsInProcessing.set(visited);
-        try {
+        myRedefinedDescriptorsInProcessing.doPreventingRecursion(tag, false, () -> {
           final XmlFile file = getRedefinedElementDescriptorFile(tag);
           addDependency(file, visited);
-        } finally {
-          myRedefinedDescriptorsInProcessing.set(null);
-        }
+          return null;
+        });
       }
     }
 
@@ -935,10 +934,6 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     }
 
     final THashSet<PsiFile> dependenciesSet = new THashSet<>();
-    final Set<PsiFile> redefineProcessingSet = myRedefinedDescriptorsInProcessing.get();
-    if (redefineProcessingSet != null) {
-      dependenciesSet.addAll(redefineProcessingSet);
-    }
     collectDependencies(myTag, myFile, dependenciesSet);
     dependencies = ArrayUtil.toObjectArray(dependenciesSet);
   }
