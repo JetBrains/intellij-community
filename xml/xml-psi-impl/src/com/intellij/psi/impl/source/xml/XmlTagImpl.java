@@ -976,7 +976,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @NotNull
-  protected XmlAttribute createAttribute(String qname, String value) {
+  protected XmlAttribute createAttribute(@NotNull String qname, @NotNull String value) {
     return XmlElementFactory.getInstance(getProject()).createAttribute(qname, value, this);
   }
 
