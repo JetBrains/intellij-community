@@ -15,7 +15,7 @@ import runtime.reactive.*
 val circletWorkspace get() = application.getComponent<CircletWorkspaceComponent>()
 
 // monitors CircletConfigurable state, creates and exposed instance of Workspace, provides various state properties and callbacks.
-class CircletWorkspaceComponent : ApplicationComponent, LifetimedComponent by SimpleLifetimedComponent() {
+class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), LifetimedComponent by SimpleLifetimedComponent() {
 
     private val workspacesLifetimes = SequentialLifetimes(lifetime)
     val workspaces = mutableProperty<WorkspaceManager?>(null)
@@ -30,7 +30,7 @@ class CircletWorkspaceComponent : ApplicationComponent, LifetimedComponent by Si
             val lt = workspacesLifetimes.next()
             if (settingsOnStartup.server.isNotBlank() && settingsOnStartup.enabled) {
                 val wsConfig = ideaConfig(settingsOnStartup.server)
-                val wss = WorkspaceManager(lt, WorkspaceManagerHost(), IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
+                val wss = WorkspaceManager(lt, this@CircletWorkspaceComponent, IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
                 workspaces.value = wss
                 wss.signInNonInteractive()
             }
@@ -50,12 +50,16 @@ class CircletWorkspaceComponent : ApplicationComponent, LifetimedComponent by Si
         }
     }
 
+    override suspend fun authFailed() {
+        authCheckFailedNotification(lifetime)
+    }
+
     suspend fun applyState(state: WorkspaceState?) {
         val lt = workspacesLifetimes.next()
         val settings = circletSettings.settings.value
         val wsConfig = ideaConfig(settings.server)
         if (state != null && settings.server.isNotBlank() && settings.enabled) {
-            val wss = WorkspaceManager(lt, WorkspaceManagerHost(), IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
+            val wss = WorkspaceManager(lt, this, IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
             workspaces.value = wss
             wss.signInWithWorkspaceState(state)
         }
@@ -79,7 +83,9 @@ private fun notifyAuthFailed(lifetime: Lifetime) {
 }
 
 private fun authCheckFailedNotification(lifetime: Lifetime) {
-    notify(lifetime, "Not authenticated.<br> <a href=\"sign-in\">Sign in</a>", {})
+    notify(lifetime, "Not authenticated.<br> <a href=\"sign-in\">Sign in</a>", {
+
+    })
 }
 
 private fun configure() {
