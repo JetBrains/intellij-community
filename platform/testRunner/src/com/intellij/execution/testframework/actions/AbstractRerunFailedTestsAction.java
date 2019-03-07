@@ -30,7 +30,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -185,7 +184,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
                                                         boolean cellHasFocus) {
             final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (value instanceof Executor) {
-              setText(UIUtil.removeMnemonic(((Executor)value).getStartActionText()));
+              setText(((Executor)value).getActionName());
               setIcon(((Executor)value).getIcon());
             }
             return component;
