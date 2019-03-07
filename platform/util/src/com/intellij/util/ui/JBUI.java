@@ -973,11 +973,6 @@ public class JBUI {
       for (UpdateListener l : listeners) {
         l.contextUpdated();
       }
-
-      @NotNull
-      public static Color hoverSeparatorColor() {
-        return JBColor.namedColor("ActionButton.hoverSeparatorColor", new JBColor(Gray.xB3, Gray.x6B));
-      }
     }
 
     protected boolean update(@NotNull Scale scale, double value) {
@@ -1552,6 +1547,11 @@ public class JBUI {
       @NotNull
       public static Color hoverBorder() {
         return JBColor.namedColor("ActionButton.hoverBorderColor", Gray.xDF);
+      }
+
+      @NotNull
+      public static Color hoverSeparatorColor() {
+        return JBColor.namedColor("ActionButton.hoverSeparatorColor", new JBColor(Gray.xB3, Gray.x6B));
       }
     }
 
