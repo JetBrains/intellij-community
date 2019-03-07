@@ -63,7 +63,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
 
   @NotNull
   public PsiReference[] getReferences() {
-    return myReferences;
+    return myReferences.clone();
   }
 
   private synchronized PsiReference chooseReference(){
