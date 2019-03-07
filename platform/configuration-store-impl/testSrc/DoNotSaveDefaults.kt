@@ -75,10 +75,7 @@ internal class DoNotSaveDefaultsTest {
             && className != "org.jetbrains.plugins.groovy.mvc.MvcConsole") {
           val instance = picoContainer.getComponentInstance(className)
           if (isTestEmptyState && instance is PersistentStateComponent<*>) {
-            val stateClass = ComponentSerializationUtil.getStateClass<Any>(instance.javaClass)
-            val emptyState = deserializeState(Element("state"), stateClass, null)!!
-            @Suppress("UNCHECKED_CAST")
-            (instance as PersistentStateComponent<Any>).loadState(emptyState)
+            testEmptyState(instance)
           }
         }
         true
@@ -120,6 +117,18 @@ internal class DoNotSaveDefaultsTest {
     ))
     println(directoryTree)
     assertThat(directoryTree).isEmpty()
+  }
+
+  private fun testEmptyState(instance: PersistentStateComponent<*>) {
+    val stateClass = ComponentSerializationUtil.getStateClass<Any>(instance.javaClass)
+    val emptyState = try {
+      deserializeState(Element("state"), stateClass, null)!!
+    }
+    catch (e: Exception) {
+      throw RuntimeException("Cannot create empty state for ${instance.javaClass}", e)
+    }
+    @Suppress("UNCHECKED_CAST")
+    (instance as PersistentStateComponent<Any>).loadState(emptyState)
   }
 }
 
