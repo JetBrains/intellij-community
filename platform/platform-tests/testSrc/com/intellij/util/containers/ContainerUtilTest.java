@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import junit.framework.TestCase;
 import one.util.streamex.IntStreamEx;
@@ -96,23 +97,22 @@ public class ContainerUtilTest extends TestCase {
     ss.add("b");
     ss.add("c");
 
-    String log = "";
+    StringBuilder log = new StringBuilder();
     for (String s : ss) {
-      log += s;
+      log.append(s);
     }
 
     for (String s : ContainerUtil.iterateBackward(ss)) {
-      log += s;
+      log.append(s);
     }
 
-    assertEquals("abc" + "cba", log);
+    assertEquals("abc" + "cba", log.toString());
   }
 
   public void testLockFreeSingleThreadPerformance() {
-    final List<Object> my = new LockFreeCopyOnWriteArrayList<>();
     final List<Object> stock = new CopyOnWriteArrayList<>();
-
     measure(stock);
+    final List<Object> my = new LockFreeCopyOnWriteArrayList<>();
     measure(my);
     measure(stock);
     measure(my); // warm up
@@ -310,5 +310,14 @@ public class ContainerUtilTest extends TestCase {
     assertArrayEquals(new int[]{0, 4}, m);
     m = ArrayUtil.mergeSortedArrays(a2, a1, true);
     assertArrayEquals(new int[]{0, 4}, m);
+  }
+
+  public void testImmutableListSubList() {
+    List<Integer> list = ContainerUtil.immutableList(0, 1, 2, 3, 4);
+    List<Integer> subList = list.subList(1, 4);
+    UsefulTestCase.assertOrderedEquals(subList, 1, 2, 3);
+    List<Integer> subSubList = subList.subList(1, 2);
+    UsefulTestCase.assertOrderedEquals(subSubList, 2);
+    assertEquals(new ArrayList<>(subSubList), subSubList);
   }
 }
