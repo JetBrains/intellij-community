@@ -96,7 +96,6 @@ public class JdkChooserPanel extends JPanel {
    * Sets the JDK types which may be shown in the panel.
    *
    * @param allowedJdkTypes the array of JDK types which may be shown, or null if all JDK types are allowed.
-   * @since 7.0.3
    */
   public void setAllowedJdkTypes(@Nullable final SdkType[] allowedJdkTypes) {
     myAllowedJdkTypes = allowedJdkTypes;

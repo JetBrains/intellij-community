@@ -5,6 +5,7 @@ import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.project.IntelliJProjectConfiguration
@@ -16,16 +17,27 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 final class RepositoryTestLibrary implements TestLibrary {
 
   private final String[] myCoordinates
+  private final DependencyScope myDependencyScope
 
   RepositoryTestLibrary(String... coordinates) {
+    this(DependencyScope.COMPILE, coordinates)
+  }
+
+  RepositoryTestLibrary(String coordinates, DependencyScope dependencyScope) {
+    this(dependencyScope, coordinates)
+  }
+
+  private RepositoryTestLibrary(DependencyScope dependencyScope, String... coordinates) {
     assert coordinates.length > 0
     myCoordinates = coordinates
+    myDependencyScope = dependencyScope
   }
 
   @Override
   void addTo(@NotNull Module module, @NotNull ModifiableRootModel model) {
     def tableModel = model.moduleLibraryTable.modifiableModel
-    def libraryModel = tableModel.createLibrary(myCoordinates[0]).modifiableModel
+    def library = tableModel.createLibrary(myCoordinates[0])
+    def libraryModel = library.modifiableModel
 
     for (coordinates in myCoordinates) {
       def roots = loadRoots(module.project, coordinates)
@@ -36,6 +48,8 @@ final class RepositoryTestLibrary implements TestLibrary {
 
     libraryModel.commit()
     tableModel.commit()
+
+    model.findLibraryOrderEntry(library).scope = myDependencyScope
   }
 
   private static Collection<OrderRoot> loadRoots(Project project, String coordinates) {

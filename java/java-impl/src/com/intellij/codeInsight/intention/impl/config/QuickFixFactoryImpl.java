@@ -930,7 +930,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   } 
   
   @Override
-  public IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock) {
-    return new CreateDefaultBranchFix(switchBlock);
+  public IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, String message) {
+    return new CreateDefaultBranchFix(switchBlock, message);
   } 
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.OldComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
@@ -245,8 +246,16 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
             myExtensions = MultiMap.createSmart();
           }
           String ns = child.getAttributeValue("defaultExtensionNs");
-          for (Element extension : child.getChildren()) {
-            myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension, ns), extension);
+          for (Element extensionElement : child.getChildren()) {
+            String os = extensionElement.getAttributeValue("os");
+            if (os != null) {
+              extensionElement.removeAttribute("os");
+              if (!Extensions.isComponentSuitableForOs(os)) {
+                continue;
+              }
+            }
+
+            myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extensionElement, ns), extensionElement);
           }
         }
         break;

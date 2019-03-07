@@ -16,8 +16,6 @@ import java.util.regex.Pattern
 /**
  * The information about a single log file displayed in the console when the configuration
  * is run.
- *
- * @since 5.1
  */
 @Tag("log_file")
 class LogFileOptions : BaseState {

@@ -1,4 +1,4 @@
-// "Convert to local" "true"
+// "Convert field to local variable in method 'Test'" "true"
 class Test {
 
   private final String f<caret>ield;

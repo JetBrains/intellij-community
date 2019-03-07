@@ -8,6 +8,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.configuration.PersistentAwareRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.ide.plugins.PluginManagerCore
@@ -196,7 +197,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       }
     }
 
-    deserializeConfigurationFrom(configuration, element)
+    deserializeConfigurationFrom(configuration, element, isTemplate)
 
     // must be after deserializeConfigurationFrom
     wasSingletonSpecifiedExplicitly = false
@@ -299,8 +300,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
-    configuration.checkConfiguration()
+    var warning: RuntimeConfigurationWarning?
+
+    warning = doCheck { configuration.checkConfiguration() }
     if (configuration !is RunConfigurationBase<*>) {
+      if (warning != null) {
+        throw warning
+      }
       return
     }
 
@@ -309,11 +315,26 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     runners.addAll(configurationPerRunnerSettings.settings.keys)
     for (runner in runners) {
       if (executor == null || runner.canRun(executor.id, configuration)) {
-        configuration.checkRunnerSettings(runner, runnerSettings.settings.get(runner), configurationPerRunnerSettings.settings.get(runner))
+        val runnerWarning = doCheck { configuration.checkRunnerSettings(runner, runnerSettings.settings[runner], configurationPerRunnerSettings.settings[runner]) }
+        if (warning == null && runnerWarning != null) warning = runnerWarning
       }
     }
     if (executor != null) {
-      configuration.checkSettingsBeforeRun()
+      val beforeRunWarning = doCheck { configuration.checkSettingsBeforeRun() }
+      if (warning == null && beforeRunWarning != null) warning = beforeRunWarning
+    }
+
+    if (warning != null) {
+      throw warning
+    }
+  }
+
+  private inline fun doCheck(crossinline check: () -> Unit): RuntimeConfigurationWarning? {
+    try {
+      check()
+      return null
+    } catch (ex: RuntimeConfigurationWarning) {
+      return ex
     }
   }
 
@@ -387,6 +408,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       else -> null
     }
   }
+
+  fun needsToBeMigrated(): Boolean = (_configuration as? PersistentAwareRunConfiguration)?.needsToBeMigrated() ?: false
 
   private abstract inner class RunnerItem<T>(private val childTagName: String) {
     val settings = THashMap<ProgramRunner<*>, T>()
@@ -497,19 +520,17 @@ private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
   get() = ApplicationManager.getApplication().isUnitTestMode || !isShared
 
 fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
-  if (configuration is PersistentStateComponent<*>) {
-    serializeStateInto(configuration, element)
-  }
-  else {
-    configuration.writeExternal(element)
+  when (configuration) {
+    is PersistentStateComponent<*> -> serializeStateInto(configuration, element)
+    is PersistentAwareRunConfiguration -> configuration.writePersistent(element)
+    else -> configuration.writeExternal(element)
   }
 }
 
-fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element) {
-  if (configuration is PersistentStateComponent<*>) {
-    deserializeAndLoadState(configuration, element)
-  }
-  else {
-    configuration.readExternal(element)
+fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element, isTemplate: Boolean = false) {
+  when (configuration) {
+    is PersistentStateComponent<*> -> deserializeAndLoadState(configuration, element)
+    is PersistentAwareRunConfiguration -> configuration.readPersistent(element, isTemplate)
+    else -> configuration.readExternal(element)
   }
 }

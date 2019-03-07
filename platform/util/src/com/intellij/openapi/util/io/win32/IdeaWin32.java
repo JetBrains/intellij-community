@@ -32,7 +32,6 @@ import java.util.zip.CRC32;
  * Do not use this class directly.
  *
  * @author Dmitry Avdeev
- * @since 12.0
  */
 public class IdeaWin32 {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.win32.IdeaWin32");

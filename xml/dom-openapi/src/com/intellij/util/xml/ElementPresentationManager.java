@@ -46,12 +46,12 @@ public abstract class ElementPresentationManager {
 
   @NotNull
   public <T> Object[] createVariants(Collection<T> elements) {
-    return createVariants(elements, (Function<T, String>)DEFAULT_NAMER);
+    return createVariants(elements, DEFAULT_NAMER);
   }
 
   @NotNull
   public <T> Object[] createVariants(Collection<T> elements, int iconFlags) {
-    return createVariants(elements, (Function<T, String>)DEFAULT_NAMER, iconFlags);
+    return createVariants(elements, DEFAULT_NAMER, iconFlags);
   }
 
   @NotNull

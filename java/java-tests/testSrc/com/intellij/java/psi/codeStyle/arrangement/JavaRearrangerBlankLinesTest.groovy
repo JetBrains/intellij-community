@@ -22,7 +22,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
 
 /**
  * @author Denis Zhdanov
- * @since 8/30/12 12:14 PM
  */
 @CompileStatic
 class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {

@@ -1,13 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.FindUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -33,6 +31,7 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.usages.UsageView;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
@@ -43,8 +42,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
@@ -52,7 +49,6 @@ import java.util.*;
 public class ImplementationViewComponent extends JPanel {
   @NonNls private static final String TEXT_PAGE_KEY = "Text";
   @NonNls private static final String BINARY_PAGE_KEY = "Binary";
-  private static final Logger LOG = Logger.getInstance(ImplementationViewComponent.class);
 
   private ImplementationViewElement[] myElements;
   private int myIndex;
@@ -82,34 +78,12 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private static class FileDescriptor {
-    public final PsiFile myFile;
-    public final String myElementPresentation;
-    private final String myLocationString;
+    @NotNull public final VirtualFile myFile;
+    @NotNull public final String myPresentableText;
 
-    FileDescriptor(PsiFile file, ImplementationViewElement element) {
+    FileDescriptor(@NotNull VirtualFile file, ImplementationViewElement element) {
       myFile = file;
-      final ItemPresentation presentation = element.getPresentation();
-      if (presentation != null) {
-        myElementPresentation = presentation.getPresentableText();
-        myLocationString = presentation.getLocationString();
-      }
-      else {
-        myElementPresentation = element.getName();
-        myLocationString = null;
-      }
-    }
-
-    public String getPresentableName(VirtualFile vFile) {
-      final String presentableName = vFile.getPresentableName();
-      if (myElementPresentation == null) {
-        return presentableName;
-      }
-
-      if (Comparing.strEqual(vFile.getName(), myElementPresentation + "." + vFile.getExtension())){
-        return presentableName + (!StringUtil.isEmptyOrSpaces(myLocationString) ? " " + myLocationString : "");
-      }
-
-      return presentableName + " (" + myElementPresentation + ")";
+      myPresentableText = element.getPresentableText();
     }
   }
 
@@ -159,31 +133,22 @@ public class ImplementationViewComponent extends JPanel {
       myElements = psiElements;
 
       myIndex = index < myElements.length ? index : 0;
-      PsiFile psiFile = myElements[myIndex].getContainingFile();
+      VirtualFile virtualFile = myElements[myIndex].getContainingFile();
 
-      VirtualFile virtualFile = psiFile.getVirtualFile();
-      EditorHighlighter highlighter;
-      if (virtualFile != null)
-        highlighter = HighlighterFactory.createHighlighter(project, virtualFile);
-      else {
-        String fileName = psiFile.getName();  // some artificial psi file, lets do best we can
-        highlighter = HighlighterFactory.createHighlighter(project, fileName);
+      if (virtualFile != null) {
+        EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, virtualFile);
+        ((EditorEx)myEditor).setHighlighter(highlighter);
       }
-
-      ((EditorEx)myEditor).setHighlighter(highlighter);
 
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.weightx = 1;
       myLabel = new JLabel();
       myFileChooser = new ComboBox<>(fileDescriptors.toArray(new FileDescriptor[0]), 250);
-      myFileChooser.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          int index1 = myFileChooser.getSelectedIndex();
-          if (myIndex != index1) {
-            myIndex = index1;
-            updateControls();
-          }
+      myFileChooser.addActionListener(e -> {
+        int index1 = myFileChooser.getSelectedIndex();
+        if (myIndex != index1) {
+          myIndex = index1;
+          updateControls();
         }
       });
       toolbarPanel.add(myFileChooser, gc);
@@ -196,11 +161,10 @@ public class ImplementationViewComponent extends JPanel {
         myFileChooser.setVisible(false);
         myCountLabel.setVisible(false);
 
-        VirtualFile file = psiFile.getVirtualFile();
-        if (file != null) {
-          myLabel.setIcon(getIconForFile(psiFile));
-          myLabel.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
-          myLabel.setText(file.getPresentableName());
+        if (virtualFile != null) {
+          myLabel.setIcon(getIconForFile(virtualFile, project));
+          myLabel.setForeground(FileStatusManager.getInstance(project).getStatus(virtualFile).getColor());
+          myLabel.setText(virtualFile.getPresentableName());
           myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), JBUI.Borders.emptyRight(5)));
         }
         toolbarPanel.add(myLabel, gc);
@@ -224,11 +188,10 @@ public class ImplementationViewComponent extends JPanel {
     myFileChooser.setRenderer(new ListCellRendererWrapper<FileDescriptor>() {
       @Override
       public void customize(JList list, FileDescriptor value, int index, boolean selected, boolean hasFocus) {
-        final PsiFile file = value.myFile;
-        setIcon(getIconForFile(file));
-        final VirtualFile vFile = file.getVirtualFile();
-        setForeground(FileStatusManager.getInstance(project).getStatus(vFile).getColor());
-        setText(value.getPresentableName(vFile));
+        final VirtualFile file = value.myFile;
+        setIcon(getIconForFile(file, project));
+        setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
+        setText(value.myPresentableText);
       }
     });
   }
@@ -239,7 +202,7 @@ public class ImplementationViewComponent extends JPanel {
     String[] result = new String[model.getSize()];
     for (int i = 0; i < model.getSize(); i++) {
       FileDescriptor o = (FileDescriptor)model.getElementAt(i);
-      result[i] = o.getPresentableName(o.myFile.getVirtualFile());
+      result[i] = o.myPresentableText;
     }
     return result;
   }
@@ -253,18 +216,13 @@ public class ImplementationViewComponent extends JPanel {
       myElements = psiElements;
 
       myIndex = index < myElements.length ? index : 0;
-      PsiFile psiFile = myElements[myIndex].getContainingFile();
+      VirtualFile virtualFile = myElements[myIndex].getContainingFile();
 
-      VirtualFile virtualFile = psiFile != null ? psiFile.getVirtualFile() : null;
       EditorHighlighter highlighter;
-      if (virtualFile != null)
+      if (virtualFile != null) {
         highlighter = HighlighterFactory.createHighlighter(project, virtualFile);
-      else {
-        String fileName = psiFile.getName();  // some artificial psi file, lets do best we can
-        highlighter = HighlighterFactory.createHighlighter(project, fileName);
+        ((EditorEx)myEditor).setHighlighter(highlighter);
       }
-
-      ((EditorEx)myEditor).setHighlighter(highlighter);
 
       if (myElements.length > 1) {
         myFileChooser.setVisible(true);
@@ -278,11 +236,10 @@ public class ImplementationViewComponent extends JPanel {
         myFileChooser.setVisible(false);
         myCountLabel.setVisible(false);
 
-        VirtualFile file = psiFile.getVirtualFile();
-        if (file != null) {
-          myLabel.setIcon(getIconForFile(psiFile));
-          myLabel.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
-          myLabel.setText(file.getPresentableName());
+        if (virtualFile != null) {
+          myLabel.setIcon(getIconForFile(virtualFile, project));
+          myLabel.setForeground(FileStatusManager.getInstance(project).getStatus(virtualFile).getColor());
+          myLabel.setText(virtualFile.getPresentableName());
           myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), JBUI.Borders.emptyRight(5)));
           myLabel.setVisible(true);
         }
@@ -312,7 +269,7 @@ public class ImplementationViewComponent extends JPanel {
     }
 
     for (ImplementationViewElement element : elements) {
-      PsiFile file = element.getContainingFile();
+      VirtualFile file = element.getContainingFile();
       if (file == null) continue;
       if (names.size() > 1) {
         files.add(new FileDescriptor(file, element));
@@ -326,8 +283,8 @@ public class ImplementationViewComponent extends JPanel {
     fun.fun(candidates.toArray(new ImplementationViewElement[0]), files);
   }
   
-  private static Icon getIconForFile(PsiFile psiFile) {
-    return psiFile.getNavigationElement().getIcon(0);
+  private static Icon getIconForFile(VirtualFile virtualFile, Project project) {
+    return IconUtil.getIcon(virtualFile, 0, project);
   }
 
   public JComponent getPreferredFocusableComponent() {
@@ -352,8 +309,7 @@ public class ImplementationViewComponent extends JPanel {
 
     final ImplementationViewElement foundElement = myElements[myIndex];
     final Project project = foundElement.getProject();
-    final PsiFile psiFile = foundElement.getContainingFile();
-    final VirtualFile vFile = psiFile != null ? psiFile.getVirtualFile() : null;
+    final VirtualFile vFile = foundElement.getContainingFile();
     if (vFile == null) return;
     final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, vFile);
     for (FileEditorProvider provider : providers) {
@@ -440,8 +396,8 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private void updateLabels() {
-    //TODO: Move from JavaDoc to somewhere more appropriate place.
-    myElements[myIndex].renderToLabel(myLocationLabel);
+    myLocationLabel.setText(myElements[myIndex].getLocationText());
+    myLocationLabel.setIcon(myElements[myIndex].getLocationIcon());
     //noinspection AutoBoxing
     myCountLabel.setText(CodeInsightBundle.message("n.of.m", myIndex + 1, myElements.length));
   }

@@ -6,8 +6,8 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.intellij.build.images.ImageExtension
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Paths
 import java.util.function.Consumer
+import kotlin.concurrent.thread
 
 internal class Context(private val errorHandler: Consumer<String> = Consumer { error(it) },
                        private val devIconsVerifier: Consumer<Collection<File>>? = null) {
@@ -77,12 +77,9 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
 
     fun bool(arg: String) = System.getProperty(arg)?.toBoolean() ?: false
 
-    fun ignoreCaseInDirName(path: String) = Files.list(Paths.get(path).parent)
-      .filter { it.toAbsolutePath().toString().equals(FileUtil.toSystemDependentName(path), ignoreCase = true) }
-      .findFirst()
-      .get()
-      .toAbsolutePath()
-      .toFile()
+    fun ignoreCaseInDirName(path: String) = File(path).parentFile?.listFiles()?.firstOrNull {
+      it.absolutePath.equals(FileUtil.toSystemDependentName(path), ignoreCase = true)
+    }
 
     fun commits(arg: String) = System.getProperty(arg)
                                  ?.takeIf { it.trim() != "*" }
@@ -90,8 +87,25 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
                                  ?.filter { it.isNotBlank() }
                                  ?.mapTo(mutableSetOf(), String::trim) ?: mutableSetOf<String>()
 
+    fun File.isDir() = exists() && isDirectory && !list().isNullOrEmpty()
+
     devRepoDir = System.getProperty(devRepoArg)?.let(::ignoreCaseInDirName) ?: error(devRepoArg)
-    iconsRepoDir = System.getProperty(iconsRepoArg)?.let(::ignoreCaseInDirName) ?: error(iconsRepoArg)
+    iconsRepoDir = System.getProperty(iconsRepoArg)?.let { path ->
+      File(path).takeIf(File::isDir) ?: ignoreCaseInDirName(path)?.takeIf(File::isDir)
+    } ?: {
+      log("WARNING: $iconsRepoArg not found")
+      val tmp = Files.createTempDirectory("icons-sync").toFile()
+      Runtime.getRuntime().addShutdownHook(thread(start = false) {
+        tmp.deleteRecursively()
+      })
+      val uri = "ssh://git@github.com/JetBrains/IntelliJIcons.git"
+      val repo = callWithTimer("Cloning $uri into $tmp") { gitClone(uri, tmp) }
+      System.getProperty(iconsRepoArg)?.let {
+        var file: File? = File(it)
+        while (file != null && file.name != repo.name) file = file.parentFile
+        if (file != null) repo.resolve(File(it).toRelativeString(file)) else null
+      }?.let { ignoreCaseInDirName(it.absolutePath) } ?: repo
+    }()
     iconsRepoName = System.getProperty(iconsRepoNameArg) ?: "icons repo"
     devRepoName = System.getProperty(devRepoNameArg) ?: "dev repo"
     skipDirsPattern = System.getProperty(patternArg)

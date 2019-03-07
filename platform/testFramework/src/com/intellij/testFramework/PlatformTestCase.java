@@ -124,10 +124,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return myTempFiles;
   }
 
+  @NotNull
   protected final VirtualFile createTestProjectStructure() throws IOException {
     return PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
   }
 
+  @NotNull
   protected final VirtualFile createTestProjectStructure(String rootPath) throws Exception {
     return PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete);
   }
@@ -243,6 +245,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return myProject;
   }
 
+  @NotNull
   public final PsiManager getPsiManager() {
     return PsiManager.getInstance(myProject);
   }
@@ -270,12 +273,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
+  @NotNull
   protected Project doCreateProject(@NotNull Path projectFile) throws Exception {
     return createProject(projectFile.toFile(), getClass().getName() + "." + getName());
   }
 
   @NotNull
-  public static Project createProject(File projectFile, @NotNull String creationPlace) {
+  public static Project createProject(@NotNull File projectFile, @NotNull String creationPlace) {
     return createProject(projectFile.getPath(), creationPlace);
   }
 
@@ -301,6 +305,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
+  @NotNull
   public static String publishHeapDump(@NotNull String fileNamePrefix) {
     String fileName = fileNamePrefix + ".hprof.zip";
     File dumpFile = new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), fileName);
@@ -316,7 +321,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return dumpPath;
   }
 
-  @Contract(value = "_ -> fail")
+  @Contract("_ -> fail")
   public static void reportLeakedProjects(@NotNull TooManyProjectLeakedException e) {
     TIntHashSet hashCodes = new TIntHashSet();
     for (Project project : e.getLeakedProjects()) {
@@ -406,22 +411,22 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  protected Module createModule(@NonNls final String moduleName) {
+  protected Module createModule(@NonNls @NotNull String moduleName) {
     return doCreateRealModule(moduleName);
   }
 
   @NotNull
-  protected Module doCreateRealModule(final String moduleName) {
+  protected Module doCreateRealModule(@NotNull String moduleName) {
     return doCreateRealModuleIn(moduleName, myProject, getModuleType());
   }
 
   @NotNull
-  protected Module doCreateRealModuleIn(@NotNull String moduleName, @NotNull Project project, final ModuleType moduleType) {
+  protected Module doCreateRealModuleIn(@NotNull String moduleName, @NotNull Project project, @NotNull ModuleType moduleType) {
     return createModuleAt(moduleName, project, moduleType, Objects.requireNonNull(project.getBasePath()));
   }
 
   @NotNull
-  protected Module createModuleAt(@NotNull String moduleName, @NotNull Project project, ModuleType moduleType, @NotNull String path) {
+  protected Module createModuleAt(@NotNull String moduleName, @NotNull Project project, @NotNull ModuleType moduleType, @NotNull String path) {
     if (isCreateProjectFileExplicitly()) {
       File moduleFile = new File(FileUtil.toSystemDependentName(path), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
       FileUtil.createIfDoesntExist(moduleFile);
@@ -440,11 +445,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       () -> moduleManager.newModule(path + File.separatorChar + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION, moduleType.getId()));
   }
 
+  @NotNull
   protected ModuleType getModuleType() {
     return EmptyModuleType.getInstance();
   }
 
-  public static void cleanupApplicationCaches(Project project) {
+  public static void cleanupApplicationCaches(@Nullable Project project) {
       UndoManagerImpl globalInstance = (UndoManagerImpl)UndoManager.getGlobalInstance();
       if (globalInstance != null) {
         globalInstance.dropHistoryInTests();
@@ -474,6 +480,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   }
 
+  @NotNull
   private static Set<VirtualFile> eternallyLivingFiles() {
     if (ourEternallyLivingFilesCache != null) {
       return ourEternallyLivingFilesCache;
@@ -497,14 +504,14 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
-  private static void registerSurvivor(Set<? super VirtualFile> survivors, VirtualFile file) {
+  private static void registerSurvivor(@NotNull Set<? super VirtualFile> survivors, @NotNull VirtualFile file) {
     addSubTree(file, survivors);
     while (file != null && survivors.add(file)) {
       file = file.getParent();
     }
   }
 
-  private static void addSubTree(VirtualFile root, Set<? super VirtualFile> to) {
+  private static void addSubTree(@NotNull VirtualFile root, @NotNull Set<? super VirtualFile> to) {
     if (root instanceof VirtualDirectoryImpl) {
       for (VirtualFile child : ((VirtualDirectoryImpl)root).getCachedChildren()) {
         if (child instanceof VirtualDirectoryImpl) {
@@ -613,7 +620,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return disposable;
   }
 
-  private void resetClassFields(final Class<?> aClass) {
+  private void resetClassFields(@NotNull Class<?> aClass) {
     try {
       clearDeclaredFields(this, aClass);
     }
@@ -726,7 +733,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
-  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
+  protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
     if (runInDispatchThread()) {
       EdtTestUtil.runInEdtAndWait(runnable);
     }
@@ -837,11 +844,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @Nullable
-  protected PsiFile getPsiFile(final Document document) {
+  protected PsiFile getPsiFile(@NotNull Document document) {
     return PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
   }
 
-  private static void setPlatformPrefix(String prefix) {
+  private static void setPlatformPrefix(@NotNull String prefix) {
     System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
     ourPlatformPrefixInitialized = true;
   }

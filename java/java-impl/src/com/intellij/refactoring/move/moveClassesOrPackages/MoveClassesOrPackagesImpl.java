@@ -20,7 +20,6 @@ import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.rename.DirectoryAsPackageRenameHandlerBase;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -301,17 +300,7 @@ public class MoveClassesOrPackagesImpl {
       .runProcessWithProgressSynchronously(analyzeConflicts, "Analyze Module Conflicts...", true, project)) {
       return;
     }
-    if (!conflicts.isEmpty()) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
-      }
-      else {
-        final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
-        if (!conflictsDialog.showAndGet()) {
-          return;
-        }
-      }
-    }
+    if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return;
     final Ref<IncorrectOperationException> ex = Ref.create(null);
     final String commandDescription = RefactoringBundle.message("moving.directories.command");
     Runnable runnable = () -> ApplicationManager.getApplication().runWriteAction(() -> {

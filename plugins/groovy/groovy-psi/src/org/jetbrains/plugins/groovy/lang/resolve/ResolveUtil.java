@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -67,6 +68,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.processDeclarationsWithCallsite;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasAnnotation;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUpAndGetElement;
 import static org.jetbrains.plugins.groovy.lang.resolve.ReceiverKt.processReceiverType;
@@ -117,8 +119,8 @@ public class ResolveUtil {
                                        @NotNull PsiScopeProcessor processor,
                                        @NotNull ResolveState state) {
     boolean processNonCodeMembers = ResolveUtilKt.processNonCodeMembers(state);
-    if (scope instanceof GrClosableBlock && processNonCodeMembers) {
-      if (!((GrClosableBlock)scope).processClosureDeclarations(processor, state, lastParent, place)) return false;
+    if (scope instanceof GrFunctionalExpression && processNonCodeMembers) {
+      if (!processDeclarationsWithCallsite((GrFunctionalExpression)scope, processor, state, lastParent, place)) return false;
     }
     else {
       if (scope instanceof PsiClass) {

@@ -33,8 +33,6 @@ import javax.swing.*;
 
 /**
  * The base class for actions which create new file elements.
- *
- * @since 5.1
  */
 public abstract class CreateElementActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
 

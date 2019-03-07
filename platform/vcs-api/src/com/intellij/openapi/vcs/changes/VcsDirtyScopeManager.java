@@ -28,7 +28,6 @@ import java.util.Collection;
  * Manages asynchronous file status updating for files under VCS.
  *
  * @author max
- * @since 6.0
  */
 public abstract class VcsDirtyScopeManager {
   @NotNull

@@ -61,7 +61,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean SIGN_OFF_COMMIT = false;
     public boolean SET_USER_NAME_GLOBALLY = true;
     public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
-    public boolean UPDATE_BRANCHES_INFO = false;
+    public boolean UPDATE_BRANCHES_INFO = true;
     public int BRANCH_INFO_UPDATE_TIME = 10;
     public boolean PREVIEW_PUSH_ON_COMMIT_AND_PUSH = true;
     public boolean PREVIEW_PUSH_PROTECTED_ONLY = false;

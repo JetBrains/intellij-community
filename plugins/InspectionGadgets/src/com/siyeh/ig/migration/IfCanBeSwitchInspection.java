@@ -16,6 +16,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -23,11 +24,9 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.CheckBox;
@@ -179,12 +178,11 @@ public class IfCanBeSwitchInspection extends BaseInspection {
           final PsiLabeledStatement labeledStatement = (PsiLabeledStatement)parent;
           labelString = labeledStatement.getLabelIdentifier().getText();
           breakTarget = labeledStatement;
-          breaksNeedRelabeled = true;
         }
         else {
           labelString = SwitchUtils.findUniqueLabelName(ifStatement, "label");
-          breaksNeedRelabeled = true;
         }
+        breaksNeedRelabeled = true;
       }
     }
     final PsiIfStatement statementToReplace = ifStatement;
@@ -254,7 +252,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       final PsiStatement newStatement = factory.createStatementFromText(switchStatementText.toString(), ifStatement);
       replacement = (PsiSwitchStatement)statementToReplace.replace(newStatement);
     }
-    if (PsiUtil.getLanguageLevel(replacement).isAtLeast(LanguageLevel.JDK_12_PREVIEW)) {
+    if (HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(replacement)) {
       EnhancedSwitchMigrationInspection.SwitchReplacer replacer = EnhancedSwitchMigrationInspection.findSwitchReplacer(replacement);
       if (replacer != null) {
         replacer.replace(replacement);
@@ -452,8 +450,8 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     }
     else if (element instanceof PsiBreakStatement) {
       final PsiBreakStatement breakStatement = (PsiBreakStatement)element;
-      final PsiIdentifier identifier = breakStatement.getLabelIdentifier();
-      if (identifier == null) {
+      final PsiExpression labelExpression = breakStatement.getLabelExpression();
+      if (labelExpression == null) {
         switchStatementText.append("break ").append(breakLabelString).append(';');
       }
       else {

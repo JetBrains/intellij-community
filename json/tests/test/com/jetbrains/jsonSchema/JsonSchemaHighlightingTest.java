@@ -11,6 +11,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.List;
  * @author Irina.Chernushina on 9/21/2015.
  */
 public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema/highlighting";
@@ -1047,5 +1049,18 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/exoticPropsSchema.json"));
     String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/exoticProps.json"));
     doTest(schemaText, inputText);
+  }
+
+  public void testLargeInt() throws Exception {
+    // currently we limit it by Java Long range, should be sufficient as per RFC 7159
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"type\": \"integer\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"x\": 9223372036854775807\n" +
+                "}");
   }
 }

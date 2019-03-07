@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.stepping;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,4 +31,11 @@ public abstract class XSmartStepIntoVariant {
 
   public abstract String getText();
 
+  /**
+   * Returns an element to highlight in the editor when this variant is selected in a popup.
+   */
+  @Nullable
+  public PsiElement getHighlightElement() {
+    return null;
+  }
 }

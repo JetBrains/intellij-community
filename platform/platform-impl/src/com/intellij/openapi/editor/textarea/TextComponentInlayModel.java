@@ -68,6 +68,9 @@ public class TextComponentInlayModel implements InlayModel {
   }
 
   @Override
+  public void setConsiderCaretPositionOnDocumentUpdates(boolean enabled) {}
+
+  @Override
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
   }
 }

@@ -570,6 +570,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       AbstractTableModel model = getModel();
       Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(this);
       model.fireTableChanged(new TableModelEvent(model, visibleRows.first - 1, visibleRows.second, ROOT_COLUMN));
+      mySelection = null;
     });
   }
 

@@ -1006,6 +1006,13 @@ public class ContainerUtil extends ContainerUtilRt {
     return result;
   }
 
+  @SuppressWarnings("unchecked")
+  @NotNull
+  @Contract(pure = true)
+  public static <T> List<T> filterIsInstance(@NotNull Collection<?> collection, @NotNull final Class<? super T> aClass) {
+    return (List<T>)filter(collection, Conditions.instanceOf(aClass));
+  }
+
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> filter(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {

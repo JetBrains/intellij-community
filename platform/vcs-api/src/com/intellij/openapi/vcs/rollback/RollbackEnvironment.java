@@ -32,7 +32,6 @@ import java.util.List;
  * Interface for performing VCS rollback / revert operations.
  *
  * @author yole
- * @since 7.0
  */
 public interface RollbackEnvironment extends VcsProviderMarker {
   /**

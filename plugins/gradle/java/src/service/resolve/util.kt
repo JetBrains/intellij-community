@@ -27,7 +27,6 @@ import java.util.*
 
 /**
  * @author Vladislav.Soroka
- * @since 11/11/2016
  */
 internal fun PsiClass?.isResolvedInGradleScript() = this is GroovyScriptClass && this.containingFile.isGradleScript()
 

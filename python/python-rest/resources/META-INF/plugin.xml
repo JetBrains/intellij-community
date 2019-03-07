@@ -2,7 +2,6 @@
   <name>Python ReStructureText Integration</name>
   <id>org.jetbrains.plugins.python-rest</id>
   <vendor>JetBrains</vendor>
-  <idea-version since-build="130.1"/>
   <depends>com.intellij.modules.python</depends>
   <depends>org.jetbrains.plugins.rest</depends>
 

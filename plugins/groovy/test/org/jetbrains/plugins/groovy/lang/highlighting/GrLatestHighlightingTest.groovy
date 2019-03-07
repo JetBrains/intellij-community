@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -573,5 +573,13 @@ def usage() {
     Map<String, Integer> correct = new E()(getMap().withDefault({ 0 }))
 }
 '''
+  }
+
+  void 'test assign empty list literal to Set'() {
+    testHighlighting 'Set<String> x = []'
+  }
+
+  void 'test assign empty list literal to Set @CS'() {
+    testHighlighting '@groovy.transform.CompileStatic def bar() { Set<String> x = [] }'
   }
 }

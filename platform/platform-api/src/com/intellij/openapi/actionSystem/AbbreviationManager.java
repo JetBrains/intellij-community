@@ -11,7 +11,6 @@ import java.util.Set;
  * which the user can enter in the Goto Action/Search Everywhere popups.
  *
  * @author Konstantin Bulenkov
- * @since 13
  */
 public abstract class AbbreviationManager {
   public static AbbreviationManager getInstance() {

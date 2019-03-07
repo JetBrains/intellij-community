@@ -73,7 +73,6 @@ public interface SdkModel {
      *
      * @param sdk          the changed or renamed JDK.
      * @param previousName the old name of the changed or renamed JDK.
-     * @since 5.0.1
      */
     default void sdkChanged(@NotNull Sdk sdk, String previousName) {}
 

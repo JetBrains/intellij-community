@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -69,7 +70,6 @@ import java.util.concurrent.CountDownLatch
 
 /**
  * @author Eugene Zhuravlev
- * @since Dec 12, 2007
  */
 @SkipSlowTestLocally
 class IndexTest extends JavaCodeInsightFixtureTestCase {
@@ -952,7 +952,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename, filename2, true))
         eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename2, filename, true))
         eventList.add(new VFileDeleteEvent(null, file, true))
-        eventList.add(new VFileCreateEvent(null, file.parent, filename, false, true))
+        eventList.add(new VFileCreateEvent(null, file.parent, filename, false, null, true, false))
       }
 
       IndexedFilesListener indexedFilesListener = ((FileBasedIndexImpl)FileBasedIndex.instance).changedFilesCollector

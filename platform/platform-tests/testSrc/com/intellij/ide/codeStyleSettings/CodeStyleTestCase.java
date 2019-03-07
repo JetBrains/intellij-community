@@ -87,6 +87,8 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
 
   protected CodeStyleScheme createTestScheme() {
     return new CodeStyleScheme() {
+      private final CodeStyleSettings mySettings = new CodeStyleSettings();
+
       @NotNull
       @Override
       public String getName() {
@@ -101,7 +103,7 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
       @NotNull
       @Override
       public CodeStyleSettings getCodeStyleSettings() {
-        return new CodeStyleSettings();
+        return mySettings;
       }
     };
   }

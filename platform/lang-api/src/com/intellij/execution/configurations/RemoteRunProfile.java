@@ -19,7 +19,6 @@ package com.intellij.execution.configurations;
  * Special interface for remote debug processes
  *
  * @author Konstantin Bulenkov
- * @since 14
  */
 public interface RemoteRunProfile extends RunProfile {
 }

@@ -30,7 +30,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.lang.manifest.ManifestFileTypeFactory;
+import org.jetbrains.lang.manifest.ManifestFileType;
 import org.jetbrains.lang.manifest.ManifestLanguage;
 import org.jetbrains.lang.manifest.psi.Header;
 import org.jetbrains.lang.manifest.psi.ManifestFile;
@@ -49,7 +49,7 @@ public class ManifestFileImpl extends PsiFileBase implements ManifestFile {
   @NotNull
   @Override
   public FileType getFileType() {
-    return ManifestFileTypeFactory.MANIFEST;
+    return ManifestFileType.INSTANCE;
   }
 
   @NotNull

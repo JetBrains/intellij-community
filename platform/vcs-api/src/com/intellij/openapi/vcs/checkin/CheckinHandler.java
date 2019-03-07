@@ -23,7 +23,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * dialogs and to perform actions before commit, on successful commit and on failed commit.
  *
  * @author lesya
- * @since 5.1
  * @see BaseCheckinHandlerFactory#createHandler(CheckinProjectPanel, CommitContext)
  * @see CodeAnalysisBeforeCheckinHandler
  */

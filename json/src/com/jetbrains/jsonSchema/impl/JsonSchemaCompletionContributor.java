@@ -464,12 +464,28 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
           if (handleInsideQuotesInsertion(context, editor, hasValue)) return;
 
-          // inserting longer string for proper formatting
-          final String stringToInsert = ": 1" + (insertComma ? "," : "");
-          EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, 2);
-          formatInsertedString(context, stringToInsert.length());
-          final int offset = editor.getCaretModel().getOffset();
-          context.getDocument().deleteString(offset, offset + 1);
+          int offset = editor.getCaretModel().getOffset();
+          CharSequence docChars = context.getDocument().getCharsSequence();
+          while (offset < docChars.length() && Character.isWhitespace(docChars.charAt(offset))) {
+            offset++;
+          }
+          if (offset < docChars.length() && docChars.charAt(offset) == ':') {
+            if (offset + 1 < docChars.length() && docChars.charAt(offset + 1) == ' ') {
+              editor.getCaretModel().moveToOffset(offset + 2);
+            }
+            else {
+              editor.getCaretModel().moveToOffset(offset + 1);
+              EditorModificationUtil.insertStringAtCaret(editor, " ", false, true, 1);
+            }
+          }
+          else {
+            // inserting longer string for proper formatting
+            final String stringToInsert = ": 1" + (insertComma ? "," : "");
+            EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, 2);
+            formatInsertedString(context, stringToInsert.length());
+            offset = editor.getCaretModel().getOffset();
+            context.getDocument().deleteString(offset, offset + 1);
+          }
           PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
           AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
         }

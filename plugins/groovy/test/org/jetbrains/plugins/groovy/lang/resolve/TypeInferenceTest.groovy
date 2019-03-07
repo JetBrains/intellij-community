@@ -558,6 +558,71 @@ def foo(bar) {
 }''', 'java.lang.Runnable')
   }
 
+  void 'test instanceof or instanceof'() {
+    doTest '''\
+class A {}
+class B extends A {}
+class C extends A {}
+def foo(a) {
+    if (a instanceof B || a instanceof C) {
+        <caret>a
+    }
+}
+''', 'A'
+  }
+
+  void 'test null or instanceof'() {
+    doTest '''\
+def foo(a) {
+    if (a == null || a instanceof String) {
+        <caret>a
+    }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test null or instanceof 2'() {
+    doTest '''\
+def foo(a) {
+    if (null == a || a instanceof String) {
+        <caret>a
+    }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test instanceof or null'() {
+    doTest '''\
+def foo(a) {
+    if (a == null || a instanceof String) {
+        <caret>a
+    }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test instanceof or null 2'() {
+    doTest '''\
+def foo(a) {
+    if (null == a || a instanceof String) {
+        <caret>a
+    }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test null or instanceof else'() {
+    doTest '''\
+def foo(a) {
+    if (a != null && a !instanceof String) {
+    
+    } else {
+        <caret>a
+    }
+}
+''', JAVA_LANG_STRING
+  }
+
   void 'test enum constant'() {
     doTest('''\
 import static MyEnum.*
@@ -1025,5 +1090,18 @@ while (condition) {
 }
 <caret>prevParent
 ''', 'java.lang.String'
+  }
+
+  void 'test String variable assigned with GString inside closure @CS'() {
+    doTest '''\
+@groovy.transform.CompileStatic
+def test() {
+    String key
+    return {
+        key = "hi ${"there"}"
+        <caret>key
+    }
+}
+''', JAVA_LANG_STRING
   }
 }

@@ -10,14 +10,16 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil;
-
-import java.util.List;
+import org.jetbrains.plugins.gradle.util.TasksToRun;
 
 /**
  * @author Vladislav.Soroka
@@ -45,7 +47,10 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
     final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
     if (projectPath == null) return false;
 
-    List<String> tasksToRun = getTasksToRun(module);
+    PsiDirectory[] sourceDirs = psiPackage.getDirectories(GlobalSearchScope.moduleScope(module));
+    if (sourceDirs.length == 0) return false;
+    VirtualFile source = sourceDirs[0].getVirtualFile();
+    TasksToRun tasksToRun = findTestsTaskToRun(source, context.getProject());
     if (tasksToRun.isEmpty()) return false;
 
     configuration.getSettings().setExternalProjectPath(projectPath);
@@ -68,7 +73,11 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
       configuration.getSettings().getExternalProjectPath())) {
       return false;
     }
-    if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(context.getModule()))) return false;
+    Module module = context.getModule();
+    PsiDirectory[] sourceDirs = psiPackage.getDirectories(GlobalSearchScope.moduleScope(module));
+    if (sourceDirs.length == 0) return false;
+    VirtualFile source = sourceDirs[0].getVirtualFile();
+    if (!hasTasksInConfiguration(source, context.getProject(), configuration.getSettings())) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
     final String filter = GradleExecutionSettingsUtil.createTestFilterFrom(psiPackage, /*hasSuffix=*/true);

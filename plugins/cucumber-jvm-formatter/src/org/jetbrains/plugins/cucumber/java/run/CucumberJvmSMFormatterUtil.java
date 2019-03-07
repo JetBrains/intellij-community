@@ -41,11 +41,23 @@ public class CucumberJvmSMFormatterUtil {
     return DATE_FORMAT.format(new Date());
   }
 
-  public static String escape(String source) {
+  private static String escape(String source) {
     if (source == null) {
       return "";
     }
-    return source.replace("|", "||").replace("\n", "|n").replace("\r", "|r").replace("'", "|'").replace("[", "|[").replace("]", "|]");
+    return source.replace("|", "||").replace("\n", "|n").replace("\r", "|r").replace("'", "|'");
+  }
+
+  /**
+   * escapes symbols: "|", "'" and new line so that not to tear SM messages
+   */
+  public static String escapeCommand(String command, String... parameters) {
+    String[] escapedParameters = new String[parameters.length];
+    for (int i = 0; i < escapedParameters.length; i++) {
+      escapedParameters[i] = escape(parameters[i]);
+    }
+
+    return String.format(command, (Object[])escapedParameters);
   }
 
   /**

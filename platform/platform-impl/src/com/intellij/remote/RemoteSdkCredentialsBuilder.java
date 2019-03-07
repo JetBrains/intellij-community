@@ -51,6 +51,7 @@ public class RemoteSdkCredentialsBuilder {
     copyCredentials(data, copyTo);
 
     copyTo.setInterpreterPath(data.getInterpreterPath());
+    copyTo.setRunAsRootViaSudo(data.isRunAsRootViaSudo());
     copyTo.setHelpersPath(data.getHelpersPath());
 
     copyTo.setHelpersVersionChecked(data.isHelpersVersionChecked());

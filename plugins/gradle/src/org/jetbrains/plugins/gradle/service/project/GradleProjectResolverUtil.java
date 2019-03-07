@@ -535,9 +535,9 @@ public class GradleProjectResolverUtil {
       DataNode<? extends ExternalEntityData> depOwnerDataNode = null;
       if (mergedDependency instanceof ExternalProjectDependency) {
         class ProjectDependencyInfo {
-          @NotNull ModuleData myModuleData;
-          @Nullable ExternalSourceSet mySourceSet;
-          Collection<File> dependencyArtifacts;
+          @NotNull final ModuleData myModuleData;
+          @Nullable final ExternalSourceSet mySourceSet;
+          final Collection<File> dependencyArtifacts;
 
           ProjectDependencyInfo(@NotNull ModuleData moduleData,
                                        @Nullable ExternalSourceSet sourceSet,

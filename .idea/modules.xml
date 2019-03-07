@@ -98,7 +98,6 @@
     <module old-name="editor-ui-api" new-name="intellij.platform.editor" />
     <module old-name="editor-ui-ex" new-name="intellij.platform.editor.ex" />
     <module old-name="editorconfig" new-name="intellij.editorconfig" />
-    <module old-name="educational-python" new-name="intellij.pycharm.edu" />
     <module old-name="execution-impl" new-name="intellij.java.execution.impl" />
     <module old-name="execution-openapi" new-name="intellij.java.execution" />
     <module old-name="extensions" new-name="intellij.platform.extensions" />
@@ -196,7 +195,6 @@
     <module old-name="lvcs-impl" new-name="intellij.platform.lvcs.impl" />
     <module old-name="main_AndroidStudio" new-name="intellij.androidStudio.main" />
     <module old-name="main_pycharm_ce" new-name="intellij.pycharm.community.main" />
-    <module old-name="main_pycharm_edu" new-name="intellij.pycharm.edu.main" />
     <module old-name="manifest" new-name="intellij.java.manifest" />
     <module old-name="manifest-merger" new-name="android.sdktools.manifest-merger" />
     <module old-name="maven" new-name="intellij.maven" />
@@ -210,6 +208,7 @@
     <module old-name="maven3-server-common" new-name="intellij.maven.server.m3.common" />
     <module old-name="maven3-server-impl" new-name="intellij.maven.server.m3.impl" />
     <module old-name="maven30-server-impl" new-name="intellij.maven.server.m30.impl" />
+    <module old-name="maven36-server-impl" new-name="intellij.maven.server.m36.impl" />
     <module old-name="ninepatch" new-name="android.sdktools.ninepatch" />
     <module old-name="node-rpc-client" new-name="intellij.nodeRpcClient" />
     <module old-name="observable" new-name="intellij.android.observable" />
@@ -237,7 +236,6 @@
     <module old-name="protocol-model-generator" new-name="intellij.javascript.protocolModelGenerator" />
     <module old-name="protocol-reader" new-name="intellij.javascript.protocolReader" />
     <module old-name="protocol-reader-runtime" new-name="intellij.platform.scriptDebugger.protocolReaderRuntime" />
-    <module old-name="pycharm-edu-dependencies" new-name="intellij.pycharm.edu.dependencies" />
     <module old-name="python-community" new-name="intellij.python.community.impl" />
     <module old-name="python-community-build" new-name="intellij.pycharm.community.build" />
     <module old-name="python-community-configure" new-name="intellij.python.configure" />
@@ -251,7 +249,6 @@
     <module old-name="python-community-plugin-resources" new-name="intellij.python.community.plugin.resources" />
     <module old-name="python-community-tests" new-name="intellij.python.community.tests" />
     <module old-name="python-community-tools" new-name="intellij.python.tools" />
-    <module old-name="python-edu-build" new-name="intellij.pycharm.edu.build" />
     <module old-name="python-helpers" new-name="intellij.python.helpers" />
     <module old-name="python-openapi" new-name="intellij.python.community" />
     <module old-name="python-plugin-tests" new-name="intellij.python.community.plugin.tests" />
@@ -621,6 +618,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven3-server-common/intellij.maven.server.m3.common.iml" filepath="$PROJECT_DIR$/plugins/maven/maven3-server-common/intellij.maven.server.m3.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven3-server-impl/intellij.maven.server.m3.impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven3-server-impl/intellij.maven.server.m3.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven30-server-impl/intellij.maven.server.m30.impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven30-server-impl/intellij.maven.server.m30.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven36-server-impl/intellij.maven.server.m36.impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven36-server-impl/intellij.maven.server.m36.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/built-in-server/client/node-rpc-client/intellij.nodeRpcClient.iml" filepath="$PROJECT_DIR$/platform/built-in-server/client/node-rpc-client/intellij.nodeRpcClient.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-api/intellij.platform.analysis.iml" filepath="$PROJECT_DIR$/platform/analysis-api/intellij.platform.analysis.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-impl/intellij.platform.analysis.impl.iml" filepath="$PROJECT_DIR$/platform/analysis-impl/intellij.platform.analysis.impl.iml" />

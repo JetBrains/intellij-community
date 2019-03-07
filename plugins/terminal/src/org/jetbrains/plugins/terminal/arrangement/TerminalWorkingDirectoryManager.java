@@ -99,21 +99,28 @@ public class TerminalWorkingDirectoryManager {
 
   private static void updateWorkingDirectory(@NotNull Content content, @NotNull Data data) {
     JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
-    if (widget == null) return;
+    if (widget != null) {
+      data.myWorkingDirectory = getWorkingDirectory(widget, data.myContentName);
+    }
+  }
+
+  @Nullable
+  public static String getWorkingDirectory(@NotNull JBTerminalWidget widget, @Nullable String name) {
     ProcessTtyConnector connector = ObjectUtils.tryCast(widget.getTtyConnector(), ProcessTtyConnector.class);
-    if (connector == null) return;
+    if (connector == null) return null;
     try {
       long startNano = System.nanoTime();
       Future<String> cwd = ProcessInfoUtil.getCurrentWorkingDirectory(connector.getProcess());
-      data.myWorkingDirectory = cwd.get(FETCH_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+      String result = cwd.get(FETCH_WAIT_MILLIS, TimeUnit.MILLISECONDS);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Cwd (" + data.myWorkingDirectory + ") fetched in " + TimeoutUtil.getDurationMillis(startNano) + " ms");
+        LOG.debug("Cwd (" + result + ") fetched in " + TimeoutUtil.getDurationMillis(startNano) + " ms");
       }
+      return result;
     }
     catch (InterruptedException ignored) {
     }
     catch (ExecutionException e) {
-      String message = "Failed to fetch cwd for " + data.myContentName;
+      String message = "Failed to fetch cwd for " + name;
       if (LOG.isDebugEnabled()) {
         LOG.warn(message, e);
       }
@@ -122,8 +129,9 @@ public class TerminalWorkingDirectoryManager {
       }
     }
     catch (TimeoutException e) {
-      LOG.warn("Timeout fetching cwd for " + data.myContentName, e);
+      LOG.warn("Timeout fetching cwd for " + name, e);
     }
+    return null;
   }
 
   private void unwatchTab(@NotNull Content content) {

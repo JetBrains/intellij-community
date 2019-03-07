@@ -9,11 +9,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.SPACES_OTHER;
 
@@ -26,9 +26,8 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                                       .toArray(value -> new String[value]);
 
   private static final int[] ALIGN_VALUES =
-    ArrayUtil.toIntArray(Arrays.stream(JsonCodeStyleSettings.PropertyAlignment.values())
-                           .map(alignment -> alignment.getId())
-                           .collect(Collectors.toList()));
+    ArrayUtil.toIntArray(
+      ContainerUtil.map(JsonCodeStyleSettings.PropertyAlignment.values(), alignment -> alignment.getId()));
 
   private static final String SAMPLE = "{\n" +
                                        "    \"json literals are\": {\n" +

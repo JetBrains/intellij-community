@@ -135,9 +135,7 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
                                      modulesBuildSettings.modules,
                                      modulesBuildSettings.includeDependentModules,
                                      modulesBuildSettings.includeRuntimeDependencies);
-    List<String> moduleNames = modulesBuildSettings.modules.stream()
-      .map(Module::getName)
-      .collect(Collectors.toList());
+    List<String> moduleNames = ContainerUtil.map(modulesBuildSettings.modules, Module::getName);
     CompileScopeUtil.setResourcesScopeForExternalBuild(scope, moduleNames);
 
     if (modulesBuildSettings.isIncrementalBuild) {

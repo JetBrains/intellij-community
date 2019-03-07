@@ -1,24 +1,31 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiTypeParameterListOwner
+import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.util.LightProjectTest
+import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.jetbrains.plugins.groovy.util.TypingTest
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
 import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType
 
 @CompileStatic
-class SubstitutorInferenceTest extends GroovyLatestTest implements TypingTest {
+class SubstitutorInferenceTest extends LightProjectTest implements TypingTest, ResolveTest {
+
+  @Override
+  LightProjectDescriptor getProjectDescriptor() {
+    GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK
+  }
 
   @Before
   void addClasses() {
@@ -36,6 +43,11 @@ class IdCallable {
 class GenericPropertyContainer {
   def <T> I<T> getGenericProperty() {}
   def <T> void setGenericProperty(I<T> c) {}
+}
+
+class Files {
+  List<File> getFiles() {}
+  void setFiles(List<File> a) {}
 }
 '''
   }
@@ -242,6 +254,39 @@ static <T> T ppp(Producer<T> p) {}
   void 'generic setter from argument'() {
     def ref = elementUnderCaret('new GenericPropertyContainer().<caret>genericProperty = new C<String>()', GrReferenceExpression)
     assertSubstitutor(ref.advancedResolve(), 'java.lang.String')
+  }
+
+  @Test
+  void 'plus assignment'() {
+    def op = elementUnderCaret('new Files().files <caret>+= new File(".")', GrAssignmentExpression)
+    assertSubstitutor(op.reference.advancedResolve(), 'java.io.File')
+  }
+
+  @Test
+  void 'same method nested'() {
+    def call = elementUnderCaret '''\
+static <T> T run(Closure<T> c) {}
+<caret>run(run { return { 42 } })
+''', GrMethodCall
+    assertSubstitutor(call.advancedResolve(), JAVA_LANG_INTEGER)
+  }
+
+  @Test
+  void 'chained with'() {
+    resolveTest '''\
+class A { def aMethod() { "42" } }
+"bar".with { new A() }.with { it.<caret>aMethod() }
+''', GrMethod
+  }
+
+  @Test
+  void 'Collectors toList'() {
+    def call = elementUnderCaret '''\
+static void testCode(java.util.stream.Stream<Integer> ss) {
+  ss.collect(java.util.stream.Collectors.<caret>toList())
+}
+''', GrMethodCall
+    assertSubstitutor(call.advancedResolve(), JAVA_LANG_INTEGER)
   }
 
   private static void assertSubstitutor(GroovyResolveResult result, String... expectedTypes) {

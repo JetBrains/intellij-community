@@ -41,7 +41,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ELVIS_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isNullLiteral;
 
 /**
  * @author ven
@@ -558,6 +559,18 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       expression.getLeftOperand().accept(this);
       processInstanceOf(expression, ((GrInExpression)expression).getNegationToken() != null);
       return;
+    }
+    if (opType == T_EQ || opType == T_NEQ) {
+      if (isNullLiteral(right)) {
+        left.accept(this);
+        processInstanceOf(expression, opType == T_NEQ);
+        return;
+      }
+      else if (right != null && isNullLiteral(left)) {
+        right.accept(this);
+        processInstanceOf(expression, opType == T_NEQ);
+        return;
+      }
     }
 
     if (opType != GroovyTokenTypes.mLOR && opType != GroovyTokenTypes.mLAND && opType != GroovyTokenTypes.kIN) {

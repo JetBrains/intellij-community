@@ -18,6 +18,16 @@ private val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?:
   }
 }
 
+internal fun gitPull(repo: File) = try {
+  execute(repo, GIT, "pull", "--rebase")
+}
+catch (e: Exception) {
+  callSafely(printStackTrace = false) {
+    execute(repo, GIT, "rebase", "--abort")
+  }
+  log("Unable to pull changes for $repo: ${e.message}")
+}
+
 /**
  * @param dirToList optional dir in [repo] from which to list files
  * @return map of file paths (relative to [dirToList]) to [GitObject]
@@ -34,15 +44,7 @@ private fun listGitTree(
 ): Stream<Pair<String, GitObject>> {
   val relativeDirToList = dirToList?.relativeTo(repo)?.path ?: ""
   log("Inspecting $repo")
-  if (!isUnderTeamCity()) try {
-    execute(repo, GIT, "pull", "--rebase")
-  }
-  catch (e: Exception) {
-    callSafely(printStackTrace = false) {
-      execute(repo, GIT, "rebase", "--abort")
-    }
-    log("Unable to pull changes for $repo: ${e.message}")
-  }
+  if (!isUnderTeamCity()) gitPull(repo)
   return execute(repo, GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
     .trim().lines().stream()
     .filter { it.isNotBlank() }.map { line ->
@@ -52,7 +54,7 @@ private fun listGitTree(
         .let { it[0].splitWithSpace() + it[1] }
         .also { if (it.size != 4) error(line) }
     }
-    .filter { fileFilter(repo.resolve(it[3])) }
+    .filter { fileFilter(repo.resolve(it[3].removeSuffix("\"").removePrefix("\""))) }
     // <file>, <object>, repo
     .map { GitObject(it[3], it[2], repo) }
     .map { it.path.removePrefix("$relativeDirToList/") to it }
@@ -351,3 +353,11 @@ internal fun changesFromCommit(repo: File, hash: String) =
         else -> return@map null
       } to path
     }.filterNotNull().groupBy({ it.first }, { it.second })
+
+internal fun gitClone(uri: String, dir: File): File {
+  val filesBeforeClone = dir.listFiles().toList()
+  execute(dir, GIT, "clone", uri)
+  return (dir.listFiles().toList() - filesBeforeClone).first {
+    uri.contains(it.name)
+  }
+}

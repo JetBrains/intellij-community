@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrImportAlias;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -138,7 +139,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
   public GrModifierList getAnnotationList() {
     GrImportStatementStub stub = getStub();
     if (stub != null) {
-      return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.MODIFIER_LIST));
+      return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyStubElementTypes.MODIFIER_LIST));
     }
     return findNotNullChildByClass(GrModifierList.class);
   }

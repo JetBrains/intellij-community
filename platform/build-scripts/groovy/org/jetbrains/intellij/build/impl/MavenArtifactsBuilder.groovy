@@ -206,17 +206,23 @@ class MavenArtifactsBuilder {
       if (dependency instanceof JpsModuleDependency) {
         def depModule = (dependency as JpsModuleDependency).module
         if (computationInProgress.contains(depModule)) {
-          buildContext.messages.debug(" module '$module.name' recursively depends on itself so it cannot be published")
-          mavenizable = false
-          return
+          /*
+           It's forbidden to have compile-time circular dependencies in IntelliJ project, but there are some cycles with runtime scope
+            (e.g. intellij.platform.ide.impl depends on (runtime scope) intellij.platform.configurationStore.impl which depends on intellij.platform.ide.impl).
+           It's convenient to have such dependencies to allow running tests in classpath of their modules, so we can just ignore them while
+           generating pom.xml files.
+          */
+          buildContext.messages.debug(" module '$module.name': skip recursive dependency on '$depModule.name'")
         }
-        def depArtifact = generateMavenArtifactData(depModule, results, nonMavenizableModules, computationInProgress)
-        if (depArtifact == null) {
-          buildContext.messages.debug(" module '$module.name' depends on non-mavenizable module '$depModule.name' so it cannot be published")
-          mavenizable = false
-          return
+        else {
+          def depArtifact = generateMavenArtifactData(depModule, results, nonMavenizableModules, computationInProgress)
+          if (depArtifact == null) {
+            buildContext.messages.debug(" module '$module.name' depends on non-mavenizable module '$depModule.name' so it cannot be published")
+            mavenizable = false
+            return
+          }
+          dependencies << new MavenArtifactDependency(depArtifact.coordinates, true, [], scope)
         }
-        dependencies << new MavenArtifactDependency(depArtifact.coordinates, true, [], scope)
       }
       else if (dependency instanceof JpsLibraryDependency) {
         def library = (dependency as JpsLibraryDependency).library
@@ -224,7 +230,7 @@ class MavenArtifactsBuilder {
         if (typed != null) {
           dependencies << createArtifactDependencyByLibrary(typed.properties.data, scope)
         }
-        else {
+        else if (!isOptionalDependency(library)) {
           List<String> names = LibraryLicensesListGenerator.getLibraryNames(library)
           for (n in names) {
             buildContext.messages.debug(" module '$module.name' depends on non-maven library $n")
@@ -241,6 +247,12 @@ class MavenArtifactsBuilder {
     def artifactData = new MavenArtifactData(generateMavenCoordinates(module.name, buildContext.messages, buildContext.buildNumber), dependencies)
     results[module] = artifactData
     return artifactData
+  }
+
+  static boolean isOptionalDependency(JpsLibrary library) {
+    //todo: this is a temporary workaround until 'microba' library is published to Maven repository (IDEA-200834)
+    // given that this library contains UI elements which are used in few places it's unlikely that absence of this dependency will cause real problems
+    library.name == "microba"
   }
 
   private static MavenArtifactDependency createArtifactDependencyByLibrary(JpsMavenRepositoryLibraryDescriptor descriptor, DependencyScope scope) {

@@ -87,14 +87,14 @@ public class Utils {
     return file.getCanonicalPath();
   }
 
-  public static void export(Project project) {
+  public static String exportToString(Project project) {
     final CodeStyleSettings settings = CodeStyle.getSettings(project);
     final CommonCodeStyleSettings.IndentOptions commonIndentOptions = settings.getIndentOptions();
     StringBuilder result = new StringBuilder();
     addIndentOptions(result, "*", commonIndentOptions, getEncoding(project) +
-                                                       getLineEndings(project) +
-                                                       getTrailingSpaces() +
-                                                       getEndOfFile());
+      getLineEndings(project) +
+      getTrailingSpaces() +
+      getEndOfFile());
     for (FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {
       if (!FileTypeIndex.containsFileOfType(fileType, GlobalSearchScope.allScope(project))) continue;
 
@@ -103,6 +103,11 @@ public class Utils {
         addIndentOptions(result, buildPattern(fileType), options, "");
       }
     }
+
+    return result.toString();
+  }
+
+  public static void export(Project project) {
     final VirtualFile baseDir = project.getBaseDir();
     final VirtualFile child = baseDir.findChild(".editorconfig");
     if (child != null) {
@@ -112,7 +117,7 @@ public class Utils {
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         final VirtualFile editorConfig = baseDir.findOrCreateChildData(Utils.class, ".editorconfig");
-        VfsUtil.saveText(editorConfig, result.toString());
+        VfsUtil.saveText(editorConfig, exportToString(project));
       } catch (IOException e) {
         Logger.getInstance(Utils.class).error(e);
       }

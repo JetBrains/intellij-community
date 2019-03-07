@@ -49,24 +49,6 @@ public class InlineUtil {
 
   private InlineUtil() {}
 
-  /**
-   * Replace variable with its initializer for every variable reference.
-   *
-   * @return references after replacement
-   */
-  @NotNull
-  public static Collection<PsiElement> inlineVariable(@NotNull PsiVariable variable, @NotNull PsiExpression initializer) {
-    final Collection<PsiElement> replacedElements = new ArrayList<>();
-    final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
-
-    for (PsiReference reference : references) {
-      final PsiExpression expression = inlineVariable(variable, initializer, (PsiJavaCodeReferenceElement)reference);
-      replacedElements.add(expression);
-    }
-
-    return replacedElements;
-  }
-
   @NotNull
   public static PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) throws IncorrectOperationException {
     return inlineVariable(variable, initializer, ref, null);
@@ -491,9 +473,9 @@ public class InlineUtil {
    * @param initializer variable initializer
    * @return found changes and errors
    */
-  public static void getChangedBeforeLastAccessConflicts(@NotNull MultiMap<PsiElement, String> conflicts,
-                                                         @NotNull PsiExpression initializer,
-                                                         @NotNull PsiVariable variable) {
+  public static void checkChangedBeforeLastAccessConflicts(@NotNull MultiMap<PsiElement, String> conflicts,
+                                                           @NotNull PsiExpression initializer,
+                                                           @NotNull PsiVariable variable) {
 
     Set<PsiVariable> referencedVars = VariableAccessUtils.collectUsedVariables(initializer);
     if (referencedVars.isEmpty()) return;

@@ -18,7 +18,6 @@ package com.intellij.execution.filters;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -47,22 +46,35 @@ public class ExceptionFilter implements Filter, DumbAware {
     String exceptionName = getExceptionFromMessage(line);
     if (exceptionName == null) return null;
     PsiElementFilter throwFilter = e -> {
-      if (!(e instanceof PsiKeyword) || !(e.textMatches(PsiKeyword.THROW))) return false;
-      PsiThrowStatement parent = ObjectUtils.tryCast(e.getParent(), PsiThrowStatement.class);
-      if (parent == null) return false;
-      PsiExpression exception = PsiUtil.skipParenthesizedExprDown(parent.getException());
-      if (exception == null) return false;
-      PsiType type = exception.getType();
-      if (type == null) return false;
-      return exception instanceof PsiNewExpression ? type.equalsToText(exceptionName) : InheritanceUtil.isInheritor(type, exceptionName);
+      if (!(e instanceof PsiKeyword) || !(e.textMatches(PsiKeyword.NEW))) return false;
+      PsiNewExpression newExpression = ObjectUtils.tryCast(e.getParent(), PsiNewExpression.class);
+      if (newExpression == null) return false;
+      PsiType type = newExpression.getType();
+      return type != null && type.equalsToText(exceptionName);
     };
-    if ("java.lang.ArrayIndexOutOfBoundsException".equals(exceptionName)) {
-      return element -> throwFilter.isAccepted(element) ||
-                        (element instanceof PsiJavaToken &&
-                         element.textMatches("[") &&
-                         element.getParent() instanceof PsiArrayAccessExpression);
+    PsiElementFilter specificFilter = getExceptionSpecificFilter(exceptionName);
+    if (specificFilter == null) return throwFilter;
+    return element -> throwFilter.isAccepted(element) || specificFilter.isAccepted(element);
+  }
+
+  @Nullable
+  private static PsiElementFilter getExceptionSpecificFilter(String exceptionName) {
+    switch (exceptionName) {
+      case "java.lang.ArrayIndexOutOfBoundsException":
+        return e -> e instanceof PsiJavaToken &&
+                    e.textMatches("[") &&
+                    e.getParent() instanceof PsiArrayAccessExpression;
+      case "java.lang.ArrayStoreException":
+        return e -> {
+          if (e instanceof PsiJavaToken && e.textMatches("=") && e.getParent() instanceof PsiAssignmentExpression) {
+            PsiExpression lExpression = ((PsiAssignmentExpression)e.getParent()).getLExpression();
+            return PsiUtil.skipParenthesizedExprDown(lExpression) instanceof PsiArrayAccessExpression;
+          }
+          return false;
+        };
+      default:
+        return null;
     }
-    return throwFilter;
   }
 
   @Nullable
@@ -91,8 +103,7 @@ public class ExceptionFilter implements Filter, DumbAware {
   /**
    * Returns a substring of {@code line} from {@code from} to {@code to} position after heuristically checking that
    * given substring could be an exception class name. Currently all names which are not very long, consist of 
-   * alphanumeric symbols, have at least one dot and not two adjacent dots are considered to be possible 
-   * exception names by this method.
+   * Java identifier symbols and have at least one dot are considered to be possible exception names by this method.
    * 
    * @param line line to extract exception name from
    * @param from start index
@@ -102,13 +113,9 @@ public class ExceptionFilter implements Filter, DumbAware {
   private static String getExceptionFromMessage(String line, int from, int to) {
     if (to - from > 200) return null;
     boolean hasDot = false;
-    char prev = '.';
     for(int i= from; i<to; i++) {
       char c = line.charAt(i);
-      if ((c < 'A' || c > 'Z') && (c < 'a' || c > 'z') && (prev == '.' || ((c < '0' || c > '9') && c != '.'))) {
-        return null;
-      }
-      prev = c;
+      if (c != '.' && !Character.isJavaIdentifierPart(c)) return null;
       hasDot |= c == '.';
     }
     if (!hasDot) return null;

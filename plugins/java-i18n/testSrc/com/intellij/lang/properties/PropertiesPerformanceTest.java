@@ -39,6 +39,7 @@ public class PropertiesPerformanceTest extends CodeInsightTestCase {
     return module != null ? module : super.createMainModule();
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("java-i18n") + "/testData/performance/";
@@ -57,7 +58,7 @@ public class PropertiesPerformanceTest extends CodeInsightTestCase {
   public void testResolveManyLiterals() throws Exception {
     final PsiClass aClass = generateTestFiles();
     assertNotNull(aClass);
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 2000, () -> aClass.accept(new JavaRecursiveElementWalkingVisitor() {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 4000, () -> aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
         PsiReference[] references = expression.getReferences();

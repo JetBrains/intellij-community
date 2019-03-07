@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
  * Collects the results of a global inspection.
  *
  * @author anna
- * @since 6.0
  * @see GlobalInspectionTool#runInspection
  */
 public interface ProblemDescriptionsProcessor {

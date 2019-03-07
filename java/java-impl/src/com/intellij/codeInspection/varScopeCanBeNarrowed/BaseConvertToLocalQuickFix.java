@@ -33,19 +33,14 @@ import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * refactored from {@link FieldCanBeLocalInspection}
@@ -68,38 +63,33 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     final PsiFile myFile = variable.getContainingFile();
 
     try {
-      final List<PsiElement> newDeclarations = moveDeclaration(project, variable).stream()
-        .map(declaration -> inlineRedundant(declaration))
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
-
+      final List<PsiElement> newDeclarations = moveDeclaration(project, variable);
       if (newDeclarations.isEmpty()) return;
 
       positionCaretToDeclaration(project, myFile, newDeclarations.get(newDeclarations.size() - 1));
+      newDeclarations.forEach(declaration -> inlineRedundant(declaration));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
 
-  @Nullable
-  private static PsiElement inlineRedundant(@Nullable PsiElement declaration) {
-    if (declaration == null) return null;
+  private static void inlineRedundant(@Nullable PsiElement declaration) {
+    if (declaration == null) return;
 
     final PsiLocalVariable newVariable = extractDeclared(declaration);
     if (newVariable != null) {
       final PsiExpression initializer = ParenthesesUtils.stripParentheses(newVariable.getInitializer());
 
-      if (VariableAccessUtils.localVariableIsCopy(newVariable, initializer)) {
-        WriteAction.run(() -> {
-          InlineUtil.inlineVariable(newVariable, initializer);
+      WriteAction.run(() -> {
+        if (VariableAccessUtils.isLocalVariableCopy(newVariable, initializer)) {
+          for (PsiReference reference : ReferencesSearch.search(newVariable).findAll()) {
+            InlineUtil.inlineVariable(newVariable, initializer, (PsiJavaCodeReferenceElement)reference);
+          }
           declaration.delete();
-        });
-        return null;
-      }
+        }
+      });
     }
-
-    return declaration;
   }
 
   @Nullable
@@ -109,11 +99,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     final PsiElement[] declaredElements = ((PsiDeclarationStatement)declaration).getDeclaredElements();
     if (declaredElements.length != 1) return null;
 
-    final PsiElement declared = declaredElements[0];
-
-    if (!(declared instanceof PsiLocalVariable)) return null;
-
-    return (PsiLocalVariable)declared;
+    return ObjectUtils.tryCast(declaredElements[0], PsiLocalVariable.class);
   }
 
   @Nullable

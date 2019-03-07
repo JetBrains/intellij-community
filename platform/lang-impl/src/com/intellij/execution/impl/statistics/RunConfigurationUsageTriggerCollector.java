@@ -3,25 +3,26 @@ package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
-import com.intellij.internal.statistic.utils.PluginType;
-import com.intellij.internal.statistic.utils.StatisticsUtilKt;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class RunConfigurationUsageTriggerCollector {
   private static final String UNKNOWN = "UNKNOWN";
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("statistics.run.configuration.start",1);
+  private static final String GROUP = "run.configuration.exec";
 
   public static void trigger(@NotNull Project project, @NotNull ConfigurationFactory factory, @NotNull Executor executor) {
-    final String key = AbstractRunConfigurationTypeUsagesCollector.toReportedId(factory);
+    final FeatureUsageData data = new FeatureUsageData().addProject(project);
+    final String key = AbstractRunConfigurationTypeUsagesCollector.toReportedId(factory, data);
     if (StringUtil.isNotEmpty(key)) {
-      final PluginType type = StatisticsUtilKt.getPluginType(executor.getClass());
-      final FUSUsageContext context = FUSUsageContext.create(type.isSafeToReport() ? executor.getId() : UNKNOWN);
-      FeatureUsageLogger.INSTANCE.log(GROUP, key, StatisticsUtilKt.createData(project, context));
+      final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(executor.getClass());
+      data.addData("executor", info.isSafeToReport() ? executor.getId() : UNKNOWN);
+
+      FUCounterUsageLogger.getInstance().logEvent(project, GROUP, key, data);
     }
   }
 }

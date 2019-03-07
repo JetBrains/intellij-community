@@ -117,7 +117,6 @@ public abstract class PsiElementFinder {
    * @param psiPackage the package to return the list of files for.
    * @param scope      the scope in which files are searched.
    * @return the list of files.
-   * @since 14.1
    */
   @NotNull
   public PsiFile[] getPackageFiles(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
@@ -133,7 +132,6 @@ public abstract class PsiElementFinder {
    * @param psiPackage the package for which the list of files is requested.
    * @param scope      the scope in which children are requested.
    * @return the filter to use, or null if no additional filtering is necessary.
-   * @since 14.1
    */
   @Nullable
   public Condition<PsiFile> getPackageFilesFilter(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {

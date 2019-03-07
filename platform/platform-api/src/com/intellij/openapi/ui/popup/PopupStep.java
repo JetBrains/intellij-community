@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
  * @see ListPopupStep
  * @see TreePopupStep
  * @param <T> the type of the objects contained in the list or tree structure.
- * @since 6.0
  */
 public interface PopupStep<T> {
   PopupStep FINAL_CHOICE = null;

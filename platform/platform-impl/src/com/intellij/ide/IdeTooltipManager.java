@@ -45,7 +45,7 @@ import java.lang.reflect.Field;
 
 public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComponent {
   public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
-  public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", (Color)null);
+  public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", null);
 
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
   private static final MouseEventAdapter<Void> DUMMY_LISTENER = new MouseEventAdapter<>(null);

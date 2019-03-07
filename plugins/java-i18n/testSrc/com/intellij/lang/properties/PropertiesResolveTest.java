@@ -14,6 +14,7 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
@@ -62,6 +63,7 @@ public class PropertiesResolveTest extends CodeInsightTestCase{
     assertTrue(elementText.contains(unescapedKey));
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("java-i18n") + "/";

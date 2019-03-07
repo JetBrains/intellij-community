@@ -289,7 +289,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    GlobalSearchScope scope = PsiUtil.isInsideJavadocComment(place) ? allScope() : place.getResolveScope();
+    GlobalSearchScope scope = place.getResolveScope();
 
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
@@ -301,11 +301,17 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
       if (providedName != null) {
-        final PsiClass[] classes = findClassByShortName(providedName, scope);
+        PsiClass[] classes = findClassByShortName(providedName, scope);
+        if (classes.length == 0 && PsiUtil.isInsideJavadocComment(place)) {
+          classes = findClassByShortName(providedName, allScope());
+        }
         if (!processClasses(processor, state, classes, Conditions.alwaysTrue())) return false;
       }
       else {
         PsiClass[] classes = getClasses(scope);
+        if (classes.length == 0 && PsiUtil.isInsideJavadocComment(place)) {
+          classes = getClasses(allScope());
+        }
         if (!processClasses(processor, state, classes, nameCondition != null ? nameCondition : Conditions.alwaysTrue())) return false;
       }
     }

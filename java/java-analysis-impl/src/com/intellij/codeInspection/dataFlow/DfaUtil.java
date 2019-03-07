@@ -337,7 +337,8 @@ public class DfaUtil {
   @Nullable
   public static Boolean evaluateCondition(@Nullable PsiExpression condition) {
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(condition);
-    return result == null ? null : tryCast(result.getExpressionValue(condition), Boolean.class);
+    if (result == null) return null;
+    return tryCast(ContainerUtil.getOnlyItem(result.getExpressionValues(condition)), Boolean.class);
   }
 
   public static boolean isComparedByEquals(PsiType type) {

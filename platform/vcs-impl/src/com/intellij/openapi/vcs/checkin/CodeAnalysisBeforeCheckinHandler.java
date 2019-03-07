@@ -43,7 +43,6 @@ import java.util.Set;
  * is provided as a sample of using the {@link CheckinHandler} API.
  *
  * @author lesya
- * @since 5.1
  */
 public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 

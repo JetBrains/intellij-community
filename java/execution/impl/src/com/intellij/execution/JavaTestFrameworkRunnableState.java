@@ -413,8 +413,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected void writeClassesPerModule(String packageName,
                                        JavaParameters javaParameters,
                                        Map<Module, List<String>> perModule,
-                                       @NotNull String filters)
-    throws FileNotFoundException, UnsupportedEncodingException, CantRunException {
+                                       @NotNull String filters) throws FileNotFoundException, UnsupportedEncodingException {
     if (perModule != null) {
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
                                ? null : javaParameters.getClassPath().getPathsString();
@@ -433,11 +432,15 @@ public abstract class JavaTestFrameworkRunnableState<T extends
           if (classpath == null) {
             final JavaParameters parameters = new JavaParameters();
             parameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
-            configureRTClasspath(parameters);
-            JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                                               getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration()
-                                                 .getAlternativeJrePath() : null);
-            wWriter.println(parameters.getClassPath().getPathsString());
+             try {
+               configureRTClasspath(parameters);
+               JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
+                                                 getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null);
+              wWriter.println(parameters.getClassPath().getPathsString());
+            }
+            catch (CantRunException e) {
+              wWriter.println(javaParameters.getClassPath().getPathsString());
+            }
           }
           else {
             wWriter.println(classpath);

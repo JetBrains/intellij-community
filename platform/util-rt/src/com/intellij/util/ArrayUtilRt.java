@@ -11,8 +11,6 @@ import java.util.Collection;
 /**
  * Stripped-down version of {@code com.intellij.util.ArrayUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
- *
- * @since 12.0
  */
 @SuppressWarnings({"SSBasedInspection"})
 public class ArrayUtilRt {

@@ -54,7 +54,6 @@ import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.ArrayUtil.toObjectArray;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
@@ -536,7 +535,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      final Side side = assertNotNull(Side.fromValue(getEditors(), editor));
+      final Side side = Side.fromValue(getEditors(), editor);
+      if (side == null) return;
+
       final List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
       if (selectedChanges.isEmpty()) return;
 

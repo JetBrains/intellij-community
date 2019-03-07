@@ -19,36 +19,38 @@ package com.intellij.codeInspection.reference;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
-  private final RefModule myRefModule;
+  private volatile RefModule myRefModule; // it's guaranteed that getModule() used after initialize()
   protected RefDirectoryImpl(PsiDirectory psiElement, RefManager refManager) {
     super(psiElement.getName(), psiElement, refManager);
-    final PsiDirectory parentDirectory = psiElement.getParentDirectory();
-    if (parentDirectory != null && parentDirectory.getManager().isInProject(parentDirectory)) {
-      final RefElementImpl refElement = (RefElementImpl)refManager.getReference(parentDirectory);
-      if (refElement != null) {
-        refElement.add(this);
-        myRefModule = null;
-        return;
-      }
-    }
-    myRefModule = refManager.getRefModule(ModuleUtilCore.findModuleForPsiElement(psiElement));
   }
-
 
   @Override
   protected void initialize() {
+    PsiDirectory psiElement = ObjectUtils.tryCast(getPsiElement(), PsiDirectory.class);
+    LOG.assertTrue(psiElement != null);
+    final PsiDirectory parentDirectory = psiElement.getParentDirectory();
+    if (parentDirectory != null && ProjectFileIndex.getInstance(psiElement.getProject()).isInSourceContent(parentDirectory.getVirtualFile())) {
+      final WritableRefElement refElement = (WritableRefElement)getRefManager().getReference(parentDirectory);
+      if (refElement != null) {
+        refElement.add(this);
+        return;
+      }
+    }
+    myRefModule = getRefManager().getRefModule(ModuleUtilCore.findModuleForPsiElement(psiElement));
     if (myRefModule != null) {
-      ((RefModuleImpl)myRefModule).add(this);
+      ((WritableRefEntity)myRefModule).add(this);
       return;
     }
-    ((RefProjectImpl)myManager.getRefProject()).add(this);
+    ((WritableRefEntity)myManager.getRefProject()).add(this);
   }
 
   @Override
@@ -70,7 +72,7 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
   @Nullable
   @Override
   public RefModule getModule() {
-    return myRefModule;
+    return myRefModule != null ? myRefModule : super.getModule();
   }
 
 

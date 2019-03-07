@@ -262,7 +262,7 @@ public class ChangesCacheFile {
     if (count == 0) {
       return NO_ENTRIES;
     }
-    myIndexStream.seek(myIndexStream.length() - INDEX_ENTRY_SIZE * (count + offset));
+    myIndexStream.seek(myIndexStream.length() - INDEX_ENTRY_SIZE * ((long)count + offset));
     IndexEntry[] result = new IndexEntry[count];
     for(int i=0; i<count; i++) {
       result [i] = new IndexEntry();
@@ -334,7 +334,7 @@ public class ChangesCacheFile {
       final long length = myIndexStream.length();
       long totalCount = length / INDEX_ENTRY_SIZE;
       for(int i=0; i<totalCount; i++) {
-        final long indexOffset = length - (i + 1) * INDEX_ENTRY_SIZE;
+        final long indexOffset = length - (i + 1L) * INDEX_ENTRY_SIZE;
         myIndexStream.seek(indexOffset);
         IndexEntry e = new IndexEntry();
         readIndexEntry(e);
@@ -644,7 +644,7 @@ public class ChangesCacheFile {
     long totalCount = length / INDEX_ENTRY_SIZE;
     List<IncomingChangeListData> incomingData = new ArrayList<>();
     for(int i=0; i<totalCount; i++) {
-      final long indexOffset = length - (i + 1) * INDEX_ENTRY_SIZE;
+      final long indexOffset = length - (i + 1L) * INDEX_ENTRY_SIZE;
       myIndexStream.seek(indexOffset);
       IndexEntry e = new IndexEntry();
       readIndexEntry(e);

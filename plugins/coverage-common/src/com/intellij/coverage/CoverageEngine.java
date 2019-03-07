@@ -52,6 +52,20 @@ public abstract class CoverageEngine {
   public abstract boolean canHavePerTestCoverage(@Nullable final RunConfigurationBase conf);
 
   /**
+   * @return tests, which covered specified line. Names should be compatible with {@link CoverageEngine#findTestsByNames(String[], Project)}
+   */
+  public Set<String> getTestsForLine(Project project, String classFQName, int lineNumber) {
+    return Collections.emptySet();
+  }
+
+  /**
+   * @return true, if test data was collected
+   */
+  public boolean wasTestDataCollected(Project project) {
+    return false;
+  }
+
+  /**
    * Creates coverage enabled configuration for given RunConfiguration. It is supposed that one run configuration may be associated
    * not more than one coverage engine.
    *

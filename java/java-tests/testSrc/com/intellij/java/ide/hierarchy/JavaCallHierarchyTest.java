@@ -29,11 +29,13 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewTestBase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class JavaCallHierarchyTest extends HierarchyViewTestBase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

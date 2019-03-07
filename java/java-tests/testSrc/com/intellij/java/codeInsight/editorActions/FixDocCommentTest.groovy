@@ -23,7 +23,6 @@ import groovy.transform.CompileStatic
 
 /**
  * @author Denis Zhdanov
- * @since 9/20/12 6:17 PM
  */
 @CompileStatic
 class FixDocCommentTest extends AbstractEditorTest {

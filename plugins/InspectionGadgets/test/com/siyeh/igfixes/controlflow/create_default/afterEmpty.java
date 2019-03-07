@@ -4,6 +4,7 @@ class X {
     switch(i) {
 
         default:
+            throw new IllegalStateException("Unexpected value: " + i);
     }
   }
 }

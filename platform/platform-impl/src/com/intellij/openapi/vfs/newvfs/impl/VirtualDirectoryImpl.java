@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -48,6 +34,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -261,7 +251,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     final FileAttributes attributes = delegate.getAttributes(fake);
     if (attributes == null) return null;
     final String realName = delegate.getCanonicallyCasedName(fake);
-    final VFileCreateEvent event = new VFileCreateEvent(null, this, realName, attributes.isDirectory(), true);
+    boolean isDirectory = attributes.isDirectory();
+    boolean isEmptyDirectory = isDirectory && !hasChildren(Paths.get(fake.getPath()));
+
+    final VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDirectory, attributes, true, isEmptyDirectory);
     RefreshQueue.getInstance().processSingleEvent(event);
     return findChild(realName);
   }
@@ -705,6 +698,19 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (key != null && newMap.get(key) instanceof PsiCachedValue) {
         throw new AssertionError("Don't store CachedValue in VFS user data, since it leads to memory leaks");
       }
+    }
+  }
+
+  /**
+   * @return true if {@code path} represents a directory which has children.
+   */
+  public static boolean hasChildren(@NotNull Path path) {
+    // make sure to not load all children
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+      return stream.iterator().hasNext();
+    }
+    catch (IOException | SecurityException e) {
+      return false;
     }
   }
 }

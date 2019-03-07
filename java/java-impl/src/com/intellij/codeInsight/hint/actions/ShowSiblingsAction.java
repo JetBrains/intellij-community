@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
 import com.intellij.codeInsight.hint.PsiImplementationViewSession;
-import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -55,7 +54,7 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     final String findUsagesTitle = "Super " + (isMethod ? "methods" : "classes/interfaces");
     final ListCellRenderer listRenderer = isMethod ? new MethodCellRenderer(false) : new PsiClassListCellRenderer();
     final JBPopup popup = PsiElementListNavigator
-      .navigateOrCreatePopup(navigatablePsiElements, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)null,
+      .navigateOrCreatePopup(navigatablePsiElements, title, findUsagesTitle, listRenderer, null,
                              objects -> showSiblings(invokedByShortcut, project, editor, file, editor != null, (PsiElement)objects[0]));
     if (popup != null) {
       if (editor != null) {
@@ -80,7 +79,7 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     final PsiElement[] impls = PsiImplementationViewSession
       .getSelfAndImplementations(editor, element, PsiImplementationViewSession.createImplementationsSearcher(true), false);
     final String text = SymbolPresentationUtil.getSymbolPresentableText(element);
-    showImplementations(new PsiImplementationViewSession(project, element, impls, text, editor, file), invokedFromEditor, invokedByShortcut);
+    showImplementations(new PsiImplementationViewSession(project, element, impls, text, editor, file != null ? file.getVirtualFile() : null, true, false), invokedFromEditor, invokedByShortcut);
   }
 
   @Override

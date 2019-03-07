@@ -44,6 +44,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
     }
   }
 
+  @NotNull
   @Override
   public String getTestDataPath() {
     PathManagerEx.TestDataLookupStrategy strategy = PathManagerEx.guessTestDataLookupStrategy();

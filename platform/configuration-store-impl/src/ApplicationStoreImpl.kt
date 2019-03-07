@@ -17,8 +17,6 @@ import org.jetbrains.jps.model.serialization.JpsGlobalLoader
 private class ApplicationPathMacroManager : PathMacroManager(null)
 
 const val APP_CONFIG = "\$APP_CONFIG$"
-private const val FILE_STORAGE_DIR = "options"
-private const val DEFAULT_STORAGE_SPEC = "${PathManager.DEFAULT_OPTIONS_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}"
 
 class ApplicationStoreImpl(private val application: Application, pathMacroManager: PathMacroManager? = null) : ComponentStoreWithExtraComponents() {
   override val storageManager = ApplicationStorageManager(application, pathMacroManager)
@@ -29,7 +27,7 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
 
   override fun setPath(path: String) {
     // app config must be first, because collapseMacros collapse from fist to last, so, at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
-    storageManager.addMacro(APP_CONFIG, "$path/${FILE_STORAGE_DIR}")
+    storageManager.addMacro(APP_CONFIG, "$path/${PathManager.OPTIONS_DIRECTORY}")
     storageManager.addMacro(ROOT_CONFIG, path)
     storageManager.addMacro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve("app.xml").systemIndependentPath)
   }
@@ -60,7 +58,7 @@ class ApplicationStorageManager(application: Application?, pathMacroManager: Pat
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
     return when (component) {
       is NamedJDOMExternalizable -> "${component.externalFileName}${FileStorageCoreUtil.DEFAULT_EXT}"
-      else -> DEFAULT_STORAGE_SPEC
+      else -> PathManager.DEFAULT_OPTIONS_FILE
     }
   }
 

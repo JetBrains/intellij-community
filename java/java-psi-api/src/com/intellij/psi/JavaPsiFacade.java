@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -23,12 +9,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * @author max
  */
 public abstract class JavaPsiFacade {
   private static final NotNullLazyKey<JavaPsiFacade, Project> INSTANCE_KEY = ServiceManager.createLazyKey(JavaPsiFacade.class);
-  
+
   public static JavaPsiFacade getInstance(Project project) {
     return INSTANCE_KEY.getValue(project);
   }
@@ -70,6 +58,18 @@ public abstract class JavaPsiFacade {
   public abstract PsiPackage findPackage(@NonNls @NotNull String qualifiedName);
 
   /**
+   * Searches the scope for a unique Java module with the given name.
+   */
+  @Nullable
+  public abstract PsiJavaModule findModule(@NotNull String moduleName, @NotNull GlobalSearchScope scope);
+
+  /**
+   * Searches the scope for a Java modules with the given name.
+   */
+  @NotNull
+  public abstract Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope);
+
+  /**
    * Returns the element factory for the project, which can be used to
    * create instances of Java and XML PSI elements.
    *
@@ -101,7 +101,7 @@ public abstract class JavaPsiFacade {
    * Returns the name helper for the project, which can be used to validate
    * and parse Java identifiers.
    *
-   * @deprecated use {@link com.intellij.psi.PsiNameHelper#getInstance(com.intellij.openapi.project.Project)}
+   * @deprecated use {@link PsiNameHelper#getInstance(Project)}
    * @return the name helper instance.
    */
   @Deprecated

@@ -6,9 +6,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
-import com.intellij.internal.statistic.service.fus.collectors.LegacyApplicationUsageTriggers;
+import com.intellij.internal.statistic.service.fus.collectors.*;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
@@ -35,9 +33,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class StatisticsJobsScheduler implements BaseComponent {
-  private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 10 * 60 * 1000;
-  private static final int SEND_EVENT_LOG_DELAY_IN_MILLIS = 2 * 60 * 60 * 1000;
-  private static final int SEND_STATISTICS_DELAY_IN_MIN = 10;
+  private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 20 * 60 * 1000;
+  private static final int SEND_EVENT_LOG_DELAY_IN_MILLIS = 60 * 60 * 1000;
+  private static final int SEND_STATISTICS_DELAY_IN_MIN = 5;
 
   public static final int LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN = 15;
   public static final int LOG_APPLICATION_STATES_DELAY_IN_MIN = 24 * 60;
@@ -74,7 +72,7 @@ public class StatisticsJobsScheduler implements BaseComponent {
       if (FeatureUsageLogger.INSTANCE.isEnabled()) {
         runStatisticsServiceWithDelay(StatisticsUploadAssistant.getEventLogStatisticsService(), SEND_STATISTICS_DELAY_IN_MIN);
       }
-    }, 2 * SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, SEND_EVENT_LOG_DELAY_IN_MILLIS, TimeUnit.MILLISECONDS);
+    }, SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, SEND_EVENT_LOG_DELAY_IN_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   private static void runStatesLogging() {
@@ -92,6 +90,7 @@ public class StatisticsJobsScheduler implements BaseComponent {
                                                              LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN,
                                                              LOG_PROJECTS_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
         myPersistStatisticsSessionsMap.put(project, future);
+        LegacyFUSProjectUsageTrigger.cleanup(project);
       }
 
       @Override

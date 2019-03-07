@@ -316,7 +316,7 @@ public final class PServerPasswordScrambler {
 	// Utils ==================================================================
 
 	private char unscramble(char scrambledChr) {
-		final int scrambledInt = (int)(scrambledChr & 255);
+		final int scrambledInt = (scrambledChr & 255);
 		for (int i = 0; i < shifts.length; i++) {
 			if (shifts[i] == scrambledInt) {
 				return (char)i;

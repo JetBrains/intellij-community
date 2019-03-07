@@ -157,6 +157,11 @@ class AsyncFilterRunner {
     return result;
   }
 
+  /**
+   * It's important that FilterResult doesn't reference frozen document from {@link HighlighterJob#snapshot},
+   * as the lifetime of FilterResult is longer (until EDT is free to apply events), and there can be many jobs
+   * holding many document snapshots all together consuming a lot of memory.
+   */
   private class FilterResult {
     private final DeltaTracker myDelta;
     private final Filter.Result myResult;

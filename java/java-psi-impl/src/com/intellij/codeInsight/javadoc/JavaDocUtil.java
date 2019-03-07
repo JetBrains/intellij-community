@@ -271,6 +271,9 @@ public class JavaDocUtil {
                ((PsiParameterList)element.getParent()).getParameterIndex((PsiParameter)element);
       }
     }
+    else if (element instanceof PsiNamedElement) {
+      return ((PsiNamedElement)element).getName();
+    }
 
     return null;
   }

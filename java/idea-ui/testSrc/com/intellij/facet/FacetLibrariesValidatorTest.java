@@ -40,7 +40,7 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
 
   @NotNull
   @Override
-  protected Module createModule(final String moduleName) {
+  protected Module createModule(@NotNull final String moduleName) {
     return createModule(moduleName, StdModuleTypes.JAVA);
   }
 

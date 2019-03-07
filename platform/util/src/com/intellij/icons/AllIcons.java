@@ -2577,10 +2577,6 @@ public class AllIcons {
     /**
      * 16x16
      */
-    public static final Icon Print = IconLoader.getIcon("/graph/print.svg");
-    /**
-     * 16x16
-     */
     public static final Icon SnapToGrid = IconLoader.getIcon("/graph/snapToGrid.svg");
     /**
      * 16x16
@@ -2595,6 +2591,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Export = AllIcons.ToolbarDecorator.Export;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Print */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Print = AllIcons.General.Print;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Preview */
     @SuppressWarnings("unused")
@@ -3540,19 +3541,7 @@ public class AllIcons {
     /**
      * 16x16
      */
-    public static final Icon DataSchema = IconLoader.getIcon("/nodes/dataSchema.svg");
-    /**
-     * 16x16
-     */
-    public static final Icon DataSource = IconLoader.getIcon("/nodes/DataSource.svg");
-    /**
-     * 16x16
-     */
     public static final Icon DataTables = IconLoader.getIcon("/nodes/DataTables.svg");
-    /**
-     * 16x16
-     */
-    public static final Icon DataView = IconLoader.getIcon("/nodes/dataView.svg");
     /**
      * 16x16
      */
@@ -4041,6 +4030,21 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon CollapseNode = AllIcons.General.ArrowDown;
+
+    /** @deprecated to be removed in IDEA 2020 - see DatabaseIcons.View */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DataSchema = IconLoader.getIcon("/nodes/dataSchema.svg");
+
+    /** @deprecated to be removed in IDEA 2020 - see DatabaseIcons.DatabaseGroup */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DataSource = IconLoader.getIcon("/nodes/DataSource.svg");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DataView = IconLoader.getIcon("/nodes/dataView.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -5398,6 +5402,10 @@ public class AllIcons {
      * 16x16
      */
     public static final Icon History = IconLoader.getIcon("/vcs/history.svg");
+    /**
+     * 16x16
+     */
+    public static final Icon Ignore_file = IconLoader.getIcon("/vcs/ignore_file.svg");
     /**
      * 16x16
      */

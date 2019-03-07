@@ -162,8 +162,8 @@ public class ReductionSystem {
   public ReductionSystem[] isolate() {
     class Node {
       int myComponent = -1;
-      Constraint myConstraint;
-      Set<Node> myNeighbours = new HashSet<>();
+      final Constraint myConstraint;
+      final Set<Node> myNeighbours = new HashSet<>();
 
       Node() {
         myConstraint = null;

@@ -68,7 +68,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private boolean myUserCaretChange = true;
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Breadcrumbs.Queue", 200, true, breadcrumbs);
 
-  private List<BreadcrumbListener> myBreadcrumbListeners = new ArrayList<>();
+  private final List<BreadcrumbListener> myBreadcrumbListeners = new ArrayList<>();
 
   private final Update myUpdate = new Update(this) {
     @Override

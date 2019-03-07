@@ -18,7 +18,6 @@ import java.util.function.Supplier;
  */
 public class LookupOffsets implements DocumentListener {
   @NotNull private String myAdditionalPrefix = "";
-  private String myInitialPrefix;
 
   private boolean myStableStart;
   @Nullable private Supplier<String> myStartMarkerDisposeInfo = null;
@@ -63,7 +62,6 @@ public class LookupOffsets implements DocumentListener {
 
   public void appendPrefix(char c) {
     myAdditionalPrefix += c;
-    myInitialPrefix = null;
   }
 
   public boolean truncatePrefix() {
@@ -73,7 +71,6 @@ public class LookupOffsets implements DocumentListener {
       return false;
     }
     myAdditionalPrefix = myAdditionalPrefix.substring(0, len - 1);
-    myInitialPrefix = null;
     return true;
   }
 
@@ -131,12 +128,6 @@ public class LookupOffsets implements DocumentListener {
   void clearAdditionalPrefix() {
     myAdditionalPrefix = "";
     myRemovedPrefix = 0;
-  }
-
-  void restorePrefix() {
-    if (myInitialPrefix == null || !myLookupStartMarker.isValid()) return;
-
-    myEditor.getDocument().replaceString(myLookupStartMarker.getStartOffset(), myEditor.getCaretModel().getOffset(), myInitialPrefix);
   }
 
   void disposeMarkers() {

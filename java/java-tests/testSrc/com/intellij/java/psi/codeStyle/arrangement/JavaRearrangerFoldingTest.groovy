@@ -22,7 +22,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
 
 /**
  * @author Denis Zhdanov
- * @since 11/20/12 3:34 PM
  */
 @CompileStatic
 class JavaRearrangerFoldingTest extends AbstractJavaRearrangerTest {

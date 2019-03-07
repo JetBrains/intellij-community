@@ -21,7 +21,6 @@ import javax.swing.*;
 
 /**
  * @author Konstantin Bulenkov
- * @since 15.0
  */
 public interface ScalableIcon extends Icon {
   /**

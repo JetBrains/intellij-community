@@ -2,7 +2,6 @@
 package com.intellij.remoteServer.util;
 
 import com.intellij.credentialStore.CredentialAttributes;
-import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.agent.util.CloudAgentConfigBase;
@@ -14,7 +13,6 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -124,29 +122,24 @@ public class CloudConfigurationBase<Self extends CloudConfigurationBase<Self>>
   }
 
   protected static void doSetSafeValue(@Nullable CredentialAttributes credentialAttributes,
-                                       @Nullable String credentialUser, @Nullable String secretValue,
+                                       @Nullable String credentialUser,
+                                       @Nullable String secretValue,
                                        @NotNull Consumer<String> unsafeSetter) {
 
-    if (credentialAttributes != null) {
-      PasswordSafe.getInstance().set(credentialAttributes, new Credentials(credentialUser, secretValue), false);
-      unsafeSetter.accept(null);
-    }
-    else {
-      unsafeSetter.accept(secretValue);
-    }
+    CloudConfigurationUtil.doSetSafeValue(credentialAttributes, credentialUser, secretValue, unsafeSetter);
   }
 
   protected static String doGetSafeValue(@Nullable CredentialAttributes credentialAttributes, @NotNull Supplier<String> unsafeGetter) {
-    return Optional.ofNullable(credentialAttributes)
-      .map(attr -> PasswordSafe.getInstance().get(credentialAttributes))
-      .map(Credentials::getPasswordAsString)
-      .orElseGet(unsafeGetter);
+    return CloudConfigurationUtil.doGetSafeValue(credentialAttributes, unsafeGetter);
+  }
+
+  protected static boolean hasSafeCredentials(@Nullable CredentialAttributes credentialAttributes) {
+    return CloudConfigurationUtil.hasSafeCredentials(credentialAttributes);
   }
 
   @Nullable
   protected static CredentialAttributes createCredentialAttributes(String serviceName, String credentialsUser) {
-    return StringUtil.isEmpty(serviceName) || StringUtil.isEmpty(credentialsUser) ?
-           null : new CredentialAttributes(serviceName, credentialsUser);
+    return CloudConfigurationUtil.createCredentialAttributes(serviceName, credentialsUser);
   }
 
   public boolean shouldMigrateToPasswordSafe() {

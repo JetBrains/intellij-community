@@ -233,7 +233,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     if (scopeAnchor != null) {
       final ScopeOwner declOwner = ScopeUtil.getDeclarationScopeOwner(scopeAnchor, name);
       if (declOwner != null && declOwner != owner) {
-        final Collection<PsiElement> writeElements = ScopeUtil.getReadWriteElements(name, declOwner, false, true);
+        final Collection<PsiElement> writeElements = ScopeUtil.getElementsOfAccessType(name, declOwner, ReadWriteInstruction.ACCESS.WRITE);
         for (PsiElement e : writeElements) {
           myUsedElements.add(e);
           myUnusedElements.remove(e);

@@ -5,8 +5,6 @@ import com.intellij.util.messages.Topic;
 
 /**
  * Listener for receiving notifications when the IDEA window is activated or deactivated.
- *
- * @since 5.0.2
  */
 public interface FrameStateListener {
   Topic<FrameStateListener> TOPIC = new Topic<>("FrameStateListener", FrameStateListener.class);

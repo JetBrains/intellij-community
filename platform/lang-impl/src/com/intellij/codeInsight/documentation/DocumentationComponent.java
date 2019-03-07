@@ -291,6 +291,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                   }
 
                   @Override
+                  public String getToolTipText(float x, float y, Shape allocation) {
+                     return (String)getElement().getAttributes().getAttribute(HTML.Attribute.ALT);
+                  }
+
+                  @Override
                   public void paint(Graphics g, Shape allocation) {
                     viewIcon.paintIcon(null, g, allocation.getBounds().x, allocation.getBounds().y - 4);
                   }

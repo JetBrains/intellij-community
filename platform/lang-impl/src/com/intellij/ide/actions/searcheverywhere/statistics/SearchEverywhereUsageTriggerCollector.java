@@ -24,4 +24,9 @@ public class SearchEverywhereUsageTriggerCollector {
   public static void trigger(@NotNull Project project, @NotNull String feature, @Nullable FUSUsageContext context) {
     FeatureUsageLogger.INSTANCE.log(GROUP_ID, feature, StatisticsUtilKt.createData(project, context));
   }
+
+  @NotNull
+  public static FUSUsageContext createContext(@Nullable String contributorID, @Nullable String shortcut) {
+    return FUSUsageContext.create(contributorID, shortcut);
+  }
 }

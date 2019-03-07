@@ -18,7 +18,6 @@ import java.lang.Double.MAX_VALUE
 
 /**
  * @author Vladislav.Soroka
- * @since 12/7/2016
  */
 class ConfigurationsCompletionContributor : AbstractGradleCompletionContributor() {
 

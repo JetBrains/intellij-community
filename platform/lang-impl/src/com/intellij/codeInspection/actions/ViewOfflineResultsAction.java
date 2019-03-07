@@ -194,7 +194,7 @@ public class ViewOfflineResultsAction extends AnAction {
                                                       @NotNull String title) {
     final AnalysisScope scope = new AnalysisScope(project);
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
-    final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
+    final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext();
     context.setExternalProfile(inspectionProfile);
     context.setCurrentScope(scope);
     context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());

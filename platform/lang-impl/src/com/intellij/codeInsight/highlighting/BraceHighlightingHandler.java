@@ -4,7 +4,6 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -512,7 +511,6 @@ public class BraceHighlightingHandler {
         int line2 = document.getLineNumber(range.getEndOffset());
         line1 = Math.max(line1, line2 - EditorFragmentComponent.getAvailableVisualLinesAboveEditor(editor) + 1);
         range = new TextRange(document.getLineStartOffset(line1), range.getEndOffset());
-        HintManager.getInstance().hideAllHints();
         LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(editor, range, true, true);
         editor.putUserData(HINT_IN_EDITOR_KEY, hint);
       });

@@ -1,7 +1,6 @@
 import json
 from abc import abstractmethod
 from datetime import datetime
-from typing import Dict
 
 try:
     import numpy
@@ -15,7 +14,7 @@ except ImportError:
 
 
 # Parameter 'value' can also be pandas.DataFrame
-def _standardize_dict(value: Dict) -> Dict:
+def _standardize_dict(value):
     result = {}
     for k, v in value.items():
         result[_standardize_value(k)] = _standardize_value(v)
@@ -23,19 +22,19 @@ def _standardize_dict(value: Dict) -> Dict:
     return result
 
 
-def is_int(v) -> bool:
+def is_int(v):
     return isinstance(v, int) or (numpy and isinstance(v, numpy.integer))
 
 
-def is_float(v) -> bool:
+def is_float(v):
     return isinstance(v, float) or (numpy and isinstance(v, numpy.floating))
 
 
-def is_number(v) -> bool:
+def is_number(v):
     return is_int(v) or is_float(v)
 
 
-def is_shapely_geometry(v) -> bool:
+def is_shapely_geometry(v):
     try:
         from shapely.geometry.base import BaseGeometry
         return isinstance(v, BaseGeometry)
@@ -73,7 +72,7 @@ def _standardize_value(v):
         return repr(v)
     except Exception as e:
         # TODO This needs a test case; Also exception should be logged somewhere
-        raise Exception('Unsupported type: {0}({1})'.format(v, type(v))) from e
+        raise Exception('Unsupported type: {0}({1})'.format(v, type(v)))
 
 
 class CanToDataFrame:

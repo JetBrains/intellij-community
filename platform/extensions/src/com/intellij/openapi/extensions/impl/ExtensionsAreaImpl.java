@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +32,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private static final boolean DEBUG_REGISTRATION = Boolean.FALSE.booleanValue(); // not compile-time constant to avoid yellow code
 
   private final AreaPicoContainer myPicoContainer;
-  private final Throwable myCreationTrace;
   private final Map<String, ExtensionPointImpl> myExtensionPoints = ContainerUtil.newConcurrentMap();
   private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new THashMap<>() : null;
   private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = MultiMap.createSmart(); // guarded by myAvailabilityListeners
@@ -40,7 +39,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final String myAreaClass;
 
   public ExtensionsAreaImpl(String areaClass, AreaInstance areaInstance, PicoContainer parentPicoContainer) {
-    myCreationTrace = DEBUG_REGISTRATION ? new Throwable("Area creation trace") : null;
     myAreaClass = areaClass;
     myAreaInstance = areaInstance;
     myPicoContainer = new DefaultPicoContainer(parentPicoContainer);
@@ -138,10 +136,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   // Used in Upsource
   @Override
   public void registerExtension(@NotNull final ExtensionPoint extensionPoint, @NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement) {
-    if (!Extensions.isComponentSuitableForOs(extensionElement.getAttributeValue("os"))) {
-      return;
-    }
-
     ExtensionComponentAdapter adapter;
     if (extensionPoint.getKind() == ExtensionPoint.Kind.INTERFACE) {
       String implClass = extensionElement.getAttributeValue("implementation");
@@ -163,7 +157,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private ExtensionComponentAdapter createAdapter(@NotNull String implementationClassName, @NotNull Element extensionElement, boolean isNeedToDeserialize, @NotNull PluginDescriptor pluginDescriptor) {
     String orderId = extensionElement.getAttributeValue("id");
     LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
-    return new ExtensionComponentAdapter(implementationClassName, myPicoContainer, pluginDescriptor, orderId, order, isNeedToDeserialize ? extensionElement : null);
+    return new XmlExtensionComponentAdapter(implementationClassName, myPicoContainer, pluginDescriptor, orderId, order, isNeedToDeserialize ? extensionElement : null);
   }
 
   private static boolean shouldDeserializeInstance(@NotNull Element extensionElement) {
@@ -240,10 +234,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       new CachingConstructorInjectionComponentAdapter(Integer.toString(System.identityHashCode(new Object())), clazz);
 
     return adapter.getComponentInstance(getPicoContainer());
-  }
-
-  public Throwable getCreationTrace() {
-    return myCreationTrace;
   }
 
   @Override

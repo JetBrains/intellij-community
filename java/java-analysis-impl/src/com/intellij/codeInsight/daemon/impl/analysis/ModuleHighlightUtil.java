@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -176,11 +176,24 @@ public class ModuleHighlightUtil {
   static HighlightInfo checkModuleReference(@NotNull PsiRequiresStatement statement) {
     PsiJavaModuleReferenceElement refElement = statement.getReferenceElement();
     if (refElement != null) {
-      PsiPolyVariantReference ref = refElement.getReference();
+      PsiJavaModuleReference ref = refElement.getReference();
       assert ref != null : refElement.getParent();
-      PsiElement target = ref.resolve();
-      if (!(target instanceof PsiJavaModule)) {
-        return moduleResolveError(refElement, ref);
+      PsiJavaModule target = ref.resolve();
+      if (target == null) {
+        if (ref.multiResolve(true).length == 0) {
+          String message = JavaErrorMessages.message("module.not.found", refElement.getReferenceText());
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).descriptionAndTooltip(message).create();
+        }
+        else if (ref.multiResolve(false).length > 1) {
+          String message = JavaErrorMessages.message("module.ambiguous", refElement.getReferenceText());
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).descriptionAndTooltip(message).create();
+        }
+        else {
+          String message = JavaErrorMessages.message("module.not.on.path", refElement.getReferenceText());
+          HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).descriptionAndTooltip(message).create();
+          factory().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(info), ref);
+          return info;
+        }
       }
       PsiJavaModule container = (PsiJavaModule)statement.getParent();
       if (target == container) {
@@ -188,7 +201,7 @@ public class ModuleHighlightUtil {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message).create();
       }
       else {
-        Collection<PsiJavaModule> cycle = JavaModuleGraphUtil.findCycle((PsiJavaModule)target);
+        Collection<PsiJavaModule> cycle = JavaModuleGraphUtil.findCycle(target);
         if (cycle != null && cycle.contains(container)) {
           Stream<String> stream = cycle.stream().map(PsiJavaModule::getName);
           if (ApplicationManager.getApplication().isUnitTestMode()) stream = stream.sorted();
@@ -266,13 +279,12 @@ public class ModuleHighlightUtil {
     Set<String> targets = ContainerUtil.newTroveSet();
     for (PsiJavaModuleReferenceElement refElement : statement.getModuleReferences()) {
       String refText = refElement.getReferenceText();
-      PsiPolyVariantReference ref = refElement.getReference();
+      PsiJavaModuleReference ref = refElement.getReference();
       assert ref != null : statement;
       if (!targets.add(refText)) {
         boolean exports = statement.getRole() == Role.EXPORTS;
         String message = JavaErrorMessages.message(exports ? "module.duplicate.exports.target" : "module.duplicate.opens.target", refText);
-        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message).create();
-        QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(refElement, QuickFixBundle.message("delete.reference.fix.text")));
+        HighlightInfo info = duplicateReference(refElement, message);
         results.add(info);
       }
       else if (ref.multiResolve(true).length == 0) {
@@ -315,8 +327,7 @@ public class ModuleHighlightUtil {
       String refText = implRef.getQualifiedName();
       if (!filter.add(refText)) {
         String message = JavaErrorMessages.message("module.duplicate.impl", refText);
-        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(implRef).descriptionAndTooltip(message).create();
-        QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(implRef, QuickFixBundle.message("delete.reference.fix.text")));
+        HighlightInfo info = duplicateReference(implRef, message);
         results.add(info);
         continue;
       }
@@ -397,23 +408,6 @@ public class ModuleHighlightUtil {
     return null;
   }
 
-  private static HighlightInfo moduleResolveError(PsiJavaModuleReferenceElement refElement, PsiPolyVariantReference ref) {
-    if (ref.multiResolve(true).length == 0) {
-      String message = JavaErrorMessages.message("module.not.found", refElement.getReferenceText());
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).descriptionAndTooltip(message).create();
-    }
-    else if (ref.multiResolve(false).length > 1) {
-      String message = JavaErrorMessages.message("module.ambiguous", refElement.getReferenceText());
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).descriptionAndTooltip(message).create();
-    }
-    else {
-      String message = JavaErrorMessages.message("module.not.on.path", refElement.getReferenceText());
-      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).descriptionAndTooltip(message).create();
-      factory().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(info), ref);
-      return info;
-    }
-  }
-
   private static QuickFixFactory factory() {
     return QuickFixFactory.getInstance();
   }
@@ -425,5 +419,11 @@ public class ModuleHighlightUtil {
 
   private static PsiElement range(PsiJavaCodeReferenceElement refElement) {
     return ObjectUtils.notNull(refElement.getReferenceNameElement(), refElement);
+  }
+
+  private static HighlightInfo duplicateReference(PsiElement refElement, String message) {
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message).create();
+    QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(refElement, QuickFixBundle.message("delete.reference.fix.text")));
+    return info;
   }
 }

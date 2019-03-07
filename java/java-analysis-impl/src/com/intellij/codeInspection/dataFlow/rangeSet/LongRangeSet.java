@@ -259,10 +259,12 @@ public abstract class LongRangeSet {
     if (right.length > 6) {
       right = splitAtZero(new long[]{right[0], right[right.length - 1]});
     }
+    long globalMask = (this instanceof ModRange ? ((ModRange)this).getBitwiseMask(true) : -1L) &
+                      (other instanceof ModRange ? ((ModRange)other).getBitwiseMask(true) : -1L);
     LongRangeSet result = empty();
     for (int i = 0; i < left.length; i += 2) {
       for (int j = 0; j < right.length; j += 2) {
-        result = result.unite(bitwiseAnd(left[i], left[i + 1], right[j], right[j + 1]));
+        result = result.unite(bitwiseAnd(left[i], left[i + 1], right[j], right[j + 1], globalMask));
       }
     }
     return result;
@@ -453,9 +455,9 @@ public abstract class LongRangeSet {
     return ranges;
   }
 
-  private static LongRangeSet bitwiseAnd(long leftFrom, long leftTo, long rightFrom, long rightTo) {
+  private static LongRangeSet bitwiseAnd(long leftFrom, long leftTo, long rightFrom, long rightTo, long globalMask) {
     if (leftFrom == leftTo && rightFrom == rightTo) {
-      return point(leftFrom & rightFrom);
+      return point(leftFrom & rightFrom & globalMask);
     }
     if (leftFrom == leftTo && Long.bitCount(leftFrom+1) == 1) {
       return bitwiseMask(rightFrom, rightTo, leftFrom);
@@ -463,8 +465,8 @@ public abstract class LongRangeSet {
     if (rightFrom == rightTo && Long.bitCount(rightFrom+1) == 1) {
       return bitwiseMask(leftFrom, leftTo, rightFrom);
     }
-    ThreeState[] leftBits = bits(leftFrom, leftTo);
-    ThreeState[] rightBits = bits(rightFrom, rightTo);
+    ThreeState[] leftBits = bits(leftFrom, leftTo, globalMask);
+    ThreeState[] rightBits = bits(rightFrom, rightTo, globalMask);
     ThreeState[] resultBits = new ThreeState[Long.SIZE];
     for (int i = 0; i < Long.SIZE; i++) {
       if (leftBits[i] == ThreeState.NO || rightBits[i] == ThreeState.NO) {
@@ -498,7 +500,7 @@ public abstract class LongRangeSet {
 
   /**
    * Creates a set which contains all the numbers satisfying the supplied bit vector.
-   * Vector format is the same as returned by {@link #bits(long, long)}. The resulting set may
+   * Vector format is the same as returned by {@link #bits(long, long, long)}. The resulting set may
    * contain more values than necessary.
    *
    * @param bits a bit vector
@@ -542,10 +544,11 @@ public abstract class LongRangeSet {
    *
    * @param from lower bound
    * @param to upper bound
+   * @param globalMask an additional and-mask applied to the result
    * @return an array of 64 ThreeState values (NO = zero bit for all values, YES = one bit for all values,
    * UNSURE = both one and zero possible)
    */
-  private static ThreeState[] bits(long from, long to) {
+  private static ThreeState[] bits(long from, long to, long globalMask) {
     ThreeState[] bits = new ThreeState[Long.SIZE];
     Arrays.fill(bits, ThreeState.NO);
     while (true) {
@@ -553,7 +556,7 @@ public abstract class LongRangeSet {
       int toBit = Long.numberOfLeadingZeros(to);
       if (fromBit != toBit) {
         for (int i = Math.min(fromBit, toBit); i < Long.SIZE; i++) {
-          bits[i] = ThreeState.UNSURE;
+          bits[i] = isSet(globalMask, Long.SIZE - 1 - i) ? ThreeState.UNSURE : ThreeState.NO;
         }
         break;
       }
@@ -1735,6 +1738,23 @@ public abstract class LongRangeSet {
       long result = myBits;
       for (int shift = targetMod - myMod; shift > 0; shift -= myMod) {
         result |= myBits << shift;
+      }
+      return result;
+    }
+    
+    long getBitwiseMask(boolean forAnd) {
+      int knownBits = Long.numberOfTrailingZeros(myMod);
+      int powerOfTwo = 1 << knownBits;
+      long result = forAnd ? -powerOfTwo : -1L;
+      for (int rem = 0; rem < myBits; rem++) {
+        if (isSet(myBits, rem)) {
+          int mask = rem % powerOfTwo;
+          if (forAnd) {
+            result |= mask;
+          } else {
+            result &= mask;
+          }
+        }
       }
       return result;
     }

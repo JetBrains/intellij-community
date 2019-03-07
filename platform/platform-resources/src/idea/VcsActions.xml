@@ -185,6 +185,7 @@
       <reference ref="Diff.ShowDiff"/>
       <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
       <separator/>
+      <reference ref="ChangesView.GroupBy"/>
       <reference ref="ShelvedChanges.ShowHideDeleted"/>
       <separator/>
       <action id="ShelfChanges.Settings" class="com.intellij.openapi.vcs.changes.shelf.OpenShelfSettings"

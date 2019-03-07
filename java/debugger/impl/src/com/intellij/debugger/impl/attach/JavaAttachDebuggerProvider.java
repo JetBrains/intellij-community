@@ -111,7 +111,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       }
       return attachInfo.getProcessDisplayText(res);
     }
-  };
+  }
 
   @NotNull
   @Override

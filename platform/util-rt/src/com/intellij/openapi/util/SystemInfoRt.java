@@ -20,8 +20,6 @@ import java.util.Locale;
 /**
  * Stripped-down version of {@code com.intellij.openapi.util.SystemInfo}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
- *
- * @since 12.0
  */
 public class SystemInfoRt {
   public static final String OS_NAME = System.getProperty("os.name");

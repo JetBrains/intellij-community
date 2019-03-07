@@ -31,6 +31,7 @@ public class LegacyApplicationUsageTriggers implements PersistentStateComponent<
   public static void cleanup() {
     ServiceManager.getService(LegacyApplicationUsageTriggers.class);
     ServiceManager.getService(LegacyUsageTrigger.class);
+    LegacyFUSApplicationUsageTrigger.cleanup();
   }
 
   public final static class State {

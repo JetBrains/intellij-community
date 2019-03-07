@@ -171,6 +171,10 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   protected void createWizard(@Nullable Project project) throws IOException {
     File directory = FileUtil.createTempDirectory(getName(), "new", false);
     myFilesToDelete.add(directory);
+    if (myWizard != null) {
+      Disposer.dispose(myWizard.getDisposable());
+      myWizard = null;
+    }
     myWizard = createWizard(project, directory);
     UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class EvaluatorBuilderImpl
@@ -226,6 +226,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       myResult = new ReturnEvaluator(accept(statement.getReturnValue()));
     }
 
+    @Override
+    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+      throw new EvaluateRuntimeException(new UnsupportedExpressionException("Synchronized is not yet supported"));
+    }
 
     @Override
     public void visitStatement(PsiStatement statement) {

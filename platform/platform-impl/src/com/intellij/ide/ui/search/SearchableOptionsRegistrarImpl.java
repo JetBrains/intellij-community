@@ -79,7 +79,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     try {
       //stop words
       URL url = ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt");
-      if (url == null) return; // IDE does not provide /search/ignore.txt
+      if (url == null) throw new IOException("Broken installation: IDE does not provide /search/ignore.txt");
 
       String text = ResourceUtil.loadText(url);
       final String[] stopWords = text.split("[\\W]");

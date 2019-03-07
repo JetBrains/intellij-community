@@ -1993,6 +1993,26 @@ def abc(String s) { print 'hjk' }
     assertEquals("C", clazz.qualifiedName)
   }
 
+  void testScriptMethodVSStaticImportInsideLambda() {
+    def method = resolveByText '''
+import static C.abc
+
+class C {
+    static def abc(c) {
+        print 2
+    }
+}
+def cl = () -> {
+    ab<caret>c '2'
+}
+
+def abc(String s) { print 'hjk' }
+''', PsiMethod
+    PsiClass clazz = method.containingClass
+    assertNotNull(clazz)
+    assertEquals("C", clazz.qualifiedName)
+  }
+
   void testScriptMethodVSStaticImportInsideScript() {
     def method = resolveByText '''
 import static C.abc

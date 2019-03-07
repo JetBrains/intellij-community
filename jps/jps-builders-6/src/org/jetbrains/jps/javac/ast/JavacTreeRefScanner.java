@@ -393,8 +393,8 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   }
 
   private static boolean isToStringImplicitCall(TypeElement strElement, TypeElement element, JavacReferenceCollectorListener.ReferenceCollector collector) {
-    TypeElement stringEthalone = collector.getNameTable().getStringElement();
-    return strElement == stringEthalone && element != stringEthalone;
+    TypeElement string = collector.getNameTable().getStringElement();
+    return strElement == string && element != string;
   }
 
   private static void visitTypeHierarchy(TypeElement element, Set<TypeElement> collector, Types typeUtility) {

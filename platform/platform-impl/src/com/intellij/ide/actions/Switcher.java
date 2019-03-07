@@ -453,8 +453,8 @@ public class Switcher extends AnAction implements DumbAware {
       }
 
       final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(this) {
-        JPanel myPanel = new JPanel(new BorderLayout());
-        JLabel myLabel = createPaleLabel("* ");
+        final JPanel myPanel = new JPanel(new BorderLayout());
+        final JLabel myLabel = createPaleLabel("* ");
 
         {
           myPanel.setOpaque(false);

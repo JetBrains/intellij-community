@@ -377,21 +377,17 @@ public interface Application extends ComponentManager {
    * Checks if IDEA is capable of restarting itself on the current platform and with the current execution mode.
    *
    * @return true if IDEA can restart itself, false otherwise.
-   * @since 8.1
    */
   boolean isRestartCapable();
 
   /**
    * Exits and restarts IDEA. If the current platform is not restart capable, only exits.
-   *
-   * @since 8.1
    */
   void restart();
 
   /**
    * Checks if the application is active
    * @return true if one of application windows is focused, false -- otherwise
-   * @since 9.0
    */
   boolean isActive();
 

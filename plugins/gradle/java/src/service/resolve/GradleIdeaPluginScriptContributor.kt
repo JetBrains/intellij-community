@@ -18,7 +18,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 
 /**
  * @author Vladislav.Soroka
- * @since 11/18/13
  */
 class GradleIdeaPluginScriptContributor : GradleMethodContextContributor {
 

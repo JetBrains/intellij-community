@@ -18,8 +18,8 @@ import java.util.Arrays;
 class NewArrayInstanceEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.NewArrayInstanceEvaluator");
   private final Evaluator myArrayTypeEvaluator;
-  private Evaluator myDimensionEvaluator;
-  private Evaluator myInitializerEvaluator;
+  private final Evaluator myDimensionEvaluator;
+  private final Evaluator myInitializerEvaluator;
 
   /**
    * either dimensionEvaluator or initializerEvaluators must be null!

@@ -665,8 +665,13 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         AttributeChildInvocationHandler semElement =
           myManager.getSemService().getSemElement(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute);
         if (semElement == null) {
-          final AttributeChildInvocationHandler take2 = myManager.getSemService().getSemElement(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute);
-          throw new AssertionError("No DOM at XML. Parent=" + tag + "; attribute=" + attribute + "; second attempt=" + take2);
+          throw new AssertionError("No DOM at XML. Parent=" + tag +
+                                   "; ns=" + ns +
+                                   "; description=" + description +
+                                   "; attribute=" + attribute.getName() +
+                                   "; XML consistent=" + (PhysicalDomParentStrategy.getParentTag(attribute) == tag) +
+                                   "; DOM consistent =" + equals(DomSemContributor.getParentDom(tag)) +
+                                   "; re-creation=" + DomSemContributor.createAttributeHandler(attribute));
         }
         return semElement;
       }

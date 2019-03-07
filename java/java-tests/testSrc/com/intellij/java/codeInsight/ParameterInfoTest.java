@@ -134,6 +134,22 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     assertEquals("<html><b>String s</b>, int... p</html>", hintFixture.getCurrentHintText());
   }
 
+  public void testCompletionPolicyWithLowerBounds() {
+    EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
+    myFixture.configureByText("x.java",
+                              "class B {\n" +
+                              "  static <T> T[] foo(T[] args, int l) {\n" +
+                              "    return null;\n" +
+                              "  }\n" +
+                              "  void f(String[] args) {\n" +
+                              "    String[] a = foo(args, args.len<caret>gth);\n" +
+                              "  }\n" +
+                              "}");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+    UIUtil.dispatchAllInvocationEvents();
+    assertEquals("<html>String[] args, <b>int l</b></html>", hintFixture.getCurrentHintText());
+  }
+
   public void testPreselectionOfCandidatesInNestedMethod() {
     myFixture.configureByFile(getTestName(false) + ".java");
 

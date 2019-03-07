@@ -143,9 +143,9 @@ public class StaticGenericInfo extends DomGenericInfoEx {
 
     if (myCustomDescription != null && method.equals(myCustomDescription.getGetterMethod())) {
       return new Invocation() {
+        @NotNull
         @Override
-        @Nullable
-        public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
+        public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) {
           return myCustomDescription.getValues(handler);
         }
       };

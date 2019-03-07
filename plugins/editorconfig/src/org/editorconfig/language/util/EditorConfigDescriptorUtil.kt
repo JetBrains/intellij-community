@@ -9,19 +9,19 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.safeCast
 
 object EditorConfigDescriptorUtil {
-  fun findDeclarations(descriptor: EditorConfigDescriptor, id: String): List<EditorConfigDeclarationDescriptor> {
+  fun collectDeclarations(descriptor: EditorConfigDescriptor, id: String): List<EditorConfigDeclarationDescriptor> {
     val result = mutableListOf<EditorConfigDeclarationDescriptor>()
 
-    fun process(descriptor: EditorConfigDescriptor) {
+    fun collectInternal(descriptor: EditorConfigDescriptor) {
       if (descriptor is EditorConfigDeclarationDescriptor) {
         if (descriptor.id == id) {
           result.add(descriptor)
         }
       }
-      descriptor.children.forEach(::process)
+      descriptor.children.forEach(::collectInternal)
     }
 
-    process(descriptor)
+    collectInternal(descriptor)
     return result
   }
 
@@ -47,17 +47,17 @@ object EditorConfigDescriptorUtil {
     else -> false
   }
 
-  fun findConstants(descriptor: EditorConfigDescriptor): List<String> {
+  fun collectConstants(descriptor: EditorConfigDescriptor): List<String> {
     val result = mutableListOf<String>()
 
-    fun collectConstants(descriptor: EditorConfigDescriptor) {
+    fun collectInternal(descriptor: EditorConfigDescriptor) {
       when (descriptor) {
         is EditorConfigConstantDescriptor -> result.add(descriptor.text)
-        else -> descriptor.children.forEach { collectConstants(it) }
+        else -> descriptor.children.forEach { collectInternal(it) }
       }
     }
 
-    collectConstants(descriptor)
+    collectInternal(descriptor)
     return result
   }
 }

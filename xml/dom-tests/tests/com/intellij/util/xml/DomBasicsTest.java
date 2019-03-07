@@ -18,7 +18,6 @@ package com.intellij.util.xml;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.mock.MockModule;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
@@ -514,7 +513,7 @@ public class DomBasicsTest extends DomTestCase {
     final MyElement element = createElement("<a><child-element/><child-element><child/></child-element></a>");
     final MyElement parent = element.getChildElements().get(1);
     final MyElement child = parent.getChild();
-    final MyElement copy = (MyElement)child.createStableCopy();
+    final MyElement copy = child.createStableCopy();
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       parent.undefine();
       element.addChildElement().getChild().ensureXmlElementExists();

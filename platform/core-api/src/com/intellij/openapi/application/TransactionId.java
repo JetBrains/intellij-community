@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable;
  * {@link TransactionGuard#submitTransaction(Disposable, TransactionId, Runnable)}.
  *
  * @author peter
- * @since 2016.2
  */
 public interface TransactionId {
 }

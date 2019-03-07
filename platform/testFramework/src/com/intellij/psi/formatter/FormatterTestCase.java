@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -243,7 +244,7 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
     throws IOException, IncorrectOperationException {
     if (subFile.isFile() && subFile.getName().endsWith(getFileExtension())) {
       final byte[] bytes = FileUtil.loadFileBytes(subFile);
-      final String text = new String(bytes);
+      final String text = new String(bytes, Charsets.UTF_8);
       final String fileName = "before." + getFileExtension();
       final PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, getFileType(fileName), StringUtil.convertLineSeparators(text), LocalTimeCounter.currentTime(), true);
 

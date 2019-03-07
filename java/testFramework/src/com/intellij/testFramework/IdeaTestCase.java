@@ -33,6 +33,7 @@ public abstract class IdeaTestCase extends PlatformTestCase {
     super.tearDown();
   }
 
+  @NotNull
   public final JavaPsiFacadeEx getJavaFacade() {
     return myJavaFacade;
   }
@@ -42,6 +43,7 @@ public abstract class IdeaTestCase extends PlatformTestCase {
     return IdeaTestUtil.getMockJdk17();
   }
 
+  @NotNull
   @Override
   protected ModuleType getModuleType() {
     return StdModuleTypes.JAVA;

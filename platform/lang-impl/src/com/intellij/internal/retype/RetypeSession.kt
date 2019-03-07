@@ -152,7 +152,7 @@ class RetypeSession(
 
   var retypePaused: Boolean = false
 
-  private val timerThread = Thread(::runLoop)
+  private val timerThread = Thread(::runLoop, "RetypeSession loop")
   private var stopTimer = false
 
   init {

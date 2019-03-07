@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressio
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.BINARY_OPERATORS;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
 import static org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference.hasOperatorReference;
 
 /**
@@ -24,7 +25,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorRef
 public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl implements GrBinaryExpression {
 
   private final NullableLazyValue<GroovyReference> myReference = AtomicNullableLazyValue.createValue(
-    () -> hasOperatorReference(this) ? new GrOperatorReference(this) : null
+    () -> hasOperatorReference(this) && !isFake(this) ? new GrOperatorReference(this) : null
   );
 
   public GrBinaryExpressionImpl(@NotNull ASTNode node) {

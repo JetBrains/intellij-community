@@ -33,7 +33,6 @@ import org.jetbrains.plugins.gradle.tooling.internal.web.WebResourceImpl
 
 /**
  * @author Vladislav.Soroka
- * @since 6/25/2014
  */
 class WarModelBuilderImpl implements ModelBuilderService {
 

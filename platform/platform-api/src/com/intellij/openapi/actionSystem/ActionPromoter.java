@@ -30,7 +30,6 @@ import java.util.List;
  * Current extension point allows to promote custom actions to use if any depending on data context
  *
  * @author Konstantin Bulenkov
- * @since 13
  */
 public interface ActionPromoter {
   ExtensionPointName<ActionPromoter> EP_NAME = ExtensionPointName.create("com.intellij.actionPromoter");

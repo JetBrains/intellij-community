@@ -27,7 +27,6 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 
 /**
  * @author Vladislav.Soroka
- * @since 11/16/2016
  */
 @CompileStatic
 class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {

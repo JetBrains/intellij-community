@@ -2050,8 +2050,8 @@ public abstract class DialogWrapper {
     }
 
     new Thread("DialogWrapper resizer") {
-      int time = 200;
-      int steps = 7;
+      final int time = 200;
+      final int steps = 7;
 
       @Override
       public void run() {
@@ -2157,6 +2157,10 @@ public abstract class DialogWrapper {
   @NotNull
   public final Disposable getDisposable() {
     return myDisposable;
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
   }
 
   /**

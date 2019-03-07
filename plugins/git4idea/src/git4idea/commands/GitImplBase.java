@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,6 +41,9 @@ import static git4idea.commands.GitCommand.LockingPolicy.READ_OPTIONAL_LOCKING;
  * Basic functionality for git handler execution.
  */
 abstract class GitImplBase implements Git {
+
+  private static final Logger LOG = Logger.getInstance(GitImplBase.class);
+
   @NotNull
   @Override
   public GitCommandResult runCommand(@NotNull GitLineHandler handler) {
@@ -122,6 +126,11 @@ abstract class GitImplBase implements Git {
     }
 
     Project project = handler.project();
+    if (project != null && project.isDisposed()) {
+      LOG.warn("Project has already been disposed");
+      throw new ProcessCanceledException();
+    }
+
     if (project != null && handler.isRemote()) {
       try (GitHandlerAuthenticationManager authenticationManager = prepareAuthentication(project, handler)) {
         GitCommandResult result = doRun(handler, version, outputCollector);

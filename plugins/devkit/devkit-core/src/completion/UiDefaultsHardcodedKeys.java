@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.completion;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -1064,7 +1064,9 @@ public final class UiDefaultsHardcodedKeys {
     "com.apple.laf.AquaTabbedPaneUI",
     "com.apple.laf.AquaTableHeaderUI",
     "com.apple.laf.AquaTableUI",
+    "com.apple.laf.AquaTextAreaUI",
     "com.apple.laf.AquaTextFieldUI",
+    "com.apple.laf.AquaTextFieldFormattedUI",
     "com.apple.laf.AquaTextPaneUI",
     "com.apple.laf.AquaTextPasswordFieldUI",
     "com.apple.laf.AquaToolBarSeparatorUI",
@@ -1315,15 +1317,21 @@ public final class UiDefaultsHardcodedKeys {
     "FlameGraph.JVMFocusBackground",
     "FlameGraph.JVMFocusSearchNotMatchedBackground",
     "FlameGraph.JVMSearchNotMatchedBackground",
+    "FlameGraph.JVMFrameForeground",
+    "FlameGraph.JVMFocusedFrameForeground",
     "FlameGraph.frameForeground",
     "FlameGraph.nativeBackground",
     "FlameGraph.nativeFocusBackground",
     "FlameGraph.nativeFocusSearchNotMatchedBackground",
     "FlameGraph.nativeSearchNotMatchedBackground",
+    "FlameGraph.nativeFrameForeground",
+    "FlameGraph.nativeFocusedFrameForeground",
     "FlameGraph.parentBackground",
     "FlameGraph.parentFocusBackground",
     "FlameGraph.parentFocusSearchNotMatchedBackground",
     "FlameGraph.parentSearchNotMatchedBackground",
+    "FlameGraph.parentFrameForeground",
+    "FlameGraph.parentFocusedFrameForeground",
     "Git.Log.Ref.Head",
     "Git.Log.Ref.LocalBranch",
     "Git.Log.Ref.Other",
@@ -1505,6 +1513,17 @@ public final class UiDefaultsHardcodedKeys {
     "SpeedSearch.errorForeground",
     "DebuggerTabs.selectedBackground",
     "ToolTip.Actions.infoForeground"
+  );
+
+  public static final Set<String> COMPATIBILITY_KEYS = ContainerUtil.immutableSet(
+    "Button.darcula.disabledText.shadow",
+    "RadioButton.darcula.selectionDisabledColor",
+    "RadioButton.darcula.selectionDisabledShadowColor",
+    "RadioButton.darcula.selectionEnabledColor",
+    "RadioButton.darcula.selectionEnabledShadowColor",
+    "Spinner.darcula.disabledButtonColor",
+    "Spinner.darcula.enabledButtonColor",
+    "ToolWindow.header.background" // deprecated lowercase variant
   );
 
   public static final Set<String> ALL_KEYS = ContainerUtil.unmodifiableOrEmptySet(ContainerUtil.union(UI_DEFAULTS_KEYS, NAMED_COLORS));

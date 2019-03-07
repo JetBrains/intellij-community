@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * while required stuff is being lazily loaded.
  *
  * @author peter
- * @since 144
  */
 public abstract class PreloadingActivity {
   public static final ExtensionPointName<PreloadingActivity> EP_NAME = ExtensionPointName.create("com.intellij.preloadingActivity");

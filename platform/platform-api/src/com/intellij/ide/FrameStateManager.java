@@ -10,8 +10,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Manager of listeners for notifications about activation and deactivation of the
  * IDEA window.
- *
- * @since 5.0.2
  */
 public abstract class FrameStateManager {
   /**

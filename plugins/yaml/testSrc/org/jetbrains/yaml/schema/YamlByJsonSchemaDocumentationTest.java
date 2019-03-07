@@ -3,8 +3,10 @@ package org.jetbrains.yaml.schema;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.jetbrains.jsonSchema.JsonBySchemaDocumentationBaseTest;
+import org.jetbrains.annotations.NotNull;
 
 public class YamlByJsonSchemaDocumentationTest extends JsonBySchemaDocumentationBaseTest {
+  @NotNull
   @Override
   public String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data";

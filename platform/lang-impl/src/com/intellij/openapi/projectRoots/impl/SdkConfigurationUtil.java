@@ -280,7 +280,7 @@ public class SdkConfigurationUtil {
 
   @NotNull
   public static String createUniqueSdkName(@NotNull String suggestedName, @NotNull Collection<? extends Sdk> sdks) {
-    Set<String> nameList = sdks.stream().map( jdk -> ((Sdk)jdk).getName()).collect(Collectors.toSet());
+    Set<String> nameList = sdks.stream().map( jdk -> jdk.getName()).collect(Collectors.toSet());
 
     return UniqueNameGenerator.generateUniqueName(suggestedName, "", "", " (", ")", o -> !nameList.contains(o));
   }

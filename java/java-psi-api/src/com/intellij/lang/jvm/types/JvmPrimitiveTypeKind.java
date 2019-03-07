@@ -12,9 +12,6 @@ import java.util.Map;
 
 import static com.intellij.psi.CommonClassNames.*;
 
-/**
- * @since 2018.2
- */
 public final class JvmPrimitiveTypeKind {
 
   public static final JvmPrimitiveTypeKind BOOLEAN = new JvmPrimitiveTypeKind("boolean", JAVA_LANG_BOOLEAN, "Z");

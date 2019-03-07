@@ -18,8 +18,6 @@ package com.intellij.lexer;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 
-import java.io.Reader;
-
 public class XmlLexer extends MergingLexerAdapter {
   private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS,
                                                                   XmlTokenType.XML_TAG_CHARACTERS,
@@ -32,7 +30,7 @@ public class XmlLexer extends MergingLexerAdapter {
   }
 
   public XmlLexer(final boolean conditionalCommentsSupport) {
-    this(new _XmlLexer(new __XmlLexer((Reader)null), conditionalCommentsSupport));
+    this(new _XmlLexer(new __XmlLexer(null), conditionalCommentsSupport));
   }
 
   public XmlLexer(Lexer baseLexer) {

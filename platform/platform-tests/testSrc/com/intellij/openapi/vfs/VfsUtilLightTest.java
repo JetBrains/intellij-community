@@ -64,7 +64,7 @@ public class VfsUtilLightTest extends BareTestFixtureTestCase {
     VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl("jar://" + FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/");
     assertNotNull(jarRoot);
 
-    VFileCreateEvent event = new VFileCreateEvent(this, jarRoot, "x.txt", false, false);
+    VFileCreateEvent event = new VFileCreateEvent(this, jarRoot, "x.txt", false, null, false, false);
     assertEquals(FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/x.txt", event.getPath());
   }
 }

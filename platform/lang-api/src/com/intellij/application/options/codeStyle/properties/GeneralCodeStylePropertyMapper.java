@@ -68,7 +68,7 @@ public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMap
 
     @Nullable
     @Override
-    protected String parseString(@NotNull String str) {
+    protected String fromExternal(@NotNull String str) {
       if (str.equals("lf")) {
         return "\n";
       }
@@ -83,7 +83,7 @@ public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMap
 
     @NotNull
     @Override
-    protected String asString(@NotNull String value) {
+    protected String toExternal(@NotNull String value) {
       if ("\n".equals(value)) {
         return "lf";
       }

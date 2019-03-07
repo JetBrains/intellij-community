@@ -80,6 +80,9 @@ open class PySdkListCellRenderer @JvmOverloads constructor(private val sdkModifi
       else ->
         append(name)
     }
+    if (PythonSdkType.isRunAsRootViaSudo(sdk)) {
+      append(" [sudo]", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+    }
     if (sdk.isPipEnv) {
       sdk.versionString?.let {
         append(" $it", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)

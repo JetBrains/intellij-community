@@ -42,7 +42,6 @@ public interface EditorGutter {
    *
    * @param provider the provider instance.
    * @param action the action to execute when the annotation is clicked.
-   * @since 5.1
    */
   void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider, @NotNull EditorGutterAction action);
 

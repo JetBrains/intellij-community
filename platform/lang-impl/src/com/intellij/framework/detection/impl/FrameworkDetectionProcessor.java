@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
@@ -43,6 +44,9 @@ import java.util.Set;
  * @author nik
  */
 public class FrameworkDetectionProcessor {
+
+  public static final Set<String> SKIPPED_DIRECTORIES = ContainerUtil.newHashSet("node_modules");
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.FrameworkDetectionProcessor");
   private final ProgressIndicator myProgressIndicator;
   private final MultiMap<FileType, FrameworkDetectorData> myDetectorsByFileType;
@@ -82,7 +86,7 @@ public class FrameworkDetectionProcessor {
           // Since this code is invoked from New Project Wizard it's very possible that VFS isn't loaded to memory yet, so we need to do it
           // manually, otherwise refresh will do nothing
           myProgressIndicator.checkCanceled();
-          return true;
+          return !(file.isDirectory() && SKIPPED_DIRECTORIES.contains(file.getName()));
         }
       });
       file.refresh(false, true);
@@ -91,6 +95,9 @@ public class FrameworkDetectionProcessor {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           myProgressIndicator.checkCanceled();
+          if (file.isDirectory() && SKIPPED_DIRECTORIES.contains(file.getName())) {
+            return false;
+          }
           if (!myProcessedFiles.add(file)) {
             return false;
           }

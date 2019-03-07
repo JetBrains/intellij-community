@@ -17,7 +17,7 @@ import java.util.Set;
  * @author yole
  */
 class PopupTableAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T> {
-  private PopupChooserBuilder myBuilder;
+  private final PopupChooserBuilder myBuilder;
   private final JTable myTable;
 
   PopupTableAdapter(PopupChooserBuilder builder, JTable table) {

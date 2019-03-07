@@ -191,6 +191,7 @@ idea.fatal.error.notification=disabled
 
   void layoutShared() {
     buildContext.messages.block("Copy files shared among all distributions") {
+      setupBundledMaven()
       new File(buildContext.paths.distAll, "build.txt").text = buildContext.fullBuildNumber
 
       buildContext.ant.copy(todir: "$buildContext.paths.distAll/bin") {
@@ -305,6 +306,7 @@ idea.fatal.error.notification=disabled
   void buildDistributions() {
     checkProductProperties()
     copyDependenciesFile()
+    setupBundledMaven()
 
     def patchedApplicationInfo = patchApplicationInfo()
     logFreeDiskSpace("before compilation")
@@ -336,16 +338,7 @@ idea.fatal.error.notification=disabled
         scramble()
       }
       /* AndroidStudio: we don't need to download JREs, they are already available in prebuilts.
-      logFreeDiskSpace("before downloading JREs")
-      String[] args = [
-        'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
-        "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
-      ]
-      if (buildContext.options.bundledJreBuild != null) {
-        args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
-      }
-      buildContext.gradle.run('Setting up JetBrains JREs', args)
-      logFreeDiskSpace("after downloading JREs")
+      setupJBre()
       */
       layoutShared()
 
@@ -409,6 +402,25 @@ idea.fatal.error.notification=disabled
       }
     }
     logFreeDiskSpace("after building distributions")
+  }
+
+  private void setupJBre() {
+    logFreeDiskSpace("before downloading JREs")
+    String[] args = [
+      'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
+      "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
+    ]
+    if (buildContext.options.bundledJreBuild != null) {
+      args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
+    }
+    buildContext.gradle.run('Setting up JetBrains JREs', args)
+    logFreeDiskSpace("after downloading JREs")
+  }
+
+  private void setupBundledMaven() {
+    logFreeDiskSpace("before downloading Maven")
+    buildContext.gradle.run('Setting up Bundled Maven', 'setupBundledMaven')
+    logFreeDiskSpace("after downloading Maven")
   }
 
   static def unpackPty4jNative(BuildContext buildContext, String distDir, String pty4jOsSubpackageName) {

@@ -194,7 +194,6 @@ public class FilterPattern {
      * Set this to true to filter by enum fields (JDK1.5).
      *
      * @param enumField if true enum fields is unwanted.
-     * @since 3.17
      */
     public void setEnumField(boolean enumField) {
         this.enumField = enumField;
@@ -208,7 +207,6 @@ public class FilterPattern {
      * Set this to true to filter loggers (Log4j, JDK1.4).
      *
      * @param loggers if true logger fields is unwanted.
-     * @since 3.20
      */
     public void setLoggers(boolean loggers) {
         this.loggers = loggers;
@@ -233,7 +231,6 @@ public class FilterPattern {
      * Sets a filtering using the field type FQN.
      *
      * @param fieldType  the field type
-     * @since 3.20
      */
     public void setFieldType(String fieldType) {
         this.fieldType = fieldType;
@@ -258,7 +255,6 @@ public class FilterPattern {
      * Sets a filtering using the method return type FQN.
      *
      * @param methodType  the method return type
-     * @since 3.20
      */
     public void setMethodType(String methodType) {
         this.methodType = methodType;

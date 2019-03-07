@@ -26,7 +26,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @NotNull private final String myId;
   @NotNull private final String myModuleTypeId;
   @NotNull private final String myExternalConfigPath;
-  @NotNull private String myModuleFileDirectoryPath;
+  @NotNull private final String myModuleFileDirectoryPath;
   @Nullable private String myGroup;
   @Nullable private String myVersion;
   @Nullable private String myDescription;

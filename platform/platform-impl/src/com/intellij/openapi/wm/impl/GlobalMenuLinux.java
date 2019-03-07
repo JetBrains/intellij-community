@@ -1,6 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -9,9 +14,9 @@ import com.intellij.openapi.actionSystem.impl.StubItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
 /* Android Studio: b/67589184
@@ -174,7 +179,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         PlatformImpl.startup(()->ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
       } catch (Throwable e) {
         LOG.info("can't start main loop via javaFX (will run it manualy): " + e.getMessage());
-        final Thread glibMain = new Thread(()->ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
+        final Thread glibMain = new Thread(()->ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished), "GlobalMenuLinux loop");
         glibMain.start();
       }
 Android Studio: b/67589184 */
@@ -588,10 +593,26 @@ Android Studio: b/67589184 */
 
   public static boolean isAvailable() { return ourLib != null; }
 
+  private static boolean _isUnderVMWare() {
+    // Workaround OC-18001 CLion crashes after opening Swift project on Linux
+    final GeneralCommandLine cmdLine = new GeneralCommandLine("lspci");
+    try {
+      final ProcessOutput out = ExecUtil.execAndGetOutput(cmdLine);
+      final String stdout = out.getStdout();
+      return stdout.toLowerCase().contains("vmware");
+    } catch (ExecutionException e) {
+      LOG.error(e);
+    }
+    return false;
+  }
+
   private static GlobalMenuLib _loadLibrary() {
     if (true) return null;  // TODO(b/118514141): fix UI tests in Bazel and delete this line
     try {
-      if (!SystemInfo.isLinux || Registry.is("linux.native.menu.force.disable") || PlatformUtils.isCLion())
+      if (!SystemInfo.isLinux
+          || Registry.is("linux.native.menu.force.disable")
+          || (isCLionSwiftPluginInstalled() && _isUnderVMWare())
+      )
         return null;
       if (!Experiments.isFeatureEnabled("linux.native.menu"))
         return null;
@@ -619,6 +640,11 @@ Android Studio: b/67589184 */
     }
 
     return null;
+  }
+
+  private static boolean isCLionSwiftPluginInstalled() {
+    // Workaround OC-18001 CLion crashes after opening Swift project on Linux
+    return PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"));
   }
 
   private static class MenuItemInternal {

@@ -685,6 +685,26 @@ public static void test(Object obj, int i) {
 }""")
     assert c == ['_, _ -> fail']
   }
+  
+  void "test ternary two notnull"() {
+    def c = inferContracts("""
+static String test(String v, boolean b, String s) { return b ? getFoo() : getBar(); }
+
+static String getFoo() { return "foo"; }
+static String getBar() { return "bar"; }
+""")
+    assert c == ['_, _, _ -> !null']
+  }
+
+  void "test not collapsed"() {
+    def c = inferContracts("""
+static String test(String a, String b) { 
+  if(b == null || a == null) return null;
+  return unknown(a+b);  
+}
+""")
+    assert c == ['_, null -> null', 'null, !null -> null']
+  }
 
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))

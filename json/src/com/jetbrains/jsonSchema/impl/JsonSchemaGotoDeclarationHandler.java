@@ -25,7 +25,7 @@ public class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler 
     final JsonStringLiteral literal = PsiTreeUtil.getParentOfType(sourceElement, JsonStringLiteral.class);
     if (literal == null) return null;
     final PsiElement parent = literal.getParent();
-    if (parent instanceof JsonProperty && ((JsonProperty)parent).getNameElement() == literal) {
+    if (literal.getReferences().length == 0 && parent instanceof JsonProperty && ((JsonProperty)parent).getNameElement() == literal) {
       final JsonSchemaService service = JsonSchemaService.Impl.get(literal.getProject());
       final PsiFile containingFile = literal.getContainingFile();
       final VirtualFile file = containingFile.getVirtualFile();

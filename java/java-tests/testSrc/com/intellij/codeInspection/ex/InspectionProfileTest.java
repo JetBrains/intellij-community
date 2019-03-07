@@ -848,7 +848,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionsKt.disableAllTools(profile);
     profile.enableTool(new UnusedDeclarationInspectionBase(true).getShortName(), getProject());
 
-    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
+    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext();
     context.setExternalProfile(profile);
     context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
   }

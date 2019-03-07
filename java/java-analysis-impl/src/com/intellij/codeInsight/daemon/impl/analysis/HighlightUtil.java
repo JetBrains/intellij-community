@@ -2021,7 +2021,7 @@ public class HighlightUtil extends HighlightUtilBase {
         if (!missingConstants.isEmpty()) {
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddMissingEnumBranchesFix(switchBlock, missingConstants));
         }
-        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddSwitchDefaultFix(switchBlock));
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddSwitchDefaultFix(switchBlock, null));
         results.add(info);
       }
     }

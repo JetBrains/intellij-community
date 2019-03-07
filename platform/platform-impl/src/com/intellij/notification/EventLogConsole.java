@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -34,7 +35,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -98,15 +97,11 @@ class EventLogConsole {
     clearLog.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.CONSOLE_CLEAR_ALL).getShortcutSet(),
                                        editor.getContentComponent());
 
-    editor.setContextMenuGroupId(null); // disabling default context menu
-    editor.addEditorMouseListener(new EditorPopupHandler() {
+    editor.installPopupHandler(new ContextMenuPopupHandler() {
       @Override
-      public void invokePopup(final EditorMouseEvent event) {
+      public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
         final ActionManager actionManager = ActionManager.getInstance();
-        DefaultActionGroup actions = createPopupActions(actionManager, clearLog, editor, event);
-        final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_POPUP, actions);
-        final MouseEvent mouseEvent = event.getMouseEvent();
-        menu.getComponent().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+        return createPopupActions(actionManager, clearLog, editor, event);
       }
     });
     return editor;

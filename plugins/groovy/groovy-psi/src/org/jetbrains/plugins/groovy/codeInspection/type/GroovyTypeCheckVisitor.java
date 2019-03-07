@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -64,6 +64,7 @@ import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
 import static org.jetbrains.plugins.groovy.codeInspection.type.ImplKt.processConstructor;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.isImplicitReturnStatement;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
 
 public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
@@ -319,6 +320,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   public void visitMethodCall(@NotNull GrMethodCall call) {
     super.visitMethodCall(call);
+    if (isFake(call)) return;
     checkMethodCall(new GrMethodCallInfo(call));
   }
 
@@ -421,8 +423,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
   private void checkOperator(@NotNull CallInfo<? extends GrBinaryExpression> info) {
     if (hasErrorElements(info.getCall())) return;
-
-    if (isSpockTimesOperator(info.getCall())) return;
 
     GroovyResolveResult[] results = info.multiResolve();
     GroovyResolveResult resolveResult = info.advancedResolve();
@@ -783,6 +783,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   public void visitBinaryExpression(@NotNull GrBinaryExpression binary) {
     super.visitBinaryExpression(binary);
+    if (isFake(binary)) return;
     checkOperator(new GrBinaryExprInfo(binary));
   }
 

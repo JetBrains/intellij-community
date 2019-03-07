@@ -484,7 +484,7 @@ public class ShowAffectedTestsAction extends AnAction {
 
   @Nullable
   public static Couple<String> getMethodKey(@NotNull PsiMethod method) {
-    PsiClass c = method.getContainingClass();
+    PsiClass c = method.isValid() ? method.getContainingClass() : null;
     String fqn = c != null ? DiscoveredTestsTreeModel.getClassName(c) : null;
     return fqn == null ? null : Couple.of(fqn, methodSignature(method));
   }

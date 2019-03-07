@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.util.io.FileUtil
 import java.io.File
-import java.lang.RuntimeException
 
 class GradleBuildScriptBuilderEx : GradleBuildScriptBuilder() {
   fun withGradleIdeaExtPluginIfCan(version: String) = apply {
@@ -38,6 +37,10 @@ class GradleBuildScriptBuilderEx : GradleBuildScriptBuilder() {
 
   fun withJavaPlugin() = apply {
     applyPlugin("'java'")
+  }
+
+  fun withIdeaPlugin() = apply {
+    applyPlugin("'idea'")
   }
 
   fun withKotlinPlugin(version: String) = apply {

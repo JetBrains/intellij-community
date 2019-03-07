@@ -28,12 +28,14 @@ import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderMa
 import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.io.FileUtil;
@@ -49,7 +51,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
@@ -760,26 +761,6 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     SourceFolder sourceFolder = findSource(moduleName, sourcePath);
     assertNotNull("Source folder " + sourcePath + " not found in module " + moduleName, sourceFolder);
     assertEquals(packagePrefix, sourceFolder.getPackagePrefix());
-  }
-
-  @Nullable
-  protected SourceFolder findSource(@NotNull String moduleName, @NotNull String sourcePath) {
-    return findSource(getRootManager(moduleName), sourcePath);
-  }
-
-  @Nullable
-  protected SourceFolder findSource(@NotNull ModuleRootModel moduleRootManager, @NotNull String sourcePath) {
-    ContentEntry[] contentRoots = moduleRootManager.getContentEntries();
-    Module module = moduleRootManager.getModule();
-    String rootUrl = getAbsolutePath(ExternalSystemApiUtil.getExternalProjectPath(module));
-    for (ContentEntry contentRoot : contentRoots) {
-      for (SourceFolder f : contentRoot.getSourceFolders()) {
-        String folderPath = getAbsolutePath(f.getUrl());
-        String rootPath = getAbsolutePath(rootUrl + "/" + sourcePath);
-        if (folderPath.equals(rootPath)) return f;
-      }
-    }
-    return null;
   }
 }
 

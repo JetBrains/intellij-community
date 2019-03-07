@@ -403,14 +403,14 @@ public class VariableAccessUtils {
   /**
    * Check if local variable has the same behavior as its initializer.
    */
-  public static boolean localVariableIsCopy(@NotNull PsiLocalVariable variable) {
-    return localVariableIsCopy(variable, ParenthesesUtils.stripParentheses(variable.getInitializer()));
+  public static boolean isLocalVariableCopy(@NotNull PsiLocalVariable variable) {
+    return isLocalVariableCopy(variable, ParenthesesUtils.stripParentheses(variable.getInitializer()));
   }
 
   /**
    * Check if local variable has the same behavior as given expression.
    */
-  public static boolean localVariableIsCopy(@NotNull PsiLocalVariable variable, @Nullable PsiExpression expression) {
+  public static boolean isLocalVariableCopy(@NotNull PsiLocalVariable variable, @Nullable PsiExpression expression) {
     if (expression instanceof PsiTypeCastExpression) {
       PsiExpression operand = ((PsiTypeCastExpression)expression).getOperand();
       if (operand instanceof PsiReferenceExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)expression)) {

@@ -20,9 +20,15 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaToken;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class LiteralJoinLinesHandler implements JoinLinesHandlerDelegate {
+
+  private static final int STATE_INITIAL = 0;
+  private static final int STATE_BEFORE_PLUS = 1;
+  private static final int STATE_AFTER_PLUS = 2;
+
   @Override
   public int tryJoinLines(@NotNull final Document doc, @NotNull final PsiFile psiFile, final int offsetNear, final int end) {
     CharSequence text = doc.getCharsSequence();
@@ -32,9 +38,9 @@ public class LiteralJoinLinesHandler implements JoinLinesHandlerDelegate {
     if (text.charAt(start) == '\"') start--;
     if (start < offsetNear) start++;
 
-    int state = 0;
+    int state = STATE_INITIAL;
     int startQuoteOffset = -1;
-    state_loop:
+    PsiElement parentExpression = null;
     for (int j = start; j < doc.getTextLength(); j++) {
       switch (text.charAt(j)) {
         case ' ':
@@ -42,28 +48,30 @@ public class LiteralJoinLinesHandler implements JoinLinesHandlerDelegate {
           break;
 
         case '\"':
-          if (state == 0) {
-            state = 1;
+          PsiJavaToken token = ObjectUtils.tryCast(psiFile.findElementAt(j), PsiJavaToken.class);
+          if (token == null || token.getTokenType() != JavaTokenType.STRING_LITERAL) return -1;
+          if (state == STATE_INITIAL) {
+            state = STATE_BEFORE_PLUS;
             startQuoteOffset = j;
-            PsiElement psiAtOffset = psiFile.findElementAt(j);
-            if (!(psiAtOffset instanceof PsiJavaToken)) return -1;
-            if (((PsiJavaToken)psiAtOffset).getTokenType() != JavaTokenType.STRING_LITERAL) return -1;
+            // token.getParent() = PsiLiteralExpression
+            parentExpression = token.getParent().getParent();
             break;
           }
 
-          if (state == 2) {
+          if (state == STATE_AFTER_PLUS) {
+            if (token.getParent().getParent() != parentExpression) return -1;
             doc.deleteString(startQuoteOffset, j + 1);
             return startQuoteOffset;
           }
-          break state_loop;
+          return -1;
 
         case '+':
-          if (state != 1) break state_loop;
-          state = 2;
+          if (state != STATE_BEFORE_PLUS) return -1;
+          state = STATE_AFTER_PLUS;
           break;
 
         default:
-          break state_loop;
+          return -1;
       }
     }
 

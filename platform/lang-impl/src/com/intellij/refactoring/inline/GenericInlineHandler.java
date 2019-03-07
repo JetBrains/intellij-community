@@ -34,12 +34,9 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import java.util.HashMap;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,17 +77,7 @@ public class GenericInlineHandler {
     }
 
     final Project project = element.getProject();
-    if (!conflicts.isEmpty()) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
-      }
-      else {
-        final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
-        if (!conflictsDialog.showAndGet()) {
-          return true;
-        }
-      }
-    }
+    if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return true;
 
     HashSet<PsiElement> elements = new HashSet<>();
     for (PsiReference reference : allReferences) {

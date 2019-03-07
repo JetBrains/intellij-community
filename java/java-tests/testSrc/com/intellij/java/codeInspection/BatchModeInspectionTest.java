@@ -22,8 +22,7 @@ public class BatchModeInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testEnsureReferencesAreRemoved() {
     PsiClass aClass = myFixture.addClass("class Foo {public void bar(int i){}}");
     Project project = myFixture.getProject();
-    RefManagerImpl refManager = new RefManagerImpl(project, new AnalysisScope(aClass.getContainingFile()), InspectionManager.getInstance(
-      project).createNewGlobalContext(false));
+    RefManagerImpl refManager = new RefManagerImpl(project, new AnalysisScope(aClass.getContainingFile()), InspectionManager.getInstance(project).createNewGlobalContext());
     refManager.findAllDeclarations();
     List<RefElement> sortedElements = refManager.getSortedElements();
 
@@ -43,7 +42,7 @@ public class BatchModeInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.addFileToProject("Bar.groovy", "class Bar { void m() { new Foo(); }}");
     Project project = myFixture.getProject();
     RefManagerImpl refManager =
-      new RefManagerImpl(project, new AnalysisScope(project), InspectionManager.getInstance(project).createNewGlobalContext(false));
+      new RefManagerImpl(project, new AnalysisScope(project), InspectionManager.getInstance(project).createNewGlobalContext());
     refManager.findAllDeclarations();
 
     RefElement refClass = refManager.getReference(aClass);

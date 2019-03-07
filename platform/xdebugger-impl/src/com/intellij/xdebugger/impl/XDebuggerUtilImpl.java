@@ -617,7 +617,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     XExecutionStack activeExecutionStack = suspendContext.getActiveExecutionStack();
     if (activeExecutionStack != null) {
       activeExecutionStack.computeStackFrames(0, new XStackFrameContainerEx() {
-        List<XStackFrame> myFrames = new ArrayList<>();
+        final List<XStackFrame> myFrames = new ArrayList<>();
 
         @Override
         public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last) {

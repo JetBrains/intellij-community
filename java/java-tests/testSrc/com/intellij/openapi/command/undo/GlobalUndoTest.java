@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IncorrectOperationException;
+import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -484,7 +485,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     FileDocumentManager.getInstance().saveAllDocuments(); // prevent 'file has been changed dialog'
 
     File ioFile = new File(f.getPath());
-    FileUtil.writeToFile(ioFile, "external".getBytes());
+    FileUtil.writeToFile(ioFile, "external".getBytes(Charsets.UTF_8));
     ioFile.setLastModified(f.getTimeStamp() + 2000);
     LocalFileSystem.getInstance().refresh(false);
 
@@ -515,7 +516,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     executeCommand(() -> delete(finalF));
 
     File ioFile = new File(f.getPath());
-    FileUtil.writeToFile(ioFile, "external".getBytes());
+    FileUtil.writeToFile(ioFile, "external".getBytes(Charsets.UTF_8));
     LocalFileSystem.getInstance().refresh(false);
 
     f = myRoot.findChild("f.txt");
@@ -547,7 +548,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     Document d = FileDocumentManager.getInstance().getDocument(f); // make sure the document is cached.
 
     File ioFile = new File(f.getPath());
-    FileUtil.writeToFile(ioFile, "external".getBytes());
+    FileUtil.writeToFile(ioFile, "external".getBytes(Charsets.UTF_8));
     ioFile.setLastModified(f.getTimeStamp() + 2000);
     LocalFileSystem.getInstance().refresh(false);
 
@@ -568,7 +569,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
       // Rider case, modify externally and refresh some file in a command
       File ioFile = new File(f.getPath());
-      FileUtil.writeToFile(ioFile, "content".getBytes());
+      FileUtil.writeToFile(ioFile, "content".getBytes(Charsets.UTF_8));
       ioFile.setLastModified(f.getTimeStamp() + 2000);
 
       f.putUserData(UndoConstants.FORCE_RECORD_UNDO, true);
@@ -593,7 +594,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     undo(getEditor(f)); // clear undo stack, but preserve the change in redo stack
 
     File ioFile = new File(f.getPath());
-    FileUtil.writeToFile(ioFile, "external".getBytes());
+    FileUtil.writeToFile(ioFile, "external".getBytes(Charsets.UTF_8));
     ioFile.setLastModified(f.getTimeStamp() + 2000);
     LocalFileSystem.getInstance().refresh(false);
 
@@ -1012,13 +1013,13 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     final String[] path = new String[2];
     executeCommand(() -> {
       VirtualFile f = createChildData(myRoot, "foo1.txt");
-      setBinaryContent(f, "initial1".getBytes());
+      setBinaryContent(f, "initial1".getBytes(Charsets.UTF_8));
       Document doc = FileDocumentManager.getInstance().getDocument(f);
       setDocumentText(doc, "document1");
       path[0] = f.getPath();
 
       f = createChildData(myRoot, "foo2.txt");
-      setBinaryContent(f, "initial2".getBytes());
+      setBinaryContent(f, "initial2".getBytes(Charsets.UTF_8));
       doc = FileDocumentManager.getInstance().getDocument(f);
       setDocumentText(doc, "document2");
       path[1] = f.getPath();
@@ -1052,7 +1053,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     executeCommand(() -> {
       dir[0] = createChildDirectory(myRoot, "dir");
       f[0] = createChildData(myRoot, "foo.txt");
-      setBinaryContent(f[0], "initial".getBytes());
+      setBinaryContent(f[0], "initial".getBytes(Charsets.UTF_8));
       setDocumentText(f[0], "document");
       path[0] = f[0].getPath();
     });

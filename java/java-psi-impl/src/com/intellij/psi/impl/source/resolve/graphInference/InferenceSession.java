@@ -365,7 +365,7 @@ public class InferenceSession {
         }
       }
       //proceed to B3 constraints
-      else if (parameters != null && args != null && !isOverloadCheck() && parameters.length > 0) {
+      else if (parameters != null && parameters.length > 0 && args != null && !isOverloadCheck()) {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<>();
         final HashSet<ConstraintFormula> ignoredConstraints = new HashSet<>();
         collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints,
@@ -739,7 +739,7 @@ public class InferenceSession {
         return inferenceVariable;
       }
       if (targetType instanceof PsiClassType) {
-        if (hasUncheckedBounds(inferenceVariable, (PsiClassType)targetType) ||
+        if (hasUncheckedBounds(inferenceVariable, (PsiClassType)targetType, this) ||
             hasWildcardParameterization(inferenceVariable, (PsiClassType)targetType)) {
           return inferenceVariable;
         }
@@ -761,13 +761,15 @@ public class InferenceSession {
     return false;
   }
 
-  private static boolean hasUncheckedBounds(InferenceVariable inferenceVariable, PsiClassType targetType) {
+  private static boolean hasUncheckedBounds(InferenceVariable inferenceVariable,
+                                            PsiClassType targetType,
+                                            InferenceSession session) {
     if (!targetType.isRaw()) {
       final InferenceBound[] boundTypes = {InferenceBound.EQ, InferenceBound.LOWER};
       for (InferenceBound inferenceBound : boundTypes) {
         final List<PsiType> bounds = inferenceVariable.getBounds(inferenceBound);
         for (PsiType bound : bounds) {
-          if (TypeCompatibilityConstraint.isUncheckedConversion(targetType, bound)) {
+          if (TypeCompatibilityConstraint.isUncheckedConversion(targetType, bound, session)) {
             return true;
           }
         }
@@ -1211,7 +1213,7 @@ public class InferenceSession {
           eqBound = capturedWildcard;
         }
       }
-      if (lowerBound != PsiType.NULL && !TypeConversionUtil.isAssignable(eqBound, lowerBound)) {
+      if (isLowerBoundNotAssignable(var, eqBound, true)) {
         final String incompatibleBoundsMessage =
           incompatibleBoundsMessage(var, substitutor, InferenceBound.EQ, EQUALITY_CONSTRAINTS_PRESENTATION, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION);
         registerIncompatibleErrorMessage(incompatibleBoundsMessage);
@@ -1219,7 +1221,7 @@ public class InferenceSession {
       } else {
         type = eqBound;
 
-        if (!TypeConversionUtil.isAssignable(eqBound, lowerBound, false)) {
+        if (isLowerBoundNotAssignable(var, eqBound, false)) {
           setErased();
         }
 
@@ -1281,6 +1283,13 @@ public class InferenceSession {
       }, ", "));
     }
     return type;
+  }
+
+  private boolean isLowerBoundNotAssignable(InferenceVariable var, PsiType eqBound, boolean allowUncheckedConversion) {
+    return var
+      .getBounds(InferenceBound.LOWER)
+      .stream()
+      .anyMatch(lBound -> isProperType(lBound) && !TypeConversionUtil.isAssignable(eqBound, lBound, allowUncheckedConversion));
   }
 
   private static String getConjunctsConflict(PsiIntersectionType type) {
@@ -2001,8 +2010,9 @@ public class InferenceSession {
         final PsiClass tClass = PsiUtil.resolveClassInClassTypeOnly(tBound);
         if (tClass != null) {
 
-          final LinkedHashSet<PsiClass> tSupers = InheritanceUtil.getSuperClasses(tClass);
+          final LinkedHashSet<PsiClass> tSupers = new LinkedHashSet<>();
           tSupers.add(tClass);
+          tSupers.addAll(InheritanceUtil.getSuperClasses(tClass));
           tSupers.retainAll(superClasses);
 
           for (PsiClass gClass : tSupers) {

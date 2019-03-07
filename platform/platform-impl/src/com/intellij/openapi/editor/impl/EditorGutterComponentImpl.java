@@ -589,10 +589,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     AffineTransform old = setMirrorTransformIfNeeded(g, getLineNumberAreaOffset(), getLineNumberAreaWidth());
     try {
+      int caretLine = convertor.execute(myEditor.getCaretModel().getLogicalPosition().line);
       VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
       while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
-        LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(new VisualPosition(visLinesIterator.getVisualLine(), 0));
-        if (EditorUtil.getSoftWrapCountAfterLineStart(myEditor, logicalPosition) <= 0) {
+        if (!visLinesIterator.startsWithSoftWrap()) {
           int logLine = convertor.execute(visLinesIterator.getStartLogicalLine());
           if (logLine >= 0) {
             int startY = visLinesIterator.getY();
@@ -603,7 +603,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
               g.setColor(color);
             }
 
-            if (colorUnderCaretRow != null && myEditor.getCaretModel().getLogicalPosition().line == logLine) {
+            if (colorUnderCaretRow != null && caretLine == logLine) {
               g.setColor(colorUnderCaretRow);
             }
 

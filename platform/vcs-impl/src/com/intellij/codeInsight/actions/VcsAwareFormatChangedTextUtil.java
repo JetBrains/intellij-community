@@ -17,13 +17,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
 import java.util.List;
+import java.util.function.Function;
 
 class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @Override
@@ -69,7 +69,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @Override
   public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
                                                            @NotNull Change[] changes,
-                                                           @NotNull Convertor<? super VirtualFile, ? extends List<T>> elementsConvertor) {
+                                                           @NotNull Function<? super VirtualFile, ? extends List<T>> elementsConvertor) {
     List<T> result = ContainerUtil.newSmartList();
     for (Change change : changes) {
       if (change.getType() == Change.Type.DELETED) continue;
@@ -81,7 +81,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
       Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null) continue;
 
-      List<T> elements = elementsConvertor.convert(file);
+      List<T> elements = ContainerUtil.skipNulls(elementsConvertor.apply(file));
       if (ContainerUtil.isEmpty(elements)) continue;
 
       BitSet changedLines = getChangedLines(project, document, change);

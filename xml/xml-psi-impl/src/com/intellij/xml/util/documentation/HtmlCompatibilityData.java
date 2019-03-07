@@ -3,6 +3,7 @@ package com.intellij.xml.util.documentation;
 
 import com.google.gson.Gson;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -25,10 +27,10 @@ public class HtmlCompatibilityData {
       URL resource = HtmlCompatibilityData.class.getResource("compatData/elements/" + key + ".json");
       if (resource == null) return null;
       try {
-        Object json = new Gson().fromJson(new InputStreamReader(resource.openStream()), Object.class);
+        Object json = new Gson().fromJson(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8), Object.class);
         Object tagHolder = ((Map)json).get("html");
-        if (tagHolder == null) ((Map)json).get("svg");
-        if (tagHolder == null) ((Map)json).get("mathml");
+        if (tagHolder == null) tagHolder = ((Map)json).get("svg");
+        if (tagHolder == null) tagHolder = ((Map)json).get("mathml");
         if (tagHolder == null) {
           ourTagsCache.put(key, null);
           return null;
@@ -56,7 +58,9 @@ public class HtmlCompatibilityData {
   @Nullable
   public static Map getTagData(@Nullable XmlTag tag) {
     if (tag == null) return null;
-    String key = tag.getName().toLowerCase(Locale.US);
+    String key = tag instanceof XmlTagImpl && ((XmlTagImpl)tag).isCaseSensitive() ?
+                 tag.getName() :
+                 tag.getName().toLowerCase(Locale.US);
     if ("input".equals(key)) {
       String type = tag.getAttributeValue("type");
       if (type != null) {
@@ -74,7 +78,8 @@ public class HtmlCompatibilityData {
       if (attributeData != null) return (Map)attributeData;
     }
     if (ourGlobalAttributesCache.get() == null) {
-      Object json = new Gson().fromJson(new InputStreamReader(HtmlCompatibilityData.class.getResourceAsStream("compatData/global_attributes.json")), Object.class);
+      Object json = new Gson().fromJson(new InputStreamReader(HtmlCompatibilityData.class.getResourceAsStream("compatData/global_attributes.json"),
+                                                              StandardCharsets.UTF_8), Object.class);
       Object html = ((Map)json).get("html");
       Object globalAttributes = ((Map)html).get("global_attributes");
       ourGlobalAttributesCache.set((Map)globalAttributes);

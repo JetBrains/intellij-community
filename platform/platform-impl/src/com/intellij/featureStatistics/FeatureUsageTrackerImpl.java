@@ -2,9 +2,8 @@
 package com.intellij.featureStatistics;
 
 import com.intellij.internal.statistic.collectors.fus.ProductivityUsageCollector;
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
@@ -20,7 +19,6 @@ import java.util.Set;
 
 @State(name = "FeatureUsageStatistics", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
 public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup(ProductivityUsageCollector.GROUP_ID, 1);
   private static final int HOUR = 1000 * 60 * 60;
   private static final long DAY = HOUR * 24;
   private long FIRST_RUN_TIME = 0;
@@ -173,7 +171,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
      // TODO: LOG.error("Feature '" + featureId +"' must be registered prior triggerFeatureUsed() is called");
     }
     else {
-      FeatureUsageLogger.INSTANCE.log(GROUP, descriptor.getId());
+      FUCounterUsageLogger.getInstance().logEvent(ProductivityUsageCollector.GROUP_ID, descriptor.getId());
       descriptor.triggerUsed();
     }
   }

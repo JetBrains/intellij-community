@@ -10,7 +10,6 @@ import com.intellij.util.ArrayUtilRt
 import org.jetbrains.annotations.NotNull
 /**
  * @author Denis Zhdanov
- * @since 2/7/13 4:01 PM
  */
 class IndentGuideTest extends LightCodeInsightFixtureTestCase {
 

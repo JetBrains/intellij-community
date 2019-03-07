@@ -31,7 +31,7 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
     if (!(descriptor instanceof PyHierarchyNodeDescriptor)) {
       return null;
     }
-    return ((PyHierarchyNodeDescriptor)descriptor).getPsiElement();
+    return descriptor.getPsiElement();
   }
 
   @Override

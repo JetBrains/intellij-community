@@ -35,11 +35,11 @@ public class PythonFileType extends LanguageFileType {
 
   public static final PythonFileType INSTANCE = new PythonFileType();
 
-  public PythonFileType() {
+  private PythonFileType() {
     this(PythonLanguage.INSTANCE);
   }
 
-  public PythonFileType(Language language) {
+  protected PythonFileType(Language language) {
     super(language);
   }
 

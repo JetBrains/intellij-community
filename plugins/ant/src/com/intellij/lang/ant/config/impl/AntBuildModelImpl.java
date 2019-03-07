@@ -17,7 +17,10 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
-import com.intellij.lang.ant.dom.*;
+import com.intellij.lang.ant.dom.AntDomIncludingDirective;
+import com.intellij.lang.ant.dom.AntDomProject;
+import com.intellij.lang.ant.dom.AntDomTarget;
+import com.intellij.lang.ant.dom.TargetResolver;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -180,7 +183,8 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
           myIsImported = true;
 
-          final Iterable<AntDomIncludingDirective> allIncludes = ContainerUtil.concat((Iterable<AntDomImport>)project.getDeclaredImports(), (Iterable<? extends AntDomInclude>)project.getDeclaredIncludes());
+          final Iterable<AntDomIncludingDirective> allIncludes = ContainerUtil.concat(project.getDeclaredImports(),
+                                                                                      project.getDeclaredIncludes());
           for (AntDomIncludingDirective incl : allIncludes) {
             final PsiFileSystemItem includedFile = incl.getFile().getValue();
             if (includedFile instanceof PsiFile) {

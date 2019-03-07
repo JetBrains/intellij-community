@@ -86,7 +86,7 @@ class MavenJDOMUtil {
       }
       else if (child instanceof Text) {
         String text = ((Text)child).getText();
-        if (!StringUtilRt.isEmptyOrSpaces((CharSequence)text)) {
+        if (!StringUtilRt.isEmptyOrSpaces(text)) {
           i = addToHash(i, text);
         }
       }

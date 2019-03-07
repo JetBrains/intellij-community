@@ -89,6 +89,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
   }
 
+  @NotNull
   @Override
   protected PsiTestData createData() {
     return new CodeInsightTestData();
@@ -121,7 +122,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
   }
 
-  protected VirtualFile configureByFile(String filePath, @Nullable String projectRoot) throws Exception {
+  protected VirtualFile configureByFile(@NotNull String filePath, @Nullable String projectRoot) throws Exception {
     VirtualFile vFile = findVirtualFile(filePath);
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
 
@@ -582,7 +583,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return aPackage;
   }
 
-  protected void setLanguageLevel(LanguageLevel level) {
+  protected void setLanguageLevel(@NotNull LanguageLevel level) {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
   }
 }

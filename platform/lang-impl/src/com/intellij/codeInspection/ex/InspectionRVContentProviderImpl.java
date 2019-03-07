@@ -109,16 +109,5 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
           model.createProblemDescriptorNode(refElement, problem, presentation, parent);
         }
     }
-    else {
-      if (false) {
-        final Set<RefEntity> currentElements = presentation.getContent().get(((InspectionPackageNode) parent).getPackageName());
-        if (currentElements != null) {
-          final Set<RefEntity> currentEntities = new HashSet<>(currentElements);
-          if (RefUtil.contains(refElement, currentEntities)) return;
-        }
-      }
-      //TODO don't understand
-      //addNodeToParent(container, presentation, parent, model);
-    }
   }
 }

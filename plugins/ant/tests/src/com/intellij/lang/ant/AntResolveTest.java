@@ -30,6 +30,7 @@ import com.intellij.testFramework.ResolveTestCase;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class AntResolveTest extends ResolveTestCase {
 
@@ -291,6 +292,7 @@ public class AntResolveTest extends ResolveTestCase {
     assertTrue(target instanceof PomTargetPsiElement && ((PomTargetPsiElement)target).getTarget().canNavigateToSource());
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi/resolve/";

@@ -128,7 +128,6 @@ public interface ModuleRootModel {
    * @param includingTests determines whether test source roots should be included in the result
    * @return the array of source roots.
    * @see #getContentEntries()
-   * @since 10.0
    */
   @NotNull
   VirtualFile[] getSourceRoots(boolean includingTests);
@@ -167,7 +166,6 @@ public interface ModuleRootModel {
    * @param includingTests determines whether test source root urls should be included in the result
    * @return the array of source root URLs.
    * @see #getContentEntries()
-   * @since 10.0
    */
   @NotNull
   String[] getSourceRootUrls(boolean includingTests);
@@ -187,7 +185,6 @@ public interface ModuleRootModel {
    * collect classes or source roots.
    *
    * @return {@link OrderEnumerator} instance
-   * @since 10.0
    */
   @NotNull
   OrderEnumerator orderEntries();

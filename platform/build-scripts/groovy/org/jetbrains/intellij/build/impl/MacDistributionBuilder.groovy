@@ -113,6 +113,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   void buildArtifacts(String osSpecificDistPath) {
     buildContext.executeStep("Build macOS artifacts", BuildOptions.MAC_ARTIFACTS_STEP) {
       def macZipPath = buildMacZip(buildContext.bundledJreManager.findMacJdk(), osSpecificDistPath)  // Android Studio: modified by Change Idc07b110 / commit f20681e
+      def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
       if (buildContext.proprietaryBuildTools.macHostProperties == null) {
         buildContext.messages.info("A macOS build agent isn't configured - .dmg artifact won't be produced")
         buildContext.notifyArtifactBuilt(macZipPath)
@@ -120,6 +121,13 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       else {
         buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
           MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath)
+          if (secondJreBuild != null) {
+            def jreArchive = "jbsdk${buildContext.bundledJreManager.getSecondJreVersion()}${secondJreBuild}_${JvmArchitecture.x64}.tar.gz"
+            File archive = new File(buildContext.paths.projectHome, "build/jdk11/mac/$jreArchive")
+            if (archive.file && archive.exists()) {
+              MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath, archive.absolutePath)
+            }
+          }
           buildContext.ant.delete(file: macZipPath)
         }
       }
@@ -272,12 +280,12 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   // Android Studio: modified by Change Idc07b110 / commit f20681e
-  private String buildMacZip(String jdkDirectoryPath, String macDistPath) {
+  private String buildMacZip(String jdkDirectoryPath, String macDistPath, String secondJreSuffix = null) {
     return buildContext.messages.block("Build zip archive for macOS") {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
       String zipRoot = getZipRoot(buildContext, customizer)
-      String suffix = buildContext.bundledJreManager.jreSuffix()
+      String suffix = secondJreSuffix == null ? buildContext.bundledJreManager.jreSuffix() : secondJreSuffix
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.mac.zip"
       def tmpTargetPath = targetPath + ".tmp.zip"
       buildContext.messages.progress("Building zip archive for macOS")

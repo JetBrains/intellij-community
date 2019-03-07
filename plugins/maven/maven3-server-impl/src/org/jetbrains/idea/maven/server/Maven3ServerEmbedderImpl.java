@@ -69,7 +69,6 @@ import org.eclipse.aether.repository.LocalRepositoryManager;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
-import org.eclipse.aether.spi.log.LoggerFactory;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
@@ -381,7 +380,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
               break;
             }
           }
-          catch (ProfileActivationException e) {
+          catch (Exception e) {
             Maven3ServerGlobals.getLogger().warn(e);
           }
         }
@@ -1238,18 +1237,14 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
       // Don't try calling setLoggerFactory() removed by MRESOLVER-36 when Maven 3.6.0+ is used.
       // For more information and link to the MRESOLVER-36 see IDEA-201282.
-      if (VersionComparatorUtil.compare(mavenVersion, "3.6.0") < 0) {
-        final MyLoggerFactory loggerFactory = new MyLoggerFactory();
+      final Maven3WrapperAetherLoggerFactory loggerFactory = new Maven3WrapperAetherLoggerFactory(myConsoleWrapper);
 
-        if (artifactResolver instanceof DefaultArtifactResolver) {
+      if (artifactResolver instanceof DefaultArtifactResolver) {
           ((DefaultArtifactResolver)artifactResolver).setLoggerFactory(loggerFactory);
-        }
+      }
 
-        if (repositorySystem instanceof DefaultRepositorySystem) {
-          ((DefaultRepositorySystem)repositorySystem).setLoggerFactory(loggerFactory);
-        }
-      } else {
-        myConsoleWrapper.warn("Maven 3.6+ logging is not wrapped.");
+      if (repositorySystem instanceof DefaultRepositorySystem) {
+        ((DefaultRepositorySystem)repositorySystem).setLoggerFactory(loggerFactory);
       }
 
       // do not use request.getRemoteRepositories() here,
@@ -1387,43 +1382,6 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   public interface Computable<T> {
     T compute();
-  }
-
-  private class MyLoggerFactory implements LoggerFactory {
-    @Override
-    public org.eclipse.aether.spi.log.Logger getLogger(String s) {
-      return new org.eclipse.aether.spi.log.Logger() {
-        @Override
-        public boolean isDebugEnabled() {
-          return myConsoleWrapper.isDebugEnabled();
-        }
-
-        @Override
-        public void debug(String s) {
-          myConsoleWrapper.debug(s);
-        }
-
-        @Override
-        public void debug(String s, Throwable throwable) {
-          myConsoleWrapper.debug(s, throwable);
-        }
-
-        @Override
-        public boolean isWarnEnabled() {
-          return myConsoleWrapper.isWarnEnabled();
-        }
-
-        @Override
-        public void warn(String s) {
-          myConsoleWrapper.warn(s);
-        }
-
-        @Override
-        public void warn(String s, Throwable throwable) {
-          myConsoleWrapper.debug(s, throwable);
-        }
-      };
-    }
   }
 }
 

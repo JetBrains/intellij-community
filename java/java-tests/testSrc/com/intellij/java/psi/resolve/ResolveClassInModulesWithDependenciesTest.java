@@ -16,11 +16,9 @@
 package com.intellij.java.psi.resolve;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,6 +49,23 @@ public class ResolveClassInModulesWithDependenciesTest extends ResolveTestCase {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertNull(target);
+  }
+
+  public void testTwoModulesJavadocRef() throws Exception {
+    Module unrelated = WriteAction.compute(() -> {
+      ModifiableModuleModel modifiableModel = ModuleManager.getInstance(getProject()).getModifiableModel();
+      Module module = modifiableModel.newModule("b.iml", StdModuleTypes.JAVA.getId());
+      modifiableModel.commit();
+      return module;
+    });
+    createFile(unrelated, "Src.java", "class Src {}");
+
+    configureDependency();
+
+    PsiReference ref = configure();
+    PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
+    assertNotNull(target);
+    assertNotSame(unrelated, ModuleUtilCore.findModuleForPsiElement(target));
   }
 
   public void testModuleSourceAsLibrarySource() throws Exception {

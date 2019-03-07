@@ -115,7 +115,6 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    *
    * @param file file to get attributes of.
    * @return attributes of a given file, or {@code null} if the file doesn't exist.
-   * @since 11.1
    */
   @Nullable
   public abstract FileAttributes getAttributes(@NotNull VirtualFile file);

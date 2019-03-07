@@ -251,6 +251,9 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
   val recentFilesLimit: Int
     get() = state.recentFilesLimit
 
+  val recentLocationsLimit: Int
+    get() = state.recentLocationsLimit
+
   var maxLookupWidth: Int
     get() = state.maxLookupWidth
     set(value) {

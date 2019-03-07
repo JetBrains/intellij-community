@@ -103,6 +103,12 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
   public ProblemHighlightType getHighlightType() {
     return myDescriptor.getHighlightType();
   }
+  
+  @Nullable
+  public PsiFile getFile() {
+    PsiElement element = myDescriptor.getPsiElement();
+    return element != null ? element.getContainingFile() : null;
+  }
 
   public String toString() {
     return getText();

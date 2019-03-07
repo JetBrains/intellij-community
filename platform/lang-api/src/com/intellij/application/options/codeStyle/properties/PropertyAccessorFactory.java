@@ -65,8 +65,15 @@ class PropertyAccessorFactory {
           }
           return new BooleanAccessor(codeStyleObject, myField);
         case INT:
+          if ("WRAP_ON_TYPING".equals(myField.getName())) {
+            return new WrapOnTypingAccessor(codeStyleObject, myField);
+          }
           return new IntegerAccessor(codeStyleObject, myField);
         case STRING:
+          CommaSeparatedValues annotation = myField.getAnnotation(CommaSeparatedValues.class);
+          if (annotation != null) {
+            return new CommaSeparatedValuesAccessor(codeStyleObject, myField);
+          }
           return new StringAccessor(codeStyleObject, myField);
         case WRAP:
           return new WrappingAccessor(codeStyleObject, myField);
@@ -96,13 +103,13 @@ class PropertyAccessorFactory {
 
     @Nullable
     @Override
-    protected Boolean parseString(@NotNull String str) {
+    protected Boolean fromExternal(@NotNull String str) {
       return "tab".equalsIgnoreCase(str);
     }
 
     @NotNull
     @Override
-    protected String asString(@NotNull Boolean value) {
+    protected String toExternal(@NotNull Boolean value) {
       return value ? "tab" : "space";
     }
 

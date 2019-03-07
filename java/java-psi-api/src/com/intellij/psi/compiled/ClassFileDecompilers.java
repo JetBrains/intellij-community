@@ -24,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * An API to extend default IDEA .class file decompiler and handle files compiled from sources other than Java.
- *
- * @since 134.1050
  */
 public class ClassFileDecompilers {
 

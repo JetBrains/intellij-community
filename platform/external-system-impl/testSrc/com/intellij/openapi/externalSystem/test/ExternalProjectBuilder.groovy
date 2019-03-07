@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull
 import static com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
 /**
  * @author Denis Zhdanov
- * @since 8/8/13 12:42 PM
  */
 class ExternalProjectBuilder extends BuilderSupport {
   

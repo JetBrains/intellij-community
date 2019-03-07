@@ -134,7 +134,7 @@ public class InvocationCache {
         catch (Throwable e) {
           final Throwable cause = e.getCause();
           if (cause instanceof ProcessCanceledException) {
-            throw(ProcessCanceledException)cause;
+            throw cause;
           }
           throw new RuntimeException(e);
         }

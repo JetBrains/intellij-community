@@ -10,7 +10,6 @@ import java.util.EventListener;
  * {@link CaretModel#runForEachCaret(CaretAction, boolean)} is invoked.
  *
  * @see CaretModel#addCaretActionListener(CaretActionListener, Disposable)
- * @since 2019.1
  */
 public interface CaretActionListener extends EventListener {
   default void beforeAllCaretsAction() {}

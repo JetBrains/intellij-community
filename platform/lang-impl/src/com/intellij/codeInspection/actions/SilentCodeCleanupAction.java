@@ -51,7 +51,7 @@ public class SilentCodeCleanupAction extends AnAction {
       return;
     }
     InspectionManager managerEx = InspectionManager.getInstance(project);
-    GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase) managerEx.createNewGlobalContext(false);
+    GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase) managerEx.createNewGlobalContext();
     globalContext.codeCleanup(scope, profile, getTemplatePresentation().getText(), getPostRunnable(), false);
   }
 

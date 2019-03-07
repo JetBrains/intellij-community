@@ -29,7 +29,7 @@ public class JqlFileType extends LanguageFileType {
   public static final LanguageFileType INSTANCE = new JqlFileType();
   public static final String DEFAULT_EXTENSION = "jql";
 
-  public JqlFileType() {
+  private JqlFileType() {
     super(JqlLanguage.INSTANCE);
   }
 

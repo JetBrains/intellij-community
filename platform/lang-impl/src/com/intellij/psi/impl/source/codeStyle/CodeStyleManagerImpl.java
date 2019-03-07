@@ -272,7 +272,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), element.getLanguage());
     final PsiElement formatted = codeFormatter.processRange(treeElement, startOffset, endOffset).getPsi();
 
-    return canChangeWhiteSpacesOnly ? formatted : postProcessElement(file, formatted);
+    return canChangeWhiteSpacesOnly ? ExternalFormatProcessor.formatInternalWhitespaces(formatted, startOffset, endOffset)
+                                    : postProcessElement(file, formatted);
   }
 
 

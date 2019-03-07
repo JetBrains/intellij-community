@@ -1,45 +1,40 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
-import groovy.lang.Closure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo;
-import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
+import static com.intellij.psi.util.CachedValueProvider.Result.create;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.*;
 
 /**
  * @author ilyas
@@ -68,10 +63,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
                                             @NotNull final ResolveState state,
                                             @Nullable final PsiElement lastParent,
                                             @NotNull final PsiElement place) {
-    if (!processDeclarations(plainProcessor, state, lastParent, place)) return false;
-    if (!processOwnerAndDelegate(plainProcessor, state, place)) return false;
-
-    return true;
+    return processDeclarationsWithCallsite(this, plainProcessor, state, lastParent, place);
   }
 
   @Override
@@ -82,113 +74,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     if (lastParent == null) return true;
 
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
-    if (!processParameters(processor, state, place)) return false;
-    if (!processClosureClassMembers(processor, state, lastParent, place)) return false;
+    if (!processParameters(this, processor, state)) return false;
+    if (!processClosureClassMembers(this, processor, state, lastParent, place)) return false;
 
     return true;
-  }
-
-  private boolean processOwnerAndDelegate(@NotNull PsiScopeProcessor processor,
-                                          @NotNull ResolveState state,
-                                          @NotNull PsiElement place) {
-    Boolean result = processDelegatesTo(processor, state, place);
-    if (result != null) return result.booleanValue();
-
-    if (!processOwner(processor, state, place)) return false;
-    return true;
-  }
-
-  @Nullable
-  private Boolean processDelegatesTo(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState state,
-                                     @NotNull PsiElement place) {
-    DelegatesToInfo info = GrDelegatesToUtilKt.getDelegatesToInfo(this);
-    if (info == null) {
-      return null;
-    }
-
-    switch (info.getStrategy()) {
-      case Closure.OWNER_FIRST:
-        if (!processOwner(processor, state, place)) return false;
-        if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
-        return true;
-      case Closure.DELEGATE_FIRST:
-        if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
-        if (!processOwner(processor, state, place)) return false;
-        return true;
-      case Closure.OWNER_ONLY:
-        if (!processOwner(processor, state, place)) return false;
-        return true;
-      case Closure.DELEGATE_ONLY:
-        if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
-        return true;
-      case Closure.TO_SELF:
-        return true;
-      default:
-        return null;
-    }
-  }
-
-  private boolean processDelegate(@NotNull PsiScopeProcessor processor,
-                                  @NotNull ResolveState state,
-                                  @NotNull PsiElement place,
-                                  @Nullable final PsiType classToDelegate) {
-    if (classToDelegate == null) return true;
-
-    ResolveState delegateState = state.put(ClassHint.THIS_TYPE, classToDelegate).put(ClassHint.RESOLVE_CONTEXT, this);
-    return ResolveUtil.processAllDeclarations(classToDelegate, processor, delegateState, place);
-  }
-
-  private boolean processClosureClassMembers(@NotNull PsiScopeProcessor processor,
-                                             @NotNull ResolveState state,
-                                             @Nullable PsiElement lastParent,
-                                             @NotNull PsiElement place) {
-    final PsiClass closureClass = JavaPsiFacade.getInstance(getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
-    if (closureClass == null) return true;
-
-    return ResolveUtil.processClassDeclarations(closureClass, processor, state.put(ClassHint.RESOLVE_CONTEXT, this), lastParent, place);
-  }
-
-  private boolean processParameters(@NotNull PsiScopeProcessor processor,
-                                    @NotNull ResolveState state,
-                                    @NotNull PsiElement place) {
-    if (!shouldProcessLocals(processor)) return true;
-
-    if (hasParametersSection()) {
-      for (GrParameter parameter : getParameters()) {
-        if (!ResolveUtil.processElement(processor, parameter, state)) return false;
-      }
-    }
-    else if (!isItAlreadyDeclared(place)) {
-      GrParameter[] synth = getSyntheticItParameter();
-      if (synth.length > 0) {
-        if (!ResolveUtil.processElement(processor, synth[0], state.put(ClassHint.RESOLVE_CONTEXT, this))) return false;
-      }
-    }
-    return true;
-  }
-
-  private boolean processOwner(@NotNull PsiScopeProcessor processor,
-                               @NotNull ResolveState state,
-                               @NotNull PsiElement place) {
-    final PsiElement parent = getParent();
-    if (parent == null) return true;
-
-    if (!ResolveUtil.processStaticImports(processor, getContainingFile(), state, place)) return false;
-
-    return ResolveUtil.treeWalkUp(parent, place, processor, state);
-  }
-
-  private boolean isItAlreadyDeclared(@Nullable PsiElement place) {
-    while (place != this && place != null) {
-      if (place instanceof GrClosableBlock &&
-          !((GrClosableBlock)place).hasParametersSection() &&
-          !(place.getParent() instanceof GrStringInjection)) {
-        return true;
-      }
-      place = place.getParent();
-    }
-    return false;
   }
 
   @Override
@@ -207,9 +96,9 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return GrParameter.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
   public GrParameter[] getAllParameters() {
-    if (getParent() instanceof GrStringInjection) return GrParameter.EMPTY_ARRAY;
     if (hasParametersSection()) return getParameters();
     return getSyntheticItParameter();
   }
@@ -276,25 +165,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   @Nullable
   @Override
   public PsiType getOwnerType() {
-    return CachedValuesManager.getCachedValue(this, () -> Result.create(doGetOwnerType(), PsiModificationTracker.MODIFICATION_COUNT));
-  }
-
-  @Nullable
-  private PsiType doGetOwnerType() {
-    final GroovyPsiElement context = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, GrClosableBlock.class, GroovyFile.class);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-    if (context instanceof GrTypeDefinition) {
-      return factory.createType((PsiClass)context);
-    }
-    else if (context instanceof GrClosableBlock) {
-      return ((GrClosableBlock)context).getType();
-    }
-    else if (context instanceof GroovyFile) {
-      final PsiClass scriptClass = ((GroovyFile)context).getScriptClass();
-      if (scriptClass != null && GroovyNamesUtil.isIdentifier(scriptClass.getName())) return factory.createType(scriptClass);
-    }
-
-    return null;
+    return CachedValuesManager.getCachedValue(this, () -> create(doGetOwnerType(this), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Override

@@ -13,7 +13,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.FILE_RESOURCE_PREFIX;
-import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.escape;
 
 @SuppressWarnings("unused")
 public class CucumberJvm3SMFormatter extends CucumberJvm2SMFormatter {
@@ -67,7 +66,7 @@ public class CucumberJvm3SMFormatter extends CucumberJvm2SMFormatter {
   }
 
   private static String getScenarioName(TestCase testCase) {
-    return escape("Scenario: " + testCase.getName());
+    return "Scenario: " + testCase.getName();
   }
 
   private static String getStepLocation(TestStep step) {
@@ -104,6 +103,6 @@ public class CucumberJvm3SMFormatter extends CucumberJvm2SMFormatter {
     } else {
       stepName = ((PickleStepTestStep) step).getPickleStep().getText();
     }
-    return escape(stepName);
+    return stepName;
   }
 }

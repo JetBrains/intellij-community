@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,6 +107,9 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
     */
 
+    def jreSuffix = buildContext.bundledJreManager.jreSuffix()
+    def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
+    def secondJreDirectoryPath = (secondJreBuild != null) ? buildContext.bundledJreManager.extractSecondJre("win", secondJreBuild) : null
     // Android Studio: we build separate artifacts for win32 and win64.
     if (customizer.buildZipArchive) {
       buildWinZip(buildContext.bundledJreManager.findWinJdk(JvmArchitecture.x64),
@@ -121,6 +124,11 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       generateProductJson(productJsonDir, jreDirectoryPath64 != null)
       new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath64], [])
       new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath, productJsonDir)
+      if (secondJreDirectoryPath != null) {
+        generateProductJson(productJsonDir, secondJreDirectoryPath != null)
+        new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, secondJreDirectoryPath], [])
+        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "-jdk${buildContext.bundledJreManager.getSecondJreVersion()}-bundled")
+      }
     } */
   }
 
@@ -256,12 +264,11 @@ IDS_VM_OPTIONS=$vmOptions
 
   // Android Studio: modified by Change Idc07b110 / commit f20681e
   private void buildWinZip(String jdkDirectoryPath, String zipNameSuffix, String winDistPath) {
-    zipNameSuffix += buildContext.bundledJreManager.jreSuffix()
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
       def dirs = [buildContext.paths.distAll, winDistPath]  // Android Studio: modified by Change Idc07b110 / commit f20681e
-      buildContext.messages.progress("Building Windows ${zipNameSuffix}.zip archive")
+      buildContext.messages.progress("Building Windows $targetPath archive")
 /* TODO(b/118034991): generate product-info.json files (or not)
       def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.zip$zipNameSuffix").absolutePath
       generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty())

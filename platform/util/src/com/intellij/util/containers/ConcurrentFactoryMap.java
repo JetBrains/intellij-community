@@ -232,7 +232,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
     @Override
     public Iterator<K> iterator() {
       return new Iterator<K>() {
-        Iterator<K> it = myDelegate.iterator();
+        final Iterator<K> it = myDelegate.iterator();
         @Override
         public boolean hasNext() {
           return it.hasNext();

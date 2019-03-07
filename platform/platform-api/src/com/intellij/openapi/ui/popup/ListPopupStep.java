@@ -26,7 +26,6 @@ import java.util.List;
  *
  * @see ListPopup
  * @see JBPopupFactory#createListPopup(ListPopupStep)
- * @since 6.0
  */
 public interface ListPopupStep<T> extends PopupStep<T> {
 

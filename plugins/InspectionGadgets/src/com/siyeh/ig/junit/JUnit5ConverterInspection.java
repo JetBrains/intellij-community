@@ -200,7 +200,7 @@ public class JUnit5ConverterInspection extends BaseInspection {
       protected UsageInfo[] findUsages() {
         UsageInfo[] usages = super.findUsages();
         InspectionManager inspectionManager = InspectionManager.getInstance(myProject);
-        GlobalInspectionContext globalContext = inspectionManager.createNewGlobalContext(false);
+        GlobalInspectionContext globalContext = inspectionManager.createNewGlobalContext();
         LocalInspectionToolWrapper assertionsConverter = new LocalInspectionToolWrapper(new JUnit5AssertionsConverterInspection("JUnit4"));
 
         Stream<ProblemDescriptor> stream = myFiles.stream().flatMap(file -> InspectionEngine.runInspectionOnFile(file, assertionsConverter, globalContext).stream());

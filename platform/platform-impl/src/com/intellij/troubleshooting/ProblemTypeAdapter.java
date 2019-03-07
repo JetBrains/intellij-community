@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("deprecation")
 public class ProblemTypeAdapter implements TroubleInfoCollector {
 
-  private ProblemType myProblemType;
+  private final ProblemType myProblemType;
 
   public ProblemTypeAdapter(ProblemType problemType) {
     myProblemType = problemType;

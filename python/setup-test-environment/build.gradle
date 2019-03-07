@@ -22,13 +22,18 @@ plugins {
  * Pitfall: TMP var on windows points to very long path inside of user local dir and may lead to errors.
  * It is recommended to create "c:\temp\" with full write access and set TMP="c:\temp\" on Windows.
  *
+ * When -DdjangoTrunkOnly passed, only install django_latest for Django Trunk tests
+ *
  * ``PyEnvTestSettings`` class uses these vars also.
+ *
  *
  */
 
 envs {
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
+
+  def djangoTrunkOnly  = System.getProperty("djangoTrunkOnly") ?: false
 
   if (System.getenv().containsKey("PYCHARM_ZIP_REPOSITORY")) {
     zipRepository = new URL(System.getenv().get("PYCHARM_ZIP_REPOSITORY"))
@@ -77,6 +82,12 @@ envs {
     }
   }
 
+
+  createPython("django_latest", "3.5.4", ["django", "behave-django", "behave"], "python3.5\ndjango\ndjango20\nbehave\nbehave-django\ndjango20", true)
+   if (djangoTrunkOnly) {
+     return
+   }
+
   createPython("py2_django11_full",
                "2.7.15",
                ["django==1.11", "tox", "nose", "pytest", "Twisted", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages", "django-nose"]
@@ -114,7 +125,6 @@ envs {
     createPython("pyqt_env", "3.5.4", ["pyqt5==5.10.1"], "pyqt5", true)
   }
 
-  createPython("django_latest", "3.5.4", ["django", "behave-django", "behave"], "python3.5\ndjango\ndjango20\nbehave\nbehave-django\ndjango20", true)
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) { // Only windows needs ironPython
 

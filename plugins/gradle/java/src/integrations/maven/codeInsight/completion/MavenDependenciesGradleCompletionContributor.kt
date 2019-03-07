@@ -21,7 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner
 
 /**
  * @author Vladislav.Soroka
- * @since 10/31/13
  */
 class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionContributor() {
   init {

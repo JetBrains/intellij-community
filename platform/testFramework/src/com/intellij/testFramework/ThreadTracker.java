@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
@@ -23,11 +24,10 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.NettyUtil;
 import org.junit.Assert;
 
+import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
 import java.util.prefs.BackingStoreException;
@@ -136,47 +136,49 @@ public class ThreadTracker {
       if (myDefaultProjectInitialized != ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized()) return;
 
       // compare threads by name because BoundedTaskExecutor reuses application thread pool for different bounded pools, leaks of which we want to find
-      Map<String, Thread> after = getThreads();
+      Map<String, Thread> all = getThreads();
+      Map<String, Thread> after = new HashMap<>(all);
       after.keySet().removeAll(before.keySet());
+      Map<Thread, StackTraceElement[]> stackTraces = ContainerUtil.map2Map(after.values(), thread -> Pair.create(thread, thread.getStackTrace()));
 
       for (final Thread thread : after.values()) {
         if (thread == Thread.currentThread()) continue;
         ThreadGroup group = thread.getThreadGroup();
         if (group != null && "system".equals(group.getName()))continue;
         if (!thread.isAlive()) continue;
-        StackTraceElement[] stackTrace = thread.getStackTrace();
-        if (shouldIgnore(thread, stackTrace)) continue;
 
-        if (stackTrace.length == 0
-            // give thread a chance to run up to the completion
-            || thread.getState() == Thread.State.RUNNABLE || thread.getState() == Thread.State.BLOCKED) {
-          thread.interrupt();
-          long start = System.currentTimeMillis();
-          //if (thread.isAlive()) {
-          //  System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
-          //}
-          while (System.currentTimeMillis() < start + 10_000) {
-            UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
-            // afters some time the submitted task can finish and the thread become idle pool
-            if (shouldIgnore(thread, thread.getStackTrace())) break;
-          }
-          //long elapsed = System.currentTimeMillis() - start;
-          //if (elapsed > 1_000) {
-          //  System.err.println("waited for " + thread + " for " + elapsed+"ms");
-          //}
+        long start = System.currentTimeMillis();
+        //if (thread.isAlive()) {
+        //  System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
+        //}
+        while (!shouldIgnore(thread, thread.getStackTrace()) && System.currentTimeMillis() < start + 10_000) {
+          UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
+          // afters some time the submitted task can finish and the thread become idle pool
         }
+        //long elapsed = System.currentTimeMillis() - start;
+        //if (elapsed > 1_000) {
+        //  System.err.println("waited for " + thread + " for " + elapsed+"ms");
+        //}
 
         // check once more because the thread name may be set via race
-        stackTrace = thread.getStackTrace();
+        StackTraceElement[] stackTrace = thread.getStackTrace();
+        stackTraces.put(thread, stackTrace);
+
         if (shouldIgnore(thread, stackTrace)) continue;
 
         String trace = PerformanceWatcher.printStacktrace("Thread leaked", thread, stackTrace);
-        Assert.fail(trace + "\n\nFull thread dump:\n"+ThreadDumper.dumpThreadsToString());
+        Assert.fail(trace + "\n\nFull thread dump:\n"+dumpThreadsToString(after, stackTraces));
       }
     }
     finally {
       before.clear();
     }
+  }
+
+  private static String dumpThreadsToString(Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {
+    Writer f = new StringWriter();
+    after.values().forEach(thread -> ThreadDumper.dumpCallStack(thread, f, stackTraces.get(thread)));
+    return f.toString();
   }
 
   private static boolean shouldIgnore(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {

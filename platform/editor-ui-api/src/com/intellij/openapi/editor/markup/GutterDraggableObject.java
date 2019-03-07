@@ -40,7 +40,6 @@ public interface GutterDraggableObject {
    * @param file the DnD target file
    * @param actionId the id of the DnD action {@link java.awt.dnd.DnDConstants}.
    * @return true if the drag and drop operation has completed successfully, false otherwise.
-   * @since 10.0.3
    */
   boolean copy(int line, VirtualFile file, int actionId);
 

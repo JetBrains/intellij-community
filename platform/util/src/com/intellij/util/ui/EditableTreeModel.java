@@ -20,7 +20,6 @@ import java.util.Collection;
 
 /**
  * @author Konstantin Bulenkov
- * @since 12.0
  */
 public interface EditableTreeModel {
   /**

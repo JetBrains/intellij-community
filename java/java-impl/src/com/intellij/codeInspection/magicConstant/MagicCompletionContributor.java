@@ -161,7 +161,7 @@ public class MagicCompletionContributor extends CompletionContributor {
         final PsiType interfaceType = ((PsiLambdaExpression)element).getFunctionalInterfaceType();
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
         if (interfaceMethod != null) {
-          result.add(Pair.create((PsiModifierListOwner)interfaceMethod, LambdaUtil.getFunctionalInterfaceReturnType(interfaceType)));
+          result.add(Pair.create(interfaceMethod, LambdaUtil.getFunctionalInterfaceReturnType(interfaceType)));
         }
       }
     }

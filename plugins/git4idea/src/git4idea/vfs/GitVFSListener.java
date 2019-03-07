@@ -183,7 +183,7 @@ public class GitVFSListener extends VcsVFSListener {
   @Override
   protected void performDeletion(@NotNull final List<FilePath> filesToDelete) {
     performBackgroundOperation(filesToDelete, GitBundle.getString("remove.removing"), new LongOperationPerRootExecutor() {
-      Set<File> filesToRefresh = newHashSet();
+      final Set<File> filesToRefresh = newHashSet();
 
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException {

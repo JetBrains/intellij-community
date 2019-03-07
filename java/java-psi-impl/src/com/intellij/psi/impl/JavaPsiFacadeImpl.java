@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -45,6 +45,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final ConcurrentMap<String, PsiPackage> myPackageCache = ContainerUtil.createConcurrentSoftValueMap();
   private final ConcurrentMap<GlobalSearchScope, Map<String, PsiClass>> myClassCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
+  private final Map<GlobalSearchScope, Map<String, Collection<PsiJavaModule>>> myModuleCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
   private final Project myProject;
   private final JavaFileManager myFileManager;
   private final AtomicNotNullLazyValue<JvmFacadeImpl> myJvmFacade;
@@ -73,6 +74,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
           if (lastTimeSeen != now) {
             lastTimeSeen = now;
             myPackageCache.clear();
+            myModuleCache.clear();
           }
         }
       });
@@ -243,6 +245,20 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     return null;
+  }
+
+  @Override
+  public PsiJavaModule findModule(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
+    Collection<PsiJavaModule> modules = findModules(moduleName, scope);
+    return modules.size() == 1 ? modules.iterator().next() : null;
+  }
+
+  @NotNull
+  @Override
+  public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
+    return myModuleCache
+      .computeIfAbsent(scope, k -> ContainerUtil.createConcurrentWeakValueMap())
+      .computeIfAbsent(moduleName, k -> JavaFileManager.getInstance(myProject).findModules(k, scope));
   }
 
   @NotNull

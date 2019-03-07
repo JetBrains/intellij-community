@@ -15,19 +15,10 @@ public enum ConflictReason {
   @XmlEnumValue("missing") MISSING("missing", "miss"),
   @XmlEnumValue("unversioned") UNVERSIONED("unversioned", "unversion"),
 
-  /**
-   * @since 1.6
-   */
   @XmlEnumValue("add") ADDED("add", "added"),
 
-  /**
-   * @since 1.7
-   */
   @XmlEnumValue("replace") REPLACED("replace", "replaced"),
 
-  /**
-   * @since 1.8
-   */
   @XmlEnumValue("moved-away") MOVED_AWAY("moved-away"),
   @XmlEnumValue("moved-here") MOVED_HERE("moved-here");
 

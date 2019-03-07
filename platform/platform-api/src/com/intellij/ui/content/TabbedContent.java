@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
- * @since 14.1
  */
 public interface TabbedContent extends Content {
   String SPLIT_PROPERTY_PREFIX = "tabbed.toolwindow.expanded.";

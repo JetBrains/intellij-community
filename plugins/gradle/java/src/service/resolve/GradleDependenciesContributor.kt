@@ -24,7 +24,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 
 /**
  * @author Vladislav.Soroka
- * @since 11/10/2016
  */
 class GradleDependenciesContributor : GradleMethodContextContributor {
   companion object {

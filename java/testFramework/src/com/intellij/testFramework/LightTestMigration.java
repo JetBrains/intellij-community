@@ -49,7 +49,7 @@ class LightTestMigration {
   private static LightTestMigration ourPrevious;
 
   static {
-    Runtime.getRuntime().addShutdownHook(new Thread(LightTestMigration::flush));
+    Runtime.getRuntime().addShutdownHook(new Thread(LightTestMigration::flush, "LightTestMigration flusher"));
   }
 
   private Path myBaseDir;

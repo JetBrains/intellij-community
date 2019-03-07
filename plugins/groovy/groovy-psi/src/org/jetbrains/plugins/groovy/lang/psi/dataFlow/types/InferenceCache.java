@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.util.Couple;
@@ -12,6 +12,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -88,8 +89,7 @@ class InferenceCache {
 
   @Nullable
   DFAType getCachedInferredType(@NotNull String variableName, @NotNull Instruction instruction) {
-    DFAType dfaType = myVarTypes.get().get(instruction.num()).getVariableType(variableName);
-    return dfaType == null ? null : dfaType.negate(instruction);
+    return myVarTypes.get().get(instruction.num()).getVariableType(variableName);
   }
 
   private Couple<Set<Instruction>> collectRequiredInstructions(@NotNull Instruction instruction,
@@ -161,6 +161,7 @@ class InferenceCache {
     return PsiTreeUtil.findFirstParent(
       element,
       element1 -> !(element1.getParent() instanceof GrExpression)
+                  || element1 instanceof GrBinaryExpression
                   || element1 instanceof GrInstanceOfExpression
                   || isExpressionStatement(element1)
     );

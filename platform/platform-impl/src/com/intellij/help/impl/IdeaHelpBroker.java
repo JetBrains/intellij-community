@@ -38,18 +38,15 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   private Font myFont=null;
   /**
    * The container for modally activated help
-   * @since 1.1
    */
   private JDialog myDialog=null;
   /**
    * The modal Window that activated help
-   * @since 1.1
    */
   private Window myOwnerWindow=null;
   /**
    * The flag for modally activated help. If true, help was activated from
    * a modal dialog. Can not be set to true for V1.1.
-   * @since 1.1
    */
   private boolean myModallyActivated=false;
 
@@ -603,7 +600,6 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * ownerDialog is set to the window. In all other instances
    * modallyActivated is set to false and ownerDialog is set to null.
    * @param window the activating window
-   * @since 1.1
    */
   @Override
   public void setActivationWindow(Window window){

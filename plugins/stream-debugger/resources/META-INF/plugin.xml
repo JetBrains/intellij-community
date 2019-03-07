@@ -55,9 +55,6 @@
     ]]>
   </change-notes>
 
-  <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-  <idea-version since-build="171"/>
-
   <extensionPoints>
     <extensionPoint name="librarySupport" interface="com.intellij.debugger.streams.lib.LibrarySupportProvider"/>
   </extensionPoints>

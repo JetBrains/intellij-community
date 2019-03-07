@@ -26,6 +26,7 @@ public abstract class ForcedCopyModeAction extends DumbAwareAction {
   
   protected ForcedCopyModeAction(boolean richCopyEnabled) {
     myRichCopyEnabled = richCopyEnabled;
+    setEnabledInModalContext(true);
   }
 
   @Override

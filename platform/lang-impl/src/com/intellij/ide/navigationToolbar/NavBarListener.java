@@ -185,7 +185,7 @@ public class NavBarListener
           shouldFocusEditor = false;
         }
       };
-      if (Disposer.isDisposed(parent)) {
+      if (dialog.isDisposed()) {
         Disposer.dispose(onParentDispose);
       }
       else {

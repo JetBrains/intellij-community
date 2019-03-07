@@ -74,7 +74,7 @@ public class DetectionExcludesConfigurable implements Configurable {
     myEnabledDetectionCheckBox.setBorder(new EmptyBorder(10, 10, 0, 0));
     final JBList excludesList = new JBList(myModel);
     final ColoredListCellRenderer renderer = new ColoredListCellRenderer() {
-      JPanel panel = new JPanel(new BorderLayout());
+      final JPanel panel = new JPanel(new BorderLayout());
       {
         panel.setBorder(new EmptyBorder(2, 10, 2, 0));
         panel.add(this);

@@ -160,6 +160,12 @@ public class JavaSourceInference {
   private static List<StandardMethodContract> postProcessContracts(@NotNull PsiMethodImpl method, MethodData data, List<PreContract> rawContracts) {
     List<StandardMethodContract> contracts = ContainerUtil.concat(rawContracts, c -> c.toContracts(method, data.methodBody(method)));
     if (contracts.isEmpty()) return Collections.emptyList();
+    if (contracts.size() == 2) {
+      StandardMethodContract collapsed = contracts.get(0).tryCollapse(contracts.get(1));
+      if (collapsed != null) {
+        contracts = Collections.singletonList(collapsed);
+      }
+    }
 
     final PsiType returnType = method.getReturnType();
     if (returnType != null && !(returnType instanceof PsiPrimitiveType)) {

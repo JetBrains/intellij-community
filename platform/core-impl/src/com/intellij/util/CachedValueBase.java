@@ -4,10 +4,7 @@ package com.intellij.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.RecursionGuard;
-import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.util.CachedValueProfiler;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ProfilingInfo;
@@ -71,14 +68,6 @@ public abstract class CachedValueBase<T> {
     myData = new SoftReference<>(data);
   }
 
-  private synchronized boolean compareAndClearData(Data<T> expected) {
-    if (getRawData() == expected) {
-      myData = null;
-      return true;
-    }
-    return false;
-  }
-
   @Nullable
   protected Object[] getDependencies(CachedValueProvider.Result<T> result) {
     return result == null ? null : result.getDependencyItems();
@@ -105,7 +94,7 @@ public abstract class CachedValueBase<T> {
   }
 
   @Nullable
-  final Data<T> getUpToDateOrNull() {
+  public final Data<T> getUpToDateOrNull() {
     Data<T> data = getRawData();
 
     if (data != null) {
@@ -195,7 +184,7 @@ public abstract class CachedValueBase<T> {
 
   public abstract boolean isFromMyProject(Project project);
 
-  protected static class Data<T> {
+  protected static class Data<T> implements Getter<T> {
     private final T myValue;
     private final Object[] myDependencies;
     private final long[] myTimeStamps;
@@ -204,6 +193,11 @@ public abstract class CachedValueBase<T> {
       myValue = value;
       myDependencies = dependencies;
       myTimeStamps = timeStamps;
+    }
+
+    @Override
+    public final T get() {
+      return getValue();
     }
 
     public T getValue() {

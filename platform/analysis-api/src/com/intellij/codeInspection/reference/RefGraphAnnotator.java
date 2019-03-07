@@ -22,7 +22,6 @@ import com.intellij.psi.PsiElement;
  * inspection run.
  *
  * @author anna
- * @since 6.0
  * @see com.intellij.codeInspection.GlobalInspectionTool#getAnnotator
  */
 public abstract class RefGraphAnnotator {

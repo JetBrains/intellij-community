@@ -34,7 +34,7 @@ public abstract class HyperlinkInfoFactory {
   }
 
   @NotNull
-  public abstract HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<VirtualFile> files,
+  public abstract HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<? extends VirtualFile> files,
                                                                  int line, @NotNull Project project);
 
   /**
@@ -46,7 +46,7 @@ public abstract class HyperlinkInfoFactory {
    * @return newly created HyperlinkInfo which navigates to given line and column
    */
   @NotNull
-  public abstract HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<VirtualFile> files,
+  public abstract HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<? extends VirtualFile> files,
                                                                  int line,
                                                                  @NotNull Project project,
                                                                  ToIntFunction<? super PsiFile> columnFinder);

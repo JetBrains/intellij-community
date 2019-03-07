@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -110,23 +110,39 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
                                           SSHUtil.CONFIRM_CONNECTION_PROMPT + " (yes/no)?",
                                           SSHUtil.CONFIRM_CONNECTION_PROMPT + "?");
 
+      String knownAnswer = myAuthenticationGate.getSavedInput(message);
+      if (knownAnswer != null) {
+        return knownAnswer;
+      }
+
       int answer = Messages.showYesNoDialog(myProject, message, "SSH Confirmation", null);
+      String textAnswer;
       if (answer == Messages.YES) {
-        return "yes";
+        textAnswer = "yes";
       }
       else if (answer == Messages.NO) {
-        return "no";
+        textAnswer = "no";
       }
       else {
-        return null;
+        throw new AssertionError(answer);
       }
+      myAuthenticationGate.saveInput(message, textAnswer);
+      return textAnswer;
     });
   }
 
   @Nullable
   private String askGenericInput(@NotNull String description) {
     return askUser(() -> {
-      return Messages.showPasswordDialog(myProject, description, GitBundle.message("ssh.keyboard.interactive.title"), null);
+      String knownAnswer = myAuthenticationGate.getSavedInput(description);
+      if (knownAnswer != null) {
+        return knownAnswer;
+      }
+      String answer = Messages.showPasswordDialog(myProject, description, GitBundle.message("ssh.keyboard.interactive.title"), null);
+      if (answer != null) {
+        myAuthenticationGate.saveInput(description, answer);
+      }
+      return answer;
     });
   }
 

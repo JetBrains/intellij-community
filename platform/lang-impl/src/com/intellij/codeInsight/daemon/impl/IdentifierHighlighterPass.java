@@ -229,8 +229,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
    * In brace matching case this is done from {@link BraceHighlightingHandler#highlightBraces(com.intellij.openapi.util.TextRange, com.intellij.openapi.util.TextRange, boolean, boolean, com.intellij.openapi.fileTypes.FileType)}
    */
   private void doAdditionalCodeBlockHighlighting() {
-    if (!CodeInsightSettings.getInstance().HIGHLIGHT_SCOPE ||
-        myCodeBlockMarkerRanges.size() < 2 ||
+    if (myCodeBlockMarkerRanges.size() < 2 ||
         myDocument == null ||
         !(myEditor instanceof EditorEx)) {
       return;

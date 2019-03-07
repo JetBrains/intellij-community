@@ -632,6 +632,10 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      displayName="Condition is covered by further condition"
                      implementationClass="com.siyeh.ig.controlflow.ConditionCoveredByFurtherConditionInspection"/>
+    <localInspection language="JAVA" shortName="ExcessiveRangeCheck" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     displayName="Excessive range check"
+                     implementationClass="com.siyeh.ig.controlflow.ExcessiveRangeCheckInspection"/>
     <localInspection language="JAVA" shortName="IdempotentLoopBody" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
                      bundle="messages.InspectionsBundle" key="inspection.idempotent.loop.body"
@@ -766,6 +770,11 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids11" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ReadWriteStringCanBeUsedInspection"
                      displayName="'Files.readString()' or 'Files.writeString()' can be used"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="StringRepeatCanBeUsed"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids11" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.StringRepeatCanBeUsedInspection"
+                     displayName="String.repeat() can be used"/>
     <!-- Android Studio: disabled by Change I8d8ec30f / commit a32d8a2
     Replaced with subclass in the Android plugin which filters based on API level
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8MapForEach"

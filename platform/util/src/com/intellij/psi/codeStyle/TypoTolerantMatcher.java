@@ -41,7 +41,6 @@ class TypoTolerantMatcher extends MinusculeMatcher {
    * Need either an explicit uppercase letter or the same separator character in prefix
    */
   TypoTolerantMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
-    super(pattern, options, hardSeparators);
     myOptions = options;
     myPattern = StringUtil.trimEnd(pattern, "* ").toCharArray();
     myHardSeparators = hardSeparators;

@@ -73,11 +73,12 @@ public class TestDataGuessByExistingFilesUtil {
     return ReadAction.compute(() -> buildDescriptorFromExistingTestData(psiMethod, testDataPath).restoreFiles());
   }
 
+  @NotNull
   static List<TestDataFile> guessTestDataName(PsiMethod method) {
     String testName = getTestName(method);
-    if (testName == null) return null;
+    if (testName == null) return Collections.emptyList();
     PsiClass psiClass = method.getContainingClass();
-    if (psiClass == null) return null;
+    if (psiClass == null) return Collections.emptyList();
     String testDataBasePath = TestDataLineMarkerProvider.getTestDataBasePath(psiClass);
     int count = 5;
     PsiMethod prev = PsiTreeUtil.getPrevSiblingOfType(method, PsiMethod.class);
@@ -93,7 +94,7 @@ public class TestDataGuessByExistingFilesUtil {
       if (!testData.isEmpty()) return testData;
       next = PsiTreeUtil.getNextSiblingOfType(next, PsiMethod.class);
     }
-    return null;
+    return Collections.emptyList();
   }
 
   @NotNull

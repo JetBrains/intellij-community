@@ -272,9 +272,6 @@ public interface Editor extends UserDataHolder {
   @NotNull
   VisualPosition xyToVisualPosition(@NotNull Point2D p);
 
-  /**
-   * @since 2017.2
-   */
   @NotNull
   default Point offsetToXY(int offset) {
     return offsetToXY(offset, false, false);
@@ -282,7 +279,6 @@ public interface Editor extends UserDataHolder {
 
   /**
    * @see #offsetToVisualPosition(int, boolean, boolean)
-   * @since 2017.2
    */
   @NotNull
   default Point offsetToXY(int offset, boolean leanForward, boolean beforeSoftWrap) {
@@ -290,9 +286,6 @@ public interface Editor extends UserDataHolder {
     return visualPositionToXY(visualPosition);
   }
 
-  /**
-   * @since 2017.2
-   */
   @NotNull
   default Point2D offsetToPoint2D(int offset) {
     return offsetToPoint2D(offset, false, false);
@@ -300,7 +293,6 @@ public interface Editor extends UserDataHolder {
 
   /**
    * @see #offsetToVisualPosition(int, boolean, boolean)
-   * @since 2017.2
    */
   @NotNull
   default Point2D offsetToPoint2D(int offset, boolean leanForward, boolean beforeSoftWrap) {
@@ -308,16 +300,10 @@ public interface Editor extends UserDataHolder {
     return visualPositionToPoint2D(visualPosition);
   }
 
-  /**
-   * @since 2018.3
-   */
   default int visualLineToY(int visualLine) {
     return visualPositionToXY(new VisualPosition(visualLine, 0)).y;
   }
 
-  /**
-   * @since 2018.3
-   */
   default int yToVisualLine(int y) {
     return xyToVisualPosition(new Point(0, y)).line;
   }

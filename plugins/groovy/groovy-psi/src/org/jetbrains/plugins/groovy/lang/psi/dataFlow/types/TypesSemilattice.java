@@ -4,9 +4,9 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
@@ -53,6 +53,10 @@ class TypeDfaState {
     myVarTypes = ContainerUtil.newHashMap(another.myVarTypes);
   }
 
+  Map<String, DFAType> getVarTypes() {
+    return myVarTypes;
+  }
+
   TypeDfaState mergeWith(TypeDfaState another) {
     if (another.myVarTypes.isEmpty()) {
       return this;
@@ -87,17 +91,18 @@ class TypeDfaState {
     return myVarTypes.get(variableName);
   }
 
+  @Contract("_ -> new")
   @NotNull
   DFAType getOrCreateVariableType(String variableName) {
     DFAType result = getVariableType(variableName);
-    return result == null ? DFAType.create(null) : result;
+    return result == null ? DFAType.create(null) : result.copy();
   }
 
-  Map<String, PsiType> getBindings(Instruction instruction) {
-    HashMap<String,PsiType> map = ContainerUtil.newHashMap();
+  Map<String, PsiType> getBindings() {
+    HashMap<String, PsiType> map = ContainerUtil.newHashMap();
     for (Map.Entry<String, DFAType> entry : myVarTypes.entrySet()) {
       DFAType value = entry.getValue();
-      map.put(entry.getKey(), value == null ? null : value.negate(instruction).getResultType());
+      map.put(entry.getKey(), value == null ? null : value.getResultType());
     }
     return map;
   }
@@ -108,7 +113,7 @@ class TypeDfaState {
 
   @Override
   public String toString() {
-    return "TypeDfaState{" + myVarTypes + '}';
+    return myVarTypes.toString();
   }
 
   public boolean containsVariable(@NotNull String variableName) {

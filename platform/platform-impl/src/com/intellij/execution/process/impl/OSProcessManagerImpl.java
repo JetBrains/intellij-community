@@ -4,11 +4,10 @@ package com.intellij.execution.process.impl;
 import com.intellij.execution.process.OSProcessManager;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessInfo;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.intellij.execution.process.impl.ProcessListUtil.getProcessList;
 
@@ -24,6 +23,6 @@ public class OSProcessManagerImpl extends OSProcessManager {
   @Override
   @NotNull
   public List<String> getCommandLinesOfRunningProcesses() {
-    return Arrays.stream(getProcessList()).map(ProcessInfo::getCommandLine).collect(Collectors.toList());
+    return ContainerUtil.map(getProcessList(), ProcessInfo::getCommandLine);
   }
 }

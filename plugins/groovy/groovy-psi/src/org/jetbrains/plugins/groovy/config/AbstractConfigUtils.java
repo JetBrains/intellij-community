@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,8 +37,6 @@ public abstract class AbstractConfigUtils {
   private static final Logger LOG = Logger.getInstance(AbstractConfigUtils.class);
 
   protected static final String VERSION_GROUP_NAME = "version";
-  // SDK-dependent entities
-  @NonNls protected String STARTER_SCRIPT_FILE_NAME;
 
   private final Condition<Library> LIB_SEARCH_CONDITION = library -> isSDKLibrary(library);
 

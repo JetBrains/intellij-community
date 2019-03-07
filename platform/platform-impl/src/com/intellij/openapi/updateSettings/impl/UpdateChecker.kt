@@ -166,20 +166,20 @@ object UpdateChecker {
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
 
       updateInfo = HttpRequests.request(updateUrl)
-          .forceHttps(settings.canUseSecureConnection())
-          .connect {
-            try {
-              if (settings.isPlatformUpdateEnabled)
-                UpdatesInfo(JDOMUtil.load(it.reader))
-              else
-                null
-            }
-            catch (e: JDOMException) {
-              // corrupted content, don't bother telling user
-              LOG.info(e)
+        .forceHttps(settings.canUseSecureConnection())
+        .connect {
+          try {
+            if (settings.isPlatformUpdateEnabled)
+              UpdatesInfo(JDOMUtil.load(it.reader))
+            else
               null
-            }
           }
+          catch (e: JDOMException) {
+            // corrupted content, don't bother telling user
+            LOG.info(e)
+            null
+          }
+        }
     }
     catch (e: Exception) {
       LOG.info(e)
@@ -265,7 +265,7 @@ object UpdateChecker {
   private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor> {
     val updateable = ContainerUtil.newTroveMap<PluginId, IdeaPluginDescriptor>()
 
-    updateable += PluginManagerCore.getPlugins().filter { !it.isBundled || it.allowBundledUpdate()}.associateBy { it.pluginId }
+    updateable += PluginManagerCore.getPlugins().filter { !it.isBundled || it.allowBundledUpdate() }.associateBy { it.pluginId }
 
     val onceInstalled = PluginManager.getOnceInstalledIfExists()
     if (onceInstalled != null) {
@@ -302,7 +302,7 @@ object UpdateChecker {
     return updateable
   }
 
-  private fun checkExternalUpdates(manualCheck: Boolean, updateSettings: UpdateSettings, indicator: ProgressIndicator?) : Collection<ExternalUpdate> {
+  private fun checkExternalUpdates(manualCheck: Boolean, updateSettings: UpdateSettings, indicator: ProgressIndicator?): Collection<ExternalUpdate> {
     val result = arrayListOf<ExternalUpdate>()
     val manager = ExternalComponentManager.getInstance()
     indicator?.text = IdeBundle.message("updates.external.progress")
@@ -406,7 +406,7 @@ object UpdateChecker {
         IdeUpdateUsageTriggerCollector.trigger("notification.shown")
         val message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().fullProductName)
         showNotification(project, message, {
-          IdeUpdateUsageTriggerCollector.trigger( "notification.clicked")
+          IdeUpdateUsageTriggerCollector.trigger("notification.clicked")
           runnable()
         }, NotificationUniqueType.PLATFORM)
       }
@@ -624,9 +624,9 @@ object UpdateChecker {
             val file = File(PathManager.getConfigPath(), DISABLED_UPDATE)
             if (file.isFile) {
               FileUtil.loadFile(file)
-                  .split("[\\s]".toRegex())
-                  .map { it.trim() }
-                  .filterTo(ourDisabledToUpdatePlugins!!) { it.isNotEmpty() }
+                .split("[\\s]".toRegex())
+                .map { it.trim() }
+                .filterTo(ourDisabledToUpdatePlugins!!) { it.isNotEmpty() }
             }
           }
           catch (e: IOException) {

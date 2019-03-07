@@ -435,15 +435,15 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (target instanceof PyFile) {
       return new PyModuleType((PyFile)target);
     }
-    if ((target instanceof PyTargetExpression || target instanceof PyNamedParameter) && context.allowDataFlow(anchor)) {
+    if (target instanceof PyElement && context.allowDataFlow(anchor)) {
       final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(anchor);
-      if (scopeOwner != null && scopeOwner == ScopeUtil.getScopeOwner(target)) {
-        final String name = ((PyElement)target).getName();
-        if (name != null) {
-          final PyType type = getTypeByControlFlow(name, context, anchor, scopeOwner);
-          if (type != null) {
-            return type;
-          }
+      final String name = ((PyElement)target).getName();
+      if (scopeOwner != null &&
+          name != null &&
+          !ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.ASSERTTYPE).isEmpty()) {
+        final PyType type = getTypeByControlFlow(name, context, anchor, scopeOwner);
+        if (type != null) {
+          return type;
         }
       }
     }

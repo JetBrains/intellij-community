@@ -128,7 +128,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
         "http://example.com/ABC-1123", "http://example.com/ABC-2", "http://example.com/ABC-22", "http://example.com/ABC-11");
       List<WebReference> refs = PlatformTestUtil.collectWebReferences(myFile);
       assertTrue(refs.stream().allMatch(PsiReferenceBase::isSoft));
-      assertEquals(expected, refs.stream().map(WebReference::getUrl).collect(Collectors.toList()));
+      assertEquals(expected, ContainerUtil.map(refs, WebReference::getUrl));
     }
     finally {
       navigationConfiguration.setLinks(oldLinks);

@@ -6,7 +6,6 @@ import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.MethodBrowser;
-import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testframework.TestSearchScope;
@@ -313,7 +312,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     data.TEST_LISTENERS.addAll(listenerModel.getListenerList());
 
     data.USE_DEFAULT_REPORTERS = myUseDefaultReportersCheckBox.isSelected();
-    config.setShortenCommandLine((ShortenCommandLine)myShortenCommandLineCombo.getComponent().getSelectedItem());
+    config.setShortenCommandLine(myShortenCommandLineCombo.getComponent().getSelectedItem());
   }
 
   public ConfigurationModuleSelector getModuleSelector() {

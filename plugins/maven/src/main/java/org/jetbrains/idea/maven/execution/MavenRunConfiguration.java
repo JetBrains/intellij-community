@@ -17,7 +17,6 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -273,7 +272,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       String execArgsStr;
 
       String execArgsPrefix = "-Dexec.args=";
-      int execArgsIndex = indexOf(programParametersList.getList(), (Condition<String>)s -> s.startsWith(execArgsPrefix));
+      int execArgsIndex = indexOf(programParametersList.getList(), s -> s.startsWith(execArgsPrefix));
       if (execArgsIndex != -1) {
         execArgsStr = programParametersList.get(execArgsIndex).substring(execArgsPrefix.length());
       }

@@ -74,7 +74,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
   }
 
   @Nullable
-  private static LibraryVersionProperties detectVersion(List<VirtualFile> classesRoots, String detectionClass) {
+  private static LibraryVersionProperties detectVersion(List<? extends VirtualFile> classesRoots, String detectionClass) {
     if (!LibraryUtil.isClassAvailableInLibrary(classesRoots, detectionClass)) {
       return null;
     }

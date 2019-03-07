@@ -24,7 +24,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
  * https://youtrack.jetbrains.com/issue/IDEA-98261
  *
  * @author VISTALL
- * @since 12.1
  */
 public class AdditionalTextAttributesEP extends AbstractExtensionPointBean {
   public static final ExtensionPointName<AdditionalTextAttributesEP> EP_NAME = ExtensionPointName.create("com.intellij.additionalTextAttributes");

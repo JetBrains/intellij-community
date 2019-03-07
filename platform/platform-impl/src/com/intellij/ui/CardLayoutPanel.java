@@ -122,6 +122,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
   }
 
   private void selectLater(final ActionCallback callback, final K key) {
+    ModalityState modality = ModalityState.stateForComponent(this);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (!myDisposed) {
         final UI ui1 = prepare(key);
@@ -130,7 +131,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
             select(callback, key, ui1);
           }
           else callback.setRejected();
-        }, ModalityState.stateForComponent(this));
+        }, modality);
       }
       else callback.setRejected();
     });

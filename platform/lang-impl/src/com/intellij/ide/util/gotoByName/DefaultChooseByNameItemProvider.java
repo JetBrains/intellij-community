@@ -199,7 +199,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     ChooseByNameModel model = base.getModel();
     Comparator<Object> weightComparator = new Comparator<Object>() {
-      @SuppressWarnings("unchecked")
+      @SuppressWarnings("unchecked") final
       Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model :
                                            new PathProximityComparator(context);
 
@@ -248,11 +248,19 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   @NotNull
   private static MinusculeMatcher getFullMatcher(FindSymbolParameters parameters, ChooseByNameViewModel base) {
-    String fullPattern = "*" + removeModelSpecificMarkup(base.getModel(), base.transformPattern(parameters.getCompletePattern()));
+    String fullRawPattern = buildFullPattern(base, parameters.getCompletePattern());
+    String fullNamePattern = buildFullPattern(base, base.transformPattern(parameters.getCompletePattern()));
+
+    return NameUtil.buildMatcherWithFallback(fullRawPattern, fullNamePattern, NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  @NotNull
+  private static String buildFullPattern(ChooseByNameViewModel base, String pattern) {
+    String fullPattern = "*" + removeModelSpecificMarkup(base.getModel(), pattern);
     for (String separator : base.getModel().getSeparators()) {
       fullPattern = StringUtil.replace(fullPattern, separator, "*" + UNIVERSAL_SEPARATOR + "*");
     }
-    return NameUtil.buildMatcher(fullPattern, NameUtil.MatchingCaseSensitivity.NONE);
+    return fullPattern;
   }
 
   @NotNull

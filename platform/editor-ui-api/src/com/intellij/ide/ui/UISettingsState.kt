@@ -37,6 +37,9 @@ class UISettingsState : BaseState() {
   @get:OptionTag("RECENT_FILES_LIMIT")
   var recentFilesLimit by property(50)
 
+  @get:OptionTag("RECENT_LOCATIONS_LIMIT")
+  var recentLocationsLimit by property(10)
+
   @get:OptionTag("CONSOLE_COMMAND_HISTORY_LIMIT")
   var consoleCommandHistoryLimit by property(300)
   @get:OptionTag("OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE")

@@ -65,7 +65,7 @@ public class InheritanceUtil {
     final Query<PsiClass> search = ClassInheritorsSearch.search(class1, scope, true);
     final boolean[] result = new boolean[1];
     search.forEach(new Processor<PsiClass>() {
-      AtomicInteger count = new AtomicInteger(0);
+      final AtomicInteger count = new AtomicInteger(0);
 
       @Override
       public boolean process(PsiClass inheritor) {

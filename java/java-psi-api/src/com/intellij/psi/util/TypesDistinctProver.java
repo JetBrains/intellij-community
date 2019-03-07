@@ -17,8 +17,9 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import java.util.HashSet;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 public class TypesDistinctProver {
@@ -107,14 +108,16 @@ public class TypesDistinctProver {
     final PsiClass boundClass2 = classResolveResult2.getElement();
 
     if (boundClass1 instanceof PsiTypeParameter && level < 2) {
-      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass1, boundClass2, type1, type2)) return false;
+      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass1, type1, type2)) return false;
     }
 
     if (boundClass2 instanceof PsiTypeParameter && level < 2) {
-      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass2, boundClass1, type2, type1)) return false;
+      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass2, type2, type1)) return false;
     }
 
-    if (Comparing.equal(TypeConversionUtil.erasure(type1), TypeConversionUtil.erasure(type2))) {
+    if (Comparing.equal(TypeConversionUtil.erasure(type1), TypeConversionUtil.erasure(type2)) && 
+        !(boundClass1 instanceof PsiTypeParameter) && 
+        !(boundClass2 instanceof PsiTypeParameter)) {
       final PsiSubstitutor substitutor1 = classResolveResult1.getSubstitutor();
       final PsiSubstitutor substitutor2 = classResolveResult2.getSubstitutor();
       for (PsiTypeParameter parameter : substitutor1.getSubstitutionMap().keySet()) {
@@ -147,23 +150,11 @@ public class TypesDistinctProver {
   }
 
   private static boolean distinguishFromTypeParam(PsiTypeParameter typeParam,
-                                                  PsiClass boundClass,
                                                   PsiType type1,
                                                   PsiType type2) {
     final PsiClassType[] paramBounds = typeParam.getExtendsListTypes();
-    if (paramBounds.length == 0 && type1 instanceof PsiClassType) return false;
-    for (PsiClassType classType : paramBounds) {
-      final PsiClass paramBound = classType.resolve();
-      if (paramBound != null &&
-          (InheritanceUtil.isInheritorOrSelf(paramBound, boundClass, true) ||
-           InheritanceUtil.isInheritorOrSelf(boundClass, paramBound, true))) {
-        return false;
-      }
-      if (type2 instanceof PsiArrayType && TypeConversionUtil.isAssignable(classType, type2)) {
-        return false;
-      }
-    }
-    return true;
+    if (paramBounds.length == 0) return !(type1 instanceof PsiClassType);
+    return Arrays.stream(paramBounds).anyMatch(paramBound -> !TypeConversionUtil.isAssignable(paramBound.rawType(), type2));
   }
 
   public static boolean provablyDistinct(PsiWildcardType type1, PsiWildcardType type2, boolean rejectInconsistentRaw, int level) {

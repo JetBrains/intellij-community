@@ -17,10 +17,7 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -142,7 +139,10 @@ public abstract class CachedValuesManager {
   public static <T> T getCachedValue(@NotNull final PsiElement psi, @NotNull Key<CachedValue<T>> key, @NotNull final CachedValueProvider<T> provider) {
     CachedValue<T> value = psi.getUserData(key);
     if (value != null) {
-      return value.getValue();
+      Getter<T> data = value.getUpToDateOrNull();
+      if (data != null) {
+        return data.get();
+      }
     }
 
     return getManager(psi.getProject()).getCachedValue(psi, key, () -> {

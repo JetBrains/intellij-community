@@ -19,7 +19,6 @@ package com.intellij.ui;
  * This markup interface is used to provide meta-information to element renderers
  *
  * @author Konstantin Bulenkov
- * @since 15.0
  */
 public interface Changeable {
   boolean hasChanged();

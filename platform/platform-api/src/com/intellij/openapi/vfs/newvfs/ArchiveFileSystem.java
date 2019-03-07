@@ -17,8 +17,6 @@ import java.io.OutputStream;
 
 /**
  * Common interface of archive-based file systems (jar://, phar:// etc).
- *
- * @since 138.100
  */
 public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   private static final Key<VirtualFile> LOCAL_FILE = Key.create("vfs.archive.local.file");

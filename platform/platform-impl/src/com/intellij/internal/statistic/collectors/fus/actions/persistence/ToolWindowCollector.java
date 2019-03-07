@@ -3,11 +3,9 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.facet.ui.FacetDependentToolWindow;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
-import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.components.*;
@@ -40,7 +38,7 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
   }
 )
 public class ToolWindowCollector implements PersistentStateComponent<ToolWindowCollector.State> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("toolwindow", 1);
+  private static final String GROUP = "toolwindow";
   private static final String UNKNOWN = "unknown";
 
   public static ToolWindowCollector getInstance() {
@@ -103,14 +101,12 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
     final PluginInfo info = getPluginInfo(toolWindowId);
     final String key = escapeDescriptorName(info.isDevelopedByJetBrains() ? toolWindowId: UNKNOWN);
 
-    final FeatureUsageDataBuilder builder = new FeatureUsageDataBuilder().
-      addPluginInfo(info).
-      addFeatureContext(FUSUsageContext.OS_CONTEXT);
+    final FeatureUsageData data = new FeatureUsageData().addOS().addPluginInfo(info);
 
     if (source != ACTIVATION) {
-      builder.addData("source", StringUtil.toLowerCase(source.name()));
+      data.addData("source", StringUtil.toLowerCase(source.name()));
     }
-    FeatureUsageLogger.INSTANCE.log(GROUP, key, builder.createData());
+    FUCounterUsageLogger.getInstance().logEvent(GROUP, key, data);
   }
 
   @NotNull
@@ -139,7 +135,7 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
     return null;
   }
 
-  private State myState = new State();
+  private final State myState = new State();
 
   @Nullable
   @Override

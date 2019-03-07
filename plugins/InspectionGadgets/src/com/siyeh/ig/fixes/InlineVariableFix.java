@@ -18,12 +18,14 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.util.InlineUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class InlineVariableFix extends InspectionGadgetsFix {
@@ -43,7 +45,12 @@ public class InlineVariableFix extends InspectionGadgetsFix {
       return;
     }
 
-    final Collection<PsiElement> replacedElements = InlineUtil.inlineVariable(variable, initializer);
+    final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
+    final Collection<PsiElement> replacedElements = new ArrayList<>();
+    for (PsiReference reference : references) {
+      final PsiExpression expression = InlineUtil.inlineVariable(variable, initializer, (PsiJavaCodeReferenceElement)reference);
+      replacedElements.add(expression);
+    }
 
     if (isOnTheFly()) {
       HighlightUtils.highlightElements(replacedElements);

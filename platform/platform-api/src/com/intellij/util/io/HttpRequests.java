@@ -607,13 +607,13 @@ public final class HttpRequests {
 
       if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
       int responseCode = httpURLConnection.getResponseCode();
-      if (LOG.isDebugEnabled()) LOG.debug("response: " + responseCode);
+      if (LOG.isDebugEnabled()) LOG.debug("response from " + url + ": " + responseCode);
 
       if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
         if (ArrayUtil.indexOf(REDIRECTS, responseCode) >= 0) {
           httpURLConnection.disconnect();
           url = connection.getHeaderField("Location");
-          if (LOG.isDebugEnabled()) LOG.debug("redirect: " + url);
+          if (LOG.isDebugEnabled()) LOG.debug("redirect from " + url + ": " + url);
           if (url != null) {
             request.myUrl = url;
             continue;

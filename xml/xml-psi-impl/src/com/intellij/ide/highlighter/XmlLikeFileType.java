@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 
 public abstract class XmlLikeFileType extends LanguageFileType {
-  public XmlLikeFileType(Language language) {
+  protected XmlLikeFileType(Language language) {
     super(language);
   }
   @Override

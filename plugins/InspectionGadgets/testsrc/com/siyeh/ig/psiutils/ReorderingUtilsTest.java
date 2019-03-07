@@ -14,7 +14,6 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
                                        "/** @noinspection all*/\n" +
                                        "class X {Object test(Object obj, String str, int x, int y, String[] arr, " +
                                        "Optional<String> opt, List<String> list) { return ";
-  @SuppressWarnings("UnnecessarySemicolon") 
   private static final String SUFFIX = ";} static Object nullNull(Object obj) {return obj == null ? null : obj.hashCode();}}";
   private static final String SELECTION_START = "/*<*/";
   private static final String SELECTION_END = "/*>*/";

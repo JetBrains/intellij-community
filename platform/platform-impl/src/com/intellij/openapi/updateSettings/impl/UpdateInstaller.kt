@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Restarter
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.lang.JavaVersion
 import java.io.File
 import java.io.IOException
 import java.net.URL
@@ -40,13 +41,14 @@ object UpdateInstaller {
 
     val files = mutableListOf<File>()
     val product = ApplicationInfo.getInstance().build.productCode
-    val jdk = if (System.getProperty("idea.java.redist", "").lastIndexOf("NoJavaDistribution") >= 0) "-no-jdk" else ""
+    val jdk = getJdkSuffix()
     val share = 1.0 / (chain.size - 1)
 
     for (i in 1 until chain.size) {
       val from = chain[i - 1].withoutProductCode().asString()
       val to = chain[i].withoutProductCode().asString()
       val patchName = "${product}-${from}-${to}-patch${jdk}-${PatchInfo.OS_SUFFIX}.jar"
+      System.out.println( "  patchName: $patchName" )
       val patchFile = File(getTempDir(), patchName)
       val url = URL(patchesUrl, patchName).toString()
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
@@ -183,4 +185,16 @@ object UpdateInstaller {
   }
 
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
+
+  private fun getJdkSuffix(): String {
+    val jreHome = File(PathManager.getHomePath(), if (SystemInfo.isMac) "Contents/jdk" else "jre64")
+    //todo[vorlov] if (!jreHome.exists()) return "-no-jdk"
+    if (System.getProperty("idea.java.redist", "").lastIndexOf("NoJavaDistribution") >= 0) return "-no-jdk"
+    val releaseFile = File(jreHome, if (SystemInfo.isMac) "Contents/Home/release" else "release")
+    val version = try {
+      releaseFile.readLines().first { it.startsWith("JAVA_VERSION=") }.let { JavaVersion.parse(it) }.feature
+    }
+    catch (e: Exception) { 0 }
+    return if (version == 11) "-jdk11-bundled" else ""
+  }
 }

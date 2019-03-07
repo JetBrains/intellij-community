@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 
 @ApiStatus.Experimental
-public abstract class CodeStylePropertyAccessor<T> {
+public abstract class CodeStylePropertyAccessor<T,V> {
   private final Object myObject;
   private final Field myField;
 
@@ -20,9 +20,9 @@ public abstract class CodeStylePropertyAccessor<T> {
     myField = field;
   }
 
-  public boolean set(@NotNull String str) {
+  public boolean set(@NotNull V extVal) {
     try {
-      T value = parseString(str);
+      T value = fromExternal(extVal);
       if (value != null) {
         myField.set(myObject, value);
         return true;
@@ -35,17 +35,28 @@ public abstract class CodeStylePropertyAccessor<T> {
   }
 
   @Nullable
-  public String get() {
+  public V get() {
     try {
       //noinspection unchecked
       T value = (T)myField.get(myObject);
-      return value != null && !isEmpty(value) ? asString(value) : null;
+      return value != null && !isEmpty(value) ? toExternal(value) : null;
     }
     catch (IllegalAccessException e) {
       // Ignore and return null
     }
     return null;
   }
+
+  public final boolean setFromString(@NotNull String valueString) {
+    V extValue = parseString(valueString);
+    if (extValue != null) {
+      return set(extValue);
+    }
+    return false;
+  }
+
+  @Nullable
+  protected abstract V parseString(@NotNull String string);
 
   @NotNull
   public Class getObjectClass() {
@@ -57,10 +68,10 @@ public abstract class CodeStylePropertyAccessor<T> {
   }
 
   @Nullable
-  protected abstract T parseString(@NotNull String str);
+  protected abstract T fromExternal(@NotNull V extVal);
 
   @NotNull
-  protected abstract String asString(@NotNull T value);
+  protected abstract V toExternal(@NotNull T value);
 
   public String getPropertyName() {
     Property descriptor = myField.getAnnotation(Property.class);

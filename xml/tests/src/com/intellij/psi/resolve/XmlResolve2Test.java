@@ -11,6 +11,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ResolveTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -20,6 +21,7 @@ import java.io.FileWriter;
 public class XmlResolve2Test extends ResolveTestCase {
   private static final String BASE_PATH = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/psi/resolve/namespace/";
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return BASE_PATH;

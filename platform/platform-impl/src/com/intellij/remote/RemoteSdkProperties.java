@@ -99,4 +99,8 @@ public interface RemoteSdkProperties {
   boolean isValid();
 
   void setValid(boolean valid);
+
+  boolean isRunAsRootViaSudo();
+
+  void setRunAsRootViaSudo(boolean runAsRootViaSudo);
 }

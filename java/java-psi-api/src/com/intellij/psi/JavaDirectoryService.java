@@ -73,7 +73,6 @@ public abstract class JavaDirectoryService {
    * @param templateName custom file template to create class text based on.
    * @return the created class instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
-   * @since 5.1
    */
   @NotNull
   public abstract PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName) throws IncorrectOperationException;

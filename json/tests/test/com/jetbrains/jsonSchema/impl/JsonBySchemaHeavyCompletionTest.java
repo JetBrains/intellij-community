@@ -164,4 +164,8 @@ public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletion
   public void testDontInsertExtraValue() throws Exception {
     baseInsertTest("dontInsertExtraValue", "testWithValue");
   }
+
+  public void testDontInsertExtraValueColonOnly() throws Exception {
+    baseInsertTest("dontInsertExtraValueColonOnly", "testWithValue");
+  }
 }

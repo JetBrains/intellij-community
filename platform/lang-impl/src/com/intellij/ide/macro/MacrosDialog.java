@@ -224,7 +224,7 @@ public final class MacrosDialog extends DialogWrapper {
   }
 
   public Macro getSelectedMacro() {
-    MacroWrapper macroWrapper = (MacroWrapper)myMacrosList.getSelectedValue();
+    MacroWrapper macroWrapper = myMacrosList.getSelectedValue();
     if (macroWrapper != null){
       return macroWrapper.myMacro;
     }

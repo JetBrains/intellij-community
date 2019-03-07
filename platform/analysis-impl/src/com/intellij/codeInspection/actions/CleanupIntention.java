@@ -52,7 +52,7 @@ public abstract class CleanupIntention implements IntentionAction, LowPriorityAc
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
     final InspectionManager managerEx = InspectionManager.getInstance(project);
-    final GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)managerEx.createNewGlobalContext(false);
+    final GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)managerEx.createNewGlobalContext();
     final AnalysisScope scope = getScope(project, InjectedLanguageManager.getInstance(project).getTopLevelFile(file));
     if (scope != null) {
       globalContext.codeCleanup(scope, InspectionProjectProfileManager.getInstance(project).getCurrentProfile(), getText(), null, false);

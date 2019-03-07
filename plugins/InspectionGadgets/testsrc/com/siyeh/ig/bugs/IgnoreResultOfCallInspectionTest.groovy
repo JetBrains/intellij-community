@@ -348,6 +348,7 @@ public static int atLeast(int min, int actual, String varName) {
   }
   
   void testInForExpressionList() {
+    //noinspection StatementWithEmptyBody
     doTest """class X {
   void test(String s) {
     for(int i=0; i<10; i++, s./*Result of 'String.trim()' is ignored*/trim/**/()) {}
@@ -356,11 +357,22 @@ public static int atLeast(int min, int actual, String varName) {
   }
 
   void testInSwitchExpression() {
+    //noinspection SwitchStatementWithTooFewBranches
     doTest """class X {
   String test(String s) {
     return switch(s) {
       default -> s.trim();
     };
+  }
+}"""
+  }
+  
+  void testOptionalGet() {
+    //noinspection ALL
+    doTest """class X {
+  void test(java.util.Optional<String> opt) {
+    opt.get();
+    if (opt.isPresent()) opt./*Result of 'Optional.get()' is ignored*/get/**/();
   }
 }"""
   }

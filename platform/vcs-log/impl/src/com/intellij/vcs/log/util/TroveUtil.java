@@ -118,6 +118,10 @@ public class TroveUtil {
     what.forEach(value -> where.add(value));
   }
 
+  public static void addAll(@NotNull Collection<Integer> where, @NotNull TIntHashSet what) {
+    what.forEach(value -> where.add(value));
+  }
+
   public static <V> void putAll(@NotNull TIntObjectHashMap<? super V> where, @NotNull TIntObjectHashMap<? extends V> what) {
     what.forEachEntry((index, value) -> {
       where.put(index, value);

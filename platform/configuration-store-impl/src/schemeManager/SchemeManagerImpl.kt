@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.ide.ui.UITheme
+import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.RoamingType
@@ -111,6 +112,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     try {
       val url = when (requestor) {
         is AbstractExtensionPointBean -> requestor.loaderForClass.getResource(resourceName)
+        is TempUIThemeBasedLookAndFeelInfo -> File(resourceName).toURI().toURL()
         is UITheme -> DecodeDefaultsUtil.getDefaults(requestor.providerClassLoader, resourceName)
         else -> DecodeDefaultsUtil.getDefaults(requestor, resourceName)
       }
@@ -143,6 +145,9 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
         schemes.add(scheme)
         if (requestor is UITheme) {
           requestor.editorSchemeName = schemeKey
+        }
+        if (requestor is TempUIThemeBasedLookAndFeelInfo) {
+          requestor.theme.editorSchemeName = schemeKey
         }
       }
     }

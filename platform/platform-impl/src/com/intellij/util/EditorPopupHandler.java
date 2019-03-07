@@ -4,8 +4,15 @@ package com.intellij.util;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use {@link EditorEx#setContextMenuGroupId(String)} or
+ * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
+ */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 public abstract class EditorPopupHandler implements EditorMouseListener {
   public abstract void invokePopup(EditorMouseEvent event);
 

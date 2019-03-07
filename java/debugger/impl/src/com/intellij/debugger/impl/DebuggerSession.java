@@ -502,11 +502,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
           }
           else {
             // heuristics: try to pre-select EventDispatchThread
-            for (ThreadReferenceProxyImpl thread : allThreads) {
-              if (ThreadState.isEDT(thread.name())) {
-                currentThread = thread;
-                break;
-              }
+            currentThread = allThreads.stream().filter(thread -> ThreadState.isEDT(thread.name())).findFirst().orElse(null);
+            if (currentThread == null) {
+              // heuristics: try to pre-select main thread
+              currentThread = allThreads.stream().filter(thread -> "main".equals(thread.name())).findFirst().orElse(null);
             }
             if (currentThread == null) {
               // heuristics: display the first thread with RUNNABLE status

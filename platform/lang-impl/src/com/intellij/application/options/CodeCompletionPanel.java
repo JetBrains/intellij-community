@@ -104,6 +104,7 @@ public class CodeCompletionPanel {
 
     hideOption(myCbOnSmartTypeCompletionPanel, OptionId.COMPLETION_SMART_TYPE);
     hideOption(myCbOnCodeCompletionPanel, OptionId.AUTOCOMPLETE_ON_BASIC_CODE_COMPLETION);
+    hideOption(myCbCompleteFunctionWithParameters, OptionId.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION);
     if(!myCbOnSmartTypeCompletionPanel.isVisible() && !myCbOnCodeCompletionPanel.isVisible())
       myAutoInsertLabel.setVisible(false);
 

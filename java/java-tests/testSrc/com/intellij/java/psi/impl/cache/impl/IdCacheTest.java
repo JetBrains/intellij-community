@@ -231,8 +231,8 @@ public class IdCacheTest extends CodeInsightTestCase{
     
     Arrays.sort(expected);
     Arrays.sort(result, (o1, o2) -> {
-      VirtualFile file1 = (VirtualFile)o1;
-      VirtualFile file2 = (VirtualFile)o2;
+      VirtualFile file1 = o1;
+      VirtualFile file2 = o2;
       return file1.getName().compareTo(file2.getName());
     });
 

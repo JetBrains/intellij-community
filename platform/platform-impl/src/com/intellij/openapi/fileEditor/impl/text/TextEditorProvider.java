@@ -53,8 +53,9 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   @NonNls private static final String RELATIVE_CARET_POSITION_ATTR    = "relative-caret-position";
   @NonNls private static final String CARET_ELEMENT                   = "caret";
 
+  @NotNull
   public static TextEditorProvider getInstance() {
-    return ApplicationManager.getApplication().getComponent(TextEditorProvider.class);
+    return FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findExtensionOrFail(TextEditorProvider.class);
   }
 
   @Override

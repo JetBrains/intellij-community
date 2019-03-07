@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Experimental
 public class JdkEx {
+  @SuppressWarnings("unused")
   @NotNull
   public static InputEventEx getInputEventEx() {
     if (SystemInfo.isJetBrainsJvm) {

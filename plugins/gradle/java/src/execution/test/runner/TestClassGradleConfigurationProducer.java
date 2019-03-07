@@ -15,9 +15,9 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
@@ -28,13 +28,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil;
+import org.jetbrains.plugins.gradle.util.TasksToRun;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
+import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom;
 
 /**
  * @author Vladislav.Soroka
@@ -70,13 +72,14 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     final String projectPath = resolveProjectPath(module);
     if (projectPath == null) return false;
 
-    List<String> tasksToRun = getTasksToRun(module);
+    VirtualFile source = testClass.getContainingFile().getVirtualFile();
+    TasksToRun tasksToRun = findTestsTaskToRun(source, context.getProject());
     if (tasksToRun.isEmpty()) return false;
 
     configuration.getSettings().setExternalProjectPath(projectPath);
     configuration.getSettings().setTaskNames(tasksToRun);
 
-    String filter = GradleExecutionSettingsUtil.createTestFilterFrom(testClass, /*hasSuffix=*/false);
+    String filter = createTestFilterFrom(testClass, /*hasSuffix=*/false);
     configuration.getSettings().setScriptParameters(filter);
     configuration.setName(testClass.getName());
 
@@ -128,13 +131,14 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     if (!StringUtil.equals(projectPath, configuration.getSettings().getExternalProjectPath())) {
       return false;
     }
-    if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(context.getModule()))) return false;
+    VirtualFile source = testClass.getContainingFile().getVirtualFile();
+    if (!hasTasksInConfiguration(source, context.getProject(), configuration.getSettings())) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
     int i = scriptParameters.indexOf("--tests ");
     if(i == -1) return false;
 
-    String testFilter = GradleExecutionSettingsUtil.createTestFilterFrom(testClass, /*hasSuffix=*/true);
+    String testFilter = createTestFilterFrom(testClass, /*hasSuffix=*/true);
     String filter = testFilter.substring("--tests ".length());
     String str = scriptParameters.substring(i + "--tests ".length()).trim() + ' ';
     return str.startsWith(filter) && !str.contains("--tests");
@@ -145,48 +149,41 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     final InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
-        if (!StringUtil.equals(ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId(),
-                               GradleConstants.SYSTEM_ID.toString())) {
-          return;
-        }
-
-        ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
-        if (!applyTestClassConfiguration(configuration, context, ArrayUtil.toObjectArray(classes, PsiClass.class))) return;
-        super.runForClasses(classes, method, context, performRunnable);
+        chooseTestClassConfiguration(fromContext, context, performRunnable, ArrayUtil.toObjectArray(classes, PsiClass.class));
       }
 
       @Override
-      protected void runForClass(PsiClass aClass,
-                                 PsiMethod psiMethod,
-                                 ConfigurationContext context,
-                                 Runnable performRunnable) {
-        if (!StringUtil.equals(
-          ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId(),
-          GradleConstants.SYSTEM_ID.toString())) {
-          return;
-        }
-
-        ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
-        if (!applyTestClassConfiguration(configuration, context, aClass)) return;
-        super.runForClass(aClass, psiMethod, context, performRunnable);
+      protected void runForClass(PsiClass aClass, PsiMethod psiMethod, ConfigurationContext context, Runnable performRunnable) {
+        chooseTestClassConfiguration(fromContext, context, performRunnable, aClass);
       }
     };
     if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, null, (PsiClass)fromContext.getSourceElement())) return;
-    super.onFirstRun(fromContext, context, performRunnable);
+    if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) return;
+    Location contextLocation = context.getLocation();
+    if (contextLocation == null) return;
+    PsiClass psiClass = getPsiClassForLocation(contextLocation);
+    if (psiClass == null) return;
+    chooseTestClassConfiguration(fromContext, context, performRunnable, psiClass);
   }
 
-  private static boolean applyTestClassConfiguration(@NotNull ExternalSystemRunConfiguration configuration,
-                                                     @NotNull ConfigurationContext context,
-                                                     @NotNull PsiClass... containingClasses) {
-    final Project project = context.getProject();
-    final ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
-    final Function1<PsiClass, String> createFilter = (psiClass) ->
-      GradleExecutionSettingsUtil.createTestFilterFrom(psiClass, /*hasSuffix=*/true);
-    if (!applyTestConfiguration(settings, project, containingClasses, createFilter)) {
-      return false;
-    }
-    configuration.setName(StringUtil.join(containingClasses, aClass -> aClass.getName(), "|"));
-    return true;
+  private static void chooseTestClassConfiguration(@NotNull ConfigurationFromContext fromContext,
+                                                   @NotNull ConfigurationContext context,
+                                                   @NotNull Runnable performRunnable,
+                                                   @NotNull PsiClass... classes) {
+    String systemId = ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId();
+    if (!StringUtil.equals(systemId, GradleConstants.SYSTEM_ID.toString())) return;
+    TasksChooser tasksChooser = new TasksChooser() {
+      @Override
+      protected void choosesTasks(@NotNull List<? extends Map<String, ? extends List<String>>> tasks) {
+        ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
+        ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
+        Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilterFrom(psiClass, /*hasSuffix=*/true);
+        if (!applyTestConfiguration(settings, context.getProject(), tasks, classes, createFilter)) return;
+        configuration.setName(StringUtil.join(classes, aClass -> aClass.getName(), "|"));
+        performRunnable.run();
+      }
+    };
+    tasksChooser.runTaskChoosing(context, classes);
   }
 
   @Deprecated
