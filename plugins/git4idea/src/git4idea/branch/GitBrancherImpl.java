@@ -20,6 +20,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.vcs.log.VcsLogRangeFilter;
+import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsProjectLog;
+import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.repo.GitRepository;
@@ -29,11 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Kirill Likhodedov
- */
 class GitBrancherImpl implements GitBrancher {
-
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
@@ -119,13 +121,26 @@ class GitBrancherImpl implements GitBrancher {
   @Override
   public void compare(@NotNull final String branchName, @NotNull final List<GitRepository> repositories,
                       @NotNull final GitRepository selectedRepository) {
-    new CommonBackgroundTask(myProject, "Comparing with " + branchName, null) {
-      @Override
-      public void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).compare(branchName, repositories, selectedRepository);
-      }
-    }.runInBackground();
+    if (Registry.is("git.compare.branches.as.tab")) {
+      VcsLogUtil.runWhenLogIsReady(myProject, (log, logManager) -> {
+        VcsLogRangeFilter filters = VcsLogFilterObject.fromRange("HEAD", branchName);
+        log.getTabsManager().openAnotherLogTab(logManager, VcsLogFilterObject.collection(filters));
+      });
+    }
+    else {
+      new CommonBackgroundTask(myProject, "Comparing with " + branchName, null) {
+        @Override
+        public void execute(@NotNull ProgressIndicator indicator) {
+          newWorker(indicator).compare(branchName, repositories, selectedRepository);
+        }
+      }.runInBackground();
+    }
+  }
 
+  private static void openComparingLogTab(@NotNull VcsProjectLog log,
+                                          @NotNull VcsLogManager logManager, @NotNull String branchName) {
+    VcsLogRangeFilter filters = VcsLogFilterObject.fromRange("HEAD", branchName);
+    log.getTabsManager().openAnotherLogTab(logManager, VcsLogFilterObject.collection(filters));
   }
 
   @Override
