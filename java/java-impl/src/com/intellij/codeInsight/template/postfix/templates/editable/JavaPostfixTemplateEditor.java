@@ -23,6 +23,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +47,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
 
     myPanel = FormBuilder.createFormBuilder()
                          .addLabeledComponent("Minimum language level:", myLanguageLevelCombo)
-                         .addComponent(myEditTemplateAndConditionsPanel)
+                         .addComponentFillVertically(myEditTemplateAndConditionsPanel, UIUtil.DEFAULT_VGAP)
                          .getPanel();
   }
 
