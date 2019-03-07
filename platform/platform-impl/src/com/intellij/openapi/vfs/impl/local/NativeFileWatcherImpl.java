@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.OSProcessHandler;
@@ -54,7 +54,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private File myExecutable;
 
   private volatile MyProcessHandler myProcessHandler;
-  private volatile int myStartAttemptCount;
+  private final AtomicInteger myStartAttemptCount = new AtomicInteger(0);
   private volatile boolean myIsShuttingDown;
   private final AtomicInteger mySettingRoots = new AtomicInteger(0);
   private volatile List<String> myRecursiveWatchRoots = Collections.emptyList();
@@ -163,7 +163,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       return;
     }
 
-    if (myStartAttemptCount++ > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
+    if (myStartAttemptCount.incrementAndGet() > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
       notifyOnFailure(ApplicationBundle.message("watcher.failed.to.start"), null);
       return;
     }
@@ -274,11 +274,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
     private MyProcessHandler(@NotNull Process process, @NotNull String commandLine) {
       super(process, commandLine, CHARSET);
-      myWriter = new BufferedWriter(writer(process.getOutputStream()));
-    }
-
-    private OutputStreamWriter writer(OutputStream stream) {
-      return CHARSET != null ? new OutputStreamWriter(stream, CHARSET) :  new OutputStreamWriter(stream);
+      myWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), CHARSET));
     }
 
     private void writeLine(String line) throws IOException {
@@ -452,7 +448,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     assert app != null && app.isUnitTestMode() : app;
 
     myIsShuttingDown = false;
-    myStartAttemptCount = 0;
+    myStartAttemptCount.set(0);
     startupProcess(false);
   }
 
