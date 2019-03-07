@@ -602,7 +602,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
   }
 
-  public static ArrayList<TaskRepository> loadRepositories(Element element) {
+  public static ArrayList<TaskRepository> loadRepositories(@NotNull Element element) {
     ArrayList<TaskRepository> repositories = new ArrayList<>();
     for (TaskRepositoryType repositoryType : TaskRepositoryType.getRepositoryTypes()) {
       for (Element o : element.getChildren(repositoryType.getName())) {
@@ -999,7 +999,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     public boolean searchClosedTasks = false;
     @Tag("servers")
-    public Element servers;
+    public Element servers = new Element("servers");
   }
 
   private abstract class TestConnectionTask extends com.intellij.openapi.progress.Task.Modal {
