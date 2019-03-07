@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.actions
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.FileTemplateUtil
 import com.intellij.ide.ui.UIThemeProvider
-import com.intellij.json.psi.JsonElementGenerator
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
@@ -75,7 +74,7 @@ class NewThemeAction: AnAction() {
     val props = Properties()
     props.setProperty("NAME", themeName)
     props.setProperty("IS_DARK", isDark.toString())
-    props.setProperty("COLOR_SCHEME_NAME", getRootRelativeLocation(module, colorScheme as PsiFile))
+    props.setProperty("COLOR_SCHEME_NAME", getSourceRootRelativeLocation(module, colorScheme as PsiFile))
 
     val created = FileTemplateUtil.createFromTemplate(template, fileName, props, dir)
     assert(created is PsiFile)
@@ -91,7 +90,7 @@ class NewThemeAction: AnAction() {
   }
 
   private fun registerTheme(dir: PsiDirectory, file: PsiFile, module: Module) {
-    val relativeLocation = getRootRelativeLocation(module, file) ?: return
+    val relativeLocation = getSourceRootRelativeLocation(module, file) ?: return
 
     val pluginXml = DevkitActionsUtil.choosePluginModuleDescriptor(dir) ?: return
     DescriptorUtil.checkPluginXmlsWritable(module.project, pluginXml)
@@ -105,14 +104,14 @@ class NewThemeAction: AnAction() {
     }
   }
 
-  //TODO review, probably this implementation doesn't cover all cases
-  private fun getRootRelativeLocation(module: Module, file: PsiFile): String? {
+  private fun getSourceRootRelativeLocation(module: Module, file: PsiFile): String? {
     val rootManager = ModuleRootManager.getInstance(module)
     val sourceRoots = rootManager.getSourceRoots(false)
     val virtualFile = file.virtualFile
 
     var relativeLocation : String? = null
     for (sourceRoot in sourceRoots) {
+      if (!VfsUtil.isAncestor(sourceRoot,virtualFile,true)) continue
       relativeLocation = VfsUtil.getRelativeLocation(virtualFile, sourceRoot) ?: continue
       break
     }
