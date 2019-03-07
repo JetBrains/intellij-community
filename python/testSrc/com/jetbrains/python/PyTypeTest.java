@@ -3418,6 +3418,32 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-26184
+  public void testGenericDescriptorFromTupleAssignment() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, () ->
+      doTest("int",
+             "from typing import Generic, TypeVar\n" +
+                  "\n" +
+                  "T = TypeVar(\"T\")\n" +
+                  "U = TypeVar(\"U\")\n" +
+                  "class Descr(Generic[T]):\n" +
+                  "    def __init__(self, one: T) -> None:\n" +
+                  "        self.one = one\n" +
+                  "\n" +
+                  "    def __get__(self, instance, owner) -> T:\n" +
+                  "        return self.one\n" +
+                  "\n\n" +
+                  "def foo(one: T, two: U) -> (Descr[T], Descr[U]):\n" +
+                  "    return Descr(one), Descr(two)" +
+                  "\n\n" +
+                  "class MyClass:\n" +
+                  "    descr_target, irrelevant = foo(42, \"string\")\n" +
+                  "\n" +
+                  "expr = MyClass().descr_target"
+             )
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

@@ -252,6 +252,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   private Ref<PyType> getDescriptorType(@Nullable PyType typeFromTargets, @NotNull TypeEvalContext context) {
+    if (typeFromTargets instanceof PyDescriptorType) {
+      PyDescriptorType descriptorType = (PyDescriptorType)typeFromTargets;
+      return Ref.create(descriptorType.getMyGetterReturnType());
+    }
     if (!isQualified()) return null;
     final PyClassLikeType targetType = as(typeFromTargets, PyClassLikeType.class);
     if (targetType == null) return null;
@@ -265,20 +269,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       .map((callable) -> context.getReturnType(callable))
       .toList();
     final PyType type = PyUnionType.union(types);
-
-    if (PyTypeChecker.hasGenerics(type, context)) {
-      PyAssignmentStatement assignmentStatement = PyAssignmentStatementNavigator.getStatementByTarget(getReference().resolve());
-      if (assignmentStatement != null && assignmentStatement.getAssignedValue() instanceof PyCallExpression) {
-        PyCallExpression callExpression = (PyCallExpression) assignmentStatement.getAssignedValue();
-        Map<PyGenericType, PyType> result = PyTypeChecker.unifyGenericCall(callExpression, Collections.emptyMap(), context);
-        if (!ContainerUtil.isEmpty(result)) {
-          PyType actualType = PyTypeChecker.substitute(type, result, context);
-          if (actualType != null) {
-            return Ref.create(actualType);
-          }
-        }
-      }
-    }
     return Ref.create(type);
   }
 

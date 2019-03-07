@@ -9,10 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.ResolveResult;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -636,7 +633,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (genericTypes.isEmpty()) {
       return null;
     }
-    return new PyCollectionTypeImpl(cls, false, genericTypes);
+    return StreamEx.of(cls.getMethods())
+      .filterBy(PsiNamedElement::getName, PyNames.GET)
+      .findAny()
+      .<PyType>map(getter -> new PyDescriptorTypeImpl(cls, false, context.getReturnType(getter)))
+      .orElseGet(() -> new PyCollectionTypeImpl(cls, false, genericTypes));
   }
 
   @NotNull

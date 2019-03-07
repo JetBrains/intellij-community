@@ -606,6 +606,10 @@ public class PyTypeChecker {
         collectGenerics(elementType, context, collected, visited);
       }
     }
+    else if (type instanceof PyDescriptorType) {
+      PyDescriptorType descriptor = (PyDescriptorType)type;
+      collectGenerics(descriptor.getMyGetterReturnType(), context, collected, visited);
+    }
     else if (type instanceof PyCallableType) {
       final PyCallableType callable = (PyCallableType)type;
       final List<PyCallableParameter> parameters = callable.getParameters(context);
@@ -663,6 +667,11 @@ public class PyTypeChecker {
           substitutes.add(substitute(elementType, substitutions, context));
         }
         return new PyCollectionTypeImpl(collection.getPyClass(), collection.isDefinition(), substitutes);
+      }
+      else if (type instanceof PyDescriptorType) {
+        final PyDescriptorType descriptor = (PyDescriptorType)type;
+        PyType newGetterReturnType = substitute(descriptor.getMyGetterReturnType(), substitutions, context);
+        return new PyDescriptorTypeImpl(descriptor.getPyClass(), descriptor.isDefinition(), newGetterReturnType);
       }
       else if (type instanceof PyTupleType) {
         final PyTupleType tupleType = (PyTupleType)type;
