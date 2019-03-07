@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard.kotlin.model
 
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.ScreenshotOnFailure
 import com.intellij.testGuiFramework.impl.jTree
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel
@@ -16,9 +17,9 @@ fun ProjectStructureDialogModel.checkFacetInOneModule(expectedFacet: FacetStruct
     with(guiTestCase) {
       step("Check facet for module `${path.joinToString(" -> ")}`") {
         try {
-          val tree = jTree(*path)
+          val tree = jTree(*path, timeout = Timeouts.seconds30)
           tree.clickPath()
-          screenshot()
+          screenshot("path is clicked")
           assert(tree.isPathSelected()) {
             "path ${path.joinToString()} is not selected"
           }
