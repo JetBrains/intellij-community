@@ -15,11 +15,12 @@ import com.intellij.vcs.log.impl.VcsCommitMetadataImpl;
 import com.intellij.vcs.log.impl.VcsUserImpl;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import git4idea.config.GitVersion;
+import git4idea.test.GitExecutor;
 import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -28,6 +29,7 @@ import static com.intellij.openapi.vcs.Executor.echo;
 import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.test.GitExecutor.*;
 import static git4idea.test.GitTestUtil.readAllRefs;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static org.junit.Assume.assumeTrue;
 
@@ -153,6 +155,40 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     assertEquals(hashes, actualHashes);
   }
 
+  public void test_by_range() throws Exception {
+    tac(repo, "a.txt");
+    String mergeBase = tac(repo, "b.txt");
+    String master1 = tac(repo, "m1.txt");
+    String master2 = tac(repo, "m2.txt");
+    git("checkout -b feature " + mergeBase);
+    tac(repo, "d.txt");
+    repo.update();
+
+    VcsLogRangeFilter rangeFilter = VcsLogFilterObject.fromRange("feature", "master");
+    List<String> actualHashes = getFilteredHashes(VcsLogFilterObject.collection(rangeFilter));
+    assertOrderedEquals(actualHashes, asList(master2, master1));
+  }
+
+  public void test_by_range_and_branch() throws Exception {
+    tac(repo, "a.txt");
+    git("branch old");
+    String mergeBase = tac(repo, "b.txt");
+    String master1 = tac(repo, "m1.txt");
+    String master2 = tac(repo, "m2.txt");
+    git("checkout -b feature " + mergeBase);
+    tac(repo, "d.txt");
+    repo.update();
+
+    VcsLogRangeFilter rangeFilter = VcsLogFilterObject.fromRange("feature", "master");
+    VcsLogBranchFilter branchFilter = VcsLogFilterObject.fromBranch("old");
+    List<String> actualHashes = getFilteredHashes(VcsLogFilterObject.collection(rangeFilter, branchFilter));
+    List<String> expected = new ArrayList<>();
+    expected.add(master2);
+    expected.add(master1);
+    expected.addAll(asList(StringUtil.splitByLines(GitExecutor.log(repo, "--pretty=%H old"))));
+    assertSameElements(actualHashes, expected); // NB: not possible to get ordered results here
+  }
+
   /*
    3 cases: no regexp + match case, regex + match case, regex + no matching case
     */
@@ -173,9 +209,9 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     String text = "[git]";
     assertEquals(Collections.singletonList(smallBrackets),
                  getFilteredHashes(VcsLogFilterObject.collection(VcsLogFilterObject.fromPattern(text, false, true))));
-    assertEquals(Arrays.asList(bigNoBrackets, smallNoBrackets, bigBrackets, smallBrackets, initial),
+    assertEquals(asList(bigNoBrackets, smallNoBrackets, bigBrackets, smallBrackets, initial),
                  getFilteredHashes(VcsLogFilterObject.collection(VcsLogFilterObject.fromPattern(text, true, false))));
-    assertEquals(Arrays.asList(smallNoBrackets, smallBrackets, initial),
+    assertEquals(asList(smallNoBrackets, smallBrackets, initial),
                  getFilteredHashes(VcsLogFilterObject.collection(VcsLogFilterObject.fromPattern(text, true, true))));
   }
 
@@ -190,7 +226,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     String bigBrackets = addCommit(repo, "[GIT] " + fileName);
     echo(fileName, "content" + Math.random());
 
-    assertEquals(Arrays.asList(bigBrackets, smallBrackets),
+    assertEquals(asList(bigBrackets, smallBrackets),
                  getFilteredHashes(VcsLogFilterObject.collection(VcsLogFilterObject.fromPattern("[git]", false, false))));
   }
 
