@@ -126,6 +126,20 @@ public class MockVirtualFile extends VirtualFile {
     return VfsUtilCore.toVirtualFileArray(myChildren);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    MockVirtualFile file = (MockVirtualFile)o;
+    return getPath().equals(file.getPath());
+  }
+
+  @Override
+  public int hashCode() {
+    return getPath().hashCode();
+  }
+
   @NotNull
   @Override
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
