@@ -15,6 +15,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.Module;
@@ -541,6 +542,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       }
     }
 
+    
+    if (ServiceDescriptor.class.getName().equals(extensionPoint.getBeanClass().getStringValue())) {
+      GenericAttributeValue serviceInterface = getAttribute(extension, "serviceInterface");
+      GenericAttributeValue serviceImplementation = getAttribute(extension, "serviceImplementation");
+      if (serviceInterface != null && serviceImplementation != null &&
+          StringUtil.equals(serviceInterface.getStringValue(), serviceImplementation.getStringValue())) {
+        holder.createProblem(serviceInterface,
+                             ProblemHighlightType.WARNING,
+                             DevKitBundle.message("inspections.plugin.xml.service.interface.class.redundant"),
+                             null,
+                             new RemoveDomElementQuickFix(serviceInterface)).highlightWholeElement();
+      }
+    }
+
     final List<? extends DomAttributeChildDescription> descriptions = extension.getGenericInfo().getAttributeChildrenDescriptions();
     for (DomAttributeChildDescription attributeDescription : descriptions) {
       final GenericAttributeValue attributeValue = attributeDescription.getDomAttributeValue(extension);
@@ -569,6 +584,16 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
       componentModuleRegistrationChecker.checkProperXmlFileForExtension(extension);
     }
+  }
+
+  @Nullable
+  private static GenericAttributeValue getAttribute(DomElement domElement, String attributeName) {
+    final DomAttributeChildDescription attributeDescription = domElement.getGenericInfo().getAttributeChildDescription(attributeName);
+    if (attributeDescription == null) {
+      return null;
+    }
+
+    return attributeDescription.getDomAttributeValue(domElement);
   }
 
   private void annotateComponent(Component component,

@@ -14,6 +14,7 @@ import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
@@ -86,6 +87,8 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("core-api", coreApiJar)
     String editorUIApi = PathUtil.getJarPathForClass(AnAction.class)
     moduleBuilder.addLibrary("editor-ui-api", editorUIApi)
+    String coreImpl = PathUtil.getJarPathForClass(ServiceDescriptor.class)
+    moduleBuilder.addLibrary("coreImpl", coreImpl)
   }
 
   void testExtensionsHighlighting() {
@@ -632,6 +635,9 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
 
   void testRedundantComponentInterfaceClass() {
     doHighlightingTest("redundantComponentInterfaceClass.xml")
-    //TODO test fix
+  }
+
+  void testRedundantServiceInterfaceClass() {
+    doHighlightingTest("redundantServiceInterfaceClass.xml")
   }
 }
