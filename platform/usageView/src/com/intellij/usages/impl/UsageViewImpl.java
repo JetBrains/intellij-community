@@ -232,10 +232,7 @@ public class UsageViewImpl implements UsageViewEx {
           SimpleToolWindowPanel toolWindowPanel = new SimpleToolWindowPanel(false, true);
           myRootPanel.add(toolWindowPanel, BorderLayout.CENTER);
 
-          JPanel toolbarPanel = new JPanel(new BorderLayout());
-          toolbarPanel.add(createActionsToolbar(), BorderLayout.WEST);
-          toolbarPanel.add(createFiltersToolbar(), BorderLayout.CENTER);
-          toolWindowPanel.setToolbar(toolbarPanel);
+          toolWindowPanel.setToolbar(createActionsToolbar());
 
           myCentralPanel = new JPanel(new BorderLayout());
           setupCentralPanel();
@@ -756,27 +753,12 @@ public class UsageViewImpl implements UsageViewEx {
     return true;
   }
 
-  @NotNull
-  private JComponent createFiltersToolbar() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final DefaultActionGroup group = new DefaultActionGroup();
-
-    final AnAction[] groupingActions = createGroupingActions();
-    for (AnAction groupingAction : groupingActions) {
-      group.add(groupingAction);
-    }
-
-    addFilteringActions(group);
-    if (isPreviewUsageActionEnabled()) {
-      group.add(new PreviewUsageAction(this));
-    }
-
-    group.add(new SortMembersAlphabeticallyAction(this));
-    return toUsageViewToolbar(group);
-  }
-
   public void addFilteringActions(@NotNull DefaultActionGroup group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    addFilteringActions(group, true);
+  }
+
+  private void addFilteringActions(@NotNull DefaultActionGroup group, boolean includeExtensionPoints) {
     if (getPresentation().isMergeDupLinesAvailable()) {
       final MergeDupLines mergeDupLines = new MergeDupLines();
       final JComponent component = myRootPanel;
@@ -785,7 +767,12 @@ public class UsageViewImpl implements UsageViewEx {
       }
       group.add(mergeDupLines);
     }
+    if (includeExtensionPoints) {
+      addFilteringFromExtensionPoints(group);
+    }
+  }
 
+  private void addFilteringFromExtensionPoints(@NotNull DefaultActionGroup group) {
     for (UsageFilteringRuleProvider provider : UsageFilteringRuleProvider.EP_NAME.getExtensionList()) {
       AnAction[] actions = provider.createFilteringActions(this);
       for (AnAction action : actions) {
@@ -833,18 +820,33 @@ public class UsageViewImpl implements UsageViewEx {
       collapseAllAction.unregisterCustomShortcutSet(component);
     });
 
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.setPopup(true);
+    group.getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
+    final AnAction[] groupingActions = createGroupingActions();
+    if (groupingActions.length > 0) {
+      group.add(new Separator(UsageViewBundle.message("action.group.by.prefix")));//todo use message bundle instead
+      group.addAll(groupingActions);
+      group.add(new Separator());
+    }
+
+    addFilteringActions(group, false);
+    DefaultActionGroup filteringSubgroup = new DefaultActionGroup();
+    addFilteringFromExtensionPoints(filteringSubgroup);
 
     return new AnAction[] {
-      canShowSettings() ? showSettings() : null,
       ActionManager.getInstance().getAction("UsageView.Rerun"),
-      ActionManager.getInstance().getAction(IdeActions.ACTION_PIN_ACTIVE_TAB),
-      createRecentFindUsagesAction(),
-      expandAllAction,
-      collapseAllAction,
       actionsManager.createPrevOccurenceAction(myRootPanel),
       actionsManager.createNextOccurenceAction(myRootPanel),
-      actionsManager.installAutoscrollToSourceHandler(myProject, myTree, new MyAutoScrollToSourceOptionProvider(getUsageViewSettings())),
-      actionsManager.createExportToTextFileAction(myTextFileExporter)
+      new Separator(),
+      group,
+      filteringSubgroup,
+      expandAllAction,
+      collapseAllAction,
+      new Separator(),
+      isPreviewUsageActionEnabled() ? new PreviewUsageAction(this) : null,
+      new Separator(),
+      canShowSettings() ? showSettings() : null,
     };
   }
 
@@ -903,19 +905,18 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @NotNull
-  private AnAction createRecentFindUsagesAction() {
-    AnAction action = ActionManager.getInstance().getAction(SHOW_RECENT_FIND_USAGES_ACTION_ID);
-    action.registerCustomShortcutSet(action.getShortcutSet(), getComponent());
-    return action;
-  }
-
-  @NotNull
   private AnAction[] createGroupingActions() {
     final List<UsageGroupingRuleProvider> providers = UsageGroupingRuleProvider.EP_NAME.getExtensionList();
     List<AnAction> list = new ArrayList<>(providers.size());
     for (UsageGroupingRuleProvider provider : providers) {
       ContainerUtil.addAll(list, provider.createGroupingActions(this));
     }
+    list.sort(new Comparator<AnAction>() {
+      @Override
+      public int compare(AnAction o1, AnAction o2) {
+        return Comparing.compare(o1.getTemplateText(), o2.getTemplateText());
+      }
+    });
     return list.toArray(AnAction.EMPTY_ARRAY);
   }
 
@@ -1958,24 +1959,6 @@ public class UsageViewImpl implements UsageViewEx {
           }
         }
       }
-    }
-  }
-
-  private static class MyAutoScrollToSourceOptionProvider implements AutoScrollToSourceOptionProvider {
-    @NotNull private final UsageViewSettings myUsageViewSettings;
-
-    MyAutoScrollToSourceOptionProvider(@NotNull UsageViewSettings usageViewSettings) {
-      myUsageViewSettings = usageViewSettings;
-    }
-
-    @Override
-    public boolean isAutoScrollMode() {
-      return myUsageViewSettings.isAutoScrollToSource();
-    }
-
-    @Override
-    public void setAutoScrollMode(boolean state) {
-      myUsageViewSettings.setAutoScrollToSource(state);
     }
   }
 

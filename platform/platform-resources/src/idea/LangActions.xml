@@ -686,6 +686,8 @@
       <reference ref="AddToFavorites"/>
       <separator/>
       <reference ref="RunContextGroup"/>
+      <separator/>
+      <reference ref="ExportToTextFile"/>
     </group>
 
     <action id="NewElementSamePlace" class="com.intellij.ide.actions.NewElementSamePlaceAction"/>

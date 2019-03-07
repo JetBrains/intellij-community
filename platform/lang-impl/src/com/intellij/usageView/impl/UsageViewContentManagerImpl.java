@@ -5,6 +5,7 @@ package com.intellij.usageView.impl;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -16,10 +17,14 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.*;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,23 +38,55 @@ public class UsageViewContentManagerImpl extends UsageViewContentManager {
   private final Key<UsageView> NEW_USAGE_VIEW_KEY = Key.create("NEW_USAGE_VIEW_KEY");
   private final ContentManager myFindContentManager;
 
-  public UsageViewContentManagerImpl(final Project project, final ToolWindowManager toolWindowManager) {
+  public UsageViewContentManagerImpl(@NotNull final Project project, final ToolWindowManager toolWindowManager) {
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.FIND, true, ToolWindowAnchor.BOTTOM, project, true);
     toolWindow.setHelpId(UsageViewImpl.HELP_ID);
     toolWindow.setToHideOnEmptyContent(true);
     toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowFind);
-    ((ToolWindowEx)toolWindow)
-      .setAdditionalGearActions(new DefaultActionGroup(new DumbAwareToggleAction(FindBundle.message("find.open.in.new.tab.title.action")) {
+
+    DumbAwareToggleAction toggleNewTabAction = new DumbAwareToggleAction(FindBundle.message("find.open.in.new.tab.title.action")) {
+      @Override
+      public boolean isSelected(@NotNull AnActionEvent e) {
+        return FindSettings.getInstance().isShowResultsInSeparateView();
+      }
+
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
+        FindSettings.getInstance().setShowResultsInSeparateView(state);
+      }
+    };
+
+    DumbAwareToggleAction toggleSortAction =
+      new DumbAwareToggleAction(UsageViewBundle.message("sort.alphabetically.action.text"), null, AllIcons.ObjectBrowser.Sorted) {
         @Override
         public boolean isSelected(@NotNull AnActionEvent e) {
-          return FindSettings.getInstance().isShowResultsInSeparateView();
+          return UsageViewSettings.getInstance().isSortAlphabetically();
         }
 
         @Override
         public void setSelected(@NotNull AnActionEvent e, boolean state) {
-          FindSettings.getInstance().setShowResultsInSeparateView(state);
+          UsageViewSettings.getInstance().setSortAlphabetically(state);
+          project.getMessageBus().syncPublisher(UsageFilteringRuleProvider.RULES_CHANGED).run();
         }
-      }));
+      };
+
+    DumbAwareToggleAction toggleAutoscrollAction = new DumbAwareToggleAction(UIBundle.message("autoscroll.to.source.action.name"),
+                                                             UIBundle.message("autoscroll.to.source.action.description"),
+                                                             AllIcons.General.AutoscrollToSource) {
+      @Override
+      public boolean isSelected(@NotNull AnActionEvent e) {
+        return UsageViewSettings.getInstance().isAutoScrollToSource();
+      }
+
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
+        UsageViewSettings.getInstance().setAutoScrollToSource(state);
+      }
+    };
+
+    DefaultActionGroup gearActions = new DefaultActionGroup(IdeBundle.message("group.view.options"), true);
+    gearActions.addAll(toggleAutoscrollAction, toggleSortAction, toggleNewTabAction);
+    ((ToolWindowEx)toolWindow).setAdditionalGearActions(gearActions);
 
     myFindContentManager = toolWindow.getContentManager();
     myFindContentManager.addContentManagerListener(new ContentManagerAdapter() {
