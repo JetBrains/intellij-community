@@ -6,6 +6,7 @@ import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -20,7 +21,7 @@ class GroovyWordsScanner extends VersionedWordsScanner {
   private Lexer myLexer;
 
   @Override
-  public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
+  public void processWords(@NotNull CharSequence fileText, @NotNull Processor<WordOccurrence> processor) {
     if (myLexer == null) {
       myLexer = new GroovyLexer();
     }
