@@ -114,7 +114,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     );
 
     if (ApplicationManager.getApplication().isInternal()) {
-      JBTextArea component = new JBTextArea();
+      JBTextArea component = new JBTextArea(5, 80);
       component.setText(PLUGINS_MODULES.stream().map(it -> String.join(",", it.modules)).collect(Collectors.joining("\n")));
       component.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
