@@ -1123,7 +1123,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         if (new EditConfigurationsDialog(project) {
           @Override
           protected void init() {
-            setOKButtonText(executor.getStartActionText());
+            setOKButtonText(executor.getActionName());
             setOKButtonIcon(executor.getIcon());
             myExecutor = executor;
             super.init();
