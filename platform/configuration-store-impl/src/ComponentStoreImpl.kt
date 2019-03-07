@@ -336,8 +336,10 @@ abstract class ComponentStoreImpl : IComponentStore {
                               reloadData: Boolean): Boolean {
     val name = stateSpec.name
     @Suppress("UNCHECKED_CAST")
-    val stateClass: Class<Any> = if (component is PersistenceStateAdapter) component.component::class.java as Class<Any>
-    else ComponentSerializationUtil.getStateClass<Any>(component.javaClass)
+    val stateClass: Class<Any> = when (component) {
+      is PersistenceStateAdapter -> component.component::class.java as Class<Any>
+      else -> ComponentSerializationUtil.getStateClass<Any>(component.javaClass)
+    }
     if (!stateSpec.defaultStateAsResource && LOG.isDebugEnabled && getDefaultState(component, name, stateClass) != null) {
       LOG.error("$name has default state, but not marked to load it")
     }
