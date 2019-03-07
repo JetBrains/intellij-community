@@ -150,13 +150,6 @@
     <xi:fallback/>
   </xi:include>
 
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.openapi.projectRoots.impl.DefaultJdkConfigurator</implementation-class>
-      <headless-implementation-class/>
-    </component>
-  </application-components>
-
   <project-components>
     <component>
       <implementation-class>com.intellij.framework.detection.impl.FrameworkDetectionManager</implementation-class>
@@ -184,7 +177,6 @@
   </project-components>
 
   <extensionPoints>
-
     <extensionPoint name="antBuildGen"
                     interface="com.intellij.compiler.ant.ChunkBuildExtension"/>
 
@@ -324,6 +316,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.openapi.projectRoots.impl.DefaultJdkConfigurator"/>
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
 
