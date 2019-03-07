@@ -47,4 +47,8 @@ public class TaskSettingsTest extends TaskManagerTestCase {
     TaskRepository[] repositories = myTaskManager.getAllRepositories();
     assertEquals(format, repositories[0].getCommitMessageFormat());
   }
+
+  public void testEmptyState() {
+    myTaskManager.loadState(new TaskManagerImpl.Config());
+  }
 }
