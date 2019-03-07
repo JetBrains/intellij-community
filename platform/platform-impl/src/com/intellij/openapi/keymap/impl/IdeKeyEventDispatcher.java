@@ -955,25 +955,19 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if (KeyEvent.KEY_PRESSED == event.getID() && Registry.is("ide.popup.navigation.via.actions")) {
       KeymapManager manager = KeymapManager.getInstance();
       if (manager != null) {
-        // search for action holder
-        Component component = element.getComponent();
-        if (component instanceof JPopupMenu) {
-          // BasicPopupMenuUI.MenuKeyboardHelper#stateChanged
-          JPopupMenu menu = (JPopupMenu)component;
-          JRootPane pane = SwingUtilities.getRootPane(menu.getInvoker());
-          if (pane != null) {
-            Keymap keymap = manager.getActiveKeymap();
-            if (keymap != null) {
-              // iterate through actions for the specified event
-              for (String id : keymap.getActionIds(KeyStroke.getKeyStrokeForEvent(event))) {
-                if (id.startsWith(POPUP_MENU_PREFIX)) {
-                  String actionId = id.substring(POPUP_MENU_PREFIX.length());
-                  Action action = pane.getActionMap().get(actionId);
-                  if (action != null) {
-                    action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, actionId));
-                    event.consume();
-                    return true; // notify dispatcher that event is processed
-                  }
+        JRootPane pane = getMenuActionsHolder(element.getComponent());
+        if (pane != null) {
+          Keymap keymap = manager.getActiveKeymap();
+          if (keymap != null) {
+            // iterate through actions for the specified event
+            for (String id : keymap.getActionIds(KeyStroke.getKeyStrokeForEvent(event))) {
+              if (id.startsWith(POPUP_MENU_PREFIX)) {
+                String actionId = id.substring(POPUP_MENU_PREFIX.length());
+                Action action = pane.getActionMap().get(actionId);
+                if (action != null) {
+                  action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, actionId));
+                  event.consume();
+                  return true; // notify dispatcher that event is processed
                 }
               }
             }
@@ -982,5 +976,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
     return false;
+  }
+
+  private static JRootPane getMenuActionsHolder(Component component) {
+    if (component instanceof JPopupMenu) {
+      // BasicPopupMenuUI.MenuKeyboardHelper#stateChanged
+      JPopupMenu menu = (JPopupMenu)component;
+      return SwingUtilities.getRootPane(menu.getInvoker());
+    }
+    return SwingUtilities.getRootPane(component);
   }
 }
