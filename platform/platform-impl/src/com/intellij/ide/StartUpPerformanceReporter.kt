@@ -114,7 +114,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.setIndent("  ")
     writer.beginObject()
 
-    writer.name("version").value("3")
+    writer.name("version").value("4")
     writeServiceStats(writer)
 
     val startTime = if (activationNumber == 0) StartUpMeasurer.getStartTime() else items.first().start

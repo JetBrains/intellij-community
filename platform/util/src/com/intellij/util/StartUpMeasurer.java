@@ -24,13 +24,13 @@ public final class StartUpMeasurer {
     public static final String INIT_APP = "app initialization";
 
     public static final String LOAD_PLUGIN_DESCRIPTORS = "plugin descriptors loading";
-    public static final String INIT_PLUGINS = "plugins initialization";
+    public static final String INIT_PLUGINS = "plugin initialization";
 
-    public static final String INITIALIZE_COMPONENTS_SUFFIX = "components initialization";
+    public static final String INITIALIZE_COMPONENTS_SUFFIX = "component initialization";
     // actually, now it is also registers services, not only components,but it doesn't worth to rename
-    public static final String REGISTER_COMPONENTS_SUFFIX = "components registration";
-    public static final String COMPONENTS_REGISTERED_CALLBACK_SUFFIX = "components registered callback";
-    public static final String CREATE_COMPONENTS_SUFFIX = "components creation";
+    public static final String REGISTER_COMPONENTS_SUFFIX = "component registration";
+    public static final String COMPONENTS_REGISTERED_CALLBACK_SUFFIX = "component registered callback";
+    public static final String CREATE_COMPONENTS_SUFFIX = "component creation";
 
     public static final String APP_INITIALIZED_CALLBACK = "app initialized callback";
 
