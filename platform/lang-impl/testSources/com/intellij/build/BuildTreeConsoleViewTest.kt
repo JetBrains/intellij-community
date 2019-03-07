@@ -42,7 +42,8 @@ class BuildTreeConsoleViewTest: LightPlatformTestCase() {
     val tree = treeConsoleView.tree
     val message = "build Started"
     treeConsoleView.onEvent(StartBuildEventImpl(buildDescriptor, message))
-    PlatformTestUtil.waitWhileBusy(tree);
+    PlatformTestUtil.waitWhileBusy(tree, (tree.model as TreeTableModelWithColumns).delegate)
+
     assertThat(TreeUtil.collectExpandedUserObjects(tree))
       .extracting("name")
       .containsExactly(message)
