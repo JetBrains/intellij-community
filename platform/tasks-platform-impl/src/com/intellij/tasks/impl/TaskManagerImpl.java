@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -11,6 +11,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -58,9 +60,7 @@ import java.util.concurrent.TimeoutException;
  * @author Dmitry Avdeev
  */
 @State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class TaskManagerImpl extends TaskManager implements ProjectComponent, PersistentStateComponent<TaskManagerImpl.Config>,
-                                                            ChangeListDecorator {
-
+public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, ChangeListDecorator, Disposable, BaseComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.impl.TaskManagerImpl");
 
   private static final DecimalFormat LOCAL_TASK_ID_FORMAT = new DecimalFormat("LOCAL-00000");
@@ -107,8 +107,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
   private final Set<TaskRepository> myBadRepositories = ContainerUtil.newConcurrentSet();
 
-  public TaskManagerImpl(Project project, WorkingContextManager contextManager, ChangeListManager changeListManager) {
-
+  public TaskManagerImpl(@NotNull Project project, WorkingContextManager contextManager, ChangeListManager changeListManager) {
     myProject = project;
     myContextManager = contextManager;
     myChangeListManager = changeListManager;
@@ -135,6 +134,13 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         }
       }
     };
+
+    project.getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectOpened(@NotNull Project project) {
+        TaskManagerImpl.this.projectOpened();
+      }
+    });
   }
 
   @Override
@@ -621,9 +627,12 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return repositories;
   }
 
-  @Override
-  public void projectOpened() {
+  @TestOnly
+  public void callProjectOpened() {
+    projectOpened();
+  }
 
+  private void projectOpened() {
     TaskProjectConfiguration projectConfiguration = getProjectConfiguration();
 
     servers:
@@ -734,7 +743,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     if (myCacheRefreshTimer != null) {
       myCacheRefreshTimer.stop();
     }
