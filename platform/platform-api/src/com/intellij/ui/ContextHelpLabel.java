@@ -24,22 +24,28 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class ContextHelpLabel extends JBLabel {
+  private final HelpTooltip tooltip;
 
   public ContextHelpLabel(String label, String description) {
     super(label);
-    init(new HelpTooltip().setDescription(description));
+    this.tooltip = new HelpTooltip().setDescription(description);
+    initTooltip();
   }
 
   private ContextHelpLabel(@NotNull HelpTooltip tooltip) {
     super(AllIcons.General.ContextHelp);
-    init(tooltip);
+    this.tooltip = tooltip;
+    initTooltip();
   }
 
-  private void init(@NotNull HelpTooltip tooltip) {
-    tooltip.
-      setNeverHideOnTimeout(true).
-      setLocation(HelpTooltip.Alignment.HELP_BUTTON).
-      installOn(this);
+  private void initTooltip() {
+    tooltip.setNeverHideOnTimeout(true).setLocation(HelpTooltip.Alignment.HELP_BUTTON);
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    tooltip.installOn(this);
   }
 
   @Override
