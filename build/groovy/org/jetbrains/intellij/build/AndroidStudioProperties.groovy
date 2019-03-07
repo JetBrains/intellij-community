@@ -298,6 +298,13 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/simpleperf") {
       fileset(dir: "$root/prebuilts/tools/common/simpleperf") {
         exclude(name: "BUILD")
+        exclude(name: "README.md")
+      }
+    }
+    buildContext.ant.copy(todir: "$androidPluginLib/../resources/perfetto") {
+      fileset(dir: "$root/prebuilts/tools/common/perfetto") {
+        exclude(name: "BUILD")
+        exclude(name: "README.md")
       }
     }
 

@@ -91,6 +91,10 @@ class StudioTests(unittest.TestCase):
       ];
     for abi in ["x86", "arm64-v8a", "armeabi-v7a"]:
       required += [
+          "plugins/android/resources/perfetto/%s/libperfetto.so" % abi,
+          "plugins/android/resources/perfetto/%s/perfetto" % abi,
+          "plugins/android/resources/perfetto/%s/traced" % abi,
+          "plugins/android/resources/perfetto/%s/traced_probes" % abi,
           "plugins/android/resources/simpleperf/%s/simpleperf" % abi,
           "plugins/android/resources/transport/%s/transport" % abi,
           "plugins/android/resources/transport/agent/%s/libjvmtiagent.so" % abi,
