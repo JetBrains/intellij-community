@@ -30,7 +30,7 @@ iml_module(
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/platform/xdebugger-api:intellij.platform.debugger[module]",
-        "//tools/idea/platform/xdebugger-impl:intellij.platform.debugger.impl[module]",
+        "//tools/idea:intellij.platform.debugger.impl_and_others[module]",
         "//tools/idea/xml/openapi:intellij.xml[module]",
         "//tools/idea/xml/impl:intellij.xml.impl[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",

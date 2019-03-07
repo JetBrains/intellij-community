@@ -10,7 +10,12 @@ iml_module(
         "resources",
         "compatibilityResources",
     ],
-    test_runtime_deps = ["//tools/idea/images:intellij.platform.images"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
+        "//tools/idea/images:intellij.platform.images",
+        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+    ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
@@ -32,7 +37,7 @@ iml_module(
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
-        "//tools/idea/platform/xdebugger-impl:intellij.platform.debugger.impl[module]",
+        "//tools/idea:intellij.platform.debugger.impl_and_others[module]",
         "//tools/idea/platform/xdebugger-api:intellij.platform.debugger[module]",
         "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",
     ],

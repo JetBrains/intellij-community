@@ -15,6 +15,7 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/platform/util:intellij.platform.util",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/usageView:intellij.platform.usageView",
@@ -26,5 +27,4 @@ iml_module(
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
     ],
-    deps = ["//tools/idea/platform/util:intellij.platform.util[module]"],
 )

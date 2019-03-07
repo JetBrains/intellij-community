@@ -11,7 +11,10 @@ iml_module(
         "compatibilityResources",
     ],
     # do not sort: must match IML order
-    test_runtime_deps = ["//tools/idea/images:intellij.platform.images"],
+    test_runtime_deps = [
+        "//tools/idea/images:intellij.platform.images",
+        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+    ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -58,7 +61,7 @@ iml_module(
         "//tools/idea/plugins/tasks/tasks-core/lib:json-path-0.8.0",
         "//tools/idea/plugins/tasks/tasks-core/lib:json-smart-1.1.1",
         "//tools/idea/platform/xdebugger-api:intellij.platform.debugger[module]",
-        "//tools/idea/platform/xdebugger-impl:intellij.platform.debugger.impl[module]",
+        "//tools/idea:intellij.platform.debugger.impl_and_others[module]",
         "//tools/idea/.idea/libraries:markdownj",
         "//tools/idea/.idea/libraries:http-client",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl[module]",

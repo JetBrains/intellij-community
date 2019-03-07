@@ -20,7 +20,7 @@ iml_module(
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/spellchecker:intellij.spellchecker",
-        "//tools/idea/platform/xdebugger-impl:intellij.platform.debugger.impl",
+        "//tools/idea:intellij.platform.debugger.impl_and_others",
         "//tools/idea/RegExpSupport:intellij.regexp",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",

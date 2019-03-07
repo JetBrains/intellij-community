@@ -10,7 +10,10 @@ iml_module(
     ],
     iml_files = ["intellij.tasks.jira.iml"],
     # do not sort: must match IML order
-    test_runtime_deps = ["//tools/idea/images:intellij.platform.images"],
+    test_runtime_deps = [
+        "//tools/idea/images:intellij.platform.images",
+        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+    ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [

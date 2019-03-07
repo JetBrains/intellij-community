@@ -30,7 +30,7 @@ iml_module(
         "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",
         "//tools/idea/.idea/libraries:XmlRPC",
         "//tools/idea/plugins/xslt-debugger:intellij.xslt.debugger[module]",
-        "//tools/idea/platform/xdebugger-impl:intellij.platform.debugger.impl[module, test]",
+        "//tools/idea:intellij.platform.debugger.impl_and_others[module, test]",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/plugins/tasks/tasks-core/jira:intellij.tasks.jira[module, test]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",

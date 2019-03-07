@@ -47,7 +47,6 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/util:intellij.platform.util[module]",
-        "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/platform/forms_rt:intellij.java.guiForms.rt[module]",
         "//tools/idea/.idea/libraries:Trove4j",

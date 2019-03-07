@@ -6,7 +6,12 @@ iml_module(
     srcs = ["src"],
     iml_files = ["intellij.platform.scriptDebugger.ui.iml"],
     package_prefixes = {"testSrc": "org.jetbrains.debugger"},
-    test_runtime_deps = ["//tools/idea/images:intellij.platform.images"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
+        "//tools/idea/images:intellij.platform.images",
+        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+    ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -27,7 +32,7 @@ iml_module(
         "//tools/idea/platform/xdebugger-api:intellij.platform.debugger[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/platform/script-debugger/backend:intellij.platform.scriptDebugger.backend[module]",
-        "//tools/idea/platform/xdebugger-impl:intellij.platform.debugger.impl[module]",
+        "//tools/idea:intellij.platform.debugger.impl_and_others[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/.idea/libraries:netty-codec-http",

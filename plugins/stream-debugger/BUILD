@@ -33,7 +33,7 @@ iml_module(
         "//tools/idea/platform/editor-ui-api:intellij.platform.editor[module]",
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
         "//tools/idea/platform/xdebugger-api:intellij.platform.debugger[module]",
-        "//tools/idea/platform/xdebugger-impl:intellij.platform.debugger.impl[module]",
+        "//tools/idea:intellij.platform.debugger.impl_and_others[module]",
         "//tools/idea/java/java-psi-api:intellij.java.psi[module]",
         "//tools/idea:intellij.java.impl[module]",
         "//tools/idea/java/openapi:intellij.java[module]",

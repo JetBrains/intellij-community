@@ -21,7 +21,10 @@ iml_module(
         "//tools/idea/platform/editor-ui-api:intellij.platform.editor",
     ],
     # do not sort: must match IML order
-    runtime_deps = ["//tools/idea/.idea/libraries:delight-rhino-sandbox"],
+    runtime_deps = [
+        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
+        "//tools/idea/.idea/libraries:rhino",
+    ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/util:intellij.platform.util[module]",

@@ -36,21 +36,18 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/util:intellij.platform.util[module]",
-        "//tools/idea/.idea/libraries:JDOM",
-        "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/platform/vcs-api:intellij.platform.vcs[module]",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
-        "//tools/idea/.idea/libraries:jna",
-        "//tools/idea/.idea/libraries:pty4j",
         "//tools/idea/.idea/libraries:http-client",
         "//tools/idea/platform/diff-impl:intellij.platform.diff.impl[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:ini4j",
         "//tools/idea/.idea/libraries:OroMatcher",
         "//tools/idea/.idea/libraries:jaxb-api",
+        "//tools/idea/.idea/libraries:javax.activation",
     ],
 )
 
