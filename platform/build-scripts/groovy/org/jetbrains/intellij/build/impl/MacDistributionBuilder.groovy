@@ -280,12 +280,12 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   // Android Studio: modified by Change Idc07b110 / commit f20681e
-  private String buildMacZip(String jdkDirectoryPath, String macDistPath, String secondJreSuffix = null) {
+  private String buildMacZip(String jdkDirectoryPath, String macDistPath) {
     return buildContext.messages.block("Build zip archive for macOS") {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
       String zipRoot = getZipRoot(buildContext, customizer)
-      String suffix = secondJreSuffix == null ? buildContext.bundledJreManager.jreSuffix() : secondJreSuffix
+      String suffix = buildContext.bundledJreManager.jreSuffix()
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.mac.zip"
       def tmpTargetPath = targetPath + ".tmp.zip"
       buildContext.messages.progress("Building zip archive for macOS")

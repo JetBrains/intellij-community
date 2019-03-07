@@ -260,9 +260,7 @@ public class TerminalView {
 
     content.setPreferredFocusableComponent(terminalWidget.getPreferredFocusableComponent());
 
-    terminalWidget.addListener(widget -> {
-      ApplicationManager.getApplication().invokeLater(() -> removeTab(content, true));
-    });
+    terminalWidget.addListener(widget -> ApplicationManager.getApplication().invokeLater(() -> removeTab(content, true)));
 
     return content;
   }

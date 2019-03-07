@@ -102,11 +102,7 @@ public class EditorImplTest extends AbstractEditorTest {
   public void testNoExceptionDuringBulkModeDocumentUpdate() {
     initText("something");
     DocumentEx document = (DocumentEx)myEditor.getDocument();
-    runWriteCommand(() -> {
-      DocumentUtil.executeInBulk(document, true, ()-> {
-        document.setText("something\telse");
-      });
-    });
+    runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.setText("something\telse")));
 
     checkResultByText("something\telse");
   }
@@ -171,11 +167,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("long long line<caret>");
     configureSoftWraps(12);
     DocumentEx document = (DocumentEx)myEditor.getDocument();
-    runWriteCommand(() -> {
-      DocumentUtil.executeInBulk(document, true, ()-> {
-        document.replaceString(4, 5, "-");
-      });
-    });
+    runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.replaceString(4, 5, "-")));
 
     assertEquals(new VisualPosition(1, 5), myEditor.getCaretModel().getVisualPosition());
   }
@@ -185,15 +177,11 @@ public class EditorImplTest extends AbstractEditorTest {
     DocumentEx document = (DocumentEx)myEditor.getDocument();
 
     runWriteCommand(() -> {
-      DocumentUtil.executeInBulk(document, true, ()-> {
-        document.replaceString(4, 5, "-");
-      });
+      DocumentUtil.executeInBulk(document, true, ()-> document.replaceString(4, 5, "-"));
 
       myEditor.getCaretModel().moveToOffset(9);
 
-      DocumentUtil.executeInBulk(document, true, ()-> {
-        document.replaceString(4, 5, "+");
-      });
+      DocumentUtil.executeInBulk(document, true, ()-> document.replaceString(4, 5, "+"));
     });
 
 
@@ -321,11 +309,7 @@ public class EditorImplTest extends AbstractEditorTest {
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(DocumentBulkUpdateListener.TOPIC, listener);
     initText("abcdef");
     DocumentEx document = (DocumentEx)myEditor.getDocument();
-    runWriteCommand(() -> {
-      DocumentUtil.executeInBulk(document, true, ()-> {
-        document.insertString(3, "\n\n");
-      });
-    });
+    runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.insertString(3, "\n\n")));
     RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
     assertEquals(1, highlighters.length);
     assertEquals(7, highlighters[0].getStartOffset());

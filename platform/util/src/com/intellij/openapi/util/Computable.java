@@ -38,6 +38,11 @@ public interface Computable <T> {
     public T compute() {
       return myValue;
     }
+
+    @Override
+    public String toString() {
+      return "PredefinedValueComputable{" + myValue + "}";
+    }
   }
 
   /**

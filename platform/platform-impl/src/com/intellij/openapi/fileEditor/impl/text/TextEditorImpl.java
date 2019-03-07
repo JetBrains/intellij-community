@@ -70,18 +70,18 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
    * @return a continuation to be called in EDT
    */
   @NotNull
-  protected Runnable loadEditorInBackground() {
+  protected AsyncEditorLoader.LoadEditorResult loadEditorInBackground() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, scheme, myProject);
     EditorEx editor = (EditorEx)getEditor();
     highlighter.setText(editor.getDocument().getImmutableCharSequence());
     long stamp = editor.getDocument().getModificationStamp();
     Language language = getDocumentLanguage(editor);
-    return () -> {
-      LOG.assertTrue(stamp == editor.getDocument().getModificationStamp());
-      editor.getSettings().setLanguage(language);
-      editor.setHighlighter(highlighter);
-    };
+    return new AsyncEditorLoader.LoadEditorResult(document -> stamp == document.getModificationStamp(),
+                                                  () -> {
+                                                    editor.getSettings().setLanguage(language);
+                                                    editor.setHighlighter(highlighter);
+                                                  });
   }
 
   @Nullable

@@ -245,10 +245,8 @@ public class GroovyOverrideImplementUtil {
     if (selectedElements == null || selectedElements.isEmpty()) return;
 
     LOG.assertTrue(aClass.isValid());
-    WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(() -> {
-      OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
-                                                                   chooser.isInsertOverrideAnnotation());
-    });
+    WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(() -> OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
+                                                                                                                                                    chooser.isInsertOverrideAnnotation()));
   }
 
   @NotNull

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.awt.event.InputEvent;
@@ -79,5 +80,11 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
       return ((RecentProjectsManagerBase)mgr).getProjectName(myProjectPath);
     }
     return myProjectName;
+  }
+
+  @Nullable
+  @Override
+  public String getTemplateText() {
+    return "Reopen Project";
   }
 }

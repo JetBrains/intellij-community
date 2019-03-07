@@ -9,7 +9,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 
 class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
-  override fun getGroupId() = "statistics.build.tools"
+  override fun getGroupId() = "build.tools"
 
   override fun getUsages(project: Project): Set<UsageDescriptor> {
     val usages = mutableSetOf<UsageDescriptor>()

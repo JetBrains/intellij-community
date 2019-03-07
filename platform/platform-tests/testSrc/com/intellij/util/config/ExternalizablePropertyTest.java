@@ -65,7 +65,7 @@ public class ExternalizablePropertyTest extends TestCase {
 
     Element element = new Element("element");
     myContainer.writeExternal(element);
-    CHECK.size(0, element.getChildren());
+    Assertion.size(0, element.getChildren());
   }
 
   public void testWriteList() throws WriteExternalException {

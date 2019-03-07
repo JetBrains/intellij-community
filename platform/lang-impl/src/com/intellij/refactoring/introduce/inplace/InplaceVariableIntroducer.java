@@ -62,9 +62,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
           final Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(expr.getLanguage()).createLexer(project);
           if (LanguageUtil.canStickTokensTogetherByLexer(prev, prev, lexer) == ParserDefinition.SpaceRequirements.MUST) {
             PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(
-              () -> WriteCommandAction.writeCommandAction(project).withName("Normalize declaration").run(() -> {
-                node.getTreeParent().addChild(astNode, node);
-              }));
+              () -> WriteCommandAction.writeCommandAction(project).withName("Normalize declaration").run(() -> node.getTreeParent().addChild(astNode, node)));
           }
         }
       }

@@ -95,7 +95,7 @@ class ImportMavenRepositoriesTask {
       psiFileList.add(psiFile);
     }
 
-    final PsiFile[] psiFiles = ArrayUtil.toObjectArray(psiFileList, PsiFile.class);
+    final PsiFile[] psiFiles = psiFileList.toArray(PsiFile.EMPTY_ARRAY);
 
     final Set<MavenRemoteRepository> mavenRemoteRepositories = ReadAction.compute(() -> {
       Set<MavenRemoteRepository> myRemoteRepositories = ContainerUtil.newHashSet();

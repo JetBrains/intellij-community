@@ -12,9 +12,7 @@ public class TouchbarTest {
   private static Icon ourTestIcon = IconLoader.getIcon("/modules/edit.png");
 
   public static void main(String[] args) {
-    SwingUtilities.invokeLater(() -> {
-      _createFrame();
-    });
+    SwingUtilities.invokeLater(() -> _createFrame());
   }
 
   private static void _createFrame() {
@@ -53,9 +51,7 @@ public class TouchbarTest {
       if (c == 3)           txt = "very very long text";
       else                  txt = String.format("r%1.2f", Math.random());
       int finalC = c;
-      scrubber.addItem(ourTestIcon, txt, () -> {
-        System.out.println("performed action of scrubber item at index " + finalC + " [thread:" + Thread.currentThread() + "]");
-      });
+      scrubber.addItem(ourTestIcon, txt, () -> System.out.println("performed action of scrubber item at index " + finalC + " [thread:" + Thread.currentThread() + "]"));
     }
 
     return testTB;
@@ -94,7 +90,7 @@ public class TouchbarTest {
   }
 
   private static Runnable createPrintTextCallback(String text) {
-    return ()->{ System.out.println(text + " [thread:" + Thread.currentThread() + "]"); };
+    return ()-> System.out.println(text + " [thread:" + Thread.currentThread() + "]");
   }
 }
 

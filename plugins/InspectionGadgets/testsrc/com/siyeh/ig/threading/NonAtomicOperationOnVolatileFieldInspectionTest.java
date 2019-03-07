@@ -73,6 +73,15 @@ public class NonAtomicOperationOnVolatileFieldInspectionTest extends LightInspec
            "}");
   }
 
+  public void testDifferentlyQualified() {
+    doTest("class X {" +
+           "  private volatile int v = 1;" +
+           "  void m() {" +
+           "    /*Non-atomic operation on volatile field 'v'*/v/**/ = 2 * this.v;" +
+           "  }" +
+           "}");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

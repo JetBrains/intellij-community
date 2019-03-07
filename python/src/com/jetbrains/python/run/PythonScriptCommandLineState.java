@@ -146,7 +146,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       ((ConsoleView)console).addMessageFilter(new Filter() {
         @Nullable
         @Override
-        public Result applyFilter(String line, int entireLength) {
+        public Result applyFilter(@NotNull String line, int entireLength) {
           int position = line.indexOf(INPUT_FILE_MESSAGE);
           if (position >= 0) {
             VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(filePath));

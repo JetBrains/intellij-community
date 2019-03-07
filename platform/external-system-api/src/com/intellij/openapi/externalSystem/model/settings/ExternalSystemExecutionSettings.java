@@ -4,6 +4,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +25,7 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
 
   private long myRemoteProcessIdleTtlInMs;
   private boolean myVerboseProcessing;
-  @NotNull private final Set<String> myVmOptions;
+  @NotNull private final List<String> myJvmArguments;
   @NotNull private final List<String> myArguments;
   @NotNull
   private final Map<String, String> myEnv;
@@ -34,7 +36,7 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   public ExternalSystemExecutionSettings() {
     int ttl = SystemProperties.getIntProperty(REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, DEFAULT_REMOTE_PROCESS_TTL_MS);
     setRemoteProcessIdleTtlInMs(ttl);
-    myVmOptions = new LinkedHashSet<>();
+    myJvmArguments = new ArrayList<>();
     myArguments = new ArrayList<>();
     myEnv = new LinkedHashMap<>();
   }
@@ -58,9 +60,19 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
     myVerboseProcessing = verboseProcessing;
   }
 
+  /**
+   * @deprecated use {@link #getJvmArguments()}
+   */
+  @Deprecated
   @NotNull
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public Set<String> getVmOptions() {
-    return Collections.unmodifiableSet(myVmOptions);
+    return ContainerUtil.newLinkedHashSet(myJvmArguments);
+  }
+
+  @NotNull
+  public List<String> getJvmArguments() {
+    return Collections.unmodifiableList(myJvmArguments);
   }
 
   @NotNull
@@ -78,17 +90,17 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   }
 
   public ExternalSystemExecutionSettings withVmOptions(Collection<String> vmOptions) {
-    myVmOptions.addAll(vmOptions);
+    myJvmArguments.addAll(vmOptions);
     return this;
   }
 
   public ExternalSystemExecutionSettings withVmOptions(String... vmOptions) {
-    Collections.addAll(myVmOptions, vmOptions);
+    Collections.addAll(myJvmArguments, vmOptions);
     return this;
   }
 
   public ExternalSystemExecutionSettings withVmOption(String vmOption) {
-    myVmOptions.add(vmOption);
+    myJvmArguments.add(vmOption);
     return this;
   }
 
@@ -132,7 +144,7 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   public int hashCode() {
     int result = (int)(myRemoteProcessIdleTtlInMs ^ (myRemoteProcessIdleTtlInMs >>> 32));
     result = 31 * result + (myVerboseProcessing ? 1 : 0);
-    result = 31 * result + myVmOptions.hashCode();
+    result = 31 * result + myJvmArguments.hashCode();
     result = 31 * result + myArguments.hashCode();
     return result;
   }
@@ -146,7 +158,7 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
 
     if (myRemoteProcessIdleTtlInMs != that.myRemoteProcessIdleTtlInMs) return false;
     if (myVerboseProcessing != that.myVerboseProcessing) return false;
-    if (!myVmOptions.equals(that.myVmOptions)) return false;
+    if (!myJvmArguments.equals(that.myJvmArguments)) return false;
     if (!myArguments.equals(that.myArguments)) return false;
     return true;
   }

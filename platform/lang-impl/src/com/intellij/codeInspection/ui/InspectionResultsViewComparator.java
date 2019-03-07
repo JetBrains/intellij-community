@@ -106,19 +106,10 @@ public class InspectionResultsViewComparator implements Comparator<InspectionTre
     }
 
     if (node1 instanceof RefElementNode && node2 instanceof ProblemDescriptionNode) {
-      final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node2).getDescriptor();
-      if (descriptor instanceof ProblemDescriptor) {
-        return compareEntity(((RefElementNode)node1).getElement(), ((ProblemDescriptor)descriptor).getPsiElement());
-      }
-      return compareEntities(((RefElementNode)node1).getElement(), ((ProblemDescriptionNode)node2).getElement());
+      return 1;
     }
-
     if (node2 instanceof RefElementNode && node1 instanceof ProblemDescriptionNode) {
-      final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node1).getDescriptor();
-      if (descriptor instanceof ProblemDescriptor) {
-        return -compareEntity(((RefElementNode)node2).getElement(), ((ProblemDescriptor)descriptor).getPsiElement());
-      }
-      return -compareEntities(((RefElementNode)node2).getElement(), ((ProblemDescriptionNode)node1).getElement());
+      return -1;
     }
     if (node1 instanceof InspectionRootNode && node2 instanceof InspectionRootNode) {
       //TODO Dmitry Batkovich: optimization, because only one root node is existed
@@ -127,23 +118,6 @@ public class InspectionResultsViewComparator implements Comparator<InspectionTre
 
     LOG.error("node1: " + node1 + ", node2: " + node2);
     return 0;
-  }
-
-  private static int compareEntity(final RefEntity entity, final PsiElement element) {
-    if (entity instanceof RefElement) {
-      final PsiElement psiElement = ((RefElement)entity).getPsiElement();
-      if (psiElement != null && element != null) {
-        return PsiUtilCore.compareElementsByPosition(psiElement, element);
-      }
-      if (element == null) return psiElement == null ? 0 : 1;
-    }
-    if (element instanceof PsiQualifiedNamedElement) {
-      return StringUtil.compare(entity.getQualifiedName(), ((PsiQualifiedNamedElement)element).getQualifiedName(), true);
-    }
-    if (element instanceof PsiNamedElement) {
-      return StringUtil.compare(entity.getName(), ((PsiNamedElement)element).getName(), true);
-    }
-    return -1;
   }
 
   public static int compareEntities(final RefEntity entity1, final RefEntity entity2) {

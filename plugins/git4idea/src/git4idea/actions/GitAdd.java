@@ -114,10 +114,8 @@ public class GitAdd extends ScheduleForAdditionAction {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 
     return allFiles
-      .filter(file -> {
-        return vcsManager.getVcsFor(file) instanceof GitVcs &&
-               (file.isDirectory() || isStatusForAddition(changeListManager.getStatus(file)));
-      })
+      .filter(file -> vcsManager.getVcsFor(file) instanceof GitVcs &&
+                    (file.isDirectory() || isStatusForAddition(changeListManager.getStatus(file))))
       .map(VcsUtil::getFilePath);
   }
 

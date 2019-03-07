@@ -8,6 +8,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
  * {
  * "groups" : [
  *   {
- *    "id" : "statistics.Productivity",
+ *    "id" : "productivity",
  *    "builds" : [{ "from" : "173.4127.37", "to": "182.124" }, { "from" : "183.12" }]
  *   },
  *   {
@@ -39,7 +40,10 @@ public class FUStatisticsWhiteListGroupsService {
   private static final Logger LOG =
     Logger.getInstance("com.intellij.internal.statistic.service.whiteList.FUStatisticsWhiteListGroupsService");
 
-  @NotNull
+  /**
+   * @return null if error happened during groups fetching
+   */
+  @Nullable
   public static Set<String> getApprovedGroups(@NotNull String serviceUrl, @NotNull BuildNumber current) {
     String content = null;
     try {
@@ -50,7 +54,7 @@ public class FUStatisticsWhiteListGroupsService {
     catch (IOException e) {
       LOG.info(e);
     }
-    if (content == null) return Collections.emptySet();
+    if (content == null) return null;
 
     return parseApprovedGroups(content, current);
   }

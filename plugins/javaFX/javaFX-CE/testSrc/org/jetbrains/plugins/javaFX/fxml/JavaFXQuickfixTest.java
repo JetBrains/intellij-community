@@ -37,7 +37,7 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       AbstractJavaFXTestCase.addJavaFxJarAsLibrary(module, model);
-      PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "groovy-1.8.0.jar");
+      PsiTestUtil.addLibrary(model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "groovy-1.8.0.jar");
       super.configureModule(module, model, contentEntry);
     }
   };

@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.roots;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Order entry for content source folders
  *  @author dsl
  */
 public interface ModuleSourceOrderEntry extends OrderEntry {
+  @NotNull
   ModuleRootModel getRootModel();
 }

@@ -24,7 +24,6 @@ import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -50,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.diff.util.DiffUtil.isUserDataFlagSet;
 import static com.intellij.util.containers.ContainerUtil.list;
 
 public class TextDiffViewerUtil {
@@ -78,7 +78,7 @@ public class TextDiffViewerUtil {
     if (settings == null) {
       settings = TextDiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE));
       context.putUserData(TextDiffSettings.KEY, settings);
-      if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES, context)) {
+      if (isUserDataFlagSet(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES, context)) {
         settings.setIgnorePolicy(IgnorePolicy.DEFAULT);
       }
     }
@@ -87,17 +87,21 @@ public class TextDiffViewerUtil {
 
   @NotNull
   public static boolean[] checkForceReadOnly(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
-    int contentCount = request.getContents().size();
+    List<DiffContent> contents = request.getContents();
+    int contentCount = contents.size();
     boolean[] result = new boolean[contentCount];
 
-    if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.FORCE_READ_ONLY, request, context)) {
-      Arrays.fill(result, true);
-      return result;
+    boolean[] data = request.getUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS);
+    if (data != null && data.length != contentCount) {
+      LOG.warn("Invalid FORCE_READ_ONLY_CONTENTS key value: " + request);
+      data = null;
     }
 
-    boolean[] data = request.getUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS);
-    if (data != null && data.length == contentCount) {
-      return data;
+    for (int i = 0; i < contents.size(); i++) {
+      if (isUserDataFlagSet(DiffUserDataKeys.FORCE_READ_ONLY, contents.get(i), request, context) ||
+          data != null && data[i]) {
+        result[i] = true;
+      }
     }
 
     return result;
@@ -269,7 +273,7 @@ public class TextDiffViewerUtil {
     @Override
     protected void setValue(@NotNull HighlightPolicy option) {
       if (getValue() == option) return;
-      DiffUsageTriggerCollector.trigger("toggle.highlight.policy." + option.name());
+      DiffUsageTriggerCollector.trigger("toggle.highlight.policy", option);
       mySettings.setHighlightPolicy(option);
     }
 
@@ -310,7 +314,7 @@ public class TextDiffViewerUtil {
     @Override
     protected void setValue(@NotNull IgnorePolicy option) {
       if (getValue() == option) return;
-      DiffUsageTriggerCollector.trigger("toggle.ignore.policy." + option.name());
+      DiffUsageTriggerCollector.trigger("toggle.ignore.policy", option);
       mySettings.setIgnorePolicy(option);
     }
 

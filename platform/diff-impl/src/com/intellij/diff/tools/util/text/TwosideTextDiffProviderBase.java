@@ -88,10 +88,8 @@ abstract class TwosideTextDiffProviderBase extends TextDiffProviderBase implemen
     boolean trimFragments = ignorePolicy.isShouldTrimChunks();
 
     indicator.checkCanceled();
-    return ContainerUtil.map(fragments, rangeFragments -> {
-      return ComparisonManager.getInstance().processBlocks(rangeFragments, text1, text2,
-                                                           policy, squashFragments, trimFragments);
-    });
+    return ContainerUtil.map(fragments, rangeFragments -> ComparisonManager.getInstance().processBlocks(rangeFragments, text1, text2,
+                                                                                                      policy, squashFragments, trimFragments));
   }
 
   @NotNull

@@ -18,11 +18,12 @@ import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowGarbageCollectorRootsAction extends NativeAgentActionBase {
+  private static final int DEFAULT_OBJECTS_LIMIT = 1000;
   @Override
   protected void perform(@NotNull MemoryAgent memoryAgent,
                          @NotNull ObjectReference reference,
                          @NotNull XValueNodeImpl node) throws EvaluateException {
-    ReferringObjectsProvider roots = memoryAgent.canFindGcRoots() ? memoryAgent.findGcRoots(reference) : null;
+    ReferringObjectsProvider roots = memoryAgent.canFindGcRoots() ? memoryAgent.findGcRoots(reference, DEFAULT_OBJECTS_LIMIT) : null;
     if (roots == null) {
       XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification("This feature is unavailable", NotificationType.INFORMATION);
       return;

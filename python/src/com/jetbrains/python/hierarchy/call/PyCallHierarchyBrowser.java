@@ -19,7 +19,10 @@ import com.intellij.ide.hierarchy.CallHierarchyBrowserBase;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.PopupHandler;
@@ -40,7 +43,6 @@ import java.util.Map;
  */
 public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.hierarchy.call.PyCallHierarchyBrowser");
-  private static final String GROUP_PY_CALL_HIERARCHY_POPUP = "PyCallHierarchyPopupMenu";
 
   public PyCallHierarchyBrowser(PsiElement function) {
     super(function.getProject(), function);
@@ -58,7 +60,7 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
 
   @Override
   protected void createTrees(@NotNull Map<String, JTree> type2TreeMap) {
-    final ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(GROUP_PY_CALL_HIERARCHY_POPUP);
+    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_CALL_HIERARCHY_POPUP);
 
     final JTree callerTree = createHierarchyTree(group);
     final JTree calleeTree = createHierarchyTree(group);

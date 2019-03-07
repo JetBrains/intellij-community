@@ -135,9 +135,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
       if (preferredFocusedComponent != null) {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (preferredFocusedComponent.isShowing()) {
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(preferredFocusedComponent, true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(preferredFocusedComponent, true));
           }
         });
       }

@@ -19,6 +19,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -34,7 +35,7 @@ public class MavenTestConsoleFilter implements Filter {
 
   @Nullable
   @Override
-  public Result applyFilter(String line, int entireLength) {
+  public Result applyFilter(@NotNull String line, int entireLength) {
     Matcher matcherReportDir = REPORT_DIR_PATTERN.matcher(line);
     if (matcherReportDir.matches()) {
       final String path = matcherReportDir.group(1);

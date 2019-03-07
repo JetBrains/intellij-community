@@ -2,6 +2,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.actions.AsyncStacksToggleAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -18,6 +19,7 @@ import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -215,7 +217,9 @@ public class JavaExecutionStack extends XExecutionStack {
         }
 
         List<StackFrameItem> relatedStack = null;
-        if (frame instanceof JavaStackFrame) {
+        if (AsyncStacksToggleAction.isAsyncStacksEnabled(
+          (XDebugSessionImpl)suspendContext.getDebugProcess().getXdebugProcess().getSession()) &&
+            frame instanceof JavaStackFrame) {
           for (AsyncStackTraceProvider asyncStackTraceProvider : AsyncStackTraceProvider.EP.getExtensionList()) {
             relatedStack = asyncStackTraceProvider.getAsyncStackTrace(((JavaStackFrame)frame), suspendContext);
             if (relatedStack != null) {

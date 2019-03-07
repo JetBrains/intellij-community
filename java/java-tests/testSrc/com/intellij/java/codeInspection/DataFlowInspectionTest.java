@@ -674,4 +674,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFinalGettersForFinalFields() { doTest(); }
   public void testInlineSimpleMethods() { doTest(); }
   public void testInferenceForNonStableParameters() { doTest(); }
+  public void testNullableTernaryInConstructor() { doTest(); }
 }

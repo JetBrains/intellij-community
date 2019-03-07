@@ -42,7 +42,7 @@ import java.util.*;
 public class XsltCodeInsightUtil {
     public static final PsiElementFilter XSLT_PARAM_FILTER = new PsiElementFilter() {
         @Override
-        public boolean isAccepted(PsiElement element) {
+        public boolean isAccepted(@NotNull PsiElement element) {
             return element instanceof XmlTag && XsltSupport.isParam((XmlTag)element);
         }
     };

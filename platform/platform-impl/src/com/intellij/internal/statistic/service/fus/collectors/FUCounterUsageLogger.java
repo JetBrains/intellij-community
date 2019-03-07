@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ public class FUCounterUsageLogger {
   private static final String REGISTERED = "registered";
   private static final String[] GENERAL_GROUPS = new String[]{
     "lifecycle", "performance", "actions", "ui.dialogs", "main.menu", "toolwindow", "intentions", "toolbar", "run.configuration.exec",
-    "file.types.usage", "statistics.productivity", "live.templates", "completion.postfix"
+    "file.types.usage", "productivity", "live.templates", "completion.postfix"
   };
 
   private static final FUCounterUsageLogger INSTANCE = new FUCounterUsageLogger();
@@ -48,7 +49,10 @@ public class FUCounterUsageLogger {
     }
 
     for (CounterUsageCollectorEP ep : CounterUsageCollectorEP.EP_NAME.getExtensionList()) {
-      register(new FeatureUsageGroup(ep.groupID, ep.version));
+      final String id = ep.getGroupId();
+      if (StringUtil.isNotEmpty(id)) {
+        register(new FeatureUsageGroup(id, ep.version));
+      }
     }
 
     JobScheduler.getScheduler().scheduleWithFixedDelay(

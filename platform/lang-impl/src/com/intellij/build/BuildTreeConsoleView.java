@@ -430,7 +430,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       @Override
       public void run() {
         myTreeModel.invalidate(node, true)
-          .onSuccess(p -> TreeUtil.expand(myTree, 2));
+          .onProcessed(p -> TreeUtil.expand(myTree, 2));
       }
     };
     myLaterInvocator.queue(update);

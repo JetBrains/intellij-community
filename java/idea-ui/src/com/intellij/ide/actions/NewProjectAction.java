@@ -23,9 +23,7 @@ public class NewProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent e) {
     NewProjectWizard wizard = new NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null);
     Project eventProject = getEventProject(e);
-    ApplicationManager.getApplication().invokeLater(() -> {
-      NewProjectUtil.createNewProject(eventProject, wizard);
-    });
+    ApplicationManager.getApplication().invokeLater(() -> NewProjectUtil.createNewProject(eventProject, wizard));
   }
 
   @Override

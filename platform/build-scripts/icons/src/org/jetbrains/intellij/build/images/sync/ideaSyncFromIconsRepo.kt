@@ -10,8 +10,11 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 
 fun main(args: Array<String>) {
+  if (args.isEmpty()) System.err.println("If you haven't intended to start full icons sync" +
+                                         " then please specify required icons repo's commit hashes" +
+                                         " joined by comma, semicolon or space in arguments")
+  System.setProperty(Context.iconsCommitHashesToSyncArg, args.joinToString())
   echo("Syncing icons..")
-  if (args.isNotEmpty()) System.setProperty(Context.iconsCommitHashesToSyncArg, args.joinToString())
   checkIcons()
   echo("Generating classes..")
   generateIconsClasses()

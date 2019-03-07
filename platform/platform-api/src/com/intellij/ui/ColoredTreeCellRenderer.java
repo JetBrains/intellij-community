@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.util.treeView.AbstractTreeUi;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -18,7 +19,9 @@ import java.awt.*;
 /**
  * @author Vladimir Kondratyev
  */
-public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent implements TreeCellRenderer{
+public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent implements TreeCellRenderer {
+  private static final Logger LOG = Logger.getInstance(ColoredTreeCellRenderer.class);
+
   private static final Icon LOADING_NODE_ICON = JBUI.scale(EmptyIcon.create(8, 16));
 
   /**
@@ -36,6 +39,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   protected JTree myTree;
 
   private boolean myOpaque = true;
+
   @Override
   public final Component getTreeCellRendererComponent(JTree tree,
                                                       Object value,
@@ -43,7 +47,23 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
                                                       boolean expanded,
                                                       boolean leaf,
                                                       int row,
-                                                      boolean hasFocus){
+                                                      boolean hasFocus) {
+    try {
+      rendererComponentInner(tree, value, selected, expanded, leaf, row, hasFocus);
+    }
+    catch (Exception e) {
+      try { LOG.error(e); } catch (Exception ignore) { }
+    }
+    return this;
+  }
+
+  private void rendererComponentInner(JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
     myTree = tree;
 
     clear();
@@ -99,7 +119,6 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     if (!myUsedCustomSpeedSearchHighlighting && !AbstractTreeUi.isLoadingNode(value)) {
       SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
     }
-    return this;
   }
 
   public JTree getTree() {

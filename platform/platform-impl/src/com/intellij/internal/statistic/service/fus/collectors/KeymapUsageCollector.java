@@ -17,7 +17,7 @@ public class KeymapUsageCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.keymaps.name";
+    return "keymaps.name";
   }
 
   @Nullable

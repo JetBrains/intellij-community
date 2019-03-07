@@ -16,6 +16,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.mock.MockDumbService;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
@@ -92,7 +93,7 @@ public class CompositeFilterTest {
     return new Filter() {
       @Nullable
       @Override
-      public Result applyFilter(String line, int entireLength) {
+      public Result applyFilter(@NotNull String line, int entireLength) {
         return applyFilter(line, entireLength);
       }
     };
@@ -102,7 +103,7 @@ public class CompositeFilterTest {
     return new Filter() {
       @Nullable
       @Override
-      public Result applyFilter(String line, int entireLength) {
+      public Result applyFilter(@NotNull String line, int entireLength) {
         return null;
       }
     };
@@ -112,7 +113,7 @@ public class CompositeFilterTest {
     return new Filter() {
       @Nullable
       @Override
-      public Result applyFilter(String line, int entireLength) {
+      public Result applyFilter(@NotNull String line, int entireLength) {
         return createResult();
       }
     };
@@ -122,7 +123,7 @@ public class CompositeFilterTest {
     return new Filter() {
       @Nullable
       @Override
-      public Result applyFilter(String line, int entireLength) {
+      public Result applyFilter(@NotNull String line, int entireLength) {
         Result result = createResult();
         result.setNextAction(NextAction.CONTINUE_FILTERING);
         return result;

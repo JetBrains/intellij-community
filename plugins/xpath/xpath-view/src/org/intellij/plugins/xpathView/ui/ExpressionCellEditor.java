@@ -55,9 +55,7 @@ public class ExpressionCellEditor extends AbstractCellEditor implements TableCel
                 Runnable runnable = () -> {
                     final Editor editor = getEditor();
                     if (editor != null) {
-                      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-                        IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
-                      });
+                      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true));
                     }
                 };
                 SwingUtilities.invokeLater(runnable);

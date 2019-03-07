@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.DefaultCaret;
@@ -157,6 +159,19 @@ public class ComponentValidator {
     return this;
   }
 
+  /**
+   * Convenient wrapper for mostly used scenario.
+   */
+  public ComponentValidator andRegisterOnDocumentListener(@NotNull JTextComponent textComponent) {
+    textComponent.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
+        getInstance(textComponent).ifPresent(ComponentValidator::revalidate); // Don't use 'this' to avoid cyclic references.
+      }
+    });
+    return this;
+  }
+
   public void revalidate() {
     if (validator != null) {
       updateInfo(validator.get());
@@ -175,7 +190,7 @@ public class ComponentValidator {
       validationInfo.component.repaint();
     }
 
-    hidePopup();
+    hidePopup(true);
 
     popupBuilder = null;
     popupLocation = null;
@@ -201,47 +216,11 @@ public class ComponentValidator {
         }
 
         if (StringUtil.isNotEmpty(validationInfo.message)) {
-          JEditorPane tipComponent = new JEditorPane();
-          View v = BasicHTML.createHTMLView(tipComponent, String.format("<html>%s</html>", validationInfo.message));
-          String text = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get() ?
-                             String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH.get(), validationInfo.message) :
-                             String.format("<html><div>%s</div></html>", validationInfo.message);
-
-          tipComponent.setContentType("text/html");
-          tipComponent.setEditable(false);
-          tipComponent.addHyperlinkListener(hyperlinkListener);
-          tipComponent.setEditorKit(UIUtil.getHTMLEditorKit());
-
-          EditorKit kit = tipComponent.getEditorKit();
-          if (kit instanceof HTMLEditorKit) {
-            StyleSheet css = ((HTMLEditorKit)kit).getStyleSheet();
-
-            css.addRule("a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}");
-            css.addRule("a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkVisitedColor()) + ";}");
-            css.addRule("a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}");
-            css.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}");
-            css.addRule("body {background-color:#" + ColorUtil.toHex(validationInfo.warning ? warningBackgroundColor() : errorBackgroundColor()) + ";}");
-          }
-
-          if (tipComponent.getCaret() instanceof DefaultCaret) {
-            ((DefaultCaret)tipComponent.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
-          }
-
-          tipComponent.setCaretPosition(0);
-          tipComponent.setText(text);
-
-          tipComponent.setBackground(validationInfo.warning ? warningBackgroundColor() : errorBackgroundColor());
-          tipComponent.setOpaque(true);
-          tipComponent.setBorder(getBorder());
-          tipComponent.addMouseListener(new TipComponentMouseListener());
-
-          popupSize = tipComponent.getPreferredSize();
-
-          popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(tipComponent, null).
-            setBorderColor(validationInfo.warning ? warningBorderColor() : errorBorderColor()).
-            setCancelOnClickOutside(false).
-            setCancelOnMouseOutCallback(e -> e.getID() == MouseEvent.MOUSE_PRESSED && !withinComponent(e)).
-            setShowShadow(false);
+          popupBuilder = createPopupBuilder(validationInfo, tipComponent -> {
+            tipComponent.addHyperlinkListener(hyperlinkListener);
+            tipComponent.addMouseListener(new TipComponentMouseListener());
+            popupSize = tipComponent.getPreferredSize();
+          });
 
           getFocusable(validationInfo.component).ifPresent(fc -> {
             if (fc.hasFocus()) {
@@ -253,9 +232,54 @@ public class ComponentValidator {
     }
   }
 
-  private boolean withinComponent(@NotNull MouseEvent e) {
-    if (validationInfo != null && validationInfo.component != null && validationInfo.component.isShowing()) {
-      Rectangle screenBounds = new Rectangle(validationInfo.component.getLocationOnScreen(), validationInfo.component.getSize());
+  @NotNull
+  public static ComponentPopupBuilder createPopupBuilder(@NotNull ValidationInfo info, @Nullable Consumer<JEditorPane> configurator) {
+    JEditorPane tipComponent = new JEditorPane();
+    View v = BasicHTML.createHTMLView(tipComponent, String.format("<html>%s</html>", info.message));
+    String text = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get() ?
+                  String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH.get(), info.message) :
+                  String.format("<html><div>%s</div></html>", info.message);
+
+    tipComponent.setContentType("text/html");
+    tipComponent.setEditable(false);
+    tipComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+
+    EditorKit kit = tipComponent.getEditorKit();
+    if (kit instanceof HTMLEditorKit) {
+      StyleSheet css = ((HTMLEditorKit)kit).getStyleSheet();
+
+      css.addRule("a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}");
+      css.addRule("a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkVisitedColor()) + ";}");
+      css.addRule("a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}");
+      css.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}");
+      css.addRule("body {background-color:#" + ColorUtil.toHex(info.warning ? warningBackgroundColor() : errorBackgroundColor()) + ";}");
+    }
+
+    if (tipComponent.getCaret() instanceof DefaultCaret) {
+      ((DefaultCaret)tipComponent.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+    }
+
+    tipComponent.setCaretPosition(0);
+    tipComponent.setText(text);
+
+    tipComponent.setBackground(info.warning ? warningBackgroundColor() : errorBackgroundColor());
+    tipComponent.setOpaque(true);
+    tipComponent.setBorder(getBorder());
+
+    if (configurator != null) {
+      configurator.accept(tipComponent);
+    }
+
+    return JBPopupFactory.getInstance().createComponentPopupBuilder(tipComponent, null).
+      setBorderColor(info.warning ? warningBorderColor() : errorBorderColor()).
+      setCancelOnClickOutside(false).
+      setShowShadow(false).
+      setCancelOnMouseOutCallback(e -> e.getID() == MouseEvent.MOUSE_PRESSED && !withinComponent(info, e));
+  }
+
+  private static boolean withinComponent(@NotNull ValidationInfo info, @NotNull MouseEvent e) {
+    if (info.component != null && info.component.isShowing()) {
+      Rectangle screenBounds = new Rectangle(info.component.getLocationOnScreen(), info.component.getSize());
       return screenBounds.contains(e.getLocationOnScreen());
     }
     else {
@@ -279,15 +303,18 @@ public class ComponentValidator {
     }
   }
 
-  private void hidePopup() {
+  private void hidePopup(boolean now) {
     if (popup != null && popup.isVisible()) {
-      popupAlarm.cancelAllRequests();
-      popupAlarm.addRequest(() -> {
-        if (popup != null && (!isOverPopup || hyperlinkListener == null)) {
-          popup.cancel();
-          popup = null;
-        }
-      }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
+      if (now || hyperlinkListener == null) {
+        popup.cancel();
+        popup = null;
+      } else {
+        popupAlarm.addRequest(() -> {
+          if (!isOverPopup || hyperlinkListener == null) {
+            hidePopup(true);
+          }
+        }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
+      }
     }
   }
 
@@ -310,7 +337,7 @@ public class ComponentValidator {
 
     @Override
     public void focusLost(FocusEvent e) {
-      hidePopup();
+      hidePopup(false);
 
       ValidationInfo info = null;
       if (focusValidator != null) {
@@ -337,7 +364,7 @@ public class ComponentValidator {
       if (validationInfo != null) {
         getFocusable(validationInfo.component).ifPresent(fc -> {
           if (!fc.hasFocus()) {
-            hidePopup();
+            hidePopup(false);
           }
         });
       }

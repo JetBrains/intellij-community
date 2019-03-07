@@ -82,7 +82,7 @@ public interface ConcurrentLongObjectMap<V> {
 
   boolean isEmpty();
   @NotNull
-  public Enumeration<V> elements();
+  Enumeration<V> elements();
   @NotNull
   Collection<V> values();
   boolean containsValue(@NotNull V value);

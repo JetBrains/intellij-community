@@ -60,8 +60,11 @@ public class ExtendableTextField extends JBTextField implements ExtendableTextCo
 
   @Override
   public void addExtension(@NotNull Extension extension) {
-    List<Extension> extensions = new ArrayList<>(getExtensions());
-    if (extensions.add(extension)) setExtensions(extensions);
+    if (!getExtensions().contains(extension)) {
+      List<Extension> extensions = new ArrayList<>(getExtensions());
+      extensions.add(extension);
+      setExtensions(extensions);
+    }
   }
 
   @Override

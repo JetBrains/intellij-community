@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Bas Leijdekkers
+ * Copyright 2011-2019 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,18 +169,18 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   public static void replaceIfWithSwitch(PsiIfStatement ifStatement) {
     boolean breaksNeedRelabeled = false;
     PsiStatement breakTarget = null;
-    String labelString = "";
+    String newLabel = "";
     if (ControlFlowUtils.statementContainsNakedBreak(ifStatement)) {
       breakTarget = PsiTreeUtil.getParentOfType(ifStatement, PsiLoopStatement.class, PsiSwitchStatement.class);
       if (breakTarget != null) {
         final PsiElement parent = breakTarget.getParent();
         if (parent instanceof PsiLabeledStatement) {
           final PsiLabeledStatement labeledStatement = (PsiLabeledStatement)parent;
-          labelString = labeledStatement.getLabelIdentifier().getText();
+          newLabel = labeledStatement.getLabelIdentifier().getText();
           breakTarget = labeledStatement;
         }
         else {
-          labelString = SwitchUtils.findUniqueLabelName(ifStatement, "label");
+          newLabel = SwitchUtils.findUniqueLabelName(ifStatement, "label");
         }
         breaksNeedRelabeled = true;
       }
@@ -232,31 +232,24 @@ public class IfCanBeSwitchInspection extends BaseInspection {
           hasConflicts = true;
         }
       }
-      dumpBranch(branch, castToInt, hasConflicts, breaksNeedRelabeled, labelString, switchStatementText);
+      dumpBranch(branch, castToInt, hasConflicts, breaksNeedRelabeled, newLabel, switchStatementText);
     }
     switchStatementText.append('}');
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(ifStatement.getProject());
-    final PsiElementFactory factory = psiFacade.getElementFactory();
-    PsiSwitchStatement replacement;
-    if (breaksNeedRelabeled) {
-      final StringBuilder out = new StringBuilder();
-      if (!(breakTarget instanceof PsiLabeledStatement)) {
-        out.append(labelString).append(':');
-      }
-      termReplace(breakTarget, statementToReplace, switchStatementText, out);
-      final String newStatementText = out.toString();
-      final PsiStatement newStatement = factory.createStatementFromText(newStatementText, ifStatement);
-      replacement = (PsiSwitchStatement)breakTarget.replace(newStatement);
-    }
-    else {
-      final PsiStatement newStatement = factory.createStatementFromText(switchStatementText.toString(), ifStatement);
-      replacement = (PsiSwitchStatement)statementToReplace.replace(newStatement);
-    }
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(ifStatement.getProject());
+    final PsiStatement newStatement = factory.createStatementFromText(switchStatementText.toString(), ifStatement);
+    final PsiSwitchStatement replacement = (PsiSwitchStatement)statementToReplace.replace(newStatement);
     if (HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(replacement)) {
-      EnhancedSwitchMigrationInspection.SwitchReplacer replacer = EnhancedSwitchMigrationInspection.findSwitchReplacer(replacement);
+      final EnhancedSwitchMigrationInspection.SwitchReplacer replacer = EnhancedSwitchMigrationInspection.findSwitchReplacer(replacement);
       if (replacer != null) {
         replacer.replace(replacement);
       }
+    }
+    if (breaksNeedRelabeled) {
+      final PsiLabeledStatement labeledStatement = (PsiLabeledStatement)factory.createStatementFromText(newLabel + ":;", null);
+      final PsiStatement statement = labeledStatement.getStatement();
+      assert statement != null;
+      statement.replace(breakTarget);
+      breakTarget.replace(labeledStatement);
     }
   }
 
@@ -304,21 +297,6 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     }
     else {
       return comment.getText();
-    }
-  }
-
-  private static void termReplace(PsiElement target, PsiElement replace, StringBuilder stringToReplaceWith, StringBuilder out) {
-    if (target.equals(replace)) {
-      out.append(stringToReplaceWith);
-    }
-    else if (target.getChildren().length == 0) {
-      out.append(target.getText());
-    }
-    else {
-      final PsiElement[] children = target.getChildren();
-      for (final PsiElement child : children) {
-        termReplace(child, replace, stringToReplaceWith, out);
-      }
     }
   }
 

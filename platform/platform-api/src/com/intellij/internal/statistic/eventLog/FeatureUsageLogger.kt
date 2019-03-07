@@ -74,6 +74,10 @@ object FeatureUsageLogger {
     return ourLogger.getLogFiles()
   }
 
+  fun cleanup() {
+    ourLogger.cleanup()
+  }
+
   fun isEnabled() : Boolean {
     return ourLogger !is FeatureUsageEmptyEventLogger
   }

@@ -18,7 +18,6 @@ import java.util.Set;
 
 public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector {
 
-  public static final String GROUP_ID = "Color Schemes";
   public static final String SCHEME_NAME_OTHER = "Other";
   public final static String[] KNOWN_NAMES = {
     "Obsidian",
@@ -82,7 +81,7 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.ui.editor.color.schemes";
+    return "ui.editor.color.schemes";
   }
 
   @Nullable

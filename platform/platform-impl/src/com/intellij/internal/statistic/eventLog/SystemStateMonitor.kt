@@ -31,13 +31,13 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
     FUStateUsagesLogger.logStateEvent(OS_GROUP, getOSName(), getOSVersion())
 
     val data = FeatureUsageData().addVersion(Version(1, JavaVersion.current().feature, 0))
-    FUStateUsagesLogger.logStateEvent(JAVA_GROUP, System.getProperty("java.vendor", "Unknown"), data)
+    FUStateUsagesLogger.logStateEvent(JAVA_GROUP, getJavaVendor(), data)
   }
 
   private fun getOSVersion(): FeatureUsageData {
     val osData = FeatureUsageData()
-    val linuxRelease = OsVersionUsageCollector.getLinuxRelease()
     if (SystemInfo.isLinux) {
+      val linuxRelease = OsVersionUsageCollector.getLinuxRelease()
       osData.addData("release", linuxRelease.release)
       osData.addVersionByString(linuxRelease.version)
     }
@@ -52,7 +52,21 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
       SystemInfo.isLinux -> "Linux"
       SystemInfo.isMac -> "Mac"
       SystemInfo.isWindows -> "Windows"
-      else -> SystemInfo.OS_NAME
+      SystemInfo.isFreeBSD -> "FreeBDS"
+      SystemInfo.isSolaris -> "Solaris"
+      else -> "Other"
+    }
+  }
+
+  private fun getJavaVendor() : String {
+    return when {
+      SystemInfo.isJetBrainsJvm -> "JetBrains"
+      SystemInfo.isAppleJvm -> "Apple"
+      SystemInfo.isOracleJvm -> "Oracle"
+      SystemInfo.isSunJvm -> "Sun"
+      SystemInfo.isIbmJvm -> "IBM"
+      SystemInfo.isAzulJvm -> "Azul"
+      else -> "Other"
     }
   }
 }

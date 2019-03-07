@@ -48,8 +48,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.util.ArrayUtil.toObjectArray;
-
 /**
  * @author Dmitry Avdeev
  */
@@ -120,7 +118,7 @@ public class ImportModuleAction extends AnAction {
     List<ProjectImportProvider> providers = getProviders(project);
     String description = getFileChooserDescription(providers);
     descriptor.setDescription(description);
-    return selectFileAndCreateWizard(project, dialogParent, descriptor, toObjectArray(providers, ProjectImportProvider.class));
+    return selectFileAndCreateWizard(project, dialogParent, descriptor, providers.toArray(new ProjectImportProvider[0]));
   }
 
   @Nullable

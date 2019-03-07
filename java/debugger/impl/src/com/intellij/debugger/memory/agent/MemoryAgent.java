@@ -23,5 +23,5 @@ public interface MemoryAgent {
   boolean canFindGcRoots();
 
   @Nullable
-  ReferringObjectsProvider findGcRoots(@NotNull ObjectReference reference) throws EvaluateException;
+  ReferringObjectsProvider findGcRoots(@NotNull ObjectReference reference, int limit) throws EvaluateException;
 }

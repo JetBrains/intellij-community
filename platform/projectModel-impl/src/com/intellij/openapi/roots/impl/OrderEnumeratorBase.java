@@ -175,14 +175,15 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     return new OrderRootsEnumeratorImpl(this, rootTypeProvider);
   }
 
-  ModuleRootModel getRootModel(Module module) {
+  ModuleRootModel getRootModel(@NotNull Module module) {
     if (myModulesProvider != null) {
       return myModulesProvider.getRootModel(module);
     }
     return ModuleRootManager.getInstance(module);
   }
 
-  public OrderRootsCache getCache() {
+  @NotNull
+  OrderRootsCache getCache() {
     LOG.assertTrue(myCache != null, "Caching is not supported for ModifiableRootModel");
     LOG.assertTrue(myCondition == null, "Caching not supported for OrderEnumerator with 'satisfying(Condition)' option");
     LOG.assertTrue(myModulesProvider == null, "Caching not supported for OrderEnumerator with 'using(ModulesProvider)' option");
@@ -227,15 +228,17 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
   }
 
   protected static class ProcessEntryAction {
+    @NotNull
     public ProcessEntryActionType type;
     @Nullable Module recurseOnModule;
 
-    private ProcessEntryAction(ProcessEntryActionType type) {
+    private ProcessEntryAction(@NotNull ProcessEntryActionType type) {
       this.type = type;
     }
 
     public static final ProcessEntryAction SKIP = new ProcessEntryAction(ProcessEntryActionType.SKIP);
 
+    @NotNull
     static ProcessEntryAction RECURSE(@NotNull Module module) {
       ProcessEntryAction result = new ProcessEntryAction(ProcessEntryActionType.RECURSE);
       result.recurseOnModule = module;
@@ -245,7 +248,8 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     public static final ProcessEntryAction PROCESS = new ProcessEntryAction(ProcessEntryActionType.PROCESS);
   }
 
-  private ProcessEntryAction shouldAddOrRecurse(OrderEntry entry, boolean firstLevel, List<? extends OrderEnumerationHandler> customHandlers) {
+  @NotNull
+  private ProcessEntryAction shouldAddOrRecurse(@NotNull OrderEntry entry, boolean firstLevel, @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
     if (myCondition != null && !myCondition.value(entry)) return ProcessEntryAction.SKIP;
 
     if (entry instanceof JdkOrderEntry && (myWithoutJdk || !firstLevel)) return ProcessEntryAction.SKIP;
@@ -301,8 +305,8 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     return ProcessEntryAction.PROCESS;
   }
 
-  protected void processEntries(final ModuleRootModel rootModel, PairProcessor<? super OrderEntry, ? super List<OrderEnumerationHandler>> processor,
-                                Set<? super Module> processed, boolean firstLevel, final List<OrderEnumerationHandler> customHandlers) {
+  protected void processEntries(@NotNull ModuleRootModel rootModel, @NotNull PairProcessor<? super OrderEntry, ? super List<OrderEnumerationHandler>> processor,
+                                @Nullable Set<? super Module> processed, boolean firstLevel, @NotNull List<OrderEnumerationHandler> customHandlers) {
     if (processed != null && !processed.add(rootModel.getModule())) return;
 
     for (OrderEntry entry : rootModel.getOrderEntries()) {
@@ -321,7 +325,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     }
   }
 
-  private static boolean shouldAddRuntimeDependenciesToTestCompilationClasspath(final List<? extends OrderEnumerationHandler> customHandlers) {
+  private static boolean shouldAddRuntimeDependenciesToTestCompilationClasspath(@NotNull List<? extends OrderEnumerationHandler> customHandlers) {
     for (OrderEnumerationHandler handler : customHandlers) {
       if (handler.shouldAddRuntimeDependenciesToTestCompilationClasspath()) {
         return true;
@@ -330,7 +334,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     return false;
   }
 
-  private static boolean shouldProcessRecursively(final List<? extends OrderEnumerationHandler> customHandlers) {
+  private static boolean shouldProcessRecursively(@NotNull List<? extends OrderEnumerationHandler> customHandlers) {
     for (OrderEnumerationHandler handler : customHandlers) {
       if (!handler.shouldProcessDependenciesRecursively()) {
         return false;

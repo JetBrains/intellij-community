@@ -83,7 +83,6 @@ public class ApplicationUtil {
         indicator.checkCanceled();
       }
       catch (ProcessCanceledException e) {
-        future.cancel(true);
         throw e;
       }
 

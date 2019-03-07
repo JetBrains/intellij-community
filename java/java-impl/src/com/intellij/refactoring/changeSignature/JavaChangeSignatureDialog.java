@@ -562,15 +562,11 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myReturnTypeField, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myReturnTypeField, true));
         return RefactoringBundle.message("changeSignature.wrong.return.type", myReturnTypeCodeFragment.getText());
       }
       catch (PsiTypeCodeFragment.NoTypeException e) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myReturnTypeField, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myReturnTypeField, true));
         return RefactoringBundle.message("changeSignature.no.return.type");
       }
     }

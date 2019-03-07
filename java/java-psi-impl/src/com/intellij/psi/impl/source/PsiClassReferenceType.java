@@ -19,10 +19,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -189,7 +189,9 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   @NotNull
   public ClassResolveResult resolveGenerics() {
     PsiJavaCodeReferenceElement reference = getReference();
-    PsiUtilCore.ensureValid(reference);
+    if (!reference.isValid()) {
+      throw new PsiInvalidElementAccessException(reference, myReference.toString() + "; augmenters=" + PsiAugmentProvider.EP_NAME.getExtensionList());
+    }
     final JavaResolveResult result = reference.advancedResolve(false);
     return result.getElement() == null ? ClassResolveResult.EMPTY : new DelegatingClassResolveResult(result);
   }

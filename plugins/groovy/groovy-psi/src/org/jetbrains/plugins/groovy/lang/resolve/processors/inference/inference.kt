@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.UnknownArgument
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
+import org.jetbrains.plugins.groovy.lang.typing.devoid
 
 fun getTopLevelType(expression: GrExpression): PsiType? {
   if (expression is GrMethodCall) {
@@ -27,7 +28,7 @@ fun getTopLevelType(expression: GrExpression): PsiType? {
       val session = GroovyInferenceSessionBuilder(expression, it, resolved.contextSubstitutor)
         .resolveMode(false)
         .build()
-      return session.inferSubst().substitute(PsiUtil.getSmartReturnType(it.method))
+      return session.inferSubst().substitute(PsiUtil.getSmartReturnType(it.method).devoid(expression))
     }
     return null
   }

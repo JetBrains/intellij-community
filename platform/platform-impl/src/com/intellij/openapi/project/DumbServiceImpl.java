@@ -2,6 +2,7 @@
 package com.intellij.openapi.project;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.Disposable;
@@ -454,6 +455,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       return;
     }
     while (isDumb()) {
+      assertState(State.SCHEDULED_TASKS);
       showModalProgress();
     }
   }
@@ -461,22 +463,34 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void showModalProgress() {
     NoAccessDuringPsiEvents.checkCallContext();
     try {
-      ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(myProject, IdeBundle.message("progress.indexing"), () ->
-        runBackgroundProcess(ProgressManager.getInstance().getProgressIndicator()));
+      ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(myProject, IdeBundle.message("progress.indexing"), () -> {
+        assertState(State.SCHEDULED_TASKS);
+        runBackgroundProcess(ProgressManager.getInstance().getProgressIndicator());
+        assertState(State.SMART, State.WAITING_FOR_FINISH);
+      });
+      assertState(State.SMART, State.WAITING_FOR_FINISH);
     }
     finally {
       if (myState.get() != State.SMART) {
-        assertWeAreWaitingToFinish();
+        assertState(State.WAITING_FOR_FINISH);
         updateFinished();
+        assertState(State.SMART, State.SCHEDULED_TASKS);
       }
     }
   }
 
-  private void assertWeAreWaitingToFinish() {
-    final State state = myState.get();
-    if (state != State.WAITING_FOR_FINISH) {
-      Attachment[] attachments = myDumbEnterTrace != null ? new Attachment[]{new Attachment("indexingStart", myDumbEnterTrace)} : Attachment.EMPTY_ARRAY;
-      throw new RuntimeExceptionWithAttachments(state.toString(), attachments);
+  private void assertState(State... expected) {
+    State state = myState.get();
+    List<State> expectedList = Arrays.asList(expected);
+    if (!expectedList.contains(state)) {
+      List<Attachment> attachments = new ArrayList<>();
+      if (myDumbEnterTrace != null) {
+        attachments.add(new Attachment("indexingStart", myDumbEnterTrace));
+      }
+      attachments.add(new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
+      throw new RuntimeExceptionWithAttachments("Internal error, please include thread dump attachment. " +
+                                                "Expected " + expectedList + ", but was " + state.toString(),
+                                                attachments.toArray(Attachment.EMPTY_ARRAY));
     }
   }
 

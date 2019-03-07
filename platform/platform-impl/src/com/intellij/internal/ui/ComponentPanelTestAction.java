@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ModalityState;
@@ -9,12 +10,14 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.ui.panel.ComponentPanel;
+import com.intellij.openapi.ui.cellvalidators.*;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Alarm;
@@ -30,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
@@ -38,6 +43,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.function.BiFunction;
 
 public class ComponentPanelTestAction extends DumbAwareAction {
   private enum Placement {
@@ -80,6 +86,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
               "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "abracadabra"));
 
     private static final String[] STRING_VALUES = { "One", "Two", "Three", "Four", "Five", "Six" };
+    private static final SimpleTextAttributes WARNING_CELL_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, null);
+
+    private static final ValidationInfo NULL_VALUE_ERROR = new ValidationInfo("Null value");
+    private static final ValidationInfo NAN_VALUE_ERROR = new ValidationInfo("Not a number");
 
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
@@ -177,7 +187,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           } else {
             return null;
           }
-        }).installOn(text1);
+        }).andRegisterOnDocumentListener(text1).installOn(text1);
 
       Dimension d = text1.getPreferredSize();
       text1.setPreferredSize(new Dimension(JBUI.scale(100), d.height));
@@ -197,30 +207,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           String tt = text2.getText();
           return StringUtil.isEmpty(tt) || tt.length() < 5 ?
             new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols.<br/>Please <a href=\"#check.rules\">check rules.</a>", text2) : null;
-        }).andStartOnFocusLost().installOn(text2);
+        }).andStartOnFocusLost().andRegisterOnDocumentListener(text2).installOn(text2);
 
       gc.gridy++;
       topPanel.add(UI.PanelFactory.panel(text2).withLabel("&Path:").createPanel(), gc);
-
-      ComponentPanel cp = ComponentPanel.getComponentPanel(text2);
-      text1.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          String text = text1.getText();
-          if (cp != null) {
-            cp.setCommentText(text);
-          }
-
-          ComponentValidator.getInstance(text1).ifPresent(v -> v.revalidate());
-        }
-      });
-
-      text2.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          ComponentValidator.getInstance(text2).ifPresent(v -> v.revalidate());
-        }
-      });
 
       JCheckBox cb1 = new JCheckBox("Scroll tab layout");
       cb1.addActionListener(e -> pane.setTabLayoutPolicy(cb1.isSelected() ? JTabbedPane.SCROLL_TAB_LAYOUT : JTabbedPane.WRAP_TAB_LAYOUT));
@@ -243,6 +233,18 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       topPanel.add(UI.PanelFactory.panel(new JComboBox<>(STRING_VALUES)).
         withComment("Combobox comment").createPanel(), gc);
 
+      JBScrollPane pane = new JBScrollPane(createTable());
+      pane.setPreferredSize(JBUI.size(400, 300));
+      pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
+
+      BorderLayoutPanel mainPanel = JBUI.Panels.simplePanel(UI.PanelFactory.panel(pane).
+        withLabel("Table label:").moveLabelOnTop().withComment("Table comment").resizeY(true).createPanel());
+      mainPanel.addToTop(topPanel);
+
+      return mainPanel;
+    }
+
+    private JComponent createTable() {
       String[] columns = { "First column", "Second column" };
       String[][] data = {{"one", "1"}, {"two", "2"}, {"three", "3"}, {"four", "4"}, {"five", "5"},
         {"six", "6"}, {"seven", "7"}, {"eight", "8"}, {"nine", "9"}, {"ten", "10"}, {"eleven", "11"},
@@ -261,48 +263,91 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         public boolean isCellEditable(int row, int column) { return true; }
         @Override
         public void setValueAt(Object value, int row, int col) {
-          if (col == 0 && ALLOWED_VALUES.contains(value.toString()) || col == 1) {
+          if (col == 0 || col == 1) {
             data[row][col] = value.toString();
             fireTableCellUpdated(row, col);
           }
         }
       });
 
-      JTextField cellEditor = new JTextField();
+      HyperlinkListener hyperlinkListener = e -> {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          System.out.println("Table cell tooltip link clicked. Desc = " + e.getDescription());
+        }
+      };
+
+      BiFunction<String, JComponent, ValidationInfo> validationInfoGenerator = (text, component) ->
+        new ValidationInfo("Illegal value: " + text + "<br/>Please <a href=\"#check.cell.rules\">check rules.</a>", component);
+
+      // Install custom tooltip manager for displaying error/warning tooltips
+      new CellTooltipManager(getDisposable()).
+        withCellComponentProvider(CellComponentProvider.forTable(table)).
+        withHyperlinkListener(hyperlinkListener).installOn(table);
+
+      // Configure left column
+      ExtendableTextField cellEditor = new ExtendableTextField();
+      ExtendableTextComponent.Extension browseExtension =
+        ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
+                                                 "Open file", () -> System.out.println("Table browse clicked"));
+      cellEditor.addExtension(browseExtension);
       cellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
-      cellEditor.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          Object op = ALLOWED_VALUES.contains(cellEditor.getText()) ? null : "error";
-          cellEditor.putClientProperty("JComponent.outline", op);
-        }
-      });
 
+      new ComponentValidator(getDisposable()).withValidator(() -> {
+        boolean isAllowed = ALLOWED_VALUES.contains(cellEditor.getText());
+        ValidationUtils.setExtension(cellEditor, ValidationUtils.ERROR_EXTENSION, !isAllowed);
+        return isAllowed ? null : validationInfoGenerator.apply(cellEditor.getText(), cellEditor);
+      }).withHyperlinkListener(hyperlinkListener).
+        andRegisterOnDocumentListener(cellEditor).
+        installOn(cellEditor);
 
-      TableColumn col0 = table.getColumnModel().getColumn(0);
-      col0.setCellEditor(new DefaultCellEditor(cellEditor));
-      col0.setCellRenderer(new DefaultTableCellRenderer() {
-        @Override
-        public Dimension getPreferredSize() {
-          Dimension size = super.getPreferredSize();
-          Dimension editorSize = cellEditor.getPreferredSize();
-          size.height = Math.max(size.height, editorSize.height);
-          return size;
-        }
-      });
+      TableColumn col = table.getColumnModel().getColumn(0);
+      col.setCellEditor(new DefaultCellEditor(cellEditor));
+      col.setCellRenderer(new ValidatingTableCellRendererWrapper(new DefaultTableCellRenderer()).
+        bindToEditorSize(cellEditor::getPreferredSize).
+        withCellValidator((value, row, column) ->
+                            value == null ? new ValidationInfo("Null value") :
+                            ALLOWED_VALUES.contains(value.toString()) ? null :
+                            validationInfoGenerator.apply(value.toString(), null)));
 
+      // Configure right column
       JComboBox<Integer> rightEditor = new ComboBox<>(Arrays.stream(data).map(i -> Integer.valueOf(i[1])).toArray(Integer[]::new));
-      table.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(rightEditor));
+      col = table.getColumnModel().getColumn(1);
 
-      JBScrollPane pane = new JBScrollPane(table);
-      pane.setPreferredSize(JBUI.size(400, 300));
-      pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
+      col.setCellEditor(new StatefulValidatingCellEditor(rightEditor, getDisposable()));
+      col.setCellRenderer(new ValidatingTableCellRendererWrapper(new ColoredTableCellRenderer() {
 
-      BorderLayoutPanel mainPanel = JBUI.Panels.simplePanel(UI.PanelFactory.panel(pane).
-        withLabel("Table label:").moveLabelOnTop().withComment("Table comment").resizeY(true).createPanel());
-      mainPanel.addToTop(topPanel);
+        { setIpad(JBUI.emptyInsets()); } // Reset standard pads
 
-      return mainPanel;
+        @Override
+        protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected,
+                                             boolean hasFocus, int row, int column) {
+          if (value == null) {
+            append("No data", SimpleTextAttributes.ERROR_ATTRIBUTES);
+          }
+          else {
+            try {
+              int iv = Integer.parseInt(value.toString());
+              append("value ", SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+              append(value.toString(), iv <= 8 ? SimpleTextAttributes.REGULAR_ATTRIBUTES : WARNING_CELL_ATTRIBUTES);
+            } catch (NumberFormatException nfe) {
+              append(value.toString(), SimpleTextAttributes.ERROR_ATTRIBUTES);
+            }
+          }
+        }
+      }).bindToEditorSize(rightEditor::getPreferredSize).
+        withCellValidator((value, row, column) -> {
+          if (value == null) return NULL_VALUE_ERROR;
+          else {
+            try {
+              int iv = Integer.parseInt(value.toString());
+              return iv <= 8 ? null : new ValidationInfo("Value " + value.toString() + " is not preferred").asWarning();
+            } catch (NumberFormatException nfe) {
+              return NAN_VALUE_ERROR;
+            }
+          }
+        }));
+
+      return table;
     }
 
     private JComponent createComponentGridPanel() {
@@ -327,11 +372,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         withLabel("&Host:").withComment("Host comment")).
 
       add(UI.PanelFactory.panel(new JComboBox<>(new String[]{"HTTP", "HTTPS", "FTP", "SSL"})).
-        withLabel("P&rotocol:").withComment("Protocol comment").withTooltip("Protocol selection").
+        withLabel("P&rotocol:").withTooltip("Protocol selection").
         withTooltipLink("Check here for more info", ()-> System.out.println("More info"))).
 
       add(UI.PanelFactory.panel(new ComponentWithBrowseButton<>(new JTextField(), (e) -> System.out.println("Browse for text"))).
-        withLabel("&Text field:").withComment("Text field comment")).
+        withLabel("&Text field:").withComment("Text field comment <a href=\"https://www.google.com\">with link</a>")).
 
       add(UI.PanelFactory.panel(cbb).
         withLabel("&Combobox selection:")).
@@ -421,6 +466,23 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         .withValidator(() -> comboBox.getSelectedIndex() % 2 == 0 ? new ValidationInfo("Can't select odd items", comboBox) : null)
         .installOn(comboBox);
 
+      // Extendable ComboBox
+      ExtendableTextComponent.Extension browseExtension =
+        ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
+                                                 "Open file", () -> System.out.println("Browse file clicked"));
+
+      ComboBox<String> eComboBox = new ComboBox<>(STRING_VALUES);
+      eComboBox.setEditable(true);
+      eComboBox.setEditor(new BasicComboBoxEditor(){
+        @Override
+        protected JTextField createEditorComponent() {
+          ExtendableTextField ecbEditor = new ExtendableTextField();
+          ecbEditor.addExtension(browseExtension);
+          ecbEditor.setBorder(null);
+          return ecbEditor;
+        }
+      });
+
       // Panels factory
       return UI.PanelFactory.grid().
         add(UI.PanelFactory.panel(tfbb).
@@ -431,6 +493,9 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
         add(UI.PanelFactory.panel(comboBox).
           withLabel("&ComboBoxEditorTextField:").withComment("EditorComboBox editor")).
+
+        add(UI.PanelFactory.panel(eComboBox).
+          withLabel("ComboBox &extendable:").withComment("ComboBox with ExtendableTextEditor")).
 
         createPanel();
     }

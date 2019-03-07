@@ -12,17 +12,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class RunConfigurationUsageTriggerCollector {
-  private static final String UNKNOWN = "UNKNOWN";
-  private static final String GROUP = "run.configuration.exec";
 
   public static void trigger(@NotNull Project project, @NotNull ConfigurationFactory factory, @NotNull Executor executor) {
     final FeatureUsageData data = new FeatureUsageData().addProject(project);
     final String key = AbstractRunConfigurationTypeUsagesCollector.toReportedId(factory, data);
     if (StringUtil.isNotEmpty(key)) {
       final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(executor.getClass());
-      data.addData("executor", info.isSafeToReport() ? executor.getId() : UNKNOWN);
+      data.addData("executor", info.isSafeToReport() ? executor.getId() : "UNKNOWN");
 
-      FUCounterUsageLogger.getInstance().logEvent(project, GROUP, key, data);
+      FUCounterUsageLogger.getInstance().logEvent(project, "run.configuration.exec", key, data);
     }
   }
 }

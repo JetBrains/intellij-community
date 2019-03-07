@@ -188,7 +188,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     ProgressIndicator progress = new ProgressIndicatorBase();
     myAsyncUpdateProgress = progress;
 
-    myBreadcrumbsCollector.updateCrumbs(myFile, myEditor, myEditor.getCaretModel().getOffset(), myAsyncUpdateProgress, (crumbs) -> {
+    myBreadcrumbsCollector.updateCrumbs(myFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset(), myAsyncUpdateProgress, (crumbs) -> {
       if (!progress.isCanceled() && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
         if (!breadcrumbs.isShowing() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
           crumbs = EMPTY_BREADCRUMBS;
@@ -197,7 +197,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
         breadcrumbs.setCrumbs(crumbs);
         notifyListeners(crumbs);
       }
-    });
+    }, BreadcrumbsForceShownSettings.getForcedShown(myEditor));
   }
 
   public void queueUpdate() {

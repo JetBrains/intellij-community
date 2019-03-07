@@ -22,14 +22,17 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTrackerImpl
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataServiceImpl
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityServiceImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateServiceImpl
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestChangesComponent
+import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestDetailsComponent
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestPreviewComponent
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListComponent
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelectionModel.SelectionChangedListener
-import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsComponent
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
@@ -68,14 +71,20 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
 
     private val dataLoader = GithubPullRequestsDataLoader(project, progressManager, git, requestExecutor, repository, remote,
                                                           account.server, repoDetails.fullPath)
-    private val stateService = GithubPullRequestsStateServiceImpl(project, progressManager, dataLoader, requestExecutor,
+    private val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, accountDetails, repoDetails)
+    private val busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
+
+    private val metadataService = GithubPullRequestsMetadataServiceImpl(project, progressManager, dataLoader, busyStateTracker,
+                                                                        requestExecutor,
+                                                                        avatarIconsProviderFactory, account.server, repoDetails.fullPath)
+    private val stateService = GithubPullRequestsStateServiceImpl(project, progressManager, dataLoader, busyStateTracker, requestExecutor,
                                                                   account.server, repoDetails.fullPath)
 
     private val changes = GithubPullRequestChangesComponent(project, pullRequestUiSettings).apply {
       diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
     }
-    private val details = GithubPullRequestDetailsComponent(sharedProjectSettings, dataLoader, stateService, avatarIconsProviderFactory,
-                                                            accountDetails, repoDetails)
+    private val details = GithubPullRequestDetailsComponent(dataLoader, securityService, busyStateTracker, metadataService, stateService,
+                                                            avatarIconsProviderFactory)
     private val preview = GithubPullRequestPreviewComponent(changes, details)
 
     private val listLoader = GithubPullRequestsLoader(progressManager, requestExecutor, account.server, repoDetails.fullPath)

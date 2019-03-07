@@ -228,7 +228,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   @NotNull
-  private static Computable<PsiJavaCodeReferenceElement> computeFromTypeOwner(final PsiElement parent, @NotNull WeakReference<PsiJavaCodeReferenceElement> ref) {
+  private static Computable<PsiJavaCodeReferenceElement> computeFromTypeOwner(PsiElement parent, @NotNull WeakReference<PsiJavaCodeReferenceElement> ref) {
     return new Computable<PsiJavaCodeReferenceElement>() {
       volatile WeakReference<PsiJavaCodeReferenceElement> myCache = ref;
 
@@ -246,6 +246,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         PsiTypeElement typeElement = parent instanceof PsiMethod ? ((PsiMethod)parent).getReturnTypeElement()
                                                                  : ((PsiVariable)parent).getTypeElement();
         return (PsiTypeElementImpl)ObjectUtils.assertNotNull(typeElement);
+      }
+
+      @Override
+      public String toString() {
+        String msg = "Type element reference of " + parent.getClass() + " #" + parent.getClass().getSimpleName();
+        return parent.isValid() ? msg + " #" + parent.getLanguage() : msg + ", invalid";
       }
     };
   }

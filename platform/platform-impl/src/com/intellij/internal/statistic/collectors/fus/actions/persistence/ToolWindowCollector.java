@@ -38,8 +38,6 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
   }
 )
 public class ToolWindowCollector implements PersistentStateComponent<ToolWindowCollector.State> {
-  private static final String GROUP = "toolwindow";
-  private static final String UNKNOWN = "unknown";
 
   public static ToolWindowCollector getInstance() {
     return ServiceManager.getService(ToolWindowCollector.class);
@@ -99,14 +97,14 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
     if (toolWindowId == null) return;
 
     final PluginInfo info = getPluginInfo(toolWindowId);
-    final String key = escapeDescriptorName(info.isDevelopedByJetBrains() ? toolWindowId: UNKNOWN);
+    final String key = escapeDescriptorName(info.isDevelopedByJetBrains() ? toolWindowId: "unknown");
 
     final FeatureUsageData data = new FeatureUsageData().addOS().addPluginInfo(info);
 
     if (source != ACTIVATION) {
       data.addData("source", StringUtil.toLowerCase(source.name()));
     }
-    FUCounterUsageLogger.getInstance().logEvent(GROUP, key, data);
+    FUCounterUsageLogger.getInstance().logEvent("toolwindow", key, data);
   }
 
   @NotNull

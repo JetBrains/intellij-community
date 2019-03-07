@@ -829,52 +829,6 @@
     <action overrides="true" id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction" text="Fo_rce Step Into"
             icon="AllIcons.Debugger.Actions.Force_step_into" description="Step into, ignore stepping filters for libraries, constructors, etc."/>
 
-    <group id="PyTypeHierarchyPopupMenu">
-      <reference ref="TypeHierarchyBase.BaseOnThisType"/>
-      <reference ref="TypeHierarchy.Class"/>
-      <reference ref="TypeHierarchy.Subtypes"/>
-      <reference ref="TypeHierarchy.Supertypes"/>
-      <separator/>
-      <reference ref="EditSource"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
-      <reference ref="ReformatCode"/>
-      <reference ref="OptimizeImports"/>
-      <reference ref="$Delete"/>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-    </group>
-
-    <group id="PyCallHierarchyPopupMenu">
-      <reference ref="EditSource"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
-
-      <reference ref="ReformatCode"/>
-      <reference ref="OptimizeImports"/>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-    </group>
-
     <!-- Console -->
     <action id="com.jetbrains.python.console.RunPythonConsoleAction"
             class="com.jetbrains.python.console.RunPythonConsoleAction"

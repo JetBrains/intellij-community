@@ -15,7 +15,7 @@ import java.util.*
 
 class DiffUsagesCollector : ApplicationUsagesCollector() {
   override fun getGroupId(): String {
-    return "statistics.vcs.diff"
+    return "vcs.diff"
   }
 
   override fun getUsages(): MutableSet<UsageDescriptor> {

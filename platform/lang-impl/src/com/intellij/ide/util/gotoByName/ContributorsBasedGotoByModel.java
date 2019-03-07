@@ -2,7 +2,7 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameContributorEx;
@@ -73,23 +73,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         try {
           if (!myProject.isDisposed()) {
             long contributorStarted = System.currentTimeMillis();
-            final TIntHashSet filter = new TIntHashSet(1000);
-            myContributorToItsSymbolsMap.put(contributor, filter);
-            if (contributor instanceof ChooseByNameContributorEx) {
-              ((ChooseByNameContributorEx)contributor).processNames(s -> {
-                if (nameProcessor.process(s)) {
-                  filter.add(s.hashCode());
-                }
-                return true;
-              }, FindSymbolParameters.searchScopeFor(myProject, checkBoxState), getIdFilter(checkBoxState));
-            } else {
-              String[] names = contributor.getNames(myProject, checkBoxState);
-              for (String element : names) {
-                if (nameProcessor.process(element)) {
-                  filter.add(element.hashCode());
-                }
-              }
-            }
+            processContributorNames(contributor, checkBoxState, nameProcessor);
 
             if (LOG.isDebugEnabled()) {
               LOG.debug(contributor + " for " + (System.currentTimeMillis() - contributorStarted));
@@ -115,6 +99,28 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     if (LOG.isDebugEnabled()) {
       LOG.debug("processNames(): "+(finish-start)+"ms;");
     }
+  }
+
+  public void processContributorNames(@NotNull ChooseByNameContributor contributor,
+                                      boolean checkBoxState,
+                                      @NotNull Processor<? super String> nameProcessor) {
+    TIntHashSet filter = new TIntHashSet(1000);
+    if (contributor instanceof ChooseByNameContributorEx) {
+      ((ChooseByNameContributorEx)contributor).processNames(s -> {
+        if (nameProcessor.process(s)) {
+          filter.add(s.hashCode());
+        }
+        return true;
+      }, FindSymbolParameters.searchScopeFor(myProject, checkBoxState), getIdFilter(checkBoxState));
+    } else {
+      String[] names = contributor.getNames(myProject, checkBoxState);
+      for (String element : names) {
+        if (nameProcessor.process(element)) {
+          filter.add(element.hashCode());
+        }
+      }
+    }
+    myContributorToItsSymbolsMap.put(contributor, filter);
   }
 
   IdFilter getIdFilter(boolean withLibraries) {
@@ -185,7 +191,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
           for (NavigationItem item : itemsByName) {
             canceled.checkCanceled();
             if (item == null) {
-              LOG.error(PluginManagerCore.createPluginException("null item from contributor " + contributor + " for name " + name, null, contributor.getClass()));
+              PluginException.logPluginError(LOG, "null item from contributor " + contributor + " for name " + name, null, contributor.getClass());
               continue;
             }
 

@@ -13,6 +13,7 @@ interface FeatureUsageEventLogger {
   fun log(group: FeatureUsageGroup, action: String, isState: Boolean)
   fun log(group: FeatureUsageGroup, action: String, data: Map<String, Any>, isState: Boolean)
   fun getLogFiles(): List<File>
+  fun cleanup()
 }
 
 interface FeatureUsageEventLoggerProvider {
@@ -29,6 +30,7 @@ class FeatureUsageEmptyEventLogger : FeatureUsageEventLogger {
   override fun log(group: FeatureUsageGroup, action: String, isState: Boolean) = Unit
   override fun log(group: FeatureUsageGroup, action: String, data: Map<String, Any>, isState: Boolean) = Unit
   override fun getLogFiles(): List<File> = emptyList()
+  override fun cleanup() = Unit
 }
 
 fun getLoggerProvider(): FeatureUsageEventLoggerProvider {

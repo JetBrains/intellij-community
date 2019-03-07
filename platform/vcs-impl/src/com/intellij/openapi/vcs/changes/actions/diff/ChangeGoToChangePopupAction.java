@@ -108,9 +108,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
       myRef.get().cancel();
 
       Object selection = ContainerUtil.getFirstItem(VcsTreeModelData.selected(myViewer).userObjects());
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        onSelected(selection);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> onSelected(selection));
     }
   }
 }

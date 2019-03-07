@@ -134,7 +134,7 @@ public class NullabilityUtil {
   public static Nullability getExpressionNullability(@Nullable PsiExpression expression, boolean useDataflow) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) return Nullability.UNKNOWN;
-    if (expression.textMatches(PsiKeyword.NULL)) return Nullability.NULLABLE;
+    if (PsiType.NULL.equals(expression.getType())) return Nullability.NULLABLE;
     if (expression instanceof PsiNewExpression ||
         expression instanceof PsiLiteralExpression ||
         expression instanceof PsiPolyadicExpression ||

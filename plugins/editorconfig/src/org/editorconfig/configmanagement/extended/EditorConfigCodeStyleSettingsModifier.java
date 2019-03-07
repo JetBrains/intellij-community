@@ -54,7 +54,13 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   @Nullable
   @Override
   public CodeStyleStatusBarUIContributor getStatusBarUiContributor(@NotNull TransientCodeStyleSettings transientSettings) {
-    return new EditorConfigStatusUIContributor(transientSettings);
+    return new EditorConfigStatusUIContributor(transientSettings) {
+      @NotNull
+      @Override
+      public String getStatusText(@NotNull PsiFile psiFile) {
+        return "EditorConfig";
+      }
+    };
   }
 
   private static boolean applyCodeStyleSettings(@NotNull List<OutPair> editorConfigOptions,

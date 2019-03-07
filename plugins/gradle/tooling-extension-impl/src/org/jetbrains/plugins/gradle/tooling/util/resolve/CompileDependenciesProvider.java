@@ -80,7 +80,8 @@ public class CompileDependenciesProvider {
     Configuration compileConfiguration = myCompileClasspathConfiguration != null ? myCompileClasspathConfiguration
                                                                                  : myCompileConfiguration;
     myCompileOnlyConfiguration =
-      resolver.isJavaLibraryPluginSupported ? myProject.getConfigurations().findByName(mySourceSet.getCompileOnlyConfigurationName()) : null;
+      DependencyResolverImpl.isJavaLibraryPluginSupported
+      ? myProject.getConfigurations().findByName(mySourceSet.getCompileOnlyConfigurationName()) : null;
 
     ExternalDepsResolutionResult externalDepsResolutionResult = resolver.resolveDependencies(compileConfiguration, SCOPE);
     myDependencies = externalDepsResolutionResult.getExternalDeps();

@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -360,15 +359,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   @Nullable
   private static PsiType getTypeByRef(@NotNull GrReferenceExpression invoked) {
-
-    final GroovyResolveResult[] results = ControlFlowBuilderUtil.resolveNonQualifiedRefWithoutFlow(invoked);
-    if (results.length == 1) {
-      final PsiElement element = results[0].getElement();
-      if (element instanceof PsiVariable) {
-        return ((PsiVariable)element).getType();
-      }
-    }
-    return null;
+    PsiElement resolved = invoked.getStaticReference().resolve();
+    return resolved instanceof PsiVariable ? ((PsiVariable)resolved).getType() : null;
   }
 
   private void interruptFlow() {

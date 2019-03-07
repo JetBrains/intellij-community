@@ -203,7 +203,7 @@ public class GridInsertLocation extends GridDropLocation {
       
       int cellWidth = vGridLines [lastColIndex] - vGridLines [insertCol];
       int cellHeight = hGridLines [lastRowIndex] - hGridLines [insertRow];
-      RadComponent component = layoutManager.getComponentAtGrid(getContainer(), insertRow, insertCol);
+      RadComponent component = RadAbstractGridLayoutManager.getComponentAtGrid(getContainer(), insertRow, insertCol);
       if (component != null && mySpanInsertMode) {
         Rectangle bounds = component.getBounds();
         bounds.translate(-vGridLines [insertCol], -hGridLines [insertRow]);

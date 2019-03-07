@@ -3,6 +3,8 @@ package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,7 +16,18 @@ public class LifecycleUsageTriggerCollector {
   private static final String LIFECYCLE = "lifecycle";
 
   public static void onIdeStart() {
-    FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "ide.start");
+    final FeatureUsageData data = new FeatureUsageData().addData("eap", ApplicationManager.getApplication().isEAP());
+    addIfTrue(data, "test", StatisticsUploadAssistant.isTestStatisticsEnabled());
+    addIfTrue(data, "command_line", ApplicationManager.getApplication().isCommandLine());
+    addIfTrue(data, "internal", ApplicationManager.getApplication().isInternal());
+    addIfTrue(data, "headless", ApplicationManager.getApplication().isHeadlessEnvironment());
+    FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "ide.start", data);
+  }
+
+  private static void addIfTrue(@NotNull FeatureUsageData data, @NotNull String key, boolean value) {
+    if (value) {
+      data.addData(key, value);
+    }
   }
 
   public static void onIdeClose(boolean restart) {

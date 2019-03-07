@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,8 +78,16 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
       substitutor = JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(substitutor, methodTypeParameters);
       methodTypeParameters = PsiTypeParameter.EMPTY_ARRAY;
     }
-    
-    assert substitutor.isValid();
+
+    try {
+      substitutor.ensureValid();
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      throw PluginException.createByClass(e, method.getClass());
+    }
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiType[] parameterTypes = PsiType.createArray(parameters.length);

@@ -6,8 +6,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -46,11 +46,15 @@ class VfsEventGenerationHelper {
     myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength, true));
   }
 
-  void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, @NotNull Path path, @NotNull FileAttributes attributes) {
-    boolean isEmptyDir = attributes.isDirectory() && !VirtualDirectoryImpl.hasChildren(path);
+  void scheduleCreation(@NotNull VirtualFile parent,
+                        @NotNull String childName,
+                        @NotNull Path path,
+                        @NotNull FileAttributes attributes,
+                        String symlinkTarget) {
+    boolean isEmptyDir = attributes.isDirectory() && !LocalFileSystemBase.hasChildren(path);
 
     if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " attr=" + attributes);
-    myEvents.add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, true, isEmptyDir));
+    myEvents.add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, isEmptyDir));
   }
 
   void scheduleDeletion(@NotNull VirtualFile file) {

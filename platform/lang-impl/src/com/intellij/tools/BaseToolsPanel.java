@@ -141,9 +141,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         if (dlg.showAndGet()) {
           insertNewTool(dlg.getData(), true);
         }
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
       }
     }).setRemoveAction(new AnActionButtonRunnable() {
       @Override
@@ -154,9 +152,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
       @Override
       public void run(AnActionButton button) {
         editSelected();
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
       }
     }).setMoveUpAction(new AnActionButtonRunnable() {
       @Override
@@ -183,9 +179,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
           if (dlg.showAndGet()) {
             insertNewTool(dlg.getData(), true);
           }
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
         }
       }
     }).createPanel(), BorderLayout.CENTER);
@@ -292,9 +286,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         TreePath path = new TreePath(node.getPath());
         myTree.getSelectionModel().setSelectionPath(path);
         myTree.expandPath(path);
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
       }
     }
   }
@@ -431,9 +423,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         removeNodeFromParent(node);
       }
       update();
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
     }
   }
 

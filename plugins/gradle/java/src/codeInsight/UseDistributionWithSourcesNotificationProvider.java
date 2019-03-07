@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.codeInsight;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
@@ -27,8 +26,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -70,14 +67,8 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
     GRADLE_SRC_DISTRIBUTION_PATTERN = Pattern.compile("https?\\\\?://services\\.gradle\\.org.*" + ALL_ZIP_DISTRIBUTION_URI_SUFFIX);
   }
 
-  public UseDistributionWithSourcesNotificationProvider(Project project, final EditorNotifications notifications) {
+  public UseDistributionWithSourcesNotificationProvider(Project project) {
     myProject = project;
-    project.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        notifications.updateAllNotifications();
-      }
-    });
   }
 
   @NotNull

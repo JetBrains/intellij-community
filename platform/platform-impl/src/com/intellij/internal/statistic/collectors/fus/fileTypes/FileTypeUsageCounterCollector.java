@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class FileTypeUsageCounterCollector {
-  private static final String GROUP = "file.types.usage";
 
   public static void triggerEdit(@NotNull Project project, @NotNull FileType fileType) {
     trigger(project, fileType, "edit");
@@ -23,6 +22,6 @@ public class FileTypeUsageCounterCollector {
                               @NotNull String type) {
     final FeatureUsageData data = new FeatureUsageData().addData("type", type);
     final String id = FileTypeUsagesCollector.toReportedId(fileType, data);
-    FUCounterUsageLogger.getInstance().logEvent(project, GROUP, id, data);
+    FUCounterUsageLogger.getInstance().logEvent(project, "file.types.usage", id, data);
   }
 }

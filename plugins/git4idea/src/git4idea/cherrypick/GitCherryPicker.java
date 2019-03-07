@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import git4idea.GitApplyChangesProcess;
@@ -49,7 +48,7 @@ public class GitCherryPicker extends VcsCherryPicker {
     GitApplyChangesProcess applyProcess = new GitApplyChangesProcess(myProject, commits, isAutoCommit(), "cherry-pick", "applied",
                                                                      (repository, commit, autoCommit, listeners) ->
       myGit.cherryPick(repository, commit.asString(), autoCommit, shouldAddSuffix(repository, commit),
-                       ArrayUtil.toObjectArray(listeners, GitLineHandlerListener.class)),
+                       listeners.toArray(new GitLineHandlerListener[0])),
       result -> isNothingToCommitMessage(result),
       (repository, commit) -> createCommitMessage(repository, commit),
       true,

@@ -137,9 +137,7 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       LOG.assertTrue(psiFile instanceof XmlFile);
       final XmlFile testngXML = (XmlFile)psiFile;
-      WriteCommandAction.writeCommandAction(project, testngXML).withName(getName()).run(() -> {
-        patchTestngXml(testngXML, psiClass);
-      });
+      WriteCommandAction.writeCommandAction(project, testngXML).withName(getName()).run(() -> patchTestngXml(testngXML, psiClass));
     }
 
     @Override

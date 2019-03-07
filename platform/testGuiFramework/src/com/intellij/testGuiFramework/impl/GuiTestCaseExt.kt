@@ -343,6 +343,7 @@ fun GuiTestCase.checkGutterIcons(gutterIcon: GutterFixture.GutterIcon,
           waitUntilFileIsLoaded()
           waitUntilErrorAnalysisFinishes()
           gutter.waitUntilIconsShown(mapOf(gutterIcon to expectedNumberOfIcons))
+          moveToLine(expectedNumberOfIcons)
         }
         val gutterLinesWithIcon = gutter.linesWithGutterIcon(gutterIcon)
         val contents = this@editor.getCurrentFileContents(false)?.lines() ?: listOf()

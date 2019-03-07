@@ -45,7 +45,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
 import com.intellij.util.PathUtil;
@@ -384,7 +383,7 @@ public class ShelvedChangesViewManager implements Disposable {
       else if (VcsDataKeys.CHANGES.is(dataId)) {
         List<ShelvedWrapper> shelvedChanges = VcsTreeModelData.selected(myTree).userObjects(ShelvedWrapper.class);
         if (!shelvedChanges.isEmpty()) {
-          return ArrayUtil.toObjectArray(map2List(shelvedChanges, s -> s.getChange(myProject)), Change.class);
+          return map2Array(shelvedChanges, Change.class, s -> s.getChange(myProject));
         }
       }
       else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {

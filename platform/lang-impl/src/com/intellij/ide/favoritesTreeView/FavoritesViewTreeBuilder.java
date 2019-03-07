@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -206,16 +207,8 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
     @Override
     public void fileStatusChanged(@NotNull VirtualFile vFile) {
-      PsiElement element;
-      PsiManager psiManager = PsiManager.getInstance(myProject);
-      if (vFile.isDirectory()) {
-        element = psiManager.findDirectory(vFile);
-      }
-      else {
-        element = psiManager.findFile(vFile);
-      }
-
-      if (!addSubtreeToUpdateByElement(element) &&
+      PsiElement element = PsiUtilCore.findFileSystemItem(myProject, vFile);
+      if (element != null && !addSubtreeToUpdateByElement(element) &&
           element instanceof PsiFile &&
           ((PsiFile)element).getFileType() == StdFileTypes.JAVA) {
         addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());

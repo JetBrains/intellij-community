@@ -243,9 +243,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       changedWithIndex.addAll(caseOnlyRenameChanges);
 
       if (!changedWithIndex.isEmpty() || Registry.is("git.force.commit.using.staging.area")) {
-        runWithMessageFile(myProject, root, message, messageFile -> {
-          exceptions.addAll(commitUsingIndex(repository, changes, changedWithIndex, messageFile));
-        });
+        runWithMessageFile(myProject, root, message, messageFile -> exceptions.addAll(commitUsingIndex(repository, changes, changedWithIndex, messageFile)));
         if (!exceptions.isEmpty()) return exceptions;
 
         callback.run();
@@ -580,9 +578,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       List<CommitChange> movedChanges = committedAndNewChanges.first;
       Collection<CommitChange> newRootChanges = committedAndNewChanges.second;
 
-      runWithMessageFile(myProject, root, message, moveMessageFile -> {
-        exceptions.addAll(commitUsingIndex(repository, movedChanges, new HashSet<>(movedChanges), moveMessageFile));
-      });
+      runWithMessageFile(myProject, root, message, moveMessageFile -> exceptions.addAll(commitUsingIndex(repository, movedChanges, new HashSet<>(movedChanges), moveMessageFile)));
 
       List<Couple<FilePath>> committedMovements = mapNotNull(movedChanges, it -> Couple.of(it.beforePath, it.afterPath));
       for (GitCheckinExplicitMovementProvider provider : providers) {
@@ -670,16 +666,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     // Commit leftovers as added/deleted files (ex: if git detected files movements in a conflicting way)
-    affectedBeforePaths.forEach((bPath, change) -> {
-      nextCommitChanges.add(new CommitChange(change.beforePath, null,
-                                             change.beforeRevision, null,
-                                             change.changelistId, change.virtualFile));
-    });
-    affectedAfterPaths.forEach((aPath, change) -> {
-      nextCommitChanges.add(new CommitChange(null, change.afterPath,
-                                             null, change.afterRevision,
-                                             change.changelistId, change.virtualFile));
-    });
+    affectedBeforePaths.forEach((bPath, change) -> nextCommitChanges.add(new CommitChange(change.beforePath, null,
+                                                                                        change.beforeRevision, null,
+                                                                                        change.changelistId, change.virtualFile)));
+    affectedAfterPaths.forEach((aPath, change) -> nextCommitChanges.add(new CommitChange(null, change.afterPath,
+                                                                                       null, change.afterRevision,
+                                                                                       change.changelistId, change.virtualFile)));
 
     if (movedChanges.isEmpty()) return null;
     return Pair.create(movedChanges, nextCommitChanges);
@@ -700,11 +692,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       addIfNotNull(beforePathsMultiSet, change.beforePath);
       addIfNotNull(afterPathsMultiSet, change.afterPath);
     }
-    return filter(explicitMoves, move -> {
-      return movedPathsMultiSet.count(move.getBefore()) == 1 && movedPathsMultiSet.count(move.getAfter()) == 1 &&
-             beforePathsMultiSet.count(move.getBefore()) == 1 && afterPathsMultiSet.count(move.getAfter()) == 1 &&
-             beforePathsMultiSet.count(move.getAfter()) == 0 && afterPathsMultiSet.count(move.getBefore()) == 0;
-    });
+    return filter(explicitMoves, move -> movedPathsMultiSet.count(move.getBefore()) == 1 && movedPathsMultiSet.count(move.getAfter()) == 1 &&
+           beforePathsMultiSet.count(move.getBefore()) == 1 && afterPathsMultiSet.count(move.getAfter()) == 1 &&
+           beforePathsMultiSet.count(move.getAfter()) == 0 && afterPathsMultiSet.count(move.getBefore()) == 0);
   }
 
 

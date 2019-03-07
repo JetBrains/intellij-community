@@ -215,9 +215,7 @@ class DesignDropTargetListener implements DropTargetListener {
             PaletteToolWindowManager.getInstance(myEditor).clearActiveItem();
             myEditor.getActiveDecorationLayer().removeFeedback();
             myEditor.getLayeredPane().setCursor(null);
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getGlassLayer(), true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getGlassLayer(), true));
             myEditor.getMainProcessor().setInsertFeedbackEnabled(true);
           });
         }

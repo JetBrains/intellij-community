@@ -1871,32 +1871,47 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     // if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     Project project = file.getProject();
+    VirtualFile vFile = Objects.requireNonNull(InjectedLanguageManager.getInstance(project).getTopLevelFile(file)).getVirtualFile();
+    AtomicBoolean result = new AtomicBoolean();
+    withReadOnlyFile(vFile, project, () -> {
+      try {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          try {
+            result.set(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, actionText));
+          }
+          catch (StubTextInconsistencyException e) {
+            PsiTestUtil.compareStubTexts(e);
+          }
+        });
+        UIUtil.dispatchAllInvocationEvents();
+        checkPsiTextConsistency(project, vFile);
+      }
+      catch (AssertionError e) {
+        ExceptionUtil.rethrowUnchecked(ExceptionUtil.getRootCause(e));
+        throw e;
+      }
+    });
+    return result.get();
+  }
+
+  /**
+   * Make the given file read-only and execute the given action, afterwards make file writable again
+   * @return whether the action has made the file writable itself
+   */
+  public static boolean withReadOnlyFile(VirtualFile vFile, Project project, Runnable action) {
+    boolean writable;
     ReadonlyStatusHandlerImpl handler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(project);
-    VirtualFile vFile = Objects.requireNonNull(InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file)).getVirtualFile();
     setReadOnly(vFile, true);
     handler.setClearReadOnlyInTests(true);
-    AtomicBoolean result = new AtomicBoolean();
     try {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        try {
-          result.set(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, actionText));
-        }
-        catch (StubTextInconsistencyException e) {
-          PsiTestUtil.compareStubTexts(e);
-        }
-      });
-      UIUtil.dispatchAllInvocationEvents();
-      checkPsiTextConsistency(project, vFile);
-    }
-    catch (AssertionError e) {
-      ExceptionUtil.rethrowUnchecked(ExceptionUtil.getRootCause(e));
-      throw e;
+      action.run();
     }
     finally {
+      writable = vFile.isWritable();
       handler.setClearReadOnlyInTests(false);
       setReadOnly(vFile, false);
     }
-    return result.get();
+    return writable;
   }
 
   private static void checkPsiTextConsistency(Project project, VirtualFile vFile) {

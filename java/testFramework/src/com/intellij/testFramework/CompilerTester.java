@@ -150,9 +150,7 @@ public class CompilerTester {
   }
 
   public void setFileName(final PsiFile file, final String name) {
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      file.setName(name);
-    });
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> file.setName(name));
   }
 
   public List<CompilerMessage> make() {

@@ -294,7 +294,7 @@ internal class ApplicationStoreTest {
 
   @Test
   fun `other xml file as not-roamable without explicit roaming`() = runBlocking<Unit> {
-    @State(name = "A", storages = [(Storage(value = Storage.NOT_ROAMABLE_FILE))])
+    @State(name = "A", storages = [(Storage(value = StoragePathMacros.NOT_ROAMABLE_FILE))])
     class AOther : A()
 
     val component = AOther()
@@ -303,7 +303,7 @@ internal class ApplicationStoreTest {
 
     saveStore()
 
-    assertThat(testAppConfig.resolve(Storage.NOT_ROAMABLE_FILE)).doesNotExist()
+    assertThat(testAppConfig.resolve(StoragePathMacros.NOT_ROAMABLE_FILE)).doesNotExist()
   }
 
   private suspend fun saveStore() {

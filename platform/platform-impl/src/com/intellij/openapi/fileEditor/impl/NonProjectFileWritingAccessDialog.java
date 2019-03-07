@@ -56,11 +56,6 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
 
     setTextAndMnemonicAndListeners(myUnlockAllButton, "I want to edit any non-project file in the current session", "any");
 
-
-    // disable default button to avoid accidental pressing, if user typed something, missed the dialog and pressed 'enter'.
-    getOKAction().putValue(DEFAULT_ACTION, null);
-    getCancelAction().putValue(DEFAULT_ACTION, null);
-
     getRootPane().registerKeyboardAction(e -> doOKAction(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK),
                                          JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     getRootPane().registerKeyboardAction(e -> doOKAction(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK),

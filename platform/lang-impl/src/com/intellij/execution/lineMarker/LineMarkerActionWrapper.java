@@ -19,10 +19,7 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -34,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class LineMarkerActionWrapper extends ActionGroup implements PriorityAction {
+public class LineMarkerActionWrapper extends ActionGroup implements PriorityAction, ActionWithDelegate<AnAction> {
   public static final Key<Pair<PsiElement, MyDataContext>> LOCATION_WRAPPER = Key.create("LOCATION_WRAPPER");
 
   protected final PsiElement myElement;
@@ -110,6 +107,12 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
   @Override
   public Priority getPriority() {
     return Priority.TOP;
+  }
+
+  @NotNull
+  @Override
+  public AnAction getDelegate() {
+    return myOrigin;
   }
 
   private class MyDataContext extends UserDataHolderBase implements DataContext {

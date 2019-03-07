@@ -41,8 +41,6 @@ public class InputException extends RuntimeException{
     if (myMessage !=  null) {
       Messages.showMessageDialog(myMessage, UIBundle.message("invalid.user.input.dialog.title"), Messages.getErrorIcon());
     }
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myComponent, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myComponent, true));
   }
 }

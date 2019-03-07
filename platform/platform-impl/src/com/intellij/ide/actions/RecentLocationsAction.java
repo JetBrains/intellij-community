@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
@@ -9,7 +10,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -32,20 +33,25 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.FocusManagerImpl;
+import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.breadcrumbs.Crumb;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,15 +65,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.COMPONENT_KEY;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
 public class RecentLocationsAction extends AnAction {
+  private static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
   private static final int DEFAULT_WIDTH = JBUI.scale(700);
@@ -84,7 +90,7 @@ public class RecentLocationsAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.locations");
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(RECENT_LOCATIONS_ACTION_ID);
     Project project = getEventProject(e);
     if (project == null) {
       return;
@@ -96,15 +102,18 @@ public class RecentLocationsAction extends AnAction {
     final Ref<List<RecentLocationItem>> navigationPlaces = Ref.create();
     Collection<Editor> editorsToRelease = ContainerUtil.newArrayList();
 
-    JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(
-      cacheAndGetItems(project, showChanged, changedPlaces, navigationPlaces, editorsToRelease)));
+    List<RecentLocationItem> items = cacheAndGetItems(project, showChanged, changedPlaces, navigationPlaces, editorsToRelease);
+    Ref<Map<PlaceInfo, String>> breadcrumbsMap = Ref.create(collectBreadcrumbs(project, items));
+
+    JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(items));
     final JScrollPane scrollPane = ScrollPaneFactory
       .createScrollPane(list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
     scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
     ListWithFilter<RecentLocationItem> listWithFilter =
-      (ListWithFilter<RecentLocationItem>)ListWithFilter.wrap(list, scrollPane, getNamer(project), true);
+      (ListWithFilter<RecentLocationItem>)ListWithFilter.wrap(list, scrollPane, getNamer(breadcrumbsMap), true);
+
     listWithFilter.setBorder(BorderFactory.createEmptyBorder());
 
     final SpeedSearch speedSearch = listWithFilter.getSpeedSearch();
@@ -117,7 +126,7 @@ public class RecentLocationsAction extends AnAction {
         }
       });
 
-    RecentLocationsRenderer renderer = new RecentLocationsRenderer(project, speedSearch);
+    RecentLocationsRenderer renderer = new RecentLocationsRenderer(project, speedSearch, breadcrumbsMap);
     list.setCellRenderer(renderer);
     list.setEmptyText(IdeBundle.message("recent.locations.popup.empty.text"));
     list.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
@@ -148,9 +157,8 @@ public class RecentLocationsAction extends AnAction {
       .createPopup();
 
     Disposer.register(popup, () -> {
-      Dimension contentSize = popup.getContent().getSize();
       Dimension scrollPaneSize = calcScrollPaneSize(scrollPane, listWithFilter, topPanel, popup.getContent());
-      //scroll pane
+      //scroll scrollPane
       DimensionService.getInstance().setSize(LOCATION_SETTINGS_KEY, scrollPaneSize, project);
     });
 
@@ -172,27 +180,12 @@ public class RecentLocationsAction extends AnAction {
       }
     });
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-      Dimension minSize = mainPanel.getMinimumSize();
-      JBInsets.addTo(minSize, popup.getContent().getInsets());
-      popup.setMinimumSize(minSize);
-
-      Dimension balloonFullSize = DimensionService.getInstance().getSize(LOCATION_SETTINGS_KEY, project);
-      if (balloonFullSize == null) {
-        DimensionService.getInstance().setSize(LOCATION_SETTINGS_KEY, mainPanel.getPreferredSize());
-        balloonFullSize = mainPanel.getPreferredSize();
-        JBInsets.addTo(balloonFullSize, popup.getContent().getInsets());
-      }
-      balloonFullSize.height = Integer.max(balloonFullSize.height, minSize.height);
-      balloonFullSize.width = Integer.max(balloonFullSize.width, minSize.width);
-      scrollPane.setPreferredSize(balloonFullSize);
-      popup.setSize(mainPanel.getPreferredSize());
-    });
-
     project.getMessageBus().connect(popup).subscribe(ShowRecentChangedLocationListener.TOPIC, new ShowRecentChangedLocationListener() {
       @Override
       public void showChangedLocation(boolean state) {
-        updateModel(project, listWithFilter, editorsToRelease, state, changedPlaces, navigationPlaces);
+        updateModel(project, listWithFilter, editorsToRelease, state, changedPlaces, navigationPlaces, breadcrumbsMap);
+
+        FocusManagerImpl.getInstance().requestFocus(list, false);
 
         updateTitleText(title, state);
 
@@ -230,7 +223,14 @@ public class RecentLocationsAction extends AnAction {
                                               @NotNull JComponent content) {
     Dimension contentSize = content.getSize();
     int speedSearchHeight = listWithFilter.getSize().height - scrollPane.getSize().height;
-    return new Dimension(contentSize.width, contentSize.height - topPanel.getSize().height - speedSearchHeight);
+    Dimension dimension = new Dimension(contentSize.width, contentSize.height - topPanel.getSize().height - speedSearchHeight);
+    JBInsets.removeFrom(dimension, content.getInsets());
+    return dimension;
+  }
+
+  @NotNull
+  private static Map<PlaceInfo, String> collectBreadcrumbs(@NotNull Project project, @NotNull List<RecentLocationItem> items) {
+    return items.stream().map(RecentLocationItem::getInfo).collect(Collectors.toMap(id -> id, info -> getBreadcrumbs(project, info)));
   }
 
   @Override
@@ -239,17 +239,34 @@ public class RecentLocationsAction extends AnAction {
   }
 
   @NotNull
-  static String getBreadcrumbs(@NotNull Project project, @NotNull PlaceInfo info) {
-    Collection<Iterable<? extends Crumb>> breadcrumbs =
-      RecentLocationManager.getInstance(project).getBreadcrumbs(info, showChanged(project));
+  static String getBreadcrumbs(@NotNull Project project, @NotNull PlaceInfo placeInfo) {
+    RangeMarker rangeMarker = RecentLocationManager.getInstance(project).getPositionOffset(placeInfo, showChanged(project));
+    String fileName = placeInfo.getFile().getName();
+    if (rangeMarker == null) {
+      return fileName;
+    }
+
+    FileBreadcrumbsCollector collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, placeInfo.getFile());
+    Collection<Iterable<? extends Crumb>> breadcrumbs = ContainerUtil.emptyList();
+    if (collector != null) {
+      CollectConsumer<Iterable<? extends Crumb>> consumer = new CollectConsumer<>();
+      collector.updateCrumbs(placeInfo.getFile(),
+                             rangeMarker.getDocument(),
+                             rangeMarker.getStartOffset(),
+                             new ProgressIndicatorBase(),
+                             consumer,
+                             true);
+      breadcrumbs = consumer.getResult();
+    }
+
     if (breadcrumbs.isEmpty()) {
-      return info.getFile().getName();
+      return fileName;
     }
 
     Iterable<? extends Crumb> crumbs = ContainerUtil.getFirstItem(breadcrumbs);
 
     if (crumbs == null) {
-      return info.getFile().getName();
+      return fileName;
     }
 
     String breadcrumbsText = StringUtil.join(ContainerUtil.map(crumbs, crumb -> crumb.getText()), " > ");
@@ -294,11 +311,13 @@ public class RecentLocationsAction extends AnAction {
                                   @NotNull Collection<Editor> editorsToRelease,
                                   boolean changed,
                                   @NotNull Ref<List<RecentLocationItem>> changedPlaces,
-                                  @NotNull Ref<List<RecentLocationItem>> navigationPlaces) {
+                                  @NotNull Ref<List<RecentLocationItem>> navigationPlaces,
+                                  @NotNull Ref<Map<PlaceInfo, String>> breadcrumbsMap) {
     NameFilteringListModel<RecentLocationItem> model = (NameFilteringListModel<RecentLocationItem>)listWithFilter.getList().getModel();
     DefaultListModel<RecentLocationItem> originalModel = (DefaultListModel<RecentLocationItem>)model.getOriginalModel();
 
     List<RecentLocationItem> items = cacheAndGetItems(project, changed, changedPlaces, navigationPlaces, editorsToRelease);
+    breadcrumbsMap.set(collectBreadcrumbs(project, items));
 
     originalModel.removeAllElements();
     items.forEach(item -> originalModel.addElement(item));
@@ -311,17 +330,19 @@ public class RecentLocationsAction extends AnAction {
     JPanel mainPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
     mainPanel.add(topPanel);
     mainPanel.add(listWithFilter);
-    mainPanel.setBorder(BorderFactory.createEmptyBorder());
     return mainPanel;
   }
 
   @NotNull
   private static JPanel createHeaderPanel(@NotNull JLabel title, @NotNull JComponent checkbox) {
-    JPanel topPanel = new NonOpaquePanel(new BorderLayout());
+    JPanel topPanel = new CaptionPanel();
     topPanel.add(title, BorderLayout.WEST);
     topPanel.add(checkbox, BorderLayout.EAST);
-    topPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    topPanel.setBackground(JBUI.CurrentTheme.Popup.headerBackground(true));
+
+    Dimension size = topPanel.getPreferredSize();
+    size.height = JBUI.scale(29);
+    topPanel.setPreferredSize(size);
+    topPanel.setBorder(JBUI.Borders.empty(5, 8));
 
     WindowMoveListener moveListener = new WindowMoveListener(topPanel);
     topPanel.addMouseListener(moveListener);
@@ -336,13 +357,13 @@ public class RecentLocationsAction extends AnAction {
                                            @NotNull AnActionEvent e,
                                            boolean changed) {
     CheckboxAction action = new RecentLocationsCheckboxAction(project);
-    CustomShortcutSet set = CustomShortcutSet.fromString(SystemInfo.isMac ? "meta L" : "control L");
-    action.registerCustomShortcutSet(set, listWithFilter);
-    action.getTemplatePresentation().setText("<html>" +
-                                             IdeBundle.message("recent.locations.title.text") +
-                                             " <font color=\"" + SHORTCUT_HEX_COLOR + "\">" +
-                                             KeymapUtil.getShortcutsText(set.getShortcuts()) + "</font>" +
-                                             "</html>");
+    ShortcutSet shortcuts = KeymapUtil.getActiveKeymapShortcuts(RECENT_LOCATIONS_ACTION_ID);
+    action.registerCustomShortcutSet(shortcuts, listWithFilter);
+    action.getTemplatePresentation().setText("<html>"
+                                             + IdeBundle.message("recent.locations.title.text")
+                                             + " <font color=\"" + SHORTCUT_HEX_COLOR + "\">"
+                                             + KeymapUtil.getShortcutsText(shortcuts.getShortcuts()) + "</font>"
+                                             + "</html>");
 
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, e.getDataContext());
     JComponent checkbox = action.createCustomComponent(action.getTemplatePresentation());
@@ -368,9 +389,9 @@ public class RecentLocationsAction extends AnAction {
   }
 
   @NotNull
-  private static Function<RecentLocationItem, String> getNamer(@NotNull Project project) {
+  private static Function<RecentLocationItem, String> getNamer(@NotNull Ref<Map<PlaceInfo, String>> breadcrumbsMap) {
     return value -> {
-      String breadcrumb = getBreadcrumbs(project, value.getInfo());
+      String breadcrumb = breadcrumbsMap.get().get(value.getInfo());
       EditorEx editor = value.getEditor();
 
       return breadcrumb + " " + value.getInfo().getFile().getName() + " " + editor.getDocument().getText();
@@ -529,20 +550,10 @@ public class RecentLocationsAction extends AnAction {
                                       @NotNull Document document,
                                       @NotNull PlaceInfo placeInfo,
                                       @NotNull TextRange textRange) {
-    EditorColorsScheme colorsScheme = setupColorScheme(project, editor, placeInfo);
+    EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
 
     applySyntaxHighlighting(project, editor, document, colorsScheme, textRange, placeInfo);
     applyHighlightingPasses(project, editor, document, colorsScheme, textRange);
-  }
-
-  @NotNull
-  private static EditorColorsScheme setupColorScheme(@NotNull Project project, @NotNull EditorEx editor, @NotNull PlaceInfo placeInfo) {
-    EditorColorsScheme colorsScheme = RecentLocationManager.getInstance(project).getColorScheme(placeInfo, showChanged(project));
-    if (colorsScheme == null) {
-      colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    }
-    editor.setColorsScheme(colorsScheme);
-    return colorsScheme;
   }
 
   private static void applySyntaxHighlighting(@NotNull Project project,

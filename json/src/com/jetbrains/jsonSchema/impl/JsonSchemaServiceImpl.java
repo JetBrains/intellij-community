@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.json.JsonUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +37,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class JsonSchemaServiceImpl implements JsonSchemaService {
+  private static final Logger LOG = Logger.getInstance(JsonSchemaServiceImpl.class);
+
   @NotNull private final Project myProject;
   @NotNull private final MyState myState;
   @NotNull private final ClearableLazyValue<Set<String>> myBuiltInSchemaIds;
@@ -85,7 +87,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
         throw e;
       }
       catch (Exception e) {
-        Logger.getInstance(JsonSchemaService.class).error(PluginManagerCore.createPluginException(e.getMessage(), e, factory.getClass()));
+        PluginException.logPluginError(Logger.getInstance(JsonSchemaService.class), e.getMessage(), e, factory.getClass());
       }
     }
     return providers;
@@ -489,13 +491,24 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     }
 
     @NotNull
-    private static MultiMap<VirtualFile, JsonSchemaFileProvider> createFileProviderMap(@NotNull final List<JsonSchemaFileProvider> list,
-                                                                                  @NotNull Project project) {
+    private static MultiMap<VirtualFile, JsonSchemaFileProvider> createFileProviderMap(@NotNull List<JsonSchemaFileProvider> list,
+                                                                                       @NotNull Project project) {
       // if there are different providers with the same schema files,
       // stream API does not allow to collect same keys with Collectors.toMap(): throws duplicate key
       final MultiMap<VirtualFile, JsonSchemaFileProvider> map = MultiMap.create();
       for (JsonSchemaFileProvider provider : list) {
-        VirtualFile schemaFile = getSchemaForProvider(project, provider);
+        VirtualFile schemaFile;
+        try {
+          schemaFile = getSchemaForProvider(project, provider);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          continue;
+        }
+
         if (schemaFile != null) {
           map.putValue(schemaFile, provider);
         }

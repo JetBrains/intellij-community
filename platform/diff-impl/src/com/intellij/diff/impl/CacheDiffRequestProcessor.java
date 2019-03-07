@@ -114,9 +114,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
           applyRequest(request, force, scrollToChangePolicy);
         };
       },
-      () -> {
-        applyRequest(new LoadingDiffRequest(getRequestName(requestProvider)), force, scrollToChangePolicy);
-      },
+      () -> applyRequest(new LoadingDiffRequest(getRequestName(requestProvider)), force, scrollToChangePolicy),
       getFastLoadingTimeMillis()
     );
   }

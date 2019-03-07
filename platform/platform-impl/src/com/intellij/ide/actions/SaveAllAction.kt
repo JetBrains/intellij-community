@@ -18,9 +18,11 @@ open class SaveAllAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     CommonDataKeys.EDITOR.getData(e.dataContext)?.let(::stripSpacesFromCaretLines)
 
+    val project = CommonDataKeys.PROJECT.getData(e.dataContext)
     GlobalScope.launch(pooledThreadContext) {
-      saveDocumentsAndProjectsAndApp(onlyProject = CommonDataKeys.PROJECT.getData(e.dataContext),
-                                     isForceSavingAllSettings = true)
+      if (project == null || !project.isDisposed) {
+        saveDocumentsAndProjectsAndApp(onlyProject = project, isForceSavingAllSettings = true)
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -41,14 +41,13 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
   public void update(@NotNull AnActionEvent e) {
     DataContext ctx = e.getDataContext();
     IdeView view = LangDataKeys.IDE_VIEW.getData(ctx);
-    if (view == null || e.getProject() == null) {
+    PsiDirectory target = view != null && e.getProject() != null ? getTargetDirectory(ctx, view) : null;
+    if (target == null || !PsiUtil.isLanguageLevel9OrHigher(target)) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
       e.getPresentation().setVisible(true);
-      PsiDirectory target = getTargetDirectory(ctx, view);
-      e.getPresentation().setEnabled(
-        target != null && PsiUtil.isLanguageLevel9OrHigher(target) && JavaModuleGraphUtil.findDescriptorByElement(target) == null);
+      e.getPresentation().setEnabled(JavaModuleGraphUtil.findDescriptorByElement(target) == null);
     }
   }
 

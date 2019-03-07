@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public class LightMethod extends LightElement implements PsiMethod, SyntheticElement {
+public class LightMethod extends LightElement implements PsiMethod {
 
   protected final @NotNull PsiMethod myMethod;
   protected final @NotNull PsiClass myContainingClass;

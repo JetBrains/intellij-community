@@ -448,9 +448,7 @@ public abstract class EditorComposite implements Disposable {
     @Override
     public void requestFocus() {
       if (myFocusComponent != null) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myFocusComponent, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myFocusComponent, true));
       }
     }
 

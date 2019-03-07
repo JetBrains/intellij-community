@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 
 class ExternalSystemSettingsCollector() : ProjectUsagesCollector() {
-  override fun getGroupId() = "statistics.build.tools.state"
+  override fun getGroupId() = "build.tools.state"
 
   override fun getUsages(project: Project): Set<UsageDescriptor> {
     val usages = mutableSetOf<UsageDescriptor>()

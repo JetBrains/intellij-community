@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesCommitExecutor;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -59,7 +58,7 @@ public enum ChangelistConflictResolution {
       }
       MoveChangesDialog dialog = new MoveChangesDialog(project, changes, changeLists, selected);
       if (dialog.showAndGet()) {
-        manager.moveChangesTo(manager.getDefaultChangeList(), ArrayUtil.toObjectArray(dialog.getIncludedChanges(), Change.class));
+        manager.moveChangesTo(manager.getDefaultChangeList(), dialog.getIncludedChanges().toArray(new Change[0]));
         return true;
       }
       return false;

@@ -60,9 +60,7 @@ public class BegTableUI extends BasicTableUI {
         if (cellEditor != null && !cellEditor.stopCellEditing()) {
           return;
         }
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
         return;
       }
       ListSelectionModel rsm = table.getSelectionModel();
@@ -73,9 +71,7 @@ public class BegTableUI extends BasicTableUI {
       Component editorComp = table.getEditorComponent();
       if (editorComp != null) {
         editorComp.addKeyListener(myAdapter);
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(editorComp, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(editorComp, true));
       }
     }
   }

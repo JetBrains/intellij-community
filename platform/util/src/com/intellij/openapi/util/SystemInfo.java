@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.PathManager;
@@ -15,6 +15,9 @@ import java.util.Locale;
 import static com.intellij.openapi.util.text.StringUtil.containsIgnoreCase;
 import static com.intellij.util.ObjectUtils.notNull;
 
+/**
+ * Provides information about operating system, system-wide settings, and Java Runtime.
+ */
 @SuppressWarnings({"HardCodedStringLiteral", "UnusedDeclaration"})
 public class SystemInfo extends SystemInfoRt {
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
@@ -46,6 +49,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isOracleJvm = containsIgnoreCase(JAVA_VENDOR, "Oracle");
   public static final boolean isSunJvm = containsIgnoreCase(JAVA_VENDOR, "Sun") && containsIgnoreCase(JAVA_VENDOR, "Microsystems");
   public static final boolean isIbmJvm = containsIgnoreCase(JAVA_VENDOR, "IBM");
+  public static final boolean isAzulJvm = containsIgnoreCase(JAVA_VENDOR, "Azul");
   public static final boolean isJetBrainsJvm = containsIgnoreCase(JAVA_VENDOR, "JetBrains");
   public static final boolean isStudioJvm = isStudioJvm();
 

@@ -92,19 +92,15 @@ public class GitRefDialog extends DialogWrapper {
   private static FutureResult<Collection<GitTag>> scheduleCollectCommonTags(@NotNull List<GitRepository> repositories,
                                                                             @NotNull Disposable disposable) {
     FutureResult<Collection<GitTag>> futureResult = new FutureResult<>();
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      futureResult.set(BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, () -> {
-        return GitBranchUtil.collectCommon(repositories.stream().map(repository -> {
-          try {
-            List<String> tags = GitBranchUtil.getAllTags(repository.getProject(), repository.getRoot());
-            return ContainerUtil.map(tags, GitTag::new);
-          }
-          catch (VcsException e) {
-            return Collections.emptyList();
-          }
-        }));
-      }));
-    });
+    ApplicationManager.getApplication().executeOnPooledThread(() -> futureResult.set(BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, () -> GitBranchUtil.collectCommon(repositories.stream().map(repository -> {
+        try {
+          List<String> tags = GitBranchUtil.getAllTags(repository.getProject(), repository.getRoot());
+          return ContainerUtil.map(tags, GitTag::new);
+        }
+        catch (VcsException e) {
+          return Collections.emptyList();
+        }
+      })))));
     return futureResult;
   }
 

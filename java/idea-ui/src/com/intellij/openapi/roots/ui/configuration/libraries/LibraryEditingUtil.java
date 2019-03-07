@@ -107,7 +107,7 @@ public class LibraryEditingUtil {
       PersistentLibraryKind<?> kind = ((LibraryEx)library).getKind();
       if (kind != null) {
         LibraryType type = LibraryType.findByKind(kind);
-        if (type != null && !type.isSuitableModule(rootModel.getModule(), facetsProvider)) {
+        if (!type.isSuitableModule(rootModel.getModule(), facetsProvider)) {
           return false;
         }
       }

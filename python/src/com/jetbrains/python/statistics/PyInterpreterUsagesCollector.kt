@@ -18,28 +18,28 @@ object PyInterpreterUsagesCollector : ProjectUsagesCollector() {
     project.sdks
       .map { sdk -> UsageDescriptor(listOf(sdk.version, sdk.remoteType, sdk.interpreterType).joinToString(".")) }.toSet()
 
-  override fun getGroupId() = "statistics.python.interpreter"
+  override fun getGroupId() = "python.interpreter"
 }
 
 object PyInterpreterVersionUsagesCollector : ProjectUsagesCollector() {
   override fun getUsages(project: Project) =
     project.sdks.map { sdk -> UsageDescriptor(sdk.version) }.toSet()
 
-  override fun getGroupId() = "statistics.python.interpreter.version"
+  override fun getGroupId() = "python.interpreter.version"
 }
 
 object PyInterpreterTypeUsagesCollector : ProjectUsagesCollector() {
   override fun getUsages(project: Project) =
     project.sdks.map { sdk -> UsageDescriptor(sdk.interpreterType) }.toSet()
 
-  override fun getGroupId() = "statistics.python.interpreter.type"
+  override fun getGroupId() = "python.interpreter.type"
 }
 
 object PyInterpreterRemoteUsagesCollector : ProjectUsagesCollector() {
   override fun getUsages(project: Project) =
     project.sdks.map { sdk -> UsageDescriptor(sdk.remoteType) }.toSet()
 
-  override fun getGroupId() = "statistics.python.interpreter.remote"
+  override fun getGroupId() = "python.interpreter.remote"
 }
 
 private val Project.sdks get() = ModuleManager.getInstance(this).modules.mapNotNull(PythonSdkType::findPythonSdk)

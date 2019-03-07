@@ -357,7 +357,9 @@ public class ExternalSystemApiUtil {
   }
 
   public static void executeProjectChangeAction(boolean synchronous, @NotNull final DisposeAwareProjectChange task) {
-    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
+    }
     executeOnEdt(synchronous, () -> ApplicationManager.getApplication().runWriteAction(task));
   }
 

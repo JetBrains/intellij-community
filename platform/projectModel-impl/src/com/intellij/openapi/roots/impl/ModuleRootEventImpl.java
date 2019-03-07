@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -25,7 +26,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 public class ModuleRootEventImpl extends ModuleRootEvent {
   private final boolean myFiletypes;
 
-  public ModuleRootEventImpl(Project project, boolean filetypes) {
+  public ModuleRootEventImpl(@NotNull Project project, boolean filetypes) {
     super(project);
     myFiletypes = filetypes;
   }

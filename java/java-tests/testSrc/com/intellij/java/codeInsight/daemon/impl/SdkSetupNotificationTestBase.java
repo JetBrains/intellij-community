@@ -15,7 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.ui.EditorNotifications;
+import com.intellij.ui.EditorNotificationsImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,6 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
     super.setUp();
 
     setProjectSdk(IdeaTestUtil.getMockJdk17());
-    new SdkSetupNotificationProvider(getProject(), EditorNotifications.getInstance(getProject()));
   }
 
   @Override
@@ -60,6 +59,7 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
     final PsiFile psiFile = myFixture.configureByText(name, text);
     final FileEditor[] editors = FileEditorManagerEx.getInstanceEx(getProject()).openFile(psiFile.getVirtualFile(), true);
     assertSize(1, editors);
+    EditorNotificationsImpl.completeAsyncTasks();
 
     return editors[0].getUserData(SdkSetupNotificationProvider.KEY);
   }

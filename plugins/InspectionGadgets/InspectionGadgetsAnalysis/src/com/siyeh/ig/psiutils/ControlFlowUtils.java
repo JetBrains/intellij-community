@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1225,11 +1225,11 @@ public class ControlFlowUtils {
     private boolean m_found;
     private final PsiStatement m_target;
 
-    private BreakFinder(@NotNull PsiStatement target) {
+    BreakFinder(@NotNull PsiStatement target) {
       m_target = target;
     }
 
-    private boolean breakFound() {
+    boolean breakFound() {
       return m_found;
     }
 
@@ -1243,7 +1243,7 @@ public class ControlFlowUtils {
       if (exitedStatement == null) {
         return;
       }
-      if (PsiTreeUtil.isAncestor(exitedStatement, m_target, false)) {
+      if (exitedStatement == m_target) {
         m_found = true;
       }
     }

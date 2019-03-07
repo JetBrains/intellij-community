@@ -28,7 +28,7 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("FONT_SIZE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontSize"))
-  var fontSize by property(defFontSize)
+  var fontSize by property(0)
 
   @get:OptionTag("FONT_SCALE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontScale"))

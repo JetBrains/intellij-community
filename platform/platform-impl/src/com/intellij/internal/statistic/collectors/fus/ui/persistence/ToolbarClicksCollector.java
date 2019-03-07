@@ -28,7 +28,6 @@ import static com.intellij.internal.statistic.collectors.fus.actions.persistence
   }
 )
 public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarClicksCollector.ClicksState> {
-  private static final String GROUP = "toolbar";
 
   public final static class ClicksState {
     @Tag("counts")
@@ -52,7 +51,7 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
     if (collector != null) {
       final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
       final FeatureUsageData data = new FeatureUsageData().addPluginInfo(info).addOS().addPlace(place);
-      FUCounterUsageLogger.getInstance().logEvent(GROUP, toReportedId(info, action, data), data);
+      FUCounterUsageLogger.getInstance().logEvent("toolbar", toReportedId(info, action, data), data);
     }
   }
 

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public class ProductivityUsageCollector extends ApplicationUsagesCollector {
-  public static final String GROUP_ID = "statistics.productivity";
+  public static final String GROUP_ID = "productivity";
 
   @NotNull
   @Override

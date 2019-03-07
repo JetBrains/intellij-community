@@ -41,7 +41,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -130,7 +129,7 @@ public class ExternalSystemTaskActivator {
         phases.add(Phase.AFTER_REBUILD);
       }
     }
-    return runTasks(modules, ArrayUtil.toObjectArray(phases, Phase.class));
+    return runTasks(modules, phases.toArray(new Phase[0]));
   }
 
   public boolean runTasks(@NotNull String modulePath, @NotNull Phase... phases) {

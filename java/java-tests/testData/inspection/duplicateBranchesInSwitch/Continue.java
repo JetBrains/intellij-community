@@ -9,7 +9,7 @@ class C {
         case 2:
           continue;
         case 3:
-          <weak_warning descr="Duplicate branch in 'switch' statement">s += i;
+          <weak_warning descr="Duplicate branch in 'switch'">s += i;
           continue;</weak_warning>
         default:
           s += i;

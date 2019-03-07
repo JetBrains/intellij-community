@@ -151,9 +151,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     uiHelper.installTreeSpeedSearch(myTree);
     TreeUtil.installActions(myTree);
 
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
   }
 
   private static class AlwaysNotifiedObservable extends Observable{

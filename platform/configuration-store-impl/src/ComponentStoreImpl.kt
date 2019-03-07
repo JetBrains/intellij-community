@@ -2,7 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.diagnostic.PluginException
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -102,7 +102,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       throw e
     }
     catch (e: Exception) {
-      LOG.error(PluginManagerCore.createPluginException("Cannot init $componentName component state", e, component.javaClass))
+      PluginException.logPluginError(LOG, "Cannot init $componentName component state", e, component.javaClass)
     }
   }
 

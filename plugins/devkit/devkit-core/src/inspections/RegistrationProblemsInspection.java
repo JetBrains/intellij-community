@@ -145,7 +145,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                                                        DevKitBundle.message("inspections.registration.problems.abstract"), isOnTheFly,
                                                        LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
-        return ArrayUtil.toObjectArray(problems, ProblemDescriptor.class);
+        return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
       }
     }
     return null;

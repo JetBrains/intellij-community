@@ -111,9 +111,7 @@ public class MacOSApplicationProvider {
         Project project = getProject(false);
         List<File> list = event.getFiles();
         if (list.isEmpty()) return;
-        submit("OpenFile", () -> {
-          tryOpenFileList( project, list, "MacMenu");
-        });
+        submit("OpenFile", () -> tryOpenFileList(project, list, "MacMenu"));
       });
       installAutoUpdateMenu();
 

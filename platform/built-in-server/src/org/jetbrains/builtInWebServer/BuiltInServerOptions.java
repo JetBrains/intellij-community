@@ -1,12 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SimpleConfigurable;
 import com.intellij.openapi.util.Getter;
@@ -27,7 +24,7 @@ import java.util.Collections;
 
 @State(
   name = "BuiltInServerOptions",
-  storages = @Storage(Storage.NOT_ROAMABLE_FILE)
+  storages = @Storage(StoragePathMacros.NOT_ROAMABLE_FILE)
 )
 public class BuiltInServerOptions implements PersistentStateComponent<BuiltInServerOptions>, Getter<BuiltInServerOptions> {
   public static final int DEFAULT_PORT = 63342;

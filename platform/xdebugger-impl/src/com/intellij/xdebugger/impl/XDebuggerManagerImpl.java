@@ -38,6 +38,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.messages.MessageBus;
@@ -59,6 +60,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -354,12 +357,6 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
 
   private class DebuggerEditorListener implements EditorMouseMotionListener, EditorMouseListener {
     RangeHighlighter myCurrentHighlighter;
-    final TextAttributes myAttributes;
-
-    DebuggerEditorListener() {
-      myAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES).clone();
-      myAttributes.setBackgroundColor(ColorUtil.softer(myAttributes.getBackgroundColor()));
-    }
 
     boolean isEnabled(@NotNull EditorMouseEvent e) {
       if (e.getArea() != EditorMouseEventArea.LINE_NUMBERS_AREA) {
@@ -376,9 +373,18 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
         return;
       }
       removeHighlighter(e);
+
+      TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES);
+      Color backgroundColor = attributes.getBackgroundColor();
+      if (backgroundColor != null) {
+        attributes = attributes.clone();
+        attributes.setBackgroundColor(ColorUtil.softer(backgroundColor));
+      }
+
       myCurrentHighlighter = e.getEditor().getMarkupModel().addLineHighlighter(getLineNumber(e),
                                                                                DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
-                                                                               myAttributes);
+                                                                               attributes);
+      IdeGlassPaneUtil.find(e.getMouseEvent().getComponent()).setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR), this);
     }
 
     @Override
@@ -388,7 +394,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
 
     private void removeHighlighter(@NotNull EditorMouseEvent e) {
       if (myCurrentHighlighter != null) {
-        e.getEditor().getMarkupModel().removeHighlighter(myCurrentHighlighter);
+        myCurrentHighlighter.dispose();
+        IdeGlassPaneUtil.find(e.getMouseEvent().getComponent()).setCursor(null, this);
+        myCurrentHighlighter = null;
       }
     }
 
@@ -401,11 +409,12 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     }
 
     @Override
-    public void mouseClicked(@NotNull EditorMouseEvent e) {
-      if (isEnabled(e)) {
+    public void mousePressed(@NotNull EditorMouseEvent e) {
+      if (e.getMouseEvent().getButton() == MouseEvent.BUTTON1 && isEnabled(e)) {
         XDebugSessionImpl session = getCurrentSession();
         if (session != null) {
           session.runToPosition(XSourcePositionImpl.create(((EditorEx)e.getEditor()).getVirtualFile(), getLineNumber(e)), false);
+          e.consume();
         }
       }
     }

@@ -28,10 +28,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
   public static final UINumericRange QUICK_DOC_DELAY_RANGE = new UINumericRange(500, 1, 5000);
 
+  private static final String SOFT_WRAP_FILE_MASKS_ENABLED_DEFAULT = "*";
+  private static final String SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT = "*.md; *.txt; *.rst; *.adoc";
+
   //Q: make it interface?
   public static final class OptionSet {
     public String LINE_SEPARATOR;
     public String USE_SOFT_WRAPS;
+    public String SOFT_WRAP_FILE_MASKS;
     public boolean USE_CUSTOM_SOFT_WRAP_INDENT = false;
     public int CUSTOM_SOFT_WRAP_INDENT = 0;
     public boolean IS_VIRTUAL_SPACE = false;
@@ -220,19 +224,35 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myAdditionalLinesCount = additionalLinesCount;
   }
 
+  /**
+   * @deprecated Not used, to be removed in version 2020.1.
+   */
+  @Deprecated
   @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
   public int getAdditinalColumnsCount() {
     return myAdditionalColumnsCount;
   }
 
+  /**
+   * @deprecated Not used, to be removed in version 2020.1.
+   */
+  @Deprecated
   public void setAdditionalColumnsCount(int value) {
     myAdditionalColumnsCount = value;
   }
 
+  /**
+   * @deprecated Not used, to be removed in version 2020.1.
+   */
+  @Deprecated
   public boolean isLineMarkerAreaShown() {
     return myLineMarkerAreaShown;
   }
 
+  /**
+   * @deprecated Not used, to be removed in version 2020.1.
+   */
+  @Deprecated
   public void setLineMarkerAreaShown(boolean lineMarkerAreaShown) {
     myLineMarkerAreaShown = lineMarkerAreaShown;
   }
@@ -355,6 +375,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
       myPlacesToUseSoftWraps.remove(place);
     }
     storeRawSoftWraps();
+    if (place == SoftWrapAppliancePlaces.MAIN_EDITOR) setSoftWrapFileMasks(getSoftWrapFileMasks());
   }
 
   public boolean isUseCustomSoftWrapIndent() {
@@ -607,5 +628,16 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setKeepTrailingSpacesOnCaretLine(boolean keep) {
     myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE = keep;
+  }
+
+  @NotNull
+  public String getSoftWrapFileMasks() {
+    String storedValue = myOptions.SOFT_WRAP_FILE_MASKS;
+    if (storedValue != null) return storedValue;
+    return isUseSoftWraps() ? SOFT_WRAP_FILE_MASKS_ENABLED_DEFAULT : SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT;
+  }
+
+  public void setSoftWrapFileMasks(@NotNull String value) {
+    myOptions.SOFT_WRAP_FILE_MASKS = value;
   }
 }

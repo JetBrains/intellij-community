@@ -15,14 +15,18 @@
  */
 package com.intellij.openapi.module;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ModuleWithNameAlreadyExists extends Exception {
+  @NotNull
   private final String myModuleName;
 
-  public ModuleWithNameAlreadyExists(final String message, final String moduleName) {
+  public ModuleWithNameAlreadyExists(@NotNull String message, @NotNull String moduleName) {
     super(message);
     myModuleName = moduleName;
   }
 
+  @NotNull
   public String getModuleName() {
     return myModuleName;
   }

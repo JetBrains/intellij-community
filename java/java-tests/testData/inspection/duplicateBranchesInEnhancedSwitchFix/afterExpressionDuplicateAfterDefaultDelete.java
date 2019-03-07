@@ -1,4 +1,4 @@
-// "Delete redundant 'switch' result expression" "GENERIC_ERROR_OR_WARNING"
+// "Delete redundant 'switch' branch" "GENERIC_ERROR_OR_WARNING"
 class C {
     void foo(int n) {
         String s = switch (n) {

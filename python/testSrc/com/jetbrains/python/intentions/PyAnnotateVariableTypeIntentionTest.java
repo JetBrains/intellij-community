@@ -287,9 +287,7 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   public void doMultiFileAnnotationTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      doMultiFileTest(PyBundle.message("INTN.add.type.hint.for.variable.family"));
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doMultiFileTest(PyBundle.message("INTN.add.type.hint.for.variable.family")));
   }
 
   private void doMultiFileTest(@NotNull String hint) {

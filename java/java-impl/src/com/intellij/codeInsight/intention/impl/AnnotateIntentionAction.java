@@ -115,9 +115,7 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
         new BaseListPopupStep<AnnotationProvider>(CodeInsightBundle.message("annotate.intention.chooser.title"), annotations) {
           @Override
           public PopupStep onChosen(final AnnotationProvider selectedValue, final boolean finalChoice) {
-            return doFinalStep(() -> {
-              new AddAnnotationFix(selectedValue.getName(project), owner, selectedValue.getAnnotationsToRemove(project)).invoke(project, editor, file);
-            });
+            return doFinalStep(() -> new AddAnnotationFix(selectedValue.getName(project), owner, selectedValue.getAnnotationsToRemove(project)).invoke(project, editor, file));
           }
 
           @Override

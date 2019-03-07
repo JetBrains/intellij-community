@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl
 
@@ -45,6 +46,12 @@ class GrLambdaExpressionImpl(node: ASTNode) : GrExpressionImpl(node), GrLambdaEx
     return getCachedValue(this) {
       create(doGetOwnerType(), PsiModificationTracker.MODIFICATION_COUNT)
     }
+  }
+
+  override fun getReturnType(): PsiType? = TypeInferenceHelper.getCurrentContext().getExpressionType(this, ::calculateReturnType)
+
+  override fun getType(): PsiType? {
+    return GrClosureType.create(this, true)
   }
 
   override fun toString(): String = "Lambda expression"

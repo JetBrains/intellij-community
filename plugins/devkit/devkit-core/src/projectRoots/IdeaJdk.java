@@ -531,7 +531,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   @Override
-  public SdkAdditionalData loadAdditionalData(@NotNull Sdk sdk, Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull Sdk sdk, @NotNull Element additional) {
     Sandbox sandbox = new Sandbox(sdk);
     try {
       sandbox.readExternal(additional);

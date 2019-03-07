@@ -128,7 +128,7 @@ public class OrderEntryUtil {
     return true;
   }
 
-  public static void addLibraryToRoots(final LibraryOrderEntry libraryOrderEntry, final Module module) {
+  public static void addLibraryToRoots(@NotNull LibraryOrderEntry libraryOrderEntry, @NotNull Module module) {
     Library library = libraryOrderEntry.getLibrary();
     if (library == null) return;
     addLibraryToRoots(module, library);
@@ -191,7 +191,7 @@ public class OrderEntryUtil {
     replaceLibraryByAdded(model, i);
   }
 
-  private static void replaceLibraryByAdded(ModifiableRootModel model, int toReplace) {
+  private static void replaceLibraryByAdded(@NotNull ModifiableRootModel model, int toReplace) {
     OrderEntry[] entries = model.getOrderEntries();
     LibraryOrderEntry newEntry = (LibraryOrderEntry)entries[entries.length - 1];
     LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entries[toReplace];
@@ -220,7 +220,8 @@ public class OrderEntryUtil {
     }
   }
 
-  public static DependencyScope intersectScopes(DependencyScope scope1, DependencyScope scope2) {
+  @NotNull
+  public static DependencyScope intersectScopes(@NotNull DependencyScope scope1, @NotNull DependencyScope scope2) {
     if (scope1 == scope2) return scope1;
     if (scope1 == DependencyScope.COMPILE) return scope2;
     if (scope2 == DependencyScope.COMPILE) return scope1;

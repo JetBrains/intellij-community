@@ -3,15 +3,18 @@ package com.intellij.javascript.debugger
 
 import com.google.common.base.CharMatcher
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.SyntaxTraverser
 import gnu.trove.THashMap
 import org.jetbrains.debugger.sourcemap.MappingEntry
 import org.jetbrains.debugger.sourcemap.Mappings
 import org.jetbrains.debugger.sourcemap.MappingsProcessorInLine
 import org.jetbrains.debugger.sourcemap.SourceMap
 import org.jetbrains.rpc.LOG
+import java.util.concurrent.atomic.AtomicInteger
 
 private const val S1 = ",()[]{}="
 // don't trim trailing .&: - could be part of expression
@@ -75,6 +78,8 @@ open class NameMapper(private val document: Document, private val transpiledDocu
       return null
     }
 
+    val file = element.containingFile
+    val namedElementsCounter = AtomicInteger(0)
     val processor = object : MappingsProcessorInLine {
       override fun process(entry: MappingEntry, nextEntry: MappingEntry?): Boolean {
         val entryColumn = entry.sourceColumn
@@ -86,12 +91,30 @@ open class NameMapper(private val document: Document, private val transpiledDocu
           entryColumn in elementColumn..elementEndColumn
         }
         if (isSuitable) {
+          val startOffset = document.getLineStartOffset(line) + entryColumn
+          val endOffset =
+            if (nextEntry != null) document.getLineStartOffset(line) + nextEntry.sourceColumn
+            else document.getLineEndOffset(line)
+          if (collectNamedElementsInRange(TextRange(startOffset, endOffset))) {
+            return false
+          }
+
           mappings.add(entry)
         }
         return true
       }
+
+      private fun collectNamedElementsInRange(range: TextRange): Boolean {
+        return SyntaxTraverser.psiTraverser(file)
+          .onRange(range)
+          .filter { it is PsiNamedElement && range.contains(it.textRange) && namedElementsCounter.incrementAndGet() > 1 }
+          .traverse()
+          .isNotEmpty
+      }
     }
-    sourceMap.processSourceMappingsInLine(sourceEntry.source, sourceEntry.sourceLine, processor)
+    if (!sourceMap.processSourceMappingsInLine(sourceEntry.source, sourceEntry.sourceLine, processor)) {
+      return null
+    }
     return mappings
   }
 

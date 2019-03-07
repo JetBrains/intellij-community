@@ -180,9 +180,7 @@ class CompareBranchesDiffPanel extends JPanel {
             ((LocalCommitCompareInfo)myCompareInfo).copyChangesFromBranch(changes, swapSides);
           }
           catch (VcsException err) {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              Messages.showErrorDialog(myProject, err.getMessage(), "Can't Copy Changes");
-            });
+            ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myProject, err.getMessage(), "Can't Copy Changes"));
           }
         }
 

@@ -80,14 +80,15 @@ class CompilationContextImpl implements CompilationContext {
     }
 
     projectHome = toCanonicalPath(projectHome)
-    def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "${jdkDir(projectHome, options)}/1.8", "JDK_18_x64"))
+    def jdkDefaultDir = "${jdkDir(projectHome, options)}/${jdkVersionName(options)}"
+    def jdkHome = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", jdkDefaultDir, "JDK_18_x64"))
 /* Android Studio: removed by Change I1dba4249 / commit 8f836c4
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
 Android Studio: removed by Change I1dba4249 / commit 8f836c4 */
 
-    def model = loadProject(projectHome, jdk8Home, kotlinHome, messages, options, ant)
+    def model = loadProject(projectHome, jdkHome, kotlinHome, messages, options, ant)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
-    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdk8Home, kotlinHome, messages, oldToNewModuleName,
+    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, kotlinHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
     messages.debugLogPath = "$context.paths.buildOutputRoot/log/debug.log"
@@ -98,6 +99,10 @@ Android Studio: removed by Change I1dba4249 / commit 8f836c4 */
     options.jdksTargetDir?.with {
       new File(it).exists() ? it : null
     } ?: "$projectHome/build/jdk"
+  }
+
+  private static String jdkVersionName(BuildOptions options) {
+    "${options.jdkVersion < 9 ? "1.$options.jdkVersion" : options.jdkVersion}"
   }
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
@@ -121,7 +126,7 @@ Android Studio: removed by Change I1dba4249 / commit 8f836c4 */
   private Map<String, List<String>> myRuntimeClasspathCache = new HashMap<>()
 
   private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsModel model, String communityHome,
-                                 String projectHome, String jdk8Home, String kotlinHome, BuildMessages messages,
+                                 String projectHome, String jdkHome, String kotlinHome, BuildMessages messages,
                                  Map<String, String> oldToNewModuleName,
                                  BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     this.ant = ant
@@ -135,7 +140,7 @@ Android Studio: removed by Change I1dba4249 / commit 8f836c4 */
     this.oldToNewModuleName = oldToNewModuleName
     this.newToOldModuleName = oldToNewModuleName.collectEntries { oldName, newName -> [newName, oldName] } as Map<String, String>
     String buildOutputRoot = options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)
-    this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home, kotlinHome)
+    this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdkHome, kotlinHome)
   }
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
@@ -154,7 +159,7 @@ Android Studio: removed by Change I1dba4249 / commit 8f836c4 */
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtil.toSystemIndependentName(new File(projectHome, "../../prebuilts/tools/common/m2/repository").absolutePath))
 
     JdkUtils.defineJdk(model.global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "${jdkDir(projectHome, options)}/1.6", "JDK_16_x64"))
-    JdkUtils.defineJdk(model.global, "1.8", jdkHome)
+    JdkUtils.defineJdk(model.global, jdkVersionName(options), jdkHome)
 
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
     JpsProjectLoader.loadProject(model.project, pathVariables, projectHome)

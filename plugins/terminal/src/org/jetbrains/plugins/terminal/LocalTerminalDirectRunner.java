@@ -20,7 +20,6 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.*;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -193,11 +192,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     try {
-      TerminalUsageTriggerCollector.trigger(myProject, "local.exec", FUSUsageContext.create(
-        FUSUsageContext.getOSNameContextData(),
-        SystemInfo.getOsNameAndVersion(),
-        TerminalUsageTriggerCollector.getShellNameForStat(command[0]))
-      );
+      TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
       String workingDir = getWorkingDirectory(directory);
       long startNano = System.nanoTime();
       String[] finalCommand = command;

@@ -301,7 +301,7 @@ public class FileManagerImpl implements FileManager {
 
   void possiblyInvalidatePhysicalPsi() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    removeInvalidDirs(true);
+    removeInvalidDirs();
     for (FileViewProvider provider : getVFileToViewProviderMap().values()) {
       markPossiblyInvalidated(provider);
     }
@@ -477,29 +477,12 @@ public class FileManagerImpl implements FileManager {
     return files;
   }
 
-  private void removeInvalidDirs(boolean useFind) {
-    Map<VirtualFile, PsiDirectory> fileToPsiDirMap = new THashMap<>(getVFileToPsiDirMap());
-    if (useFind) {
-      myVFileToPsiDirMap.set(null);
-    }
-    for (Iterator<VirtualFile> iterator = fileToPsiDirMap.keySet().iterator(); iterator.hasNext();) {
-      VirtualFile vFile = iterator.next();
-      if (!vFile.isValid()) {
-        iterator.remove();
-      }
-      else {
-        PsiDirectory psiDir = findDirectory(vFile);
-        if (psiDir == null) {
-          iterator.remove();
-        }
-      }
-    }
+  private void removeInvalidDirs() {
     myVFileToPsiDirMap.set(null);
-    getVFileToPsiDirMap().putAll(fileToPsiDirMap);
   }
 
   void removeInvalidFilesAndDirs(boolean useFind) {
-    removeInvalidDirs(useFind);
+    removeInvalidDirs();
 
     // note: important to update directories map first - findFile uses findDirectory!
     Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<>(getVFileToViewProviderMap());

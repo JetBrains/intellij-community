@@ -5,6 +5,8 @@ class A {
   A() {
     <error descr="Qualified new of static class">b.new c()</error>;
     b.new inner();
+    new A.inner();
+    b.new <error descr="Qualified class reference is not allowed in qualified new">A</error>.inner();
   }
   class inner {}
 

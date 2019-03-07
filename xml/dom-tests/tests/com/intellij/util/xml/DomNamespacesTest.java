@@ -15,14 +15,12 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.impl.DomFileElementImpl;
 import com.intellij.util.xml.impl.DomTestCase;
 import com.intellij.util.xml.reflect.DomGenericInfo;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -264,9 +262,7 @@ public class DomNamespacesTest extends DomTestCase {
                                              "<sys:aaa/>" +
                                              "</f:a>", MyElement.class);
     registerNamespacePolicies(element2, "foo1", "bar1");
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      element.copyFrom(element2);
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> element.copyFrom(element2));
 
     assertEquals("<a xmlns=\"foo\" xmlns:bar=\"bar\">" +
                  "<bar:bar-child/>" +

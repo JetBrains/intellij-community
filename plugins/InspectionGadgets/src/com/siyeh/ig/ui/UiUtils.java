@@ -121,17 +121,13 @@ public class UiUtils {
     selectionModel.setSelectionInterval(row, row);
     EventQueue.invokeLater(() -> {
       final ListWrappingTableModel tableModel = table.getModel();
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
       final Rectangle rectangle = table.getCellRect(row, column, true);
       table.scrollRectToVisible(rectangle);
       table.editCellAt(row, column);
       final TableCellEditor editor = table.getCellEditor();
       final Component component = editor.getTableCellEditorComponent(table, tableModel.getValueAt(row, column), true, row, column);
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(component, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
     });
   }
 

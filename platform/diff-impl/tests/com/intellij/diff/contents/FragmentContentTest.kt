@@ -83,22 +83,22 @@ class FragmentContentTest : HeavyDiffTestCase() {
 
   fun testRemoveOriginalFragment() {
     assertTrue(fragment.isWritable)
-    replaceString(document, 2, 8, "");
-    assertEquals("0189", document.text);
+    replaceString(document, 2, 8, "")
+    assertEquals("0189", document.text)
     assertEquals("Invalid selection range", fragment.text)
     assertFalse(fragment.isWritable)
   }
 
   fun testRemoveListeners() {
-    replaceString(fragment, 0, 1, "x");
-    assertEquals("012x456789", document.text);
+    replaceString(fragment, 0, 1, "x")
+    assertEquals("012x456789", document.text)
 
     fragmentContent.onAssigned(false)
-    replaceString(fragment, 0, 1, "3");
-    assertEquals("012x456789", document.text);
-    replaceString(document, 3, 4, "y");
-    assertEquals("012y456789", document.text);
-    assertEquals("3456", fragment.text);
+    replaceString(fragment, 0, 1, "3")
+    assertEquals("012x456789", document.text)
+    replaceString(document, 3, 4, "y")
+    assertEquals("012y456789", document.text)
+    assertEquals("3456", fragment.text)
 
     fragmentContent.onAssigned(true)
   }

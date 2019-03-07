@@ -570,7 +570,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   private static String findLiteralText(@NotNull PsiExpression expr) {
     final PsiElement[] literals = PsiTreeUtil.collectElements(expr, new PsiElementFilter() {
       @Override
-      public boolean isAccepted(PsiElement element) {
+      public boolean isAccepted(@NotNull PsiElement element) {
         if (isStringPsiLiteral(element) && isNameSupplier(element)) {
           final PsiElement exprList = element.getParent();
           if (exprList instanceof PsiExpressionList) {

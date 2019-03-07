@@ -21,11 +21,16 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -35,6 +40,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * @author dsl
@@ -472,5 +478,46 @@ public class RootsChangedTest extends ModuleTestCase {
     UIUtil.dispatchAllInvocationEvents();
     delete(dir);
     assertEventsCount(mustGenerateEvents);
+  }
+
+  public void testEmptyDirectoryCreatedAndSomeRogueFileListenerImmediatelyCallsGetChildrenPreventingFurtherCreationEventsForFilesThatHappenedToBeAlreadyThereByThatMoment() {
+    File ioRoot = new File(FileUtil.getTempDirectory());
+
+    VirtualFile vRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioRoot);
+    vRoot.getChildren();
+
+    Module module = createModule("a.iml");
+    ModuleRootModificationUtil.addContentRoot(module, vRoot.getPath());
+    ModuleRootModificationUtil.updateModel(module, model -> model.getContentEntries()[0].addExcludeFolder(vRoot.getUrl() + "/parent/excluded"));
+
+    MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
+    BulkFileListener rogueListenerWhichStupidlyGetChildrensRightAway = new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          VirtualFile file = event.getFile();
+          if (event instanceof VFileCreateEvent && file != null) {
+            file.getChildren();// aaaaaaaaah!
+          }
+        }
+      }
+    };
+    connect.subscribe(VirtualFileManager.VFS_CHANGES, rogueListenerWhichStupidlyGetChildrensRightAway);
+
+    myModuleRootListener.reset();
+
+    File iParent = new File(ioRoot, "parent");
+    assertTrue(iParent.mkdirs());
+    vRoot.refresh(true, true);
+
+    TimeoutUtil.sleep(1000); // hope that now async refresh has found "parent" and is waiting for EDT to fire events
+
+    File ioExcluded = new File(iParent, "excluded");
+    assertTrue(ioExcluded.mkdirs());
+    UIUtil.dispatchAllInvocationEvents(); // now events are fired
+
+    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioExcluded));
+
+    assertEventsCount(1);
   }
 }

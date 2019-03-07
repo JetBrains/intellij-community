@@ -4,10 +4,16 @@ package com.intellij.java.codeInsight;
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
+import com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExternalLibraryResolver;
+import com.intellij.java.testutil.MavenDependencyUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +33,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Range;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.eclipse.util.PathUtil;
 
 import java.util.Arrays;
@@ -50,13 +56,22 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
 
       Collection<String> utilClassPath = PathManager.getUtilClassPath();
       VirtualFile[] files = StreamEx.of(utilClassPath)
-        .append(PathManager.getJarPathForClass(Range.class))
+        .append(PathManager.getJarPathForClass(Unmodifiable.class))
         .map(path -> path.endsWith(".jar") ?
                      JarFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path) + "!/") :
                      LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path)))
         .toArray(VirtualFile[]::new);
 
       return PsiTestUtil.addRootsToJdk(plusTools, OrderRootType.CLASSES, files);
+    }
+
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      super.configureModule(module, model, contentEntry);
+      ExternalLibraryDescriptor descriptor = JetBrainsAnnotationsExternalLibraryResolver.getAnnotationsLibraryDescriptor(module);
+      String coordinates =
+        descriptor.getLibraryGroupId() + ":" + descriptor.getLibraryArtifactId() + ":" + descriptor.getPreferredVersion();
+      MavenDependencyUtil.addFromMaven(model, coordinates);
     }
   };
 

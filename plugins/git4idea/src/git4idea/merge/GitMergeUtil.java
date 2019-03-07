@@ -135,9 +135,7 @@ public class GitMergeUtil {
     Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
     if (!unmergedNames.isEmpty()) {
       List<VirtualFile> unmerged = mapNotNull(unmergedNames, name -> LocalFileSystem.getInstance().findFileByPath(name));
-      GuiUtils.invokeLaterIfNeeded(() -> {
-        AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, GitVcs.getInstance(project).getMergeProvider());
-      }, ModalityState.defaultModalityState());
+      GuiUtils.invokeLaterIfNeeded(() -> AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, GitVcs.getInstance(project).getMergeProvider()), ModalityState.defaultModalityState());
     }
   }
 }

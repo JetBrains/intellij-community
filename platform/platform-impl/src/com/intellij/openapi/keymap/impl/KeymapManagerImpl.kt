@@ -126,6 +126,7 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
 
   fun setKeymaps(keymaps: List<Keymap>, active: Keymap?, removeCondition: Condition<Keymap>?) {
     schemeManager.setSchemes(keymaps, active, removeCondition)
+    fireActiveKeymapChanged(active)
   }
 
   override fun getState(): Element {

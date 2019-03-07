@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.Disposable;
@@ -197,11 +197,11 @@ public class PersistentFsTest extends PlatformTestCase {
     // wrt persistence subDir becomes partially loaded and subsubDir becomes fully loaded
     File nestedDirOutsideTheProject = new File(projectStructure.getPath() + "../../../"+testName + "/subDir", "subSubDir").getCanonicalFile();
     Disposable disposable = null;
-    
+
     try {
       boolean atleastSecondRun = nestedDirOutsideTheProject.getParentFile().getParentFile().exists();
       StringBuilder eventLog = new StringBuilder();
-      
+
       if (atleastSecondRun) {
         disposable = Disposer.newDisposable();
         getProject().getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
@@ -219,18 +219,18 @@ public class PersistentFsTest extends PlatformTestCase {
           }
         });
       }
-      
+
       // recreating structure will fire vfs removal events
       VirtualFile nestedDirOutsideTheProjectFile = VfsUtil.createDirectories(nestedDirOutsideTheProject.getPath());
       WriteAction.run(() -> nestedDirOutsideTheProjectFile.createChildData(null, "Foo.txt"));
-      
+
       // subsubDir becomes fully loaded wrt persistence
       nestedDirOutsideTheProjectFile.getChildren();
 
       if (atleastSecondRun) {
-        assertEquals("subDir\n" + 
+        assertEquals("subDir\n" +
                      "subDir/subSubDir\n" +
-                     "subDir/subSubDir/Foo.txt\n", 
+                     "subDir/subSubDir/Foo.txt\n",
                      eventLog.toString()
         );
       }
@@ -240,7 +240,7 @@ public class PersistentFsTest extends PlatformTestCase {
       FileUtil.delete(nestedDirOutsideTheProject.getParentFile());
     }
   }
-  
+
   public void testModCountIncreases() throws IOException {
     VirtualFile vFile = setupFile();
     ManagingFS managingFS = ManagingFS.getInstance();
@@ -360,10 +360,10 @@ public class PersistentFsTest extends PlatformTestCase {
     checkEvents("Before:[VFileCreateEvent->xx.created, VFileDeleteEvent->file.txt]\n" +
                 "After:[VFileCreateEvent->xx.created, VFileDeleteEvent->file.txt]\n",
                 new VFileDeleteEvent(this, vFile, false),
-                new VFileCreateEvent(this, vFile.getParent(), "xx.created", false, null, false, false),
+                new VFileCreateEvent(this, vFile.getParent(), "xx.created", false, null, null, false, false),
                 new VFileDeleteEvent(this, vFile, false));
   }
-  
+
   public void testProcessEventsMustGroupDependentEventsCorrectly2() throws IOException {
     File file = new File(createTempDirectory(), "a/b/c/test.txt");
     assertTrue(file.getParentFile().mkdirs());
@@ -377,8 +377,8 @@ public class PersistentFsTest extends PlatformTestCase {
                 "Before:[VFileDeleteEvent->c]\n" +
                 "After:[VFileDeleteEvent->c]\n",
                 new VFileDeleteEvent(this, vFile, false),
-                new VFileCreateEvent(this, vFile.getParent(), "xx.created", false, null, false, false),
-                new VFileCreateEvent(this, vFile.getParent(), "xx.created2", false, null, false, false),
+                new VFileCreateEvent(this, vFile.getParent(), "xx.created", false, null, null, false, false),
+                new VFileCreateEvent(this, vFile.getParent(), "xx.created2", false, null, null, false, false),
                 new VFileDeleteEvent(this, vFile.getParent(), false));
   }
 

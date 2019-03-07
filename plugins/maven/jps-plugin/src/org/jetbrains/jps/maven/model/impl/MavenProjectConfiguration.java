@@ -222,9 +222,7 @@ public class MavenProjectConfiguration {
 
   // adapted from org.jetbrains.idea.maven.server.Maven3ServerEmbedder
   private static Map<String, String> getMavenAndJvmConfig(MavenModuleResourceConfiguration moduleResourceConfig) {
-    return ourMavenAndJvmConfigs.computeIfAbsent(getBaseDir(moduleResourceConfig.directory), baseDir -> {
-      return readConfigFiles(baseDir);
-    });
+    return ourMavenAndJvmConfigs.computeIfAbsent(getBaseDir(moduleResourceConfig.directory), baseDir -> readConfigFiles(baseDir));
   }
 
   @NotNull

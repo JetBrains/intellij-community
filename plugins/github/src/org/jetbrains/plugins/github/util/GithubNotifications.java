@@ -173,8 +173,6 @@ public class GithubNotifications {
 
   @NotNull
   public static AnAction getConfigureAction(@NotNull Project project) {
-    return NotificationAction.createSimple("Configure...", () -> {
-      ShowSettingsUtil.getInstance().showSettingsDialog(project, GithubUtil.SERVICE_DISPLAY_NAME);
-    });
+    return NotificationAction.createSimple("Configure...", () -> ShowSettingsUtil.getInstance().showSettingsDialog(project, GithubUtil.SERVICE_DISPLAY_NAME));
   }
 }

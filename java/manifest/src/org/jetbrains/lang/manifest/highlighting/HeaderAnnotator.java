@@ -37,13 +37,7 @@ import org.jetbrains.lang.manifest.psi.Header;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class HeaderAnnotator implements Annotator {
-  private final HeaderParserRepository myRepository;
-
-  public HeaderAnnotator(@NotNull HeaderParserRepository repository) {
-    myRepository = repository;
-  }
-
+final class HeaderAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof Header) {
@@ -53,7 +47,7 @@ public class HeaderAnnotator implements Annotator {
         holder.createAnnotation(HighlightSeverity.ERROR, header.getNameElement().getTextRange(), ManifestBundle.message("header.name.invalid"));
       }
       else {
-        HeaderParser headerParser = myRepository.getHeaderParser(name);
+        HeaderParser headerParser = HeaderParserRepository.getInstance().getHeaderParser(name);
         if (headerParser != null) {
           headerParser.annotate(header, holder);
         }

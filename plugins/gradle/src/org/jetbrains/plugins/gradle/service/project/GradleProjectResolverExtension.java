@@ -30,6 +30,7 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
+import org.jetbrains.plugins.gradle.model.ProjectImportExtraModelProvider;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -94,6 +95,9 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
 
   @NotNull
   Set<Class> getExtraProjectModelClasses();
+
+  @NotNull
+  ProjectImportExtraModelProvider getExtraModelProvider();
 
   /**
    * add paths containing these classes to classpath of gradle tooling extension

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
@@ -18,10 +18,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CoreCommandProcessor;
 import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
@@ -105,7 +102,7 @@ public class CoreApplicationEnvironment {
     VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs, myApplication.getMessageBus());
     registerApplicationComponent(VirtualFileManager.class, virtualFileManager);
 
-    //fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area) 
+    //fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area)
     registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileSystem"), KeyedLazyInstanceEP.class);
 
     registerApplicationService(EncodingManager.class, new CoreEncodingRegistry());
@@ -263,12 +260,16 @@ public class CoreApplicationEnvironment {
     });
   }
 
-
   public static <T> void registerExtensionPoint(@NotNull ExtensionsArea area,
                                                 @NotNull ExtensionPointName<T> extensionPointName,
                                                 @NotNull Class<? extends T> aClass) {
-    final String name = extensionPointName.getName();
-    registerExtensionPoint(area, name, aClass);
+    registerExtensionPoint(area, extensionPointName.getName(), aClass);
+  }
+
+  public static <T> void registerExtensionPoint(@NotNull ExtensionsArea area,
+                                                @NotNull BaseExtensionPointName extensionPointName,
+                                                @NotNull Class<? extends T> aClass) {
+    registerExtensionPoint(area, extensionPointName.getName(), aClass);
   }
 
   public static <T> void registerExtensionPoint(@NotNull ExtensionsArea area, @NotNull String name, @NotNull Class<? extends T> aClass) {

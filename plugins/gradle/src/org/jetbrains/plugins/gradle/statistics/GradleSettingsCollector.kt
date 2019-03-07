@@ -14,7 +14,7 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 class GradleSettingsCollector : ProjectUsagesCollector() {
-  override fun getGroupId() = "statistics.build.gradle.state"
+  override fun getGroupId() = "build.gradle.state"
 
   override fun getUsages(project: Project): Set<UsageDescriptor> {
     val gradleSettings = GradleSettings.getInstance(project)

@@ -61,11 +61,6 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
     }
   }
 
-  @Override
-  protected String getSdkTypeName(String type) {
-    return type != null ? type : JavaSdk.getInstance().getName();
-  }
-
   @TestOnly
   public static void removeInternalJdkInTests() {
     WriteAction.run(()-> {

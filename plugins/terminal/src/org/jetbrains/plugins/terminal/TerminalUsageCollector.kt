@@ -1,26 +1,40 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger
+import com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
-import com.intellij.internal.statistic.utils.createData
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.PathUtil
 import java.util.*
 
-private var GROUP =  FeatureUsageGroup("statistics.terminalShell",1)
-
 class TerminalUsageTriggerCollector {
   companion object {
+    @Deprecated("To be removed")
     @JvmStatic
     fun trigger(project: Project, featureId: String, context: FUSUsageContext) {
-      FeatureUsageLogger.log(GROUP, featureId, createData(project, context))
+      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, featureId, FeatureUsageData().addFeatureContext(context))
     }
 
     @JvmStatic
-    fun getShellNameForStat(shellName: String?): String {
+    fun triggerSshShellStarted(project: Project) {
+      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "ssh.exec", FeatureUsageData().addOS())
+    }
+
+    @JvmStatic
+    fun triggerLocalShellStarted(project: Project, shellCommand: Array<String>) {
+      val osVersion = OsVersionUsageCollector.parse(SystemInfo.OS_VERSION)
+      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "local.exec", FeatureUsageData()
+        .addOS()
+        .addData("os-version", if (osVersion == null) "unknown" else osVersion.toCompactString())
+        .addData("shell", getShellNameForStat(shellCommand.firstOrNull()))
+      )
+    }
+
+    @JvmStatic
+    private fun getShellNameForStat(shellName: String?): String {
       if (shellName == null) return "unspecified"
       var name = shellName.trimStart()
       val ind = name.indexOf(" ")
@@ -39,6 +53,8 @@ class TerminalUsageTriggerCollector {
     }
   }
 }
+
+private const val GROUP_ID = "terminalShell"
 
 private val KNOWN_SHELLS = setOf("activate",
                                  "anaconda3",

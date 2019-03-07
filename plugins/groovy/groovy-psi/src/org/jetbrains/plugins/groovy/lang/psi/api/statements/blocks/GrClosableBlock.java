@@ -32,6 +32,7 @@ public interface GrClosableBlock extends GrFunctionalExpression, GrCodeBlock {
 
   boolean hasParametersSection();
 
+  @Override
   @Nullable
   PsiType getReturnType();
 

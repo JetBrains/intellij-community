@@ -191,7 +191,6 @@ idea.fatal.error.notification=disabled
 
   void layoutShared() {
     buildContext.messages.block("Copy files shared among all distributions") {
-      setupBundledMaven()
       new File(buildContext.paths.distAll, "build.txt").text = buildContext.fullBuildNumber
 
       buildContext.ant.copy(todir: "$buildContext.paths.distAll/bin") {
@@ -340,6 +339,7 @@ idea.fatal.error.notification=disabled
       /* AndroidStudio: we don't need to download JREs, they are already available in prebuilts.
       setupJBre()
       */
+      setupBundledMaven()
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()
@@ -726,6 +726,7 @@ idea.fatal.error.notification=disabled
   @Override
   void buildUnpackedDistribution(String targetDirectory) {
     buildContext.paths.distAll = targetDirectory
+    setupBundledMaven()
     def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo())
     CompilationTasks.create(buildContext).buildProjectArtifacts(jarsBuilder.includedProjectArtifacts)
     jarsBuilder.buildJARs()

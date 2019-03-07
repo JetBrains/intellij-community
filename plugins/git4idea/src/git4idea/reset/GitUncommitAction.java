@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsShortCommitDetails;
@@ -126,7 +125,7 @@ public class GitUncommitAction extends GitCommitEditingAction {
         ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
         changeListManager.invokeAfterUpdate(() -> {
           Collection<Change> changes = GitUtil.findCorrespondentLocalChanges(changeListManager, changesInCommit);
-          changeListManager.moveChangesTo(changeList, ArrayUtil.toObjectArray(changes, Change.class));
+          changeListManager.moveChangesTo(changeList, changes.toArray(new Change[0]));
         }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Refreshing Changes...", ModalityState.defaultModalityState());
       }
     }.queue();
@@ -147,9 +146,7 @@ public class GitUncommitAction extends GitCommitEditingAction {
   @Nullable
   private static VcsFullCommitDetails getChangesFromCache(@NotNull VcsLogData data, @NotNull Hash hash, @NotNull VirtualFile root) {
     Ref<VcsFullCommitDetails> details = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      details.set(data.getCommitDetailsGetter().getCommitDataIfAvailable(data.getCommitIndex(hash, root)));
-    });
+    ApplicationManager.getApplication().invokeAndWait(() -> details.set(data.getCommitDetailsGetter().getCommitDataIfAvailable(data.getCommitIndex(hash, root))));
     if (details.isNull() || details.get() instanceof LoadingDetails) return null;
     return details.get();
   }

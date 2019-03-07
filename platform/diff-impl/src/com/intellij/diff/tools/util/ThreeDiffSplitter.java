@@ -160,7 +160,7 @@ public class ThreeDiffSplitter extends JPanel {
 
     Divider(@NotNull Side side) {
       mySide = side;
-      enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
+      enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
       setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
     }
 

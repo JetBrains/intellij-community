@@ -340,9 +340,7 @@ public class ManagePackagesDialog extends DialogWrapper {
           if (e.getKeyCode() == KeyEvent.VK_ENTER) {
             e.consume();
             filter();
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(myPackages, true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPackages, true));
           } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
             onEscape(e);
           }

@@ -171,9 +171,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       WindowsCommandLineProcessor.LISTENER = (currentDirectory, args) -> {
         List<String> argsList = Arrays.asList(args);
         LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + argsList);
-        invokeLater(() -> {
-          CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory);
-        });
+        invokeLater(() -> CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory));
       };
     }
 

@@ -26,7 +26,7 @@ public class ExpectedPatterns extends AbstractExpectedPatterns {
   
   private static final String[] PATTERN_STRINGS = new String[]{
     "\nexpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n",
-    "\nexpected: is \"(.*)\"\n\\s*but: was \"(.*)\"",
+    "\nexpected: is \"(.*)\"\n\\s*but:\\s*was \"(.*)\"",
     "\nexpected: (.*)\n\\s*got: (.*)",
     "expected same:<(.*)> was not:<(.*)>",
     "\nexpected: \"(.*)\"\n\\s*but: was \"(.*)\"",

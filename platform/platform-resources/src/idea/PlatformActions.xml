@@ -208,6 +208,8 @@
     <action id="CollapseTreeNode" class="com.intellij.ide.actions.tree.CollapseTreeNodeAction"/>
     <action id="FullyExpandTreeNode" class="com.intellij.ide.actions.tree.FullyExpandTreeNodeAction"/>
 
+    <action id="SelectNextOccurrence" class="com.intellij.openapi.editor.actions.SelectNextOccurrenceAction"/>
+
     <action id="Refresh" class="com.intellij.ide.actions.RefreshAction"/>
 
     <group id="Diff.KeymapGroup" text="Diff \&amp;\&amp; Merge">
@@ -349,7 +351,7 @@
           <action id="FindPrevious" class="com.intellij.ide.actions.SearchBackAction"/>
           <action id="FindWordAtCaret" class="com.intellij.openapi.editor.actions.FindWordAtCaretAction"/>
           <action id="SelectAllOccurrences" class="com.intellij.openapi.editor.actions.SelectAllOccurrencesAction"/>
-          <action id="SelectNextOccurrence" class="com.intellij.openapi.editor.actions.SelectNextOccurrenceAction"/>
+          <reference ref="SelectNextOccurrence"/>
           <action id="UnselectPreviousOccurrence" class="com.intellij.openapi.editor.actions.UnselectPreviousOccurrenceAction"/>
           <action id="GotoNextElementUnderCaretUsage" class="com.intellij.codeInsight.daemon.impl.actions.GotoNextElementUnderCaretUsageAction"/>
           <action id="GotoPrevElementUnderCaretUsage" class="com.intellij.codeInsight.daemon.impl.actions.GotoPrevElementUnderCaretUsageAction"/>
@@ -426,11 +428,12 @@
         </group>
 
         <group id="EditorToggleActions" popup="true">
+          <action id="EditorToggleUseSoftWraps" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsMenuAction" icon="AllIcons.Actions.ToggleSoftWrap"/>
+          <separator/>
           <action id="EditorToggleShowWhitespaces" class="com.intellij.openapi.editor.actions.ToggleShowWhitespacesAction"/>
           <action id="EditorToggleShowLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersAction"/>
           <action id="EditorToggleShowGutterIcons" class="com.intellij.openapi.editor.actions.ToggleShowGutterIconsAction"/>
           <action id="EditorToggleShowIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesAction"/>
-          <action id="EditorToggleUseSoftWraps" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsMenuAction" icon="AllIcons.Actions.ToggleSoftWrap"/>
         </group>
 
         <separator/>
@@ -713,8 +716,8 @@
     </group>
 
     <group id="EditorGutterPopupMenu">
-      <action id="EditorGutterToggleGlobalSoftWraps" class="com.intellij.openapi.editor.actions.ToggleSoftWrapsGloballyAction"/>
       <reference ref="EditorToggleUseSoftWraps"/>
+      <action id="ConfigureSoftWraps" class="com.intellij.openapi.editor.actions.ConfigureSoftWrapsAction"/>
       <separator/>
       <action id="EditorGutterToggleGlobalLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction"/>
       <action id="EditorGutterToggleGlobalIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesGloballyAction"/>
@@ -854,6 +857,7 @@
 
       <group id="FeatureUsage.Internal" popup="true" compact="true" text="Feature Usages Statistics">
         <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction" text="Send Feature Usage Event Log"/>
+        <action internal="true" id="CleanupEventLogStatistics" class="com.intellij.internal.statistic.actions.CleanupEventLogAction" text="Clean Up Event Log"/>
         <action internal="true" id="RecordStateCollectors" class="com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction" text="Record State Collectors to Event Log"/>
       </group>
 
@@ -901,6 +905,19 @@
               text="Cancel Comparing New Files with Each Other" icon="AllIcons.Vcs.Remove"/>
       <add-to-group group-id="Diff.KeymapGroup" anchor="last"/>
     </group>
+
+    <action id="OpenBlankEditorInBlankDiffWindow" class="com.intellij.diff.actions.SwitchToBlankEditorAction" text="Switch to Blank Editor">
+      <add-to-group group-id="Diff.EditorPopupMenu" anchor="last"/>
+      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="ShowBlankDiffWindow" anchor="after"/>
+    </action>
+    <action id="OpenFileEditorInBlankDiffWindow" class="com.intellij.diff.actions.SwitchToFileEditorAction" text="Switch to a File...">
+      <add-to-group group-id="Diff.EditorPopupMenu" relative-to-action="OpenBlankEditorInBlankDiffWindow" anchor="after"/>
+      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="OpenBlankEditorInBlankDiffWindow" anchor="after"/>
+    </action>
+    <action id="SwapSidesInDiffWindow" class="com.intellij.diff.actions.impl.SwapDiffSidesAction" text="Swap Sides" icon="AllIcons.Actions.SwapPanels">
+      <add-to-group group-id="Diff.ViewerToolbar"/>
+      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="OpenFileEditorInBlankDiffWindow" anchor="after"/>
+    </action>
 
     <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction" text="Rerun"/>
     <action id="RerunTests" class="com.intellij.execution.runners.RerunTestsAction" text="Rerun Tests"/>

@@ -6,7 +6,7 @@ class C {
       case 2:
         return "B";
       case 3:
-        <weak_warning descr="Duplicate branch in 'switch' statement">return "A";</weak_warning>
+        <weak_warning descr="Duplicate branch in 'switch'">return "A";</weak_warning>
     }
     return "";
   }

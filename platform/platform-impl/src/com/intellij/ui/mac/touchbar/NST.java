@@ -49,7 +49,7 @@ public class NST {
         if (ourNSTLibrary != null) {
           // small check that loaded library works
           try {
-            final ID test = ourNSTLibrary.createTouchBar("test", (uid) -> { return ID.NIL; }, null);
+            final ID test = ourNSTLibrary.createTouchBar("test", (uid) -> ID.NIL, null);
             if (test == null || test == ID.NIL) {
               LOG.error("Failed to create native touchbar object, result is null");
               ourNSTLibrary = null;

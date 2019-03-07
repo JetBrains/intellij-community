@@ -150,7 +150,7 @@ public abstract class InplaceRefactoring {
     if (editor == null || oldDocument != editor.getDocument()) {
       final int exitCode = Messages.showYesNoDialog(project, message,
                                                     RefactoringBundle.getCannotRefactorMessage(null),
-                                                    "Continue Started", "Cancel Started", Messages.getErrorIcon());
+                                                    "Continue Started", "Abandon Started", Messages.getErrorIcon());
       navigateToStarted(oldDocument, project, exitCode, startMarkAction.getCommandName());
     }
     else {
@@ -322,7 +322,7 @@ public abstract class InplaceRefactoring {
       final Document oldDocument = e.getDocument();
       if (oldDocument != myEditor.getDocument()) {
         final int exitCode = Messages.showYesNoCancelDialog(myProject, e.getMessage(), getCommandName(),
-                                                            "Navigate to Started", "Cancel Started", "Cancel", Messages.getErrorIcon());
+                                                            "Navigate to Started", "Abandon Started", "Cancel Current", Messages.getErrorIcon());
         if (exitCode == Messages.CANCEL) {
           finish(true);
         }
@@ -351,9 +351,7 @@ public abstract class InplaceRefactoring {
 
     beforeTemplateStart();
 
-    WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> {
-      startTemplate(builder);
-    });
+    WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> startTemplate(builder));
 
     if (myBalloon == null) {
       showBalloon();

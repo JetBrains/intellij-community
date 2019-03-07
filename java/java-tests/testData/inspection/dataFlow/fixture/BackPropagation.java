@@ -121,4 +121,18 @@ public class BackPropagation {
       System.out.println();
     }
   }
+
+  public Integer boxing(Integer x) {
+    if (x == null) {
+      return 0;
+    }
+    if (x + 3 < 10) {
+      return <warning descr="'null' is returned by the method which is not declared as @Nullable">null</warning>;
+    }
+    if (<warning descr="Condition 'x == 3' is always 'false'">x == 3</warning>) {
+      // Can't enter
+      return 100;
+    }
+    return x * 2;
+  }
 }

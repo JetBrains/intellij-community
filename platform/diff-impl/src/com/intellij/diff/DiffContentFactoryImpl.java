@@ -349,9 +349,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                                    @Nullable VirtualFile highlightFile) {
     if (file.isDirectory()) return new DirectoryContentImpl(project, file, highlightFile);
 
-    Document document = ReadAction.compute(() -> {
-      return FileDocumentManager.getInstance().getDocument(file);
-    });
+    Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
     if (document != null) {
       // TODO: add notification if file is decompiled ?
       return new FileDocumentContentImpl(project, document, file, highlightFile);

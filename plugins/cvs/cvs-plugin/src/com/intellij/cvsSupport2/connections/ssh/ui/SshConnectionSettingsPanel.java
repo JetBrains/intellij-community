@@ -62,9 +62,7 @@ public class SshConnectionSettingsPanel {
     else {
       myPathToPrivateKeyFile.setEnabled(true);
       myPathToPrivateKeyFile.getTextField().selectAll();
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myPathToPrivateKeyFile.getTextField(), true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPathToPrivateKeyFile.getTextField(), true));
     }
   }
 

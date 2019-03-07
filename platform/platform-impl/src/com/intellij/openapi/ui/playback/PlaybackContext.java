@@ -101,7 +101,7 @@ public abstract class PlaybackContext  {
   public void delayAndRunInEdt(final Runnable runnable, final long delay) {
     runPooledThread(() -> {
       try {
-        Thread.currentThread().sleep(delay);
+        Thread.sleep(delay);
       }
       catch (InterruptedException e) {
 

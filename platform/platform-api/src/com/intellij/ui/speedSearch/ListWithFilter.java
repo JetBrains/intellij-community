@@ -90,9 +90,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
   protected void processFocusEvent(FocusEvent e) {
     super.processFocusEvent(e);
     if (e.getID() == FocusEvent.FOCUS_GAINED) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
     }
   }
 
@@ -193,8 +191,6 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
 
   @Override
   public void requestFocus() {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
   }
 }

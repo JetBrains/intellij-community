@@ -619,7 +619,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     else {
       s = title + " (" + UsageViewBundle.message("usages.n", usages.size()) + soFarSuffix + ")";
     }
-    return "<html><nobr>" + s + "</nobr></html>";
+    return "<html><body><nobr>" + StringUtil.escapeXmlEntities(s) + "</nobr></body></html>";
   }
 
   @NotNull

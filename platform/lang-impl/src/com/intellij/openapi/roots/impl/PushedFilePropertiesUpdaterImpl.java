@@ -6,7 +6,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -117,7 +117,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
         }
 
         @Override
-        public void pushRecursively(VirtualFile file, Project project) {
+        public void pushRecursively(@NotNull VirtualFile file, @NotNull Project project) {
           queueTasks(ContainerUtil.createMaybeSingletonList(createRecursivePushTask(file, new FilePropertyPusher[]{pusher})));
         }
       });
@@ -318,7 +318,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       }
     }
     catch (AbstractMethodError ame) { // acceptsDirectory is missed
-      if (pusher != null) throw PluginManagerCore.createPluginException("Failed to apply pusher " + pusher.getClass(), ame, pusher.getClass());
+      if (pusher != null) throw PluginException.createByClass("Failed to apply pusher " + pusher.getClass(), ame, pusher.getClass());
       throw ame;
     }
   }

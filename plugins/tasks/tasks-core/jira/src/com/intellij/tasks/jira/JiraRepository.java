@@ -31,7 +31,6 @@ import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.soap.JiraLegacyApi;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.commons.httpclient.*;
@@ -146,7 +145,7 @@ public class JiraRepository extends BaseRepositoryImpl {
         tasksFound = ContainerUtil.append(tasksFound, task);
       }
     }
-    return ArrayUtil.toObjectArray(tasksFound, Task.class);
+    return tasksFound.toArray(Task.EMPTY_ARRAY);
   }
 
   @Nullable

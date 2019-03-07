@@ -9,7 +9,6 @@ import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -137,7 +136,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
         return myDeleteProvider;
       }
       else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return ArrayUtil.toObjectArray(getSelectedChanges(), VirtualFile.class);
+        return getSelectedChanges().toArray(VirtualFile.EMPTY_ARRAY);
       }
 
       return super.getData(dataId);

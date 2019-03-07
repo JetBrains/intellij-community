@@ -25,10 +25,12 @@ import org.jetbrains.jps.model.module.JpsDependencyElement;
  * @author nik
  */
 public abstract class JpsOrderEntry<E extends JpsDependencyElement> implements OrderEntry {
+  @NotNull
   protected final JpsRootModel myRootModel;
+  @NotNull
   protected final E myDependencyElement;
 
-  protected JpsOrderEntry(JpsRootModel rootModel, E dependencyElement) {
+  protected JpsOrderEntry(@NotNull JpsRootModel rootModel, @NotNull E dependencyElement) {
     myRootModel = rootModel;
     myDependencyElement = dependencyElement;
   }

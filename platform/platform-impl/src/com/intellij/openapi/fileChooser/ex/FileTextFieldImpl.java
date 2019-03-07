@@ -387,9 +387,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
           myPathTextField.setSelectionStart(caret);
           myPathTextField.setSelectionEnd(caret);
           myPathTextField.setFocusTraversalKeysEnabled(true);
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(getField(), true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getField(), true));
           return Boolean.TRUE;
         }).setItemChoosenCallback(() -> processChosenFromCompletion(false)).setCancelKeyEnabled(false).setAlpha(0.1f).setFocusOwners(new Component[]{myPathTextField}).
           createPopup();

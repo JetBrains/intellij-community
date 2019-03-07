@@ -101,9 +101,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     assertFalse(getDomManager().isDomFile(file));
     assertNull(getDomManager().getFileElement(file));
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      file.getDocument().getRootTag().getValue().setText("239");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> file.getDocument().getRootTag().getValue().setText("239"));
     assertTrue(getDomManager().isDomFile(file));
     final DomFileElementImpl<MyElement> root = getDomManager().getFileElement(file);
     assertNotNull(root);
@@ -111,9 +109,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     assertTrue(root.isValid());
     assertTrue(child.isValid());
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      file.getDocument().getRootTag().getValue().setText("57121");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> file.getDocument().getRootTag().getValue().setText("57121"));
     assertFalse(getDomManager().isDomFile(file));
     assertNull(getDomManager().getFileElement(file));
     assertFalse(root.isValid());

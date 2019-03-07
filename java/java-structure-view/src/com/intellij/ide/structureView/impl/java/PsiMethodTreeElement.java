@@ -25,6 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -49,7 +50,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
   public Collection<StructureViewTreeElement> getChildrenBase() {
     final List<StructureViewTreeElement> emptyResult = Collections.emptyList();
     final PsiMethod element = getElement();
-    if (element == null || element instanceof SyntheticElement) return emptyResult;
+    if (element == null || element instanceof SyntheticElement || element instanceof LightElement) return emptyResult;
 
     final PsiFile psiFile = element.getContainingFile();
     if (psiFile == null || psiFile instanceof PsiCompiledElement) return emptyResult;

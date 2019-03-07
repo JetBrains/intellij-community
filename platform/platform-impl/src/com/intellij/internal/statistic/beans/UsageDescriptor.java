@@ -6,7 +6,9 @@ import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class UsageDescriptor implements Comparable<UsageDescriptor> {
+import java.util.Objects;
+
+public final class UsageDescriptor {
   private final String myKey;
   private final int myValue;
   private final @Nullable FeatureUsageData myData;
@@ -49,8 +51,18 @@ public final class UsageDescriptor implements Comparable<UsageDescriptor> {
   }
 
   @Override
-  public int compareTo(UsageDescriptor ud) {
-    return getKey().compareTo(ud.myKey);
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    UsageDescriptor that = (UsageDescriptor)o;
+    return myValue == that.myValue &&
+           Objects.equals(myKey, that.myKey) &&
+           Objects.equals(myData, that.myData);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myKey, myValue, myData);
   }
 
   @Override

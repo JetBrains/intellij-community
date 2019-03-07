@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.AbstractBundle;
@@ -29,17 +14,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ResourceBundle;
 
-public class IntentionActionBean extends CustomLoadingExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.IntentionActionBean");
-  @Tag("className")
+public final class IntentionActionBean extends CustomLoadingExtensionPointBean {
+  private static final Logger LOG = Logger.getInstance(IntentionActionBean.class);
+
+  @Tag
   public String className;
-  @Tag("category")
+  @Tag
   public String category;
-  @Tag("categoryKey")
+  @Tag
   public String categoryKey;
-  @Tag("bundleName")
+  @Tag
   public String bundleName;
-  @Tag("descriptionDirectoryName")
+  @Tag
   public String descriptionDirectoryName;
 
   @Nullable
@@ -58,8 +44,7 @@ public class IntentionActionBean extends CustomLoadingExtensionPointBean {
 
       category = CommonBundle.message(bundle, categoryKey);
     }
-    if (category == null) return null;
-    return category.split("/");
+    return category == null ? null : category.split("/");
   }
 
   public String getDescriptionDirectoryName() {
@@ -67,8 +52,8 @@ public class IntentionActionBean extends CustomLoadingExtensionPointBean {
   }
 
   @NotNull
-  public IntentionAction instantiate() throws ClassNotFoundException {
-    return (IntentionAction)instantiateExtension(className, ApplicationManager.getApplication().getPicoContainer());
+  public IntentionAction instantiate() {
+    return instantiateExtension(className, ApplicationManager.getApplication().getPicoContainer());
   }
 
   public ClassLoader getMetadataClassLoader() {

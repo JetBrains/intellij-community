@@ -1077,7 +1077,7 @@ public class LambdaUtil {
         // variable/parameter/field/method/class are always PsiModifierListOwners
         if (target instanceof PsiModifierListOwner &&
             !((PsiModifierListOwner)target).hasModifierProperty(PsiModifier.STATIC) &&
-            !PsiTreeUtil.isAncestor(body, target, true)) {
+            !PsiTreeUtil.isAncestor(lambda, target, true)) {
           if (target instanceof PsiClass && ((PsiClass)target).getContainingClass() == null) return;
           capturing = true;
           stopWalking();

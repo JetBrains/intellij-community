@@ -1739,7 +1739,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                     : renderer.getClickAction();
     }
     if (clickAction != null) {
-      performAction(clickAction, e, "ICON_NAVIGATION", myEditor.getDataContext());
+      performAction(clickAction, e, ActionPlaces.EDITOR_GUTTER, myEditor.getDataContext());
       repaint();
       e.consume();
     }
@@ -1951,15 +1951,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
         JPopupMenu menu = actionManager.createActionPopupMenu("", actionGroup).getComponent();
         menu.show(this, e.getX(), e.getY());
+        e.consume();
       }
-      e.consume();
     }
     else {
       GutterIconRenderer renderer = getGutterRenderer(e);
       if (renderer != null) {
         AnAction rightButtonAction = renderer.getRightButtonClickAction();
         if (rightButtonAction != null) {
-          performAction(rightButtonAction, e, "ICON_NAVIGATION_SECONDARY_BUTTON", myEditor.getDataContext());
+          performAction(rightButtonAction, e, ActionPlaces.EDITOR_GUTTER_POPUP, myEditor.getDataContext());
           e.consume();
         }
         else {

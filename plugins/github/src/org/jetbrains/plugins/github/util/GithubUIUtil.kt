@@ -41,7 +41,7 @@ object GithubUIUtil {
     }
   }
 
-  fun createIssueLabelLabel(label: GithubIssueLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.MINI).apply {
+  fun createIssueLabelLabel(label: GithubIssueLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
     val apiColor = ColorUtil.fromHex(label.color)
     background = JBColor(apiColor, ColorUtil.darker(apiColor, 3))
     foreground = computeForeground(background)

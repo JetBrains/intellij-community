@@ -36,7 +36,7 @@ public class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
   public boolean contains(Object file) {
     if (file instanceof VirtualFileWithId) {
       BitSet ids = fileIds;
-      int id = getValidId((VirtualFileWithId)file);
+      int id = ((VirtualFileWithId)file).getId();
       if (ids != null) {
         return ids.get(id);
       }
@@ -48,10 +48,6 @@ public class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
     return weirdFiles.contains(file);
   }
 
-  private static int getValidId(@NotNull VirtualFileWithId file) {
-    return Math.abs(file.getId());
-  }
-
   @Override
   public boolean add(@NotNull VirtualFile file) {
     if (frozen) {
@@ -59,7 +55,7 @@ public class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
     }
     boolean added;
     if (file instanceof VirtualFileWithId) {
-      int id = getValidId((VirtualFileWithId)file);
+      int id = ((VirtualFileWithId)file).getId();
       BitSet ids = fileIds;
       TIntHashSet idSet = this.idSet;
       if (ids != null) {
@@ -81,7 +77,7 @@ public class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
           for (Iterator<VirtualFile> iterator = weirdFiles.iterator(); iterator.hasNext(); ) {
             VirtualFile wf = iterator.next();
             if (wf instanceof VirtualFileWithId) {
-              int i = getValidId((VirtualFileWithId)wf);
+              int i = ((VirtualFileWithId)wf).getId();
               idSet.add(i);
               iterator.remove();
             }

@@ -2,7 +2,6 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -28,8 +27,6 @@ import java.util.*;
  * @author nik
  */
 public class JavaProjectRootsUtil {
-  private static final Logger LOG = Logger.getInstance(JavaProjectRootsUtil.class);
-
   public static boolean isOutsideJavaSourceRoot(@Nullable PsiFile psiFile) {
     if (psiFile == null) return false;
     if (psiFile instanceof PsiCodeFragment) return false;
@@ -62,7 +59,7 @@ public class JavaProjectRootsUtil {
     }
   }
 
-  public static boolean isForGeneratedSources(SourceFolder sourceFolder) {
+  public static boolean isForGeneratedSources(@NotNull SourceFolder sourceFolder) {
     JavaSourceRootProperties properties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
     JavaResourceRootProperties resourceProperties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.RESOURCES);
     return properties != null && properties.isForGeneratedSources() || resourceProperties != null && resourceProperties.isForGeneratedSources();
@@ -82,6 +79,7 @@ public class JavaProjectRootsUtil {
     return folder != null && isForGeneratedSources(folder);
   }
 
+  @NotNull
   public static GlobalSearchScope getScopeWithoutGeneratedSources(@NotNull GlobalSearchScope baseScope, @NotNull Project project) {
     return new NonGeneratedSourceScope(baseScope, project);
   }

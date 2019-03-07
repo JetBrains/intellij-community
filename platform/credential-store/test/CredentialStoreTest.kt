@@ -61,6 +61,11 @@ internal class CredentialStoreTest {
   }
 
   @Test
+  fun `KeePass - testEmptyStrAccountName`() {
+    testEmptyStrAccountName(InMemoryCredentialStore())
+  }
+
+  @Test
   fun `KeePass - changedAccountName`() {
     testChangedAccountName(InMemoryCredentialStore())
   }
@@ -133,6 +138,19 @@ internal class CredentialStoreTest {
     finally {
       store.set(attributes, null)
     }
+  }
+
+  private fun testEmptyStrAccountName(store: CredentialStore) {
+    val attributes = CredentialAttributes("Test IJ — ${randomString()}", "")
+    try {
+      val credentials = Credentials("", "pass")
+      store.set(attributes, credentials)
+      assertThat(store.get(attributes)).isEqualTo(credentials)
+    }
+    finally {
+      store.set(attributes, null)
+    }
+    assertThat(store.get(attributes)).isNull()
   }
 
   private fun testChangedAccountName(store: CredentialStore) {

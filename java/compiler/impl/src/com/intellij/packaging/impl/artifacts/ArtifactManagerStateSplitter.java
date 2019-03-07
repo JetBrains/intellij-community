@@ -27,6 +27,7 @@ import java.util.List;
  * @author nik
  */
 final class ArtifactManagerStateSplitter extends StateSplitterEx {
+  @NotNull
   @Override
   public List<Pair<Element, String>> splitState(@NotNull Element state) {
     return splitState(state, ArtifactState.NAME_ATTRIBUTE);

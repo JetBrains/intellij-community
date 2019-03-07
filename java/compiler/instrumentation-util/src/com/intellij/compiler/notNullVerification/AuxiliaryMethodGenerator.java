@@ -15,7 +15,10 @@
  */
 package com.intellij.compiler.notNullVerification;
 
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
 
@@ -65,7 +68,7 @@ class AuxiliaryMethodGenerator {
         existingMethods.add(name);
         return null;
       }
-    }, 0);
+    }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     return existingMethods;
   }
 

@@ -145,9 +145,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
       }
 
       ListSelection<Change> changeSelection = ListSelection.createAt(changes, idx);
-      return changeSelection.map(change -> {
-        return ChangeDiffRequestProducer.create(fileAnnotation.getProject(), change, context.get(change));
-      });
+      return changeSelection.map(change -> ChangeDiffRequestProducer.create(fileAnnotation.getProject(), change, context.get(change)));
     }
     catch (VcsException e) {
       throw new DiffRequestProducerException(e);

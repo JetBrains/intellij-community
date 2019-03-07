@@ -47,45 +47,43 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
     Arrays.sort(files, FileComparator.getInstance());
 
     List<String> problems = ContainerUtil.newLinkedList();
-    CommandProcessor.getInstance().executeCommand(project, () -> {
-      new Task.Modal(project, "Deleting Files...", true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          indicator.setIndeterminate(false);
-          int i = 0;
-          for (VirtualFile file : files) {
-            indicator.checkCanceled();
-            indicator.setText2(file.getPresentableUrl());
-            indicator.setFraction((double)i / files.length);
-            i++;
+    CommandProcessor.getInstance().executeCommand(project, () -> new Task.Modal(project, "Deleting Files...", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(false);
+        int i = 0;
+        for (VirtualFile file : files) {
+          indicator.checkCanceled();
+          indicator.setText2(file.getPresentableUrl());
+          indicator.setFraction((double)i / files.length);
+          i++;
 
-            try {
-              WriteAction.runAndWait(()-> file.delete(this));
-            }
-            catch (IOException e) {
-              LOG.info("Error when deleting " + file, e);
-              problems.add(file.getName());
-            }
+          try {
+            WriteAction.runAndWait(()-> file.delete(this));
+          }
+          catch (IOException e) {
+            LOG.info("Error when deleting " + file, e);
+            problems.add(file.getName());
           }
         }
+      }
 
-        @Override
-        public void onSuccess() {
-          reportProblems();
-        }
+      @Override
+      public void onSuccess() {
+        reportProblems();
+      }
 
-        @Override
-        public void onCancel() {
-          reportProblems();
-        }
+      @Override
+      public void onCancel() {
+        reportProblems();
+      }
 
-        private void reportProblems() {
-          if (!problems.isEmpty()) {
-            reportDeletionProblem(problems);
-          }
+      private void reportProblems() {
+        if (!problems.isEmpty()) {
+          reportDeletionProblem(problems);
         }
-      }.queue();
-    }, "Deleting files", null);
+      }
+    }.queue(), "Deleting files", null);
   }
 
   private static void reportDeletionProblem(List<String> problems) {

@@ -49,12 +49,7 @@ public class VcsLogUtil {
     Map<VirtualFile, Set<T>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
     for (T item : items) {
       VirtualFile root = rootGetter.fun(item);
-      Set<T> set = map.get(root);
-      if (set == null) {
-        set = ContainerUtil.newHashSet();
-        map.put(root, set);
-      }
-      set.add(item);
+      map.computeIfAbsent(root, k -> ContainerUtil.newHashSet()).add(item);
     }
     return map;
   }
@@ -155,11 +150,6 @@ public class VcsLogUtil {
       VirtualFile virtualFile = filePath.getVirtualFile();
       return root.equals(virtualFile) || FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), filePath.getIOFile(), false);
     }));
-  }
-
-  @NotNull
-  public static <T> List<T> collectFirstPack(@NotNull List<T> list, int max) {
-    return ContainerUtil.getFirstItems(list, max);
   }
 
   @Nullable

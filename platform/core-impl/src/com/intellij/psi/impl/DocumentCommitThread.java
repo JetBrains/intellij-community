@@ -2,7 +2,7 @@
 package com.intellij.psi.impl;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -131,18 +131,17 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     PsiFile psiFile = documentManager.getCachedPsiFile(document);
     if (psiFile == null || psiFile instanceof PsiCompiledElement) return;
-    doQueue(project, document, getAllFileNodes(psiFile), reason, context, documentManager.getLastCommittedText(document));
+    doQueue(project, document, reason, context, documentManager.getLastCommittedText(document));
   }
 
   private void doQueue(@NotNull Project project,
                        @NotNull Document document,
-                       @NotNull List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes,
                        @NotNull Object reason,
                        @Nullable TransactionId context,
                        @NotNull CharSequence lastCommittedText) {
     synchronized (lock) {
       if (!project.isInitialized()) return;  // check the project is disposed under lock.
-      CommitTask newTask = createNewTaskAndCancelSimilar(project, document, oldFileNodes, reason, context, lastCommittedText, false);
+      CommitTask newTask = createNewTaskAndCancelSimilar(project, document, reason, context, lastCommittedText, false);
 
       documentsToCommit.offer(newTask);
       log(project, "Queued", newTask, reason);
@@ -154,15 +153,11 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   @NotNull
   private CommitTask createNewTaskAndCancelSimilar(@NotNull Project project,
                                                    @NotNull Document document,
-                                                   @NotNull List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes,
                                                    @NotNull Object reason,
                                                    @Nullable TransactionId context,
                                                    @NotNull CharSequence lastCommittedText, boolean canReQueue) {
     synchronized (lock) {
-      for (Pair<PsiFileImpl, FileASTNode> pair : oldFileNodes) {
-        assert pair.first.getProject() == project;
-      }
-      CommitTask newTask = new CommitTask(project, document, oldFileNodes, createProgressIndicator(), reason, context, lastCommittedText);
+      CommitTask newTask = new CommitTask(project, document, createProgressIndicator(), reason, context, lastCommittedText);
       cancelAndRemoveFromDocsToCommit(newTask, reason, canReQueue);
       cancelAndRemoveCurrentTask(newTask, reason, canReQueue);
       cancelAndRemoveFromDocsToApplyInEDT(newTask, reason, canReQueue);
@@ -322,7 +317,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
           // e.g. when submitted the same document with the different transaction context
           if (task.dead) return;
 
-          doQueue(project, document, oldFileNodes, reQueuedReason, task.myCreationContext, lastCommittedText);
+          doQueue(project, document, reQueuedReason, task.myCreationContext, lastCommittedText);
         }
       });
     }
@@ -348,14 +343,12 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       throw new RuntimeException(s);
     }
 
-    List<Pair<PsiFileImpl, FileASTNode>> allFileNodes = getAllFileNodes(psiFile);
-
     Lock documentLock = getDocumentLock(document);
 
     CommitTask task;
     synchronized (lock) {
       // synchronized to ensure no new similar tasks can start before we hold the document's lock
-      task = createNewTaskAndCancelSimilar(project, document, allFileNodes, SYNC_COMMIT_REASON, TransactionGuard.getInstance().getContextTransaction(),
+      task = createNewTaskAndCancelSimilar(project, document, SYNC_COMMIT_REASON, TransactionGuard.getInstance().getContextTransaction(),
                                            PsiDocumentManager.getInstance(project).getLastCommittedText(document), true);
     }
 
@@ -440,24 +433,13 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
           return;
         }
 
-        for (Pair<PsiFileImpl, FileASTNode> pair : task.myOldFileNodes) {
-          PsiFileImpl file = pair.first;
-          if (file.isValid()) {
-            FileASTNode oldFileNode = pair.second;
-            ProperTextRange changedPsiRange = ChangedPsiRangeUtil
-              .getChangedPsiRange(file, task.document, task.myLastCommittedText, document.getImmutableCharSequence());
-            if (changedPsiRange != null) {
-              BooleanRunnable finishProcessor = doCommit(task, file, oldFileNode, changedPsiRange, reparseInjectedProcessors);
-              finishProcessors.add(finishProcessor);
-            }
-          }
-          else {
-            // file became invalid while sitting in the queue
-            if (task.reason.equals(SYNC_COMMIT_REASON)) {
-              throw new PsiInvalidElementAccessException(file, "File " + file + " invalidated during sync commit");
-            }
-            commitAsynchronously(project, document, "File " + file + " invalidated during background commit; task: "+task,
-                                 task.myCreationContext);
+        for (PsiFile file : viewProvider.getAllFiles()) {
+          FileASTNode oldFileNode = file.getNode();
+          ProperTextRange changedPsiRange = ChangedPsiRangeUtil
+            .getChangedPsiRange(file, task.document, task.myLastCommittedText, document.getImmutableCharSequence());
+          if (changedPsiRange != null) {
+            BooleanRunnable finishProcessor = doCommit(task, file, oldFileNode, changedPsiRange, reparseInjectedProcessors);
+            finishProcessors.add(finishProcessor);
           }
         }
       }
@@ -579,12 +561,10 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     @NotNull final Object reason;
     @Nullable final TransactionId myCreationContext;
     private final CharSequence myLastCommittedText;
-    @NotNull final List<Pair<PsiFileImpl, FileASTNode>> myOldFileNodes;
     private volatile boolean dead; // the task was explicitly removed from the queue; no attempts to re-queue should be made
 
     CommitTask(@NotNull final Project project,
                @NotNull final Document document,
-               @NotNull final List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes,
                @NotNull ProgressIndicator indicator,
                @NotNull Object reason,
                @Nullable TransactionId context,
@@ -595,7 +575,6 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       this.reason = reason;
       myCreationContext = context;
       myLastCommittedText = lastCommittedText;
-      myOldFileNodes = oldFileNodes;
       modificationSequence = ((DocumentEx)document).getModificationSequence();
     }
 
@@ -738,7 +717,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
                             "; file name:" + file.getName() +
                             "; type:" + file.getFileType() +
                             "; lang:" + file.getLanguage();
-      LOG.error(PluginManagerCore.createPluginException(errorMessage, null, file.getLanguage().getClass()));
+      PluginException.logPluginError(LOG, errorMessage, null, file.getLanguage().getClass());
 
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
       try {
@@ -748,7 +727,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         diffLog.doActualPsiChange(file);
 
         if (oldFileNode.getTextLength() != document.getTextLength()) {
-          LOG.error(PluginManagerCore.createPluginException("PSI is broken beyond repair in: " + file, null, file.getLanguage().getClass()));
+          PluginException.logPluginError(LOG, "PSI is broken beyond repair in: " + file, null, file.getLanguage().getClass());
         }
       }
       finally {

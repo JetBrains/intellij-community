@@ -56,7 +56,7 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
             int groupCount;
 
             @Override
-            public boolean isAccepted(PsiElement element) {
+            public boolean isAccepted(@NotNull PsiElement element) {
               if (element instanceof RegExpGroup) {
                 if (((RegExpGroup)element).isCapturing() && ++groupCount == index) {
                   return true;

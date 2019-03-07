@@ -60,13 +60,13 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   void buildArtifacts(String osSpecificDistPath) {
     buildContext.executeStep("Build Linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledJre) {
-        buildTarGz(null, osSpecificDistPath)
+        buildTarGz(null, osSpecificDistPath, "-no-jdk")
       }
-      buildTarGz(buildContext.bundledJreManager.findLinuxJdk(), osSpecificDistPath)  // Android Studio: added by Change Idc07b110 / commit f20681e
+      buildTarGz(buildContext.bundledJreManager.findLinuxJdk(), osSpecificDistPath, buildContext.bundledJreManager.jreSuffix())  // Android Studio: added by Change Idc07b110 / commit f20681e
       /* Android Studio: no need to download JRE
       def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
       if (jreDirectoryPath != null) {
-        buildTarGz(jreDirectoryPath, osSpecificDistPath)
+        buildTarGz(jreDirectoryPath, osSpecificDistPath, buildContext.bundledJreManager.jreSuffix())
         buildSnapPackage(jreDirectoryPath, osSpecificDistPath)
       }
       else {
@@ -76,7 +76,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
       if (secondJreBuild != null) {
         def secondJreDirectoryPath = buildContext.bundledJreManager.extractSecondJre("linux", secondJreBuild)
-        buildTarGz(secondJreDirectoryPath, osSpecificDistPath, "-jdk${buildContext.bundledJreManager.getSecondJreVersion()}-bundled")
+        buildTarGz(secondJreDirectoryPath, osSpecificDistPath, "-jre${buildContext.bundledJreManager.getSecondJreVersion()}")
       }
     }
   }
@@ -137,10 +137,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/Install-Linux-tar.txt", eol: "unix")
   }
 
-  private void buildTarGz(String jreDirectoryPath, String unixDistPath, String secondJreSuffix = null) {
+  private void buildTarGz(String jreDirectoryPath, String unixDistPath, String suffix) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-    def suffix = secondJreSuffix
-    if (suffix == null) suffix = jreDirectoryPath != null ? buildContext.bundledJreManager.jreSuffix() : "-no-jdk"
     def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
     def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]

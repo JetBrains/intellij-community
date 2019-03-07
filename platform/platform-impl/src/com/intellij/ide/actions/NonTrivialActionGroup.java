@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * This group hides itself when there's no enabled and visible child.
  *
- * @see com.intellij.ide.actions.SmartPopupActionGroup
- * @see com.intellij.ide.actions.NonEmptyActionGroup
+ * @see SmartPopupActionGroup
+ * @see NonEmptyActionGroup
  *
  * @author gregsh
  */

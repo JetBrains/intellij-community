@@ -184,9 +184,7 @@ public class InplaceChangeSignature implements DocumentListener {
     String methodSignature = myDetector.getMethodSignaturePreview(changeInfo, deleteRanges, newRanges);
 
     myPreview.getMarkupModel().removeAllHighlighters();
-    WriteCommandAction.writeCommandAction(null).run(() -> {
-      myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), methodSignature);
-    });
+    WriteCommandAction.writeCommandAction(null).run(() -> myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), methodSignature));
     TextAttributes deprecatedAttributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
     for (TextRange range : deleteRanges) {

@@ -7,8 +7,13 @@ try:
 except:
     from urllib.parse import quote  # @UnresolvedImport
 
+try:
+    from collections import OrderedDict
+except:
+    OrderedDict = dict
+
 import inspect
-from _pydevd_bundle.pydevd_constants import IS_PY3K
+from _pydevd_bundle.pydevd_constants import IS_PY3K, dict_iter_items
 import sys
 from _pydev_bundle import pydev_log
 
@@ -205,4 +210,36 @@ def is_ignored_by_filter(filename, filename_to_ignored_by_filters_cache={}):
             filename_to_ignored_by_filters_cache[filename] = False
 
         return filename_to_ignored_by_filters_cache[filename]
+
+
+def take_first_n_coll_elements(coll, n):
+    if coll.__class__ in (list, tuple):
+        return coll[:n]
+    elif coll.__class__ in (set, frozenset):
+        buf = []
+        for i, x in enumerate(coll):
+            if i >= n:
+                break
+            buf.append(x)
+        return type(coll)(buf)
+    elif coll.__class__ in (dict, OrderedDict):
+        ret = type(coll)()
+        for i, (k, v) in enumerate(dict_iter_items(coll)):
+            if i >= n:
+                break
+            ret[k] = v
+        return ret
+    else:
+        raise TypeError("Unsupported collection type: '%s'" % str(coll.__class__))
+
+
+class VariableWithOffset(object):
+    def __init__(self, data, offset):
+        self.data, self.offset = data, offset
+
+
+def get_var_and_offset(var):
+    if isinstance(var, VariableWithOffset):
+        return var.data, var.offset
+    return var, 0
 

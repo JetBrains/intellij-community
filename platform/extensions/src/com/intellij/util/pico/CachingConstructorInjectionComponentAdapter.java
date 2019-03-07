@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.pico;
 
 import com.intellij.util.ExceptionUtil;
@@ -38,8 +38,11 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
   }
 
   @Override
-  public Object getComponentInstance(PicoContainer container) throws PicoInitializationException, PicoIntrospectionException,
-                                                                     AssignabilityRegistrationException, NotConcreteRegistrationException {
+  public Object getComponentInstance(@NotNull PicoContainer container) throws
+                                                                       PicoInitializationException,
+                                                                       PicoIntrospectionException,
+                                                                       AssignabilityRegistrationException,
+                                                                       NotConcreteRegistrationException {
     Object instance = myInstance;
     if (instance == null) {
       myInstance = instance = instantiateGuarded(container, getComponentImplementation());
@@ -48,7 +51,7 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
   }
 
   @NotNull
-  private Object instantiateGuarded(PicoContainer container, Class stackFrame) {
+  private Object instantiateGuarded(@NotNull PicoContainer container, @NotNull Class<?> stackFrame) {
     Set<CachingConstructorInjectionComponentAdapter> currentStack = ourGuard.get();
     if (currentStack == null) {
       ourGuard.set(currentStack = ContainerUtil.newIdentityTroveSet());
@@ -72,7 +75,7 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
   }
 
   @NotNull
-  private Object doGetComponentInstance(PicoContainer guardedContainer) {
+  private Object doGetComponentInstance(@NotNull PicoContainer guardedContainer) {
     final Constructor constructor;
     try {
       constructor = getGreediestSatisfiableConstructor(guardedContainer);
@@ -119,7 +122,7 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
 
   @NotNull
   @Override
-  protected Constructor getGreediestSatisfiableConstructor(PicoContainer container) throws
+  protected Constructor getGreediestSatisfiableConstructor(@NotNull PicoContainer container) throws
                                                                                     PicoIntrospectionException,
                                                                                     AssignabilityRegistrationException, NotConcreteRegistrationException {
     final Set<Constructor> conflicts = new HashSet<>();

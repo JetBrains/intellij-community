@@ -147,9 +147,7 @@ public class StackTouchBars {
       // changeReason = null;
 
       myNextBar = bar;
-      final Timer timer = new Timer(100, (event)->{
-        _setNextTouchBar();
-      });
+      final Timer timer = new Timer(100, (event)-> _setNextTouchBar());
       timer.setRepeats(false);
       timer.start();
     }

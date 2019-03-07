@@ -26,17 +26,6 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     myOfflineDescriptor = offlineDescriptor;
   }
 
-  public static OfflineProblemDescriptorNode create(@NotNull OfflineProblemDescriptor offlineDescriptor,
-                                                    @NotNull OfflineDescriptorResolveResult resolveResult,
-                                                    @NotNull InspectionToolPresentation presentation,
-                                                    InspectionTreeModel model,
-                                                    @NotNull InspectionTreeNode parent) {
-    return new OfflineProblemDescriptorNode(resolveResult,
-                                            presentation,
-                                            offlineDescriptor,
-                                            parent);
-  }
-
   @NotNull
   @Override
   protected String calculatePresentableName() {

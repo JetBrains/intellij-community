@@ -24,15 +24,10 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_VALUE = "value";
 
-  @NotNull
-  public String getComponentName() {
-    return "PropertiesComponent";
-  }
-
   PropertiesComponentImpl() {
   }
 
-  private void doPut(String key, String value) {
+  private void doPut(@NotNull String key, @NotNull String value) {
     String reason = Verifier.checkCharacterData(key);
     if (reason != null) {
       LOG.error(reason);
@@ -70,7 +65,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   }
 
   @Override
-  public String getValue(String name) {
+  public String getValue(@NotNull String name) {
     return myMap.get(name);
   }
 
@@ -125,25 +120,25 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   }
 
   @Override
-  public void unsetValue(String name) {
+  public void unsetValue(@NotNull String name) {
     myMap.remove(name);
     incModificationCount();
   }
 
   @Override
-  public boolean isValueSet(String name) {
+  public boolean isValueSet(@NotNull String name) {
     return myMap.containsKey(name);
   }
 
   @Nullable
   @Override
-  public String[] getValues(@NonNls String name) {
+  public String[] getValues(@NotNull @NonNls String name) {
     final String value = getValue(name);
     return value != null ? value.split("\n") : null;
   }
 
   @Override
-  public void setValues(@NonNls String name, String[] values) {
+  public void setValues(@NotNull @NonNls String name, String[] values) {
     if (values == null) {
       setValue(name, null);
     }

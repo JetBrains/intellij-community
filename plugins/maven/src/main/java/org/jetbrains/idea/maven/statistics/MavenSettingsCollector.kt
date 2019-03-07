@@ -12,7 +12,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenSettingsCollector : ProjectUsagesCollector() {
-  override fun getGroupId() = "statistics.build.maven.state"
+  override fun getGroupId() = "build.maven.state"
 
   override fun getUsages(project: Project): Set<UsageDescriptor> {
     val manager = MavenProjectsManager.getInstance(project)

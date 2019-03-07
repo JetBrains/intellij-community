@@ -15,6 +15,9 @@
  */
 package com.intellij.lang.cacheBuilder;
 
+import com.intellij.diagnostic.PluginException;
+import com.intellij.lexer.DelegateLexer;
+import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -89,8 +92,10 @@ public class DefaultWordsScanner extends VersionedWordsScanner {
   @Override
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
     if (myBusy) {
-      throw new IllegalStateException("Different word scanner instances should be used for different threads, " +
-                                      "make sure that " + this + " with " + myLexer + " is instantiated on every request and not shared");
+      throw PluginException.createByClass("Different word scanner instances should be used for different threads, " +
+                                          "make sure that " + this + " with " + myLexer + " is instantiated on every request and not shared",
+                                          null,
+                                          guessPluginClass());
     }
     myBusy = true;
     try {
@@ -122,6 +127,28 @@ public class DefaultWordsScanner extends VersionedWordsScanner {
     finally {
       myBusy = false;
     }
+  }
+
+  private Class<?> guessPluginClass() {
+    if (myIdentifierTokenSet.getTypes().length > 0) {
+      return myIdentifierTokenSet.getTypes()[0].getClass();
+    }
+    if (myLiteralTokenSet.getTypes().length > 0) {
+      return myLiteralTokenSet.getTypes()[0].getClass();
+    }
+    Object lexer = myLexer;
+    while (true) {
+      if (lexer instanceof FlexAdapter) {
+        lexer = ((FlexAdapter)lexer).getFlex();
+      }
+      else if (lexer instanceof DelegateLexer) {
+        lexer = ((DelegateLexer)lexer).getDelegate();
+      }
+      else {
+        break;
+      }
+    }
+    return lexer.getClass();
   }
 
   protected static boolean stripWords(final Processor<? super WordOccurrence> processor,

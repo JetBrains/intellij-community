@@ -29,6 +29,7 @@ public class DefaultConsoleFiltersProvider implements ConsoleFilterProviderEx {
     return getDefaultFilters(project, GlobalSearchScope.allScope(project));
   }
 
+  @NotNull
   @Override
   public Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
     List<Filter> filters = ExceptionFilters.getFilters(scope);

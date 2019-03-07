@@ -5,33 +5,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
 
-//example/GithubRepoWithPermissions.json
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubRepoWithPermissions extends GithubRepo {
-  @Mandatory private Permissions permissions;
+  @Mandatory private GithubPermissions permissions;
 
   @NotNull
-  public Permissions getPermissions() {
+  public GithubPermissions getPermissions() {
     return permissions;
-  }
-
-  @RestModel
-  public static class Permissions {
-    @Mandatory private Boolean admin;
-    @Mandatory private Boolean pull;
-    @Mandatory private Boolean push;
-
-    public boolean isAdmin() {
-      return admin;
-    }
-
-    public boolean isPull() {
-      return pull;
-    }
-
-    public boolean isPush() {
-      return push;
-    }
   }
 }

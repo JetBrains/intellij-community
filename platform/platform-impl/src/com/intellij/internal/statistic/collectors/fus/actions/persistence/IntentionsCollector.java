@@ -27,8 +27,6 @@ import java.util.Map;
   value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
 )
 public class IntentionsCollector implements PersistentStateComponent<IntentionsCollector.State> {
-  private static final String GROUP = "intentions";
-  private static final String DEFAULT_ID = "third.party.intention";
 
   private final State myState = new State();
 
@@ -50,8 +48,8 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
       addPluginInfo(info).
       addLanguage(language);
 
-    final String id = info.isSafeToReport() ? toReportedId(clazz) : DEFAULT_ID;
-    FUCounterUsageLogger.getInstance().logEvent(GROUP, id, data);
+    final String id = info.isSafeToReport() ? toReportedId(clazz) : "third.party.intention";
+    FUCounterUsageLogger.getInstance().logEvent("intentions", id, data);
   }
 
   @NotNull

@@ -122,6 +122,7 @@ class RetypeSession(
   private val threadDumpAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
 
   private val originalText = document.text
+  @Volatile
   private var pos = 0
   private val endPos: Int
   private val tailLength: Int

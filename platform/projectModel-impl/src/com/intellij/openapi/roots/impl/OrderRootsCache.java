@@ -57,6 +57,7 @@ class OrderRootsCache {
   }
 
   private static final VirtualFilePointerContainer EMPTY = ObjectUtils.sentinel("Empty roots container", VirtualFilePointerContainer.class);
+  @NotNull
   private VirtualFilePointerContainer setCachedRoots(@NotNull CacheKey key, @NotNull Collection<String> urls) {
     // optimization: avoid creating heavy container for empty list, use 'EMPTY' stub for that case
     VirtualFilePointerContainer container;

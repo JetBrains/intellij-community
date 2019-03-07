@@ -65,9 +65,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     ModuleRootModificationUtil.addModuleLibrary(myModule, getJDomJar().getUrl());
     Library library = assertOneElement(OrderEntryUtil.getModuleLibraries(ModuleRootManager.getInstance(myModule)));
     assertTrue(LibraryTableImplUtil.isValidLibrary(library));
-    ModuleRootModificationUtil.updateModel(myModule, model -> {
-      model.getModuleLibraryTable().removeLibrary(library);
-    });
+    ModuleRootModificationUtil.updateModel(myModule, model -> model.getModuleLibraryTable().removeLibrary(library));
     assertFalse(LibraryTableImplUtil.isValidLibrary(library));
   }
 

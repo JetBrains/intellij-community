@@ -699,14 +699,10 @@ public class JBTabsImpl extends JComponent
   public void requestFocus() {
     final JComponent toFocus = getToFocus();
     if (toFocus != null) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(toFocus, true);
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(toFocus, true));
     }
     else {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        super.requestFocus();
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> super.requestFocus());
     }
   }
 
@@ -976,9 +972,7 @@ public class JBTabsImpl extends JComponent
     if (toFocus == null) return ActionCallback.DONE;
 
     if (myTestMode) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(toFocus, true);
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(toFocus, true));
       return ActionCallback.DONE;
     }
 

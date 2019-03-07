@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -99,8 +100,10 @@ public class AnnotateLocalFileAction {
         }
 
         if (editor == null) {
-          LOG.error(String.format("Can't create text editor for file: valid - %s; file type - %s; editors - %s",
-                                  selectedFile.isValid(), selectedFile.getFileType(), Arrays.toString(fileEditors)));
+          Messages.showErrorDialog(project, "Can't create text editor for " + selectedFile.getPresentableUrl(),
+                                   VcsBundle.message("message.title.annotate"));
+          LOG.warn(String.format("Can't create text editor for file: valid - %s; file type - %s; editors - %s",
+                                 selectedFile.isValid(), selectedFile.getFileType().getName(), Arrays.toString(fileEditors)));
 
           return;
         }

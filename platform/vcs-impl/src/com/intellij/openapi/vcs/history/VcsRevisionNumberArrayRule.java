@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListByDateComparator;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +40,7 @@ public class VcsRevisionNumberArrayRule implements GetDataRule {
   public Object getData(@NotNull DataProvider dataProvider) {
     List<VcsRevisionNumber> revisionNumbers = getRevisionNumbers(dataProvider);
 
-    return !ContainerUtil.isEmpty(revisionNumbers) ? ArrayUtil.toObjectArray(revisionNumbers, VcsRevisionNumber.class) : null;
+    return !ContainerUtil.isEmpty(revisionNumbers) ? revisionNumbers.toArray(new VcsRevisionNumber[0]) : null;
   }
 
   @Nullable

@@ -959,7 +959,7 @@ parenthesized_lambda_parameter_list ::= empty_parens | '(' <<comma_list (mb_nl l
 lambda_parameter ::= modifier_list mb_type_element var { elementType = parameter }
 
 single_lambda_parameter_list ::= single_lambda_parameter { elementType = parameter_list }
-single_lambda_parameter ::= IDENTIFIER {
+single_lambda_parameter ::= modifier_list IDENTIFIER {
   elementType = parameter
 }
 
@@ -1147,7 +1147,7 @@ call_argument_list ::= !<<isParameterizedLambda>> (empty_parens | non_empty_argu
   elementType = argument_list
 }
 
-private non_empty_argument_list::= '(' paren_argument_list_inner ')' {
+private non_empty_argument_list::= '(' <<notApplicationArguments paren_argument_list_inner>> ')' {
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }

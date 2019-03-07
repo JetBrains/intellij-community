@@ -445,6 +445,28 @@ public class LongRangeSetTest {
     checkBitwiseAnd(range(0, 100).mul(point(6), true), point(~4), "{0..1018}: <0, 2> mod 8");
     checkBitwiseAnd(range(0, 50).mul(point(6), true), range(0, 50).mul(point(20), true).plus(point(1), true), "{0..508}: <0> mod 4");
   }
+  
+  @Test
+  public void testBitwiseOr() {
+    assertTrue(empty().bitwiseOr(all(), true).isEmpty());
+    assertTrue(all().bitwiseOr(empty(), true).isEmpty());
+    assertEquals(all(), all().bitwiseOr(all(), true));
+    assertEquals("{-9223372036854775807..Long.MAX_VALUE}: odd", all().bitwiseOr(point(1), true).toString());
+    assertEquals("{-9223372036854775804..Long.MAX_VALUE-1}: <4, 6> mod 8", all().mul(point(64), true).minus(point(2), true).bitwiseOr(point(4), true).toString());
+
+    checkBitwiseOr(point(1), point(2), false, "{3}");
+    checkBitwiseOr(range(0, 100), point(1), false, "{1..127}: odd");
+    checkBitwiseOr(range(0, 100), point(2), false, "{2..127}: <2, 3> mod 4");
+    checkBitwiseOr(range(0, 100), point(3), false, "{3..127}: <3> mod 4");
+    checkBitwiseOr(range(0, 100).bitwiseAnd(point(12)), range(0, 100).bitwiseAnd(point(24)), false, "{0..28}: <0> mod 4");
+    checkBitwiseOr(range(0, 100).bitwiseAnd(point(4)), range(0, 100).bitwiseAnd(point(8)), false, "{0..12}: <0> mod 4");
+    checkBitwiseOr(range(-100, 100).bitwiseAnd(point(4)), point(-256), true, "{-256, -252}");
+    checkBitwiseOr(range(-100, 100).bitwiseAnd(point(~0xF)), point(-244), true, "{-244..-4}: <12> mod 16");
+    checkBitwiseOr(range(-50, 50).bitwiseAnd(point(4)), range(-50, 50).bitwiseAnd(point(~0xFF)), true, "{Long.MIN_VALUE..9223372036854775748}: <0, 4> mod 64");
+    checkBitwiseOr(range(-50, 50).bitwiseAnd(point(~0xF)), range(-50, 50).bitwiseAnd(point(~0xF0)), true, "{Long.MIN_VALUE..Long.MAX_VALUE}");
+    checkBitwiseOr(range(-50, 50).bitwiseAnd(point(~0xF)), range(-50, 50).bitwiseAnd(point(~0xF1)), true, "{Long.MIN_VALUE..Long.MAX_VALUE}");
+    checkBitwiseOr(all().bitwiseAnd(point(4)), all().bitwiseAnd(point(8)), true, "{0..12}: <0> mod 4");
+  }
 
   @Test
   public void testMod() {
@@ -599,6 +621,8 @@ public class LongRangeSetTest {
     assertEquals(intDomain, range(Integer.MIN_VALUE, 2).plus(range(-2, Integer.MAX_VALUE), false));
     assertEquals(all(), range(Long.MIN_VALUE, 2).plus(range(-2, Long.MAX_VALUE), true));
     assertEquals(all(), range(-100, Long.MAX_VALUE).plus(all(), true));
+
+    assertEquals("{-9223372036854775745..Long.MAX_VALUE}: <63> mod 64", all().mul(point(64), true).minus(point(1), true).toString());
   }
   
   @Test
@@ -737,6 +761,10 @@ public class LongRangeSetTest {
     assertEquals("{0..16}: <0, 1> mod 5", modRange(0, 11, 5, 0b1).unite(modRange(11, 20, 5, 0b10)).toString());
     assertEquals("{0..19}: <0, 1, 3, 5, 7, 9> mod 10", modRange(0, 11, 5, 0b1).unite(modRange(11, 20, 2, 0b10)).toString());
     assertEquals("{0..100}", modRange(0, 100, 2, 0b1).unite(point(1)).toString());
+    assertEquals("{0..102}: even", modRange(0, 100, 2, 0b1).unite(point(102)).toString());
+    assertEquals("{-2..100}: even", modRange(0, 100, 2, 0b1).unite(point(-2)).toString());
+    assertEquals("{-3, 0..100}", modRange(0, 100, 2, 0b1).unite(point(-3)).toString());
+    assertEquals("{-4, 0..100}", modRange(0, 100, 2, 0b1).unite(point(-4)).toString());
   }
   
   @Test
@@ -790,6 +818,12 @@ public class LongRangeSetTest {
     LongRangeSet result = range1.bitwiseAnd(range2);
     assertEquals(result, range2.bitwiseAnd(range1)); // commutative
     checkBinOp(range1, range2, result, x -> true, (a, b) -> a & b, expected, "&");
+  }
+
+  void checkBitwiseOr(LongRangeSet range1, LongRangeSet range2, boolean isLong, String expected) {
+    LongRangeSet result = range1.bitwiseOr(range2, isLong);
+    assertEquals(result, range2.bitwiseOr(range1, isLong)); // commutative
+    checkBinOp(range1, range2, result, x -> true, (a, b) -> a | b, expected, "|");
   }
 
   void checkBinOp(LongRangeSet op1,

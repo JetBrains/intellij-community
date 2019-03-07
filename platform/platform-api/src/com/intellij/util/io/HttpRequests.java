@@ -174,6 +174,11 @@ public final class HttpRequests {
   }
 
   @NotNull
+  public static RequestBuilder delete(@NotNull String url, @Nullable String contentType) {
+    return requestWithBody(url, "DELETE", contentType, null);
+  }
+
+  @NotNull
   public static RequestBuilder post(@NotNull String url, @Nullable String contentType) {
     return requestWithBody(url, "POST", contentType, null);
   }
@@ -525,8 +530,8 @@ public final class HttpRequests {
 
       if (builder.myThrowStatusCodeException) {
         URLConnection connection = request.myConnection;
-        if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getRequestMethod().equals("POST")) {
-          // getResponseCode is not checked on connect for POST, because write must be performed before read
+        if (connection != null && connection.getDoOutput()) {
+          // getResponseCode is not checked on connect, because write must be performed before read
           HttpURLConnection urlConnection = (HttpURLConnection)connection;
           int responseCode = urlConnection.getResponseCode();
           if (responseCode >= 400) {
@@ -596,11 +601,12 @@ public final class HttpRequests {
         return connection;
       }
 
-      HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
-      String method = httpURLConnection.getRequestMethod();
-      if (method.equals("POST") || method.equals("PUT")) {
+      if (connection.getDoOutput()) {
         return connection;
       }
+
+      HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
+      String method = httpURLConnection.getRequestMethod();
 
       LOG.assertTrue(method.equals("GET") || method.equals("HEAD") || method.equals("DELETE"),
                      "'" + method + "' not supported; please use GET, HEAD, DELETE, PUT or POST");

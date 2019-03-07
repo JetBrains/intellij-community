@@ -22,7 +22,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -42,7 +41,7 @@ import java.util.Iterator;
 /**
  *  @author dsl
  */
-public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.ModifiableModel {
+public class ModuleLibraryTable implements LibraryTable, LibraryTable.ModifiableModel {
   private static final ModuleLibraryOrderEntryCondition MODULE_LIBRARY_ORDER_ENTRY_FILTER = new ModuleLibraryOrderEntryCondition();
   private static final OrderEntryToLibraryConvertor ORDER_ENTRY_TO_LIBRARY_CONVERTOR = new OrderEntryToLibraryConvertor();
   @NotNull
@@ -50,16 +49,19 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
   @NotNull
   private final ProjectRootManagerImpl myProjectRootManager;
   public static final LibraryTablePresentation MODULE_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
+    @NotNull
     @Override
     public String getDisplayName(boolean plural) {
       return ProjectBundle.message("module.library.display.name", plural ? 2 : 1);
     }
 
+    @NotNull
     @Override
     public String getDescription() {
       return ProjectBundle.message("libraries.node.text.module");
     }
 
+    @NotNull
     @Override
     public String getLibraryTableEditorTitle() {
       return ProjectBundle.message("library.configure.module.title");

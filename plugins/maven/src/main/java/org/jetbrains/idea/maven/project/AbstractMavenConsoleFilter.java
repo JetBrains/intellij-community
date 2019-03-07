@@ -11,6 +11,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -35,7 +36,7 @@ public abstract class AbstractMavenConsoleFilter implements Filter {
 
   @Nullable
   @Override
-  public Result applyFilter(String line, int entireLength) {
+  public Result applyFilter(@NotNull String line, int entireLength) {
     if (!lightCheck(line)) return null;
 
     Matcher matcher = myPattern.matcher(line);

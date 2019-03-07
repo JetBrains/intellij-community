@@ -132,9 +132,7 @@ public class TraceTreeCellRenderer extends ColoredTreeCellRenderer {
   @Override
   protected void doPaint(Graphics2D g) {
     if (myHaveLink) {
-      useSafely(g.create(0, 0, myLinkOffset, g.getClipBounds().height), textGraphics -> {
-        super.doPaint(textGraphics);
-      });
+      useSafely(g.create(0, 0, myLinkOffset, g.getClipBounds().height), textGraphics -> super.doPaint(textGraphics));
       g.translate(myLinkOffset, 0);
       myLink.setHeight(getHeight());
       myLink.doPaint(g);

@@ -51,7 +51,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
@@ -102,7 +101,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private final Alarm myLoadingProgressPreviewAlarm = new Alarm(this);
   private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
-  private final Invoker myTreeUpdater;
+  private final ExecutorService myTreeUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Inspection-View-Tree-Updater");
   private volatile boolean myUpdating;
 
   public InspectionResultsView(@NotNull GlobalInspectionContextImpl globalInspectionContext,
@@ -113,7 +112,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
     myTree = new InspectionTree(globalInspectionContext, this);
-    myTreeUpdater = myTree.getInspectionTreeModel().getInvoker();
 
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(globalInspectionContext.getProject()).SPLITTER_PROPORTION);
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
@@ -791,12 +789,12 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   private void updateTree(@NotNull Runnable action) {
-    myTreeUpdater.runOrInvokeLater(() -> ProgressManager.getInstance().runProcess(action, new EmptyProgressIndicator()));
+    myTreeUpdater.submit(() -> ProgressManager.getInstance().runProcess(action, new EmptyProgressIndicator()));
   }
 
 
   @TestOnly
   public void dispatchTreeUpdate() throws ExecutionException, InterruptedException {
-    myTreeUpdater.runOrInvokeLater(EmptyRunnable.getInstance()).get();
+    myTreeUpdater.submit(EmptyRunnable.getInstance()).get();
   }
 }

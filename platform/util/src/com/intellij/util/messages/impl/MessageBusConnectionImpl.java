@@ -79,12 +79,9 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
 
   @Override
   public void dispose() {
-    Queue<Message> jobs = myPendingMessages.get();
+    myPendingMessages.get();
     myPendingMessages.remove();
     myBus.notifyConnectionTerminated(this);
-    if (!jobs.isEmpty()) {
-      LOG.error("Not delivered events in the queue: " + jobs);
-    }
   }
 
   @Override

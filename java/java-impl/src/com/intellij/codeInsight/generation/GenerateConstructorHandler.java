@@ -285,12 +285,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       }
       final PsiParameter[] parameters = fieldParams.toArray(PsiParameter.EMPTY_ARRAY);
       final List<String> existingNames = ContainerUtil.map(dummyConstructor.getParameterList().getParameters(), parameter -> parameter.getName());
-      if (generator instanceof ConstructorBodyGeneratorEx) {
-        ((ConstructorBodyGeneratorEx)generator).generateFieldInitialization(buffer, fields, parameters, existingNames);
-      }
-      else {
-        generator.generateFieldInitialization(buffer, fields, parameters);
-      }
+      generator.generateFieldInitialization(buffer, fields, parameters, existingNames);
       generator.finish(buffer);
       PsiMethod stub = factory.createMethodFromText(buffer.toString(), aClass);
       PsiCodeBlock original = constructor.getBody(), replacement = stub.getBody();

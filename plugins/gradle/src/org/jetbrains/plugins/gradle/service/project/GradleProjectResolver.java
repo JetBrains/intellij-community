@@ -66,7 +66,8 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getDefaultModuleTypeId;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId;
 
 /**
  * @author Denis Zhdanov, Vladislav Soroka
@@ -197,11 +198,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
     }
 
-    executionSettings.withArgument("-Didea.version=" + getIdeaVersion());
+    executionSettings.withArgument("-Didea.sync.active=true");
     if(resolverCtx.isPreviewMode()){
       executionSettings.withArgument("-Didea.isPreviewMode=true");
       final Set<Class> previewLightWeightToolingModels = ContainerUtil.set(ExternalProjectPreview.class, GradleBuild.class);
-      projectImportAction.addExtraProjectModelClasses(previewLightWeightToolingModels);
+      projectImportAction.addProjectImportExtraModelProvider(new ClassSetProjectImportExtraModelProvider(previewLightWeightToolingModels));
     }
     if(resolverCtx.isResolveModulePerSourceSet()) {
       executionSettings.withArgument("-Didea.resolveSourceSetDependencies=true");
@@ -228,7 +229,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       if(!resolverCtx.isPreviewMode()){
         // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
         try {
-          projectImportAction.addExtraProjectModelClasses(resolverExtension.getExtraProjectModelClasses());
+          projectImportAction.addProjectImportExtraModelProvider(
+            new ClassSetProjectImportExtraModelProvider(resolverExtension.getExtraProjectModelClasses()));
         }
         catch (Throwable t) {
           LOG.warn(t);
@@ -789,10 +791,5 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     return projectResolverChain;
-  }
-
-  private static String getIdeaVersion() {
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    return appInfo.getMajorVersion() + "." + appInfo.getMinorVersion();
   }
 }

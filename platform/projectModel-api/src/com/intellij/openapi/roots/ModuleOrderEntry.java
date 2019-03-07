@@ -16,13 +16,16 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
  */
 public interface ModuleOrderEntry extends ExportableOrderEntry {
-  @Nullable Module getModule();
+  @Nullable
+  Module getModule();
 
+  @NotNull
   String getModuleName();
 }

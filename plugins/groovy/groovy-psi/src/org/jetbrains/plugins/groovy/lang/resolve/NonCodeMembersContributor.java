@@ -79,13 +79,16 @@ public abstract class NonCodeMembersContributor {
 
     if (aClass != null) {
       for (String superClassName : ClassUtil.getSuperClassesWithCache(aClass).keySet()) {
+        ProgressManager.checkCanceled();
         for (NonCodeMembersContributor enhancer : ourClassSpecifiedContributors.get(superClassName)) {
+          ProgressManager.checkCanceled();
           if (!invokeContributor(qualifierType, place, state, aClass, allDelegates, enhancer)) return false;
         }
       }
     }
 
     for (NonCodeMembersContributor contributor : ourAllTypeContributors) {
+      ProgressManager.checkCanceled();
       if (!invokeContributor(qualifierType, place, state, aClass, allDelegates, contributor)) return false;
     }
 
@@ -102,8 +105,8 @@ public abstract class NonCodeMembersContributor {
                                            PsiClass aClass,
                                            List<MyDelegatingScopeProcessor> allDelegates,
                                            NonCodeMembersContributor enhancer) {
-    ProgressManager.checkCanceled();
     for (MyDelegatingScopeProcessor delegatingProcessor : allDelegates) {
+      ProgressManager.checkCanceled();
       enhancer.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
       if (!delegatingProcessor.wantMore) {
         return false;

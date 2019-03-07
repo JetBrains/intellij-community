@@ -8,6 +8,7 @@ import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 
@@ -19,7 +20,8 @@ public class PropertiesPsiCompletionUtil {
                                          final PropertiesFile propertiesFile,
                                          final Set<Object> variants) {
     if (propertiesFile == null) return;
-    if (!ProjectRootManager.getInstance(propertiesFile.getProject()).getFileIndex().isInContent(propertiesFile.getVirtualFile())) return;
+    VirtualFile virtualFile = propertiesFile.getVirtualFile();
+    if (virtualFile == null || !ProjectRootManager.getInstance(propertiesFile.getProject()).getFileIndex().isInContent(virtualFile)) return;
     List<? extends IProperty> properties = propertiesFile.getProperties();
     for (IProperty property : properties) {
       propertyReference.addKey(property, variants);

@@ -132,6 +132,17 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
           return getText(expression, previousOperand, operand, PsiType.LONG.equals(expression.getType()) ? "0L" : "0", ct);
         }
       }
+      else {
+        PsiExpression left = unwrapNegation(previousOperand);
+        PsiExpression right = unwrapNegation(operand);
+        if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left, right)) {
+          if (tokenType.equals(AND)) {
+            return getText(expression, previousOperand, operand, PsiType.LONG.equals(expression.getType()) ? "0L" : "0", ct);
+          } else if (tokenType.equals(OR) || tokenType.equals(XOR)) {
+            return getText(expression, previousOperand, operand, PsiType.LONG.equals(expression.getType()) ? "-1L" : "-1", ct);
+          }
+        }
+      }
       previousOperand = operand;
     }
     return "";
@@ -265,13 +276,17 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
     private boolean booleanExpressionIsPointless(PsiExpression[] operands) {
       PsiExpression previousExpression = null;
       for (PsiExpression operand : operands) {
-        if (isZero(operand) || isAllOnes(operand) || (EquivalenceChecker.getCanonicalPsiEquivalence()
-          .expressionsAreEquivalent(previousExpression, operand) && !SideEffectChecker.mayHaveSideEffects(operand))) {
+        if (isZero(operand) || isAllOnes(operand) ||
+            (areEquivalentModuloNegation(previousExpression, operand) && !SideEffectChecker.mayHaveSideEffects(operand))) {
           return true;
         }
         previousExpression = operand;
       }
       return false;
+    }
+
+    private boolean areEquivalentModuloNegation(PsiExpression op1, PsiExpression op2) {
+      return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(unwrapNegation(op1), unwrapNegation(op2));
     }
 
     private boolean shiftExpressionIsPointless(PsiExpression[] operands) {
@@ -282,6 +297,14 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
       }
       return false;
     }
+  }
+
+  private static PsiExpression unwrapNegation(PsiExpression op) {
+    PsiExpression deparenthesized = PsiUtil.skipParenthesizedExprDown(op);
+    if (deparenthesized instanceof PsiPrefixExpression && ((PsiPrefixExpression)deparenthesized).getOperationTokenType().equals(TILDE)) {
+      return ((PsiPrefixExpression)deparenthesized).getOperand();
+    }
+    return op;
   }
 
   private boolean isZero(PsiExpression expression) {
@@ -301,26 +324,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
     else {
       value = ConstantExpressionUtil.computeCastTo(expression, expressionType);
     }
-    if (value == null) {
-      return false;
-    }
-    if (value instanceof Integer &&
-        ((Integer)value).intValue() == 0xffffffff) {
-      return true;
-    }
-    if (value instanceof Long &&
-        ((Long)value).longValue() == 0xffffffffffffffffL) {
-      return true;
-    }
-    if (value instanceof Short &&
-        ((Short)value).shortValue() == (short)0xffff) {
-      return true;
-    }
-    if (value instanceof Character &&
-        ((Character)value).charValue() == (char)0xffff) {
-      return true;
-    }
-    return value instanceof Byte &&
-           ((Byte)value).byteValue() == (byte)0xff;
+    return (value instanceof Integer || value instanceof Short || value instanceof Byte) && ((Number)value).intValue() == -1 ||
+           value instanceof Long && ((Long)value).longValue() == 0xffffffffffffffffL;
   }
 }

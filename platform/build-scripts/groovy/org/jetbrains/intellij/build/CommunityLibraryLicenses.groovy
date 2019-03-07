@@ -73,8 +73,6 @@ class CommunityLibraryLicenses {
 
     new LibraryLicense(name: "Apache Axis", libraryName: "axis-1.4", version: "1.4", license: "Apache 2.0",
                        url: "http://ws.apache.org/axis/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.html"),
-    new LibraryLicense(name: "Apache Axis wstx-asl", libraryName: "wstx-asl", version: "1.4", license: "Apache 2.0",
-                           url: "http://ws.apache.org/axis/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.html"),
 
     new LibraryLicense(name: "Apache Commons BeanUtils", libraryName: "commons-beanutils.jar", version: "1.6", license: "Apache 2.0",
                        url: "http://commons.apache.org/beanutils/"),
@@ -250,9 +248,9 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.14", license: "LGPL 3",
                        url: "https://github.com/JetBrains/jediterm",
                        licenseUrl: "https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt"),
-    new LibraryLicense(name: "JetBrains Annotations", libraryName: "jetbrains-annotations", version: "16.0.1", license: "Apache 2.0",
+    new LibraryLicense(name: "JetBrains Annotations", libraryName: "jetbrains-annotations", version: "17.0.0", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/java-annotations"),
-    new LibraryLicense(name: "JetBrains Annotations for Java 5", libraryName: "jetbrains-annotations-java5", version: "16.0.1",
+    new LibraryLicense(name: "JetBrains Annotations for Java 5", libraryName: "jetbrains-annotations-java5", version: "17.0.0",
                        license: "Apache 2.0", url: "https://github.com/JetBrains/java-annotations"),
     new LibraryLicense(name: "jetCheck", libraryName: "jetCheck", version: "0.2.1", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/jetCheck"),

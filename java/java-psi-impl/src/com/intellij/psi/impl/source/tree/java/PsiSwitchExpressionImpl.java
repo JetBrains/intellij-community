@@ -46,6 +46,8 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
       resultTypes.add(resultExpressionType);
     }
 
+    if (resultTypes.isEmpty()) return null;
+
     //If the result expressions all have the same type (which may be the null type), then that is the type of the switch expression.
     if (resultTypes.size() == 1) {
       return ContainerUtil.getFirstItem(resultTypes);

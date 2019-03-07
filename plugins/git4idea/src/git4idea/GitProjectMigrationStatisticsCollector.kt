@@ -67,6 +67,6 @@ class GitProjectMigrationStatisticsCollector : ProjectUsagesCollector() {
   }
 
   override fun getGroupId(): String {
-    return "statistics.vcs.git.project.root"
+    return "vcs.git.project.root"
   }
 }

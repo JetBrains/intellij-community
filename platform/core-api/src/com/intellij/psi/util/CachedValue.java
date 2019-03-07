@@ -40,15 +40,28 @@ import org.jetbrains.annotations.NotNull;
  * <b>Important note</b>: if you store the CachedValue in a field or user data of some object {@code X}, then its {@link CachedValueProvider}
  * may only depend on X and parts of global system state that don't change while {@code X} is alive and valid (e.g. application/project components/services).
  * Otherwise re-invoking the CachedValueProvider after invalidation would use outdated data and produce incorrect results,
- * possibly causing exceptions in places far, far away. In particular, the provider may not depend on:
+ * possibly causing exceptions in places far, far away. In particular, the provider may not capture:
  * <ul>
- *   <li>Parameters of a method where CachedValue is created, except for {@code X} itself</li>
+ *   <li>Parameters of a method where CachedValue is created, except for {@code X} itself. Example:
+ *   <pre>
+ *   PsiElement resolve(PsiElement e, boolean incompleteCode) {
+ *     return CachedValuesManager.getCachedValue(e, () -> doResolve(e, incompleteCode)); // WRONG!!!
+ *   }
+ *   </pre>
+ *
+ *   </li>
  *   <li>"this" object creating the CachedValue, if {@code X} can outlive it,
  *   or if there can be several non-equivalent instances of "this"-object's class all creating a cached value for the same place</li>
  *   <li>Thread-locals at the moment of creation. If you use them (either directly or via {@link RecursionGuard#currentStack()}),
  *   please try not to. If you really have to, also use {@link RecursionGuard#prohibitResultCaching(Object)}
  *   to ensure values depending on unstable data won't be cached.</li>
- *   <li>PSI elements around {@code X}, when {@code X} is a {@link com.intellij.psi.PsiElement} itself</ul>
+ *   <li>PSI elements around {@code X}, when {@code X} is a {@link com.intellij.psi.PsiElement} itself,
+ *   as they can change during the lifetime of that PSI element. Example:
+ *   <pre>
+ *   PsiMethod[] methods = psiClass.getMethods();
+ *   return CachedValuesManager.getCachedValue(psiClass, () -> calculateSomeResult(methods)); // WRONG!!!
+ *   </pre>
+ *   </ul>
  * </ul>
  *
  * @param <T> The type of the computation result.

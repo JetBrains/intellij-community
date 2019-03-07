@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -409,7 +409,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       // component may have been already loaded by PicoContainer, so fire error only if components are really different
       if (!instance.equals(loadedComponent)) {
         String errorMessage = "Component name collision: " + componentName + " " + (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
-        LOG.error(PluginManagerCore.createPluginException(errorMessage, null, instance.getClass()));
+        PluginException.logPluginError(LOG, errorMessage, null, instance.getClass());
       }
     }
     else {
@@ -442,7 +442,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     @Override
-    public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
+    public Object getComponentInstance(@NotNull PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
       Object instance = myInitializedComponentInstance;
       // getComponent could be called during some component.dispose() call, in this case we don't attempt to instantiate component
       if (instance != null || myDisposed) {

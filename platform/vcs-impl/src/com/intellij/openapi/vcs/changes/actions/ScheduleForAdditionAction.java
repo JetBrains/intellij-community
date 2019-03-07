@@ -128,9 +128,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     ProgressManager.getInstance().run(new Task.Modal(project, "Adding Files to VCS...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        ChangesUtil.processVirtualFilesByVcs(project, files, (vcs, files) -> {
-          addUnversionedFilesToVcs(project, vcs, files, allProcessedFiles, exceptions);
-        });
+        ChangesUtil.processVirtualFilesByVcs(project, files, (vcs, files) -> addUnversionedFilesToVcs(project, vcs, files, allProcessedFiles, exceptions));
 
         if (additionalTask != null) additionalTask.consume(indicator, exceptions);
       }

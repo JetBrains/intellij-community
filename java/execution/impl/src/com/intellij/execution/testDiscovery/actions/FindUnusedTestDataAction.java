@@ -20,7 +20,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -69,12 +68,11 @@ public class FindUnusedTestDataAction extends DumbAwareAction {
           PsiManager psiManager = PsiManager.getInstance(project);
           String basePath = projectBasePath.getPath();
           application.runReadAction(() -> {
-            PsiFile[] files = ArrayUtil.toObjectArray(
-              JBIterable.of(filesWithoutTests)
+            PsiFile[] files = JBIterable.of(filesWithoutTests)
                 .flatten(FunctionUtil.id())
                 .map(f -> vfm.refreshAndFindFileByUrl(PROTOCOL_PREFIX + basePath + f))
-                .map(f -> psiManager.findFile(f))
-                .filter(Objects::nonNull).toSet(), PsiFile.class);
+                .map(psiManager::findFile)
+                .filter(Objects::nonNull).toSet().toArray(PsiFile.EMPTY_ARRAY);
 
             if (files.length == 0) {
               nothingToDo();

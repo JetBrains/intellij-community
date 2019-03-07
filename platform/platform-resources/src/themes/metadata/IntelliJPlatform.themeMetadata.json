@@ -1,0 +1,618 @@
+{
+  "name": "IntelliJ Platform",
+  "fixed": false,
+  "ui": [
+    {
+      "key": "Borders.color"
+    },
+    {
+      "key": "Borders.ContrastBorderColor"
+    },
+    {
+      "key": "ComboPopup.border"
+    },
+    {
+      "key": "CompletionPopup.background"
+    },
+    {
+      "key": "CompletionPopup.foreground"
+    },
+    {
+      "key": "CompletionPopup.infoForeground"
+    },
+    {
+      "key": "CompletionPopup.matchForeground"
+    },
+    {
+      "key": "CompletionPopup.matchSelectionForeground"
+    },
+    {
+      "key": "CompletionPopup.nonFocusedState"
+    },
+    {
+      "key": "CompletionPopup.selectionBackground"
+    },
+    {
+      "key": "CompletionPopup.selectionForeground"
+    },
+    {
+      "key": "CompletionPopup.selectionInactiveBackground"
+    },
+    {
+      "key": "CompletionPopup.selectionInfoForeground"
+    },
+    {
+      "key": "Counter.background"
+    },
+    {
+      "key": "Counter.foreground"
+    },
+    {
+      "key": "DebuggerTabs.selectedBackground"
+    },
+    {
+      "key": "Editor.background"
+    },
+    {
+      "key": "Editor.foreground"
+    },
+    {
+      "key": "Editor.shortcutForeground"
+    },
+    {
+      "key": "EditorTabs.borderColor"
+    },
+    {
+      "key": "EditorTabs.inactiveMaskColor"
+    },
+    {
+      "key": "EditorTabs.selectedBackground"
+    },
+    {
+      "key": "EditorTabs.selectedForeground"
+    },
+    {
+      "key": "EditorTabs.underlineColor"
+    },
+    {
+      "key": "FileColor.Blue"
+    },
+    {
+      "key": "FileColor.Green"
+    },
+    {
+      "key": "FileColor.Orange"
+    },
+    {
+      "key": "FileColor.Rose"
+    },
+    {
+      "key": "FileColor.Violet"
+    },
+    {
+      "key": "FileColor.Yellow"
+    },
+    {
+      "key": "FlameGraph.frameForeground"
+    },
+    {
+      "key": "FlameGraph.JVMBackground"
+    },
+    {
+      "key": "FlameGraph.JVMFocusBackground"
+    },
+    {
+      "key": "FlameGraph.JVMFocusedFrameForeground"
+    },
+    {
+      "key": "FlameGraph.JVMFocusSearchNotMatchedBackground"
+    },
+    {
+      "key": "FlameGraph.JVMFrameForeground"
+    },
+    {
+      "key": "FlameGraph.JVMSearchNotMatchedBackground"
+    },
+    {
+      "key": "FlameGraph.nativeBackground"
+    },
+    {
+      "key": "FlameGraph.nativeFocusBackground"
+    },
+    {
+      "key": "FlameGraph.nativeFocusedFrameForeground"
+    },
+    {
+      "key": "FlameGraph.nativeFocusSearchNotMatchedBackground"
+    },
+    {
+      "key": "FlameGraph.nativeFrameForeground"
+    },
+    {
+      "key": "FlameGraph.nativeSearchNotMatchedBackground"
+    },
+    {
+      "key": "FlameGraph.parentBackground"
+    },
+    {
+      "key": "FlameGraph.parentFocusBackground"
+    },
+    {
+      "key": "FlameGraph.parentFocusedFrameForeground"
+    },
+    {
+      "key": "FlameGraph.parentFocusSearchNotMatchedBackground"
+    },
+    {
+      "key": "FlameGraph.parentFrameForeground"
+    },
+    {
+      "key": "FlameGraph.parentSearchNotMatchedBackground"
+    },
+    {
+      "key": "Git.Log.Ref.Head"
+    },
+    {
+      "key": "Git.Log.Ref.LocalBranch"
+    },
+    {
+      "key": "Git.Log.Ref.Other"
+    },
+    {
+      "key": "Git.Log.Ref.RemoteBranch"
+    },
+    {
+      "key": "Git.Log.Ref.Tag"
+    },
+    {
+      "key": "Group.disabledSeparatorColor"
+    },
+    {
+      "key": "Group.separatorColor"
+    },
+    {
+      "key": "GutterTooltip.infoForeground"
+    },
+    {
+      "key": "GutterTooltip.lineSeparatorColor"
+    },
+    {
+      "key": "HeaderColor.active"
+    },
+    {
+      "key": "HeaderColor.inactive"
+    },
+    {
+      "key": "HelpTooltip.background"
+    },
+    {
+      "key": "HelpTooltip.borderColor"
+    },
+    {
+      "key": "HelpTooltip.foreground"
+    },
+    {
+      "key": "HelpTooltip.shortcutForeground"
+    },
+    {
+      "key": "Hg.Log.Ref.Bookmark"
+    },
+    {
+      "key": "Hg.Log.Ref.Branch"
+    },
+    {
+      "key": "Hg.Log.Ref.ClosedBranch"
+    },
+    {
+      "key": "Hg.Log.Ref.Head"
+    },
+    {
+      "key": "Hg.Log.Ref.LocalTag"
+    },
+    {
+      "key": "Hg.Log.Ref.MqTag"
+    },
+    {
+      "key": "Hg.Log.Ref.Tag"
+    },
+    {
+      "key": "Hg.Log.Ref.Tip"
+    },
+    {
+      "key": "InformationHint.borderColor"
+    },
+    {
+      "key": "Label.disabledText"
+    },
+    {
+      "key": "Label.errorForeground"
+    },
+    {
+      "key": "Label.infoForeground"
+    },
+    {
+      "key": "NavBar.borderColor"
+    },
+    {
+      "key": "Notification.background"
+    },
+    {
+      "key": "Notification.borderColor"
+    },
+    {
+      "key": "Notification.errorBackground"
+    },
+    {
+      "key": "Notification.errorBorderColor"
+    },
+    {
+      "key": "Notification.errorForeground"
+    },
+    {
+      "key": "Notification.foreground"
+    },
+    {
+      "key": "Notification.MoreButton.background"
+    },
+    {
+      "key": "Notification.MoreButton.foreground"
+    },
+    {
+      "key": "Notification.MoreButton.innerBorderColor"
+    },
+    {
+      "key": "Notification.ToolWindow.errorBackground"
+    },
+    {
+      "key": "Notification.ToolWindow.errorBorderColor"
+    },
+    {
+      "key": "Notification.ToolWindow.errorForeground"
+    },
+    {
+      "key": "Notification.ToolWindow.informativeBackground"
+    },
+    {
+      "key": "Notification.ToolWindow.informativeBorderColor"
+    },
+    {
+      "key": "Notification.ToolWindow.informativeForeground"
+    },
+    {
+      "key": "Notification.ToolWindow.warningBackground"
+    },
+    {
+      "key": "Notification.ToolWindow.warningBorderColor"
+    },
+    {
+      "key": "Notification.ToolWindow.warningForeground"
+    },
+    {
+      "key": "ParameterInfo.background"
+    },
+    {
+      "key": "ParameterInfo.borderColor"
+    },
+    {
+      "key": "ParameterInfo.currentOverloadBackground"
+    },
+    {
+      "key": "ParameterInfo.currentParameterForeground"
+    },
+    {
+      "key": "ParameterInfo.disabledForeground"
+    },
+    {
+      "key": "ParameterInfo.foreground"
+    },
+    {
+      "key": "ParameterInfo.infoForeground"
+    },
+    {
+      "key": "ParameterInfo.lineSeparatorColor"
+    },
+    {
+      "key": "Plugins.background"
+    },
+    {
+      "key": "Plugins.Button.installBackground"
+    },
+    {
+      "key": "Plugins.Button.installBorderColor"
+    },
+    {
+      "key": "Plugins.Button.installFillBackground"
+    },
+    {
+      "key": "Plugins.Button.installFillForeground"
+    },
+    {
+      "key": "Plugins.Button.installFocusedBackground"
+    },
+    {
+      "key": "Plugins.Button.installForeground"
+    },
+    {
+      "key": "Plugins.Button.updateBackground"
+    },
+    {
+      "key": "Plugins.Button.updateBorderColor"
+    },
+    {
+      "key": "Plugins.Button.updateForeground"
+    },
+    {
+      "key": "Plugins.disabledForeground"
+    },
+    {
+      "key": "Plugins.eapTagBackground"
+    },
+    {
+      "key": "Plugins.lightSelectionBackground"
+    },
+    {
+      "key": "Plugins.SearchField.background"
+    },
+    {
+      "key": "Plugins.SearchField.borderColor"
+    },
+    {
+      "key": "Plugins.SectionHeader.background"
+    },
+    {
+      "key": "Plugins.SectionHeader.foreground"
+    },
+    {
+      "key": "Plugins.Tab.hoverBackground"
+    },
+    {
+      "key": "Plugins.Tab.selectedBackground"
+    },
+    {
+      "key": "Plugins.Tab.selectedForeground"
+    },
+    {
+      "key": "Plugins.tagBackground"
+    },
+    {
+      "key": "Plugins.tagForeground"
+    },
+    {
+      "key": "Popup.Advertiser.background"
+    },
+    {
+      "key": "Popup.Advertiser.borderColor"
+    },
+    {
+      "key": "Popup.Advertiser.borderInsets"
+    },
+    {
+      "key": "Popup.Advertiser.foreground"
+    },
+    {
+      "key": "Popup.innerBorderColor"
+    },
+    {
+      "key": "Popup.paintBorder"
+    },
+    {
+      "key": "Popup.separatorColor"
+    },
+    {
+      "key": "Popup.separatorForeground"
+    },
+    {
+      "key": "ProgressBar.failedColor"
+    },
+    {
+      "key": "ProgressBar.failedEndColor"
+    },
+    {
+      "key": "ProgressBar.passedColor"
+    },
+    {
+      "key": "ProgressBar.passedEndColor"
+    },
+    {
+      "key": "SearchEverywhere.Advertiser.background"
+    },
+    {
+      "key": "SearchEverywhere.Advertiser.borderInsets"
+    },
+    {
+      "key": "SearchEverywhere.Advertiser.foreground"
+    },
+    {
+      "key": "SearchEverywhere.Header.background"
+    },
+    {
+      "key": "SearchEverywhere.List.separatorColor"
+    },
+    {
+      "key": "SearchEverywhere.List.separatorForeground"
+    },
+    {
+      "key": "SearchEverywhere.SearchField.background"
+    },
+    {
+      "key": "SearchEverywhere.SearchField.borderColor"
+    },
+    {
+      "key": "SearchEverywhere.SearchField.infoForeground"
+    },
+    {
+      "key": "SearchEverywhere.Tab.selectedBackground"
+    },
+    {
+      "key": "SearchEverywhere.Tab.selectedForeground"
+    },
+    {
+      "key": "SearchMatch.endBackground"
+    },
+    {
+      "key": "SearchMatch.startBackground"
+    },
+    {
+      "key": "SidePanel.background"
+    },
+    {
+      "key": "SpeedSearch.background"
+    },
+    {
+      "key": "SpeedSearch.borderColor"
+    },
+    {
+      "key": "SpeedSearch.errorForeground"
+    },
+    {
+      "key": "SpeedSearch.foreground"
+    },
+    {
+      "key": "Table.lightSelectionBackground"
+    },
+    {
+      "key": "Table.lightSelectionForeground"
+    },
+    {
+      "key": "Table.lightSelectionInactiveBackground"
+    },
+    {
+      "key": "Table.lightSelectionInactiveForeground"
+    },
+    {
+      "key": "Table.stripeColor"
+    },
+    {
+      "key": "TitlePane.background"
+    },
+    {
+      "key": "ToggleButton.borderColor"
+    },
+    {
+      "key": "ToggleButton.buttonColor"
+    },
+    {
+      "key": "ToggleButton.offBackground"
+    },
+    {
+      "key": "ToggleButton.offForeground"
+    },
+    {
+      "key": "ToggleButton.onBackground"
+    },
+    {
+      "key": "ToggleButton.onForeground"
+    },
+    {
+      "key": "ToolTip.Actions.background"
+    },
+    {
+      "key": "ToolTip.Actions.infoForeground"
+    },
+    {
+      "key": "ToolWindow.Button.hoverBackground"
+    },
+    {
+      "key": "ToolWindow.Button.selectedBackground"
+    },
+    {
+      "key": "ToolWindow.Button.selectedForeground"
+    },
+    {
+      "key": "ToolWindow.Header.background"
+    },
+    {
+      "key": "ToolWindow.Header.borderColor"
+    },
+    {
+      "key": "ToolWindow.Header.inactiveBackground"
+    },
+    {
+      "key": "ToolWindow.HeaderCloseButton.background"
+    },
+    {
+      "key": "ToolWindow.HeaderTab.selectedBackground"
+    },
+    {
+      "key": "ToolWindow.HeaderTab.selectedInactiveBackground"
+    },
+    {
+      "key": "ToolWindow.HeaderTab.hoverBackground"
+    },
+    {
+      "key": "ToolWindow.HeaderTab.hoverInactiveBackground"
+    },
+    {
+      "key": "ValidationTooltip.errorBackground"
+    },
+    {
+      "key": "ValidationTooltip.errorBorderColor"
+    },
+    {
+      "key": "ValidationTooltip.warningBackground"
+    },
+    {
+      "key": "ValidationTooltip.warningBorderColor"
+    },
+    {
+      "key": "VersionControl.FileHistory.Commit.selectedBranchBackground"
+    },
+    {
+      "key": "VersionControl.Log.Commit.currentBranchBackground"
+    },
+    {
+      "key": "VersionControl.Log.Commit.unmatchedForeground"
+    },
+    {
+      "key": "VersionControl.Ref.backgroundBase"
+    },
+    {
+      "key": "VersionControl.Ref.backgroundBrightness"
+    },
+    {
+      "key": "VersionControl.Ref.foreground"
+    },
+    {
+      "key": "WelcomeScreen.background"
+    },
+    {
+      "key": "WelcomeScreen.borderColor"
+    },
+    {
+      "key": "WelcomeScreen.captionBackground"
+    },
+    {
+      "key": "WelcomeScreen.captionForeground"
+    },
+    {
+      "key": "WelcomeScreen.footerBackground"
+    },
+    {
+      "key": "WelcomeScreen.footerForeground"
+    },
+    {
+      "key": "WelcomeScreen.groupIconBorderColor"
+    },
+    {
+      "key": "WelcomeScreen.headerBackground"
+    },
+    {
+      "key": "WelcomeScreen.headerForeground"
+    },
+    {
+      "key": "WelcomeScreen.Projects.background"
+    },
+    {
+      "key": "WelcomeScreen.Projects.selectionBackground"
+    },
+    {
+      "key": "WelcomeScreen.Projects.selectionInactiveBackground"
+    },
+    {
+      "key": "WelcomeScreen.separatorColor"
+    },
+    {
+      "key": "Window.border"
+    }
+  ]
+}

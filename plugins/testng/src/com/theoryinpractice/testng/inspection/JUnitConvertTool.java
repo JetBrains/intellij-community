@@ -241,7 +241,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
     private static PsiMethodCallExpression[] getTestCaseCalls(PsiMethod method) {
       PsiElement[] methodCalls = PsiTreeUtil.collectElements(method, new PsiElementFilter() {
         @Override
-        public boolean isAccepted(PsiElement element) {
+        public boolean isAccepted(@NotNull PsiElement element) {
           if (!(element instanceof PsiMethodCallExpression)) return false;
           final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
           final PsiMethod method = methodCall.resolveMethod();

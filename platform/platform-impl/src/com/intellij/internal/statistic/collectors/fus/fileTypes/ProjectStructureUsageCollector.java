@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -32,19 +33,20 @@ public class ProjectStructureUsageCollector extends ProjectUsagesCollector {
   @Override
   public Set<UsageDescriptor> getUsages(@NotNull Project project) {
     Map<? extends JpsModuleSourceRootType<?>, String> typeNames = JBIterable.from(JpsModelSerializerExtension.getExtensions())
+      .filter(o -> PluginInfoDetectorKt.getPluginInfo(o.getClass()).isDevelopedByJetBrains())
       .flatMap(JpsModelSerializerExtension::getModuleSourceRootPropertiesSerializers)
       .toMap(JpsElementPropertiesSerializer::getType, JpsElementPropertiesSerializer::getTypeId);
     boolean packagePrefixUsed = false;
 
-    Set<UsageDescriptor> result = new HashSet<>();
+    int contentRoots = 0, sourceRoots = 0, excludedRoots = 0;
     TObjectIntHashMap<String> types = new TObjectIntHashMap<>();
     Module[] modules = ModuleManager.getInstance(project).getModules();
-    result.add(getCountingUsage("modules.count", modules.length));
+
     for (Module module : modules) {
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-      result.add(getCountingUsage("content.roots.count", rootManager.getContentEntries().length));
-      result.add(getCountingUsage("source.roots.count", rootManager.getSourceRoots(true).length));
-      result.add(getCountingUsage("excluded.roots.count", rootManager.getExcludeRoots().length));
+      contentRoots += rootManager.getContentEntries().length;
+      sourceRoots += rootManager.getSourceRoots(true).length;
+      excludedRoots += rootManager.getExcludeRoots().length;
       for (ContentEntry entry : rootManager.getContentEntries()) {
         for (SourceFolder source : entry.getSourceFolders()) {
           packagePrefixUsed = packagePrefixUsed || StringUtil.isNotEmpty(source.getPackagePrefix());
@@ -55,9 +57,13 @@ public class ProjectStructureUsageCollector extends ProjectUsagesCollector {
           }
         }
       }
-      types.forEachEntry((key, count) -> result.add(getCountingUsage("source.root." + key, count)));
-      types.clear();
     }
+    Set<UsageDescriptor> result = new HashSet<>();
+    result.add(getCountingUsage("modules.count", modules.length));
+    result.add(getCountingUsage("content.roots.count", contentRoots));
+    result.add(getCountingUsage("source.roots.count", sourceRoots));
+    result.add(getCountingUsage("excluded.roots.count", excludedRoots));
+    types.forEachEntry((key, count) -> result.add(getCountingUsage("source.root." + key, count)));
     if (PlatformUtils.isIntelliJ()) {
       result.add(new UsageDescriptor(packagePrefixUsed ? "package.prefix.used" : "package.prefix.not.used"));
     }
@@ -67,6 +73,6 @@ public class ProjectStructureUsageCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.project.structure";
+    return "project.structure";
   }
 }

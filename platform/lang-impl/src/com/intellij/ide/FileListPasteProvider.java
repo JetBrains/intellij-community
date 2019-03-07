@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler;
@@ -65,12 +64,9 @@ public class FileListPasteProvider implements PasteProvider {
     final List<PsiElement> elements = new ArrayList<>();
     for (File file : fileList) {
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-      if (vFile != null) {
-        final PsiManager instance = PsiManager.getInstance(project);
-        PsiFileSystemItem item = vFile.isDirectory() ? instance.findDirectory(vFile) : instance.findFile(vFile);
-        if (item != null) {
-          elements.add(item);
-        }
+      PsiFileSystemItem item = PsiUtilCore.findFileSystemItem(project, vFile);
+      if (item != null) {
+        elements.add(item);
       }
     }
 

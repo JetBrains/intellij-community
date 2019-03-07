@@ -8,12 +8,12 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
@@ -30,8 +30,8 @@ import java.util.*;
  */
 public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnhancer {
   @Override
-  protected PsiType getClosureParameterType(@NotNull GrClosableBlock closure, int index) {
-    final PsiElement parent = closure.getParent();
+  protected PsiType getClosureParameterType(@NotNull GrFunctionalExpression expression, int index) {
+    final PsiElement parent = expression.getParent();
     if (parent instanceof GrNamedArgument) {
       final Pair<PsiMethod, PsiSubstitutor> pair = getOverriddenMethod((GrNamedArgument)parent);
       if (pair != null) {
@@ -47,13 +47,13 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
       final GrListOrMap list = (GrListOrMap)parent;
       if (!list.isMap()) {
         final PsiType listType = list.getType();
-        final int argIndex = Arrays.asList(list.getInitializers()).indexOf(closure);
+        final int argIndex = Arrays.asList(list.getInitializers()).indexOf(expression);
         assert argIndex >= 0;
         if (listType instanceof GrTupleType) {
           for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(list)) {
             if (!(type instanceof PsiClassType)) continue;
 
-            final GroovyResolveResult[] candidates = PsiUtil.getConstructorCandidates((PsiClassType)type,((GrTupleType)listType).getComponentTypesArray(),closure);
+            final GroovyResolveResult[] candidates = PsiUtil.getConstructorCandidates((PsiClassType)type,((GrTupleType)listType).getComponentTypesArray(), expression);
             for (GroovyResolveResult resolveResult : candidates) {
               final PsiElement method = resolveResult.getElement();
               if (!(method instanceof PsiMethod) || !((PsiMethod)method).isConstructor()) continue;
@@ -62,7 +62,7 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
               if (parameters.length <= argIndex) continue;
 
               final PsiType toCastTo = resolveResult.getSubstitutor().substitute(parameters[argIndex].getType());
-              final PsiType suggestion = getSingleMethodParameterType(toCastTo, index, closure);
+              final PsiType suggestion = getSingleMethodParameterType(toCastTo, index, expression);
               if (suggestion != null) return suggestion;
             }
           }
@@ -71,8 +71,8 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
       }
     }
 
-    for (PsiType constraint : GroovyExpectedTypesProvider.getDefaultExpectedTypes(closure)) {
-      final PsiType suggestion = getSingleMethodParameterType(constraint, index, closure);
+    for (PsiType constraint : GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression)) {
+      final PsiType suggestion = getSingleMethodParameterType(constraint, index, expression);
       if (suggestion != null) {
         return suggestion;
       }
@@ -112,13 +112,13 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
   }
 
   @Nullable
-  public static PsiType getSingleMethodParameterType(@Nullable PsiType type, int index, GrClosableBlock closure) {
+  public static PsiType getSingleMethodParameterType(@Nullable PsiType type, int index, @NotNull GrFunctionalExpression expression) {
     final PsiType[] signature = findSingleAbstractMethodSignature(type);
     if (signature == null) {
       return null;
     }
-    final GrSignature closureSignature = GrClosureSignatureUtil.createSignature(closure);
-    if (GrClosureSignatureUtil.isSignatureApplicable(Collections.singletonList(closureSignature), signature, closure)) {
+    final GrSignature closureSignature = GrClosureSignatureUtil.createSignature(expression);
+    if (GrClosureSignatureUtil.isSignatureApplicable(Collections.singletonList(closureSignature), signature, expression)) {
       return signature.length > index ? signature[index] : PsiType.NULL;
     }
     return null;

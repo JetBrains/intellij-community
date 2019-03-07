@@ -796,8 +796,15 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
   public void testTravisPythonVersion() throws Exception {
     @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/travis.schema.json"));
     doTest(schema, "python: 3.5"); // validates as 'number'
-    doTest(schema, "python: 3.50"); // validates as 'string'
+    doTest(schema, "python: 3.50"); // validates as 'number'
+    doTest(schema, "python: 3.50a"); // validates as 'string'
     doTest(schema, "python: <warning descr=\"Schema validation: Type is not allowed. Expected one of: array, number, string.\">null</warning>");
+  }
+
+  public void testTravisNode() throws Exception {
+    @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/travis.schema.json"));
+    doTest(schema, "node_js: \n" +
+                   "  - <warning descr=\"Schema validation: Type is not allowed. Expected: string.\">2.10</warning>");
   }
 
   public void testExpNumberNotation() throws Exception {
@@ -808,5 +815,81 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "    }\n" +
            "  }\n" +
            "}", "x: 2.99792458e8");
+  }
+
+  public void testTreatEmptyValueAsNull() throws Exception {
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"type\": \"number\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "x:<warning descr=\"Schema validation: Type is not allowed. Expected: number.\"> </warning>");
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"type\": \"null\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "x: ");
+  }
+
+  public void testEmptyValueInArray() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"array\",\n" +
+           "      \"items\": {\n" +
+           "        \"type\": \"string\"\n" +
+           "      }\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "versionAsStringArray:\n" +
+                "  -<warning descr=\"Schema validation: Type is not allowed. Expected: string.\"> </warning>\n" +
+                "  <warning descr=\"Schema validation: Type is not allowed. Expected: string.\">-</warning>\n" +
+                "  - a");
+  }
+
+  public void testEmptyFile() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"array\"\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"required\": [\"versionAsStringArray\"]\n" +
+           "}", "<warning descr=\"Schema validation: Missing required property 'versionAsStringArray'\"></warning>");
+  }
+
+  public void testEmptyValueBetweenProps() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"object\",\n" +
+           "      \"properties\": {\n" +
+           "        \"xxx\": {\n" +
+           "          \"type\": \"number\"\n" +
+           "        },\n" +
+           "        \"yyy\": {\n" +
+           "          \"type\": \"string\"\n" +
+           "        },\n" +
+           "        \"zzz\": {\n" +
+           "          \"type\": \"number\"\n" +
+           "        }\n" +
+           "      },\n" +
+           "      \"required\": [\"xxx\", \"yyy\", \"zzz\"]\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"required\": [\"versionAsStringArray\"]\n" +
+           "}", "versionAsStringArray:\n" +
+                "  zzz: 0\n" +
+                "  yyy:<warning descr=\"Schema validation: Type is not allowed. Expected: string.\">  </warning>\n" +
+                "  xxx: 0");
   }
 }

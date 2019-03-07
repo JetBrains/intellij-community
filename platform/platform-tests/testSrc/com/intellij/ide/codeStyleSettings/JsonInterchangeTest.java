@@ -17,8 +17,7 @@ public class JsonInterchangeTest extends CodeStyleTestCase {
     CodeStyleSchemeJsonExporter exporter = new CodeStyleSchemeJsonExporter();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     exporter.exportScheme(testScheme, outputStream, Arrays.asList(GeneralCodeStylePropertyMapper.COMMON_DOMAIN_ID, "html"));
-    String expected = loadExpected("json");
-    assertEquals(expected, outputStream.toString());
+    compareWithExpected(outputStream.toString(), "json");
   }
 
   @Nullable

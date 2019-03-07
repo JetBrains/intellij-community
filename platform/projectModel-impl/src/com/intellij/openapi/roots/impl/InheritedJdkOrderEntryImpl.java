@@ -74,7 +74,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   }
 
   @Override
-  public void writeExternal(Element rootElement) throws WriteExternalException {
+  public void writeExternal(@NotNull Element rootElement) throws WriteExternalException {
     final Element orderEntryElement = OrderEntryFactory.createOrderEntryElement(ENTRY_TYPE);
     rootElement.addContent(orderEntryElement);
   }

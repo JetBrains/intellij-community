@@ -58,5 +58,6 @@ public abstract class LibraryTablesRegistrar {
    */
   public abstract void registerLibraryTable(@NotNull LibraryTable libraryTable);
 
+  @NotNull
   public abstract List<LibraryTable> getCustomLibraryTables();
 }

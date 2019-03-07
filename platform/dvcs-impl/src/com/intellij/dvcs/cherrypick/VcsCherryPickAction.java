@@ -75,7 +75,7 @@ public class VcsCherryPickAction extends DumbAwareAction {
       return;
     }
 
-    List<CommitId> commits = VcsLogUtil.collectFirstPack(log.getSelectedCommits(), VcsLogUtil.MAX_SELECTED_COMMITS);
+    List<CommitId> commits = ContainerUtil.getFirstItems(log.getSelectedCommits(), VcsLogUtil.MAX_SELECTED_COMMITS);
     if (commits.isEmpty() || cherryPickManager.isCherryPickAlreadyStartedFor(commits)) {
       e.getPresentation().setEnabled(false);
       return;

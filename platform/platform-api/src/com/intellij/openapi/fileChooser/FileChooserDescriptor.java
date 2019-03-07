@@ -281,7 +281,7 @@ public class FileChooserDescriptor implements Cloneable {
    * @param files - selected files to be checked
    * @throws Exception if the the files cannot be accepted
    */
-  public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+  public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
   }
 
   public boolean isForcedToUseIdeaFileChooser() {

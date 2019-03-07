@@ -4,6 +4,7 @@ package com.intellij.execution.impl
 import com.intellij.configurationStore.SerializableScheme
 import com.intellij.configurationStore.deserializeAndLoadState
 import com.intellij.configurationStore.serializeStateInto
+import com.intellij.diagnostic.PluginException
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistry
@@ -508,7 +509,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
         return settings.getOrPut(runner) { createSettings(runner) }
       }
       catch (e: AbstractMethodError) {
-        RunManagerImpl.LOG.error(PluginManagerCore.createPluginException("Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", e, runner.javaClass))
+        PluginException.logPluginError(RunManagerImpl.LOG, "Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", e, runner.javaClass)
         return null
       }
     }

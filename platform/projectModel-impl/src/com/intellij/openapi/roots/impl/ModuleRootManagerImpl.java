@@ -205,7 +205,7 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
   }
 
   @Override
-  public boolean isDependsOn(Module module) {
+  public boolean isDependsOn(@NotNull Module module) {
     return myRootModel.findModuleOrderEntry(module) != null;
   }
 
@@ -221,7 +221,7 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
   }
 
   @Override
-  public <R> R processOrder(RootPolicy<R> policy, R initialValue) {
+  public <R> R processOrder(@NotNull RootPolicy<R> policy, R initialValue) {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.processOrder(policy, initialValue);
   }

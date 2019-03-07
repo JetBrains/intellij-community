@@ -19,12 +19,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
-import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import com.jetbrains.jsonSchema.impl.JsonValidationError;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -60,12 +62,13 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     Ref<Boolean> hadComma = Ref.create(false);
+    VirtualFile file = element.getContainingFile().getVirtualFile();
     PsiElement newElement = performFix(element, hadComma);
     // if we have more than one property, don't expand templates and don't move the caret
     if (newElement == null) return;
 
     PsiElement value = myQuickFixAdapter.getPropertyValue(newElement);
-    FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(element.getContainingFile().getVirtualFile());
+    FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
     EditorEx editor = EditorUtil.getEditorEx(fileEditor);
     assert editor != null;
     if (value == null) {
@@ -83,7 +86,12 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
                                           ? new MacroCallNode(new CompleteMacro())
                                           : isEmptyArray ? new EmptyNode() : new ConstantNode(goInside ? StringUtil.unquoteString(text) : text));
     editor.getCaretModel().moveToOffset(newElement.getTextRange().getStartOffset());
-    builder.setEndVariableAfter(newElement);
+    if (PsiTreeUtil.nextLeaf(newElement) != null) {
+      builder.setEndVariableAfter(newElement);
+    }
+    else {
+      builder.setEndVariableBefore(newElement.getLastChild());
+    }
     WriteAction.run(() -> {
             Template template = builder.buildInlineTemplate();
             template.setToReformat(true);
@@ -92,34 +100,48 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
   }
 
   @Nullable
-  public PsiElement performFix(@Nullable PsiElement element, @NotNull Ref<Boolean> hadComma) {
-    if (element == null) return null;
+  public PsiElement performFix(@Nullable PsiElement node, @NotNull Ref<Boolean> hadComma) {
+    if (node == null) return null;
+    PsiElement element = node instanceof PsiFile ? node.getFirstChild() : node;
     Ref<PsiElement> newElementRef = Ref.create(null);
 
     WriteAction.run(() -> {
       boolean isSingle = myData.myMissingPropertyIssues.size() == 1;
-      for (JsonValidationError.MissingPropertyIssueData issue: myData.myMissingPropertyIssues) {
+      PsiElement processedElement = element;
+      List<JsonValidationError.MissingPropertyIssueData> reverseOrder
+        = ContainerUtil.reverse(ContainerUtil.newArrayList(myData.myMissingPropertyIssues));
+      for (JsonValidationError.MissingPropertyIssueData issue: reverseOrder) {
         Object defaultValueObject = issue.defaultValue;
         String defaultValue = defaultValueObject instanceof String ? StringUtil.wrapWithDoubleQuote(defaultValueObject.toString()) : null;
-        PsiElement newElement = element
-          .addBefore(
-            myQuickFixAdapter.createProperty(issue.propertyName, defaultValue == null ? getDefaultValueFromType(issue) : defaultValue),
-            element.getLastChild());
-        PsiElement backward = PsiTreeUtil.skipWhitespacesBackward(newElement);
-        hadComma.set(myQuickFixAdapter.ensureComma(backward, element, newElement));
+        PsiElement property = myQuickFixAdapter.createProperty(issue.propertyName, defaultValue == null
+                                                                                   ? myQuickFixAdapter
+                                                                                     .getDefaultValueFromType(issue.propertyType)
+                                                                                   : defaultValue, element);
+        PsiElement newElement;
+        if (processedElement instanceof LeafPsiElement) {
+          newElement = myQuickFixAdapter.adjustPropertyAnchor((LeafPsiElement)processedElement).addBefore(property, null);
+        }
+        else {
+          if (processedElement == element) {
+            newElement = processedElement.addBefore(property, processedElement.getLastChild());
+          }
+          else {
+            newElement = processedElement.getParent().addBefore(property, processedElement);
+          }
+        }
+        PsiElement adjusted = myQuickFixAdapter.adjustNewProperty(newElement);
+        hadComma.set(myQuickFixAdapter.ensureComma(adjusted, PsiTreeUtil.skipWhitespacesForward(newElement)));
+        if (!hadComma.get()) {
+          hadComma.set(processedElement == element && myQuickFixAdapter.ensureComma(PsiTreeUtil.skipWhitespacesBackward(newElement), adjusted));
+        }
+        processedElement = adjusted;
         if (isSingle) {
-          newElementRef.set(newElement);
+          newElementRef.set(adjusted);
         }
       }
      });
 
     return newElementRef.get();
-  }
-
-  @NotNull
-  private static String getDefaultValueFromType(JsonValidationError.MissingPropertyIssueData issue) {
-    JsonSchemaType propertyType = issue.propertyType;
-    return propertyType == null ? "" : propertyType.getDefaultValue();
   }
 
   @Override

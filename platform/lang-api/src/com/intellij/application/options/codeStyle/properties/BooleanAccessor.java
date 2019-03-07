@@ -8,7 +8,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
-public class BooleanAccessor extends ScalarPropertyAccessor<Boolean> implements CodeStyleChoiceList {
+public class BooleanAccessor extends CodeStylePropertyAccessor<Boolean,Boolean> implements CodeStyleChoiceList {
 
   private final static List<String> BOOLEAN_VALS = Arrays.asList("false", "true");
 
@@ -18,14 +18,20 @@ public class BooleanAccessor extends ScalarPropertyAccessor<Boolean> implements 
 
   @Nullable
   @Override
-  protected Boolean fromExternal(@NotNull String extVal) {
-    return extVal.equalsIgnoreCase("true");
+  protected Boolean parseString(@NotNull String string) {
+    return "true".equalsIgnoreCase(string);
+  }
+
+  @Nullable
+  @Override
+  protected Boolean fromExternal(@NotNull Boolean extVal) {
+    return extVal;
   }
 
   @NotNull
   @Override
-  protected String toExternal(@NotNull Boolean value) {
-    return value.toString();
+  protected Boolean toExternal(@NotNull Boolean value) {
+    return value;
   }
 
   @NotNull

@@ -19,7 +19,7 @@ import org.jetbrains.io.mandatory.RestModel;
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubIssueLabel {
-  private Long id;
+  @Mandatory private Long id;
   private String nodeId;
   private String url;
   @Mandatory private String name;
@@ -34,5 +34,22 @@ public class GithubIssueLabel {
   @NotNull
   public String getColor() {
     return color;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof GithubIssueLabel)) return false;
+
+    GithubIssueLabel label = (GithubIssueLabel)o;
+
+    if (!id.equals(label.id)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return id.hashCode();
   }
 }

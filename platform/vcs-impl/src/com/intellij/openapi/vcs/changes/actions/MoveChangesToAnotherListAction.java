@@ -157,7 +157,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     if (targetList != null) {
       ChangeListManagerImpl listManager = ChangeListManagerImpl.getInstanceImpl(project);
 
-      listManager.moveChangesTo(targetList, ArrayUtil.toObjectArray(changes, Change.class));
+      listManager.moveChangesTo(targetList, changes.toArray(new Change[0]));
       if (!unversionedFiles.isEmpty()) {
         listManager.addUnversionedFiles(targetList, unversionedFiles);
       }

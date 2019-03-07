@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.jsonRpc;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,7 +40,7 @@ public class JsonRpcDomainBean extends AbstractExtensionPointBean {
           try {
             if (service == null) {
               Class<Object> aClass = findClass(implementation);
-              return asInstance ? instantiate(aClass, ApplicationManager.getApplication().getPicoContainer(), true) : aClass;
+              return asInstance ? instantiate(aClass, ApplicationManager.getApplication().getPicoContainer()) : aClass;
             }
             else {
               return ServiceManager.getService(findClass(service));

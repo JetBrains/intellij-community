@@ -42,6 +42,11 @@ class TestProjectViewPSIPane extends AbstractProjectViewPSIPane {
       public void selectIn(SelectInContext context, boolean requestFocus) {
 
       }
+
+      @Override
+      public String getMinorViewId() {
+        return getId();
+      }
     };
   }
 

@@ -13,6 +13,7 @@ from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K,
     BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, ValuesPolicy, DEFAULT_VALUES_DICT
 from _pydev_bundle.pydev_imports import quote
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
+from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements
 
 try:
     import types
@@ -242,8 +243,17 @@ def is_builtin(x):
     return getattr(x, '__module__', None) == BUILTINS_MODULE_NAME
 
 
+def is_numpy(x):
+    if not getattr(x, '__module__', None) == 'numpy':
+        return False
+    type_name = x.__name__
+    return type_name == 'dtype' or type_name == 'bool_' or type_name == 'str_' or 'int' in type_name or 'uint' in type_name \
+           or 'float' in type_name or 'complex' in type_name
+
+
 def should_evaluate_full_value(val):
-    return LOAD_VALUES_POLICY == ValuesPolicy.SYNC or (is_builtin(type(val)) and not isinstance(val, (list, tuple, dict)))
+    return LOAD_VALUES_POLICY == ValuesPolicy.SYNC or ((is_builtin(type(val)) or is_numpy(type(val)))
+                                                       and not isinstance(val, (list, tuple, dict, set, frozenset)))
 
 
 def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
@@ -311,8 +321,10 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
                     value = pydevd_resolver.frameResolver.get_frame_name(v)
 
                 elif v.__class__ in (list, tuple, set, frozenset, dict):
-                    if len(v) > 300:
-                        value = '%s: %s' % (str(v.__class__), '<Too big to print. Len: %s>' % (len(v),))
+                    if len(v) > pydevd_resolver.MAX_ITEMS_TO_HANDLE:
+                        value = '%s: %s' % (str(v.__class__), take_first_n_coll_elements(
+                            v, pydevd_resolver.MAX_ITEMS_TO_HANDLE))
+                        value = value.rstrip(')]}') + '...'
                     else:
                         value = '%s: %s' % (str(v.__class__), v)
                 else:

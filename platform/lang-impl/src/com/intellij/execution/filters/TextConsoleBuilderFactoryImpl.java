@@ -24,11 +24,13 @@ import org.jetbrains.annotations.NotNull;
  * @author dyoma
  */
 public class TextConsoleBuilderFactoryImpl extends TextConsoleBuilderFactory {
+  @NotNull
   @Override
   public TextConsoleBuilder createBuilder(@NotNull final Project project) {
     return new TextConsoleBuilderImpl(project);
   }
 
+  @NotNull
   @Override
   public TextConsoleBuilder createBuilder(@NotNull Project project, @NotNull GlobalSearchScope scope) {
     return new TextConsoleBuilderImpl(project, scope);

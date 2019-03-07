@@ -106,7 +106,7 @@ public class GradleBuildSrcProjectsResolver {
       jvmOptions.addAll(mainBuildEnvironment.getJava().getJvmArguments());
     }
     if (myMainBuildExecutionSettings != null) {
-      jvmOptions.addAll(myMainBuildExecutionSettings.getVmOptions());
+      jvmOptions.addAll(myMainBuildExecutionSettings.getJvmArguments());
     }
 
     for (String buildPath : buildClasspathNodesMap.keySet()) {

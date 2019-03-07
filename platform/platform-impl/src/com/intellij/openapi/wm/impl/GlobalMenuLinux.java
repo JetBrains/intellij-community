@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -32,6 +33,7 @@ import javax.imageio.ImageIO;
 import javax.swing.Timer;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.peer.ComponentPeer;
 import java.io.ByteArrayOutputStream;
@@ -65,6 +67,7 @@ interface GlobalMenuLib extends Library {
 
   void reorderMenuItem(Pointer parent, Pointer item, int position);
   void removeMenuItem(Pointer parent, Pointer item);
+  void showMenuItem(Pointer item);
 
   void setItemLabel(Pointer item, String label);
   void setItemEnabled(Pointer item, boolean isEnabled);
@@ -102,14 +105,23 @@ interface GlobalMenuLib extends Library {
 
 public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final SimpleDateFormat ourDtf = new SimpleDateFormat("hhmmss.SSS"); // for debug only
-  private static final boolean TRACE_SYSOUT               = System.getProperty("linux.native.menu.debug.trace.sysout",            "false").equals("true");
-  private static final boolean TRACE_DISABLED             = System.getProperty("linux.native.menu.debug.trace.disabled",          "true").equals("true");
-  private static final boolean TRACE_SYNC_STATS           = System.getProperty("linux.native.menu.debug.trace.sync-stats",        "false").equals("true");
-  private static final boolean TRACE_EVENTS               = System.getProperty("linux.native.menu.debug.trace.events",            "false").equals("true");
-  private static final boolean TRACE_EVENT_FILTER         = System.getProperty("linux.native.menu.debug.trace.event-filter",      "false").equals("true");
-  private static final boolean TRACE_CLEARING             = System.getProperty("linux.native.menu.debug.trace.clearing",          "false").equals("true");
-  private static final boolean TRACE_HIERARCHY_MISMATCHES = System.getProperty("linux.native.menu.debug.trace.hierarchy.mismatches","false").equals("true");
-  private static final boolean SHOW_SWING_MENU            = System.getProperty("linux.native.menu.debug.show.frame.menu",         "false").equals("true");
+  private static final boolean TRACE_SYSOUT               = Boolean.getBoolean("linux.native.menu.debug.trace.sysout");
+  private static final boolean TRACE_ENABLED              = Boolean.getBoolean("linux.native.menu.debug.trace.enabled");
+  private static final boolean TRACE_SYNC_STATS           = Boolean.getBoolean("linux.native.menu.debug.trace.sync-stats");
+  private static final boolean TRACE_EVENTS               = Boolean.getBoolean("linux.native.menu.debug.trace.events");
+  private static final boolean TRACE_EVENT_FILTER         = Boolean.getBoolean("linux.native.menu.debug.trace.event-filter");
+  private static final boolean TRACE_SKIPPED_EVENT        = Boolean.getBoolean("linux.native.menu.debug.trace.skipped.event");
+  private static final boolean TRACE_CLEARING             = Boolean.getBoolean("linux.native.menu.debug.trace.clearing");
+  private static final boolean TRACE_HIERARCHY_MISMATCHES = Boolean.getBoolean("linux.native.menu.debug.trace.hierarchy.mismatches");
+  private static final boolean SHOW_SWING_MENU            = Boolean.getBoolean("linux.native.menu.debug.show.frame.menu");
+
+  private static final boolean KDE_DISABLE_ROOT_MNEMONIC_PROCESSING = Boolean.getBoolean("linux.native.menu.kde.disable.root.mnemonic");
+
+  private static final boolean SKIP_OPEN_MENU_COMMAND     = Boolean.getBoolean("linux.native.menu.skip.open");
+  private static final boolean DONT_FILL_ROOTS            = SystemInfo.isKDE || Boolean.getBoolean("linux.native.dont.fill.roots");
+  private static final boolean DONT_FILL_SUBMENU          = Boolean.getBoolean("linux.native.menu.dont.fill.submenu");
+  private static final boolean DONT_CLOSE_POPUPS          = Boolean.getBoolean("linux.native.menu.dont.close.popups");
+  private static final boolean DISABLE_EVENTS_FILTERING   = Boolean.getBoolean("linux.native.menu.disable.events.filtering");
 
   private static final Logger LOG = Logger.getInstance(GlobalMenuLinux.class);
   private static final GlobalMenuLib ourLib;
@@ -127,6 +139,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private boolean myIsRootsUpdated = false;
   private boolean myIsEnabled = true;
   private boolean myIsDisposed = false;
+  private boolean myIsFirstFilling = true; // don't filter first packet of events (it causes slow reaction of KDE applet)
 
   private final GlobalMenuLib.JRunnable myOnWindowReleased;
   private final EventFilter myEventFilter = new EventFilter();
@@ -212,6 +225,37 @@ Android Studio: b/67589184 */
       if (myIsDisposed)
         ourInstances.remove(myXid);
     };
+
+    if (SystemInfo.isKDE && !KDE_DISABLE_ROOT_MNEMONIC_PROCESSING) {
+      // root menu items doesn't catch mnemonic shortcuts (in KDE), so process them inside IDE
+      IdeEventQueue.getInstance().addDispatcher(e -> {
+        if (!(e instanceof KeyEvent))
+          return false;
+
+        final KeyEvent event = (KeyEvent)e;
+        if (!event.isAltDown())
+          return false;
+
+        final Component src = event.getComponent();
+        final Window wndParent = src instanceof Window ? (Window)src : SwingUtilities.windowForComponent(src);
+        final char eventChar = Character.toUpperCase(event.getKeyChar());
+
+        for (GlobalMenuLinux gml: ourInstances.values()) {
+          if (gml.myFrame == wndParent) {
+            for (MenuItemInternal root : gml.myRoots) {
+              if (eventChar == root.mnemonic) {
+                ourLib.showMenuItem(root.nativePeer);
+                return false;
+              }
+            }
+            return false;
+          }
+        }
+
+        return false;
+      }, this);
+    }
+
     ourInstances.put(myXid, this);
   }
 
@@ -268,15 +312,26 @@ Android Studio: b/67589184 */
 
     ApplicationManager.getApplication().assertIsDispatchThread();
 
+    int[] stats = new int[]{0, 0, 0};
     final int size = roots == null ? 0 : roots.size();
     final List<MenuItemInternal> newRoots = new ArrayList<>(size);
+
     if (roots != null) {
       for (ActionMenu am: roots) {
         final int uid = System.identityHashCode(am);
-        final MenuItemInternal mi = new MenuItemInternal(newRoots.size(), uid, GlobalMenuLib.ITEM_SUBMENU, am.getAnAction());
+        final MenuItemInternal mi = new MenuItemInternal(null, newRoots.size(), uid, GlobalMenuLib.ITEM_SUBMENU, am.getAnAction());
         mi.jitem = am;
         mi.setLabelFromSwingPeer(am);
         newRoots.add(mi);
+
+        if (!DONT_FILL_ROOTS) {
+          final long startMs = System.currentTimeMillis();
+          am.removeAll();
+          am.fillMenu();
+          _syncChildren(mi, am, 1, stats); // NOTE: fill root menus to avoid empty submenu showing
+          final long elapsedMs = System.currentTimeMillis() - startMs;
+          if (TRACE_SYNC_STATS) _trace("filled root menu '%s', spent (in EDT) %d ms, stats: %s", String.valueOf(mi.txt), elapsedMs, _stats2str(stats));
+        }
       }
     }
 
@@ -400,20 +455,20 @@ Android Studio: b/67589184 */
     }
   }
 
-  private static MenuItemInternal _createInternalFromSwing(Component each) {
+  private static MenuItemInternal _createInternalFromSwing(MenuItemInternal parent, Component each) {
     if (each == null)
       return null;
     MenuItemInternal result = null;
     if (each instanceof ActionMenuItem) {
       final ActionMenuItem ami = (ActionMenuItem)each;
-      result = new MenuItemInternal(-1, System.identityHashCode(ami), ami.isToggleable() ? GlobalMenuLib.ITEM_CHECK : GlobalMenuLib.ITEM_SIMPLE, ami.getAnAction());
+      result = new MenuItemInternal(parent, -1, System.identityHashCode(ami), ami.isToggleable() ? GlobalMenuLib.ITEM_CHECK : GlobalMenuLib.ITEM_SIMPLE, ami.getAnAction());
       result.jitem = ami;
     } else if (each instanceof ActionMenu) {
       final ActionMenu am2 = (ActionMenu)each;
-      result = new MenuItemInternal(-1, System.identityHashCode(am2), GlobalMenuLib.ITEM_SUBMENU, am2.getAnAction());
+      result = new MenuItemInternal(parent, -1, System.identityHashCode(am2), GlobalMenuLib.ITEM_SUBMENU, am2.getAnAction());
       result.jitem = am2;
     } else if (each instanceof JSeparator) {
-      result = new MenuItemInternal(-1, System.identityHashCode(each), GlobalMenuLib.ITEM_SIMPLE, null);
+      result = new MenuItemInternal(parent, -1, System.identityHashCode(each), GlobalMenuLib.ITEM_SIMPLE, null);
     } else if (each instanceof StubItem) {
       // System.out.println("skip StubItem");
     } else {
@@ -446,7 +501,7 @@ Android Studio: b/67589184 */
     for (Component each : am.getPopupMenu().getComponents()) {
       MenuItemInternal cmi = mi.findCorrespondingChild(each);
       if (cmi == null) {
-        cmi = _createInternalFromSwing(each);
+        cmi = _createInternalFromSwing(mi, each);
         if (cmi != null) {
           cmi.position = itemPos++;
           mi.children.add(cmi);
@@ -463,8 +518,12 @@ Android Studio: b/67589184 */
         }
       }
       if (cmi != null) {
-        if (deepness > 1 && (each instanceof ActionMenu))
-          _syncChildren(cmi, (ActionMenu)each, deepness - 1, stats);
+        if (deepness > 1 && (each instanceof ActionMenu)) {
+          final ActionMenu jmiEach = (ActionMenu)each;
+          jmiEach.removeAll();
+          jmiEach.fillMenu();
+          _syncChildren(cmi, jmiEach, deepness - 1, stats);
+        }
       }
     }
   }
@@ -512,8 +571,15 @@ Android Studio: b/67589184 */
     }
   }
 
+  private static boolean _isFillEvent(int eventType) {
+    return eventType == GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW || (!SKIP_OPEN_MENU_COMMAND && eventType == GlobalMenuLib.EVENT_OPENED);
+  }
+
   @Override
   public void handleEvent(int uid, int eventType) {
+    _handleEvent(uid, eventType, true);
+  }
+  private void _handleEvent(int uid, int eventType, boolean doFiltering) {
     // glib main-loop thread
     final MenuItemInternal mi = _findMenuItem(uid);
     if (mi == null) {
@@ -531,16 +597,27 @@ Android Studio: b/67589184 */
 
     if (TRACE_EVENTS) _trace("received event '%s' from item %s", _evtype2str(eventType), mi);
 
-    if (eventType == GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW || eventType == GlobalMenuLib.EVENT_CLOSED) {
-      final boolean check = myEventFilter.check(uid, eventType, mi);
-      if (!check)
-        return;
+    if (!DISABLE_EVENTS_FILTERING && !myIsFirstFilling && doFiltering && !myEventFilter.check(uid, eventType, mi))
+      return;
 
-      if (eventType == GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW) {
+    if (myIsFirstFilling) {
+      final Timer timer = new Timer(5000, e -> myIsFirstFilling = false);
+      timer.setRepeats(false);
+      timer.start();
+    }
+
+    if (_isFillEvent(eventType)) {
         // glib main-loop thread
-        final long startMs = System.currentTimeMillis();
-        int[] stats = new int[]{0, 0, 0};
+      if (!DONT_CLOSE_POPUPS)
+        ApplicationManager.getApplication().invokeLater(() -> IdeEventQueue.getInstance().getPopupManager().closeAllPopups());
+      mi.cancelClearSwing();
 
+      // simple check to avoid double (or frequent) filling
+      final long timeMs = System.currentTimeMillis();
+      int[] stats = new int[]{0, 0, 0};
+      if (timeMs - mi.lastFilledMs < 1500 && mi.lastClearedMs < mi.lastFilledMs) {
+        if (TRACE_SKIPPED_EVENT) _trace("skipped fill-event for item '%s', use cached (too frequent fill-events)", String.valueOf(mi.txt));
+      } else {
         ApplicationManager.getApplication().invokeAndWait(()-> {
           // ETD-start
           final JMenuItem jmi = mi.jitem;
@@ -553,23 +630,25 @@ Android Studio: b/67589184 */
             return;
           }
 
+          mi.lastFilledMs = timeMs;
+
           final ActionMenu am = (ActionMenu)jmi;
           am.removeAll();
           am.fillMenu();
-          _syncChildren(mi, am, 1, stats);
+          _syncChildren(mi, am, DONT_FILL_SUBMENU ? 1 : 2, stats); // NOTE: fill next submenus level to avoid empty submenu showing (intermittent behaviour of menu-applet)
         });
 
         // glib main-loop thread
-        final long elapsedMs = System.currentTimeMillis() - startMs;
-        if (TRACE_SYNC_STATS) _trace("opened %s '%s', spent (in EDT) %d ms, stats: %s", (mi.isRoot() ? "root menu" : "submenu"), String.valueOf(mi.txt), elapsedMs, _stats2str(stats));
+        final long elapsedMs = System.currentTimeMillis() - timeMs;
+        if (TRACE_SYNC_STATS) _trace("filled menu %s '%s', spent (in EDT) %d ms, stats: %s", (mi.isRoot() ? "root menu" : "submenu"), String.valueOf(mi.txt), elapsedMs, _stats2str(stats));
 
         _processChildren(mi);
-      } else {
-        // glib main-loop thread
-        // process GlobalMenuLib.EVENT_CLOSED
-        mi.scheduleClearSwing();
       }
+    }
 
+    if (eventType == GlobalMenuLib.EVENT_CLOSED) {
+      // glib main-loop thread
+      mi.scheduleClearSwing();
       return;
     }
 
@@ -653,10 +732,12 @@ Android Studio: b/67589184 */
     final int type;
     final AnAction action;
 
+    final MenuItemInternal parent;
     final List<MenuItemInternal> children = new ArrayList<>();
 
     String txt;
     String originTxt;
+    char mnemonic;
     boolean isEnabled = true;
     boolean isChecked = false;
     byte[] iconPngBytes;
@@ -668,11 +749,13 @@ Android Studio: b/67589184 */
     Pointer nativePeer;
     int position = -1;
 
-    long lastClosedMs = 0;
+    long lastFilledMs = 0;
+    long lastClearedMs = 0;
 
     Timer timerClearSwing;
 
-    MenuItemInternal(int rootPos, int uid, int type, AnAction action) {
+    MenuItemInternal(MenuItemInternal parent, int rootPos, int uid, int type, AnAction action) {
+      this.parent = parent;
       this.rootPos = rootPos;
       this.uid = uid;
       this.type = type;
@@ -719,7 +802,19 @@ Android Studio: b/67589184 */
     void setLabelFromSwingPeer(@NotNull JMenuItem peer) {
       // exec at EDT
       originTxt = peer.getText();
-      txt = _buildMnemonicLabel(peer);
+      txt = originTxt != null ? originTxt : "";
+      mnemonic = 0;
+
+      if (originTxt != null && !originTxt.isEmpty()) {
+        final int mnemonicCode = peer.getMnemonic();
+        final int mnemonicIndex = peer.getDisplayedMnemonicIndex();
+        if (mnemonicIndex >= 0 && mnemonicIndex < originTxt.length() && Character.toUpperCase(originTxt.charAt(mnemonicIndex)) == mnemonicCode) {
+          final StringBuilder res = new StringBuilder(originTxt);
+          res.insert(mnemonicIndex, '_');
+          txt = res.toString();
+          mnemonic = (char)mnemonicCode;
+        }
+      }
     }
 
     void updateNative() {
@@ -737,7 +832,7 @@ Android Studio: b/67589184 */
         final int x11keycode = X11KeyCodes.jkeycode2X11code(jkeycode, 0);
         if (x11keycode != 0)
           ourLib.setItemShortcut(nativePeer, jmodifiers, x11keycode);
-        else if (!TRACE_DISABLED)
+        else if (TRACE_ENABLED)
           _trace("unknown x11 keycode for jcode=" + jkeycode);
       }
     }
@@ -823,13 +918,26 @@ Android Studio: b/67589184 */
 
     void scheduleClearSwing() {
       // exec at glib main-loop thread
-      if (timerClearSwing != null)
-        timerClearSwing.stop();
+      if (timerClearSwing != null) {
+        timerClearSwing.restart();
+        if (TRACE_CLEARING) _trace("\t reset clear timer of item '%s'", toStringShort());
+        return;
+      }
 
-      timerClearSwing = new Timer(300, (e)->_clearSwing());
+      timerClearSwing = new Timer(2000, (e)->_clearSwing());
       timerClearSwing.setRepeats(false);
       timerClearSwing.start();
       if (TRACE_CLEARING) _trace("\t scheduled (300 ms later) to clear '%s'", toStringShort());
+    }
+
+    void cancelClearSwing() {
+      // exec at glib main-loop thread
+      if (timerClearSwing != null) {
+        timerClearSwing.stop();
+        timerClearSwing = null;
+      }
+      for (MenuItemInternal p = parent; p != null; p = p.parent)
+        p.cancelClearSwing();
     }
 
     private void _clearSwing() {
@@ -849,81 +957,158 @@ Android Studio: b/67589184 */
       final ActionMenu am = (ActionMenu)jitem;
       am.clearItems();
       clearChildrenSwingRefs();
+      _onSwingCleared(System.currentTimeMillis());
       if (TRACE_CLEARING) _trace("\t cleared '%s'", toStringShort());
+    }
+
+    private void _onSwingCleared(long timeMs) {
+      lastClearedMs = timeMs;
+      if (timerClearSwing != null) {
+        timerClearSwing.stop();
+        timerClearSwing = null;
+      }
+
+      for (MenuItemInternal kid: children)
+        kid._onSwingCleared(timeMs);
+    }
+  }
+
+  private static class QueuedEvent {
+    final int uid;
+    final int eventType;
+    final int rootId;
+    final long timeMs;
+
+    private QueuedEvent(int uid, int eventType, int rootId, long timeMs) {
+      this.uid = uid;
+      this.eventType = eventType;
+      this.rootId = rootId;
+      this.timeMs = timeMs;
+    }
+
+    static QueuedEvent of(int uid, int eventType, int rootId, long timeMs) {
+      return new QueuedEvent(uid, eventType, rootId, timeMs);
     }
   }
 
   private class EventFilter {
+    final private ArrayList<QueuedEvent> myQueued = new ArrayList<>();
     private Timer myTimer;
-    private long myLastFirstRootEventMs = 0;
+    private long myClosedMs = 0;
+
     @SuppressWarnings("unused")
     private GlobalMenuLib.JRunnable myGlibLoopRunnable; // holds runnable object
 
-    boolean check(int uid, int eventType, @NotNull MenuItemInternal mi) {
-      final long timeMs = System.currentTimeMillis();
-      if (eventType == GlobalMenuLib.EVENT_CLOSED) {
-        mi.lastClosedMs = timeMs;
-      } else {
-        if (mi.rootPos == 0) {
-          if (myTimer == null) {
-            myLastFirstRootEventMs = timeMs;
-            // start timer to call handleEvent(uid, eventType) after several ms
-            myTimer = new Timer(50, (e) -> {
-              if (myTimer == null) {
-                if (TRACE_EVENT_FILTER) _trace("EventFilter: skip delayed 'about-to-show' processing of first-root because timer was reset (i.e. myTimer == null)");
-                return;
-              }
-              ourLib.execOnMainLoop(myGlibLoopRunnable = () -> handleEvent(uid, eventType));
-            });
-            myTimer.setRepeats(false);
-            myTimer.start();
-            if (TRACE_EVENT_FILTER) _trace("EventFilter: start timer to process 'about-to-show' of first-root later");
-            return false;
+    private boolean _isClosed() { return myClosedMs > 0; }
+
+    private void _stopTimer() {
+      // exec at glib-main-thread
+      if (myTimer != null)
+        myTimer.stop();
+      myTimer = null;
+    }
+
+    private void _processQueue() {
+      // exec at glib-main-thread
+      for (QueuedEvent q: myQueued)
+        _handleEvent(q.uid, q.eventType, false);
+      myQueued.clear();
+    }
+
+    private void _startTimer() {
+      // exec at glib-main-thread
+      _stopTimer();
+
+      final Timer timer = new Timer(50, null);
+      timer.addActionListener((e) -> {
+        if (TRACE_EVENT_FILTER) _trace("EventFilter: start execution of timer callback");        // exec at EDT
+        if (myTimer != timer) {// check that timer wasn't reset
+          if (TRACE_EVENT_FILTER) _trace("EventFilter: skip timer-processing because timer was reset (i.e. myTimer == null)");
+          return;
+        }
+
+        ourLib.execOnMainLoop(myGlibLoopRunnable = () -> {
+          // remove continuous series of sequential root events
+          // because some of implementations (of menu applet) regularly send packets of root events ('about-to-show' or/and 'open')
+          final int lastRootId = myRoots.size() - 1;
+          int from = 0;
+          while (from < myQueued.size()) {
+            final int size = myQueued.size();
+
+            // 1. find event from second root
+            while (from < size && myQueued.get(from).rootId != 1) ++from;
+            if (from == size) break;
+
+            // 2. rewind to first root
+            int first = from - 1;
+            if (first < 0 || myQueued.get(first).rootId != 0) {
+              // no events from first root, rewind forward
+              while (from < size && myQueued.get(from).rootId == 1) ++from;
+              continue;
+            }
+            while (first >= 1 && myQueued.get(first - 1).rootId == 0 && from - first <= 1) --first;
+
+            // 3. find last root
+            int to = from + 1;
+            while (to < size && myQueued.get(to).rootId != lastRootId) ++to;
+            if (to == size) break;
+            while (to < size && myQueued.get(to).rootId == lastRootId) ++to;
+
+            // 4. remove fake segment
+            if (TRACE_EVENT_FILTER) _trace("EventFilter: remove segment [%d, %d) from queue of size=%d", first, to, myQueued.size());
+            myQueued.subList(first, to).clear();
+            from = first + 1;
           }
 
+          if (!myQueued.isEmpty()) {
+            if (TRACE_ENABLED) _trace("EventFilter: process queued events, size=%d", myQueued.size());
+            _processQueue();
+          } else if (TRACE_ENABLED) _trace("EventFilter: queue is empty");
+
           myTimer = null;
-        } else if (mi.rootPos > 0) {
-          if ((timeMs - myLastFirstRootEventMs) < 50) {
-            if (TRACE_EVENT_FILTER) _trace("EventFilter: skip fake 'about-to-show' of root[%d]%s", mi.rootPos, myTimer != null ? " (reset timer)" : "");
-            if (myTimer != null) {
-              myTimer.stop();
-              myTimer = null;
-            }
-            return false;
-          }
-          if (TRACE_EVENT_FILTER) _trace("EventFilter: process real 'about-to-show' on root[%d]", mi.rootPos);
+          myClosedMs = 0; // open filter
+          if (TRACE_EVENT_FILTER) _trace("EventFilter: filter is opened");
+        });
+      });
+
+      myTimer = timer;
+      myTimer.setRepeats(false);
+      myTimer.start();
+      if (TRACE_EVENT_FILTER) _trace("EventFilter: start timer");
+    }
+
+    boolean check(int uid, int eventType, @NotNull MenuItemInternal mi) {
+      // exec at glib-main-thread
+      final boolean isFillEvent = _isFillEvent(eventType);
+      final long timeMs = System.currentTimeMillis();
+
+      if (_isClosed()) {
+        if (timeMs - myClosedMs > 2000) {
+          // simple protection (open filter by timeout)
+          if (TRACE_ENABLED) _trace("EventFilter WARNING: close filter by timeout protection");
+          _processQueue();
+          _stopTimer();
+          myClosedMs = 0;
         } else {
-          if (TRACE_EVENT_FILTER) _trace("EventFilter: process real 'about-to-show' on non-root item '%s'%s", mi.txt, myTimer != null ? " (reset timer)" : "");
-          if (myTimer != null) {
-            myTimer.stop();
-            myTimer = null;
-          }
+          // filter is closed
+          myQueued.add(QueuedEvent.of(uid, eventType, mi.rootPos, timeMs));
+          if (myTimer != null)
+            myTimer.restart();
+          return false;
         }
       }
 
-      return true;
-    }
-  }
+      // filter is opened
+      if (mi.rootPos != 0)
+        return true;
 
-  private static String _buildMnemonicLabel(JMenuItem jmenuitem) {
-    String text = jmenuitem.getText();
-    final int mnemonicCode = jmenuitem.getMnemonic();
-    final int mnemonicIndex = jmenuitem.getDisplayedMnemonicIndex();
-    if (text == null)
-      text = "";
-    final int index;
-    if (mnemonicIndex >= 0 && mnemonicIndex < text.length() && Character.toUpperCase(text.charAt(mnemonicIndex)) == mnemonicCode) {
-      index = mnemonicIndex;
-    } else {
-      // Mnemonic mismatch index
-      index = -1;
-      // LOG.error("Mnemonic code " + mnemonicCode + " mismatch index " + mnemonicIndex + " with txt: " + text);
+      // filter is opened and first root appeared
+      if (TRACE_EVENT_FILTER) _trace("EventFilter: close filter");
+      myQueued.add(QueuedEvent.of(uid, eventType, mi.rootPos, timeMs));
+      myClosedMs = timeMs;
+      _startTimer();
+      return false;
     }
-
-    final StringBuilder res = new StringBuilder(text);
-    if(index != -1)
-      res.insert(index, '_');
-    return res.toString();
   }
 
   private static Object _getPeerField(@NotNull Component object) {
@@ -1002,14 +1187,14 @@ Android Studio: b/67589184 */
   }
 
   private static void _trace(String fmt, Object... args) {
-    if (TRACE_DISABLED)
+    if (!TRACE_ENABLED)
       return;
     final String msg = String.format(fmt, args);
     _trace(msg);
   }
 
   private static void _trace(String msg) {
-    if (TRACE_DISABLED)
+    if (!TRACE_ENABLED)
       return;
     if (TRACE_SYSOUT)
       //noinspection UseOfSystemOutOrSystemErr

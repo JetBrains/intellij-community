@@ -3,24 +3,36 @@ package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
-public class WrapOnTypingAccessor extends IntegerAccessor {
+public class WrapOnTypingAccessor extends CodeStylePropertyAccessor<Integer,Boolean> {
   WrapOnTypingAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
   }
 
+  @Nullable
+  @Override
+  protected Boolean parseString(@NotNull String string) {
+    return "true".equalsIgnoreCase(string);
+  }
+
   @NotNull
   @Override
-  protected String toExternal(@NotNull Integer value) {
-    return value == CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue ? "true" : "false";
+  protected Boolean toExternal(@NotNull Integer value) {
+    return value == CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue;
   }
 
   @Override
-  protected Integer fromExternal(@NotNull String str) {
-    return "true".equalsIgnoreCase(str) ?
+  protected Integer fromExternal(@NotNull Boolean extValue) {
+    return extValue ?
            CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue :
            CommonCodeStyleSettings.WrapOnTyping.NO_WRAP.intValue;
+  }
+
+  @Override
+  protected boolean isEmpty(@NotNull Integer value) {
+    return value < 0;
   }
 }

@@ -10,9 +10,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.CurryKt;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -29,7 +29,6 @@ public class GrClosureType extends GrLiteralClassType {
 
   private final List<GrSignature> mySignatures;
   private volatile PsiType[] myTypeArgs;
-  private GrClosableBlock myClosure;
 
   private GrClosureType(@NotNull LanguageLevel languageLevel,
                         @NotNull GlobalSearchScope scope,
@@ -49,15 +48,6 @@ public class GrClosureType extends GrLiteralClassType {
     super(level, scope, facade);
     mySignatures = signatures;
     myTypeArgs = typeArgs;
-  }
-
-  @Nullable
-  public GrClosableBlock getClosure() {
-    return myClosure;
-  }
-
-  private void setClosure(@NotNull GrClosableBlock closure) {
-    myClosure = closure;
   }
 
   @Override
@@ -142,13 +132,11 @@ public class GrClosureType extends GrLiteralClassType {
     return create(signatures, resolveScope, facade, LanguageLevel.JDK_1_5, true);
   }
 
-  public static GrClosureType create(@NotNull GrClosableBlock closure, boolean shouldInferTypeParameters) {
-    final GrSignature signature = GrClosureSignatureUtil.createSignature(closure);
-    final GlobalSearchScope resolveScope = closure.getResolveScope();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(closure.getProject());
-    GrClosureType type = create(Collections.singletonList(signature), resolveScope, facade, LanguageLevel.JDK_1_5, shouldInferTypeParameters);
-    type.setClosure(closure);
-    return type;
+  public static GrClosureType create(@NotNull GrFunctionalExpression expression, boolean shouldInferTypeParameters) {
+    final GrSignature signature = GrClosureSignatureUtil.createSignature(expression);
+    final GlobalSearchScope resolveScope = expression.getResolveScope();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(expression.getProject());
+    return create(Collections.singletonList(signature), resolveScope, facade, LanguageLevel.JDK_1_5, shouldInferTypeParameters);
   }
 
   @NotNull

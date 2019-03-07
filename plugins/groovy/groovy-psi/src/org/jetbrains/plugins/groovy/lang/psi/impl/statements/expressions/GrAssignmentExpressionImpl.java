@@ -1,9 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.AtomicNullableLazyValue;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
@@ -19,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference;
+import org.jetbrains.plugins.groovy.util.SafePublicationClearableLazyValue;
 
 import java.util.Objects;
 
@@ -30,7 +29,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
  */
 public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl implements GrAssignmentExpression {
 
-  private final NullableLazyValue<GroovyReference> myReference = AtomicNullableLazyValue.createValue(
+  private final SafePublicationClearableLazyValue<GroovyReference> myReference = new SafePublicationClearableLazyValue<>(
     () -> isOperatorAssignment() ? new GrOperatorReference(this) : null
   );
 
@@ -42,6 +41,12 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   @Override
   public GroovyReference getReference() {
     return myReference.getValue();
+  }
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myReference.clear();
   }
 
   @Override

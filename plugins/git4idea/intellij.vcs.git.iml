@@ -26,10 +26,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.vcs.git.rt" />
     <orderEntry type="module" module-name="intellij.platform.images" />
-    <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" exported="" />
-    <orderEntry type="library" scope="TEST" name="cucumber-core" level="project" />
-    <orderEntry type="library" name="JSch" level="project" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log.graph.impl" />
@@ -37,7 +34,6 @@
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
-    <orderEntry type="library" scope="TEST" name="cucumber-java" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.platform.vcs.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" />

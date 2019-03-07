@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsCommitMetadata;
@@ -159,7 +158,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       }
       List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
       if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ArrayUtil.toObjectArray(VcsLogUtil.collectChanges(details, detail -> myUi.collectRelevantChanges(detail)), Change.class);
+      return VcsLogUtil.collectChanges(details, detail -> myUi.collectRelevantChanges(detail)).toArray(new Change[0]);
     }
     else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
       return myUi.getProperties();
@@ -172,7 +171,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
       List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
       if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ArrayUtil.toObjectArray(ContainerUtil.mapNotNull(details, myUi::createRevision), VcsFileRevision.class);
+      return ContainerUtil.mapNotNull(details, myUi::createRevision).toArray(new VcsFileRevision[0]);
     }
     else if (VcsDataKeys.FILE_PATH.is(dataId)) {
       return myFilePath;

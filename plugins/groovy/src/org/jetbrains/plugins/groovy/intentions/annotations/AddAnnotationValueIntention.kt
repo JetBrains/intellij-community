@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.annotations
 
 import com.intellij.openapi.editor.Editor
@@ -19,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyAnnotationArgumentLi
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyAnnotationArgumentValue
 
 class AddAnnotationValueIntention : Intention() {
-
   companion object {
     private val myPredicate: PsiElementPredicate
 

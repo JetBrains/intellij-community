@@ -56,8 +56,9 @@ public class ExcludeFolderImpl extends ContentFolderBaseImpl implements Clonable
     writeFolder(element, ELEMENT_NAME);
   }
 
+  @NotNull
   @Override
-  public ContentFolder cloneFolder(ContentEntry contentEntry) {
+  public ContentFolder cloneFolder(@NotNull ContentEntry contentEntry) {
     return new ExcludeFolderImpl(this, (ContentEntryImpl)contentEntry);
   }
 

@@ -11,13 +11,11 @@ import com.intellij.debugger.memory.agent.parsers.BooleanParser;
 import com.intellij.debugger.memory.agent.parsers.GcRootsPathsParser;
 import com.intellij.debugger.memory.agent.parsers.LongValueParser;
 import com.intellij.openapi.diagnostic.Logger;
-import com.sun.jdi.ClassType;
-import com.sun.jdi.Method;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,7 +58,7 @@ public class MemoryAgentImpl implements MemoryAgent {
   public long evaluateObjectSize(@NotNull ObjectReference reference) throws EvaluateException {
     if (!canEvaluateObjectSize()) throw new UnsupportedOperationException();
     Value result = callMethod(SIZE_OF_SINGLE_OBJECT_METHOD_NAME, Collections.singletonList(reference));
-    return result != null ? new LongValueParser().parse(result) : -1;
+    return result != null ? LongValueParser.INSTANCE.parse(result) : -1;
   }
 
   @Override
@@ -83,11 +81,12 @@ public class MemoryAgentImpl implements MemoryAgent {
 
   @Nullable
   @Override
-  public ReferringObjectsProvider findGcRoots(@NotNull ObjectReference reference) throws EvaluateException {
+  public ReferringObjectsProvider findGcRoots(@NotNull ObjectReference reference, int limit) throws EvaluateException {
     if (!canFindGcRoots()) throw new UnsupportedOperationException();
 
-    Value value = callMethod(GARBAGE_COLLECTOR_ROOTS_METHOD_NAME, Collections.singletonList(reference));
-    return value == null ? null : new GcRootsPathsParser().parse(value);
+    IntegerValue limitValue = myDebugProcess.getVirtualMachineProxy().mirrorOf(limit);
+    Value value = callMethod(GARBAGE_COLLECTOR_ROOTS_METHOD_NAME, Arrays.asList(reference, limitValue));
+    return value == null ? null : GcRootsPathsParser.INSTANCE.parse(value);
   }
 
   @Override

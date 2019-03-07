@@ -127,14 +127,14 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
         return o1.getDescription().equals(o2.getDescription());
       }
     });
-    return myConfiguration.VALIDATE_ON_BUILD != myValidateBox.isSelected() ||
+    return myConfiguration.isValidateOnBuild() != myValidateBox.isSelected() ||
         set.retainAll(markedValidators) ||
         myExcludedConfigurable.isModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    myConfiguration.VALIDATE_ON_BUILD = myValidateBox.isSelected();
+    myConfiguration.setValidateOnBuild(myValidateBox.isSelected());
     for (int i = 0; i < myValidators.getElementCount(); i++) {
       final Compiler validator = myValidators.getElementAt(i);
       myConfiguration.setSelected(validator,  myValidators.isElementMarked(validator));
@@ -144,7 +144,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
 
   @Override
   public void reset() {
-    myValidateBox.setSelected(myConfiguration.VALIDATE_ON_BUILD);
+    myValidateBox.setSelected(myConfiguration.isValidateOnBuild());
     final List<Compiler> validators = getValidators();
     Collections.sort(validators, Comparator.comparing(Compiler::getDescription));
     myValidators.setElements(validators, false);

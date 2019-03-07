@@ -14,6 +14,7 @@ import java.util.List;
 
 @SuppressWarnings("deprecation")
 public abstract class StateSplitterEx implements StateSplitter {
+  @NotNull
   @Override
   public abstract List<Pair<Element, String>> splitState(@NotNull Element state);
 
@@ -22,7 +23,7 @@ public abstract class StateSplitterEx implements StateSplitter {
   }
 
   @Override
-  public final void mergeStatesInto(Element target, Element[] elements) {
+  public final void mergeStatesInto(@NotNull Element target, @NotNull Element[] elements) {
     throw new IllegalStateException();
   }
 

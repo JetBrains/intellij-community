@@ -122,9 +122,7 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
 
     @Override
     public void reset() {
-      WriteCommandAction.writeCommandAction(null).run(() -> {
-        myEditor.getDocument().setText(template.getTemplate());
-      });
+      WriteCommandAction.writeCommandAction(null).run(() -> myEditor.getDocument().setText(template.getTemplate()));
     }
 
     @Override

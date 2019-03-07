@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,6 +11,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
@@ -72,7 +59,8 @@ public class FSRecords {
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
-  private static final int VERSION = 21 + (weHaveContentHashes ? 0x10:0) + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0x37:0) +
+  //TODO[anyone] when bumping the version, please delete `ourSymlinkTargetAttr_old` and use it's value for `ourSymlinkTargetAttr`
+  private static final int VERSION = 22 + (weHaveContentHashes ? 0x10:0) + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0x37:0) +
                                      31 + (bulkAttrReadSupport ? 0x27:0) + (inlineAttributes ? 0x31 : 0) +
                                      (ourStoreRootsSeparately ? 0x63 : 0) +
                                      (useCompressionUtil ? 0x7f : 0) + (useSmallAttrTable ? 0x31 : 0) +
@@ -111,6 +99,8 @@ public class FSRecords {
   private static final int CORRUPTED_MAGIC = 0xabcf7f7f;
 
   private static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
+  private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET_2");
+  private static final FileAttribute ourSymlinkTargetAttr_old = new FileAttribute("FsRecords.SYMLINK_TARGET");
 
   private static final ReentrantReadWriteLock lock;
   private static final ReentrantReadWriteLock.ReadLock r;
@@ -310,7 +300,7 @@ public class FSRecords {
           markDirty();
         }
         scanFreeRecords();
-        getAttributeId(ourChildrenAttr.getId()); // trigger writing / loading of vfs attribute ids in top level write action 
+        getAttributeId(ourChildrenAttr.getId()); // trigger writing / loading of vfs attribute ids in top level write action
       }
       catch (Exception e) { // IOException, IllegalArgumentException
         LOG.info("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
@@ -889,6 +879,16 @@ public class FSRecords {
     });
   }
 
+  static boolean mayHaveChildren(int id) {
+    return readAndHandleErrors(() -> {
+      try (final DataInputStream input = readAttribute(id, ourChildrenAttr)) {
+        if (input == null) return true;
+        final int count = DataInputOutputUtil.readINT(input);
+        return count != 0;
+      }
+    });
+  }
+
   public static class NameId {
     @NotNull
     public static final NameId[] EMPTY_ARRAY = new NameId[0];
@@ -948,7 +948,7 @@ public class FSRecords {
       throw new RuntimeException(e);
     }
   }
-  
+
   private static <T> T writeAndHandleErrors(@NotNull ThrowableComputable<T, ?> action) {
     try {
       w.lock();
@@ -976,7 +976,6 @@ public class FSRecords {
     }
   }
 
-
   static void updateList(int id, @NotNull int[] childIds) {
     Arrays.sort(childIds);
     writeAndHandleErrors(() -> {
@@ -996,6 +995,27 @@ public class FSRecords {
             prevId = childId;
           }
         }
+      }
+    });
+  }
+
+  static @Nullable String readSymlinkTarget(int id) {
+    return readAndHandleErrors(() -> {
+      try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
+        if (stream != null) return StringUtil.nullize(IOUtil.readUTF(stream));
+      }
+      try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr_old)) {
+        if (stream != null) return StringUtil.nullize(stream.readUTF());
+      }
+      return null;
+    });
+  }
+
+  static void storeSymlinkTarget(int id, @Nullable String symlinkTarget) {
+    writeAndHandleErrors(() -> {
+      DbConnection.markDirty();
+      try (DataOutputStream stream = writeAttribute(id, ourSymlinkTargetAttr)) {
+        IOUtil.writeUTF(stream, StringUtil.notNullize(symlinkTarget));
       }
     });
   }
@@ -1042,7 +1062,7 @@ public class FSRecords {
     class ParentFinder implements ThrowableComputable<Void, Throwable> {
       @Nullable private TIntArrayList path;
       private VirtualFileSystemEntry foundParent;
-      
+
       @Override
       public Void compute() {
         int currentId = id;
@@ -1090,7 +1110,7 @@ public class FSRecords {
         return child;
       }
     }
-    
+
     ParentFinder finder = new ParentFinder();
     readAndHandleErrors(finder);
     return finder.findDescendantByIdPath();
@@ -1243,7 +1263,7 @@ public class FSRecords {
     if (page == 0) return null;
     try {
       return doReadContentById(page);
-    } 
+    }
     catch (OutOfMemoryError outOfMemoryError) {
       throw outOfMemoryError;
     }
@@ -1587,13 +1607,13 @@ public class FSRecords {
       ++reuses;
       getContentStorage().acquireRecord(page);
       totalReuses += length;
-      
+
       return page;
     }
     else {
       int newRecord = getContentStorage().acquireNewRecord();
       assert page == newRecord : "Unexpected content storage modification: page="+page+"; newRecord="+newRecord;
-      
+
       return -page;
     }
   }

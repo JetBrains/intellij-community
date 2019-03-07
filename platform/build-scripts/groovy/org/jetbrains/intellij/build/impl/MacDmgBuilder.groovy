@@ -55,7 +55,7 @@ class MacDmgBuilder {
     // Android Studio: modified by Change Idc07b110 / commit f20681e
     def jreArchivePath = (secondJreArchive == null) ? buildContext.bundledJreManager.findMacJdk() : secondJreArchive
     if (jreArchivePath != null) {
-      dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, (secondJreArchive != null) ? "-jdk${buildContext.bundledJreManager.getSecondJreVersion()}-bundled" : null)
+      dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, (secondJreArchive != null) ? "-jre${buildContext.bundledJreManager.getSecondJreVersion()}" : null)
     }
     else {
       buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")

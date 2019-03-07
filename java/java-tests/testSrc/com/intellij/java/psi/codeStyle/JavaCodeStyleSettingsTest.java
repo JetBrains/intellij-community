@@ -90,8 +90,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CodeStyleSchemeJsonExporter exporter = new CodeStyleSchemeJsonExporter();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     exporter.exportScheme(testScheme, outputStream, Collections.singletonList("java"));
-    String expected = loadExpected(j2eeProviderExists() ? "j2ee.json" : "json");
-    assertEquals(expected, outputStream.toString());
+    compareWithExpected(outputStream.toString(), j2eeProviderExists() ? "j2ee.json" : "json");
   }
 
   private static boolean j2eeProviderExists() {
@@ -133,8 +132,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
   private static void setSimple(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String name, @NotNull String value) {
     CodeStylePropertyAccessor accessor = mapper.getAccessor(name);
     assertNotNull(name + " not found", accessor);
-    //noinspection unchecked
-    accessor.set(value);
+    accessor.setFromString(value);
   }
 
   private static void setList(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String name, @NotNull List<String> value) {

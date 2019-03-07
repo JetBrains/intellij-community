@@ -2108,20 +2108,6 @@ class Fo {
     assertEquals('C', clazz.qualifiedName)
   }
 
-  void 'test list equals null'() {
-    def method = resolveByText '''\
-void usage(List<String> l) { l.<caret>equals(null) }
-''', GrGdkMethod
-    assert method.staticMethod.parameterList.parameters.last().type.equalsToText("java.util.List")
-  }
-
-  void 'test list == null'() {
-    def method = resolveByText '''\
-void usage(List<String> l) { l <caret>== null }
-''', GrGdkMethod
-    assert method.staticMethod.parameterList.parameters.last().type.equalsToText("java.util.List")
-  }
-
   void testSuperReferenceWithTraitQualifier() {
     def method = resolveByText('''
 trait A {

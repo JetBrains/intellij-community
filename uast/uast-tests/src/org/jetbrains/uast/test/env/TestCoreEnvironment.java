@@ -185,8 +185,7 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
 
     private void registerProjectExtensionPoints() {
       ExtensionsArea area = Extensions.getArea(myProject);
-      CoreApplicationEnvironment.registerExtensionPoint(
-        area, PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
+      CoreApplicationEnvironment.registerExtensionPoint(area, PsiTreeChangePreprocessor.EP, PsiTreeChangePreprocessor.class);
       CoreApplicationEnvironment.registerExtensionPoint(
         area, PsiElementFinder.EP_NAME, PsiElementFinder.class);
     }

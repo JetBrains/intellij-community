@@ -43,6 +43,7 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
     myScope = scope;
   }
 
+  @NotNull
   @Override
   public ConsoleView getConsole() {
     final ConsoleView consoleView = createConsole();
@@ -62,8 +63,9 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
     myFilters.add(filter);
   }
 
+  @NotNull
   @Override
-  public TextConsoleBuilder filters(@NotNull List<Filter> filters) {
+  public TextConsoleBuilder filters(@NotNull List<? extends Filter> filters) {
     myFilters.addAll(filters);
     return this;
   }

@@ -90,6 +90,14 @@ public class GitVFSListener extends VcsVFSListener {
 
   @Override
   protected void executeAdd(@NotNull final List<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copiedFiles) {
+    executeAddWithoutIgnores(addedFiles, copiedFiles,
+                             (notIgnoredAddedFiles, copiedFilesMap) -> originalExecuteAdd(notIgnoredAddedFiles, copiedFilesMap));
+  }
+
+  @Override
+  protected void executeAddWithoutIgnores(@NotNull List<VirtualFile> addedFiles,
+                                          @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
+                                          @NotNull ExecuteAddCallback executeAddCallback) {
     saveUnsavedVcsIgnoreFiles();
     // Filter added files before further processing
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
@@ -117,7 +125,7 @@ public class GitVFSListener extends VcsVFSListener {
         }
         addedFiles.retainAll(retainedFiles);
 
-        AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> originalExecuteAdd(addedFiles, copiedFiles));
+        AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> executeAddCallback.executeAdd(addedFiles, copyFromMap));
       }
     });
   }

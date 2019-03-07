@@ -42,7 +42,7 @@
     <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngGrammar" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngGrammarImpl"/>
     <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngInclude" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngIncludeImpl"/>
     <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngRef" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngRefImpl"/>
-    <xml.html5SchemaProvider implementation="org.intellij.plugins.relaxNG.xml.RngHtml5SchemaProvider"/>
+    <applicationService serviceInterface="com.intellij.xml.Html5SchemaProvider" serviceImplementation="org.intellij.plugins.relaxNG.xml.RngHtml5SchemaProvider"/>
     <metaDataContributor implementation="org.intellij.html.RngHtml5MetaDataContributor"/>
 
     <localInspection shortName="UnresolvedReference" displayName="Unresolved References" groupName="RELAX NG" enabledByDefault="true"

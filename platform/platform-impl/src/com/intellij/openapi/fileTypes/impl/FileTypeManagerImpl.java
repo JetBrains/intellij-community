@@ -460,7 +460,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       return true;
     }
     if (file instanceof VirtualFileWithId) {
-      int id = Math.abs(((VirtualFileWithId)file).getId());
+      int id = ((VirtualFileWithId)file).getId();
       // do not re-detect binary files
       return (packedFlags.get(id) & (AUTO_DETECT_WAS_RUN_MASK | AUTO_DETECTED_AS_BINARY_MASK)) == AUTO_DETECT_WAS_RUN_MASK;
     }
@@ -588,7 +588,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (!isDetectable(file)) return UnknownFileType.INSTANCE;
     if (file instanceof VirtualFileWithId) {
       int id = ((VirtualFileWithId)file).getId();
-      if (id < 0) return UnknownFileType.INSTANCE;
 
       long flags = packedFlags.get(id);
       if (!BitUtil.isSet(flags, ATTRIBUTES_WERE_LOADED_MASK)) {
@@ -705,7 +704,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     flags = BitUtil.set(flags, AUTO_DETECTED_AS_BINARY_MASK, wasAutodetectedAsBinary);
     writeFlagsToCache(file, flags);
     if (file instanceof VirtualFileWithId) {
-      int id = Math.abs(((VirtualFileWithId)file).getId());
+      int id = ((VirtualFileWithId)file).getId();
       flags = BitUtil.set(flags, AUTO_DETECT_WAS_RUN_MASK, true);
       flags = BitUtil.set(flags, ATTRIBUTES_WERE_LOADED_MASK, true);
       packedFlags.set(id, flags);

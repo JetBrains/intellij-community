@@ -25,9 +25,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState = state
   }
 
-  fun getShellPath(): String? {
-    return if (myState.myShellPath.isNullOrEmpty()) defaultShellPath() else myState.myShellPath
-  }
+  fun getShellPath(): String = getEffectiveShellPath(myState.myShellPath)
 
   fun setShellPath(shellPath: String) {
     myState.myShellPath = if (shellPath == defaultShellPath()) null else shellPath
@@ -126,7 +124,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState.envDataOptions.set(envData)
   }
 
-  private fun defaultShellPath(): String {
+  fun defaultShellPath(): String {
     val shell = System.getenv("SHELL")
     if (shell != null && File(shell).canExecute()) {
       return shell
@@ -139,6 +137,10 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
       return "/bin/sh"
     }
     return "cmd.exe"
+  }
+
+  fun getEffectiveShellPath(shellPath: String?): String {
+    return if (shellPath.isNullOrEmpty()) defaultShellPath() else shellPath
   }
 
   companion object {

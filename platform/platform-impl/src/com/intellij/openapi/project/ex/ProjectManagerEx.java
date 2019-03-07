@@ -91,6 +91,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
   /**
    * Internal use only. Force reload changed project files. Must be called before save otherwise saving maybe not performed (because storage saving is disabled).
    */
+  @TestOnly
   public void flushChangedProjectFileAlarm() {
   }
 }

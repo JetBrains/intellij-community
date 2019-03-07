@@ -64,9 +64,7 @@ public final class SwingCleanuper {
                 if (app != null && app.isActive()) {
                   StatusBar statusBar = frame.getStatusBar();
                   if (statusBar != null) {
-                    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-                      IdeFocusManager.getGlobalInstance().requestFocus((JComponent)statusBar, true);
-                    });
+                    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus((JComponent)statusBar, true));
                   }
                 }
               }

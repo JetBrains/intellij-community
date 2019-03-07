@@ -63,7 +63,7 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   @NotNull
   ProjectImportAction.AllModels getModels();
 
-  public void setModels(@NotNull ProjectImportAction.AllModels models) ;
+  void setModels(@NotNull ProjectImportAction.AllModels models) ;
 
   @Nullable
   <T> T getExtraProject(Class<T> modelClazz);

@@ -323,9 +323,7 @@ public class SearchDialog extends DialogWrapper {
     final PsiFile file = documentManager.getPsiFile(document);
     if (file == null) return;
 
-    WriteCommandAction.writeCommandAction(project, file).run(() -> {
-      CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength()));
-    });
+    WriteCommandAction.writeCommandAction(project, file).run(() -> CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength())));
   }
 
   protected void startSearching() {

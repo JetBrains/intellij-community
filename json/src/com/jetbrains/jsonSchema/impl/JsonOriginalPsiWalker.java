@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
@@ -193,14 +194,14 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
 
       @NotNull
       @Override
-      public PsiElement createProperty(@NotNull String name, @NotNull String value) {
+      public PsiElement createProperty(@NotNull String name, @NotNull String value, PsiElement element) {
         return myGenerator.createProperty(name, value);
       }
 
       @Override
-      public boolean ensureComma(PsiElement backward, PsiElement self, PsiElement newElement) {
-        if (backward instanceof JsonProperty) {
-          self.addAfter(myGenerator.createComma(), backward);
+      public boolean ensureComma(PsiElement self, PsiElement newElement) {
+        if (newElement instanceof JsonProperty && self instanceof JsonProperty) {
+          self.getParent().addAfter(myGenerator.createComma(), self);
           return true;
         }
         return false;
@@ -216,6 +217,22 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
       @Override
       public boolean fixWhitespaceBefore(PsiElement initialElement, PsiElement element) {
         return true;
+      }
+
+      @NotNull
+      @Override
+      public String getDefaultValueFromType(@Nullable JsonSchemaType type) {
+        return type == null ? "" : type.getDefaultValue();
+      }
+
+      @Override
+      public PsiElement adjustNewProperty(PsiElement element) {
+        return element;
+      }
+
+      @Override
+      public PsiElement adjustPropertyAnchor(LeafPsiElement element) {
+        throw new IncorrectOperationException("Shouldn't use leafs for insertion in pure JSON!");
       }
     };
   }

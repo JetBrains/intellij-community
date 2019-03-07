@@ -45,6 +45,7 @@ public abstract class NewLibraryConfiguration {
     return myProperties;
   }
 
+  @NotNull
   public String getDefaultLibraryName() {
     return myDefaultLibraryName;
   }

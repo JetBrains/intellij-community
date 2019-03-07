@@ -111,7 +111,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   @Nullable
-  private static ProjectModelExternalSource findExternalSource(Element element) {
+  private static ProjectModelExternalSource findExternalSource(@NotNull Element element) {
     @Nullable String externalSourceId = element.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE);
     return externalSourceId != null ? ExternalProjectSystemRegistry.getInstance().getSourceById(externalSourceId) : null;
   }
@@ -282,7 +282,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   // just to maintain .xml compatibility
   // VirtualFilePointerContainerImpl does the same but stores its jar dirs attributes inside <root> element
   @Deprecated // todo to remove sometime later
-  private void readJarDirectories(Element element) {
+  private void readJarDirectories(@NotNull Element element) {
     final List<Element> jarDirs = element.getChildren(VirtualFilePointerContainerImpl.JAR_DIRECTORY_ELEMENT);
     for (Element jarDir : jarDirs) {
       final String url = jarDir.getAttributeValue(VirtualFilePointerContainerImpl.URL_ATTR);
@@ -296,6 +296,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     }
   }
 
+  @NotNull
   private static OrderRootType getJarDirectoryRootType(@Nullable String type) {
     for (PersistentOrderRootType rootType : OrderRootType.getAllPersistentTypes()) {
       if (rootType.name().equals(type)) {
@@ -305,7 +306,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     return DEFAULT_JAR_DIRECTORY_TYPE;
   }
 
-  private void readProperties(Element element) {
+  private void readProperties(@NotNull Element element) {
     final String typeId = element.getAttributeValue(LIBRARY_TYPE_ATTR);
     if (typeId == null) return;
 
@@ -421,7 +422,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   // just to maintain .xml compatibility
   // VirtualFilePointerContainerImpl does the same but stores its jar dirs attributes inside <root> element
   @Deprecated // todo to remove sometime later
-  private void writeJarDirectories(Element element) {
+  private void writeJarDirectories(@NotNull Element element) {
     final List<OrderRootType> rootTypes = sortRootTypes(myRoots.keySet());
     for (OrderRootType rootType : rootTypes) {
       VirtualFilePointerContainer container = myRoots.get(rootType);

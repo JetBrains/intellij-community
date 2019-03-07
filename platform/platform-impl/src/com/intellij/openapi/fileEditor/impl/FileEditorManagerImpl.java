@@ -698,6 +698,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private static boolean isOpenInNewWindow() {
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+    // openFile... methods can be called several times in a row with the same InputEvent but we should open just one new window in this case
+    if (event instanceof InputEvent && ((InputEvent)event).isConsumed()) return false;
 
     // Shift was used while clicking
     if (event instanceof MouseEvent &&
@@ -705,14 +707,23 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         (event.getID() == MouseEvent.MOUSE_CLICKED ||
          event.getID() == MouseEvent.MOUSE_PRESSED ||
          event.getID() == MouseEvent.MOUSE_RELEASED)) {
+      ((MouseEvent)event).consume();
       return true;
     }
 
     if (event instanceof KeyEvent) {
       KeyEvent ke = (KeyEvent)event;
-      Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+      KeymapManager keymapManager = KeymapManager.getInstance();
+      if (keymapManager == null) {
+        return false;
+      }
+      Keymap keymap = keymapManager.getActiveKeymap();
       String[] ids = keymap.getActionIds(KeyStroke.getKeyStroke(ke.getKeyCode(), ke.getModifiers()));
-      return Arrays.asList(ids).contains("OpenElementInNewWindow");
+      boolean inNewWindow = Arrays.asList(ids).contains("OpenElementInNewWindow");
+      if (inNewWindow) {
+        ke.consume();
+      }
+      return inNewWindow;
     }
 
     return false;

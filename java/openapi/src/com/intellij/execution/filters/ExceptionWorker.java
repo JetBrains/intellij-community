@@ -65,14 +65,14 @@ public class ExceptionWorker {
     myCache = cache;
   }
 
-  public Filter.Result execute(final String line, final int textEndOffset) {
+  public Filter.Result execute(@NotNull String line, final int textEndOffset) {
     return execute(line, textEndOffset, null);
   }
 
-  public Filter.Result execute(final String line, final int textEndOffset, PsiElementFilter elementMatcher) {
+  public Filter.Result execute(@NotNull String line, final int textEndOffset, @Nullable PsiElementFilter elementMatcher) {
     myResult = null;
     myInfo = parseExceptionLine(line);
-    if (myInfo == null) {
+    if (myInfo == null || myProject.isDisposed()) {
       return null;
     }
 
@@ -133,9 +133,11 @@ public class ExceptionWorker {
     Filter.Result result = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
     if (myMethod.startsWith("access$")) {
       myLocationRefiner = elementMatcher;
-    } else if (myMethod.startsWith("lambda$")) {
+    }
+    else if (myMethod.startsWith("lambda$")) {
       myLocationRefiner = new FunctionCallMatcher();
-    } else {
+    }
+    else {
       myLocationRefiner = new StackFrameMatcher(line, myInfo);
     }
     myResult = result;
@@ -146,7 +148,7 @@ public class ExceptionWorker {
     return myLocationRefiner;
   }
 
-  private static int getLineNumber(String lineString) {
+  private static int getLineNumber(@NotNull String lineString) {
     // some quick checks to avoid costly exceptions
     if (lineString.isEmpty() || lineString.length() > 9 || !Character.isDigit(lineString.charAt(0))) {
       return -1;
@@ -180,14 +182,14 @@ public class ExceptionWorker {
     return myInfo;
   }
 
-  private static int findAtPrefix(String line) {
+  private static int findAtPrefix(@NotNull String line) {
     if (line.startsWith(AT_PREFIX)) return 0;
 
     int startIdx = line.indexOf(STANDALONE_AT);
     return startIdx < 0 ? line.indexOf(AT_PREFIX) : startIdx;
   }
 
-  private static int findFirstRParenAfterDigit(String line) {
+  private static int findFirstRParenAfterDigit(@NotNull String line) {
     int rParenIdx = -1;
     int rParenCandidate = line.lastIndexOf(')');
     //Looking for minimal position for ')' after a digit
@@ -201,7 +203,7 @@ public class ExceptionWorker {
   }
 
   @Nullable
-  public static ParsedLine parseExceptionLine(final String line) {
+  public static ParsedLine parseExceptionLine(@NotNull String line) {
     ParsedLine result = parseNormalStackTraceLine(line);
     if (result == null) result = parseYourKitLine(line);
     if (result == null) result = parseForcedLine(line);
@@ -209,7 +211,7 @@ public class ExceptionWorker {
   }
 
   @Nullable
-  private static ParsedLine parseNormalStackTraceLine(String line) {
+  private static ParsedLine parseNormalStackTraceLine(@NotNull String line) {
     int startIdx = findAtPrefix(line);
     int rParenIdx = findFirstRParenAfterDigit(line);
     if (rParenIdx < 0) return null;
@@ -227,7 +229,8 @@ public class ExceptionWorker {
                                             lParenIdx + 1, rParenIdx, line);
   }
 
-  private static TextRange trimRange(String line, TextRange range) {
+  @NotNull
+  private static TextRange trimRange(@NotNull String line, @NotNull TextRange range) {
     int start = handleSpaces(line, range.getStartOffset(), 1);
     int end = handleSpaces(line, range.getEndOffset(), -1);
     if (start != range.getStartOffset() || end != range.getEndOffset()) {
@@ -237,7 +240,7 @@ public class ExceptionWorker {
   }
 
   @Nullable
-  private static ParsedLine parseYourKitLine(String line) {
+  private static ParsedLine parseYourKitLine(@NotNull String line) {
     int lineEnd = line.length() - 1;
     if (lineEnd > 0 && line.charAt(lineEnd) == '\n') lineEnd--;
     if (lineEnd > 0 && Character.isDigit(line.charAt(lineEnd))) {
@@ -257,7 +260,7 @@ public class ExceptionWorker {
   }
 
   @Nullable
-  private static ParsedLine parseForcedLine(String line) {
+  private static ParsedLine parseForcedLine(@NotNull String line) {
     String dash = "- ";
     if (!line.trim().startsWith(dash)) return null;
 
@@ -279,7 +282,7 @@ public class ExceptionWorker {
                           TextRange.create(lineNumberStart, lineNumberEnd), null, lineNumber);
   }
   
-  private static TextRange findMethodNameCandidateBefore(String line, int start, int end) {
+  private static TextRange findMethodNameCandidateBefore(@NotNull String line, int start, int end) {
     int lParenIdx = line.lastIndexOf('(', end);
     if (lParenIdx < 0) return null;
 
@@ -289,7 +292,7 @@ public class ExceptionWorker {
     return TextRange.create(dotIdx + 1, lParenIdx);
   }
 
-  private static int handleSpaces(String line, int pos, int delta) {
+  private static int handleSpaces(@NotNull String line, int pos, int delta) {
     int len = line.length();
     while (pos >= 0 && pos < len) {
       final char c = line.charAt(pos);
@@ -307,8 +310,8 @@ public class ExceptionWorker {
     public final int lineNumber;
 
     ParsedLine(@NotNull TextRange classFqnRange,
-                      @NotNull TextRange methodNameRange,
-                      @NotNull TextRange fileLineRange, @Nullable String fileName, int lineNumber) {
+               @NotNull TextRange methodNameRange,
+               @NotNull TextRange fileLineRange, @Nullable String fileName, int lineNumber) {
       this.classFqnRange = classFqnRange;
       this.methodNameRange = methodNameRange;
       this.fileLineRange = fileLineRange;
@@ -318,8 +321,8 @@ public class ExceptionWorker {
 
     @Nullable
     private static ParsedLine createFromFileAndLine(@NotNull TextRange classFqnRange,
-                                                              @NotNull TextRange methodNameRange,
-                                                              int fileLineStart, int fileLineEnd, String line) {
+                                                    @NotNull TextRange methodNameRange,
+                                                    int fileLineStart, int fileLineEnd, @NotNull String line) {
       TextRange fileLineRange = TextRange.create(fileLineStart, fileLineEnd);
       String fileAndLine = fileLineRange.substring(line);
 
@@ -347,7 +350,7 @@ public class ExceptionWorker {
     }
 
     @Override
-    public boolean isAccepted(PsiElement element) {
+    public boolean isAccepted(@NotNull PsiElement element) {
       if (!(element instanceof PsiIdentifier)) return false;
       if (myMethodName.equals("<init>")) {
         if (myHasDollarInName || element.textMatches(StringUtil.getShortName(myClassName))) {
@@ -422,7 +425,7 @@ public class ExceptionWorker {
 
   private static class FunctionCallMatcher implements PsiElementFilter {
     @Override
-    public boolean isAccepted(PsiElement element) {
+    public boolean isAccepted(@NotNull PsiElement element) {
       if (!(element instanceof PsiIdentifier)) return false;
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiReferenceExpression)) return false;

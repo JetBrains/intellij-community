@@ -856,9 +856,15 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private DataContext getDataContext() {
-    Component referenceComponent = SoftReference.dereference(myReferenceComponent);
-    if (referenceComponent == null) referenceComponent = IdeFocusManager.getInstance(myManager.myProject).getFocusOwner();
-    if (myReferenceComponent == null) myReferenceComponent = new WeakReference<>(referenceComponent);
+    Component referenceComponent;
+    if (myReferenceComponent == null) {
+      referenceComponent = IdeFocusManager.getInstance(myManager.myProject).getFocusOwner();
+      myReferenceComponent = new WeakReference<>(referenceComponent);
+    }
+    else {
+      referenceComponent = SoftReference.dereference(myReferenceComponent);
+      if (referenceComponent == null || ! referenceComponent.isShowing()) referenceComponent = myHint.getComponent();
+    }
     return DataManager.getInstance().getDataContext(referenceComponent);
   }
 

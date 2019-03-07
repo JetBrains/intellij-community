@@ -3,12 +3,11 @@
  */
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -77,7 +76,9 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
 
   void cleanup();
   @Nullable
-  IntentionAction findQuickFixes(@NotNull CommonProblemDescriptor descriptor, final String hint);
+  QuickFix findQuickFixes(@NotNull CommonProblemDescriptor descriptor,
+                          RefEntity entity,
+                          String hint);
   @NotNull
   HTMLComposerImpl getComposer();
 
@@ -145,19 +146,18 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
 
   void exclude(@NotNull CommonProblemDescriptor descriptor);
 
+  @NotNull
   static HighlightSeverity getSeverity(@Nullable RefEntity entity,
                                        @Nullable PsiElement psiElement,
                                        @NotNull InspectionToolPresentation presentation) {
-    HighlightSeverity severity;
+    HighlightSeverity severity = null;
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(presentation.getContext().getProject()).getCurrentProfile();
     if (entity instanceof RefElement){
       final RefElement refElement = (RefElement)entity;
       severity = presentation.getSeverity(refElement);
     }
-    else {
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(presentation.getContext().getProject()).getCurrentProfile();
-      final HighlightDisplayLevel
-        level = profile.getErrorLevel(HighlightDisplayKey.find(presentation.getToolWrapper().getShortName()), psiElement);
-      severity = level.getSeverity();
+    if (severity == null) {
+      severity = profile.getErrorLevel(HighlightDisplayKey.find(presentation.getToolWrapper().getShortName()), psiElement).getSeverity();
     }
     return severity;
   }

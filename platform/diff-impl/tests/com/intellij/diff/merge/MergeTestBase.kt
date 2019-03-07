@@ -111,17 +111,17 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     // Modification
     //
 
-    fun command(affected: TextMergeChange, f: () -> Unit): Unit {
+    fun command(affected: TextMergeChange, f: () -> Unit) {
       command(listOf(affected), f)
     }
 
-    fun command(affected: List<TextMergeChange>? = null, f: () -> Unit): Unit {
+    fun command(affected: List<TextMergeChange>? = null, f: () -> Unit) {
       viewer.executeMergeCommand(null, affected, f)
       UIUtil.dispatchAllInvocationEvents()
     }
 
-    fun write(f: () -> Unit): Unit {
-      ApplicationManager.getApplication().runWriteAction({ CommandProcessor.getInstance().executeCommand(project, f, null, null) })
+    fun write(f: () -> Unit) {
+      ApplicationManager.getApplication().runWriteAction { CommandProcessor.getInstance().executeCommand(project, f, null, null) }
     }
 
     fun Int.ignore(side: Side, modifier: Boolean = false) {
@@ -334,8 +334,7 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     operator fun Int.not(): LineColHelper = LineColHelper(this)
     operator fun LineColHelper.minus(col: Int): LineCol = LineCol(this.line, col)
 
-    inner class LineColHelper(val line: Int) {
-    }
+    inner class LineColHelper(val line: Int)
 
     inner class LineCol(val line: Int, val col: Int) {
       fun toOffset(): Int = editor.document.getLineStartOffset(line) + col
@@ -384,7 +383,7 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
       }
 
       private fun recordChangeState(viewer: MyThreesideViewer, change: TextMergeChange): ChangeState {
-        val document = viewer.editor.document;
+        val document = viewer.editor.document
         val content = DiffUtil.getLinesContent(document, change.startLine, change.endLine)
 
         val resolved =

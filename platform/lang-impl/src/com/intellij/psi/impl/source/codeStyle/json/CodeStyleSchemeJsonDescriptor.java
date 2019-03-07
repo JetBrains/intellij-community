@@ -6,14 +6,13 @@ import com.intellij.application.options.codeStyle.properties.CodeStyleProperties
 import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper;
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,25 +24,32 @@ public class CodeStyleSchemeJsonDescriptor {
   private transient final List<String> myLangDomainIds;
 
   public final String schemeName;
+  @SuppressWarnings("FieldMayBeStatic")
   public final String version = VERSION;
-  public List<LanguagePropertyMapperDescriptor> codeStyle;
+  public PropertyListHolder codeStyle;
 
   CodeStyleSchemeJsonDescriptor(CodeStyleScheme scheme, List<String> ids) {
     myScheme = scheme;
     schemeName = scheme.getName();
     myLangDomainIds = ids;
-    this.codeStyle = getOptionDescriptors();
+    this.codeStyle = getPropertyListHolder();
   }
 
-  private List<LanguagePropertyMapperDescriptor> getOptionDescriptors() {
-    List<LanguagePropertyMapperDescriptor> descriptors = ContainerUtil.newArrayList();
+  private PropertyListHolder getPropertyListHolder() {
+    PropertyListHolder holder = new PropertyListHolder();
     CodeStylePropertiesUtil.collectMappers(myScheme.getCodeStyleSettings(), mapper -> {
       if (myLangDomainIds == null || myLangDomainIds.contains(mapper.getLanguageDomainId())) {
-        descriptors.add(new LanguagePropertyMapperDescriptor(mapper.getLanguageDomainId(), mapper, getPriority(mapper)));
+        holder.add(mapper);
       }
     });
-    Collections.sort(descriptors);
-    return descriptors;
+    Collections.sort(holder, (m1, m2) -> {
+      int result = Comparing.compare(getPriority(m1), getPriority(m2));
+      if (result == 0) {
+        return Comparing.compare(m1.getLanguageDomainId(), m2.getLanguageDomainId());
+      }
+      return result;
+    });
+    return holder;
   }
 
   private static DisplayPriority getPriority(@NotNull AbstractCodeStylePropertyMapper mapper) {
@@ -60,26 +66,5 @@ public class CodeStyleSchemeJsonDescriptor {
     return DisplayPriority.OTHER_SETTINGS;
   }
 
-  private static class LanguagePropertyMapperDescriptor implements Comparable<LanguagePropertyMapperDescriptor> {
-    final @NotNull String language;
-    final @NotNull AbstractCodeStylePropertyMapper options;
-    private final transient @NotNull DisplayPriority priority;
-
-    private LanguagePropertyMapperDescriptor(@NotNull String language,
-                                             @NotNull AbstractCodeStylePropertyMapper mapper,
-                                             @NotNull DisplayPriority priority) {
-      this.language = language;
-      this.options = mapper;
-      this.priority = priority;
-    }
-
-    @Override
-    public int compareTo(@NotNull LanguagePropertyMapperDescriptor d) {
-      int result = this.priority.compareTo(d.priority);
-      if (result == 0) {
-        result = this.language.compareTo(d.language);
-      }
-      return result;
-    }
-  }
+  static class PropertyListHolder extends ArrayList<AbstractCodeStylePropertyMapper> {}
 }

@@ -32,6 +32,20 @@ import java.util.*
  * date: 11.09.2017.
  */
 class JUnitRunConfigurationImporter : RunConfigurationImporter {
+
+  private enum class TestKind(val dslName: String) {
+    PACKAGE_NAME("packageName"),
+    DIRECTORY("directory"),
+    PATTERN("pattern"),
+    CLASS("class"),
+    METHOD("method"),
+    CATEGORY("category");
+
+    companion object {
+      fun byDslName(dslName: String): TestKind? = TestKind.values().find { it.dslName == dslName }
+    }
+  }
+
   override fun canImport(typeName: String): Boolean = "junit" == typeName
 
   override fun process(project: Project, runConfig: RunConfiguration, cfg: MutableMap<String, *>, modelsProvider: IdeModifiableModelsProvider) {
@@ -40,22 +54,22 @@ class JUnitRunConfigurationImporter : RunConfigurationImporter {
     }
 
     val data = runConfig.persistentData
-    val testKind = cfg.keys.firstOrNull { it in listOf("packageName", "directory", "pattern", "className", "method", "category") && cfg[it] != null }
-    if (testKind != null) {
-      consumeIfCast(cfg[testKind], String::class.java) { testKindValue ->
-        data.TEST_OBJECT = when (testKind) {
-          "package" -> JUnitConfiguration.TEST_PACKAGE.also { data.PACKAGE_NAME = testKindValue }
-          "directory" -> JUnitConfiguration.TEST_DIRECTORY.also { data.dirName = testKindValue }
-          "pattern" -> JUnitConfiguration.TEST_PATTERN.also { data.setPatterns(LinkedHashSet(testKindValue.split(','))) }
-          "class" -> JUnitConfiguration.TEST_CLASS.also { data.MAIN_CLASS_NAME = testKindValue }
-          "method" -> JUnitConfiguration.TEST_METHOD.also {
+    val testKindName = cfg.keys.firstOrNull { it in TestKind.values().map { testKind -> testKind.dslName } && cfg[it] != null }
+    if (testKindName != null) {
+      consumeIfCast(cfg[testKindName], String::class.java) { testKindValue ->
+        data.TEST_OBJECT = when (TestKind.byDslName(testKindName)) {
+          TestKind.PACKAGE_NAME -> JUnitConfiguration.TEST_PACKAGE.also { data.PACKAGE_NAME = testKindValue }
+          TestKind.DIRECTORY -> JUnitConfiguration.TEST_DIRECTORY.also { data.dirName = testKindValue }
+          TestKind.PATTERN -> JUnitConfiguration.TEST_PATTERN.also { data.setPatterns(LinkedHashSet(testKindValue.split(','))) }
+          TestKind.CLASS -> JUnitConfiguration.TEST_CLASS.also { data.MAIN_CLASS_NAME = testKindValue }
+          TestKind.METHOD -> JUnitConfiguration.TEST_METHOD.also {
             val className = testKindValue.substringBefore('#')
             val methodName = testKindValue.substringAfter('#')
             data.MAIN_CLASS_NAME = className
             data.METHOD_NAME = methodName
           }
-          "category" -> JUnitConfiguration.TEST_CATEGORY.also { data.setCategoryName(testKindValue) }
-          else -> data.TEST_OBJECT
+          TestKind.CATEGORY -> JUnitConfiguration.TEST_CATEGORY.also { data.setCategoryName(testKindValue) }
+          null -> data.TEST_OBJECT
         }
       }
     }

@@ -78,7 +78,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     }
 
     findDetectedSystemWideSdk(module, existingSdks)?.let {
-      SdkConfigurationUtil.createAndAddSDK(it.homePath, PythonSdkType.getInstance())?.apply {
+      SdkConfigurationUtil.createAndAddSDK(it.homePath!!, PythonSdkType.getInstance())?.apply {
         SdkConfigurationUtil.setDirectoryProjectSdk(project, this)
       }
     }

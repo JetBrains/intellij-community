@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.breadcrumbs;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -43,10 +44,11 @@ public abstract class FileBreadcrumbsCollector {
                                        @NotNull Runnable changesHandler);
 
   public abstract void updateCrumbs(@NotNull VirtualFile virtualFile,
-                                    @NotNull Editor editor,
+                                    Document document,
                                     int offset,
                                     ProgressIndicator progressIndicator,
-                                    @NotNull Consumer<Iterable<? extends Crumb>> consumer);
+                                    @NotNull Consumer<Iterable<? extends Crumb>> consumer,
+                                    Boolean forcedShown);
 
   public static FileBreadcrumbsCollector findBreadcrumbsCollector(Project project, VirtualFile file) {
     if (file != null) {

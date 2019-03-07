@@ -46,12 +46,14 @@ import java.io.IOException;
 public class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
   public static final String DESCR = EclipseBundle.message("eclipse.classpath.storage.description");
 
+  @NotNull
   @Override
   @NonNls
   public String getID() {
     return JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID;
   }
 
+  @NotNull
   @Override
   @Nls
   public String getDescription() {
@@ -59,7 +61,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   @Override
-  public void assertCompatible(final ModuleRootModel model) throws ConfigurationException {
+  public void assertCompatible(@NotNull final ModuleRootModel model) throws ConfigurationException {
     final String moduleName = model.getModule().getName();
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry) {

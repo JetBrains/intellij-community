@@ -23,6 +23,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -42,6 +43,11 @@ public interface JpsJavaCompilerConfiguration extends JpsElement {
 
   @NotNull
   JpsCompilerExcludes getValidationExcludes();
+
+  @NotNull
+  JpsValidationConfiguration getValidationConfiguration();
+
+  void setValidationConfiguration(boolean validateOnBuild, @NotNull Set<String> disabledValidators);
 
   @NotNull
   ProcessorConfigProfile getDefaultAnnotationProcessingProfile();

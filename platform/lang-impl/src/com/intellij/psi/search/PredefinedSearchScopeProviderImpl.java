@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.ide.IdeBundle;
@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.project.DumbUnawareHider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -40,7 +41,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProvider {
@@ -252,11 +252,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       return;
     }
     final String name = content.getDisplayName();
-    final JComponent component = content.getComponent();
-    if (!(component instanceof HierarchyBrowserBase)) {
-      return;
-    }
-    final HierarchyBrowserBase hierarchyBrowserBase = (HierarchyBrowserBase)component;
+    final DumbUnawareHider dumbUnawareHider = (DumbUnawareHider)content.getComponent();
+    final HierarchyBrowserBase hierarchyBrowserBase = (HierarchyBrowserBase)dumbUnawareHider.getContent();
     final PsiElement[] elements = hierarchyBrowserBase.getAvailableElements();
     if (elements.length > 0) {
       result.add(new LocalSearchScope(elements, "Hierarchy '" + name + "' (visible nodes only)"));

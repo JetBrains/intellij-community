@@ -195,7 +195,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       .handleFocusLostOnPinned(toolWindowId -> {
         List<FinalizableCommand> commands = new ArrayList<>();
         deactivateToolWindowImpl(getRegisteredInfoOrLogError(toolWindowId), true, commands);
-        myCommandProcessor.execute(commands, myProject.getDisposed());
+        execute(commands, true); // notify clients that toolwindow is deactivated
       })
       .handleWindowed(toolWindowId -> {})
       .bind(myProject);

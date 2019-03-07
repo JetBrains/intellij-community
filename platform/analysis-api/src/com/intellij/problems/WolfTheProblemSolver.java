@@ -39,8 +39,20 @@ public abstract class WolfTheProblemSolver {
 
   public abstract boolean hasSyntaxErrors(final VirtualFile file);
 
+  /**
+   * Reports that the specified file contains problems that cannot be discovered by running the general
+   * highlighting pass for the file.
+   *
+   * @param source Identifies the component that discovered the problems. A file is highlighted as problematic
+   *               if it has problems from GeneralHighlightingPass or from at least one source.
+   */
   public abstract void reportProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source);
 
+  /**
+   * Reports that the specified file no longer contains problems discovered by the specified source. If the
+   * file has no problems from GeneralHighlightingPass or from any other sources, it will no longer be
+   * highlighted as problematic.
+   */
   public abstract void clearProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source);
 
   @Deprecated

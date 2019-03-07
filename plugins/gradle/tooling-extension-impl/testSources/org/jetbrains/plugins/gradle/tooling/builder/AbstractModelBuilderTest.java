@@ -37,6 +37,7 @@ import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
+import org.jetbrains.plugins.gradle.service.project.ClassSetProjectImportExtraModelProvider;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.After;
@@ -155,7 +156,7 @@ public abstract class AbstractModelBuilderTest {
       boolean isCompositeBuildsSupported = isGradleProjectDirSupported && _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
       final ProjectImportAction projectImportAction = new ProjectImportAction(false, isGradleProjectDirSupported,
                                                                               isCompositeBuildsSupported);
-      projectImportAction.addExtraProjectModelClasses(getModels());
+      projectImportAction.addProjectImportExtraModelProvider(new ClassSetProjectImportExtraModelProvider(getModels()));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
       assertNotNull(initScript);

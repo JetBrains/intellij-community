@@ -50,4 +50,25 @@ public class ModRange {
     long lo = x & 0x00FF;
     if (hi == lo && <warning descr="Condition 'hi % 32 == 0' is always 'true' when reached">hi % 32 == 0</warning>) {}
   }
+  
+  void testAndChain(long x) {
+    long y = x & ~1;
+    long z = y & ~2;
+    long t = z & ~4;
+    if (t == 0) {}
+    if (<warning descr="Condition 't == 1' is always 'false'">t == 1</warning>) {}
+    if (<warning descr="Condition 't == 2' is always 'false'">t == 2</warning>) {}
+    if (<warning descr="Condition 't == 4' is always 'false'">t == 4</warning>) {}
+    if (<warning descr="Condition 't == 7' is always 'false'">t == 7</warning>) {}
+    if (t == 8) {}
+  }
+  
+  void testOr(long x) {
+    long y = x | 1;
+    if (<warning descr="Condition 'y % 2 == 0' is always 'false'">y % 2 == 0</warning>) {}
+  }
+  
+  void testAndOr(long x) {
+    if(<warning descr="Condition '((x & 4) | (x & 8)) == 3' is always 'false'">((x & 4) | (x & 8)) == 3</warning>) {}
+  }
 }

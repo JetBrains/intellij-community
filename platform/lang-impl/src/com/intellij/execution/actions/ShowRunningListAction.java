@@ -24,7 +24,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
@@ -97,9 +96,7 @@ public class ShowRunningListAction extends AnAction {
                 Project aProject = (Project)((Trinity)value).first;
                 JFrame aFrame = WindowManager.getInstance().getFrame(aProject);
                 if (aFrame != null && !aFrame.isActive()) {
-                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-                    IdeFocusManager.getGlobalInstance().requestFocus(aFrame, true);
-                  });
+                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(aFrame, true));
                 }
                 ExecutionManagerImpl.getInstance(aProject).getContentManager().
                   toFrontRunContent((Executor)((Trinity)value).second, (RunContentDescriptor)((Trinity)value).third);

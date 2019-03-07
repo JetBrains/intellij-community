@@ -21,10 +21,10 @@ public abstract class ProjectJdkTable {
   }
 
   @Nullable
-  public abstract Sdk findJdk(String name);
+  public abstract Sdk findJdk(@NotNull String name);
 
   @Nullable
-  public abstract Sdk findJdk(String name, String type);
+  public abstract Sdk findJdk(@NotNull String name, @NotNull String type);
 
   @NotNull
   public abstract Sdk[] getAllJdks();
@@ -39,7 +39,7 @@ public abstract class ProjectJdkTable {
 
   /** @deprecated comparing version strings across SDK types makes no sense; use {@link #findMostRecentSdkOfType} (to be removed in IDEA 2019) */
   @Deprecated
-  public Sdk findMostRecentSdk(@NotNull Condition<Sdk> condition) {
+  public Sdk findMostRecentSdk(@NotNull Condition<? super Sdk> condition) {
     Sdk found = null;
     for (Sdk each : getAllJdks()) {
       if (condition.value(each) &&

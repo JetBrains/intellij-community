@@ -161,9 +161,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
               case MouseEvent.MOUSE_PRESSED:
                 boolean consumed = false;
                 if (target.isFocusable()) {
-                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-                    IdeFocusManager.getGlobalInstance().requestFocus(target, true);
-                  });
+                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(target, true));
                 }
                 for (final MouseListener listener : listeners) {
                   final String className = listener.getClass().getName();

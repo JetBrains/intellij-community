@@ -272,10 +272,8 @@ class SpecialFirstIterationLoop {
   sb.append(mainPart)
  */
     @Nullable
-    static SpecialFirstIterationLoop extract(@NotNull TerminalBlock terminalBlock) {
-      StreamApiMigrationInspection.CountingLoopSource countingLoopSource =
-        terminalBlock.getLastOperation(StreamApiMigrationInspection.CountingLoopSource.class);
-      if (countingLoopSource == null) return null;
+    static SpecialFirstIterationLoop extract(@NotNull TerminalBlock terminalBlock,
+                                             StreamApiMigrationInspection.CountingLoopSource countingLoopSource) {
       PsiVariable loopVar = countingLoopSource.getVariable();
       PsiLocalVariable loopLocalVar = tryCast(loopVar, PsiLocalVariable.class);
       if (loopLocalVar == null) return null;

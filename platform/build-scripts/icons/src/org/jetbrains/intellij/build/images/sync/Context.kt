@@ -42,6 +42,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
    * commits to review id
    */
   var commitsAlreadyInReview = emptyMap<CommitInfo, String>()
+  val devIconsSyncAll: Boolean
 
   init {
     val iconsRepoArg = "icons.repo"
@@ -116,14 +117,14 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     notifySlack = bool(notifySlackArg)
     iconsCommitHashesToSync = commits(iconsCommitHashesToSyncArg)
     doSyncRemovedIconsInDev = bool(syncRemovedIconsInDevArg) || iconsCommitHashesToSync.isNotEmpty()
+    // scheduled build is always full check
+    devIconsSyncAll = bool(devIconsSyncAllArg) || isScheduled()
     // read TeamCity provided changes
     devIconsCommitHashesToSync = System.getProperty("teamcity.build.changedFiles.file")
       // if icons sync is required
       ?.takeIf { doSyncIconsRepo }
       // or full check is not required
-      ?.takeIf { !bool(devIconsSyncAllArg) }
-      // or it is not scheduled build which is always full check
-      ?.takeIf { !isScheduled() }
+      ?.takeIf { !devIconsSyncAll }
       ?.let(::File)
       ?.takeIf(File::exists)
       ?.let(FileUtil::loadFile)

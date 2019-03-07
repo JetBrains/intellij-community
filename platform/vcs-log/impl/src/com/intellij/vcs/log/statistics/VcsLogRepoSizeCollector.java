@@ -4,6 +4,7 @@ package com.intellij.vcs.log.statistics;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
@@ -46,7 +47,7 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
                                                      asList(0, 1, 10, 50, 100, 500, 1000, 5 * 1000, 10 * 1000, 20 * 1000, 50 * 1000)));
 
         for (VcsKey vcs : groupedRoots.keySet()) {
-          String vcsKey = UsageDescriptorKeyValidator.ensureProperKey(vcs.getName().toLowerCase());
+          String vcsKey = getVcsKeySafe(vcs);
           usages.add(StatisticsUtilKt.getCountingUsage(vcsKey + ".root.count", groupedRoots.get(vcs).size(),
                                                        asList(0, 1, 2, 5, 8, 15, 30, 50, 100, 300, 500)));
         }
@@ -54,6 +55,14 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
       }
     }
     return Collections.emptySet();
+  }
+
+  @NotNull
+  private static String getVcsKeySafe(@NotNull VcsKey vcs) {
+    if (PluginInfoDetectorKt.getPluginInfo(vcs.getClass()).isDevelopedByJetBrains()) {
+      return UsageDescriptorKeyValidator.ensureProperKey(vcs.getName().toLowerCase());
+    }
+    return "third.party";
   }
 
   @NotNull
@@ -70,6 +79,6 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.vcs.log.data";
+    return "vcs.log.data";
   }
 }

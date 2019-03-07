@@ -2,7 +2,7 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class AnsiEscapeDecoderTest extends PlatformTestCase {
+public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
 
   private static final String STDOUT_KEY = ProcessOutputTypes.STDOUT.toString();
   private static final String STDERR_KEY = ProcessOutputTypes.STDERR.toString();
