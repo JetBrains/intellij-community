@@ -489,10 +489,10 @@
                              key="title.path.variables" bundle="messages.ApplicationBundle"/>
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
-    <editorNotificationProviderApp implementation="com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider"/>
-    <editorNotificationProviderApp implementation="com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider"/>
     <projectSdkSetupValidator id="javaSdk" implementation="com.intellij.codeInsight.daemon.impl.JavaProjectSdkSetupValidator"/>
-    <editorNotificationProviderApp implementation="com.intellij.debugger.ui.AlternativeSourceNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.debugger.ui.AlternativeSourceNotificationProvider"/>
 
     <attachSourcesProvider implementation="com.intellij.jarFinder.InternetAttachSourceProvider"/>
     <attachSourcesProvider implementation="com.intellij.jarFinder.IvyAttachSourceProvider"/>
@@ -604,7 +604,7 @@
 
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
 
-    <editorNotificationProviderApp implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
+    <editorNotificationProvider implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
 
     <applicationService serviceInterface="com.intellij.debugger.engine.DebuggerUtils"
                         serviceImplementation="com.intellij.debugger.impl.DebuggerUtilsImpl"/>
