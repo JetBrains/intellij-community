@@ -13,7 +13,7 @@ import java.util.List;
 
 public interface MemoryAgent {
   /**
-   * Maximal number of objects that will be retrieved by {@code findGcRoots} call
+   * Maximal number of objects that will be retrieved by {@code findReferringObjects} call
    */
   int DEFAULT_GC_ROOTS_OBJECTS_LIMIT = 1000;
 
@@ -35,16 +35,16 @@ public interface MemoryAgent {
     return context != null ? using(context) : null;
   }
 
-  boolean canEvaluateObjectSize();
+  boolean canEstimateObjectSize();
 
-  long evaluateObjectSize(@NotNull ObjectReference reference) throws EvaluateException;
+  long estimateObjectSize(@NotNull ObjectReference reference) throws EvaluateException;
 
-  boolean canEvaluateObjectsSizes();
+  boolean canEstimateObjectsSizes();
 
-  long[] evaluateObjectsSizes(@NotNull List<ObjectReference> references) throws EvaluateException;
+  long[] estimateObjectsSizes(@NotNull List<ObjectReference> references) throws EvaluateException;
 
-  boolean canFindGcRoots();
+  boolean canGetReferringObjects();
 
   @NotNull
-  ReferringObjectsInfo findGcRoots(@NotNull ObjectReference reference, int limit) throws EvaluateException;
+  ReferringObjectsInfo findReferringObjects(@NotNull ObjectReference reference, int limit) throws EvaluateException;
 }

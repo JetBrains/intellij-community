@@ -21,33 +21,33 @@ class MemoryAgentImpl implements MemoryAgent {
   }
 
   @Override
-  public boolean canEvaluateObjectSize() {
+  public boolean canEstimateObjectSize() {
     return myEvaluationContext.isEvaluationPossible() && capabilities().canEstimateObjectSize();
   }
 
   @Override
-  public boolean canEvaluateObjectsSizes() {
+  public boolean canEstimateObjectsSizes() {
     return myEvaluationContext.isEvaluationPossible() && capabilities().canEstimateObjectsSizes();
   }
 
   @Override
-  public boolean canFindGcRoots() {
+  public boolean canGetReferringObjects() {
     return myEvaluationContext.isEvaluationPossible() && capabilities().canGetReferringObjects();
   }
 
   @Override
-  public long evaluateObjectSize(@NotNull ObjectReference reference) throws EvaluateException {
+  public long estimateObjectSize(@NotNull ObjectReference reference) throws EvaluateException {
     return MemoryAgentOperations.estimateObjectSize(myEvaluationContext, reference);
   }
 
   @Override
-  public long[] evaluateObjectsSizes(@NotNull List<ObjectReference> references) throws EvaluateException {
+  public long[] estimateObjectsSizes(@NotNull List<ObjectReference> references) throws EvaluateException {
     return MemoryAgentOperations.estimateObjectsSizes(myEvaluationContext, references);
   }
 
   @NotNull
   @Override
-  public ReferringObjectsInfo findGcRoots(@NotNull ObjectReference reference, int limit) throws EvaluateException {
+  public ReferringObjectsInfo findReferringObjects(@NotNull ObjectReference reference, int limit) throws EvaluateException {
     return MemoryAgentOperations.findReferringObjects(myEvaluationContext, reference, limit);
   }
 

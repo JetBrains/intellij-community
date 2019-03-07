@@ -35,7 +35,7 @@ public class MemoryAgentReferringObjectsProvider implements ReferringObjectsProv
       }
     }
 
-    ReferringObjectsInfo roots = MemoryAgent.using(evaluationContext).findGcRoots(value, myObjectsToRequestLimit);
+    ReferringObjectsInfo roots = MemoryAgent.using(evaluationContext).findReferringObjects(value, myObjectsToRequestLimit);
     myCachedRequests.put(value, roots);
     return roots.getReferringObjects(value, limit);
   }

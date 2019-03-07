@@ -16,7 +16,7 @@ public class CalculateRetainedSizeAction extends MemoryAgentActionBase {
   protected void perform(@NotNull MemoryAgent memoryAgent,
                          @NotNull ObjectReference reference,
                          @NotNull XValueNodeImpl node) throws EvaluateException {
-    long size = memoryAgent.evaluateObjectSize(reference);
+    long size = memoryAgent.estimateObjectSize(reference);
     ApplicationManager.getApplication().invokeLater(
       () -> new MessageDialog(node.getTree().getProject(), String.valueOf(size), "Size of the Object",
                               ArrayUtil.EMPTY_STRING_ARRAY, 0, null, false)

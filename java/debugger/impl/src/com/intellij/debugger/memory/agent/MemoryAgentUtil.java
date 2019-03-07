@@ -5,7 +5,6 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.memory.agent.extractor.AgentExtractor;
 import com.intellij.debugger.memory.ui.JavaReferenceInfo;
 import com.intellij.debugger.memory.ui.SizedReferenceInfo;
@@ -54,7 +53,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 import java.util.jar.Attributes;
 
 public class MemoryAgentUtil {
@@ -118,13 +116,13 @@ public class MemoryAgentUtil {
   }
 
   public static List<JavaReferenceInfo> tryCalculateSizes(@NotNull List<JavaReferenceInfo> objects, @Nullable MemoryAgent agent) {
-    if (agent == null || !agent.canEvaluateObjectsSizes()) return objects;
+    if (agent == null || !agent.canEstimateObjectsSizes()) return objects;
     if (objects.size() > ESTIMATE_OBJECTS_SIZE_LIMIT) {
       LOG.info("Too many objects to estimate their sizes");
       return objects;
     }
     try {
-      long[] sizes = agent.evaluateObjectsSizes(ContainerUtil.map(objects, x -> x.getObjectReference()));
+      long[] sizes = agent.estimateObjectsSizes(ContainerUtil.map(objects, x -> x.getObjectReference()));
       return IntStreamEx.range(0, objects.size())
         .mapToObj(i -> new SizedReferenceInfo(objects.get(i).getObjectReference(), sizes[i]))
         .reverseSorted(Comparator.comparing(x -> x.size()))
