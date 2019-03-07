@@ -2,9 +2,7 @@
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.engine.DebugProcessAdapterImpl;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -140,47 +138,20 @@ public class MemoryAgentUtil {
     return objects;
   }
 
-  public static void loadAgentProxy(@NotNull DebugProcessImpl debugProcess, @NotNull Consumer<MemoryAgent> agentLoaded) {
+  public static void setupAgent(@NotNull DebugProcessImpl debugProcess) {
+    if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) return;
     debugProcess.addDebugProcessListener(new DebugProcessAdapterImpl() {
-      private final AtomicBoolean isInitializing = new AtomicBoolean(false);
+      private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
       @Override
-      public void paused(SuspendContextImpl suspendContext) {
-        if (isInitializing.compareAndSet(false, true)) {
-          try {
-            MemoryAgent memoryAgent = initMemoryAgent(suspendContext);
-            if (memoryAgent == null) {
-              LOG.warn("Could not initialize memory agent.");
-              return;
-            }
-
-            agentLoaded.accept(memoryAgent);
+      public void paused(@NotNull SuspendContextImpl suspendContext) {
+        EvaluationContextImpl context = new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy());
+        if (context.isEvaluationPossible()) {
+          if (isInitialized.compareAndSet(false, true)) {
             debugProcess.removeDebugProcessListener(this);
-          }
-          finally {
-            isInitializing.set(false);
+            MemoryAgentOperations.initializeCapabilities(context);
           }
         }
-      }
-
-      @Nullable
-      private MemoryAgent initMemoryAgent(@NotNull SuspendContextImpl suspendContext) {
-        if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) {
-          LOG.info("Memory agent disabled");
-          return AgentLoader.DEFAULT_PROXY;
-        }
-
-        StackFrameProxyImpl frameProxy = suspendContext.getFrameProxy();
-        if (frameProxy == null) {
-          LOG.warn("frame proxy is not available");
-          return null;
-        }
-
-        long start = System.currentTimeMillis();
-        EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, frameProxy);
-        MemoryAgent agent = new AgentLoader().load(evaluationContext, debugProcess.getVirtualMachineProxy());
-        LOG.info("Memory agent loading took " + (System.currentTimeMillis() - start) + " ms");
-        return agent;
       }
     });
   }

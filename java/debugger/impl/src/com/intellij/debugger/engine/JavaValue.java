@@ -14,6 +14,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.agent.MemoryAgent;
+import com.intellij.debugger.memory.agent.MemoryAgentCapabilities;
 import com.intellij.debugger.memory.agent.MemoryAgentReferringObjectsProvider;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
@@ -514,10 +515,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return new XReferrersProvider() {
       @Override
       public XValue getReferringObjectsValue() {
-        MemoryAgent memoryAgent = getEvaluationContext().getDebugProcess().getMemoryAgent();
         ReferringObjectsProvider provider = ReferringObjectsProvider.BASIC_JDI;
-        if (memoryAgent != null && memoryAgent.canFindGcRoots()) {
-          provider = new MemoryAgentReferringObjectsProvider(memoryAgent, MemoryAgent.DEFAULT_GC_ROOTS_OBJECTS_LIMIT);
+
+        if (MemoryAgentCapabilities.get(getEvaluationContext().getDebugProcess()).canGetReferringObjects()) {
+          provider = new MemoryAgentReferringObjectsProvider(MemoryAgent.DEFAULT_GC_ROOTS_OBJECTS_LIMIT);
         }
         return new JavaReferringObjectsValue(JavaValue.this, provider, null);
       }

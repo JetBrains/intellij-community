@@ -3,6 +3,7 @@ package com.intellij.debugger.memory.action;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.memory.agent.MemoryAgent;
+import com.intellij.debugger.memory.agent.MemoryAgentCapabilities;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.util.ArrayUtil;
@@ -23,7 +24,7 @@ public class CalculateRetainedSizeAction extends MemoryAgentActionBase {
   }
 
   @Override
-  protected boolean isEnabled(@NotNull MemoryAgent agent) {
-    return agent.canEvaluateObjectSize();
+  protected boolean isEnabled(@NotNull MemoryAgentCapabilities agentCapabilities) {
+    return agentCapabilities.canEstimateObjectSize();
   }
 }

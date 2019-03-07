@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.memory.filtering.FilteringResult;
 import com.intellij.debugger.memory.filtering.FilteringTask;
@@ -186,8 +187,7 @@ class InstancesView extends InstancesViewBase {
         List<JavaReferenceInfo> instances = ContainerUtil
           .map(getInstancesProvider().getInstances(limit + 1), referenceInfo -> ((JavaReferenceInfo)referenceInfo));
 
-        final EvaluationContextImpl evaluationContext = myDebugProcess
-          .getDebuggerContext().createEvaluationContext();
+        final EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy());
 
         if (instances.size() > limit) {
           myWarningMessageConsumer.accept(String.format("Not all instances will be loaded (only %d)", limit));
@@ -195,17 +195,15 @@ class InstancesView extends InstancesViewBase {
         }
 
         if (Registry.is("debugger.memory.agent.use.in.memory.view")) {
-          instances = MemoryAgentUtil.tryCalculateSizes(instances, myDebugProcess.getMemoryAgent());
+          instances = MemoryAgentUtil.tryCalculateSizes(instances, MemoryAgent.using(evaluationContext));
         }
 
-        if (evaluationContext != null) {
-          synchronized (myFilteringTaskLock) {
-            List<JavaReferenceInfo> finalInstances = instances;
-            ApplicationManager.getApplication().runReadAction(() -> {
-              myFilteringTask = new MyFilteringWorker(finalInstances, myFilterConditionEditor.getExpression(), evaluationContext);
-              myFilteringTask.execute();
-            });
-          }
+        synchronized (myFilteringTaskLock) {
+          List<JavaReferenceInfo> finalInstances = instances;
+          ApplicationManager.getApplication().runReadAction(() -> {
+            myFilteringTask = new MyFilteringWorker(finalInstances, myFilterConditionEditor.getExpression(), evaluationContext);
+            myFilteringTask.execute();
+          });
         }
       }
     });
