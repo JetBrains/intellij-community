@@ -6,17 +6,17 @@ import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @see SuspiciousAssignmentOperatorInspection
+ * @see SuspiciousIntegerDivAssignmentInspection
  */
-public class SuspiciousAssignmentOperatorTest extends LightInspectionTestCase {
+public class SuspiciousIntegerDivAssignmentTest extends LightInspectionTestCase {
 
-  public void testSuspiciousAssignmentOperator() {
+  public void testSuspiciousIntegerDivAssignment() {
     doTest();
   }
 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new SuspiciousAssignmentOperatorInspection();
+    return new SuspiciousIntegerDivAssignmentInspection();
   }
 }
