@@ -39,7 +39,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -59,7 +58,6 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.zip.CRC32;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -77,11 +75,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private final MessagePool myMessagePool;
   private final Project myProject;
-  private final boolean myInternalMode;
+  private final boolean myDevelopersListVisible;
   private final Set<String> myAcceptedNotices;
   private final List<MessageCluster> myMessageClusters = new ArrayList<>();  // exceptions with the same stacktrace
   private int myIndex, myLastIndex = -1;
-  private Long myUpdateDevelopersTimestamp;
+  private Long myDevelopersUpdateTimestamp;
 
   private JLabel myCountLabel;
   private HyperlinkLabel.Croppable myInfoLabel;
@@ -101,14 +99,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     super(project, true);
     myMessagePool = messagePool;
     myProject = project;
-    myInternalMode = ApplicationManager.getApplication().isInternal() || PluginManager.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID));
+    myDevelopersListVisible = ApplicationManager.getApplication().isInternal() || PluginManager.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID));
 
     setTitle(DiagnosticBundle.message("error.list.title"));
     setModal(false);
     init();
     setCancelButtonText(CommonBundle.message("close.action.name"));
 
-    if (myInternalMode) {
+    if (myDevelopersListVisible) {
       loadDevelopersList();
     }
 
@@ -124,8 +122,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private void loadDevelopersList() {
     InternalErrorReportConfigurable internalConfigurable = InternalErrorReportConfigurable.getInstance();
-    if (internalConfigurable.isDevelopersListValid()) {
-      setDevelopers(internalConfigurable);
+    if (internalConfigurable.isDevelopersListObsolete()) {
+      loadConfigurable(internalConfigurable);
     }
     else {
       new Task.Backgroundable(null, "Loading Developers List", true) {
@@ -134,9 +132,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
           try {
             List<Developer> developers = ITNProxy.fetchDevelopers(indicator);
             UIUtil.invokeLaterIfNeeded(() -> {
-              internalConfigurable.setDevelopersList(developers);
+              internalConfigurable.setDevelopers(developers);
               if (isShowing()) {
-                setDevelopers(internalConfigurable);
+                loadConfigurable(internalConfigurable);
               }
             });
           }
@@ -144,7 +142,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
             LOG.debug(e);
             UIUtil.invokeLaterIfNeeded(() -> {
               if (isShowing()) {
-                setDevelopers(internalConfigurable);
+                loadConfigurable(internalConfigurable);
               }
             });
           }
@@ -154,9 +152,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private void setDevelopers(InternalErrorReportConfigurable internalConfigurable) {
-    myAssigneeCombo.setModel(new CollectionComboBoxModel<>(internalConfigurable.getDevelopersList()));
-    myUpdateDevelopersTimestamp = internalConfigurable.getDevelopersUpdateTimestamp();
+  private void loadConfigurable(InternalErrorReportConfigurable configurable) {
+    myAssigneeCombo.setModel(new CollectionComboBoxModel<>(configurable.getDevelopers()));
+    myDevelopersUpdateTimestamp = configurable.getDevelopersUpdateTimestamp();
   }
 
   private int selectMessage(@Nullable LogMessage defaultMessage) {
@@ -271,7 +269,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     });
 
-    if (myInternalMode) {
+    if (myDevelopersListVisible) {
       myAssigneeCombo = new ComboBox<>();
       myAssigneeCombo.setRenderer(new ListCellRendererWrapper<Developer>() {
         @Override
@@ -336,7 +334,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     JPanel bottomRow = new JPanel(new BorderLayout());
     bottomRow.add(accountRow, BorderLayout.NORTH);
     bottomRow.add(myNoticePanel, BorderLayout.CENTER);
-    if (myInternalMode) {
+    if (myDevelopersListVisible) {
       JPanel assigneeRow = new JPanel(new BorderLayout());
       assigneeRow.add(myAssigneePanel, BorderLayout.EAST);
       bottomRow.add(assigneeRow, BorderLayout.SOUTH);
@@ -362,7 +360,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   protected Action[] createActions() {
     List<Action> actions = new ArrayList<>();
-    if (myInternalMode && myProject != null && !myProject.isDefault()) {
+    if (myDevelopersListVisible && myProject != null && !myProject.isDefault()) {
       AnAction action = ActionManager.getInstance().getAction("Unscramble");
       if (action != null) {
         actions.add(new AnalyzeAction(action));
@@ -432,7 +430,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     updateLabels(cluster);
     updateDetails(cluster);
-    if (myInternalMode) {
+    if (myDevelopersListVisible) {
       updateAssigneePanel(cluster);
     }
     updateCredentialsPanel(submitter);
@@ -569,14 +567,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         myAssigneeCombo.setSelectedIndex(-1);
       }
       else {
-        int assigneeIndex = -1;
-        for (int i = 0; i < myAssigneeCombo.getItemCount(); i++) {
-          if (Objects.equals(assignee, myAssigneeCombo.getItemAt(i).getId())) {
-            assigneeIndex = i;
-            break;
-          }
-        }
-
+        int assigneeIndex = getAssigneeIndex(assignee);
         if (assigneeIndex != -1) {
           myAssigneeCombo.setSelectedIndex(assigneeIndex);
         }
@@ -588,6 +579,16 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     else {
       myAssigneePanel.setVisible(false);
     }
+  }
+
+  private int getAssigneeIndex(Integer assigneeId) {
+    for (int index = 0; index < myAssigneeCombo.getItemCount(); index++) {
+      if (Objects.equals(assigneeId, myAssigneeCombo.getItemAt(index).getId())) {
+        return index;
+      }
+    }
+
+    return -1;
   }
 
   private void updateCredentialsPanel(ErrorReportSubmitter submitter) {
@@ -611,7 +612,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (submitter == null) return false;
     AbstractMessage message = cluster.first;
 
-    message.setDevelopersUpdateTimestamp(myUpdateDevelopersTimestamp);
+    message.setDevelopersUpdateTimestamp(myDevelopersUpdateTimestamp);
     message.setSubmitting(true);
 
     String notice = submitter.getPrivacyNoticeText();
@@ -800,42 +801,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     protected void off() {
       super.off();
       setTitle(DiagnosticBundle.message("error.dialog.notice.label"));
-    }
-  }
-
-  private static class BlinkingLabel extends JBLabel {
-
-    private boolean myFirstPainting = true;
-
-    BlinkingLabel(@NotNull String text) {
-      super(text);
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      super.paintComponent(g);
-
-      if (myFirstPainting) {
-        myFirstPainting = false;
-
-        delay(() -> {
-          reverseBold(this);
-          delay(() -> reverseBold(this));
-        });
-      }
-    }
-
-    private static void reverseBold(JComponent component) {
-      Font font = component.getFont();
-      if ((font.getStyle() & Font.BOLD) == 0) {
-        component.setFont(font.deriveFont(font.getStyle() | Font.BOLD));
-      } else {
-        component.setFont(font.deriveFont(font.getStyle() & ~Font.BOLD));
-      }
-    }
-
-    private static void delay(Runnable runnable) {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> UIUtil.invokeLaterIfNeeded(runnable), 750, TimeUnit.MILLISECONDS);
     }
   }
 

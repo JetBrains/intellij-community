@@ -17,8 +17,7 @@ public class Developer {
 
   @SuppressWarnings("unused") // need for xml serialization
   private Developer() {
-    myId = 0;
-    myName = "";
+    this(0, "");
   }
 
   public Developer(int id, String name) {

@@ -8,38 +8,40 @@ import com.intellij.openapi.components.Storage
 
 @State(name = "InternalErrorReportConfigurable", storages = [(Storage(value = "internalReportError.xml"))])
 internal class InternalErrorReportConfigurable : PersistentStateComponent<InternalErrorReportConfigurable.State> {
-  private var myState: State = State()
+  private var myState: State? = null
 
-  override fun getState(): State = myState
+  override fun getState(): State? = myState
 
   override fun loadState(state: State) {
     myState = state
   }
 
-  fun getDevelopersList(): List<Developer> {
-    return myState.developersList.toList()
+  var developers: List<Developer>
+    get() = myState?.developers?.toList() ?: emptyList()
+    set(developersList) {
+      myState = State(developersList.toList(), System.currentTimeMillis())
+    }
+
+  fun isDevelopersListObsolete(): Boolean {
+    val state = myState ?: return false
+    val developersListObsolete = System.currentTimeMillis() - state.developersUpdateTimestamp >= UPDATE_INTERVAL
+    return !developersListObsolete && state.developers.isNotEmpty()
   }
 
-  fun setDevelopersList(developersList: List<Developer>) {
-    myState = State(developersList.toList(), System.currentTimeMillis())
-  }
-
-  fun isDevelopersListValid(): Boolean {
-    val developersListObsolete = System.currentTimeMillis() - myState.developersUpdateTimestamp >= DEVELOPERS_OBSOLESCENCE_MILLIS
-    return !developersListObsolete && myState.developersList.isNotEmpty()
-  }
-
-  fun getDevelopersUpdateTimestamp(): Long = myState.developersUpdateTimestamp
+  fun getDevelopersUpdateTimestamp(): Long? = myState?.developersUpdateTimestamp
 
   private companion object {
-    private const val DEVELOPERS_OBSOLESCENCE_MILLIS = 24L * 60 * 60 * 1000 // 24 hours
+    private const val UPDATE_INTERVAL = 24L * 60 * 60 * 1000 // 24 hours
 
     @JvmStatic
-    fun getInstance(): InternalErrorReportConfigurable = ServiceManager.getService(InternalErrorReportConfigurable::class.java)
+    val instance: InternalErrorReportConfigurable
+      get() = ServiceManager.getService(InternalErrorReportConfigurable::class.java)
   }
 
   internal data class State(
-    var developersList: List<Developer> = emptyList(),
-    var developersUpdateTimestamp: Long = 0
-  )
+    var developers: List<Developer>,
+    var developersUpdateTimestamp: Long
+  ) {
+    private constructor(): this(emptyList(), 0) // need for xml serialization
+  }
 }
