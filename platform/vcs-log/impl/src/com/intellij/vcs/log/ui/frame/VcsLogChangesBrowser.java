@@ -50,6 +50,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.*;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.*;
@@ -180,7 +182,8 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       int maxSize = getMaxSize(detailsList);
       if (maxSize > Registry.intValue("vcs.log.max.changes.shown") && !showBigCommits) {
         String commitText = detailsList.size() == 1 ? "This commit" : "One of the selected commits";
-        myViewer.getEmptyText().setText(commitText + " has " + maxSize + " changes").
+        String sizeText = getSizeText(maxSize);
+        myViewer.getEmptyText().setText(commitText + " has " + sizeText + " changes").
           appendSecondaryText("Show anyway", VcsLogUiUtil.getLinkAttributes(), e -> setSelectedDetails(detailsList, true));
       }
       else {
@@ -215,6 +218,25 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
     myViewer.rebuildTree();
     myDispatcher.getMulticaster().onModelUpdated();
+  }
+
+  @NotNull
+  private static String getSizeText(int maxSize) {
+    if (maxSize < 1000) {
+      return String.valueOf(maxSize);
+    }
+    DecimalFormat format = new DecimalFormat("#.#");
+    format.setRoundingMode(RoundingMode.FLOOR);
+    if (maxSize < 10_000) {
+      return format.format(maxSize / 1000.0) + "K";
+    }
+    else if (maxSize < 1_000_000) {
+      return (maxSize / 1000) + "K";
+    }
+    else if (maxSize < 10_000_000) {
+      return format.format(maxSize / 1_000_000.0) + "M";
+    }
+    return (maxSize / 1_000_000) + "M";
   }
 
   private static int getMaxSize(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
