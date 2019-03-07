@@ -709,19 +709,15 @@ object GuiTestUtil {
                      vararg pathStrings: String,
                      predicate: FinderPredicate = Predicate.equality): JTree = step("search '${pathStrings.joinToString()}' in tree") {
     try {
-      waitUntilFound(
-        robot = GuiRobotHolder.robot,
-        root = container,
-        matcher = GuiTestUtilKt.typeMatcher(JTree::class.java) {
-          // the found tree should have meaningful model
-          it.hasValidModel() &&
-          (pathStrings.isEmpty() || ExtendedJTreePathFixture(it, pathStrings.toList(), predicate).hasPath())
-        },
-        timeout = timeout
-      )
+      val trees = waitUntilFoundList(container, timeout, GuiTestUtilKt.typeMatcher(JTree::class.java) { it.hasValidModel() })
+      return@step if(pathStrings.isEmpty()) trees.first()
+      else trees.firstOrNull {
+        ExtendedJTreePathFixture(it, pathStrings.toList(), predicate).hasPath()
+      } ?: throw ComponentLookupException("JTree by path [${pathStrings.joinToString()}] not found")
+
     }
     catch (e: WaitTimedOutError) {
-      throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path ${pathStrings.joinToString()}" else ""}"""")
+      throw ComponentLookupException("No JTree with valid model is found")
     }
   }
 
