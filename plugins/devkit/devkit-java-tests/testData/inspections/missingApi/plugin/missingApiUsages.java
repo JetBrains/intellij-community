@@ -112,7 +112,7 @@ class <error descr="Default constructor in 'library.OldKotlinClassWithDefaultCon
 class E extends OldClassWithDefaultConstructor {
   public <error descr="Default constructor in 'library.OldClassWithDefaultConstructor' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">E</error>() {}
 
-  public E(int x) {
+  public <error descr="Default constructor in 'library.OldClassWithDefaultConstructor' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">E</error>(int x) {
     super();
   }
 }
@@ -121,7 +121,7 @@ class E extends OldClassWithDefaultConstructor {
 class EK extends OldKotlinClassWithDefaultConstructor {
   public <error descr="Default constructor in 'library.OldKotlinClassWithDefaultConstructor' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">EK</error>() {}
 
-  public EK(int x) {
+  public <error descr="Default constructor in 'library.OldKotlinClassWithDefaultConstructor' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">EK</error>(int x) {
     <error descr="'OldKotlinClassWithDefaultConstructor()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">super</error>();
   }
 }
