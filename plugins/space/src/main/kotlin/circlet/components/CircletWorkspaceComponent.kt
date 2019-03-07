@@ -30,7 +30,7 @@ class CircletWorkspaceComponent : ApplicationComponent, LifetimedComponent by Si
             val lt = workspacesLifetimes.next()
             if (settingsOnStartup.server.isNotBlank() && settingsOnStartup.enabled) {
                 val wsConfig = ideaConfig(settingsOnStartup.server)
-                val wss = WorkspaceManager(lt, IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
+                val wss = WorkspaceManager(lt, WorkspaceManagerHost(), IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
                 workspaces.value = wss
                 wss.signInNonInteractive()
             }
@@ -55,7 +55,7 @@ class CircletWorkspaceComponent : ApplicationComponent, LifetimedComponent by Si
         val settings = circletSettings.settings.value
         val wsConfig = ideaConfig(settings.server)
         if (state != null && settings.server.isNotBlank() && settings.enabled) {
-            val wss = WorkspaceManager(lt, IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
+            val wss = WorkspaceManager(lt, WorkspaceManagerHost(), IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
             workspaces.value = wss
             wss.signInWithWorkspaceState(state)
         }
