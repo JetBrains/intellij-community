@@ -61,7 +61,7 @@ import java.util.concurrent.TimeoutException;
  */
 @State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, ChangeListDecorator, Disposable, BaseComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.impl.TaskManagerImpl");
+  private static final Logger LOG = Logger.getInstance(TaskManagerImpl.class);
 
   private static final DecimalFormat LOCAL_TASK_ID_FORMAT = new DecimalFormat("LOCAL-00000");
   public static final Comparator<Task> TASK_UPDATE_COMPARATOR = (o1, o2) -> {
@@ -146,7 +146,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   public <T extends TaskRepository> void setRepositories(List<T> repositories) {
-
     Set<TaskRepository> set = new HashSet<>(myRepositories);
     set.removeAll(repositories);
     myBadRepositories.removeAll(set); // remove all changed reps
@@ -175,8 +174,11 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
-  public void removeTask(LocalTask task) {
-    if (task.isDefault()) return;
+  public void removeTask(@NotNull LocalTask task) {
+    if (task.isDefault()) {
+      return;
+    }
+
     if (myActiveTask.equals(task)) {
       activateTask(myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID), true);
     }
@@ -284,7 +286,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
-  public LocalTask addTask(Task issue) {
+  public LocalTask addTask(@NotNull Task issue) {
     LocalTaskImpl task = issue instanceof LocalTaskImpl ? (LocalTaskImpl)issue : new LocalTaskImpl(issue);
     addTask(task);
     return task;
@@ -503,7 +505,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   @Override
   public boolean testConnection(final TaskRepository repository) {
-
     TestConnectionTask task = new TestConnectionTask("Test connection") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -580,7 +581,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   @Override
   public void loadState(@NotNull Config config) {
-
     config.branchNameFormat = TaskUtil.updateToVelocity(config.branchNameFormat);
     config.changelistNameFormat = TaskUtil.updateToVelocity(config.changelistNameFormat);
 
@@ -681,7 +681,9 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
     changeListManager.addChangeListListener(myChangeListListener, this);
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> WorkingContextManager.getInstance(myProject).pack(200, 50));
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> WorkingContextManager.getInstance(myProject).pack(200, 50));
+    }
   }
 
   private TaskProjectConfiguration getProjectConfiguration() {
@@ -872,16 +874,12 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   @Override
   public boolean isLocallyClosed(@NotNull LocalTask localTask) {
-    if (isVcsEnabled()) {
-      List<ChangeListInfo> lists = localTask.getChangeLists();
-      if (lists.isEmpty()) return true;
-      for (ChangeListInfo list : lists) {
-        if (StringUtil.isEmpty(list.id)) {
-          return true;
-        }
-      }
+    if (!isVcsEnabled()) {
+      return false;
     }
-    return false;
+
+    List<ChangeListInfo> lists = localTask.getChangeLists();
+    return lists.isEmpty() || lists.stream().anyMatch(list -> StringUtil.isEmpty(list.id));
   }
 
   @Nullable

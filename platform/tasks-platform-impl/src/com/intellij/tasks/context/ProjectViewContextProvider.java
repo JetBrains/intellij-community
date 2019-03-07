@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.context;
 
@@ -36,7 +36,7 @@ public class ProjectViewContextProvider extends WorkingContextProvider {
   }
 
   @Override
-  public void saveContext(Element toElement) throws WriteExternalException {
+  public void saveContext(@NotNull Element toElement) throws WriteExternalException {
     for (AbstractProjectViewPane pane : myPanes) {
       Element paneElement = new Element(pane.getId());
       pane.writeExternal(paneElement);
@@ -45,7 +45,7 @@ public class ProjectViewContextProvider extends WorkingContextProvider {
   }
 
   @Override
-  public void loadContext(Element fromElement) throws InvalidDataException {
+  public void loadContext(@NotNull Element fromElement) throws InvalidDataException {
     for (AbstractProjectViewPane pane : myPanes) {
       Element paneElement = fromElement.getChild(pane.getId());
       if (paneElement != null) {
