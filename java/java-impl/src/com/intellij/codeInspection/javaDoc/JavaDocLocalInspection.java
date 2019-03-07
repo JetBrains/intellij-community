@@ -623,7 +623,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     @Override
     public void invoke(@NotNull Project project,
                        @NotNull PsiFile file,
-                       @Nullable("is null when called from inspection") Editor editor,
+                       @Nullable Editor editor,
                        @NotNull PsiElement startElement,
                        @NotNull PsiElement endElement) {
       myIntention.invoke(project, editor, startElement);
