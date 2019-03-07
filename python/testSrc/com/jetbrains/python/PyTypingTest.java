@@ -1424,6 +1424,30 @@ public class PyTypingTest extends PyTestCase {
                              "\n");
   }
 
+  // PY-34478
+  public void testTrivialTypeAliasInAnotherFile() {
+    doMultiFileStubAwareTest("str",
+                             "from other import alias\n" +
+                             "\n" +
+                             "expr: alias");
+  }
+
+  // PY-34478
+  public void testTrivialUnresolvedTypeAliasInAnotherFile() {
+    doMultiFileStubAwareTest("Any",
+                             "from other import alias\n" +
+                             "\n" +
+                             "expr: alias");
+  }
+
+  // PY-34478
+  public void testTrivialRecursiveTypeAliasInAnotherFile() {
+    doMultiFileStubAwareTest("Any",
+                             "from other import alias\n" +
+                             "\n" +
+                             "expr: alias");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

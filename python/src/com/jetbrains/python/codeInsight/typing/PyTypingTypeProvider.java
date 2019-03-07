@@ -828,6 +828,15 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (anyType != null) {
         return anyType;
       }
+      // We perform chained resolve only for actual aliases as tryResolvingWithAliases() returns the passed-in 
+      // expression both when it's not a reference expression and when it's failed to resolve it, hence we might
+      // hit SOE for mere unresolved references in the latter case.
+      if (alias != null) {
+        final Ref<PyType> aliasedType = getAliasedType(resolved, context);
+        if (aliasedType != null) {
+          return aliasedType;
+        }
+      }
       final Ref<PyType> classType = getClassType(resolved, context.getTypeContext());
       if (classType != null) {
         return classType;
@@ -839,6 +848,14 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         context.getExpressionCache().remove(alias);
       }
     }
+  }
+
+  @Nullable
+  private static Ref<PyType> getAliasedType(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PyReferenceExpression && ((PyReferenceExpression)resolved).asQualifiedName() != null) {
+      return getType((PyExpression)resolved, context);
+    }
+    return null;
   }
 
   @Nullable
