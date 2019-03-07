@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -56,9 +55,8 @@ import java.util.List;
 /**
  * @author max
  */
-public class EditorTextField extends NonOpaquePanel implements DocumentListener, TextComponent, DataProvider, TextAccessor,
-                                                       DocumentBasedComponent, FocusListener, MouseListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
+public class EditorTextField extends NonOpaquePanel implements EditorTextComponent, DocumentListener, DataProvider, TextAccessor,
+                                                               FocusListener, MouseListener {
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
 
   private Document myDocument;
@@ -167,12 +165,14 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return this;
   }
 
+  @Override
   public void addDocumentListener(@NotNull DocumentListener listener) {
     myDocumentListeners.add(listener);
     installDocumentListener();
   }
 
-  public void removeDocumentListener(DocumentListener listener) {
+  @Override
+  public void removeDocumentListener(@NotNull DocumentListener listener) {
     myDocumentListeners.remove(listener);
     uninstallDocumentListener(false);
   }
