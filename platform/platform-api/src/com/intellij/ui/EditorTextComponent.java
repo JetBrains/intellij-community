@@ -16,13 +16,21 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentListener;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Roman Chernyatchik
- *
- * Component based on document. 
- * User activity watcher listens changes in documents of such components.
- */
-public interface DocumentBasedComponent extends TextComponent {
+import javax.swing.*;
+
+public interface EditorTextComponent {
+
+  String getText();
+
+  JComponent getComponent();
+
+  @NotNull
   Document getDocument();
+
+  void addDocumentListener(@NotNull DocumentListener listener);
+
+  void removeDocumentListener(@NotNull DocumentListener listener);
 }
