@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.EditorWindow;
@@ -6,25 +6,23 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorLastActionTracker;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EditorLastActionTrackerImpl implements AnActionListener, EditorMouseListener, Disposable, EditorLastActionTracker, BaseComponent {
-  private final ActionManager myActionManager;
-  private final EditorEventMulticaster myEditorEventMulticaster;
-
+public final class EditorLastActionTrackerImpl implements AnActionListener, EditorMouseListener, Disposable, EditorLastActionTracker {
   private String myLastActionId;
   private Editor myCurrentEditor;
   private Editor myLastEditor;
 
-  EditorLastActionTrackerImpl(ActionManager actionManager, EditorFactory editorFactory) {
-    myActionManager = actionManager;
-    myEditorEventMulticaster = editorFactory.getEventMulticaster();
+  EditorLastActionTrackerImpl() {
+    EditorFactory editorFactory = EditorFactory.getInstance();
     // to prevent leaks
     editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       @Override
@@ -38,16 +36,13 @@ public class EditorLastActionTrackerImpl implements AnActionListener, EditorMous
         }
       }
     }, this);
+
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(TOPIC, this);
+    editorFactory.getEventMulticaster().addEditorMouseListener(this, this);
   }
 
   private static boolean is(Editor currentEditor, EditorImpl killedEditor) {
     return currentEditor == killedEditor || currentEditor instanceof EditorWindow && ((EditorWindow)currentEditor).getDelegate() == killedEditor;
-  }
-
-  @Override
-  public void initComponent() {
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(TOPIC, this);
-    myEditorEventMulticaster.addEditorMouseListener(this, this);
   }
 
   @Override
@@ -95,8 +90,8 @@ public class EditorLastActionTrackerImpl implements AnActionListener, EditorMous
     resetLastAction();
   }
 
-  private String getActionId(AnAction action) {
-    return action instanceof ActionStub ? ((ActionStub)action).getId() : myActionManager.getId(action);
+  private static String getActionId(AnAction action) {
+    return action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action);
   }
 
   private void resetLastAction() {
