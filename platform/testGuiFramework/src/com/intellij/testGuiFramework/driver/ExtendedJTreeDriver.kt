@@ -6,9 +6,7 @@ import com.intellij.testGuiFramework.cellReader.ProjectTreeCellReader
 import com.intellij.testGuiFramework.cellReader.SettingsTreeCellReader
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
-import com.intellij.testGuiFramework.util.FinderPredicate
-import com.intellij.testGuiFramework.util.Predicate
-import com.intellij.testGuiFramework.util.step
+import com.intellij.testGuiFramework.util.*
 import com.intellij.ui.treeStructure.SimpleTree
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.tree.TreeUtil
@@ -31,7 +29,11 @@ import javax.swing.tree.TreePath
 open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDriver(robot) {
   private val DEFAULT_FIND_PATH_ATTEMPTS: Int = 3
 
-  protected data class PathInfo(val expandPoint: Point, val clickPoint: Point, val toggleClickCount: Int, val bounds: Rectangle)
+  protected data class PathInfo(val expandPoint: Point, val clickPoint: Point, val toggleClickCount: Int, val bounds: Rectangle){
+    override fun toString(): String {
+      return "expandPoint=[${expandPoint.x}, ${expandPoint.y}], clickPoint=[${clickPoint.x}, ${clickPoint.y}], toggleClickCount=$toggleClickCount, bounds=[left top=[${bounds.x}, ${bounds.y}], width=${bounds.width}, height=${bounds.height}]"
+    }
+  }
 
   init {
     val resultReader = when (javaClass.name) {
