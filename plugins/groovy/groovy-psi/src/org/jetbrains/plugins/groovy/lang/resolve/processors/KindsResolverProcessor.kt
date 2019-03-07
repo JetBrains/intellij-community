@@ -45,7 +45,7 @@ open class KindsResolverProcessor(
     }
     else if (kind !in kinds) {
       if (state[sorryCannotKnowElementKind] != true) {
-        log.error("Unneeded kind: $kind. ${elementInfo(element)}")
+        log.warn("Unneeded kind: $kind. ${elementInfo(element)}")  // Android Studio: b/127846603
       }
     }
     else if (kind !in candidates) {
