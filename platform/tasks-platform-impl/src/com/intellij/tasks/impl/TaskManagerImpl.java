@@ -72,8 +72,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   private final Project myProject;
 
-  private final WorkingContextManager myContextManager;
-
   private final Map<String, Task> myIssueCache = Collections.synchronizedMap(new LinkedHashMap<>());
 
   private final Map<String, LocalTask> myTasks = Collections.synchronizedMap(new LinkedHashMap<String, LocalTask>() {
@@ -101,16 +99,13 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   private volatile boolean myUpdating;
   private final Config myConfig = new Config();
   private final ChangeListAdapter myChangeListListener;
-  private final ChangeListManager myChangeListManager;
 
   private final List<TaskRepository> myRepositories = new ArrayList<>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
   private final Set<TaskRepository> myBadRepositories = ContainerUtil.newConcurrentSet();
 
-  public TaskManagerImpl(@NotNull Project project, WorkingContextManager contextManager, ChangeListManager changeListManager) {
+  public TaskManagerImpl(@NotNull Project project) {
     myProject = project;
-    myContextManager = contextManager;
-    myChangeListManager = changeListManager;
 
     myChangeListListener = new ChangeListAdapter() {
       @Override
@@ -185,7 +180,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     }
     myTasks.remove(task.getId());
     myDispatcher.getMulticaster().taskRemoved(task);
-    myContextManager.removeContext(task);
+    WorkingContextManager.getInstance(myProject).removeContext(task);
   }
 
   @Override
@@ -313,10 +308,11 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
     saveActiveTask();
 
+    WorkingContextManager contextManager = WorkingContextManager.getInstance(myProject);
     if (clearContext) {
-      myContextManager.clearContext();
+      contextManager.clearContext();
     }
-    myContextManager.restoreContext(origin);
+    contextManager.restoreContext(origin);
 
     final LocalTask task = doActivate(origin, true);
 
@@ -329,17 +325,18 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       return;
 
     List<ChangeListInfo> changeLists = task.getChangeLists();
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     if (changeLists.isEmpty()) {
-      task.addChangelist(new ChangeListInfo(myChangeListManager.getDefaultChangeList()));
+      task.addChangelist(new ChangeListInfo(changeListManager.getDefaultChangeList()));
     }
     else {
       ChangeListInfo info = changeLists.get(0);
-      LocalChangeList changeList = myChangeListManager.getChangeList(info.id);
+      LocalChangeList changeList = changeListManager.getChangeList(info.id);
       if (changeList == null) {
-        changeList = myChangeListManager.addChangeList(info.name, info.comment);
+        changeList = changeListManager.addChangeList(info.name, info.comment);
         info.id = changeList.getId();
       }
-      myChangeListManager.setDefaultChangeList(changeList);
+      changeListManager.setDefaultChangeList(changeList);
     }
 
     unshelveChanges(task);
@@ -387,9 +384,10 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     String name = task.getShelfName();
     if (name != null) {
       ShelveChangesManager manager = ShelveChangesManager.getInstance(myProject);
+      ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
       for (ShelvedChangeList list : manager.getShelvedChangeLists()) {
         if (name.equals(list.DESCRIPTION)) {
-          manager.unshelveChangeList(list, list.getChanges(myProject), list.getBinaryFiles(), myChangeListManager.getDefaultChangeList(), true);
+          manager.unshelveChangeList(list, list.getChanges(myProject), list.getBinaryFiles(), changeListManager.getDefaultChangeList(), true);
           return;
         }
       }
@@ -460,7 +458,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   private void saveActiveTask() {
-    myContextManager.saveContext(myActiveTask);
+    WorkingContextManager.getInstance(myProject).saveContext(myActiveTask);
     myActiveTask.setUpdated(new Date());
     String shelfName = myActiveTask.getShelfName();
     if (shelfName != null) {
@@ -660,7 +658,8 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
     // make sure the task is associated with default changelist
     LocalTask defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
-    LocalChangeList defaultList = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    LocalChangeList defaultList = changeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
     if (defaultList != null && defaultTask != null) {
       ChangeListInfo listInfo = new ChangeListInfo(defaultList);
       if (!defaultTask.getChangeLists().contains(listInfo)) {
@@ -672,15 +671,15 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     for (LocalTask localTask : getLocalTasks()) {
       for (Iterator<ChangeListInfo> iterator = localTask.getChangeLists().iterator(); iterator.hasNext(); ) {
         final ChangeListInfo changeListInfo = iterator.next();
-        if (myChangeListManager.getChangeList(changeListInfo.id) == null) {
+        if (changeListManager.getChangeList(changeListInfo.id) == null) {
           iterator.remove();
         }
       }
     }
 
-    myChangeListManager.addChangeListListener(myChangeListListener);
+    changeListManager.addChangeListListener(myChangeListListener, this);
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> myContextManager.pack(200, 50));
+    ApplicationManager.getApplication().executeOnPooledThread(() -> WorkingContextManager.getInstance(myProject).pack(200, 50));
   }
 
   private TaskProjectConfiguration getProjectConfiguration() {
@@ -747,7 +746,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     if (myCacheRefreshTimer != null) {
       myCacheRefreshTimer.stop();
     }
-    myChangeListManager.removeChangeListListener(myChangeListListener);
   }
 
   @Override
@@ -935,19 +933,20 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   private void createChangeList(LocalTask task, String name, @Nullable String comment) {
-    LocalChangeList changeList = myChangeListManager.findChangeList(name);
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    LocalChangeList changeList = changeListManager.findChangeList(name);
     if (changeList == null) {
-      changeList = myChangeListManager.addChangeList(name, comment);
+      changeList = changeListManager.addChangeList(name, comment);
     }
     else {
       final LocalTask associatedTask = getAssociatedTask(changeList);
       if (associatedTask != null) {
         associatedTask.removeChangelist(new ChangeListInfo(changeList));
       }
-      myChangeListManager.editComment(name, comment);
+      changeListManager.editComment(name, comment);
     }
     task.addChangelist(new ChangeListInfo(changeList));
-    myChangeListManager.setDefaultChangeList(changeList);
+    changeListManager.setDefaultChangeList(changeList);
   }
 
   public String getChangelistName(Task task) {
