@@ -317,7 +317,7 @@
 
     <extensionPoint name="reporting.sendPermission" interface="com.intellij.reporting.DataSendPermission"/>
 
-    <extensionPoint name="tasks.contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider" area="IDEA_PROJECT"/>
+    <extensionPoint name="tasks.contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider"/>
     <extensionPoint name="smartSelectProvider" interface="com.intellij.openapi.ide.SmartSelectProvider"/>
 
     <extensionPoint name="sshCredentialProvider" interface="com.intellij.remote.SshCredentialProvider"/>

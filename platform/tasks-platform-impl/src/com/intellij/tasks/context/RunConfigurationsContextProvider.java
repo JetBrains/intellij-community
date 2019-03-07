@@ -9,13 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-public class RunConfigurationsContextProvider extends WorkingContextProvider {
-  @NotNull private final Project myProject;
-
-  public RunConfigurationsContextProvider(@NotNull Project project) {
-    myProject = project;
-  }
-
+final class RunConfigurationsContextProvider extends WorkingContextProvider {
   @Override
   @NotNull
   public String getId() {
@@ -29,12 +23,12 @@ public class RunConfigurationsContextProvider extends WorkingContextProvider {
   }
 
   @Override
-  public void saveContext(@NotNull Element toElement) {
-    RunManagerImpl.getInstanceImpl(myProject).writeContext(toElement);
+  public void saveContext(@NotNull Project project, @NotNull Element toElement) {
+    RunManagerImpl.getInstanceImpl(project).writeContext(toElement);
   }
 
   @Override
-  public void loadContext(@NotNull Element fromElement) {
-    RunManagerImpl.getInstanceImpl(myProject).readContext(fromElement);
+  public void loadContext(@NotNull Project project, @NotNull Element fromElement) {
+    RunManagerImpl.getInstanceImpl(project).readContext(fromElement);
   }
 }

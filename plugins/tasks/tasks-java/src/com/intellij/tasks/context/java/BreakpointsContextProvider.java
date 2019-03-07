@@ -7,6 +7,7 @@ import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.tasks.context.WorkingContextProvider;
@@ -38,18 +39,18 @@ public class BreakpointsContextProvider extends WorkingContextProvider {
   }
 
   @Override
-  public void saveContext(@NotNull Element toElement) throws WriteExternalException {
+  public void saveContext(@NotNull Project project, @NotNull Element toElement) throws WriteExternalException {
     ((DebuggerManagerEx)myDebuggerManager).getBreakpointManager().writeExternal(toElement);
   }
 
   @Override
-  public void loadContext(@NotNull Element fromElement) throws InvalidDataException {
+  public void loadContext(@NotNull Project project, @NotNull Element fromElement) throws InvalidDataException {
     //noinspection unchecked
     ((PersistentStateComponent<Element>)myDebuggerManager).loadState(fromElement);
   }
 
   @Override
-  public void clearContext() {
+  public void clearContext(@NotNull Project project) {
     final BreakpointManager breakpointManager = ((DebuggerManagerEx)myDebuggerManager).getBreakpointManager();
     List<Breakpoint> breakpoints = breakpointManager.getBreakpoints();
     for (final Breakpoint breakpoint : breakpoints) {

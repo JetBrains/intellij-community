@@ -2,6 +2,7 @@
 package com.intellij.tasks.context;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  */
 public abstract class WorkingContextProvider {
-  public static final ExtensionPointName<WorkingContextProvider> EP_NAME = ExtensionPointName.create("com.intellij.tasks.contextProvider");
+  public static final ExtensionPointName<WorkingContextProvider> EP_NAME = new ExtensionPointName<>("com.intellij.tasks.contextProvider");
 
   /**
    * Short unique name.
@@ -31,12 +32,13 @@ public abstract class WorkingContextProvider {
   /**
    * Saves a component's state.
    * May delegate to {@link com.intellij.openapi.util.JDOMExternalizable#writeExternal(org.jdom.Element)}
+   * @param project
    * @param toElement
    */
-  public abstract void saveContext(@NotNull Element toElement);
+  public abstract void saveContext(@NotNull Project project, @NotNull Element toElement);
 
-  public abstract void loadContext(@NotNull Element fromElement);
+  public abstract void loadContext(@NotNull Project project, @NotNull Element fromElement);
 
-  public void clearContext() {
+  public void clearContext(@NotNull Project project) {
   }
 }
