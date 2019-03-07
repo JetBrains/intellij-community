@@ -54,6 +54,7 @@ import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
@@ -282,6 +283,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   public void resetColumnWidth(int column) {
+    VcsLogUsageTriggerCollector.triggerUsage("ColumnWidthReset");
     if (CommonUiProperties.getColumnWidth(myProperties, column) != -1) {
       CommonUiProperties.saveColumnWidth(myProperties, column, -1);
     }
