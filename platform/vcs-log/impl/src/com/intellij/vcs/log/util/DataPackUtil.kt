@@ -19,6 +19,11 @@ fun DataPack.subgraphDifference(withRef: VcsRef, withoutRef: VcsRef, storage: Vc
 
   val withRefIndex = storage.getCommitIndex(withRef.commitHash, withRef.root)
   val withoutRefIndex = storage.getCommitIndex(withoutRef.commitHash, withoutRef.root)
+
+  return subgraphDifference(withRefIndex, withoutRefIndex)
+}
+
+fun DataPack.subgraphDifference(withRefIndex: Int, withoutRefIndex: Int): TIntHashSet? {
   if (withRefIndex == withoutRefIndex) return TIntHashSet()
 
   if (permanentGraph !is PermanentGraphInfo<*>) return null

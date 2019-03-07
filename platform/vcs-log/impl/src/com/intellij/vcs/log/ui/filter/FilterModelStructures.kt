@@ -3,9 +3,11 @@ package com.intellij.vcs.log.ui.filter
 
 import com.intellij.vcs.log.VcsLogBranchFilter
 import com.intellij.vcs.log.VcsLogFilter
+import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.VcsLogRevisionFilter
 
 data class FilterPair<F1 : VcsLogFilter, F2 : VcsLogFilter>(val filter1: F1?, val filter2: F2?)
 
 internal data class BranchFilters(val branchFilter: VcsLogBranchFilter?,
-                                  val revisionFilter: VcsLogRevisionFilter?)
+                                  val revisionFilter: VcsLogRevisionFilter?,
+                                  val rangeFilter: VcsLogRangeFilter?)

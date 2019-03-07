@@ -45,6 +45,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.vcs.log.VcsLogFilterCollection.*;
+import static java.util.Collections.emptyList;
 
 /**
  *
@@ -125,6 +126,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   public VcsLogFilterCollection getFilters() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return VcsLogFilterObject.collection(myBranchFilterModel.getBranchFilter(), myBranchFilterModel.getRevisionFilter(),
+                                         myBranchFilterModel.getRangeFilter(),
                                          myTextFilterModel.getFilter1(), myTextFilterModel.getFilter2(),
                                          myStructureFilterModel.getFilter1(), myStructureFilterModel.getFilter2(),
                                          myDateFilterModel.getFilter(), myUserFilterModel.getFilter());
@@ -190,7 +192,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       myRoots = roots;
 
       if (filters != null) {
-        saveFilterToProperties(new BranchFilters(filters.get(BRANCH_FILTER), filters.get(REVISION_FILTER)));
+        saveFilterToProperties(new BranchFilters(filters.get(BRANCH_FILTER), filters.get(REVISION_FILTER), filters.get(RANGE_FILTER)));
       }
     }
 
@@ -209,6 +211,13 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       else {
         myUiProperties.saveFilterValues(REVISION_FILTER.getName(), getRevisionFilterValues(filters.getRevisionFilter()));
       }
+
+      if (filters == null || filters.getRangeFilter() == null) {
+        myUiProperties.saveFilterValues(RANGE_FILTER.getName(), null);
+      }
+      else {
+        myUiProperties.saveFilterValues(RANGE_FILTER.getName(), getRangeFilterValues(filters.getRangeFilter()));
+      }
     }
 
     @Nullable
@@ -226,10 +235,16 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
         revisionFilter = createRevisionFilter(revisionFilterValues);
       }
 
-      if (branchFilter == null && revisionFilter == null) {
+      List<String> rangeFilterValues = myUiProperties.getFilterValues(RANGE_FILTER.getName());
+      VcsLogRangeFilter rangeFilter = null;
+      if (rangeFilterValues != null) {
+        rangeFilter = createRangeFilter(rangeFilterValues);
+      }
+
+      if (branchFilter == null && revisionFilter == null && rangeFilter == null) {
         return null;
       }
-      return new BranchFilters(branchFilter, revisionFilter);
+      return new BranchFilters(branchFilter, revisionFilter, rangeFilter);
     }
 
     public void onStructureFilterChanged(@Nullable VcsLogRootFilter rootFilter,
@@ -281,6 +296,20 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
 
     @Nullable
+    private static VcsLogRangeFilter createRangeFilter(@NotNull List<String> values) {
+      if (values.isEmpty()) return null;
+      return VcsLogFilterObject.fromRange(ContainerUtil.map(values, value -> {
+        String TWO_DOTS = "..";
+        int twoDots = value.indexOf(TWO_DOTS);
+        if (twoDots <= 0) {
+          LOG.error("Incorrect range filter value: " + values);
+          return null;
+        }
+        return new VcsLogRangeFilter.RefRange(value.substring(0, twoDots), value.substring(twoDots + TWO_DOTS.length()));
+      }));
+    }
+
+    @Nullable
     private CommitId findCommitId(@NotNull Hash hash) {
       for (VirtualFile root : myRoots) {
         CommitId commitId = new CommitId(hash, root);
@@ -302,27 +331,38 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
 
     @NotNull
+    private static List<String> getRangeFilterValues(@NotNull VcsLogRangeFilter rangeFilter) {
+      return ContainerUtil.newArrayList(rangeFilter.getTextPresentation());
+    }
+
+    @NotNull
     private static List<String> getRevisionFilter2Presentation(@NotNull VcsLogRevisionFilter filter) {
       return ContainerUtil.map(filter.getHeads(), id -> id.getHash().asString());
     }
 
     void setBranchFilter(@NotNull VcsLogBranchFilter branchFilter) {
-      setFilter(new BranchFilters(branchFilter, null));
+      setFilter(new BranchFilters(branchFilter, null, null));
     }
 
     @NotNull
     static List<String> getFilterPresentation(@NotNull BranchFilters filters) {
-      List<String> branchFilterValues = filters.getBranchFilter() == null ? Collections.emptyList() : getBranchFilterValues(filters.getBranchFilter());
-      List<String> revisionFilterValues = filters.getRevisionFilter() == null ? Collections.emptyList() : getRevisionFilter2Presentation(filters.getRevisionFilter());
-      return ContainerUtil.concat(branchFilterValues, revisionFilterValues);
+      List<String> branchFilterValues = filters.getBranchFilter() == null ? emptyList() : getBranchFilterValues(filters.getBranchFilter());
+      List<String> revisionFilterValues = filters.getRevisionFilter() == null ? emptyList() : getRevisionFilter2Presentation(filters.getRevisionFilter());
+      List<String> rangeFilterValues = filters.getRangeFilter() == null ? emptyList() : getRangeFilterValues(filters.getRangeFilter());
+      return ContainerUtil.concat(branchFilterValues, revisionFilterValues, rangeFilterValues);
     }
 
     @Nullable
     BranchFilters createFilterFromPresentation(@NotNull List<String> values) {
       List<String> hashes = ContainerUtil.newArrayList();
       List<String> branches = ContainerUtil.newArrayList();
+      List<String> ranges = ContainerUtil.newArrayList();
       for (String s : values) {
-        if (s.length() == VcsLogUtil.FULL_HASH_LENGTH && VcsLogUtil.HASH_REGEX.matcher(s).matches()) {
+        int twoDots = s.indexOf("..");
+        if (twoDots > 0 && twoDots == s.lastIndexOf("..")) {
+          ranges.add(s);
+        }
+        else if (s.length() == VcsLogUtil.FULL_HASH_LENGTH && VcsLogUtil.HASH_REGEX.matcher(s).matches()) {
           hashes.add(s);
         }
         else {
@@ -331,7 +371,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       }
       VcsLogBranchFilter branchFilter = branches.isEmpty() ? null : createBranchFilter(branches);
       VcsLogRevisionFilter hashFilter = hashes.isEmpty() ? null : createRevisionFilter(hashes);
-      return new BranchFilters(branchFilter, hashFilter);
+      VcsLogRangeFilter refDiffFilter = ranges.isEmpty() ? null : createRangeFilter(ranges);
+      return new BranchFilters(branchFilter, hashFilter, refDiffFilter);
     }
 
     @Nullable
@@ -346,6 +387,13 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       BranchFilters filter = getFilter();
       if (filter == null) return null;
       return filter.getRevisionFilter();
+    }
+
+    @Nullable
+    public VcsLogFilter getRangeFilter() {
+      BranchFilters filter = getFilter();
+      if (filter == null) return null;
+      return filter.getRangeFilter();
     }
   }
 
