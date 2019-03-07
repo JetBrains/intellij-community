@@ -6,5 +6,9 @@ iml_module(
     srcs = ["src"],
     iml_files = ["intellij.maven.artifactResolver.common.iml"],
     visibility = ["//visibility:public"],
-    deps = ["//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:maven-artifact-3.0.5"],
+    # do not sort: must match IML order
+    deps = [
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-artifact/3.0.5:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/2.0.6:jar",
+    ],
 )

@@ -9,6 +9,11 @@ iml_module(
 
 filegroup(
     name = "prebuilts",
-    srcs = ["gradle.properties"],
+    srcs = glob(["*.gradle"]) + [
+        "gradle.properties",
+        "gradlew",
+        "gradle/wrapper/gradle-wrapper.jar",
+        "gradle/wrapper/gradle-wrapper.properties",
+    ],
     visibility = ["//visibility:public"],
 )

@@ -1538,10 +1538,10 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "javax.activation-api",
+    name = "javax.activation",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/javax/activation/javax.activation-api/1.2.0:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/javax/activation/javax.activation-api/1.2.0:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/sun/activation/javax.activation/1.2.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/sun/activation/javax.activation/1.2.0:jar"],
 )
 
 # managed by go/iml_to_build

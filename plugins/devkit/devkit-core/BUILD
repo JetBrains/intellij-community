@@ -51,6 +51,7 @@ iml_module(
         "//tools/idea/.idea/libraries:protobuf",
         "//tools/idea/json:intellij.json[module]",
         "//tools/idea/aether-dependency-resolver:intellij.java.aetherDependencyResolver[module]",
+        "//tools/idea/plugins/groovy/groovy-psi:intellij.groovy.psi[module]",
     ],
 )
 

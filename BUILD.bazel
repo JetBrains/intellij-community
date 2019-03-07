@@ -407,6 +407,7 @@ iml_project(
         "//tools/idea/plugins/maven/maven3-server-common:intellij.maven.server.m3.common",
         "//tools/idea/plugins/maven/maven3-server-impl:intellij.maven.server.m3.impl",
         "//tools/idea/plugins/maven/maven30-server-impl:intellij.maven.server.m30.impl",
+        "//tools/idea/plugins/maven/maven36-server-impl:intellij.maven.server.m36.impl",
         "//tools/idea/plugins/maven:intellij.maven",
         "//tools/idea/plugins/maven:intellij.maven.server.m2.impl",
         "//tools/idea/plugins/properties/properties-psi-api:intellij.properties.psi",
