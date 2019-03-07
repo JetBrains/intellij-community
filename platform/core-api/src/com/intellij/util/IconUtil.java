@@ -458,7 +458,17 @@ public class IconUtil {
    */
   @Contract("null, _->null; !null, _->!null")
   public static Icon copy(@Nullable Icon icon, @Nullable Component ancestor) {
-    return IconLoader.copy(icon, ancestor);
+    return IconLoader.copy(icon, ancestor, false);
+  }
+
+  /**
+   * Returns a deep copy of the provided {@code icon}.
+   *
+   * @see CopyableIcon
+   */
+  @Contract("null, _->null; !null, _->!null")
+  public static Icon deepCopy(@Nullable Icon icon, @Nullable Component ancestor) {
+    return IconLoader.copy(icon, ancestor, true);
   }
 
   /**
@@ -519,6 +529,26 @@ public class IconUtil {
       scale /= usrScale;
     }
     return scale(icon, ancestor, scale);
+  }
+
+  /**
+   * Overrides the provided scale in the icon's scale context and in the composited icon's scale contexts (when applicable).
+   *
+   * @see JBUIScale.UserScaleContext#overrideScale(JBUIScale.Scale)
+   */
+  @NotNull
+  public static Icon overrideScale(@NotNull Icon icon, JBUIScale.Scale scale) {
+    if (icon instanceof CompositeIcon) {
+      CompositeIcon compositeIcon = (CompositeIcon)icon;
+      for (int i = 0; i < compositeIcon.getIconCount(); i++) {
+        Icon subIcon = compositeIcon.getIcon(i);
+        if (subIcon != null) overrideScale(subIcon, scale);
+      }
+    }
+    if (icon instanceof ScaleContextAware) {
+      ((ScaleContextAware)icon).getScaleContext().overrideScale(scale);
+    }
+    return icon;
   }
 
   @NotNull

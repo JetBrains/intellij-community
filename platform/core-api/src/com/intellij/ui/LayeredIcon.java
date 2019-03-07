@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconLoader.DarkIconProvider;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBCachingScalableIcon;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +81,16 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
   @Override
   public LayeredIcon copy() {
     return new LayeredIcon(this);
+  }
+
+  @NotNull
+  @Override
+  public LayeredIcon deepCopy() {
+    LayeredIcon icon = new LayeredIcon(this);
+    for (int i = 0; i < icon.myIcons.length; i++) {
+      icon.myIcons[i] = IconUtil.copy(icon.myIcons[i], null);
+    }
+    return icon;
   }
 
   @NotNull
