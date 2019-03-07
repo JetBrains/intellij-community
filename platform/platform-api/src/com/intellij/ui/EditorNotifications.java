@@ -25,6 +25,7 @@ public abstract class EditorNotifications {
     /**
      * @deprecated Override {@link #createNotificationPanel(VirtualFile, FileEditor, Project)}
      */
+    @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
     @Nullable
     @Deprecated
     public T createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
