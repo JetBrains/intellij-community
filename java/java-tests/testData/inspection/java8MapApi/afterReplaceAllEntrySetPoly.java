@@ -8,6 +8,7 @@ class Main {
     Map<String, String> map = new HashMap<>();
     String defaultValue = "42";
     map.put("foo", "bar");
-      map.replaceAll((k, v) -> v + k + defaultValue + "baz");
+    /*1*//*8*//*9*//*2*//*3*//*4*//*5*/
+      map/*6*/.replaceAll(/*7*//*10*/ (k, v) -> v +/*11*/ k +/*12*/ defaultValue + "baz");/*13*/
   }
 }
