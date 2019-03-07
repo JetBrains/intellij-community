@@ -120,6 +120,12 @@ internal class DoNotSaveDefaultsTest {
   }
 
   private fun testEmptyState(instance: PersistentStateComponent<*>) {
+    val stateSpec = getStateSpec(javaClass) ?: return
+    if (stateSpec.defaultStateAsResource) {
+      // component expect some default state if no state
+      return
+    }
+
     val stateClass = ComponentSerializationUtil.getStateClass<Any>(instance.javaClass)
     val emptyState = try {
       deserializeState(Element("state"), stateClass, null)!!
