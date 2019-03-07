@@ -2,7 +2,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
 import gnu.trove.TDoubleObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,8 +13,8 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
-import static com.intellij.util.ui.JBUI.sysScale;
 import static com.intellij.util.ui.JBUIScale.DerivedScaleType.*;
 import static com.intellij.util.ui.JBUIScale.ScaleType.*;
 
@@ -110,7 +109,7 @@ public class JBUIScale {
   }
 
   /**
-   * The scale factors derived from the {@link ScaleType} scale factors. Used for convenuence.
+   * The scale factors derived from the {@link ScaleType} scale factors. Used for convenience.
    */
   public enum DerivedScaleType {
     /**
@@ -119,7 +118,7 @@ public class JBUIScale {
      */
     EFF_USR_SCALE,
     /**
-     * The device scale factor. In JRE-HiDPI mode equals {@link ScaleType#SYS_SCALE}, in IDE-HiDPI mode eqauls 1.0
+     * The device scale factor. In JRE-HiDPI mode equals {@link ScaleType#SYS_SCALE}, in IDE-HiDPI mode equals 1.0
      * (in IDE-HiDPI the user space and the device space are equal and so the transform b/w the spaces is 1.0)
      */
     DEV_SCALE,
@@ -465,7 +464,7 @@ public class JBUIScale {
         Pair<Double, D> data = myData.get();
         double scale = ctx.getScale(PIX_SCALE);
         if (data == null || Double.compare(scale, data.first) != 0) {
-          myData.set(data = Pair.create(scale, myDataProvider.fun(ctx)));
+          myData.set(data = Pair.create(scale, myDataProvider.apply(ctx)));
         }
         return data.second;
       }
@@ -489,7 +488,7 @@ public class JBUIScale {
    */
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static class ScaleContext extends UserScaleContext {
-    protected Scale sysScale = SYS_SCALE.of(sysScale());
+    protected Scale sysScale = SYS_SCALE.of(JBUI.sysScale());
 
     @Nullable
     protected WeakReference<Component> compRef;
@@ -525,7 +524,7 @@ public class JBUIScale {
      */
     @NotNull
     public static ScaleContext create(@Nullable Component comp) {
-      final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(sysScale(comp)));
+      final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(JBUI.sysScale(comp)));
       if (comp != null) ctx.compRef = new WeakReference<>(comp);
       return ctx;
     }
@@ -535,7 +534,7 @@ public class JBUIScale {
      */
     @NotNull
     public static ScaleContext create(@Nullable GraphicsConfiguration gc) {
-      return new ScaleContext(SYS_SCALE.of(sysScale(gc)));
+      return new ScaleContext(SYS_SCALE.of(JBUI.sysScale(gc)));
     }
 
     /**
@@ -543,7 +542,7 @@ public class JBUIScale {
      */
     @NotNull
     public static ScaleContext create(Graphics2D g) {
-      return new ScaleContext(SYS_SCALE.of(sysScale(g)));
+      return new ScaleContext(SYS_SCALE.of(JBUI.sysScale(g)));
     }
 
     /**
@@ -608,7 +607,7 @@ public class JBUIScale {
       boolean updated = setScale(USR_SCALE.of(JBUI.scale(1f)));
       if (compRef != null) {
         Component comp = compRef.get();
-        if (comp != null) updated = setScale(SYS_SCALE.of(sysScale(comp))) || updated;
+        if (comp != null) updated = setScale(SYS_SCALE.of(JBUI.sysScale(comp))) || updated;
       }
       return onUpdated(updated);
     }
@@ -723,11 +722,11 @@ public class JBUIScale {
     boolean setScale(@NotNull Scale scale);
   }
 
-  private static class ScaleContextAwareImpl<T extends UserScaleContext> implements ScaleContextAware {
+  private static abstract class AbstractScaleContextAware<T extends UserScaleContext> implements ScaleContextAware {
     @NotNull
     private final T myScaleContext;
 
-    ScaleContextAwareImpl(@NotNull T ctx) {
+    AbstractScaleContextAware(@NotNull T ctx) {
       myScaleContext = ctx;
     }
 
@@ -759,18 +758,18 @@ public class JBUIScale {
   }
 
   /**
-   * Support for {@link UserScaleContext} (device scale independant).
+   * Support for {@link UserScaleContext} (device scale independent).
    */
-  public static class UserScaleContextSupport extends ScaleContextAwareImpl<UserScaleContext> {
+  public static class UserScaleContextSupport extends AbstractScaleContextAware<UserScaleContext> {
     public UserScaleContextSupport() {
       super(UserScaleContext.create());
     }
   }
 
   /**
-   * Support for {@link ScaleContext} (device scale dependant).
+   * Support for {@link ScaleContext} (device scale dependent).
    */
-  public static class ScaleContextSupport extends ScaleContextAwareImpl<ScaleContext> {
+  public static class ScaleContextSupport extends AbstractScaleContextAware<ScaleContext> {
     public ScaleContextSupport() {
       super(ScaleContext.create());
     }
