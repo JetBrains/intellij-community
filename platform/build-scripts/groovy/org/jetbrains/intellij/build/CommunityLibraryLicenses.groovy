@@ -493,11 +493,10 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://xmlgraphics.apache.org/commons/"),
     new LibraryLicense(name: "XmlRPC", libraryName: "XmlRPC", version: "2.0", license: "Apache 2.0",
                            url: "http://ws.apache.org/xmlrpc/xmlrpc2/", licenseUrl: "http://ws.apache.org/xmlrpc/xmlrpc2/license.html"),
-    new LibraryLicense(name: "XStream", libraryName: "XStream", version: "1.4.2", license: "BSD License",
-                       url: "https://github.com/codehaus/xstream",
-                       licenseUrl: "https://github.com/codehaus/xstream/blob/master/LICENSE.txt"),
-    new LibraryLicense(name: "XStream", version: "1.4.3", license: "BSD", url: "https://github.com/codehaus/xstream",
-                       licenseUrl: "https://github.com/codehaus/xstream/blob/master/LICENSE.txt"),
+
+    new LibraryLicense(name: "XStream", libraryName: "XStream", version: "1.4.11.1", license: "BSD License",
+                       url: "https://x-stream.github.io/", licenseUrl: "https://x-stream.github.io/license.html"),
+
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", version: "1.5", license: "Public Domain",
                        url: "http://tukaani.org/xz/java.html"),
     new LibraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-redist.jar", version: "8.0.x",
