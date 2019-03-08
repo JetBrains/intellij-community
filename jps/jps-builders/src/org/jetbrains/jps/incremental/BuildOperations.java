@@ -75,7 +75,7 @@ public class BuildOperations {
 
   private static void initTargetFSState(CompileContext context, BuildTarget<?> target, final boolean forceMarkDirty) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    final StampsStorage stampsStorage = pd.projectStamps.getStorage();
+    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.projectStamps.getStorage();
     final THashSet<File> currentFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, stampsStorage, forceMarkDirty, currentFiles, null);
 
