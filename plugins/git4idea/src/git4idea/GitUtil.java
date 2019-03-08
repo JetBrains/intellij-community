@@ -223,9 +223,33 @@ public class GitUtil {
                                                                         @NotNull Collection<? extends VirtualFile> virtualFiles,
                                                                         boolean ignoreNonGit)
     throws VcsException {
-    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
+    Map<GitRepository, List<VirtualFile>> map = sortFilesByRepository(project, virtualFiles, ignoreNonGit);
 
     Map<VirtualFile, List<VirtualFile>> result = new HashMap<>();
+    for (Map.Entry<GitRepository, List<VirtualFile>> entry : map.entrySet()) {
+      result.put(entry.getKey().getRoot(), entry.getValue());
+    }
+    return result;
+  }
+
+  /**
+   * @throws VcsException if non git files are passed
+   */
+  @NotNull
+  public static Map<GitRepository, List<VirtualFile>> sortFilesByRepository(@NotNull Project project,
+                                                                            @NotNull Collection<? extends VirtualFile> filePaths)
+    throws VcsException {
+    return sortFilesByRepository(project, filePaths, false);
+  }
+
+  @NotNull
+  private static Map<GitRepository, List<VirtualFile>> sortFilesByRepository(@NotNull Project project,
+                                                                             @NotNull Collection<? extends VirtualFile> virtualFiles,
+                                                                             boolean ignoreNonGit)
+    throws VcsException {
+    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
+
+    Map<GitRepository, List<VirtualFile>> result = new HashMap<>();
     for (VirtualFile file : virtualFiles) {
       // directory is reported only when it is a submodule or a mistakenly non-ignored nested root
       // => it should be treated in the context of super-root
@@ -233,11 +257,10 @@ public class GitUtil {
 
       GitRepository repository = manager.getRepositoryForFile(actualFile);
       if (repository == null) {
-        if (ignoreNonGit) continue;
         throw new GitRepositoryNotFoundException(file);
       }
 
-      List<VirtualFile> files = result.computeIfAbsent(repository.getRoot(), key -> new ArrayList<>());
+      List<VirtualFile> files = result.computeIfAbsent(repository, key -> new ArrayList<>());
       files.add(file);
     }
     return result;
@@ -430,6 +453,16 @@ public class GitUtil {
       .filter(Objects::nonNull)
       .map(Repository::getRoot)
       .collect(Collectors.toSet());
+  }
+
+  @NotNull
+  public static Set<GitRepository> getRepositoriesForFiles(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files)
+    throws VcsException {
+    Set<GitRepository> result = new HashSet<>();
+    for (VirtualFile file : files) {
+      result.add(getRepositoryForFile(project, file));
+    }
+    return result;
   }
 
   /**
