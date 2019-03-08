@@ -178,7 +178,7 @@ public class ThreadDumper {
   /**
    * Returns the EDT stack in a form that Google Crash understands, or null if the EDT stack cannot be determined.
    *
-   * @param threadDump lines comprising a thread dump as formatted by {@link #dumpCallStack(ThreadInfo, Writer, StackTraceElement[])}
+   * @param fullThreadDump lines comprising a thread dump as formatted by {@link #dumpCallStack(ThreadInfo, Writer, StackTraceElement[])}
    */
   @Nullable
   public static String getEdtStackForCrash(@NotNull String fullThreadDump, @NotNull String exceptionType) {
