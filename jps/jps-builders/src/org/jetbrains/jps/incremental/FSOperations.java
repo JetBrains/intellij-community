@@ -221,7 +221,7 @@ public class FSOperations {
                                              final BuildRootDescriptor rd,
                                              final CompilationRound round,
                                              final File file,
-                                             @NotNull final StampsStorage<?> tsStorage,
+                                             @NotNull final StampsStorage<?> stampStorage,
                                              final boolean forceDirty,
                                              @Nullable Set<? super File> currentFiles, @Nullable FileFilter filter) throws IOException {
 
@@ -235,7 +235,7 @@ public class FSOperations {
           LOG.info(e);
           // in some cases (e.g. Google Drive File Stream) loop detection for directories works incorrectly
           // fallback: try to traverse in the old IO-way
-          final boolean marked = traverseRecursivelyIO(context, rd, round, file.toFile(), tsStorage, forceDirty, currentFiles, filter);
+          final boolean marked = traverseRecursivelyIO(context, rd, round, file.toFile(), stampStorage, forceDirty, currentFiles, filter);
           if (!marked) {
             allFilesMarked.set(Boolean.FALSE);
           }
@@ -261,12 +261,12 @@ public class FSOperations {
         else {
           boolean markDirty = forceDirty;
           if (!markDirty) {
-            markDirty = !tsStorage.getStamp(_file, rd.getTarget()).isEqual(tsStorage.lastModified(f.toFile(), attrs));
+            markDirty = !stampStorage.getStamp(_file, rd.getTarget()).isEqual(stampStorage.lastModified(f.toFile(), attrs));
           }
           if (markDirty) {
             // if it is full project rebuild, all storages are already completely cleared;
             // so passing null because there is no need to access the storage to clear non-existing data
-            final StampsStorage marker = context.isProjectRebuild() ? null : tsStorage;
+            final StampsStorage marker = context.isProjectRebuild() ? null : stampStorage;
             context.getProjectDescriptor().fsState.markDirty(context, round, _file, rd, marker, false);
           }
           if (currentFiles != null) {

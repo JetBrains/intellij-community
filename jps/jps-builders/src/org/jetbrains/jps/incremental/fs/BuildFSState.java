@@ -157,10 +157,10 @@ public class BuildFSState {
     myInitialScanPerformed.add(target);
   }
 
-  public void registerDeleted(@Nullable CompileContext context, BuildTarget<?> target, final File file, @Nullable StampsStorage tsStorage) throws IOException {
+  public void registerDeleted(@Nullable CompileContext context, BuildTarget<?> target, final File file, @Nullable StampsStorage stampStorage) throws IOException {
     registerDeleted(context, target, file);
-    if (tsStorage != null) {
-      tsStorage.removeStamp(file, target);
+    if (stampStorage != null) {
+      stampStorage.removeStamp(file, target);
     }
   }
 
@@ -233,11 +233,11 @@ public class BuildFSState {
    * Note: marked file will well be visible as "dirty" only on the next compilation round!
    * @throws IOException
    */
-  public final boolean markDirty(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable StampsStorage tsStorage, boolean saveEventStamp) throws IOException {
-    return markDirty(context, CompilationRound.NEXT, file, rd, tsStorage, saveEventStamp);
+  public final boolean markDirty(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable StampsStorage stampStorage, boolean saveEventStamp) throws IOException {
+    return markDirty(context, CompilationRound.NEXT, file, rd, stampStorage, saveEventStamp);
   }
 
-  public boolean markDirty(@Nullable CompileContext context, CompilationRound round, File file, final BuildRootDescriptor rd, @Nullable StampsStorage tsStorage, boolean saveEventStamp) throws IOException {
+  public boolean markDirty(@Nullable CompileContext context, CompilationRound round, File file, final BuildRootDescriptor rd, @Nullable StampsStorage stampStorage, boolean saveEventStamp) throws IOException {
     final FilesDelta roundDelta = getRoundDelta(round == CompilationRound.NEXT? NEXT_ROUND_DELTA_KEY : CURRENT_ROUND_DELTA_KEY, context);
     if (roundDelta != null && isInCurrentContextTargets(context, rd)) {
       roundDelta.markRecompile(rd, file);
@@ -257,8 +257,8 @@ public class BuildFSState {
             myRegistrationStamps.put(file, eventStamp);
           }
         }
-        if (tsStorage != null) {
-          tsStorage.removeStamp(file, rd.getTarget());
+        if (stampStorage != null) {
+          stampStorage.removeStamp(file, rd.getTarget());
         }
       }
       else {
@@ -281,10 +281,10 @@ public class BuildFSState {
     return targets.contains(rd.getTarget());
   }
 
-  public boolean markDirtyIfNotDeleted(@Nullable CompileContext context, CompilationRound round, File file, final BuildRootDescriptor rd, @Nullable StampsStorage tsStorage) throws IOException {
+  public boolean markDirtyIfNotDeleted(@Nullable CompileContext context, CompilationRound round, File file, final BuildRootDescriptor rd, @Nullable StampsStorage stampStorage) throws IOException {
     final boolean marked = getDelta(rd.getTarget()).markRecompileIfNotDeleted(rd, file);
-    if (marked && tsStorage != null) {
-      tsStorage.removeStamp(file, rd.getTarget());
+    if (marked && stampStorage != null) {
+      stampStorage.removeStamp(file, rd.getTarget());
     }
     if (marked) {
       final FilesDelta roundDelta = getRoundDelta(round == CompilationRound.NEXT? NEXT_ROUND_DELTA_KEY : CURRENT_ROUND_DELTA_KEY, context);
