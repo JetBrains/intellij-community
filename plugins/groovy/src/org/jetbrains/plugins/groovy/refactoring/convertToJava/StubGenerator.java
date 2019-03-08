@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,11 +124,11 @@ public class StubGenerator implements ClassItemGenerator {
       //writeModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
     }
 
-    /************* name **********/
+    // ************* name **********/
     //append constructor name
     text.append(constructor.getName());
 
-    /************* parameters **********/
+    // ************* parameters **********/
     GenerationUtil.writeParameterList(text, constructor.getParameterList().getParameters(), classNameProvider, null);
 
     final Set<String> throwsTypes = collectThrowsTypes(constructor, new THashSet<>());
@@ -136,7 +136,7 @@ public class StubGenerator implements ClassItemGenerator {
       text.append("throws ").append(StringUtil.join(throwsTypes, ", ")).append(' ');
     }
 
-    /************* body **********/
+    // ************* body **********/
 
     text.append("{\n");
     if (constructor instanceof GrReflectedMethod) {
@@ -265,7 +265,7 @@ public class StubGenerator implements ClassItemGenerator {
     writeThrowsList(text, method);
 
     if (!isAbstract && !method.hasModifierProperty(PsiModifier.NATIVE)) {
-      /************* body **********/
+      // ************* body **********/
       text.append("{\nreturn ");
       text.append(GroovyToJavaGenerator.getDefaultValueText(retType.getCanonicalText()));
       text.append(";\n}");
