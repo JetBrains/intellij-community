@@ -8,8 +8,10 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.xml.util.XmlStringUtil
+import git4idea.GitBranch
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.GitUtil.CHERRY_PICK_HEAD
@@ -101,18 +103,13 @@ open class GitDefaultMergeDialogCustomizer(
   }
 
   private fun loadCherryPickCommitDetails(repository: GitRepository): CherryPickDetails? {
-    val cherryPickHead = try {
-      GitRevisionNumber.resolve(project, repository.root, CHERRY_PICK_HEAD)
-    }
-    catch (e: VcsException) {
-      return null
-    }
+    val cherryPickHead = tryResolveRef(repository, CHERRY_PICK_HEAD) ?: return null
 
     val shortDetails = GitLogUtil.collectShortDetails(project, GitVcs.getInstance(project), repository.root,
-                                                      listOf(cherryPickHead.rev))
+                                                      listOf(cherryPickHead.asString()))
 
     val result = shortDetails.singleOrNull() ?: return null
-    return CherryPickDetails(cherryPickHead.shortRev, result.author.name, result.subject)
+    return CherryPickDetails(cherryPickHead.toShortString(), result.author.name, result.subject)
   }
 
   private data class CherryPickDetails(val shortHash: String, val authorName: String, val commitMessage: String)
@@ -140,33 +137,19 @@ fun getDefaultRightPanelTitleForBranch(branchName: String, revisionNumber: VcsRe
 
 private fun resolveMergeBranchOrCherryPick(repository: GitRepository): String? {
   val mergeBranch = resolveMergeBranch(repository)
-  if (mergeBranch != null) {
-    return mergeBranch
-  }
-  val rebaseOntoBranch = resolveRebaseOntoBranch(repository)
-  if (rebaseOntoBranch != null) {
-    return rebaseOntoBranch
-  }
+  if (mergeBranch != null) return mergeBranch
 
-  try {
-    GitRevisionNumber.resolve(repository.project, repository.root, CHERRY_PICK_HEAD)
-    return "cherry-pick"
-  }
-  catch (e: VcsException) {
-    return null
-  }
+  val rebaseOntoBranch = resolveRebaseOntoBranch(repository)
+  if (rebaseOntoBranch != null) return rebaseOntoBranch
+
+  val cherryHead = tryResolveRef(repository, CHERRY_PICK_HEAD)
+  if (cherryHead != null) return "cherry-pick"
+  return null
 }
 
 private fun resolveMergeBranch(repository: GitRepository): String? {
-  val mergeHeadRevisionNumber: GitRevisionNumber
-  try {
-    mergeHeadRevisionNumber = GitRevisionNumber.resolve(repository.project, repository.root, MERGE_HEAD)
-  }
-  catch (e: VcsException) {
-    return null
-  }
-
-  return resolveBranchName(repository, mergeHeadRevisionNumber)
+  val mergeHead = tryResolveRef(repository, MERGE_HEAD) ?: return null
+  return resolveBranchName(repository, mergeHead)
 }
 
 private fun resolveRebaseOntoBranch(repository: GitRepository): String? {
@@ -179,22 +162,23 @@ private fun resolveRebaseOntoBranch(repository: GitRepository): String? {
   }
 
   val repo = GitRepositoryManager.getInstance(repository.project).getRepositoryForRoot(repository.root) ?: return null
-  return resolveBranchName(repo, GitRevisionNumber(ontoHash))
+  return resolveBranchName(repo, HashImpl.build(ontoHash))
 }
 
-private fun resolveBranchName(repository: GitRepository, revisionNumber: GitRevisionNumber): String {
-  val hash = HashImpl.build(revisionNumber.asString())
-  val localBranchesByHash = repository.branches.findLocalBranchesByHash(hash)
-  if (localBranchesByHash.size == 1) {
-    return localBranchesByHash.iterator().next().name
+private fun resolveBranchName(repository: GitRepository, hash: Hash): String {
+  var branches: Collection<GitBranch> = repository.branches.findLocalBranchesByHash(hash)
+  if (branches.isEmpty()) branches = repository.branches.findRemoteBranchesByHash(hash)
+  return branches.singleOrNull()?.name ?: hash.toShortString()
+}
+
+private fun tryResolveRef(repository: GitRepository, ref: String): Hash? {
+  try {
+    val revision = GitRevisionNumber.resolve(repository.project, repository.root, ref)
+    return HashImpl.build(revision.asString())
   }
-  if (localBranchesByHash.isEmpty()) {
-    val remoteBranchesByHash = repository.branches.findRemoteBranchesByHash(hash)
-    if (remoteBranchesByHash.size == 1) {
-      return remoteBranchesByHash.iterator().next().name
-    }
+  catch (e: VcsException) {
+    return null
   }
-  return revisionNumber.shortRev
 }
 
 fun getSingleMergeBranchName(project: Project, roots: Collection<VirtualFile>): String? {
