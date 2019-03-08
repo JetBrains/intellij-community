@@ -12,6 +12,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBEditorTabsBase;
+import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsPresentation;
 import com.intellij.ui.tabs.newImpl.singleRow.CompressibleSingleRowLayout;
 import com.intellij.ui.tabs.newImpl.singleRow.ScrollableSingleRowLayout;
