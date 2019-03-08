@@ -71,7 +71,7 @@ public class GitConflictResolver {
     public Params(Project project) {
       GitMergeProvider provider = (GitMergeProvider)GitVcs.getInstance(project).getMergeProvider();
 
-      myMergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(provider) {
+      myMergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(project) {
         @NotNull
         @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
           if (!StringUtil.isEmpty(myMergeDescription)) {
