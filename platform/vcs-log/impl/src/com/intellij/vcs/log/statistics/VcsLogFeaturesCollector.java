@@ -34,7 +34,8 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         MainVcsLogUiProperties properties = ui.getProperties();
         VcsLogUiProperties defaultProperties = createDefaultPropertiesInstance();
 
-        Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
+        Set<UsageDescriptor> usages = ContainerUtil.newHashSet(new UsageDescriptor("uiInitialized"));
+
         addBooleanUsage(properties, defaultProperties, usages, "details", CommonUiProperties.SHOW_DETAILS);
         addBooleanUsage(properties, defaultProperties, usages, "diffPreview", CommonUiProperties.SHOW_DIFF_PREVIEW);
         addBooleanUsage(properties, defaultProperties, usages, "parentChanges", SHOW_CHANGES_FROM_PARENTS);
