@@ -1,0 +1,3 @@
+def hello(<spot>Integer </spot>x, <spot>Integer </spot>y) {
+    return java.lang.Math.max(x, y)
+}
