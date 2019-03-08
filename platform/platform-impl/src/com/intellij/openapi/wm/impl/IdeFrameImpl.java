@@ -15,10 +15,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
@@ -265,7 +262,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(@NotNull final WindowEvent e) {
-        if (!isTemporaryDisposed()) {
+        if (isTemporaryDisposed()) {
+          return;
+        }
+
+        Application app = ApplicationManager.getApplication();
+        if (app != null && (!app.isDisposeInProgress() && !app.isDisposed())) {
           helper.windowClosing(myProject);
         }
       }

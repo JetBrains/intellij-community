@@ -13,11 +13,8 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.util.SystemProperties
-import java.util.concurrent.atomic.AtomicBoolean
 
 open class CloseProjectWindowHelper {
-  private val isClosingInProgress = AtomicBoolean()
-
   protected open val isMacSystemMenu: Boolean
     get() = SystemProperties.getBooleanProperty("idea.test.isMacSystemMenu", SystemInfo.isMacSystemMenu)
 
@@ -28,24 +25,15 @@ open class CloseProjectWindowHelper {
     get() = GeneralSettings.getInstance().isShowWelcomeScreen
 
   fun windowClosing(project: Project?) {
-    if (!isClosingInProgress.compareAndSet(false, true)) {
-      return
+    val numberOfOpenedProjects = getNumberOfOpenedProjects()
+    // Exit on Linux and Windows if the only opened project frame is closed.
+    // On macOS behaviour is different - to exit app, quit action should be used, otherwise welcome frame is shown.
+    // If welcome screen is disabled, behaviour on all OS is the same.
+    if (numberOfOpenedProjects > 1 || (numberOfOpenedProjects == 1 && isShowWelcomeScreen)) {
+      closeProjectAndShowWelcomeFrameIfNoProjectOpened(project)
     }
-
-    try {
-      val numberOfOpenedProjects = getNumberOfOpenedProjects()
-      // Exit on Linux and Windows if the only opened project frame is closed.
-      // On macOS behaviour is different - to exit app, quit action should be used, otherwise welcome frame is shown.
-      // If welcome screen is disabled, behaviour on all OS is the same.
-      if (numberOfOpenedProjects > 1 || (numberOfOpenedProjects == 1 && isShowWelcomeScreen)) {
-        closeProjectAndShowWelcomeFrameIfNoProjectOpened(project)
-      }
-      else {
-        quitApp()
-      }
-    }
-    finally {
-      isClosingInProgress.set(false)
+    else {
+      quitApp()
     }
   }
 
