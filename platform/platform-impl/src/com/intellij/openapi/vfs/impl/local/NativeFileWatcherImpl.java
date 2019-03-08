@@ -188,7 +188,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   private void shutdownProcess() {
-    final OSProcessHandler processHandler = myProcessHandler;
+    OSProcessHandler processHandler = myProcessHandler;
     if (processHandler != null) {
       if (!processHandler.isProcessTerminated()) {
         boolean killProcess = true;
@@ -239,7 +239,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private void writeLine(final String line) throws IOException {
+  private void writeLine(String line) throws IOException {
     if (LOG.isTraceEnabled()) LOG.trace("<< " + line);
     MyProcessHandler processHandler = myProcessHandler;
     if (processHandler != null) {
@@ -319,7 +319,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       if (LOG.isTraceEnabled()) LOG.trace(">> " + line);
 
       if (myLastOp == null) {
-        final WatcherOp watcherOp;
+        WatcherOp watcherOp;
         try {
           watcherOp = WatcherOp.valueOf(line);
         }
