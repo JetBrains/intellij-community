@@ -73,7 +73,6 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
   }
 }
 
-// cannot check com.intellij.codeInsight.intention.IntentionAction by class qualified name because not all IntentionAction used as IntentionActionBean
 private fun findExtensionPoint(clazz: UClass, project: Project): ExtensionPoint? {
   var result: ExtensionPoint? = null
   val qualifiedNamed = clazz.qualifiedName ?: return null
