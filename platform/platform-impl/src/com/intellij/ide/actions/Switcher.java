@@ -177,7 +177,7 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   /**
-   * @deprecated Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}
+   * @deprecated Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, String, boolean, boolean)}
    */
   @Deprecated
   @Nullable
