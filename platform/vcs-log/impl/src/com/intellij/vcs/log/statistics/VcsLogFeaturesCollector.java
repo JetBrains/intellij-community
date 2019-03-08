@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
@@ -54,6 +55,12 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
           if (factory.showMenuItem()) {
             addBooleanUsage(properties, defaultProperties, usages, "highlighter." + getFactoryIdSafe(factory),
                             VcsLogHighlighterProperty.get(factory.getId()));
+          }
+        }
+
+        for (VcsLogFilterCollection.FilterKey<?> key : VcsLogFilterCollection.STANDARD_KEYS) {
+          if (properties.getFilterValues(key.getName()) != null) {
+            usages.add(StatisticsUtilKt.getBooleanUsage(key.getName() + "Filter", true));
           }
         }
 
