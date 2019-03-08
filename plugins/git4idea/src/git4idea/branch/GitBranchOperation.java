@@ -243,7 +243,6 @@ abstract class GitBranchOperation {
   /**
    * Updates the recently visited branch in the settings.
    * This is to be performed after successful checkout operation.
-   * @param branchName
    */
   protected void updateRecentBranch() {
     if (getRepositories().size() == 1) {
