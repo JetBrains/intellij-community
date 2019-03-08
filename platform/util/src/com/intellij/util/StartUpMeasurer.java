@@ -20,6 +20,12 @@ public final class StartUpMeasurer {
   public static final class Phases {
     // this phase name is not fully clear - it is time from `PluginManager.start` to `IdeaApplication.initApplication`
     public static final String PREPARE_TO_INIT_APP = "app initialization preparation";
+    public static final String LOCK_SYSTEM_DIRS = "lock system dirs";
+    public static final String FIX_PROCESS_ENV = "fix process env";
+    public static final String LOAD_SYSTEM_LIBS = "load system libs";
+    public static final String INIT_DEFAULT_LAF = "init default LaF";
+    public static final String REGISTER_BUNDLED_FONTS = "register bundled fonts";
+
     // this phase name is not fully clear - it is time from `IdeaApplication.initApplication` to `IdeaApplication.run`
     public static final String INIT_APP = "app initialization";
 

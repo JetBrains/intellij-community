@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -24,10 +24,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
+import com.intellij.util.StartUpMeasurer.Phases;
 import com.intellij.util.ui.UIUtil;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -132,6 +130,7 @@ public class StartupUtil {
       System.exit(Main.DIR_CHECK_FAILED);
     }
 
+    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(Phases.LOCK_SYSTEM_DIRS);
     ActivationResult result = lockSystemFolders(args);
     if (result == ActivationResult.ACTIVATED) {
       System.exit(0);
@@ -139,18 +138,25 @@ public class StartupUtil {
     if (result != ActivationResult.STARTED) {
       System.exit(Main.INSTANCE_CHECK_FAILED);
     }
+    measureToken.end();
 
     // the log initialization should happen only after locking the system directory
     Logger.setFactory(LoggerFactory.class);
     Logger log = Logger.getInstance(Main.class);
     startLogging(log);
+    measureToken = StartUpMeasurer.start(Phases.LOAD_SYSTEM_LIBS);
     loadSystemLibraries(log);
+    measureToken.end();
+    measureToken = StartUpMeasurer.start(Phases.FIX_PROCESS_ENV);
     fixProcessEnvironment(log);
+    measureToken.end();
 
     runPreAppClass(log);
 
     if (!Main.isHeadless()) {
+      measureToken = StartUpMeasurer.start(Phases.INIT_DEFAULT_LAF);
       UIUtil.initDefaultLAF();
+      measureToken.end();
     }
 
     if (newConfigFolder) {
@@ -163,7 +169,9 @@ public class StartupUtil {
 
     if (!Main.isHeadless()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
+      measureToken = StartUpMeasurer.start(Phases.REGISTER_BUNDLED_FONTS);
       AppUIUtil.registerBundledFonts();
+      measureToken.end();
       AppUIUtil.showUserAgreementAndConsentsIfNeeded();
     }
 

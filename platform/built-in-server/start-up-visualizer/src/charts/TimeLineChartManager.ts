@@ -9,7 +9,7 @@ import {Item} from "@/state/data"
 export class TimelineChartManager extends XYChartManager {
   private maxRowIndex = 0
 
-  private readonly statLabel: am4core.Label
+  private readonly statsLabel: am4core.Label
 
   constructor(container: HTMLElement) {
     super(container, module.hot)
@@ -19,10 +19,12 @@ export class TimelineChartManager extends XYChartManager {
     this.configureSeries()
     this.addHeightAdjuster(levelAxis)
 
-    this.statLabel = this.chart.createChild(am4core.Label)
-    this.statLabel.isMeasured = false
-    this.statLabel.x = 5
-    this.statLabel.y = 40
+    this.statsLabel = this.chart.createChild(am4core.Label)
+    this.statsLabel.selectable = true
+    // cannot be placed on chart because overlaps data
+    // this.statLabel.isMeasured = false
+    // this.statLabel.x = 5
+    // this.statLabel.y = 40
   }
 
   private configureLevelAxis() {
@@ -100,36 +102,36 @@ export class TimelineChartManager extends XYChartManager {
   render(data: DataManager) {
     const originalItems = data.data.items || []
 
-    this.setStatLabel(data)
+    this.setStatsLabel(data)
     this.chart.data = this.transformIjData(originalItems)
 
     const durationAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
     durationAxis.max = originalItems.length === 0 ? 0 : originalItems[originalItems.length - 1].end
   }
 
-  private setStatLabel(data: DataManager) {
+  private setStatsLabel(data: DataManager) {
     if (!data.isStatSupported) {
-      this.statLabel.html = ""
+      this.statsLabel.html = ""
       return
     }
 
     const stats = data.data.stats
     const itemStats = data.itemStats
-    const statLabelData = [
+    const statsLabelData = [
       "Plugin count", stats.plugin, "",
-      "Component count", stats.component.app + stats.component.project + stats.component.module, `(${itemStats.reportedComponentCount})`,
-      "Service count", stats.service.app + stats.service.project + stats.service.module, `(${itemStats.reportedServiceCount})`,
+      "Component count", stats.component.app + stats.component.project + stats.component.module, `(${itemStats.reportedComponentCount} of them took more than 10ms)`,
+      "Service count", stats.service.app + stats.service.project + stats.service.module, `(${itemStats.reportedServiceCount} created and each took more than 10ms)`,
     ]
 
     let result = "<table>"
-    for (let i = 0; i < statLabelData.length; i += 3) {
-      result += `<tr><td>${statLabelData[i]}:</td><td style="text-align: right">${statLabelData[i + 1]}</td>`
-      result += `<td>${statLabelData[i + 2]}</td>`
+    for (let i = 0; i < statsLabelData.length; i += 3) {
+      result += `<tr><td>${statsLabelData[i]}:</td><td style="text-align: right">${statsLabelData[i + 1]}</td>`
+      result += `<td>${statsLabelData[i + 2]}</td>`
       result += `</tr>`
     }
     result += "</table>"
 
-    this.statLabel.html = result
+    this.statsLabel.html = result
   }
 
   private transformIjData(originalItems: Array<Item>): Array<any> {

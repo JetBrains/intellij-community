@@ -35,8 +35,8 @@ export class ItemChartManager extends XYChartManager {
   private configureNameAxis(): void {
     const nameAxis = this.chart.xAxes.push(new am4charts.CategoryAxis())
     nameAxis.dataFields.category = "shortName"
-    // allow to copy text
     const nameAxisLabel = nameAxis.renderer.labels.template
+    // allow to copy text
     nameAxisLabel.selectable = true
     nameAxisLabel.fontSize = 12
     // quite useful to have tooltips also on axis labels (user report: they're easy to target with mouse)
