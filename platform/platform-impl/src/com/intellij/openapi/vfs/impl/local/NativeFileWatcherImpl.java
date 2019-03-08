@@ -191,17 +191,15 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     OSProcessHandler processHandler = myProcessHandler;
     if (processHandler != null) {
       if (!processHandler.isProcessTerminated()) {
-        boolean killProcess = true;
-        try {
-          writeLine(EXIT_COMMAND);
-          killProcess = !processHandler.waitFor(500);
-          if (killProcess) {
-            LOG.warn("File watcher is still alive. Doing a force quit.");
-          }
-        }
+        try { writeLine(EXIT_COMMAND); }
         catch (IOException ignore) { }
-        if (killProcess) {
-          processHandler.destroyProcess();
+        if (!processHandler.waitFor(10)) {
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            if (!processHandler.waitFor(500)) {
+              LOG.warn("File watcher is still alive. Doing a force quit.");
+              processHandler.destroyProcess();
+            }
+          });
         }
       }
 
