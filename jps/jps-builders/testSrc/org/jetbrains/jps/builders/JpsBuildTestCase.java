@@ -28,7 +28,7 @@ import org.jetbrains.jps.incremental.RebuildRequestedException;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
-import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
+import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
@@ -206,7 +206,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetRegistry, myModel, index, dataPaths, ignoredFileIndex);
       BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(targetRegistry, buildRootIndex);
       BuildTargetsState targetsState = new BuildTargetsState(dataPaths, myModel, buildRootIndex);
-      ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot, targetsState);
+      ProjectStamps timestamps = new ProjectStamps(myDataStorageRoot, targetsState);
       BuildDataManager dataManager = new BuildDataManager(dataPaths, targetsState, true);
       return new ProjectDescriptor(myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager, index, targetsState,
                                    targetIndex, buildRootIndex, ignoredFileIndex);

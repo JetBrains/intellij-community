@@ -38,7 +38,7 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
-import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
+import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
@@ -86,10 +86,10 @@ public class BuildRunner {
     BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(targetRegistry, buildRootIndex);
     BuildTargetsState targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
 
-    ProjectTimestamps projectTimestamps = null;
+    ProjectStamps projectStamps = null;
     BuildDataManager dataManager = null;
     try {
-      projectTimestamps = new ProjectTimestamps(dataStorageRoot, targetsState);
+      projectStamps = new ProjectStamps(dataStorageRoot, targetsState);
       dataManager = new BuildDataManager(dataPaths, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
@@ -99,8 +99,8 @@ public class BuildRunner {
     catch (Exception e) {
       // second try
       LOG.info(e);
-      if (projectTimestamps != null) {
-        projectTimestamps.close();
+      if (projectStamps != null) {
+        projectStamps.close();
       }
       if (dataManager != null) {
         dataManager.close();
@@ -108,13 +108,13 @@ public class BuildRunner {
       myForceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
       targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
-      projectTimestamps = new ProjectTimestamps(dataStorageRoot, targetsState);
+      projectStamps = new ProjectStamps(dataStorageRoot, targetsState);
       dataManager = new BuildDataManager(dataPaths, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
       // second attempt succeeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
     }
 
-    return new ProjectDescriptor(jpsModel, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
+    return new ProjectDescriptor(jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
                                  targetIndex, buildRootIndex, ignoredFileIndex);
   }
 
