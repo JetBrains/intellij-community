@@ -543,28 +543,34 @@ object GuiTestUtil {
   }
 
   /**
-   * Waits for a first component which passes the given matcher under the given root to become visible.
+   * Waits for a list of components which passes the given matcher under the given root to become visible.
+   * Note: doesn't throw [WaitTimedOutError] or [ComponentLookupException]
+   * @return empty List<T> if no element matching to [matcher] is found
+   * @return List<T> with found elements matching to [matcher]
    */
   fun <T : Component> waitUntilFoundList(root: Container?,
                                          timeout: Timeout,
                                          matcher: GenericTypeMatcher<T>): List<T> {
-    var reference: AtomicReferenceArray<T>? = null
-    Pause.pause(object : Condition("Find component using " + matcher.toString()) {
-      override fun test(): Boolean {
-        val finder = GuiRobotHolder.robot.finder()
-        val allFound = if (root != null) finder.findAll(root, matcher) else finder.findAll(matcher)
-        if (allFound.isNotEmpty()) {
-          reference = AtomicReferenceArray(allFound.size)
-          allFound.withIndex().forEach { (index, found) ->
-            reference!!.set(index, found)
+    return try {
+      var reference: AtomicReferenceArray<T>? = null
+      Pause.pause(object : Condition("Find component using $matcher") {
+        override fun test(): Boolean {
+          val finder = GuiRobotHolder.robot.finder()
+          val allFound = if (root != null) finder.findAll(root, matcher) else finder.findAll(matcher)
+          if (allFound.isNotEmpty()) {
+            reference = AtomicReferenceArray(allFound.size)
+            allFound.withIndex().forEach { (index, found) ->
+              reference!!.set(index, found)
+            }
           }
+          return allFound.isNotEmpty()
         }
-        return allFound.isNotEmpty()
-      }
-    }, timeout)
-
-    return if (reference == null) listOf()
-    else (0 until reference!!.length()).map { reference!!.get(it) }
+      }, timeout)
+      (0 until reference!!.length()).map { reference!!.get(it) }
+    }
+    catch (notFound: WaitTimedOutError) {
+      emptyList()
+    }
   }
 
 
@@ -708,18 +714,16 @@ object GuiTestUtil {
                      timeout: Timeout,
                      vararg pathStrings: String,
                      predicate: FinderPredicate = Predicate.equality): JTree = step("search '${pathStrings.joinToString()}' in tree") {
-    try {
-      val trees = waitUntilFoundList(container, timeout, GuiTestUtilKt.typeMatcher(JTree::class.java) { it.hasValidModel() })
-      return@step if(pathStrings.isEmpty()) trees.first()
-      else trees.firstOrNull {
-        ExtendedJTreePathFixture(it, pathStrings.toList(), predicate).hasPath()
-      } ?: throw ComponentLookupException("JTree by path [${pathStrings.joinToString()}] not found")
-
-    }
-    catch (e: WaitTimedOutError) {
-      throw ComponentLookupException("No JTree with valid model is found")
-    }
-  }
+      GuiTestUtilKt.withPauseWhenNull(
+        conditionText = "tree with path $pathStrings",
+        timeout = timeout) {
+        val trees = waitUntilFoundList(container, Timeouts.noTimeout, GuiTestUtilKt.typeMatcher(JTree::class.java) { it.hasValidModel() })
+        if(pathStrings.isEmpty()) trees.firstOrNull()
+        else trees.firstOrNull {
+          ExtendedJTreePathFixture(it, pathStrings.toList(), predicate).hasPath()
+        }
+      }
+  } ?: throw ComponentLookupException("JTree by path [${pathStrings.joinToString()}] not found")
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   /**
