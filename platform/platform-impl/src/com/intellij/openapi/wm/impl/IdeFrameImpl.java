@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -262,7 +263,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(@NotNull final WindowEvent e) {
-        if (isTemporaryDisposed()) {
+        if (isTemporaryDisposed() || LaterInvocator.isInModalContext()) {
           return;
         }
 
