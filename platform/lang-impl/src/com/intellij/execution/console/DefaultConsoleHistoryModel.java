@@ -17,12 +17,7 @@ import java.util.Map;
  * @author Gregory.Shrago
  */
 public class DefaultConsoleHistoryModel extends SimpleModificationTracker implements ConsoleHistoryModel {
-  /**
-   * @noinspection FieldCanBeLocal
-   */
 
-  /**
-   */
   private final static Map<String, DefaultConsoleHistoryModel> ourModels =
     ConcurrentFactoryMap.createMap(key -> new DefaultConsoleHistoryModel(null),
                                    ContainerUtil::createConcurrentWeakValueMap);
