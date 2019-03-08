@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference
 private val CHANGED_FILES_KEY = Key<MultiMap<ComponentStoreImpl, StateStorage>>("CHANGED_FILES_KEY")
 private val CHANGED_SCHEMES_KEY = Key<MultiMap<SchemeChangeApplicator, SchemeChangeEvent>>("CHANGED_SCHEMES_KEY")
 
-internal class StoreAwareProjectManager : Disposable, StoreReloadManager {
+internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
   private val reloadBlockCount = AtomicInteger()
   private val blockStackTrace = AtomicReference<String?>()
   private val changedApplicationFiles = LinkedHashSet<StateStorage>()
