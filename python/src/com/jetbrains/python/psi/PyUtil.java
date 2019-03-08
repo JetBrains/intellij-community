@@ -213,10 +213,10 @@ public class PyUtil {
                   .createBalloon().show(point, Balloon.Position.atLeft);
   }
 
-  @NonNls
   /**
    * Returns a quoted string representation, or "null".
    */
+  @NonNls
   public static String nvl(Object s) {
     if (s != null) {
       return "'" + s.toString() + "'";
