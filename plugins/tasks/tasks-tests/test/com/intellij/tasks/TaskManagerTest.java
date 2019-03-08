@@ -27,26 +27,21 @@ import java.util.List;
  */
 public class TaskManagerTest extends TaskManagerTestCase {
   public void testTaskSwitch() {
-
     final Ref<Integer> count = Ref.create(0);
-    TaskListener listener = new TaskListenerAdapter() {
+    myTaskManager.addTaskListener(new TaskListenerAdapter() {
       @Override
       public void taskActivated(@NotNull LocalTask task) {
         count.set(count.get() + 1);
       }
-    };
-    myTaskManager.addTaskListener(listener, getTestRootDisposable());
-    LocalTask localTask = myTaskManager.createLocalTask("foo");
-    myTaskManager.activateTask(localTask, false);
+    }, getTestRootDisposable());
+    myTaskManager.activateTask(myTaskManager.createLocalTask("foo"), false);
     assertEquals(1, count.get().intValue());
 
-    LocalTask other = myTaskManager.createLocalTask("bar");
-    myTaskManager.activateTask(other, false);
+    myTaskManager.activateTask(myTaskManager.createLocalTask("bar"), false);
     assertEquals(2, count.get().intValue());
   }
 
   public void testNotifications() {
-
     final Ref<Notification> notificationRef = new Ref<>();
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
       @Override

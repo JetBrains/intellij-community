@@ -130,14 +130,14 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       }
     };
 
-    project.getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        if (myProject == project) {
-          TaskManagerImpl.this.projectOpened();
+      project.getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+        @Override
+        public void projectOpened(@NotNull Project project) {
+          if (myProject == project) {
+            TaskManagerImpl.this.projectOpened();
+          }
         }
-      }
-    });
+      });
   }
 
   @Override
@@ -481,7 +481,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     if (task.isIssue()) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
         () -> ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(myProject, "Updating " + task.getPresentableId()) {
-
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             updateIssue(task.getId());
