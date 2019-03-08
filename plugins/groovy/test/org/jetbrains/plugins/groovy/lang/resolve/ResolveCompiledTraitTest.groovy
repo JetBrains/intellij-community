@@ -329,6 +329,28 @@ def usage(ExternalConcrete ec) {
     assert method.containingClass.qualifiedName == 'java.lang.String'
   }
 
+  void 'test static trait method with @DelegatesTo(type) on lambda'() {
+    configureTraitInheritor()
+    def method = resolveByText '''\
+def usage(ExternalConcrete ec) {
+  ec.delegatesTo () -> <caret>toUpperCase()
+}
+''', PsiMethod
+    assert method.name == 'toUpperCase'
+    assert method.containingClass.qualifiedName == 'java.lang.String'
+  }
+
+  void 'test static trait method with @ClosureParams(FromString) on lambda'() {
+    configureTraitInheritor()
+    def method = resolveByText '''\
+def usage(ExternalConcrete ec) {
+  ec.closureParams (it) -> it.<caret>toUpperCase() 
+}
+''', PsiMethod
+    assert method.name == 'toUpperCase'
+    assert method.containingClass.qualifiedName == 'java.lang.String'
+  }
+
   private PsiClass configureTraitInheritor() {
     myFixture.addFileToProject "inheritors.groovy", '''\
 class PojoInheritor extends somepackage.Pojo {}

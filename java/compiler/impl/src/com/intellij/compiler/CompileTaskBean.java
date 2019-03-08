@@ -5,10 +5,10 @@ import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.util.ExtensionInstantiator;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -23,17 +23,23 @@ public final class CompileTaskBean extends AbstractExtensionPointBean {
   @Attribute("implementation")
   public String myImplementation;
 
-  private final AtomicNotNullLazyValue<CompileTask> myInstanceHolder;
-
-  public CompileTaskBean(Project project) {
-    myInstanceHolder = AtomicNotNullLazyValue.createValue(() -> {
-      //noinspection CodeBlock2Expr
-      return ExtensionInstantiator.instantiateWithPicoContainerOnlyIfNeeded(myImplementation, project.getPicoContainer(), myPluginDescriptor);
-    });
-  }
+  @Nullable
+  private volatile CompileTask myInstance;
 
   @NotNull
-  public CompileTask getTaskInstance() {
-    return myInstanceHolder.getValue();
+  public CompileTask getTaskInstance(@NotNull Project project) {
+    CompileTask result = myInstance;
+    if (result == null) {
+      //noinspection SynchronizeOnThis
+      synchronized (this) {
+        result = myInstance;
+        if (result == null) {
+          //noinspection NonPrivateFieldAccessedInSynchronizedContext
+          result = ExtensionInstantiator.instantiateWithPicoContainerOnlyIfNeeded(myImplementation, project.getPicoContainer(), myPluginDescriptor);
+          myInstance = result;
+        }
+      }
+    }
+    return result;
   }
 }

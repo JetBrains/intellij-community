@@ -13,6 +13,7 @@ import com.intellij.psi.JavaCodeFragmentFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WRAP_ALWAYS
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.IncorrectOperationException
@@ -3683,5 +3684,78 @@ public class Test {
       }""".trimIndent()
     )
   }
+
+  fun testIdeaIDEA203464() {
+    getSettings().apply{
+      ENUM_CONSTANTS_WRAP = WRAP_ALWAYS
+      KEEP_LINE_BREAKS = false
+    }
+    doTextTest(
+        """
+/**
+ * javadoc
+ */
+public enum EnumApplyChannel {
+
+    C;
+
+    public String method() {
+        return null;
+    }
+}""".trimIndent(),
+
+      """
+/**
+ * javadoc
+ */
+public enum EnumApplyChannel {
+
+    C;
+
+    public String method() {
+        return null;
+    }
+}""".trimIndent()
+    )
+  }
+
+
+  fun testIdeaIDEA198408() {
+    getSettings().apply{
+      ENUM_CONSTANTS_WRAP = WRAP_ALWAYS
+      KEEP_LINE_BREAKS = false
+    }
+    doTextTest(
+        """
+/** JavaDoc */
+public enum LevelCode {HIGH(3),
+   MEDIUM(2),
+   LOW(1);
+
+   private final int levelCode;
+
+   LevelCode(int levelCode) {
+       this.levelCode = levelCode;
+   }
+}""".trimIndent(),
+
+      """
+/**
+ * JavaDoc
+ */
+public enum LevelCode {
+    HIGH(3),
+    MEDIUM(2),
+    LOW(1);
+
+    private final int levelCode;
+
+    LevelCode(int levelCode) {
+        this.levelCode = levelCode;
+    }
+}""".trimIndent()
+    )
+  }
+
 
 }

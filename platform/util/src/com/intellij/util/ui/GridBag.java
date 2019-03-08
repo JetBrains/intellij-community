@@ -73,7 +73,7 @@ public class GridBag extends GridBagConstraints {
   @NotNull private final TIntIntHashMap myDefaultColumnPaddingsY = new TIntIntHashMap();
 
   @Nullable private Insets myDefaultInsets = insets;
-  @NotNull private final TIntObjectHashMap<Insets> myDefaultColumnInsets = new TIntObjectHashMap<Insets>();
+  @NotNull private final TIntObjectHashMap<Insets> myDefaultColumnInsets = new TIntObjectHashMap<>();
 
   public GridBag() {
     gridx = gridy = -1;

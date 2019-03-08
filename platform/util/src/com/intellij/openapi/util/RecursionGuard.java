@@ -80,11 +80,12 @@ public abstract class RecursionGuard {
 
     /**
      * @return whether a computation that started at the moment of this {@link StackStamp} instance creation does not depend on any
-     * re-entrant recursive results. When such non-reliable results exist in the thread's call stack, returns false, otherwise true.
+     * re-entrant recursive results. When such non-reliable results exist in the thread's call stack, returns false, otherwise true.<p></p>
      *
      * If you use this with {@link RecursionGuard#doPreventingRecursion(Object, boolean, Computable)}, then the
      * {@link RecursionGuard#markStack()}+{@link #mayCacheNow()} should be outside of recursion prevention call. Otherwise
-     * even the outer recursive computation result won't be cached.
+     * even the outer recursive computation result won't be cached. In particular, {@code doPreventingRecursion} calls should
+     * be inside your {@link com.intellij.psi.util.CachedValue} provider, not outside cached value access.
      */
     @SuppressWarnings("JavaDoc")
     boolean mayCacheNow();

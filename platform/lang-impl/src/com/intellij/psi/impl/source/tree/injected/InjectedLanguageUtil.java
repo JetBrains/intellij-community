@@ -47,6 +47,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -172,6 +173,7 @@ public class InjectedLanguageUtil {
   /**
    * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
+  @Contract("null,_->null;!null,_->!null")
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable PsiFile file) {
     if (editor == null || file == null || editor instanceof EditorWindow) return editor;
 
@@ -252,6 +254,7 @@ public class InjectedLanguageUtil {
   /**
    * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
+  @Contract("null,_,_->null;!null,_,_->!null")
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable PsiFile file, final int offset) {
     if (editor == null || file == null || editor instanceof EditorWindow) return editor;
     PsiFile injectedFile = findInjectedPsiNoCommit(file, offset);

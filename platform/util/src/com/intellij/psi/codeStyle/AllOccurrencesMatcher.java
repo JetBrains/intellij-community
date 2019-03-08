@@ -51,7 +51,7 @@ public class AllOccurrencesMatcher extends MinusculeMatcher {
   public FList<TextRange> matchingFragments(@NotNull String name) {
     FList<TextRange> match = delegate.matchingFragments(name);
     if (!ContainerUtil.isEmpty(match)) {
-      List<FList<TextRange>> allMatchesReversed = new ArrayList<FList<TextRange>>();
+      List<FList<TextRange>> allMatchesReversed = new ArrayList<>();
       int lastOffset = 0;
       while (!ContainerUtil.isEmpty(match)) {
         FList<TextRange> reversedWithAbsoluteOffsets = FList.emptyList();

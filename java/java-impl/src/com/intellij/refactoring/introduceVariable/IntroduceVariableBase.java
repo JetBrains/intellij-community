@@ -770,6 +770,17 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return wasSucceed[0];
   }
 
+  public static boolean canBeExtractedWithoutExplicitType(PsiExpression expr) {
+    if (PsiUtil.isLanguageLevel10OrHigher(expr)) {
+      PsiType type = expr.getType();
+      return type != null &&
+             !PsiType.NULL.equals(type) &&
+             PsiTypesUtil.isDenotableType(type, expr) &&
+             (expr instanceof PsiNewExpression || type.equals(((PsiExpression)expr.copy()).getType()));
+    }
+    return false;
+  }
+
   @Nullable
   private static PsiElement getAnchor(PsiElement place) {
     PsiElement anchorStatement = RefactoringUtil.getParentStatement(place, false);
@@ -935,6 +946,25 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return initializer;
   }
 
+  /**
+   * Ensure that diamond inside initializer is expanded, then replace variable type with var
+   */
+  public static PsiElement expandDiamondsAndReplaceExplicitTypeWithVar(PsiTypeElement typeElement, PsiElement context) {
+    PsiElement parent = typeElement.getParent();
+    if (parent instanceof PsiVariable) {
+      PsiExpression copyVariableInitializer = ((PsiVariable)parent).getInitializer();
+      if (copyVariableInitializer instanceof PsiNewExpression) {
+        final PsiDiamondType.DiamondInferenceResult diamondResolveResult =
+          PsiDiamondTypeImpl.resolveInferredTypesNoCheck((PsiNewExpression)copyVariableInitializer, copyVariableInitializer);
+        if (!diamondResolveResult.getInferredTypes().isEmpty()) {
+          PsiDiamondTypeUtil.expandTopLevelDiamondsInside(copyVariableInitializer);
+        }
+      }
+    }
+
+    return typeElement.replace(JavaPsiFacade.getElementFactory(context.getProject()).createTypeElementFromText("var", context));
+  }
+
   public static PsiElement replace(final PsiExpression expr1, final PsiExpression ref, final Project project)
     throws IncorrectOperationException {
     final PsiExpression expr2;
@@ -1021,6 +1051,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final SuggestedNameInfo suggestedName = getSuggestedName(typeSelectorManager.getDefaultType(), expr, anchor);
     final String variableName = suggestedName.names.length > 0 ? suggestedName.names[0] : "";
     final boolean declareFinal = replaceAll && declareFinalIfAll || !anyAssignmentLHS && createFinals(anchor.getContainingFile());
+    final boolean declareVarType = canBeExtractedWithoutExplicitType(expr) && createVarType();
     final boolean replaceWrite = anyAssignmentLHS && replaceChoice.isAll();
     return new IntroduceVariableSettings() {
       @Override
@@ -1036,6 +1067,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       @Override
       public boolean isDeclareFinal() {
         return declareFinal;
+      }
+
+      @Override
+      public boolean isDeclareVarType() {
+        return declareVarType;
       }
 
       @Override
@@ -1061,6 +1097,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return createFinals == null ?
            JavaCodeStyleSettings.getInstance(file).GENERATE_FINAL_LOCALS :
            createFinals.booleanValue();
+  }
+
+  public static boolean createVarType() {
+    final Boolean createVarType = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE;
+    return createVarType != null && createVarType.booleanValue();
   }
 
   public static boolean checkAnchorBeforeThisOrSuper(final Project project,

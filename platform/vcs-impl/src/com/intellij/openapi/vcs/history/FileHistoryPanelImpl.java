@@ -676,7 +676,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
           setOpaque(selected);
           Date date = (Date)value;
           if (date != null) {
-            append(DateFormatUtil.formatPrettyDateTime(date), getDefaultAttributes());
+            append(DateFormatUtil.formatDateTime(date), getDefaultAttributes());
           }
           SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
         }
@@ -697,7 +697,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
 
     @Override
     public String getPreferredStringValue() {
-      return DateFormatUtil.formatPrettyDateTime(Clock.getTime() + 1000);
+      return DateFormatUtil.formatDateTime(Clock.getTime() + 1000);
     }
 
     @Nullable

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.focusMode;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
@@ -10,13 +10,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FocusModeModel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
@@ -46,7 +46,7 @@ public class FocusModePassFactory implements TextEditorHighlightingPassFactory {
   }
 
   private static boolean isEnabled() {
-    return Registry.is("editor.focus.mode");
+    return EditorSettingsExternalizable.getInstance().isFocusMode();
   }
 
   @Nullable

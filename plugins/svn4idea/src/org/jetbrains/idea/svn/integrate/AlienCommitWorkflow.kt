@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate
 
 import com.intellij.openapi.vcs.AbstractVcs
@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.ui.DefaultCommitResultHandler
 import com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.NullableFunction
 
 class AlienCommitWorkflow(val vcs: AbstractVcs<*>, changeListName: String, changes: List<Change>, commitMessage: String?) :
   DialogCommitWorkflow(vcs.project, changes, vcsToCommit = vcs, initialCommitMessage = commitMessage) {
@@ -24,11 +23,7 @@ class AlienCommitWorkflow(val vcs: AbstractVcs<*>, changeListName: String, chang
 
   override fun canExecute(executor: CommitExecutor, changes: Collection<Change>) = true
 
-  override fun doCommit(changeList: LocalChangeList,
-                        changes: List<Change>,
-                        commitMessage: String,
-                        handlers: List<CheckinHandler>,
-                        additionalData: NullableFunction<Any, Any>) {
+  override fun doCommit(changeList: LocalChangeList, changes: List<Change>, commitMessage: String, handlers: List<CheckinHandler>) {
     val committer = AlienCommitter(vcs, changes, commitMessage, handlers, additionalData)
 
     committer.addResultHandler(DefaultCommitResultHandler(committer))

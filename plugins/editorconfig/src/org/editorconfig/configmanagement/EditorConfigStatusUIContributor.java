@@ -79,7 +79,7 @@ public class EditorConfigStatusUIContributor extends IndentStatusBarUIContributo
       e -> {
         EditorConfigSettings settings = CodeStyle.getSettings(project).getCustomSettings(EditorConfigSettings.class);
         settings.ENABLED = false;
-        notifyCodeStyleChanged(project);
+        CodeStyleSettingsManager.getInstance(project).notifyCodeStyleSettingsChanged();
         showDisabledDetectionNotification(project);
       });
   }
@@ -141,7 +141,7 @@ public class EditorConfigStatusUIContributor extends IndentStatusBarUIContributo
       final CodeStyleSettings rootSettings = CodeStyle.getSettings(myProject);
       EditorConfigSettings settings = rootSettings.getCustomSettings(EditorConfigSettings.class);
       settings.ENABLED = true;
-      notifyCodeStyleChanged(myProject);
+      CodeStyleSettingsManager.getInstance(myProject).notifyCodeStyleSettingsChanged();
       myNotification.expire();
     }
   }
@@ -149,10 +149,6 @@ public class EditorConfigStatusUIContributor extends IndentStatusBarUIContributo
   @Override
   public boolean isShowFileIndentOptionsEnabled() {
     return false;
-  }
-
-  private static void notifyCodeStyleChanged(@NotNull Project project) {
-    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(null);
   }
 
   @Override

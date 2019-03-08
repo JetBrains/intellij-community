@@ -49,7 +49,7 @@ public class EditorRtlTest extends AbstractRtlTest {
     checkVPConversions(vR(3), lB(3), xy(30));
     checkVPConversions(vL(4), lF(2), xy(40));
     checkVPConversions(vR(4), lF(4), xy(40));
-    checkVPConversions(vL(5), lF(5), xy(50));
+    checkVPConversions(vL(5), lB(5), xy(50));
     checkVPConversions(vR(5), lF(5), xy(50));
     checkVPConversions(vL(1, 0), lB(1, 0), xy(0, 10));
     checkVPConversions(vR(1, 0), lF(1, 0), xy(0, 10));
@@ -147,7 +147,7 @@ public class EditorRtlTest extends AbstractRtlTest {
     checkVPConversions(vR(6), lB(5), xy(60));
     checkVPConversions(vL(7), lF(4), xy(70));
     checkVPConversions(vR(7), lF(6), xy(70));
-    checkVPConversions(vL(8), lF(7), xy(80));
+    checkVPConversions(vL(8), lB(7), xy(80));
     checkVPConversions(vR(8), lF(7), xy(80));
     
     checkXYConversion(xy(1), vR(0));
@@ -223,7 +223,7 @@ public class EditorRtlTest extends AbstractRtlTest {
     checkVPConversions(vR(1, 2), lB(4), xy(20, 10));
     checkVPConversions(vL(1, 3), lF(3), xy(30, 10));
     checkVPConversions(vR(1, 3), lF(5), xy(30, 10));
-    checkVPConversions(vL(1, 4), lF(6), xy(40, 10));
+    checkVPConversions(vL(1, 4), lB(6), xy(40, 10));
     checkVPConversions(vR(1, 4), lF(6), xy(40, 10));
 
     checkXYConversion(xy(0), vL(0));

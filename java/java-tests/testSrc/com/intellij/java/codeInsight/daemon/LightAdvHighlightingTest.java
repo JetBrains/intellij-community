@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.ToolExtensionPoints;
@@ -303,14 +303,12 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       public void writeExternal(Element element) { }
     };
 
-    point.registerExtension(extension);
-
+    point.registerExtension(extension, getTestRootDisposable());
     try {
       myUnusedDeclarationInspection = new UnusedDeclarationInspectionBase(true);
       doTest(true);
     }
     finally {
-      point.unregisterExtension(extension);
       myUnusedDeclarationInspection = new UnusedDeclarationInspectionBase();
     }
   }
@@ -423,7 +421,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInsane() {
     configureFromFileText("x.java", "class X { \nx_x_x_x\n }");
     List<HighlightInfo> infos = highlightErrors();
-    assertTrue(!infos.isEmpty());
+    assertFalse(infos.isEmpty());
   }
 
   public void testAnnotatorWorksWithFileLevel() {
@@ -463,7 +461,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIllegalWhitespaces() { doTest(false); }
-  
+
   public void testMarkUsedDefaultAnnotationMethodUnusedInspection() {
     setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest(true);

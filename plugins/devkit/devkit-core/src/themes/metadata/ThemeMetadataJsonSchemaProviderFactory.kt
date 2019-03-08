@@ -11,19 +11,23 @@ import java.util.*
 
 class ThemeMetadataJsonSchemaProviderFactory : JsonSchemaProviderFactory {
 
-  private val EXTENSION = ".themeMetadata.json"
-
-  private val THEME_METADATA_SCHEMA = "/schemes/themeMetadata.schema.json"
-
   override fun getProviders(project: Project): MutableList<JsonSchemaFileProvider> {
     return Collections.singletonList(object : JsonSchemaFileProvider {
       override fun getName(): String = "IntelliJ Theme Metadata"
 
-      override fun isAvailable(file: VirtualFile): Boolean = file.nameSequence.endsWith(EXTENSION)
+      override fun isAvailable(file: VirtualFile): Boolean = file.nameSequence.endsWith(DOT_EXTENSION)
 
       override fun getSchemaFile(): VirtualFile? = VfsUtil.findFileByURL(javaClass.getResource(THEME_METADATA_SCHEMA))
 
       override fun getSchemaType(): SchemaType = SchemaType.embeddedSchema
     })
+  }
+
+  companion object {
+    const val EXTENSION = "themeMetadata.json"
+
+    private const val DOT_EXTENSION = ".$EXTENSION"
+
+    private const val THEME_METADATA_SCHEMA = "/schemes/themeMetadata.schema.json"
   }
 }

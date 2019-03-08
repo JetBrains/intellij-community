@@ -29,7 +29,7 @@ import java.util.Map;
  * Please use {@link SkipDefaultsSerializationFilter} if state class doesn't implement "equals" (in Kotlin use data classes {@see http://kotlinlang.org/docs/reference/data-classes.html})
  */
 public class SkipDefaultValuesSerializationFilters extends SerializationFilterBase {
-  private final Map<Class<?>, Object> myDefaultBeans = new THashMap<Class<?>, Object>();
+  private final Map<Class<?>, Object> myDefaultBeans = new THashMap<>();
 
   public SkipDefaultValuesSerializationFilters() { }
 

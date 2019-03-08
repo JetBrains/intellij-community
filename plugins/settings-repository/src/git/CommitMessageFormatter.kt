@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.merge.MergeMessageFormatter
+import org.jetbrains.settingsRepository.icsManager
 import java.net.InetAddress
 
 interface CommitMessageFormatter {
@@ -30,25 +17,29 @@ interface CommitMessageFormatter {
 }
 
 class IdeaCommitMessageFormatter : CommitMessageFormatter {
-  override fun message(text: String): String = StringBuilder().appendCommitOwnerInfo().append(text).toString()
+  override fun message(text: String) = appendCommitOwnerInfo().append(text).toString()
 
-  override fun prependMessage(builder: StringBuilder): StringBuilder = builder.appendCommitOwnerInfo()
+  override fun prependMessage(builder: StringBuilder) = appendCommitOwnerInfo(builder = builder)
 
-  override fun mergeMessage(refsToMerge: List<Ref>, target: Ref): String = StringBuilder().appendCommitOwnerInfo().append(super.mergeMessage(refsToMerge, target)).toString()
+  override fun mergeMessage(refsToMerge: List<Ref>, target: Ref) = appendCommitOwnerInfo().append(super.mergeMessage(refsToMerge, target)).toString()
 
-  fun StringBuilder.appendCommitOwnerInfo(avoidAppInfoInstantiation: Boolean = false): StringBuilder {
+  fun appendCommitOwnerInfo(avoidAppInfoInstantiation: Boolean = false, builder: StringBuilder = StringBuilder()): StringBuilder {
     if (avoidAppInfoInstantiation) {
-      append(ApplicationNamesInfo.getInstance().productName)
+      builder.append(ApplicationNamesInfo.getInstance().productName)
     }
     else {
-      appendAppName()
+      builder.appendAppName()
     }
-    append(' ').append('<').append(System.getProperty("user.name", "unknown-user")).append('@').append(InetAddress.getLocalHost().hostName)
-    append(' ')
-    return this
+
+    if (icsManager.settings.includeHostIntoCommitMessage) {
+      builder.append(' ').append('<').append(System.getProperty("user.name", "unknown-user"))
+      builder.append('@').append(InetAddress.getLocalHost().hostName)
+    }
+    builder.append(' ')
+    return builder
   }
 
-  fun StringBuilder.appendAppName() {
+  private fun StringBuilder.appendAppName() {
     val appInfo = ApplicationInfoEx.getInstanceEx()
     if (appInfo != null) {
       val build = appInfo.build

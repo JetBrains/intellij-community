@@ -17,6 +17,21 @@ import com.intellij.util.containers.ContainerUtil
 import java.awt.event.KeyEvent
 import java.util.*
 
+/**
+ * <p>FeatureUsageData represents additional data for reported event.</p>
+ *
+ * <h3>Example</h3>
+ *
+ * <p>My usage collector collects actions invocations. <i>"my.foo.action"</i> could be invoked from one of the following contexts:
+ * "main.menu", "context.menu", "my.dialog", "all-actions-run".</p>
+ *
+ * <p>If I write {@code FUCounterUsageLogger.logEvent("my.foo.action", "bar")}, I'll know how many times the action "bar" was invoked (e.g. 239)</p>
+ *
+ * <p>If I write {@code FUCounterUsageLogger.logEvent("my.foo.action", "bar", new FeatureUsageData().addPlace(place))}, I'll get the same
+ * total count of action invocations (239), but I'll also know that the action was called 3 times from "main.menu", 235 times from "my.dialog" and only once from "context.menu".
+ * <br/>
+ * </p>
+ */
 class FeatureUsageData {
   private var data: MutableMap<String, Any> = ContainerUtil.newHashMap<String, Any>()
 
@@ -132,6 +147,9 @@ class FeatureUsageData {
   }
 
   fun build(): Map<String, Any> {
+    if (data.isEmpty()) {
+      return Collections.emptyMap()
+    }
     return data
   }
 

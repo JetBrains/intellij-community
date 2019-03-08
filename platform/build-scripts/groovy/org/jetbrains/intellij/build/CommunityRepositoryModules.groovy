@@ -269,7 +269,7 @@ class CommunityRepositoryModules {
       withModule("intellij.android.buildCommon", "build-common.jar", null)
       withModule("intellij.android.rt", "android-rt.jar", null)
 
-      withModule("intellij.android", "android.jar", null)
+      withModule("intellij.android.core", "android.jar", null)
       withModule("intellij.android.adb", "android.jar")
       withModule("intellij.android.debuggers", "android.jar")
       withModule("intellij.android.lang", "android.jar")
@@ -311,22 +311,18 @@ class CommunityRepositoryModules {
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
-      withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
-      withProjectLibrary("jgraphx") //todo[nik] move to module libraries
+      withProjectLibrary("freemarker") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
 
-      withResourceFromModule("intellij.android","lib/antlr4-runtime-4.5.3.jar", "lib")
-      withResourceFromModule("intellij.android","lib/asm-5.0.3.jar", "lib")
-      withResourceFromModule("intellij.android","lib/asm-analysis-5.0.3.jar", "lib")
-      withResourceFromModule("intellij.android","lib/asm-tree-5.0.3.jar", "lib")
-      withResourceFromModule("intellij.android","lib/commons-io-2.4.jar", "lib")
-      withResourceFromModule("intellij.android","lib/commons-compress-1.8.1.jar", "lib")
-      withResourceFromModule("intellij.android","lib/javawriter-2.2.1.jar", "lib")
-      withResourceFromModule("intellij.android","lib/juniversalchardet-1.0.3.jar", "lib")
+      withResourceFromModule("intellij.android.core","lib/asm-5.0.3.jar", "lib")
+      withResourceFromModule("intellij.android.core","lib/asm-analysis-5.0.3.jar", "lib")
+      withResourceFromModule("intellij.android.core","lib/asm-tree-5.0.3.jar", "lib")
+      withResourceFromModule("intellij.android.core","lib/commons-compress-1.8.1.jar", "lib")
+      withResourceFromModule("intellij.android.core","lib/javawriter-2.2.1.jar", "lib")
 
-      withResourceFromModule("intellij.android","lib/androidWidgets", "lib/androidWidgets")
+      withResourceFromModule("intellij.android.core","lib/androidWidgets", "lib/androidWidgets")
       withResourceFromModule("intellij.android.artwork","resources/device-art-resources", "lib/device-art-resources")
-      withResourceFromModule("intellij.android","lib/sampleData", "lib/sampleData")
+      withResourceFromModule("intellij.android.core","lib/sampleData", "lib/sampleData")
       withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/linux", "lib/libwebp/linux")
       withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/mac", "lib/libwebp/mac")
       withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/win", "lib/libwebp/win")

@@ -531,6 +531,7 @@ public class CommonCodeStyleSettings {
    * or
    * "f()"
    */
+  @Property(externalName = "space_within_empty_method_call_parentheses")
   public boolean SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = false;
 
   /**
@@ -545,6 +546,7 @@ public class CommonCodeStyleSettings {
    * or
    * "void f()"
    */
+  @Property(externalName = "space_within_empty_method_parentheses")
   public boolean SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = false;
 
   /**
@@ -629,6 +631,7 @@ public class CommonCodeStyleSettings {
    * or
    * "int X[] {}"
    */
+  @Property(externalName = "space_within_empty_array_initializer_braces")
   public boolean SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES = false;
 
   public boolean SPACE_AFTER_TYPE_CAST = true;
@@ -921,6 +924,7 @@ public class CommonCodeStyleSettings {
   public int PARAMETER_ANNOTATION_WRAP = DO_NOT_WRAP;
   public int VARIABLE_ANNOTATION_WRAP = DO_NOT_WRAP;
 
+  @Property(externalName = "space_before_annotation_parameter_list")
   public boolean SPACE_BEFORE_ANOTATION_PARAMETER_LIST = false;
   public boolean SPACE_WITHIN_ANNOTATION_PARENTHESES = false;
 

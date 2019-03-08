@@ -17,13 +17,17 @@ Groovy script
     Open block
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
-      Reference expression
-        PsiElement(identifier)('a')
-      PsiWhiteSpace(' ')
-      PsiErrorElement:'->' unexpected
+      Lambda expression
+        Parameter list
+          Parameter
+            Modifiers
+              <empty list>
+            PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
         PsiElement(->)('->')
-      PsiWhiteSpace(' ')
-      Reference expression
-        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        Lambda body
+          Reference expression
+            PsiElement(identifier)('a')
       PsiElement(new line)('\n')
       PsiElement(})('}')

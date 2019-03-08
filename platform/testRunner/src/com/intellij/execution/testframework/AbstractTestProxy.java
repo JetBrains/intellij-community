@@ -171,6 +171,16 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return null;
   }
 
+  @Override
+  protected DiffHyperlink createHyperlink(String expected,
+                                          String actual,
+                                          String filePath,
+                                          final String actualFilePath, final boolean printOneLine) {
+    DiffHyperlink hyperlink = super.createHyperlink(expected, actual, filePath, actualFilePath, printOneLine);
+    hyperlink.setTestProxyName(getName());
+    return hyperlink;
+  }
+
   @Nullable
   public String getLocationUrl() {
     return null;

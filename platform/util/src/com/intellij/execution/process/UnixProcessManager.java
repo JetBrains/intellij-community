@@ -145,9 +145,9 @@ public class UnixProcessManager {
       LOG.debug("Sending signal " + signal + " to process tree with root PID " + processId);
     }
 
-    final Ref<Integer> foundPid = new Ref<Integer>();
+    final Ref<Integer> foundPid = new Ref<>();
     final ProcessInfo processInfo = new ProcessInfo();
-    final List<Integer> childrenPids = new ArrayList<Integer>();
+    final List<Integer> childrenPids = new ArrayList<>();
 
     findChildProcesses(ourPid, processId, foundPid, processInfo, childrenPids);
 
@@ -176,33 +176,30 @@ public class UnixProcessManager {
                                          final ProcessInfo processInfo,
                                          final List<? super Integer> childrenPids) {
     final Ref<Boolean> ourPidFound = Ref.create(false);
-    processPSOutput(getPSCmd(false), new Processor<String>() {
-      @Override
-      public boolean process(String s) {
-        StringTokenizer st = new StringTokenizer(s, " ");
+    processPSOutput(getPSCmd(false), s -> {
+      StringTokenizer st = new StringTokenizer(s, " ");
 
-        int parent_pid = Integer.parseInt(st.nextToken());
-        int pid = Integer.parseInt(st.nextToken());
+      int parent_pid = Integer.parseInt(st.nextToken());
+      int pid = Integer.parseInt(st.nextToken());
 
-        processInfo.register(pid, parent_pid);
+      processInfo.register(pid, parent_pid);
 
-        if (parent_pid == process_pid) {
-          childrenPids.add(pid);
-        }
-
-        if (pid == our_pid) {
-          ourPidFound.set(true);
-        }
-        else if (pid == process_pid) {
-          if (parent_pid == our_pid || our_pid == -1) {
-            foundPid.set(pid);
-          }
-          else {
-            throw new IllegalStateException("Process (pid=" + process_pid + ") is not our child(our pid = " + our_pid + ")");
-          }
-        }
-        return false;
+      if (parent_pid == process_pid) {
+        childrenPids.add(pid);
       }
+
+      if (pid == our_pid) {
+        ourPidFound.set(true);
+      }
+      else if (pid == process_pid) {
+        if (parent_pid == our_pid || our_pid == -1) {
+          foundPid.set(pid);
+        }
+        else {
+          throw new IllegalStateException("Process (pid=" + process_pid + ") is not our child(our pid = " + our_pid + ")");
+        }
+      }
+      return false;
     });
     if (our_pid != -1 && !ourPidFound.get()) {
       throw new IllegalStateException("IDE pid is not found in ps list(" + our_pid + ")");
@@ -224,10 +221,8 @@ public class UnixProcessManager {
   }
 
   private static void processCommandOutput(Process process, Processor<? super String> processor, boolean skipFirstLine, boolean throwOnError) throws IOException {
-    BufferedReader stdOutput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-    try {
-      BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-      try {
+    try (BufferedReader stdOutput = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+      try (BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
         if (skipFirstLine) {
           stdOutput.readLine(); //ps output header
         }
@@ -247,12 +242,6 @@ public class UnixProcessManager {
           throw new IOException("Error reading ps output:" + errorStr.toString());
         }
       }
-      finally {
-        stdError.close();
-      }
-    }
-    finally {
-      stdOutput.close();
     }
   }
 
@@ -278,11 +267,11 @@ public class UnixProcessManager {
   }
 
   private static class ProcessInfo {
-    private final Map<Integer, List<Integer>> BY_PARENT = new TreeMap<Integer, List<Integer>>(); // pid -> list of children pids
+    private final Map<Integer, List<Integer>> BY_PARENT = new TreeMap<>(); // pid -> list of children pids
 
     public void register(Integer pid, Integer parentPid) {
       List<Integer> children = BY_PARENT.get(parentPid);
-      if (children == null) BY_PARENT.put(parentPid, children = new LinkedList<Integer>());
+      if (children == null) BY_PARENT.put(parentPid, children = new LinkedList<>());
       children.add(pid);
     }
 

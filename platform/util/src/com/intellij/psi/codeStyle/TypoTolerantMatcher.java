@@ -753,7 +753,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     }
 
     void addError(int index, @NotNull Error error) {
-      if (myErrors == null) myErrors = new SmartList<Pair<Integer, Error>>();
+      if (myErrors == null) myErrors = new SmartList<>();
       Pair<Integer, Error> pair = Pair.create(index, error);
       myErrors.add(pair);
 
@@ -842,17 +842,14 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     }
 
     public boolean affects(final int index) {
-      return !processErrors(0, index + 1, new Processor<Pair<Integer, Error>>() {
-        @Override
-        public boolean process(Pair<Integer, Error> error) {
-          if (error.first == index) return false;
-          if (error.first == index - 1 && error.second == SwapError.instance) return false;
-          if (error.first < index) {
-            if (error.second instanceof MissError) return false;
-            //todo support extra
-          }
-          return true;
+      return !processErrors(0, index + 1, error -> {
+        if (error.first == index) return false;
+        if (error.first == index - 1 && error.second == SwapError.instance) return false;
+        if (error.first < index) {
+          if (error.second instanceof MissError) return false;
+          //todo support extra
         }
+        return true;
       });
     }
 
@@ -871,15 +868,12 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     }
 
     public int length(char[] pattern) {
-      final Ref<Integer> ref = new Ref<Integer>(pattern.length);
-      processErrors(0, Integer.MAX_VALUE, new Processor<Pair<Integer, Error>>() {
-        @Override
-        public boolean process(Pair<Integer, Error> error) {
-          if (error.second instanceof MissError) {
-            ref.set(ref.get() + 1);
-          }
-          return true;
+      final Ref<Integer> ref = new Ref<>(pattern.length);
+      processErrors(0, Integer.MAX_VALUE, error -> {
+        if (error.second instanceof MissError) {
+          ref.set(ref.get() + 1);
         }
+        return true;
       });
       return ref.get();
     }

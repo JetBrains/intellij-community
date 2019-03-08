@@ -19,7 +19,7 @@ class EditorConfigRemoveDeprecatedElementQuickFix : LocalQuickFix {
     val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(element::delete)
     ApplicationManager.getApplication().invokeLater {
-      CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, project, editor, 0, false)
+      CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, project, editor, 0)
     }
   }
 }

@@ -194,20 +194,20 @@ public class PersistentFsTest extends PlatformTestCase {
     VirtualFile projectStructure = createTestProjectStructure();
     String testName = getTestName(false);
 
-    // wrt persistence subDir becomes partially loaded and subsubDir becomes fully loaded
+    // wrt persistence subDir becomes partially loaded and subSubDir becomes fully loaded
     File nestedDirOutsideTheProject = new File(projectStructure.getPath() + "../../../"+testName + "/subDir", "subSubDir").getCanonicalFile();
     Disposable disposable = null;
 
     try {
-      boolean atleastSecondRun = nestedDirOutsideTheProject.getParentFile().getParentFile().exists();
+      boolean atLeastSecondRun = nestedDirOutsideTheProject.getParentFile().getParentFile().exists();
       StringBuilder eventLog = new StringBuilder();
 
-      if (atleastSecondRun) {
+      if (atLeastSecondRun) {
         disposable = Disposer.newDisposable();
         getProject().getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
           @Override
           public void before(@NotNull List<? extends VFileEvent> events) {
-            for(VFileEvent event:events) {
+            for (VFileEvent event : events) {
               if (event instanceof VFileDeleteEvent) process(((VFileDeleteEvent)event).getFile());
             }
           }
@@ -215,7 +215,7 @@ public class PersistentFsTest extends PlatformTestCase {
             String path = file.getPath();
             eventLog.append(path.substring(path.indexOf(testName) + testName.length() + 1)).append("\n");
             Iterable<VirtualFile> files = ((NewVirtualFile)file).iterInDbChildren();
-            for(VirtualFile nested:files) process(nested);
+            for (VirtualFile nested : files) process(nested);
           }
         });
       }
@@ -224,17 +224,17 @@ public class PersistentFsTest extends PlatformTestCase {
       VirtualFile nestedDirOutsideTheProjectFile = VfsUtil.createDirectories(nestedDirOutsideTheProject.getPath());
       WriteAction.run(() -> nestedDirOutsideTheProjectFile.createChildData(null, "Foo.txt"));
 
-      // subsubDir becomes fully loaded wrt persistence
+      // subSubDir becomes fully loaded wrt persistence
       nestedDirOutsideTheProjectFile.getChildren();
 
-      if (atleastSecondRun) {
+      if (atLeastSecondRun) {
         assertEquals("subDir\n" +
                      "subDir/subSubDir\n" +
                      "subDir/subSubDir/Foo.txt\n",
-                     eventLog.toString()
-        );
+                     eventLog.toString());
       }
-    } finally {
+    }
+    finally {
       if (disposable != null) Disposer.dispose(disposable);
       // remove <testName>/subDir via java.io to have vfs events on next test launch
       FileUtil.delete(nestedDirOutsideTheProject.getParentFile());
@@ -342,7 +342,7 @@ public class PersistentFsTest extends PlatformTestCase {
 
       private void log(String msg, @NotNull List<? extends VFileEvent> events) {
         List<String> names = ContainerUtil.map(events, e -> e.getClass().getSimpleName() + "->" + PathUtil.getFileName(e.getPath()));
-        log.append(msg).append(names).append("\n");
+        log.append(msg).append(names).append('\n');
       }
 
       @Override
@@ -396,8 +396,7 @@ public class PersistentFsTest extends PlatformTestCase {
                 "After:[VFileDeleteEvent->test.txt]\n",
 
                 new VFileContentChangeEvent(this, vFile.getParent(), 0, 0, false),
-                new VFileDeleteEvent(this, vFile, false)
-    );
+                new VFileDeleteEvent(this, vFile, false));
   }
 
   public void testProcessNestedDeletions() throws IOException {
@@ -417,8 +416,7 @@ public class PersistentFsTest extends PlatformTestCase {
 
                 new VFileDeleteEvent(this, testTxt, false),
                 new VFileDeleteEvent(this, testTxt.getParent(), false),
-                new VFileDeleteEvent(this, test2Txt, false)
-    );
+                new VFileDeleteEvent(this, test2Txt, false));
   }
 
   public void testProcessCompositeMoveEvents() throws IOException {
@@ -438,8 +436,7 @@ public class PersistentFsTest extends PlatformTestCase {
                 "After:[VFileDeleteEvent->d]\n",
 
                 new VFileMoveEvent(this, testTxt, newParent),
-                new VFileDeleteEvent(this, newParent, false)
-    );
+                new VFileDeleteEvent(this, newParent, false));
   }
 
   public void testProcessCompositeCopyEvents() throws IOException {
@@ -459,8 +456,7 @@ public class PersistentFsTest extends PlatformTestCase {
                 "After:[VFileDeleteEvent->test.txt]\n",
 
                 new VFileCopyEvent(this, testTxt, newParent,"new.txt"),
-                new VFileDeleteEvent(this, testTxt, false)
-    );
+                new VFileDeleteEvent(this, testTxt, false));
   }
 
   public void testProcessCompositeRenameEvents() throws IOException {
@@ -480,8 +476,6 @@ public class PersistentFsTest extends PlatformTestCase {
                 "After:[VFilePropertyChangeEvent->test2.txt]\n",
 
                 new VFileDeleteEvent(this, test2Txt, false),
-                new VFilePropertyChangeEvent(this, testTxt, VirtualFile.PROP_NAME, file.getName(), file2.getName(), false)
-    );
+                new VFilePropertyChangeEvent(this, testTxt, VirtualFile.PROP_NAME, file.getName(), file2.getName(), false));
   }
-
 }

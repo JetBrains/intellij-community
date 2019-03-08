@@ -51,6 +51,6 @@ public class NotNullLazyKey<T,H extends UserDataHolder> extends Key<T>{
 
   @NotNull
   public static <T,H extends UserDataHolder> NotNullLazyKey<T,H> create(@NonNls @NotNull String name, @NotNull NotNullFunction<? super H, ? extends T> function) {
-    return new NotNullLazyKey<T,H>(name, function);
+    return new NotNullLazyKey<>(name, function);
   }
 }

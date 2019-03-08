@@ -70,7 +70,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
 
   @Override
   public boolean isAcceptableNamedParent(@NotNull PsiElement parent) {
-    return !(parent instanceof PsiDocTag);
+    return !(parent instanceof PsiDocTag) && !(parent instanceof PsiAnonymousClass);
   }
 
   @Override

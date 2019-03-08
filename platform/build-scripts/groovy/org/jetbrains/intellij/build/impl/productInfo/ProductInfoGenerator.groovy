@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.productInfo
 
 import com.google.gson.GsonBuilder
@@ -15,14 +15,20 @@ import org.jetbrains.intellij.build.OsFamily
 @CompileStatic
 class ProductInfoGenerator {
   public static final String FILE_NAME = "product-info.json"
+
   private final BuildContext context
 
   ProductInfoGenerator(BuildContext context) {
     this.context = context
   }
 
-  void generateProductJson(@NotNull String targetDirectory, @NotNull String relativePathToBin, @Nullable String startupWmClass, @NotNull String launcherPath,
-                           @Nullable String javaExecutablePath, @NotNull String vmOptionsFilePath, @NotNull OsFamily os) {
+  void generateProductJson(@NotNull String targetDirectory,
+                           @NotNull String relativePathToBin,
+                           @Nullable String startupWmClass,
+                           @NotNull String launcherPath,
+                           @Nullable String javaExecutablePath,
+                           @NotNull String vmOptionsFilePath,
+                           @NotNull OsFamily os) {
     generateMultiPlatformProductJson(targetDirectory, relativePathToBin, [
       new ProductInfoLaunchData(
         os: os.osName,

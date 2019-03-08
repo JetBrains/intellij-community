@@ -298,11 +298,9 @@
   <action id="RecentFiles">
     <keyboard-shortcut first-keystroke="control E"/>
   </action>
-  <action id="RecentChangedFiles">
-    <keyboard-shortcut first-keystroke="control shift E"/>
-  </action>
+  <action id="RecentChangedFiles"/>
   <action id="RecentLocations">
-    <keyboard-shortcut first-keystroke="control alt shift E"/>
+    <keyboard-shortcut first-keystroke="control shift E"/>
   </action>
   <action id="QuickChangeScheme">
     <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
@@ -580,6 +578,12 @@
   </action>
   <action id="Diff.FocusOppositePaneAndScroll">
     <keyboard-shortcut first-keystroke="control shift TAB"/>
+  </action>
+  <action id="Diff.ApplyLeftSide">
+    <keyboard-shortcut first-keystroke="alt shift LEFT"/>
+  </action>
+  <action id="Diff.ApplyRightSide">
+    <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
   </action>
   <action id="Move">
     <keyboard-shortcut first-keystroke="F6"/>

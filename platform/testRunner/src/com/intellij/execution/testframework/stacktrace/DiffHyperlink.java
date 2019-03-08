@@ -43,6 +43,7 @@ public class DiffHyperlink implements Printable {
   protected final String myActualFilePath;
   private final boolean myPrintOneLine;
   private final HyperlinkInfo myDiffHyperlink = new DiffHyperlinkInfo();
+  private String myTestProxyName;
 
 
   public DiffHyperlink(final String expected, final String actual, final String filePath) {
@@ -68,12 +69,16 @@ public class DiffHyperlink implements Printable {
     myPrintOneLine = printOneLine;
   }
 
+  public void setTestProxyName(String name) {
+    myTestProxyName = name;
+  }
+
   private static String normalizeSeparators(String filePath) {
     return filePath == null ? null : filePath.replace(File.separatorChar, '/');
   }
 
   protected String getTitle() {
-    return ExecutionBundle.message("strings.equal.failed.dialog.title");
+    return ExecutionBundle.message("strings.equal.failed.dialog.title") + (myTestProxyName != null ? " (" + myTestProxyName + ")" : "");
   }
 
   public String getDiffTitle() {

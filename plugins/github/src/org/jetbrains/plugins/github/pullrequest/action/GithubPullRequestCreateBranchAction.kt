@@ -32,7 +32,7 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
 
     val hashesFuture = e.getRequiredData(GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER).branchFetchRequest
     val options = GitBranchUtil.getNewBranchNameFromUser(project, repositoryList,
-                                                         "Checkout New Branch From Pull Request #${pullRequest.number}",
+                                                         "Create New Branch From Pull Request #${pullRequest.number}",
                                                          "pull/${pullRequest.number}") ?: return
 
     if (!options.checkout) {

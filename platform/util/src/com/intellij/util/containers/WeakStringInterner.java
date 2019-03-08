@@ -27,7 +27,7 @@ import java.util.Set;
  * @author peter
  */
 public class WeakStringInterner extends StringInterner {
-  private final WeakInterner<String> myDelegate = new WeakInterner<String>();
+  private final WeakInterner<String> myDelegate = new WeakInterner<>();
   
   @NotNull
   @Override

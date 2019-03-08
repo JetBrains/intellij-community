@@ -57,7 +57,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
 
   public static void invokeCompletion(@NotNull CompletionType completionType,
                                       boolean autopopup,
-                                      Project project, Editor editor, int time, boolean restart) {
+                                      Project project, Editor editor, int time) {
     if (editor.isDisposed()) {
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
       return;
@@ -78,7 +78,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
     Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile);
     try {
-      CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false).invokeCompletion(project, newEditor, time, false, restart);
+      CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false).invokeCompletion(project, newEditor, time, false);
     }
     catch (IndexNotReadyException ignored) {
     }

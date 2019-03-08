@@ -25,9 +25,9 @@ public class Registry  {
   @NonNls
   public static final String REGISTRY_BUNDLE = "misc.registry";
 
-  private final Map<String, String> myUserProperties = new LinkedHashMap<String, String>();
-  private final ConcurrentMap<String, RegistryValue> myValues = new ConcurrentHashMap<String, RegistryValue>();
-  private final Map<String, RegistryKeyDescriptor> myContributedKeys = new HashMap<String, RegistryKeyDescriptor>();
+  private final Map<String, String> myUserProperties = new LinkedHashMap<>();
+  private final ConcurrentMap<String, RegistryValue> myValues = new ConcurrentHashMap<>();
+  private final Map<String, RegistryKeyDescriptor> myContributedKeys = new HashMap<>();
 
   private static final Registry ourInstance = new Registry();
 
@@ -86,7 +86,7 @@ public class Registry  {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(REGISTRY_BUNDLE);
-      ourBundle = new SoftReference<ResourceBundle>(bundle);
+      ourBundle = new SoftReference<>(bundle);
     }
     return bundle;
   }
@@ -151,7 +151,7 @@ public class Registry  {
     final ResourceBundle bundle = getBundle();
     final Enumeration<String> keys = bundle.getKeys();
 
-    List<RegistryValue> result = new ArrayList<RegistryValue>();
+    List<RegistryValue> result = new ArrayList<>();
 
     Map<String, RegistryKeyDescriptor> contributedKeys = getInstance().myContributedKeys;
     while (keys.hasMoreElements()) {
@@ -168,7 +168,7 @@ public class Registry  {
   }
 
   void restoreDefaults() {
-    Map<String, String> old = new HashMap<String, String>(myUserProperties);
+    Map<String, String> old = new HashMap<>(myUserProperties);
     for (String each : old.keySet()) {
       try {
         get(each).resetToDefault();

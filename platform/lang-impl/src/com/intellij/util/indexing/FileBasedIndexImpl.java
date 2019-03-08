@@ -1021,7 +1021,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         minMax[0] = minMax[1] = set.get(0);
       }
       set.forEach(value -> {
-        if (value < 0) value = -value;
         minMax[0] = Math.min(minMax[0], value);
         minMax[1] = Math.max(minMax[1], value);
         return true;
@@ -1030,7 +1029,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       myMinId = minMax[0];
       myBitMask = new long[((myMaxId - myMinId) >> SHIFT) + 1];
       set.forEach(value -> {
-        if (value < 0) value = -value;
         value -= myMinId;
         myBitMask[value >> SHIFT] |= (1L << (value & MASK));
         return true;
@@ -1806,9 +1804,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         if (getInputFilter(indexId).acceptInput(file)) {
           if (fileContent == null) {
             fileContent = new FileContentImpl(file);
-            if (fileId < 0) {
-              fileId = -fileId;
-            }
           }
           updateSingleIndex(indexId, file, fileId, fileContent);
         }
@@ -2115,10 +2110,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
       for(VirtualFile file:files) {
         int fileId = ((VirtualFileWithId)file).getId();
-        if (fileId > 0) {
-          if (usedFileIds.get(fileId)) continue;
-          usedFileIds.set(fileId);
-        }
+        if (usedFileIds.get(fileId)) continue;
+        usedFileIds.set(fileId);
+        
         if (file.getFileSystem() instanceof LocalFileSystem) localFileSystemFiles.add(file);
         else archiveFiles.add(file);
       }

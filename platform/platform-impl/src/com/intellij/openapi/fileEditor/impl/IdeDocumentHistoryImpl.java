@@ -311,6 +311,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     removeInvalidFilesFromStacks();
     if (myBackPlaces.isEmpty()) return;
     final PlaceInfo info = myBackPlaces.removeLast();
+    myProject.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(info, false);
 
     PlaceInfo current = getCurrentPlaceInfo();
     if (current != null) myForwardPlaces.add(current);
@@ -383,8 +384,30 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   @Override
+  @NotNull
+  public List<PlaceInfo> getBackPlaces() {
+    return ContainerUtil.immutableList(myBackPlaces);
+  }
+
+  @Override
   public List<PlaceInfo> getChangePlaces() {
     return ContainerUtil.immutableList(myChangePlaces);
+  }
+
+  @Override
+  public void removeBackPlace(@NotNull Project project, @NotNull PlaceInfo placeInfo) {
+    boolean removed = myBackPlaces.remove(placeInfo);
+    if (removed) {
+      project.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(placeInfo, false);
+    }
+  }
+
+  @Override
+  public void removeChangePlace(@NotNull Project project, @NotNull PlaceInfo placeInfo) {
+    boolean removed = myChangePlaces.remove(placeInfo);
+    if (removed) {
+      project.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(placeInfo, true);
+    }
   }
 
   @Override
@@ -493,7 +516,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     list.add(next);
     listener.recentPlaceAdded(next, isChanged);
     if (list.size() > limit) {
-      list.removeFirst();
+      PlaceInfo first = list.removeFirst();
+      listener.recentPlaceRemoved(first, isChanged);
     }
   }
 
@@ -543,12 +567,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     public String toString() {
       return getFile().getName() + " " + getNavigationState();
     }
-  }
-
-  @Override
-  @NotNull
-  public List<PlaceInfo> getBackPlaces() {
-    return ContainerUtil.immutableList(myBackPlaces);
   }
 
   @Override

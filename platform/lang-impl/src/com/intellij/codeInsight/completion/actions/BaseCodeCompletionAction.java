@@ -33,7 +33,7 @@ public abstract class BaseCodeCompletionAction extends DumbAwareAction implement
     Project project = editor.getProject();
     assert project != null;
     InputEvent inputEvent = e.getInputEvent();
-    createHandler(type, true, false, true).invokeCompletion(project, editor, time, inputEvent != null && inputEvent.getModifiers() != 0, false);
+    createHandler(type, true, false, true).invokeCompletion(project, editor, time, inputEvent != null && inputEvent.getModifiers() != 0);
   }
 
   @NotNull

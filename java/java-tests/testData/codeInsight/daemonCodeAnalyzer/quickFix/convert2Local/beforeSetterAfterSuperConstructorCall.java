@@ -1,4 +1,4 @@
-// "Convert field to local variable in method 'FieldCanBeLocalTest'" "true"
+// "Convert field to local variable in constructor" "true"
 
 import javax.swing.*;
 

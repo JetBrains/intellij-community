@@ -380,12 +380,8 @@ class JBZipOutputStream {
     if (entry.getMethod() == ZipEntry.DEFLATED) {
       def.setLevel(level);
       final BufferExposingByteArrayOutputStream compressedBytesStream = new BufferExposingByteArrayOutputStream();
-      final DeflaterOutputStream stream = new DeflaterOutputStream(compressedBytesStream, def);
-      try {
+      try (DeflaterOutputStream stream = new DeflaterOutputStream(compressedBytesStream, def)) {
         stream.write(bytes);
-      }
-      finally {
-        stream.close();
       }
       outputBytesLength = compressedBytesStream.size();
       outputBytes = compressedBytesStream.getInternalBuffer();

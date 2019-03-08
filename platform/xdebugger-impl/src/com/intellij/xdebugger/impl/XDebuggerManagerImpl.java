@@ -1,7 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.AppTopics;
+import com.intellij.codeInsight.hint.LineTooltipRenderer;
+import com.intellij.codeInsight.hint.TooltipController;
+import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
@@ -12,6 +15,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -36,17 +40,22 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
@@ -355,11 +364,13 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     myExecutionPointHighlighter.navigateTo();
   }
 
+  private static final TooltipGroup RUN_TO_CURSOR_TOOLTIP_GROUP = new TooltipGroup("RUN_TO_CURSOR_TOOLTIP_GROUP", 0);
+
   private class DebuggerEditorListener implements EditorMouseMotionListener, EditorMouseListener {
     RangeHighlighter myCurrentHighlighter;
 
     boolean isEnabled(@NotNull EditorMouseEvent e) {
-      if (e.getArea() != EditorMouseEventArea.LINE_NUMBERS_AREA) {
+      if (e.getArea() != EditorMouseEventArea.LINE_NUMBERS_AREA || e.getEditor().getProject() != myProject) {
         return false;
       }
       XDebugSessionImpl session = getCurrentSession();
@@ -374,6 +385,11 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
       }
       removeHighlighter(e);
 
+      int lineNumber = getLineNumber(e);
+      if (lineNumber < 0) {
+        return;
+      }
+
       TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES);
       Color backgroundColor = attributes.getBackgroundColor();
       if (backgroundColor != null) {
@@ -381,9 +397,17 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
         attributes.setBackgroundColor(ColorUtil.softer(backgroundColor));
       }
 
-      myCurrentHighlighter = e.getEditor().getMarkupModel().addLineHighlighter(getLineNumber(e),
-                                                                               DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
-                                                                               attributes);
+      Editor editor = e.getEditor();
+      myCurrentHighlighter = editor.getMarkupModel().addLineHighlighter(lineNumber,
+                                                                        DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
+                                                                        attributes);
+
+      HintHint hint = new HintHint(e.getMouseEvent()).setAwtTooltip(true).setPreferredPosition(Balloon.Position.above);
+      String text = UIUtil.removeMnemonic(ActionsBundle.actionText(XDebuggerActions.RUN_TO_CURSOR));
+      TooltipController.getInstance()
+        .showTooltipByMouseMove(editor, new RelativePoint(e.getMouseEvent()), new LineTooltipRenderer(text, new Object[]{text}), false,
+                                RUN_TO_CURSOR_TOOLTIP_GROUP, hint);
+
       IdeGlassPaneUtil.find(e.getMouseEvent().getComponent()).setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR), this);
     }
 
@@ -395,6 +419,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     private void removeHighlighter(@NotNull EditorMouseEvent e) {
       if (myCurrentHighlighter != null) {
         myCurrentHighlighter.dispose();
+        TooltipController.getInstance().cancelTooltip(RUN_TO_CURSOR_TOOLTIP_GROUP, e.getMouseEvent(), true);
         IdeGlassPaneUtil.find(e.getMouseEvent().getComponent()).setCursor(null, this);
         myCurrentHighlighter = null;
       }
@@ -403,6 +428,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     private int getLineNumber(EditorMouseEvent event) {
       Editor editor = event.getEditor();
       int line = editor.yToVisualLine(event.getMouseEvent().getY());
+      if (line >= ((EditorImpl)editor).getVisibleLineCount()) {
+        return -1;
+      }
       int offset = ((EditorImpl)editor).visualLineStartOffset(line);
       int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, offset);
       return editor.getDocument().getLineNumber(lineStartOffset);
@@ -411,9 +439,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     @Override
     public void mousePressed(@NotNull EditorMouseEvent e) {
       if (e.getMouseEvent().getButton() == MouseEvent.BUTTON1 && isEnabled(e)) {
+        int lineNumber = getLineNumber(e);
         XDebugSessionImpl session = getCurrentSession();
-        if (session != null) {
-          session.runToPosition(XSourcePositionImpl.create(((EditorEx)e.getEditor()).getVirtualFile(), getLineNumber(e)), false);
+        if (session != null && lineNumber >= 0) {
+          session.runToPosition(XSourcePositionImpl.create(((EditorEx)e.getEditor()).getVirtualFile(), lineNumber), false);
           e.consume();
         }
       }

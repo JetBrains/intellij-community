@@ -83,8 +83,6 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
    * their saved text chunks into {@link PyExpressionCodeFragment} and extracting top-level expressions
    * from them. Otherwise, get suitable expressions directly from AST, but process them in the same way as
    * if they were going to be saved in the stub.
-   *
-   * @see PyClassStub#getSubscriptedSuperClasses()
    */
   @NotNull
   public static List<PySubscriptionExpression> getSubscriptedSuperClassesStubLike(@NotNull PyClass pyClass) {
@@ -92,7 +90,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     if (classStub == null) {
       return getSubscriptedSuperClasses(pyClass);
     }
-    return ContainerUtil.mapNotNull(classStub.getSubscriptedSuperClasses(),
+    return ContainerUtil.mapNotNull(classStub.getSuperClassesText(),
                                     x -> as(PyUtil.createExpressionFromFragment(x, pyClass.getContainingFile()),
                                             PySubscriptionExpression.class));
   }

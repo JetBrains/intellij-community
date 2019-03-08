@@ -282,14 +282,11 @@ public class DefaultJDOMExternalizer {
       }
       catch (NoSuchFieldException ignore) {
       }
-      catch (SecurityException ex) {
+      catch (SecurityException | InstantiationException ex) {
         throw new InvalidDataException();
       }
       catch (IllegalAccessException ex) {
         throw new InvalidDataException(ex);
-      }
-      catch (InstantiationException ex) {
-        throw new InvalidDataException();
       }
     }
   }

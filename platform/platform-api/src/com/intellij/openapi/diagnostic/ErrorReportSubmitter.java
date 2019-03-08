@@ -55,7 +55,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    */
   public boolean submit(@NotNull IdeaLoggingEvent[] events,
                         @Nullable String additionalInfo,
-                        @Nullable Component parentComponent,
+                        @NotNull Component parentComponent,
                         @NotNull Consumer<SubmittedReportInfo> consumer) {
     //noinspection deprecation
     return trySubmitAsync(events, additionalInfo, parentComponent, consumer);

@@ -58,7 +58,11 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitClosure(@NotNull GrClosableBlock closure) {
-    visitStatement(closure);
+    visitFunctionalExpression(closure);
+  }
+
+  public void visitFunctionalExpression(@NotNull GrFunctionalExpression expression) {
+    visitExpression(expression);
   }
 
   public void visitOpenBlock(@NotNull GrOpenBlock block) {
@@ -66,11 +70,11 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitLambdaExpression(@NotNull GrLambdaExpression expression) {
-    visitExpression(expression);
+    visitFunctionalExpression(expression);
   }
 
-  public void visitLambdaBlock(@NotNull GrCodeBlock block) {
-    visitElement(block);
+  public void visitLambdaBody(@NotNull GrLambdaBody body) {
+    visitElement(body);
   }
 
   public void visitEnumConstants(@NotNull GrEnumConstantList enumConstantsSection) {

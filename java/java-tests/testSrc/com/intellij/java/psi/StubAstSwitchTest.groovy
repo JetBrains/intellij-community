@@ -290,7 +290,7 @@ class B {
     List<PsiJavaFileImpl> files = fileNumbers.collect {
       (PsiJavaFileImpl)myFixture.addFileToProject("a${it}.java", "import foo.bar; class A{}")
     }
-    for (iteration in 0..3) {
+    for (iteration in 0..<1) {
       GCUtil.tryGcSoftlyReachableObjects()
       files.each { assert !it.treeElement }
 

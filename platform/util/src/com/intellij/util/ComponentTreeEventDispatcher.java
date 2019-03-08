@@ -41,18 +41,15 @@ public class ComponentTreeEventDispatcher<T extends EventListener> {
   }
 
   public static <T extends EventListener> ComponentTreeEventDispatcher<T> create(@Nullable Component root, @NotNull Class<T> listenerClass) {
-    return new ComponentTreeEventDispatcher<T>(root, listenerClass);
+    return new ComponentTreeEventDispatcher<>(root, listenerClass);
   }
 
   private ComponentTreeEventDispatcher(@Nullable final Component root, @NotNull Class<T> listenerClass) {
     myListenerClass = listenerClass;
-    myMulticaster = EventDispatcher.createMulticaster(listenerClass, null, new Getter<Iterable<T>>() {
-      @Override
-      public Iterable<T> get() {
-        JBTreeTraverser<Component> traverser = uiTraverser(root);
-        if (root == null) traverser = traverser.withRoots(Arrays.asList(Window.getWindows()));
-        return traverser.postOrderDfsTraversal().filter(myListenerClass);
-      }
+    myMulticaster = EventDispatcher.createMulticaster(listenerClass, null, () -> {
+      JBTreeTraverser<Component> traverser = uiTraverser(root);
+      if (root == null) traverser = traverser.withRoots(Arrays.asList(Window.getWindows()));
+      return traverser.postOrderDfsTraversal().filter(myListenerClass);
     });
   }
 

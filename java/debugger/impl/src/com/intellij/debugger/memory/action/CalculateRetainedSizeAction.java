@@ -10,7 +10,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 
-public class CalculateRetainedSizeAction extends NativeAgentActionBase {
+public class CalculateRetainedSizeAction extends MemoryAgentActionBase {
   @Override
   protected void perform(@NotNull MemoryAgent memoryAgent,
                          @NotNull ObjectReference reference,

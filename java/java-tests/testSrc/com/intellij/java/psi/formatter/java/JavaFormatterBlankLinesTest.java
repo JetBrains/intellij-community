@@ -532,4 +532,32 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       "package com.intellij.samples;"
     );
   }
+
+  public void testEnumRbrace() {
+    getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 0;
+    getSettings().KEEP_BLANK_LINES_BEFORE_RBRACE = 2;
+    doTextTest(
+      "enum Test {\n" +
+      "  TEST1, TEST2, TEST3;\n\n\n" +
+      "}",
+      "enum Test {\n" +
+      "    TEST1, TEST2, TEST3;\n" +
+      "\n" +
+      "\n" +
+      "}"
+    );
+  }
+
+  public void testEnumRbrace2() {
+    getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 2;
+    getSettings().KEEP_BLANK_LINES_BEFORE_RBRACE = 0;
+    doTextTest(
+      "enum Test {\n" +
+      "  TEST1, TEST2, TEST3;\n\n\n" +
+      "}",
+      "enum Test {\n" +
+      "    TEST1, TEST2, TEST3;\n" +
+      "}"
+    );
+  }
 }

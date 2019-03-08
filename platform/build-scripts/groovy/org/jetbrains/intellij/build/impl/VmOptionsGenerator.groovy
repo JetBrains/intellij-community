@@ -40,7 +40,9 @@ class VmOptionsGenerator {
   static String computeCommonVmOptions(boolean isEAP) {
     String options = COMMON_VM_OPTIONS
     if (isEAP) {
-      options += " -XX:MaxJavaStackTraceDepth=-1 -XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow -ea"
+      //must be consistent with com.intellij.openapi.application.ConfigImportHelper.updateVMOptions
+      // Android Studio: modified by Change Ie7351d92 / commit 6303bdc
+      options += " -XX:MaxJavaStackTraceDepth=10000 -XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow -ea"
     } else {
       options += " -da"
     }

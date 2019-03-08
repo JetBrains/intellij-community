@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -26,7 +26,7 @@ public class NonClasspathResolveScopeEnlarger extends ResolveScopeEnlarger {
 
     String fileExtension = file.getExtension();
     if ("class".equals(fileExtension) || JavaFileType.DEFAULT_EXTENSION.equals(fileExtension)) {
-      for (PsiElementFinder finder : PsiElementFinder.EP_NAME.getExtensions(project)) {
+      for (PsiElementFinder finder : PsiElementFinder.EP.getExtensions(project)) {
         if (finder instanceof NonClasspathClassFinder) {
           final List<VirtualFile> roots = ((NonClasspathClassFinder)finder).getClassRoots();
           for (VirtualFile root : roots) {

@@ -29,7 +29,7 @@ public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupA
     myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        FileTypeUsageCounterCollector.triggerOpen(project, file.getFileType());
+        FileTypeUsageCounterCollector.triggerOpen(project, file);
       }
     });
     ApplicationManager.getApplication().getMessageBus().connect(project).subscribe(AnActionListener.TOPIC, new AnActionListener() {
@@ -48,7 +48,7 @@ public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupA
           Long lastEdit = editor.getUserData(LAST_EDIT_USAGE);
           if (lastEdit == null || System.currentTimeMillis() - lastEdit > 60 * 1000) {
             editor.putUserData(LAST_EDIT_USAGE, System.currentTimeMillis());
-            FileTypeUsageCounterCollector.triggerEdit(project, file.getFileType());
+            FileTypeUsageCounterCollector.triggerEdit(project, file);
           }
         }
       }

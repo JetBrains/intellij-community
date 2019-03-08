@@ -564,7 +564,7 @@ public class HighlightMethodUtil {
 
     if (qualifierExpression instanceof PsiReferenceExpression) {
       PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
-      if (resolve == containingClass) {
+      if (containingClass.getManager().areElementsEquivalent(resolve, containingClass)) {
         return null;
       }
 

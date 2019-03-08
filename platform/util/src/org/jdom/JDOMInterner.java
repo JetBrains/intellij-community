@@ -17,7 +17,7 @@ import static com.intellij.openapi.util.JDOMUtil.getAttributes;
 public class JDOMInterner {
   private static final Condition<Object> IS_ELEMENT = Conditions.instanceOf(Element.class);
   private final StringInterner myStrings = new StringInterner();
-  private final OpenTHashSet<Element> myElements = new OpenTHashSet<Element>(new TObjectHashingStrategy<Element>() {
+  private final OpenTHashSet<Element> myElements = new OpenTHashSet<>(new TObjectHashingStrategy<Element>() {
     @Override
     public int computeHashCode(Element e) {
       int result = e.getName().hashCode() * 31;
@@ -53,7 +53,7 @@ public class JDOMInterner {
         }
         else if (c1 instanceof Element) {
           if (!(c2 instanceof Element)) return false;
-          if (!equals((Element)c1,(Element)c2)) return false;
+          if (!equals((Element)c1, (Element)c2)) return false;
         }
         else {
           throw new RuntimeException(c1.toString());
@@ -97,7 +97,7 @@ public class JDOMInterner {
     return name.hashCode() * 31 + (value == null ? 0 : value.hashCode());
   }
 
-  private final OpenTHashSet<Text/*ImmutableText or ImmutableCDATA*/> myTexts = new OpenTHashSet<Text>(new TObjectHashingStrategy<Text>() {
+  private final OpenTHashSet<Text/*ImmutableText or ImmutableCDATA*/> myTexts = new OpenTHashSet<>(new TObjectHashingStrategy<Text>() {
     @Override
     public int computeHashCode(Text object) {
       return computeTextHashCode(object);

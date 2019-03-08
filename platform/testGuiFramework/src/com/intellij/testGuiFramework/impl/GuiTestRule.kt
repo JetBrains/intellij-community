@@ -186,7 +186,7 @@ class GuiTestRule : TestRule {
       LOG.info("tearDown: waiting for welcome frame (return if necessary)...")
       errors.addAll(thrownFromRunning(Runnable { this.returnToTheFirstStepOfWelcomeFrame() }))
       LOG.info("tearDown: collecting fatal errors from IDE...")
-      errors.addAll(GuiTestUtilKt.fatalErrorsFromIde(currentTestDateStart)) //do not add fatal errors from previous tests
+//      errors.addAll(GuiTestUtilKt.fatalErrorsFromIde(currentTestDateStart)) //do not add fatal errors from previous tests
       LOG.info("tearDown: double checking return to the first step on a welcome frame")
       if (!isWelcomeFrameFirstStep() || anyIdeFrame(Timeouts.seconds01) != null) {
         LOG.warn("tearDown: IDE cannot return to welcome frame, need to restart IDE")
@@ -220,9 +220,9 @@ class GuiTestRule : TestRule {
     //find first page with such actions like "Create New Project" without timeout
     private fun isWelcomeFrameFirstStep(timeout: org.fest.swing.timing.Timeout = Timeouts.seconds01): Boolean {
       val createNewProjectAction = GuiTestUtilKt.ignoreComponentLookupException {
-        WelcomeFrameFixture.find(robot(), timeout).apply { robot().finder().find(this@apply.target() as Container) { it is ActionLink && it.text.contains("New Project") } }
+        WelcomeFrameFixture.find(robot(), timeout).let { robot().finder().find(it.target() as Container) { it is ActionLink && it.text.contains("New Project") } }
       }
-      return createNewProjectAction?.target()?.isShowing ?: false
+      return createNewProjectAction?.isShowing ?: false
     }
 
 

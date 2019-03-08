@@ -33,6 +33,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
                              MainVcsLogUiProperties.SHOW_LONG_EDGES,
                              MainVcsLogUiProperties.BEK_SORT_TYPE,
                              CommonUiProperties.SHOW_ROOT_NAMES,
+                             MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES,
                              MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
                              MainVcsLogUiProperties.TEXT_FILTER_REGEX,
                              CommonUiProperties.COLUMN_ORDER);
@@ -48,6 +49,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     public boolean LONG_EDGES_VISIBLE = false;
     public int BEK_SORT_TYPE = 0;
     public boolean SHOW_ROOT_NAMES = false;
+    public boolean SHOW_ONLY_AFFECTED_CHANGES = false;
     @Deprecated
     public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<>();
     @Deprecated
@@ -79,6 +81,9 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     }
     else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
       return (T)Boolean.valueOf(getState().SHOW_ROOT_NAMES);
+    }
+    else if (SHOW_ONLY_AFFECTED_CHANGES.equals(property)) {
+      return (T)Boolean.valueOf(getState().SHOW_ONLY_AFFECTED_CHANGES);
     }
     else if (BEK_SORT_TYPE.equals(property)) {
       return (T)PermanentGraph.SortType.values()[getState().BEK_SORT_TYPE];
@@ -123,6 +128,9 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     }
     else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
       getState().SHOW_ROOT_NAMES = (Boolean)value;
+    }
+    else if (SHOW_ONLY_AFFECTED_CHANGES.equals(property)) {
+      getState().SHOW_ONLY_AFFECTED_CHANGES = (Boolean)value;
     }
     else if (BEK_SORT_TYPE.equals(property)) {
       getState().BEK_SORT_TYPE = ((PermanentGraph.SortType)value).ordinal();

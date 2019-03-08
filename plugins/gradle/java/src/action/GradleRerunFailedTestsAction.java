@@ -42,6 +42,7 @@ import java.util.List;
 import static com.intellij.util.containers.ContainerUtil.filterIsInstance;
 import static org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
+import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.escapeIfNeeded;
 import static org.jetbrains.plugins.gradle.util.GradleRerunFailedTasksActionUtilsKt.containsSubSequenceInSequence;
 import static org.jetbrains.plugins.gradle.util.GradleRerunFailedTasksActionUtilsKt.containsTasksInScriptParameters;
 
@@ -83,8 +84,9 @@ public class GradleRerunFailedTestsAction extends JavaRerunFailedTestsAction {
           List<List<String>> tasksToRun = new ArrayList<>();
           boolean isSpecificTask = false;
           for (List<String> tasks : foundTasksToRun) {
-            if (containsSubSequenceInSequence(runProfile.getSettings().getTaskNames(), tasks) ||
-                containsTasksInScriptParameters(runProfile.getSettings().getScriptParameters(), tasks)) {
+            List<String> escapedTasks = ContainerUtil.map(tasks, it -> escapeIfNeeded(it));
+            if (containsSubSequenceInSequence(runProfile.getSettings().getTaskNames(), escapedTasks) ||
+                containsTasksInScriptParameters(runProfile.getSettings().getScriptParameters(), escapedTasks)) {
               ContainerUtil.addAllNotNull(tasksToRun, tasks);
               isSpecificTask = true;
             }

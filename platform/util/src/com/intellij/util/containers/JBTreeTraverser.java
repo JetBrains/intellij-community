@@ -23,12 +23,12 @@ public class JBTreeTraverser<T> extends FilteredTraverserBase<T, JBTreeTraverser
 
   @NotNull
   public static <T> JBTreeTraverser<T> from(@NotNull Function<? super T, ? extends Iterable<? extends T>> treeStructure) {
-    return new JBTreeTraverser<T>(treeStructure);
+    return new JBTreeTraverser<>(treeStructure);
   }
 
   @NotNull
   public static <T> JBTreeTraverser<T> of(@NotNull Function<? super T, T[]> treeStructure) {
-    return new JBTreeTraverser<T>(Functions.compose(treeStructure, Functions.<T>wrapArray()));
+    return new JBTreeTraverser<>(Functions.compose(treeStructure, Functions.wrapArray()));
   }
 
   public JBTreeTraverser(Function<? super T, ? extends Iterable<? extends T>> treeStructure) {
@@ -42,6 +42,6 @@ public class JBTreeTraverser<T> extends FilteredTraverserBase<T, JBTreeTraverser
   @NotNull
   @Override
   protected JBTreeTraverser<T> newInstance(Meta<T> meta) {
-    return new JBTreeTraverser<T>(meta, getTree());
+    return new JBTreeTraverser<>(meta, getTree());
   }
 }

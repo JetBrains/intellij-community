@@ -3,7 +3,6 @@ package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.*
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
-import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.io.delete
 import gnu.trove.THashMap
@@ -17,11 +16,9 @@ import java.util.*
 // part of specific tests in the IcsCredentialTest
 class KeePassCredentialStoreTest {
   // we don't use in memory fs to check real file io
-  private val tempDirManager = TemporaryDirectory()
-
   @Rule
   @JvmField
-  val ruleChain = RuleChain(tempDirManager)
+  val tempDirManager = TemporaryDirectory()
 
   @Test
   fun many() {

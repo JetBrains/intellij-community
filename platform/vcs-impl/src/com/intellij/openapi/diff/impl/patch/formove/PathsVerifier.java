@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +96,10 @@ public class PathsVerifier {
     for (FilePath path : myBeforePaths) {
       final FilePath parent = path.getParentPath();
       if (parent != null) {
-        affected.add(parent.getVirtualFile());
+        VirtualFile parentFile = parent.getVirtualFile();
+        if (parentFile != null) {
+          affected.add(parentFile);
+        }
       }
     }
     return affected;
@@ -310,7 +314,6 @@ public class PathsVerifier {
       if (! checkExistsAndValid(beforeFile, myBeforeName)) {
         return false;
       }
-      assert beforeFile != null; // if beforeFile is null then checkExist returned false;
       myMovedFiles.put(beforeFile, new MovedFileData(afterFileParent, beforeFile, myPatch.getAfterFileName()));
       addPatch(myPatch, beforeFile);
       return true;
@@ -348,7 +351,8 @@ public class PathsVerifier {
                                         DelayedPrecheckContext context);
     protected abstract boolean check() throws IOException;
 
-    protected boolean checkExistsAndValid(final VirtualFile file, final String name) {
+    @Contract("null, _ -> false")
+    protected boolean checkExistsAndValid(@Nullable VirtualFile file, final String name) {
       if (file == null) {
         setErrorMessage(fileNotFoundMessage(name));
         return false;
@@ -384,7 +388,7 @@ public class PathsVerifier {
     }
   }
 
-  private void addPatch(final FilePatch patch, final VirtualFile file) {
+  private void addPatch(@NotNull FilePatch patch, @NotNull VirtualFile file) {
     if (patch instanceof TextFilePatch) {
       myTextPatches.add(new PatchAndFile(file, ApplyFilePatchFactory.create((TextFilePatch)patch)));
     }
@@ -504,6 +508,7 @@ public class PathsVerifier {
       VirtualFile nextChild = child.findChild(piece);
       if (nextChild == null) {
         nextChild = VfsUtil.createDirectories(child.getPath() + '/' + piece);
+        if (nextChild == null) throw new IOException("Can't create directory: " + piece);
         myCreatedDirectories.add(nextChild);
       }
       child = nextChild;

@@ -2,6 +2,7 @@
 package com.intellij.build.output;
 
 import com.intellij.build.BuildProgressListener;
+import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,7 @@ import java.util.function.Consumer;
 /**
  * @author Vladislav.Soroka
  */
-public class BuildOutputInstantReaderImpl implements Appendable, Closeable, BuildOutputInstantReader {
+public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
 
   private static final int MAX_LINES_BUFFER_SIZE = 50;
 
@@ -41,8 +42,8 @@ public class BuildOutputInstantReaderImpl implements Appendable, Closeable, Buil
                                       @NotNull List<BuildOutputParser> parsers) {
     myBuildId = buildId;
     myThread = new Thread(() -> {
-      Ref<MessageEvent> lastMessageRef = Ref.create();
-      Consumer<MessageEvent> messageConsumer = event -> {
+      Ref<BuildEvent> lastMessageRef = Ref.create();
+      Consumer<BuildEvent> messageConsumer = event -> {
         //do not add duplicates, e.g. sometimes same messages can be added both to stdout and stderr
         if (!event.equals(lastMessageRef.get())) {
           buildProgressListener.onEvent(event);
@@ -70,7 +71,7 @@ public class BuildOutputInstantReaderImpl implements Appendable, Closeable, Buil
   }
 
   @Override
-  public Appendable append(CharSequence csq) {
+  public BuildOutputInstantReader append(CharSequence csq) {
     for (int i = 0; i < csq.length(); i++) {
       append(csq.charAt(i));
     }
@@ -78,13 +79,13 @@ public class BuildOutputInstantReaderImpl implements Appendable, Closeable, Buil
   }
 
   @Override
-  public Appendable append(CharSequence csq, int start, int end) {
+  public BuildOutputInstantReader append(CharSequence csq, int start, int end) {
     append(csq.subSequence(start, end));
     return this;
   }
 
   @Override
-  public Appendable append(char c) {
+  public BuildOutputInstantReader append(char c) {
     if (myBuffer == null) {
       myBuffer = new StringBuilder();
     }

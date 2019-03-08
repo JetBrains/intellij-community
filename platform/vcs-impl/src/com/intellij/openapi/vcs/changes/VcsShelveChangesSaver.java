@@ -84,10 +84,11 @@ public class VcsShelveChangesSaver {
       LOG.info("load ");
       String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(VcsBundle.getString("vcs.unshelving.changes"));
-      for (ShelvedChangeList list : myShelvedLists.values()) {
-        VcsShelveUtils.doSystemUnshelve(myProject, list, myShelveManager,
-                                        VcsBundle.getString("vcs.unshelving.conflict.left"),
-                                        VcsBundle.getString("vcs.unshelving.conflict.right"));
+      for (Map.Entry<String, ShelvedChangeList> listEntry : myShelvedLists.entrySet()) {
+        VcsShelveUtils
+          .doSystemUnshelve(myProject, listEntry.getValue(), myChangeManager.findChangeList(listEntry.getKey()), myShelveManager,
+                            VcsBundle.getString("vcs.unshelving.conflict.left"),
+                            VcsBundle.getString("vcs.unshelving.conflict.right"));
       }
       myProgressIndicator.setText(oldProgressTitle);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.testFramework.fixtures.impl;
 
@@ -57,7 +57,11 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
           myCodeStyleSettingsTracker.checkForSettingsDamage();
         }
       })
-      .append(() -> PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS))
+      .append(() -> {
+        if (project != null) {
+          PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
+        }
+      })
       .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open
       .append(() -> {
         if (project != null) {

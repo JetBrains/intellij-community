@@ -15,20 +15,34 @@
  */
 package org.jetbrains.idea.maven.plugins.groovy;
 
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageSchemaDescriptor;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * @author Vladislav.Soroka
  */
-public class MavenGroovyScriptTypeDetector extends GroovyScriptTypeDetector {
-  protected MavenGroovyScriptTypeDetector() {
+public class MavenGroovyScriptTypeDetector extends GroovyScriptTypeDetector implements FileTypeUsageSchemaDescriptor {
+  public MavenGroovyScriptTypeDetector() {
     super(MavenGroovyPomScriptType.INSTANCE);
   }
 
   @Override
   public boolean isSpecificScriptFile(@NotNull GroovyFile script) {
-    return "pom".equals(script.getViewProvider().getVirtualFile().getNameWithoutExtension());
+    return isMavenGroovyScript(script.getViewProvider().getVirtualFile());
+  }
+
+  @Nullable
+  @Override
+  public String describeSchema(@NotNull VirtualFile file) {
+    return isMavenGroovyScript(file) ? "Maven Groovy" : null;
+  }
+
+  private static boolean isMavenGroovyScript(@NotNull VirtualFile file) {
+    return file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE && "pom".equals(file.getNameWithoutExtension());
   }
 }

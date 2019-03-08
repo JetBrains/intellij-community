@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.panel;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.SystemInfo;
@@ -21,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
@@ -373,6 +377,44 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
                                  ContextHelpLabel.create(myHTDescription);
           JBUI.Borders.emptyLeft(7).wrap(lbl);
           componentPanel.add(lbl);
+
+          ComponentValidator.getInstance(myComponent).ifPresent(v -> {
+              JLabel iconLabel = new JLabel();
+              JBUI.Borders.emptyLeft(7).wrap(iconLabel);
+              iconLabel.setVisible(false);
+              componentPanel.add(iconLabel);
+
+              iconLabel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                  myComponent.dispatchEvent(convertMouseEvent(e));
+                  e.consume();
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                  myComponent.dispatchEvent(convertMouseEvent(e));
+                  e.consume();
+                }
+              });
+
+              myComponent.addPropertyChangeListener("JComponent.outline", evt -> {
+                if (evt.getNewValue() == null) {
+                  iconLabel.setVisible(false);
+                  lbl.setVisible(true);
+                } else if ("warning".equals(evt.getNewValue())) {
+                  iconLabel.setIcon(AllIcons.General.BalloonWarning);
+                  iconLabel.setVisible(true);
+                  lbl.setVisible(false);
+                } else if ("error".equals(evt.getNewValue())) {
+                  iconLabel.setIcon(AllIcons.General.BalloonError);
+                  iconLabel.setVisible(true);
+                  lbl.setVisible(false);
+                }
+                componentPanel.revalidate();
+                componentPanel.repaint();
+              });
+            });
         }
         else if (!myCommentBelow) {
           comment.setBorder(getCommentBorder());
@@ -398,6 +440,14 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
       myComponent.putClientProperty(DECORATED_PANEL_PROPERTY, this);
       gc.gridy++;
+    }
+
+    private MouseEvent convertMouseEvent(MouseEvent e) {
+      Point p = e.getPoint();
+      SwingUtilities.convertPoint(e.getComponent(), p, myComponent);
+      return new MouseEvent(myComponent, e.getID(), e.getWhen(), e.getModifiers(),
+                            p.x, p.y, e.getXOnScreen(), e.getYOnScreen(),
+                            e.getClickCount(), e.isPopupTrigger(), e.getButton());
     }
   }
 }

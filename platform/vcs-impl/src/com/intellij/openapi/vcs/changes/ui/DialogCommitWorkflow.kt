@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -9,10 +9,7 @@ import com.intellij.openapi.ui.Messages.getWarningIcon
 import com.intellij.openapi.ui.Messages.showYesNoDialog
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.CommitResultHandler
-import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.getExecutorPresentableText
@@ -23,6 +20,7 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.NullableFunction
+import com.intellij.util.PairConsumer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.UIUtil.addBorder
@@ -41,6 +39,13 @@ open class DialogCommitWorkflow(val project: Project,
                                 val initialCommitMessage: String? = null,
                                 val resultHandler: CommitResultHandler? = null) {
   val isPartialCommitEnabled: Boolean = affectedVcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || executors.any { it.supportsPartialCommit() })
+
+  protected val commitContext: CommitContext = CommitContext()
+
+  // TODO Probably unify with "CommitContext"
+  private val _additionalData = PseudoMap<Any, Any>()
+  protected val additionalDataConsumer: PairConsumer<Any, Any> get() = _additionalData
+  protected val additionalData: NullableFunction<Any, Any> get() = _additionalData
 
   fun showDialog(): Boolean {
     val dialog = CommitChangeListDialog(this)
@@ -67,11 +72,7 @@ open class DialogCommitWorkflow(val project: Project,
     return true
   }
 
-  protected open fun doCommit(changeList: LocalChangeList,
-                              changes: List<Change>,
-                              commitMessage: String,
-                              handlers: List<CheckinHandler>,
-                              additionalData: NullableFunction<Any, Any>) {
+  protected open fun doCommit(changeList: LocalChangeList, changes: List<Change>, commitMessage: String, handlers: List<CheckinHandler>) {
     LOG.debug("Do actual commit")
     val committer = SingleChangeListCommitter(project, changeList, changes, commitMessage, handlers, additionalData, vcsToCommit,
                                               DIALOG_TITLE, isDefaultChangeListFullyIncluded)

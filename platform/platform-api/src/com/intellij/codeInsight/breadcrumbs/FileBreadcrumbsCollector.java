@@ -5,13 +5,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.breadcrumbs.Crumb;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows to replace the mechanism of gathering breadcrumbs for a file.
@@ -43,12 +42,11 @@ public abstract class FileBreadcrumbsCollector {
                                        @NotNull Disposable disposable,
                                        @NotNull Runnable changesHandler);
 
-  public abstract void updateCrumbs(@NotNull VirtualFile virtualFile,
-                                    Document document,
-                                    int offset,
-                                    ProgressIndicator progressIndicator,
-                                    @NotNull Consumer<Iterable<? extends Crumb>> consumer,
-                                    Boolean forcedShown);
+  @NotNull
+  public abstract Iterable<? extends Crumb> computeCrumbs(@NotNull VirtualFile virtualFile,
+                                                          @NotNull Document document,
+                                                          int offset,
+                                                          @Nullable Boolean forcedShown);
 
   public static FileBreadcrumbsCollector findBreadcrumbsCollector(Project project, VirtualFile file) {
     if (file != null) {

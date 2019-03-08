@@ -63,7 +63,7 @@ class CachingGithubUserAvatarLoader(private val progressManager: ProgressManager
       return null
     }
     catch (e: Exception) {
-      LOG.info("Error loading image from $url", e)
+      LOG.debug("Error loading image from $url", e)
       return null
     }
   }

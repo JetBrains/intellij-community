@@ -37,8 +37,8 @@ import java.util.concurrent.ConcurrentMap;
 @Deprecated
 public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K, V> {
   private final ConcurrentMap<KeyReference<K,V>, ValueReference<K,V>> myMap;
-  final ReferenceQueue<K> myKeyQueue = new ReferenceQueue<K>();
-  final ReferenceQueue<V> myValueQueue = new ReferenceQueue<V>();
+  final ReferenceQueue<K> myKeyQueue = new ReferenceQueue<>();
+  final ReferenceQueue<V> myValueQueue = new ReferenceQueue<>();
   @NotNull final TObjectHashingStrategy<? super K> myHashingStrategy;
 
   protected ConcurrentWeakKeySoftValueHashMap(int initialCapacity,
@@ -137,7 +137,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   @NotNull
   KeyReference<K,V> createKeyReference(@NotNull K k, @NotNull final V v) {
     final ValueReference<K, V> valueReference = createValueReference(v, myValueQueue);
-    WeakKey<K, V> keyReference = new WeakKey<K, V>(k, valueReference, myHashingStrategy, myKeyQueue);
+    WeakKey<K, V> keyReference = new WeakKey<>(k, valueReference, myHashingStrategy, myKeyQueue);
     if (valueReference instanceof SoftValue) {
       ((SoftValue)valueReference).myKeyReference = keyReference;
     }
@@ -146,7 +146,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   @NotNull
   protected ValueReference<K, V> createValueReference(@NotNull V value, @NotNull ReferenceQueue<? super V> queue) {
-    return new SoftValue<K, V>(value, queue);
+    return new SoftValue<>(value, queue);
   }
 
   @Override
@@ -201,12 +201,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     }
   }
 
-  private static final ThreadLocal<HardKey> HARD_KEY = new ThreadLocal<HardKey>() {
-    @Override
-    protected HardKey initialValue() {
-      return new HardKey();
-    }
-  };
+  private static final ThreadLocal<HardKey> HARD_KEY = ThreadLocal.withInitial(HardKey::new);
 
   @NotNull
   private HardKey<K,V> createHardKey(Object o) {

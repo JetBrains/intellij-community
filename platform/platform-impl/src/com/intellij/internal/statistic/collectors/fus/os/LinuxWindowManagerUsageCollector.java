@@ -2,8 +2,8 @@
 package com.intellij.internal.statistic.collectors.fus.os;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +87,7 @@ public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector
 
   @Nullable
   @Override
-  public FUSUsageContext getContext() {
-    return FUSUsageContext.OS_CONTEXT;
+  public FeatureUsageData getData() {
+    return new FeatureUsageData().addOS();
   }
 }

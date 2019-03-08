@@ -226,7 +226,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
       statement = ObjectUtils.tryCast(statements[statements.length - 1], PsiReturnStatement.class);
       if (anchor != null) {
         PsiElement gParent = anchor.getParent();
-        if (hasNameConflict(statements, anchor)) {
+        if (hasNameConflict(statements, anchor, element)) {
           gParent.addBefore(JavaPsiFacade.getElementFactory(element.getProject()).createStatementFromText(ct.text(body), anchor), anchor);
         }
         else {
@@ -246,15 +246,16 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
       ct.deleteAndRestoreComments(callExpression);
     }
   }
-
-  private static boolean hasNameConflict(PsiStatement[] statements, PsiElement anchor) {
+  
+  private static boolean hasNameConflict(PsiStatement[] statements, PsiElement anchor, PsiLambdaExpression lambda) {
+    Predicate<PsiVariable> allowedVar = variable -> PsiTreeUtil.isAncestor(lambda, variable, true);
     JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(anchor.getProject());
     return StreamEx.of(statements).select(PsiDeclarationStatement.class)
       .flatArray(PsiDeclarationStatement::getDeclaredElements)
       .select(PsiNamedElement.class)
       .map(PsiNamedElement::getName)
       .nonNull()
-      .anyMatch(name -> !name.equals(manager.suggestUniqueVariableName(name, anchor, true)));
+      .anyMatch(name -> !name.equals(manager.suggestUniqueVariableName(name, anchor, allowedVar)));
   }
 
   private static void inlineCallArguments(PsiMethodCallExpression callExpression,

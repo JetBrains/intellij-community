@@ -278,7 +278,7 @@ public abstract class InspectionRVContentProvider {
         RefElementNode node = container.createNode(context.getPresentation(toolWrapper),
                                                    model,
                                                    currentParent,
-                                                   showStructure || HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME.equals(toolWrapper.getShortName()));
+                                                   showStructure || HighlightInfoType.UNUSED_SYMBOL_DISPLAY_NAME.equals(toolWrapper.getDisplayName()));
         appendDescriptor(context, toolWrapper, container, node);
       }
     }

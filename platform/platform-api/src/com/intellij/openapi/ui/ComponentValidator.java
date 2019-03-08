@@ -208,11 +208,12 @@ public class ComponentValidator {
       validationInfo = info;
 
       if (newInfo) {
-        if (validationInfo.component != null) {
-          outlineProvider.apply(validationInfo.component).putClientProperty("JComponent.outline", validationInfo.warning ? "warning" : "error");
+        JComponent component = validationInfo.component;
+        if (component != null) {
+          outlineProvider.apply(component).putClientProperty("JComponent.outline", validationInfo.warning ? "warning" : "error");
 
-          validationInfo.component.revalidate();
-          validationInfo.component.repaint();
+          component.revalidate();
+          component.repaint();
         }
 
         if (StringUtil.isNotEmpty(validationInfo.message)) {
@@ -220,9 +221,9 @@ public class ComponentValidator {
             tipComponent.addHyperlinkListener(hyperlinkListener);
             tipComponent.addMouseListener(new TipComponentMouseListener());
             popupSize = tipComponent.getPreferredSize();
-          });
+          }).setCancelOnMouseOutCallback(e -> e.getID() == MouseEvent.MOUSE_PRESSED && !withinComponent(info, e));
 
-          getFocusable(validationInfo.component).ifPresent(fc -> {
+          getFocusable(component).ifPresent(fc -> {
             if (fc.hasFocus()) {
               showPopup();
             }
@@ -273,11 +274,10 @@ public class ComponentValidator {
     return JBPopupFactory.getInstance().createComponentPopupBuilder(tipComponent, null).
       setBorderColor(info.warning ? warningBorderColor() : errorBorderColor()).
       setCancelOnClickOutside(false).
-      setShowShadow(false).
-      setCancelOnMouseOutCallback(e -> e.getID() == MouseEvent.MOUSE_PRESSED && !withinComponent(info, e));
+      setShowShadow(false);
   }
 
-  private static boolean withinComponent(@NotNull ValidationInfo info, @NotNull MouseEvent e) {
+  public static boolean withinComponent(@NotNull ValidationInfo info, @NotNull MouseEvent e) {
     if (info.component != null && info.component.isShowing()) {
       Rectangle screenBounds = new Rectangle(info.component.getLocationOnScreen(), info.component.getSize());
       return screenBounds.contains(e.getLocationOnScreen());
@@ -324,7 +324,9 @@ public class ComponentValidator {
   }
 
   private static Optional<Component> getFocusable(Component source) {
-    return source instanceof JComboBox && !((JComboBox)source).isEditable() ?
+    return (source instanceof JComboBox && !((JComboBox)source).isEditable() ||
+            source instanceof JCheckBox ||
+            source instanceof JRadioButton) ?
            Optional.of(source) :
            UIUtil.uiTraverser(source).filter(c -> c instanceof JTextComponent && c.isFocusable()).toList().stream().findFirst();
   }

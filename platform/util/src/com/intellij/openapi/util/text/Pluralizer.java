@@ -26,7 +26,6 @@
 package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -241,12 +240,7 @@ class Pluralizer {
       {"groove", "grooves"},
       {"pickaxe", "pickaxes"},
       {"whiskey", "whiskies"}
-    }).consumeEach(new Consumer<String[]>() {
-      @Override
-      public void consume(String[] o) {
-        pluralizer.addIrregularRule(o[0], o[1]);
-      }
-    });
+    }).consumeEach(o -> pluralizer.addIrregularRule(o[0], o[1]));
 
     /*
      * Pluralization rules.
@@ -275,12 +269,7 @@ class Pluralizer {
       {"/(child)(?:ren)?$", "$1ren"},
       {"/eaux$", "$0"},
       {"/m[ae]n$", "men"},
-    }).consumeEach(new Consumer<String[]>() {
-      @Override
-      public void consume(String[] o) {
-        pluralizer.addPluralRule(o[0], o[1]);
-      }
-    });
+    }).consumeEach(o -> pluralizer.addPluralRule(o[0], o[1]));
 
     /*
      * Singularization rules.
@@ -313,12 +302,7 @@ class Pluralizer {
       {"/(child)ren$", "$1"},
       {"/(eau)x?$", "$1"},
       {"/men$", "man"}
-    }).consumeEach(new Consumer<String[]>() {
-      @Override
-      public void consume(String[] o) {
-        pluralizer.addSingularRule(o[0], o[1]);
-      }
-    });
+    }).consumeEach(o -> pluralizer.addSingularRule(o[0], o[1]));
     /*
      * Uncountable rules.
      */
@@ -417,12 +401,7 @@ class Pluralizer {
       "/o[iu]s$", // "carnivorous"
       "/pox$", // "chickpox", "smallpox"
       "/sheep$"
-    ).consumeEach(new Consumer<String>() {
-      @Override
-      public void consume(String o) {
-        pluralizer.addUncountableRule(o);
-      }
-    });
+    ).consumeEach(pluralizer::addUncountableRule);
 
     PLURALIZER = pluralizer;
   }

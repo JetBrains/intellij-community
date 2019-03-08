@@ -63,7 +63,7 @@ public interface OverrideImplementsAnnotationsHandler {
       }
     }
 
-    for (OverrideImplementsAnnotationsHandler each : EP_NAME.getExtensions()) {
+    for (OverrideImplementsAnnotationsHandler each : EP_NAME.getExtensionList()) {
       each.cleanup(source, targetClass, target);
     }
   }

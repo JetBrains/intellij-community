@@ -202,11 +202,11 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   @NotNull
-  private List<CompileTask> getCompileTasks(List<CompileTask> taskList, CompileTaskBean.CompileTaskExecutionPhase phase) {
+  private List<CompileTask> getCompileTasks(@NotNull List<CompileTask> taskList, @NotNull CompileTaskBean.CompileTaskExecutionPhase phase) {
     List<CompileTask> beforeTasks = new ArrayList<>(taskList);
     for (CompileTaskBean extension : CompileTaskBean.EP_NAME.getExtensions(myProject)) {
       if (extension.myExecutionPhase == phase) {
-        beforeTasks.add(extension.getTaskInstance());
+        beforeTasks.add(extension.getTaskInstance(myProject));
       }
     }
     return beforeTasks;

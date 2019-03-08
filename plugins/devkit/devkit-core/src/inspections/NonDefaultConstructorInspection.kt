@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
 import gnu.trove.THashSet
+import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.util.processExtensionsByClassName
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UMethod
@@ -35,12 +36,11 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
       return null
     }
 
+    var extensionPoint: ExtensionPoint? = null
     // fast path - check by qualified name
     if (!isExtensionBean(aClass)) {
       // slow path - check using index
-      if (!isReferencedByExtension(aClass, manager.project)) {
-        return null
-      }
+      extensionPoint = findExtensionPoint(aClass, manager.project) ?: return null
     }
     else if (javaPsi.name == "VcsConfigurableEP") {
       // VcsConfigurableEP extends ConfigurableEP but used directly, for now just ignore it as hardcoded exclusion
@@ -50,7 +50,7 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
     var errors: MutableList<ProblemDescriptor>? = null
     loop@ for (method in constructors) {
       val parameters = method.parameterList
-      if (parameters.isEmpty || isAllowedParameters(parameters)) {
+      if (isAllowedParameters(parameters, extensionPoint)) {
         // allow to have empty constructor and extra (e.g. DartQuickAssistIntention)
         return null
       }
@@ -73,9 +73,9 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
 }
 
 // cannot check com.intellij.codeInsight.intention.IntentionAction by class qualified name because not all IntentionAction used as IntentionActionBean
-private fun isReferencedByExtension(clazz: UClass, project: Project): Boolean {
-  var isFound = false
-  val qualifiedNamed = clazz.qualifiedName ?: return false
+private fun findExtensionPoint(clazz: UClass, project: Project): ExtensionPoint? {
+  var result: ExtensionPoint? = null
+  val qualifiedNamed = clazz.qualifiedName ?: return null
   processExtensionsByClassName(project, qualifiedNamed) { tag, point ->
     // check only bean extensions
     if (point.beanClass.value == null) {
@@ -83,11 +83,14 @@ private fun isReferencedByExtension(clazz: UClass, project: Project): Boolean {
     }
 
     if (tag.name == "className" || tag.subTags.any { it.name == "className" } || checkAttributes(tag, qualifiedNamed)) {
-      isFound = true
+      result = point
+      false
     }
-    !isFound
+    else {
+      true
+    }
   }
-  return isFound
+  return result
 }
 
 // todo can we use attribute `with` to avoid hardcoding?
@@ -108,7 +111,20 @@ private fun checkAttributes(tag: XmlTag, qualifiedNamed: String): Boolean {
   }
 }
 
-private fun isAllowedParameters(list: PsiParameterList): Boolean {
+private fun isAllowedParameters(list: PsiParameterList, extensionPoint: ExtensionPoint?): Boolean {
+  if (list.isEmpty) {
+    return true
+  }
+
+  val area = extensionPoint?.area?.value ?: ExtensionPoint.Area.IDEA_APPLICATION
+  val isAppLevelExtensionPoint = area == ExtensionPoint.Area.IDEA_APPLICATION
+
+  // hardcoded for now, later will be generalized
+  if (isAppLevelExtensionPoint || extensionPoint?.effectiveQualifiedName == "com.intellij.semContributor") {
+    // disallow any parameters
+    return false
+  }
+
   if (list.parametersCount != 1) {
     return false
   }

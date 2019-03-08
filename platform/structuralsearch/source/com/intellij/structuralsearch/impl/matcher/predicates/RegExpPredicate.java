@@ -94,7 +94,7 @@ public final class RegExpPredicate extends MatchPredicate {
     return result;
   }
 
-  boolean doMatch(String text, MatchContext context, PsiElement matchedElement) {
+  public boolean doMatch(String text, MatchContext context, PsiElement matchedElement) {
     return doMatch(text, 0, -1 ,context, matchedElement);
   }
 

@@ -28,7 +28,7 @@ public final class SmartSerializer {
   private final SerializationFilter mySerializationFilter;
 
   public SmartSerializer(boolean trackSerializedNames, boolean useSkipEmptySerializationFilter) {
-    mySerializedAccessorNameTracker = trackSerializedNames ? new LinkedHashSet<String>() : null;
+    mySerializedAccessorNameTracker = trackSerializedNames ? new LinkedHashSet<>() : null;
 
     mySerializationFilter = useSkipEmptySerializationFilter ?
                             new SkipEmptySerializationFilter() {

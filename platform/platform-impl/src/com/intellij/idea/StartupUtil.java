@@ -163,7 +163,8 @@ public class StartupUtil {
 
     if (newConfigFolder) {
       appStarter.beforeImportConfigs();
-      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
+      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath(), log);
+      // Android Studio: added by Change I0540b71d / commit 2898bd9
       DeleteOldDirectoriesHelper.run();
     }
     else {

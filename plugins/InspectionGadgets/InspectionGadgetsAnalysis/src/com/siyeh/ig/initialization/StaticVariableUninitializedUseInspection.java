@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.initialization;
 
-import com.intellij.psi.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -25,6 +25,7 @@ import com.siyeh.ig.psiutils.UninitializedReadCollector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 public class StaticVariableUninitializedUseInspection extends BaseInspection {
 
@@ -66,64 +67,50 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
     return new StaticVariableInitializationVisitor();
   }
 
-  private class StaticVariableInitializationVisitor
-    extends BaseInspectionVisitor {
+  private class StaticVariableInitializationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitField(@NotNull PsiField field) {
-      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+    public void visitClass(PsiClass aClass) {
+      PsiField[] fields = aClass.getFields();
+      if (aClass.isEnum()) {
         return;
       }
-      if (field.getInitializer() != null) {
-        return;
-      }
-      final PsiClass containingClass = field.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (containingClass.isEnum()) {
-        return;
-      }
-      if (m_ignorePrimitives) {
-        final PsiType type = field.getType();
-        if (ClassUtils.isPrimitive(type)) {
-          return;
-        }
-      }
-      final PsiClassInitializer[] initializers = containingClass.getInitializers();
-      final UninitializedReadCollector uninitializedReadCollector = new UninitializedReadCollector();
-      boolean assigned = false;
-      for (final PsiClassInitializer initializer : initializers) {
-        if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
+      for (PsiField field : fields) {
+        if (!field.hasModifierProperty(PsiModifier.STATIC) || field.getInitializer() != null) {
           continue;
         }
-        final PsiCodeBlock body = initializer.getBody();
-        if (uninitializedReadCollector.blockAssignsVariable(
-          body, field)) {
-          assigned = true;
-          break;
+        if (m_ignorePrimitives) {
+          final PsiType type = field.getType();
+          if (ClassUtils.isPrimitive(type)) {
+            continue;
+          }
         }
-      }
-      if (assigned) {
-        final PsiExpression[] badReads =
-          uninitializedReadCollector.getUninitializedReads();
-        for (PsiExpression badRead : badReads) {
+
+        final UninitializedReadCollector uninitializedReadCollector = new UninitializedReadCollector();
+        boolean assignedInInitializer = Arrays.stream(aClass.getInitializers())
+          .filter(initializer -> initializer.hasModifierProperty(PsiModifier.STATIC))
+          .map(PsiClassInitializer::getBody)
+          .anyMatch(body -> uninitializedReadCollector.blockAssignsVariable(body, field));
+        if (assignedInInitializer) {
+          final PsiExpression[] badReads = uninitializedReadCollector.getUninitializedReads();
+          for (PsiExpression badRead : badReads) {
+            registerError(badRead);
+          }
+          continue;
+        }
+
+        final PsiMethod[] methods = aClass.getMethods();
+        for (PsiMethod method : methods) {
+          if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+            continue;
+          }
+          final PsiCodeBlock body = method.getBody();
+          uninitializedReadCollector.blockAssignsVariable(body, field);
+        }
+        final PsiExpression[] moreBadReads = uninitializedReadCollector.getUninitializedReads();
+        for (PsiExpression badRead : moreBadReads) {
           registerError(badRead);
         }
-        return;
-      }
-      final PsiMethod[] methods = containingClass.getMethods();
-      for (PsiMethod method : methods) {
-        if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-          continue;
-        }
-        final PsiCodeBlock body = method.getBody();
-        uninitializedReadCollector.blockAssignsVariable(body, field);
-      }
-      final PsiExpression[] moreBadReads =
-        uninitializedReadCollector.getUninitializedReads();
-      for (PsiExpression badRead : moreBadReads) {
-        registerError(badRead);
       }
     }
   }

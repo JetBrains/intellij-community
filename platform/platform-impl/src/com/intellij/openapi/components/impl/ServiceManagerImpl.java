@@ -11,7 +11,10 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -24,6 +27,7 @@ import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.*;
 import org.picocontainer.defaults.InstanceComponentAdapter;
 
@@ -37,7 +41,6 @@ public class ServiceManagerImpl implements Disposable {
   private static final ExtensionPointName<ServiceDescriptor> APP_SERVICES = new ExtensionPointName<>("com.intellij.applicationService");
   private static final ExtensionPointName<ServiceDescriptor> PROJECT_SERVICES = new ExtensionPointName<>("com.intellij.projectService");
   private ExtensionPointName<ServiceDescriptor> myExtensionPointName;
-  private ExtensionPointListener<ServiceDescriptor> myExtensionPointListener;
 
   public ServiceManagerImpl() {
     installEP(APP_SERVICES, ApplicationManager.getApplication());
@@ -50,20 +53,22 @@ public class ServiceManagerImpl implements Disposable {
   protected ServiceManagerImpl(boolean ignoreInit) {
   }
 
-  protected void installEP(@NotNull ExtensionPointName<ServiceDescriptor> pointName, @NotNull final ComponentManager componentManager) {
+  protected final void installEP(@NotNull ExtensionPointName<ServiceDescriptor> point, @NotNull ComponentManager componentManager) {
     LOG.assertTrue(myExtensionPointName == null, "Already called installEP with " + myExtensionPointName);
-    myExtensionPointName = pointName;
-    final ExtensionPoint<ServiceDescriptor> extensionPoint = Extensions.getArea(null).getExtensionPoint(pointName);
-    final MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();
+    myExtensionPointName = point;
 
-    myExtensionPointListener = new ExtensionPointListener<ServiceDescriptor>() {
+    final MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();
+    // Allow to re-define service implementations in plugins.
+    // empty serviceImplementation means we want to unregister service
+    point.getPoint(null).addExtensionPointListener(new ExtensionPointListener<ServiceDescriptor>() {
       @Override
-      public void extensionAdded(@NotNull final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull ServiceDescriptor descriptor, @Nullable PluginDescriptor pluginDescriptor) {
         if (descriptor.overrides) {
           // Allow to re-define service implementations in plugins.
           ComponentAdapter oldAdapter = picoContainer.unregisterComponent(descriptor.getInterface());
           if (oldAdapter == null) {
-            throw new PluginException("Service: " + descriptor.getInterface() + " doesn't override anything", pluginDescriptor != null ? pluginDescriptor.getPluginId() : null);
+            throw new PluginException("Service: " + descriptor.getInterface() + " doesn't override anything",
+                                      pluginDescriptor != null ? pluginDescriptor.getPluginId() : null);
           }
         }
 
@@ -77,8 +82,7 @@ public class ServiceManagerImpl implements Disposable {
       public void extensionRemoved(@NotNull final ServiceDescriptor extension, final PluginDescriptor pluginDescriptor) {
         picoContainer.unregisterComponent(extension.getInterface());
       }
-    };
-    extensionPoint.addExtensionPointListener(myExtensionPointListener);
+    }, true, this);
   }
 
   @NotNull
@@ -146,8 +150,6 @@ public class ServiceManagerImpl implements Disposable {
 
   @Override
   public void dispose() {
-    final ExtensionPoint<ServiceDescriptor> extensionPoint = Extensions.getArea(null).getExtensionPoint(myExtensionPointName);
-    extensionPoint.removeExtensionPointListener(myExtensionPointListener);
   }
 
   private static class MyComponentAdapter implements AssignableToComponentAdapter, DefaultPicoContainer.LazyComponentAdapter {

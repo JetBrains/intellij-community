@@ -159,7 +159,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
   }
 
   private static class DescriptionLabel extends JBLabel {
-    private String myAllText;
+    private String myAllText = "";
 
     DescriptionLabel() {
       setForeground(JBColor.GRAY);

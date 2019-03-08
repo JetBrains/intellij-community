@@ -13,14 +13,15 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(->)('->')
     PsiWhiteSpace(' ')
-    Closable block
-      PsiElement({)('{')
-      PsiWhiteSpace(' ')
-      Parameter list
-        <empty list>
-      PsiElement(->)('->')
-      PsiWhiteSpace(' ')
-      Reference expression
-        PsiElement(identifier)('a')
-      PsiWhiteSpace(' ')
-      PsiElement(})('}')
+    Lambda body
+      Closable block
+        PsiElement({)('{')
+        PsiWhiteSpace(' ')
+        Parameter list
+          <empty list>
+        PsiElement(->)('->')
+        PsiWhiteSpace(' ')
+        Reference expression
+          PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(})('}')

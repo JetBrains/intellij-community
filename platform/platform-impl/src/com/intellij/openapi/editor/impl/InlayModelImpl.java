@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.DocumentUtil;
@@ -18,21 +20,20 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class InlayModelImpl implements InlayModel, Disposable {
+public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
-  private static final Comparator<Inlay> INLINE_ELEMENTS_COMPARATOR = Comparator.comparingInt((Inlay inlay) -> inlay.getOffset())
+  private static final Comparator<Inlay> INLINE_ELEMENTS_COMPARATOR = Comparator.comparingInt((Inlay i) -> i.getOffset())
     .thenComparing(i -> i.isRelatedToPrecedingText());
-  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_PRIORITY_COMPARATOR =
-    Comparator.comparingInt((BlockInlayImpl i) -> -i.myPriority);
-  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_COMPARATOR =
-    Comparator.comparing((BlockInlayImpl inlay) -> inlay.getVerticalAlignment())
-      .thenComparing(i -> i.getVerticalAlignment() == Inlay.VerticalAlignment.ABOVE_LINE ? i.myPriority : -i.myPriority);
+  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_PRIORITY_COMPARATOR = Comparator.comparingInt(i -> -i.myPriority);
+  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_COMPARATOR = Comparator.comparing((BlockInlayImpl i) -> i.getPlacement())
+    .thenComparing(i -> i.getPlacement() == Inlay.Placement.ABOVE_LINE ? i.myPriority : -i.myPriority);
+  private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR =
+    Comparator.comparingInt((AfterLineEndInlayImpl i) -> i.getOffset()).thenComparingInt(i -> i.myOrder);
+  private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_COMPARATOR = Comparator.comparingInt(i -> i.myOrder);
   private static final Processor<InlayImpl> UPDATE_SIZE_PROCESSOR = inlay -> {
     inlay.updateSize();
     return true;
@@ -44,6 +45,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
   final List<InlayImpl> myInlaysInvalidatedOnMove = new ArrayList<>();
   final RangeMarkerTree<InlineInlayImpl> myInlineElementsTree;
   final MarkerTreeWithPartialSums<BlockInlayImpl> myBlockElementsTree;
+  final RangeMarkerTree<AfterLineEndInlayImpl> myAfterLineEndElementsTree;
 
   boolean myMoveInProgress;
   boolean myPutMergedIntervalsAtBeginning;
@@ -54,6 +56,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
     myEditor = editor;
     myInlineElementsTree = new InlineElementsTree(editor.getDocument());
     myBlockElementsTree = new BlockElementsTree(editor.getDocument());
+    myAfterLineEndElementsTree = new AfterLineEndElementTree(editor.getDocument());
     myEditor.getDocument().addDocumentListener(new PrioritizedInternalDocumentListener() {
       @Override
       public int getPriority() {
@@ -136,6 +139,19 @@ public class InlayModelImpl implements InlayModel, Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread();
     offset = Math.max(0, Math.min(myEditor.getDocument().getTextLength(), offset));
     BlockInlayImpl<T> inlay = new BlockInlayImpl<>(myEditor, offset, relatesToPrecedingText, showAbove, priority, renderer);
+    notifyAdded(inlay);
+    return inlay;
+  }
+
+  @Nullable
+  @Override
+  public <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
+                                                                                 boolean relatesToPrecedingText,
+                                                                                 @NotNull T renderer) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    Document document = myEditor.getDocument();
+    offset = Math.max(0, Math.min(document.getTextLength(), offset));
+    AfterLineEndInlayImpl<T> inlay = new AfterLineEndInlayImpl<>(myEditor, offset, relatesToPrecedingText, renderer);
     notifyAdded(inlay);
     return inlay;
   }
@@ -282,8 +298,10 @@ public class InlayModelImpl implements InlayModel, Disposable {
   public Inlay getElementAt(@NotNull Point point) {
     boolean hasInlineElements = hasInlineElements();
     boolean hasBlockElements = hasBlockElements();
-    if (!hasInlineElements && !hasBlockElements) return null;
+    boolean hasAfterLineEndElements = hasAfterLineEndElements();
+    if (!hasInlineElements && !hasBlockElements && !hasAfterLineEndElements) return null;
 
+    int offset = -1;
     VisualPosition visualPosition = myEditor.xyToVisualPosition(point);
     if (hasBlockElements) {
       int visualLine = visualPosition.line;
@@ -314,19 +332,82 @@ public class InlayModelImpl implements InlayModel, Disposable {
       }
     }
     if (hasInlineElements) {
-      int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+      offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
       List<Inlay> inlays = getInlineElementsInRange(offset, offset);
-      if (inlays.isEmpty()) return null;
-
-      VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
-      int x = myEditor.visualPositionToXY(startVisualPosition).x;
-      for (Inlay inlay : inlays) {
-        int endX = x + inlay.getWidthInPixels();
-        if (point.x >= x && point.x < endX) return inlay;
-        x = endX;
+      if (!inlays.isEmpty()) {
+        VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
+        int x = myEditor.visualPositionToXY(startVisualPosition).x;
+        Inlay inlay = findInlay(inlays, point, x);
+        if (inlay != null) return inlay;
+      }
+    }
+    if (hasAfterLineEndElements) {
+      if (offset < 0) offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+      int logicalLine = myEditor.getDocument().getLineNumber(offset);
+      if (offset == myEditor.getDocument().getLineEndOffset(logicalLine) && !myEditor.getFoldingModel().isOffsetCollapsed(offset)) {
+        List<Inlay> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
+        if (!inlays.isEmpty()) {
+          Rectangle bounds = inlays.get(0).getBounds();
+          assert bounds != null;
+          Inlay inlay = findInlay(inlays, point, bounds.x);
+          if (inlay != null) return inlay;
+        }
       }
     }
     return null;
+  }
+
+  private static Inlay findInlay(List<Inlay> inlays, @NotNull Point point, int startX) {
+    for (Inlay inlay : inlays) {
+      int endX = startX + inlay.getWidthInPixels();
+      if (point.x >= startX && point.x < endX) return inlay;
+      startX = endX;
+    }
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getAfterLineEndElementsInRange(int startOffset, int endOffset) {
+    if (!hasAfterLineEndElements()) return Collections.emptyList();
+    List<AfterLineEndInlayImpl> range =
+      getElementsInRange(myAfterLineEndElementsTree, startOffset, endOffset, inlay -> true, AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR);
+    //noinspection unchecked
+    return (List)range;
+  }
+
+  @NotNull
+  @Override
+  public <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, Class<T> type) {
+    if (!hasAfterLineEndElements()) return Collections.emptyList();
+    List<AfterLineEndInlayImpl> range =
+      getElementsInRange(myAfterLineEndElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
+                         AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR);
+    //noinspection unchecked
+    return (List)range;
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getAfterLineEndElementsForLogicalLine(int logicalLine) {
+    DocumentEx document = myEditor.getDocument();
+    if (!hasAfterLineEndElements() || logicalLine < 0 || logicalLine > 0 && logicalLine >= document.getLineCount()) {
+      return Collections.emptyList();
+    }
+    List<AfterLineEndInlayImpl> result = new ArrayList<>();
+    int startOffset = document.getLineStartOffset(logicalLine);
+    int endOffset = document.getLineEndOffset(logicalLine);
+    myAfterLineEndElementsTree.processOverlappingWith(startOffset, endOffset, inlay -> {
+      result.add(inlay);
+      return true;
+    });
+    result.sort(AFTER_LINE_END_ELEMENTS_COMPARATOR);
+    //noinspection unchecked
+    return (List)result;
+  }
+
+  public boolean hasAfterLineEndElements() {
+    return myAfterLineEndElementsTree.size() > 0;
   }
 
   @Override
@@ -356,6 +437,24 @@ public class InlayModelImpl implements InlayModel, Disposable {
     for (Inlay inlay : getInlineElementsInRange(0, myEditor.getDocument().getTextLength())) {
       LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), inlay.getOffset()));
     }
+  }
+
+  @NotNull
+  @Override
+  public String dumpState() {
+    return "Inline elements: " + dumpInlays(myInlineElementsTree)
+           + ", after-line-end elements: " + dumpInlays(myAfterLineEndElementsTree)
+           + ", block elements: " + dumpInlays(myBlockElementsTree);
+  }
+
+
+  private static String dumpInlays(RangeMarkerTree<? extends InlayImpl> tree) {
+    StringJoiner joiner = new StringJoiner(",", "[", "]");
+    tree.processAll(o -> {
+      joiner.add(Integer.toString(o.getOffset()));
+      return true;
+    });
+    return joiner.toString();
   }
 
   private class InlineElementsTree extends HardReferencingRangeMarkerTree<InlineInlayImpl> {
@@ -403,6 +502,19 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
     @Override
     void fireBeforeRemoved(@NotNull BlockInlayImpl inlay, @NotNull @NonNls Object reason) {
+      if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
+        notifyRemoved(inlay);
+      }
+    }
+  }
+
+  private class AfterLineEndElementTree extends HardReferencingRangeMarkerTree<AfterLineEndInlayImpl> {
+    AfterLineEndElementTree(@NotNull Document document) {
+      super(document);
+    }
+
+    @Override
+    void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl inlay, @NotNull @NonNls Object reason) {
       if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }

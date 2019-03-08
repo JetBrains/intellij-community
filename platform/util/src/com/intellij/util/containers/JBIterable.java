@@ -176,7 +176,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public static <E> JBIterable<E> of(@Nullable E... elements) {
-    return elements == null || elements.length == 0 ? JBIterable.<E>empty() : from(ContainerUtilRt.newArrayList(elements));
+    return elements == null || elements.length == 0 ? JBIterable.empty() : from(ContainerUtilRt.newArrayList(elements));
   }
 
   private static final JBIterable EMPTY = new Empty();
@@ -195,15 +195,12 @@ public abstract class JBIterable<E> implements Iterable<E> {
 
   @NotNull
   public static <E> JBIterable<E> once(@NotNull Iterator<E> iterator) {
-    return of(Ref.create(iterator)).intercept(new Function<Iterator<Ref<Iterator<E>>>, Iterator<E>>() {
-      @Override
-      public Iterator<E> fun(Iterator<Ref<Iterator<E>>> iterator) {
-        Ref<Iterator<E>> ref = iterator.next();
-        Iterator<E> result = ref.get();
-        if (result == null) throw new UnsupportedOperationException();
-        ref.set(null);
-        return result;
-      }
+    return of(Ref.create(iterator)).intercept(iterator1 -> {
+      Ref<Iterator<E>> ref = iterator1.next();
+      Iterator<E> result = ref.get();
+      if (result == null) throw new UnsupportedOperationException();
+      ref.set(null);
+      return result;
     });
   }
 
@@ -312,7 +309,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   public final JBIterable<E> append(@Nullable Iterable<? extends E> other) {
     if (other == null || other == EMPTY) return this;
     if (this == EMPTY) return from(other);
-    Appended parent = this instanceof Appended ? (Appended)this : new Appended<E>(this, null);
+    Appended parent = this instanceof Appended ? (Appended)this : new Appended<>(this, null);
     // to keep append lazy, ignore the fact that 'other' can also be an Appended
     return new Appended<E>(other, parent);
   }
@@ -376,12 +373,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final JBIterable<E> filter(@NotNull final Condition<? super E> condition) {
-    return intercept(new Function<Iterator<E>, Iterator<E>>() {
-      @Override
-      public Iterator<E> fun(Iterator<E> iterator) {
-        return JBIterator.from(iterator).filter(Stateful.copy(condition));
-      }
-    });
+    return intercept(iterator -> JBIterator.from(iterator).filter(Stateful.copy(condition)));
   }
 
   /**
@@ -395,42 +387,22 @@ public abstract class JBIterable<E> implements Iterable<E> {
 
   @NotNull
   public final JBIterable<E> take(final int count) {
-    return intercept(new Function<Iterator<E>, Iterator<E>>() {
-      @Override
-      public Iterator<E> fun(Iterator<E> iterator) {
-        return JBIterator.from(iterator).take(count);
-      }
-    });
+    return intercept(iterator -> JBIterator.from(iterator).take(count));
   }
 
   @NotNull
   public final JBIterable<E> takeWhile(@NotNull final Condition<? super E> condition) {
-    return intercept(new Function<Iterator<E>, Iterator<E>>() {
-      @Override
-      public Iterator<E> fun(Iterator<E> iterator) {
-        return JBIterator.from(iterator).takeWhile(Stateful.copy(condition));
-      }
-    });
+    return intercept(iterator -> JBIterator.from(iterator).takeWhile(Stateful.copy(condition)));
   }
 
   @NotNull
   public final JBIterable<E> skip(final int count) {
-    return intercept(new Function<Iterator<E>, Iterator<E>>() {
-      @Override
-      public Iterator<E> fun(Iterator<E> iterator) {
-        return JBIterator.from(iterator).skip(count);
-      }
-    });
+    return intercept(iterator -> JBIterator.from(iterator).skip(count));
   }
 
   @NotNull
   public final JBIterable<E> skipWhile(@NotNull final Condition<? super E> condition) {
-    return intercept(new Function<Iterator<E>, Iterator<E>>() {
-      @Override
-      public Iterator<E> fun(Iterator<E> iterator) {
-        return JBIterator.from(iterator).skipWhile(Stateful.copy(condition));
-      }
-    });
+    return intercept(iterator -> JBIterator.from(iterator).skipWhile(Stateful.copy(condition)));
   }
 
   /**
@@ -438,12 +410,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final <T> JBIterable<T> map(@NotNull final Function<? super E, T> function) {
-    return intercept(new Function<Iterator<E>, Iterator<T>>() {
-      @Override
-      public Iterator<T> fun(Iterator<E> iterator) {
-        return JBIterator.from(iterator).map(Stateful.copy(function));
-      }
-    });
+    return intercept(iterator -> JBIterator.from(iterator).map(Stateful.copy(function)));
   }
 
   /**
@@ -464,7 +431,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public <T> JBIterable<T> flatten(@NotNull final Function<? super E, ? extends Iterable<? extends T>> function) {
-    return intercept(new FlattenFun<E, T>(function));
+    return intercept(new FlattenFun<>(function));
   }
 
   private static final class FlattenFun<E, T> implements Function<Iterator<E>, Iterator<T>> {
@@ -474,7 +441,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
 
     @Override
     public Iterator<T> fun(final Iterator<E> iterator) {
-      return new FlattenIt<E, T>(iterator, Stateful.copy(function));
+      return new FlattenIt<>(iterator, Stateful.copy(function));
     }
 
     static final class FlattenIt<E, T> extends JBIterator<T> {
@@ -516,7 +483,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
 
       @Override
       public boolean value(E e) {
-        if (visited == null) visited = new java.util.HashSet<Object>();
+        if (visited == null) visited = new java.util.HashSet<>();
         return visited.add(identity.fun(e));
       }
     });
@@ -533,7 +500,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
         ((Intercepted)this).original,
         Functions.compose(((Intercepted)this).interceptor, function));
     }
-    return new Intercepted<E, T, X>(this, function);
+    return new Intercepted<>(this, function);
   }
 
   private static final class Intercepted<E, T, X> extends JBIterable<T> {
@@ -660,7 +627,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final <T> JBIterable<T> filterMap(@NotNull Function<? super E, T> function) {
-    return map(function).filter(Conditions.<T>notNull());
+    return map(function).filter(Conditions.notNull());
   }
 
   /**
@@ -679,20 +646,17 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final JBIterable<E> join(@Nullable final E separator) {
-    return intercept(new Function<Iterator<E>, Iterator<E>>() {
-      @Override
-      public Iterator<E> fun(Iterator<E> iterator) {
-        final Iterator<E> original = iterator;
-        return new JBIterator<E>() {
-          boolean flag;
-          @Override
-          protected E nextImpl() {
-            if (!original.hasNext()) return stop();
-            flag = !flag;
-            return flag ? original.next() : separator;
-          }
-        };
-      }
+    return intercept(iterator -> {
+      final Iterator<E> original = iterator;
+      return new JBIterator<E>() {
+        boolean flag;
+        @Override
+        protected E nextImpl() {
+          if (!original.hasNext()) return stop();
+          flag = !flag;
+          return flag ? original.next() : separator;
+        }
+      };
     });
   }
 
@@ -703,12 +667,9 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final JBIterable<List<E>> split(final int size, final boolean strict) {
-    return split(size).filterMap(new Function<JBIterable<E>, List<E>>() {
-      @Override
-      public List<E> fun(JBIterable<E> es) {
-        List<E> list = es.addAllTo(ContainerUtilRt.<E>newArrayListWithCapacity(size));
-        return strict && list.size() < size ? null : list;
-      }
+    return split(size).filterMap(es -> {
+      List<E> list = es.addAllTo(ContainerUtilRt.newArrayListWithCapacity(size));
+      return strict && list.size() < size ? null : list;
     });
   }
 
@@ -719,22 +680,19 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final JBIterable<JBIterable<E>> split(final int size) {
     if (size <= 0) throw new IllegalArgumentException(size + " <= 0");
-    return intercept(new Function<Iterator<E>, Iterator<JBIterable<E>>>() {
-      @Override
-      public Iterator<JBIterable<E>> fun(Iterator<E> iterator) {
-        final Iterator<E> orig = iterator;
-        return new JBIterator<JBIterable<E>>() {
-          JBIterator<E> it;
+    return intercept(iterator -> {
+      final Iterator<E> orig = iterator;
+      return new JBIterator<JBIterable<E>>() {
+        JBIterator<E> it;
 
-          @Override
-          protected JBIterable<E> nextImpl() {
-            // iterate through the previous result fully before proceeding
-            while (it != null && it.advance()) /* no-op */ ;
-            it = null;
-            return orig.hasNext() ? once((it = JBIterator.wrap(orig)).take(size)) : stop();
-          }
-        };
-      }
+        @Override
+        protected JBIterable<E> nextImpl() {
+          // iterate through the previous result fully before proceeding
+          while (it != null && it.advance()) /* no-op */ ;
+          it = null;
+          return orig.hasNext() ? once((it = JBIterator.wrap(orig)).take(size)) : stop();
+        }
+      };
     });
   }
 
@@ -746,52 +704,57 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final JBIterable<JBIterable<E>> split(final Split mode, final Condition<? super E> separator) {
-    return intercept(new Function<Iterator<E>, Iterator<JBIterable<E>>>() {
-      @Override
-      public Iterator<JBIterable<E>> fun(Iterator<E> iterator) {
-        final Iterator<E> orig = iterator;
-        final Condition<? super E> condition = Stateful.copy(separator);
-        return new JBIterator<JBIterable<E>>() {
-          JBIterator<E> it;
-          E stored;
-          int st; // encode transitions: -2:sep->sep, -1:val->sep, 1:sep->val, 2:val->val
+    return intercept(iterator -> {
+      final Iterator<E> orig = iterator;
+      final Condition<? super E> condition = Stateful.copy(separator);
+      return new JBIterator<JBIterable<E>>() {
+        JBIterator<E> it;
+        E stored;
+        int st; // encode transitions: -2:sep->sep, -1:val->sep, 1:sep->val, 2:val->val
 
-          @Override
-          protected JBIterable<E> nextImpl() {
-            // iterate through the previous result fully before proceeding
-            while (it != null && it.advance()) /* no-op */ ;
-            it = null;
-            // empty case: check hasNext() only if nothing is stored to be compatible with JBIterator#cursor()
-            if (stored == null && !orig.hasNext()) {
-              if (st < 0 && mode != Split.BEFORE && mode != Split.GROUP) { st = 1; return empty(); }
-              return stop();
-            }
-            // general case: add empty between 2 separators in KEEP mode; otherwise go with some state logic
-            if (st == -2 && mode == Split.AROUND) { st = -1; return empty(); }
-            E tmp = stored;
-            stored = null;
-            return of(tmp).append(once((it = JBIterator.wrap(orig)).takeWhile(new Condition<E>() {
-              @Override
-              public boolean value(E e) {
-                boolean sep = condition.value(e);
-                int st0 = st;
-                st = st0 < 0 && sep ? -2 : st0 > 0 && !sep ? 2 : sep ? -1 : 1;
-                boolean result;
-                switch (mode) {
-                  case AFTER:  result = st != -2 && (st != 1 || st0 == 0); break;
-                  case BEFORE: result = st != -2 && st != -1; break;
-                  case AROUND: result = st0 >= 0 && st > 0; break;
-                  case GROUP:  result = st0 >= 0 && st > 0 || st0 <= 0 && st < 0; break;
-                  case OFF:    result = st > 0; break;
-                  default: throw new AssertionError(st);
-                }
-                stored = !result && mode != Split.OFF ? e : null;
-                return result;
-              }
-            })));
+        @Override
+        protected JBIterable<E> nextImpl() {
+          // iterate through the previous result fully before proceeding
+          while (it != null && it.advance()) /* no-op */ ;
+          it = null;
+          // empty case: check hasNext() only if nothing is stored to be compatible with JBIterator#cursor()
+          if (stored == null && !orig.hasNext()) {
+            if (st < 0 && mode != Split.BEFORE && mode != Split.GROUP) { st = 1; return empty(); }
+            return stop();
           }
-        };
-      }
+          // general case: add empty between 2 separators in KEEP mode; otherwise go with some state logic
+          if (st == -2 && mode == Split.AROUND) { st = -1; return empty(); }
+          E tmp = stored;
+          stored = null;
+          return of(tmp).append(once((it = JBIterator.wrap(orig)).takeWhile(e -> {
+            boolean sep = condition.value(e);
+            int st0 = st;
+            st = st0 < 0 && sep ? -2 : st0 > 0 && !sep ? 2 : sep ? -1 : 1;
+            boolean result;
+            switch (mode) {
+              case AFTER:
+                result = st != -2 && (st != 1 || st0 == 0);
+                break;
+              case BEFORE:
+                result = st != -2 && st != -1;
+                break;
+              case AROUND:
+                result = st0 >= 0 && st > 0;
+                break;
+              case GROUP:
+                result = st0 >= 0 && st > 0 || st0 <= 0 && st < 0;
+                break;
+              case OFF:
+                result = st > 0;
+                break;
+              default:
+                throw new AssertionError(st);
+            }
+            stored = !result && mode != Split.OFF ? e : null;
+            return result;
+          })));
+        }
+      };
     });
   }
 
@@ -832,7 +795,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final JBIterable<E> collect() {
     if (content instanceof Collection) return this;
-    return collect(ContainerUtilRt.<E>newArrayList());
+    return collect(ContainerUtilRt.newArrayList());
   }
 
   /**
@@ -841,8 +804,8 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final JBIterable<E> sort(@NotNull Comparator<? super E> comparator) {
-    ArrayList<E> list = addAllTo(ContainerUtilRt.<E>newArrayList());
-    Collections.sort(list, comparator);
+    ArrayList<E> list = addAllTo(ContainerUtilRt.newArrayList());
+    list.sort(comparator);
     return from(list);
   }
 
@@ -894,7 +857,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   public final <K, V> Map<K, V> toMap(@NotNull Convertor<E, K> toKey, @NotNull Convertor<E, V> toValue) {
     Map<K, V> map = ContainerUtil.newLinkedHashMap();
     for (E e : this) map.put(toKey.convert(e), toValue.convert(e));
-    return map.isEmpty() ? Collections.<K, V>emptyMap() : Collections.unmodifiableMap(map);
+    return map.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(map);
   }
 
   /**

@@ -133,7 +133,7 @@ public class ByWord implements DiffPolicy {
 
   @NotNull
   static Word[] buildWords(@NotNull DiffString text, @NotNull ComparisonPolicy policy) {
-    ArrayList<Word> words = new ArrayList<Word>();
+    ArrayList<Word> words = new ArrayList<>();
     if (text.isEmpty() || !Character.isWhitespace(text.charAt(0)))
       words.add(policy.createFormatting(text, TextRange.EMPTY_RANGE));
     int start = 0;
@@ -169,7 +169,7 @@ public class ByWord implements DiffPolicy {
   }
 
   private static class FragmentBuilder {
-    private final ArrayList<DiffFragment> myFragments = new ArrayList<DiffFragment>();
+    private final ArrayList<DiffFragment> myFragments = new ArrayList<>();
     private final Version myVersion1;
     private final Version myVersion2;
     private final DiffPolicy.ByChar BY_CHAR;

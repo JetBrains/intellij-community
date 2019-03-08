@@ -28,6 +28,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.HttpRequests;
@@ -54,7 +55,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   private static final String LATEST_GRADLE_VERSION_KEY = "LATEST_GRADLE_VERSION_KEY";
   private static final String LATEST_UPDATING_TIME_KEY = "LATEST_UPDATING_TIME_KEY";
 
-  private static final String FALLBACK_VERSION = "0.4.1";
+  private static final String FALLBACK_VERSION = "0.4.2";
   protected static final String HELP_COMMENT = "// See https://github.com/JetBrains/gradle-intellij-plugin/\n";
 
   private static class Lazy {
@@ -150,7 +151,11 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
         }
       });
     }
-    return null;
+
+    final HyperlinkLabel linkLabel = new HyperlinkLabel();
+    linkLabel.setHtmlText("Learn how to <a>build plugins with Gradle</a>");
+    linkLabel.setHyperlinkTarget("http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system.html");
+    return linkLabel;
   }
 
   private boolean createPluginXml(@NotNull ProjectId projectId, @NotNull Module module, @NotNull String contentRootPath) {

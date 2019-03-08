@@ -22,6 +22,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
   private JCheckBox myCbShowAlternativeSource;
   private JCheckBox myCbKillImmediately;
   private JCheckBox myCbAlwaysDebug;
+  private JCheckBox myCbEnableMemoryAgent;
 
   @Override
   public void reset(@NotNull DebuggerSettings settings) {
@@ -43,6 +44,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     myCbShowAlternativeSource.setSelected(settings.SHOW_ALTERNATIVE_SOURCE);
     myCbKillImmediately.setSelected(settings.KILL_PROCESS_IMMEDIATELY);
     myCbAlwaysDebug.setSelected(settings.ALWAYS_DEBUG);
+    myCbEnableMemoryAgent.setSelected(settings.ENABLE_MEMORY_AGENT);
   }
 
   @Override
@@ -62,6 +64,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     settings.SHOW_ALTERNATIVE_SOURCE = myCbShowAlternativeSource.isSelected();
     settings.KILL_PROCESS_IMMEDIATELY = myCbKillImmediately.isSelected();
     settings.ALWAYS_DEBUG = myCbAlwaysDebug.isSelected();
+    settings.ENABLE_MEMORY_AGENT = myCbEnableMemoryAgent.isSelected();
   }
 
   @Override
@@ -81,6 +84,8 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     myRbShmem = new JRadioButton(DebuggerBundle.message("label.debugger.launching.configurable.shmem"));
     myCbKillImmediately = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.kill.immediately"));
     myCbAlwaysDebug = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.always.debug"));
+    myCbEnableMemoryAgent = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent"));
+    myCbEnableMemoryAgent.setToolTipText(DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent.tooltip.text"));
 
     final ButtonGroup gr = new ButtonGroup();
     gr.add(myRbSocket);
@@ -101,6 +106,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     panel.add(myCbDisableJIT);
     panel.add(myCbShowAlternativeSource);
     panel.add(myCbKillImmediately);
+    panel.add(myCbEnableMemoryAgent);
     if (Registry.is("execution.java.always.debug")) {
       panel.add(myCbAlwaysDebug);
     }

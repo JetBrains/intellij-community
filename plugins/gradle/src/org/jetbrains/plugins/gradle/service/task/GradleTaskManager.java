@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupportedImpl;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerConfiguration;
+import com.intellij.openapi.externalSystem.task.BaseExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.Key;
@@ -59,7 +60,7 @@ import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
 /**
  * @author Denis Zhdanov
  */
-public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
+public class GradleTaskManager extends BaseExternalSystemTaskManager<GradleExecutionSettings> {
 
   private static final Logger LOG = Logger.getInstance(GradleTaskManager.class);
   public static final Key<String> INIT_SCRIPT_KEY = Key.create("INIT_SCRIPT_KEY");
@@ -91,7 +92,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
     ForkedDebuggerConfiguration forkedDebuggerSetup = ForkedDebuggerConfiguration.parse(jvmAgentSetup);
     if (forkedDebuggerSetup != null && isGradleScriptDebug(settings)) {
-      effectiveSettings.withVmOption(forkedDebuggerSetup.getJvmAgentSetup(isJdk9orLater(effectiveSettings)));
+      effectiveSettings.withVmOption(forkedDebuggerSetup.getJvmAgentSetup(isJdk9orLater(effectiveSettings.getJavaHome())));
     }
 
     CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
@@ -137,13 +138,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     return Optional.ofNullable(settings)
       .map(s -> s.getUserData(GradleRunConfiguration.DEBUG_FLAG_KEY))
       .orElse(false);
-  }
-
-  protected boolean isJdk9orLater(GradleExecutionSettings effectiveSettings) {
-    String javaHome = effectiveSettings.getJavaHome();
-    JdkVersionDetector.JdkVersionInfo jdkVersionInfo =
-      javaHome == null ? null : JdkVersionDetector.getInstance().detectJdkVersionInfo(javaHome);
-    return jdkVersionInfo != null && jdkVersionInfo.version.isAtLeast(9);
   }
 
   public static void appendInitScriptArgument(@NotNull List<String> taskNames,

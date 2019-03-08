@@ -191,7 +191,7 @@ public class ManyObjectEquals {
   private String test183;
 
   @Override
-  public boolean equals(Object o) {
+  public boolean <weak_warning descr="Method 'equals' is complex: data flow results could be imprecise">equals</weak_warning>(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ManyObjectEquals test = (ManyObjectEquals) o;

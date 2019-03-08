@@ -1,12 +1,15 @@
 <html>
 <body>
-Reports integer multiplication or left shift
-which are implicitly cast to long.
-Such multiplication is often an error, as overflow truncation may occur unexpectedly.
+Reports integer multiplications or left shifts which are implicitly cast to long.
+For example:
+<pre><code>
+  <b>void</b> x(int i) {
+    <b>long</b> val = 65536 * i;
+  }
+</code></pre>
+Such multiplication is often a mistake, as overflow truncation may occur unexpectedly.
+Converting the <b>int</b> literal to a <b>long</b> literal (<code>65536L</code>) fixes the problem.
 <!-- tooltip end -->
-<p>
-Use the checkbox below to ignore compile time constant expressions which evaluate to
-a non-overflowing value.
 <p>
 
 </body>

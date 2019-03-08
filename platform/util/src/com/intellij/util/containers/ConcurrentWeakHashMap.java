@@ -64,7 +64,7 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
   @Override
   protected KeyReference<K, V> createKeyReference(@NotNull K key,
                                                   @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
-    return new WeakKey<K, V>(key, hashingStrategy.computeHashCode(key), hashingStrategy, myReferenceQueue);
+    return new WeakKey<>(key, hashingStrategy.computeHashCode(key), hashingStrategy, myReferenceQueue);
   }
 
   @Deprecated

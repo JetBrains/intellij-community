@@ -1,16 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.ResolveState
+import com.intellij.util.recursionSafeLazy
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLevelSession
 import org.jetbrains.plugins.groovy.util.recursionAwareLazy
-import org.jetbrains.plugins.groovy.util.recursionPreventingLazy
 import kotlin.reflect.jvm.isAccessible
 
 class MethodResolveResult(
@@ -31,7 +31,7 @@ class MethodResolveResult(
     PsiSubstitutor.EMPTY
   }
 
-  private val fullSubstitutor by recursionPreventingLazy {
+  private val fullSubstitutor by recursionSafeLazy {
     buildTopLevelSession(place).inferSubst(this)
   }
 

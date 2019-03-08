@@ -40,6 +40,7 @@
 
     <!-- Codeinsight -->
     <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>
+    <focusModeProvider language="JSON" implementationClass="com.intellij.json.editor.JsonFocusModeProvider"/>
     <qualifiedNameProvider implementation="com.intellij.json.navigation.JsonQualifiedNameProvider"/>
     <completion.contributor language="JSON" id="JsonCompletionContributor" order="last" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
     <lang.psiStructureViewFactory language="JSON" implementationClass="com.intellij.json.structureView.JsonStructureViewBuilderFactory"/>

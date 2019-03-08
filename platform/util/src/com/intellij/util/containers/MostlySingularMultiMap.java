@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -24,13 +10,13 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.Debugger;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.*;
 
-@Debugger.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "myMap.entrySet().toArray()")
+@Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "myMap.entrySet().toArray()")
 public class MostlySingularMultiMap<K, V> implements Serializable {
   private static final long serialVersionUID = 2784473565881807109L;
 
@@ -42,7 +28,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
 
   @NotNull
   protected Map<K, Object> createMap() {
-    return new THashMap<K, Object>();
+    return new THashMap<>();
   }
 
   public void add(@NotNull K key, @NotNull V value) {
@@ -56,7 +42,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
       curList.add(value);
     }
     else {
-      ValueList<Object> newList = new ValueList<Object>();
+      ValueList<Object> newList = new ValueList<>();
       newList.add(current);
       newList.add(value);
       myMap.put(key, newList);
@@ -164,13 +150,10 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
 
   @Override
   public String toString() {
-    return "{" + StringUtil.join(myMap.entrySet(), new Function<Map.Entry<K, Object>, String>() {
-      @Override
-      public String fun(Map.Entry<K, Object> entry) {
-        Object value = entry.getValue();
-        String s = (value instanceof MostlySingularMultiMap.ValueList ? ((ValueList)value) : Collections.singletonList(value)).toString();
-        return entry.getKey() + ": " + s;
-      }
+    return "{" + StringUtil.join(myMap.entrySet(), entry -> {
+      Object value = entry.getValue();
+      String s = (value instanceof MostlySingularMultiMap.ValueList ? ((ValueList)value) : Collections.singletonList(value)).toString();
+      return entry.getKey() + ": " + s;
     }, "; ") + "}";
   }
 
@@ -186,7 +169,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
 
   @NotNull
   public static <K, V> MostlySingularMultiMap<K, V> newMap() {
-    return new MostlySingularMultiMap<K, V>();
+    return new MostlySingularMultiMap<>();
   }
   private static final MostlySingularMultiMap EMPTY = new EmptyMap();
 

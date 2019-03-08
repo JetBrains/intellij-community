@@ -23,7 +23,7 @@ import java.util.ArrayList;
 
 public class Layers extends JLayeredPane {
 
-  private final ArrayList<Component> myComponents = new ArrayList<Component>();
+  private final ArrayList<Component> myComponents = new ArrayList<>();
 
   public Layers() {
     setLayout(new Layout());

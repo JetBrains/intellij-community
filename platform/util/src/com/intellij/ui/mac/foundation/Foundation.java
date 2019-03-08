@@ -27,7 +27,7 @@ public class Foundation {
     // May be removed if we use toStringViaUTF16
     System.setProperty("jna.encoding", "UTF8");
 
-    Map<String, Object> foundationOptions = new HashMap<String, Object>();
+    Map<String, Object> foundationOptions = new HashMap<>();
     //foundationOptions.put(Library.OPTION_TYPE_MAPPER, FoundationTypeMapper.INSTANCE);
 
     myFoundationLibrary = Native.loadLibrary("Foundation", FoundationLibrary.class, foundationOptions);
@@ -273,7 +273,7 @@ public class Foundation {
   }
 
   private static Callback ourRunnableCallback;
-  private static final Map<String, RunnableInfo> ourMainThreadRunnables = new HashMap<String, RunnableInfo>();
+  private static final Map<String, RunnableInfo> ourMainThreadRunnables = new HashMap<>();
   private static long ourCurrentRunnableCount = 0;
   private static final Object RUNNABLE_LOCK = new Object();
 
@@ -375,7 +375,7 @@ public class Foundation {
 
     @NotNull
     public static Map<String, String> toStringMap(@Nullable ID delegate) {
-      Map<String, String> result = new HashMap<String, String>();
+      Map<String, String> result = new HashMap<>();
       if (isNil(delegate)) {
         return result;
       }
@@ -418,7 +418,7 @@ public class Foundation {
 
     @NotNull
     public List<ID> getList() {
-      List<ID> result = new ArrayList<ID>();
+      List<ID> result = new ArrayList<>();
       for (int i = 0; i < count(); i++) {
         result.add(at(i));
       }

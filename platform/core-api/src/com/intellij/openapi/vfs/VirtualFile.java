@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.Application;
@@ -90,8 +90,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public static final String PROP_SYMLINK_TARGET = "symlink";
 
   /**
-   * Acceptable values for "propertyName" argument in
-   * {@link VFilePropertyChangeEvent#VFilePropertyChangeEvent(Object, VirtualFile, String, Object, Object, boolean)}
+   * Acceptable values for "propertyName" argument of {@link VFilePropertyChangeEvent#VFilePropertyChangeEvent VFilePropertyChangeEvent()}.
    */
   @MagicConstant(stringValues = {PROP_NAME, PROP_ENCODING, PROP_HIDDEN, PROP_WRITABLE, PROP_SYMLINK_TARGET})
   public @interface PropName {}
@@ -126,7 +125,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Gets the path of this file. Path is a string which uniquely identifies file within given
    * <code>{@link VirtualFileSystem}</code>. Format of the path depends on the concrete file system.
-   * For <code>{@link com.intellij.openapi.vfs.LocalFileSystem}</code> it is an absolute file path with file separator characters
+   * For {@code com.intellij.openapi.vfs.LocalFileSystem} it is an absolute file path with file separator characters
    * (File.separatorChar) replaced to the forward slash ('/').
    *
    * @return the path
@@ -270,7 +269,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Checks whether this {@code VirtualFile} is valid. File can be invalidated either by deleting it or one of its
    * parents with {@link #delete} method or by an external change.
-   * If file is not valid only {@link #equals}, {@link #hashCode}, 
+   * If file is not valid only {@link #equals}, {@link #hashCode},
    * {@link #getName()}, {@link #getPath()}, {@link #getUrl()}, {@link #getPresentableUrl()} and methods from
    * {@link UserDataHolder} can be called for it. Using any other methods for an invalid {@link VirtualFile} instance
    * produce unpredictable results.
@@ -321,7 +320,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * @return the {@link FileType} of this file.
    *         When IDEA has no idea what the file type is (i.e. file type is not registered via {@link FileTypeRegistry}),
-   *         it returns {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN}
+   *         it returns {@code com.intellij.openapi.fileTypes.FileTypes.UNKNOWN}.
    */
   @NotNull
   public FileType getFileType() {
@@ -338,16 +337,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public VirtualFile findFileByRelativePath(@NotNull String relPath) {
     VirtualFile child = this;
 
-    for (int off = CharArrayUtil.shiftForward(relPath, 0, "/");
-         child != null && off < relPath.length();
-         off = CharArrayUtil.shiftForward(relPath, off, "/")) {
+    int off = CharArrayUtil.shiftForward(relPath, 0, "/");
+    while (child != null && off < relPath.length()) {
       int nextOff = relPath.indexOf('/', off);
       if (nextOff < 0) nextOff = relPath.length();
       String name = relPath.substring(off, nextOff);
 
       if (name.equals("..")) {
         if (child.is(VFileProperty.SYMLINK)) {
-          final VirtualFile canonicalFile = child.getCanonicalFile();
+          VirtualFile canonicalFile = child.getCanonicalFile();
           child = canonicalFile != null ? canonicalFile.getParent() : null;
         }
         else {
@@ -358,8 +356,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
         child = child.findChild(name);
       }
 
-      off = nextOff;
+      off = CharArrayUtil.shiftForward(relPath, nextOff, "/");
     }
+
     return child;
   }
 
@@ -553,7 +552,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if {@code requestor} is {@code null}.
-   *                  See {@link VirtualFileEvent#getRequestor} and {@link com.intellij.openapi.vfs.SafeWriteRequestor}.
+   *                  See {@link VirtualFileEvent#getRequestor} and {@code com.intellij.openapi.vfs.SafeWriteRequestor}.
    * @return {@code OutputStream}
    * @throws IOException if an I/O error occurs
    */
@@ -571,7 +570,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @param requestor            any object to control who called this method. Note that
    *                             it is considered to be an external change if {@code requestor} is {@code null}.
-   *                             See {@link VirtualFileEvent#getRequestor} and {@link com.intellij.openapi.vfs.SafeWriteRequestor}.
+   *                             See {@link VirtualFileEvent#getRequestor} and {@code com.intellij.openapi.vfs.SafeWriteRequestor}.
    * @param newModificationStamp new modification stamp or -1 if no special value should be set
    * @param newTimeStamp         new time stamp or -1 if no special value should be set
    * @return {@code OutputStream}

@@ -160,6 +160,12 @@ class DefaultFileOperations implements FileOperations {
     private final ZipFile myZip;
     private final Map<String, Collection<ZipEntry>> myPaths = new THashMap<String, Collection<ZipEntry>>();
     private final Function<ZipEntry, JavaFileObject> myToFileObjectConverter;
+    private static final FileObjectKindFilter<ZipEntry> ourEntryFilter = new FileObjectKindFilter<ZipEntry>(new Function<ZipEntry, String>() {
+      @Override
+      public String fun(ZipEntry zipEntry) {
+        return zipEntry.getName();
+      }
+    });
 
     ZipArchive(final File root, final String encodingName) throws IOException {
       myZip = new ZipFile(root, ZipFile.OPEN_READ);
@@ -184,7 +190,6 @@ class DefaultFileOperations implements FileOperations {
       };
     }
 
-
     @NotNull
     @Override
     public Iterable<JavaFileObject> list(final String relPath, Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException{
@@ -206,9 +211,9 @@ class DefaultFileOperations implements FileOperations {
             }
           }
         }
-        return JpsJavacFileManager.convert(JpsJavacFileManager.merge(allChildren), myToFileObjectConverter);
+        return JpsJavacFileManager.convert(JpsJavacFileManager.filter(JpsJavacFileManager.merge(allChildren), ourEntryFilter.getFor(kinds)), myToFileObjectConverter);
       }
-      return JpsJavacFileManager.convert(entries, myToFileObjectConverter);
+      return JpsJavacFileManager.convert(JpsJavacFileManager.filter(entries, ourEntryFilter.getFor(kinds)), myToFileObjectConverter);
     }
 
     @Override

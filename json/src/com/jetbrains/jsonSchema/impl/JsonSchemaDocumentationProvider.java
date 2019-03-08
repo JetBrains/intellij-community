@@ -52,7 +52,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
                                                 @Nullable PsiElement originalElement,
                                                 final boolean preferShort,
                                                 @Nullable String forcedPropName) {
-    if (element instanceof FakeDocElement) return null;
+    if (element instanceof FakePsiElement) return null;
     element = isWhitespaceOrComment(originalElement) ? element : ObjectUtils.coalesce(originalElement, element);
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;

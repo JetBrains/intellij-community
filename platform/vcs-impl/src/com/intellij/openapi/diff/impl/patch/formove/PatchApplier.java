@@ -177,7 +177,7 @@ public class PatchApplier<Unused> {
     if (group.isEmpty()) return ApplyPatchStatus.SUCCESS; //?
     final Project project = group.iterator().next().myProject;
 
-    return PartialChangesUtil.computeUnderChangeListWithRefresh(project, targetChangeList, "Applying patch...", () -> {
+    return PartialChangesUtil.computeUnderChangeList(project, targetChangeList, "Applying patch...", () -> {
       ApplyPatchStatus result = ApplyPatchStatus.SUCCESS;
       for (PatchApplier patchApplier : group) {
         result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
@@ -226,7 +226,7 @@ public class PatchApplier<Unused> {
 
       final Set<FilePath> directlyAffected = new HashSet<>();
       final Set<VirtualFile> indirectlyAffected = new HashSet<>();
-      for (PatchApplier applier : group) {
+      for (PatchApplier<?> applier : group) {
         directlyAffected.addAll(applier.getDirectlyAffected());
         indirectlyAffected.addAll(applier.getIndirectlyAffected());
       }
@@ -234,7 +234,7 @@ public class PatchApplier<Unused> {
       refreshPassedFiles(project, directlyAffected, indirectlyAffected);
 
       return result;
-    });
+    }, true);
   }
 
   private static void suggestRollback(@NotNull Project project, @NotNull Collection<PatchApplier> group, @NotNull Label beforeLabel) {

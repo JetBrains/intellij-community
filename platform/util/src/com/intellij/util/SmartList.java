@@ -335,7 +335,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     }
 
     if (mySize == 1) {
-      return myElem == null ? that.myElem == null : myElem.equals(that.myElem);
+      return Objects.equals(myElem, that.myElem);
     }
 
     return compareOneByOne(that);
@@ -347,8 +347,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     }
 
     if (mySize == 1) {
-      Object o = that.get(0);
-      return myElem == null ? o == null : myElem.equals(o);
+      return Objects.equals(myElem, that.get(0));
     }
 
     return compareOneByOne(that);
@@ -358,7 +357,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     for (int i = 0; i < mySize; i++) {
       E o1 = get(i);
       Object o2 = that.get(i);
-      if (o1 == null ? o2 != null : !o1.equals(o2)) {
+      if (!Objects.equals(o1, o2)) {
         return false;
       }
     }

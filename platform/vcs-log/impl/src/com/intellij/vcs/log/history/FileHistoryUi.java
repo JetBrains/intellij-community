@@ -216,18 +216,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     }
   }
 
-  public void jumpToNearestCommit(@NotNull Hash hash) {
-    jumpTo(hash, (model, h) -> {
-      if (!myLogData.getStorage().containsCommit(new CommitId(h, myRoot))) return GraphTableModel.COMMIT_NOT_FOUND;
-      int commitIndex = myLogData.getCommitIndex(h, myRoot);
-      Integer rowIndex = myVisiblePack.getVisibleGraph().getVisibleRowIndex(commitIndex);
-      if (rowIndex == null) {
-        rowIndex = ReachableNodesUtilKt.findVisibleAncestorRow(commitIndex, myVisiblePack);
-      }
-      return rowIndex == null ? GraphTableModel.COMMIT_DOES_NOT_MATCH : rowIndex;
-    }, SettableFuture.create());
-  }
-
   public boolean matches(@NotNull FilePath targetPath, @Nullable Hash targetRevision) {
     return myPath.equals(targetPath) && Objects.equals(myRevision, targetRevision);
   }

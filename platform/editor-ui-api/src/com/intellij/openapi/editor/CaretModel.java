@@ -185,7 +185,7 @@ public interface CaretModel {
   int getCaretCount();
 
   /**
-   * Returns all carets currently existing in the document, ordered by their position in the document.
+   * Returns all carets currently existing in the document, ordered by their visual position in editor.
    */
   @NotNull
   List<Caret> getAllCarets();

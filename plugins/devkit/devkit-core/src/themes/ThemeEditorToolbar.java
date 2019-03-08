@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public class ThemeEditorToolbar extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
+public final class ThemeEditorToolbar extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("ThemeEditorToolbar");
 
   @NotNull
@@ -30,7 +31,7 @@ public class ThemeEditorToolbar extends EditorNotifications.Provider<EditorNotif
 
   @Nullable
   @Override
-  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
+  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
     if (StringUtil.endsWithIgnoreCase(file.getName(), ".theme.json")) {
       EditorNotificationPanel panel = new EditorNotificationPanel(JBColor.PanelBackground);
       panel.removeAll();

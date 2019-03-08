@@ -15,6 +15,10 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +42,13 @@ public class JavaVersionServiceImpl extends JavaVersionService {
   @Override
   public boolean isCompilerVersionAtLeast(@NotNull PsiElement element, @NotNull JavaSdkVersion version) {
     if (super.isCompilerVersionAtLeast(element, version)) return true;
-    JavaSdkVersion projectVersion = JavaSdkVersionUtil.getJavaSdkVersion(ProjectRootManager.getInstance(element.getProject()).getProjectSdk());
-    return projectVersion != null && projectVersion.isAtLeast(version);
+    Project project = element.getProject();
+    JavaSdkVersion projectVersion = JavaSdkVersionUtil.getJavaSdkVersion(ProjectRootManager.getInstance(project).getProjectSdk());
+    if (projectVersion != null && projectVersion.isAtLeast(version)) return true;
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      JavaSdkVersion moduleVersion = JavaSdkVersionUtil.getJavaSdkVersion(ModuleRootManager.getInstance(module).getSdk());
+      if (moduleVersion != null && moduleVersion.isAtLeast(version)) return true;
+    }
+    return false;
   }
 }

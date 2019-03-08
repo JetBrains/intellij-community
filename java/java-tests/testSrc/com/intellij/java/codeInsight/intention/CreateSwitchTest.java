@@ -59,6 +59,10 @@ public class CreateSwitchTest extends JavaCodeInsightFixtureTestCase {
     doTestNotAvailable();
   }
   
+  public void testNotAvailableInAssignment() {
+    doTestNotAvailable();
+  }
+  
   public void testNotAvailableOnRedCode() {
     withJava7(this::doTestNotAvailable);
   }

@@ -1,4 +1,4 @@
-// "Convert to local" "false"
+// "Fix all 'Field can be local' problems in file" "false"
 class MyClassTest {
 
   private boolean edit<caret>able = false;

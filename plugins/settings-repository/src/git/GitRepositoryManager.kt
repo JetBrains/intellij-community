@@ -259,7 +259,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     repository.edit(toDelete)
     addCommand?.call()
 
-    repository.commit(with(IdeaCommitMessageFormatter()) { StringBuilder().appendCommitOwnerInfo(true) }.append(commitMessage).toString())
+    repository.commit(IdeaCommitMessageFormatter().appendCommitOwnerInfo().append(commitMessage).toString())
     return true
   }
 

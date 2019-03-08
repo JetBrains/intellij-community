@@ -104,9 +104,18 @@ public class CompletionPolicy {
     PsiElement target = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     if (target != null) target = target.getNavigationElement();
     PsiFile targetFile = target != null ? target.getContainingFile() : null;
-    return targetFile != null && targetFile.getViewProvider() == file.getViewProvider() &&
-           (target.getTextOffset() == leaf.getTextRange().getStartOffset() ||
-            ref != null && target.getTextOffset() == ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset());
+    if (targetFile == null || targetFile.getViewProvider() != file.getViewProvider()) {
+      return false;
+    }
+    if (target.getTextOffset() == leaf.getTextRange().getStartOffset() ||
+        ref != null && target.getTextOffset() == ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset()) {
+      return true;
+    }
+    if (target instanceof PsiNameIdentifierOwner) {
+      PsiElement nameIdentifier = ((PsiNameIdentifierOwner)target).getNameIdentifier();
+      if (nameIdentifier != null && PsiTreeUtil.isAncestor(nameIdentifier, leaf, false)) return true;
+    }
+    return false;
   }
 
   protected boolean shouldSuggestNonReferenceLeafText(@NotNull PsiElement leaf) {

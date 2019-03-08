@@ -166,19 +166,14 @@ public class JBUI {
 
     // The cache radically reduces potentially thousands of equal Scale instances.
     private static final ThreadLocal<EnumMap<ScaleType, TDoubleObjectHashMap<Scale>>> cache =
-      new ThreadLocal<EnumMap<ScaleType, TDoubleObjectHashMap<Scale>>>() {
-        @Override
-        protected EnumMap<ScaleType, TDoubleObjectHashMap<Scale>> initialValue() {
-          return new EnumMap<ScaleType, TDoubleObjectHashMap<Scale>>(ScaleType.class);
-        }
-      };
+      ThreadLocal.withInitial(() -> new EnumMap<>(ScaleType.class));
 
     @NotNull
     public static Scale create(double value, @NotNull ScaleType type) {
       EnumMap<ScaleType, TDoubleObjectHashMap<Scale>> emap = cache.get();
       TDoubleObjectHashMap<Scale> map = emap.get(type);
       if (map == null) {
-        emap.put(type, map = new TDoubleObjectHashMap<Scale>());
+        emap.put(type, map = new TDoubleObjectHashMap<>());
       }
       Scale scale = map.get(value);
       if (scale != null) return scale;
@@ -965,7 +960,7 @@ public class JBUI {
     }
 
     public void addUpdateListener(@NotNull UpdateListener l) {
-      if (listeners == null) listeners = new ArrayList<UpdateListener>(1);
+      if (listeners == null) listeners = new ArrayList<>(1);
       listeners.add(l);
     }
 
@@ -1012,7 +1007,7 @@ public class JBUI {
      */
     public static class Cache<D, S extends BaseScaleContext> {
       private final Function<? super S, ? extends D> myDataProvider;
-      private final AtomicReference<Pair<Double, D>> myData = new AtomicReference<Pair<Double, D>>(null);
+      private final AtomicReference<Pair<Double, D>> myData = new AtomicReference<>(null);
 
       /**
        * @param dataProvider provides a data object matching the passed scale context
@@ -1097,7 +1092,7 @@ public class JBUI {
     @NotNull
     public static ScaleContext create(@Nullable Component comp) {
       final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(sysScale(comp)));
-      if (comp != null) ctx.compRef = new WeakReference<Component>(comp);
+      if (comp != null) ctx.compRef = new WeakReference<>(comp);
       return ctx;
     }
 

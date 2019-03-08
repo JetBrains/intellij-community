@@ -1457,7 +1457,7 @@ public abstract class DialogWrapper {
   /**
    * Sets margin for command buttons ("OK", "Cancel", "Help").
    *
-   * @Deprecated Button margins aren't used anymore. Button style is standardized.
+   * @deprecated Button margins aren't used anymore. Button style is standardized.
    * @param insets buttons margin
    */
   @Deprecated
@@ -2053,8 +2053,8 @@ public abstract class DialogWrapper {
     }
 
     new Thread("DialogWrapper resizer") {
-      final int time = 200;
-      final int steps = 7;
+      static final int time = 200;
+      static final int steps = 7;
 
       @Override
       public void run() {

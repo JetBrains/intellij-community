@@ -12,6 +12,7 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -45,7 +46,7 @@ public class VcsLogTabsManager {
   private void createLogTabs(@NotNull VcsLogManager manager) {
     List<String> tabIds = myUiProperties.getTabs();
     for (String tabId : tabIds) {
-      openLogTab(manager, tabId, false, false);
+      openLogTab(manager, tabId, false, null);
     }
   }
 
@@ -56,19 +57,21 @@ public class VcsLogTabsManager {
   }
 
   public void openAnotherLogTab(@NotNull VcsLogManager manager) {
-    openAnotherLogTab(manager, false);
+    openAnotherLogTab(manager, null);
   }
 
   @NotNull
-  public VcsLogUiImpl openAnotherLogTab(@NotNull VcsLogManager manager, boolean resetFilters) {
-    return openLogTab(manager, VcsLogContentUtil.generateTabId(myProject), true, resetFilters);
+  public VcsLogUiImpl openAnotherLogTab(@NotNull VcsLogManager manager, @Nullable VcsLogFilterCollection filters) {
+    return openLogTab(manager, VcsLogContentUtil.generateTabId(myProject), true, filters);
   }
 
   @NotNull
-  private VcsLogUiImpl openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, boolean focus, boolean resetFilters) {
-    if (resetFilters) myUiProperties.resetState(tabId);
+  private VcsLogUiImpl openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, boolean focus,
+                                  @Nullable VcsLogFilterCollection filters) {
+    if (filters != null) myUiProperties.resetState(tabId);
 
-    VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory = new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId));
+    VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory =
+      new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId, filters));
     VcsLogUiImpl ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
     updateTabName(ui);
     ui.addFilterListener(() -> updateTabName(ui));

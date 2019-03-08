@@ -8,7 +8,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
-public class BooleanAccessor extends CodeStylePropertyAccessor<Boolean,Boolean> implements CodeStyleChoiceList {
+public class BooleanAccessor extends CodeStyleFieldAccessor<Boolean,Boolean> implements CodeStyleChoiceList {
 
   private final static List<String> BOOLEAN_VALS = Arrays.asList("false", "true");
 

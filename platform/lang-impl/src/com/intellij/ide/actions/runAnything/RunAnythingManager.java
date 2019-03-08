@@ -116,7 +116,7 @@ public class RunAnythingManager {
       }
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        Dimension minSize = myRunAnythingUI.getMinimumSize();
+        Dimension minSize = view.getMinimumSize();
         JBInsets.addTo(minSize, myBalloon.getContent().getInsets());
         myBalloon.setMinimumSize(minSize);
 
@@ -127,7 +127,7 @@ public class RunAnythingManager {
         }
         else {
           if (myBalloonFullSize == null) {
-            myBalloonFullSize = myRunAnythingUI.getPreferredSize();
+            myBalloonFullSize = view.getPreferredSize();
             JBInsets.addTo(myBalloonFullSize, myBalloon.getContent().getInsets());
           }
           myBalloonFullSize.height = Integer.max(myBalloonFullSize.height, minSize.height);

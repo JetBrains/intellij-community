@@ -451,12 +451,8 @@ public class JBZipEntry implements Cloneable {
   }
 
   void doSetDataFromFile(File file) throws IOException {
-    InputStream input = new BufferedInputStream(new FileInputStream(file));
-    try {
+    try (InputStream input = new BufferedInputStream(new FileInputStream(file))) {
       myFile.getOutputStream().putNextEntryContent(this, file.length(), input);
-    }
-    finally {
-      input.close();
     }
   }
 
@@ -470,12 +466,8 @@ public class JBZipEntry implements Cloneable {
   public byte[] getData() throws IOException {
     if (size == -1) throw new IOException("no data");
 
-    final InputStream stream = getInputStream();
-    try {
+    try (InputStream stream = getInputStream()) {
       return FileUtil.loadBytes(stream, (int)size);
-    }
-    finally {
-      stream.close();
     }
   }
 

@@ -88,7 +88,7 @@ public class PluginManagerCore {
   private static List<String> ourDisabledPlugins;
   private static MultiMap<String, String> ourBrokenPluginVersions;
   private static IdeaPluginDescriptor[] ourPlugins;
-  private static boolean ourUnitTestWithBundledPlugins;
+  private static boolean ourUnitTestWithBundledPlugins = SystemProperties.getBooleanProperty("idea.run.tests.with.bundled.plugins", false);
 
   static String myPluginError;
   static List<String> myPlugins2Disable;
@@ -1475,14 +1475,12 @@ public class PluginManagerCore {
     }
 
     registerExtensionPointsAndExtensions(Extensions.getRootArea(), result);
-    Extensions.getRootArea().getExtensionPoint(Extensions.AREA_LISTENER_EXTENSION_POINT).registerExtension(new AreaListener() {
+    //noinspection deprecation
+    Extensions.AREA_LISTENER_EXTENSION_POINT.getPoint(null).registerExtension(new AreaListener() {
       @Override
       public void areaCreated(@NotNull String areaClass, @NotNull AreaInstance areaInstance) {
         registerExtensionPointsAndExtensions(Extensions.getArea(areaInstance), result);
       }
-
-      @Override
-      public void areaDisposing(@NotNull String areaClass, @NotNull AreaInstance areaInstance) { }
     });
 
     ourPlugins = pluginDescriptors;
@@ -1552,8 +1550,20 @@ public class PluginManagerCore {
       }
     }
 
+    fixOptionalConfigs(idToDescriptorMap);
     mergeOptionalConfigs(idToDescriptorMap);
     addModulesAsDependents(idToDescriptorMap);
+  }
+
+  private static void fixOptionalConfigs(@NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap) {
+    if (!isRunningFromSources()) return;
+    for (IdeaPluginDescriptorImpl descriptor : idToDescriptorMap.values()) {
+      if (!descriptor.isUseCoreClassLoader() || descriptor.getOptionalDescriptors() == null) continue;
+      descriptor.getOptionalDescriptors().entrySet().removeIf(entry -> {
+        IdeaPluginDescriptorImpl dependent = idToDescriptorMap.get(entry.getKey());
+        return dependent != null && !dependent.isUseCoreClassLoader();
+      });
+    }
   }
 
   private static void registerExtensionPointsAndExtensions(@NotNull ExtensionsArea area, @NotNull List<? extends IdeaPluginDescriptorImpl> loadedPlugins) {

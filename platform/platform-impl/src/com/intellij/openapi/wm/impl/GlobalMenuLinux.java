@@ -8,7 +8,9 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.StubItem;
@@ -18,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.loader.NativeLibraryLoader;
 import com.intellij.util.ui.UIUtil;
 /* Android Studio: b/67589184
 import com.sun.javafx.application.PlatformImpl;
@@ -104,6 +106,10 @@ interface GlobalMenuLib extends Library {
 }
 
 public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
+  private static final String TOGGLE_SWING_MENU_ACTION_NAME = "Toggle Global Menu integration";
+  private static final String TOGGLE_SWING_MENU_ACTION_DESC = "Enable/disable global menu integration (in all frames)";
+  private static final String TOGGLE_SWING_MENU_ACTION_ID = "ToggleGlobalLinuxMenu";
+
   private static final SimpleDateFormat ourDtf = new SimpleDateFormat("hhmmss.SSS"); // for debug only
   private static final boolean TRACE_SYSOUT               = Boolean.getBoolean("linux.native.menu.debug.trace.sysout");
   private static final boolean TRACE_ENABLED              = Boolean.getBoolean("linux.native.menu.debug.trace.enabled");
@@ -118,7 +124,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final boolean KDE_DISABLE_ROOT_MNEMONIC_PROCESSING = Boolean.getBoolean("linux.native.menu.kde.disable.root.mnemonic");
 
   private static final boolean SKIP_OPEN_MENU_COMMAND     = Boolean.getBoolean("linux.native.menu.skip.open");
-  private static final boolean DONT_FILL_ROOTS            = SystemInfo.isKDE || Boolean.getBoolean("linux.native.dont.fill.roots");
+  private static final boolean DO_FILL_ROOTS              = Boolean.getBoolean("linux.native.do.fill.roots");
   private static final boolean DONT_FILL_SUBMENU          = Boolean.getBoolean("linux.native.menu.dont.fill.submenu");
   private static final boolean DONT_CLOSE_POPUPS          = Boolean.getBoolean("linux.native.menu.dont.close.popups");
   private static final boolean DISABLE_EVENTS_FILTERING   = Boolean.getBoolean("linux.native.menu.disable.events.filtering");
@@ -196,6 +202,19 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         glibMain.start();
       }
 Android Studio: b/67589184 */
+
+      // register toggle-swing-menu action (to be able to enable swing menu when system applet is died)
+      final ActionManager am = ActionManager.getInstance();
+      final AnAction toggleSwingMenu = new AnAction(TOGGLE_SWING_MENU_ACTION_NAME, TOGGLE_SWING_MENU_ACTION_DESC, null) {
+        boolean enabled = false;
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          for (GlobalMenuLinux gml: ourInstances.values())
+            gml.toggle(enabled);
+          enabled = !enabled;
+        }
+      };
+      am.registerAction(TOGGLE_SWING_MENU_ACTION_ID, toggleSwingMenu);
     } else {
       ourGLogger = null;
       ourUpdateAllRoots = null;
@@ -324,11 +343,12 @@ Android Studio: b/67589184 */
         mi.setLabelFromSwingPeer(am);
         newRoots.add(mi);
 
-        if (!DONT_FILL_ROOTS) {
+        if (DO_FILL_ROOTS) {
           final long startMs = System.currentTimeMillis();
-          am.removeAll();
+          am.removeAll(); // just for insurance
           am.fillMenu();
           _syncChildren(mi, am, 1, stats); // NOTE: fill root menus to avoid empty submenu showing
+          am.removeAll();
           final long elapsedMs = System.currentTimeMillis() - startMs;
           if (TRACE_SYNC_STATS) _trace("filled root menu '%s', spent (in EDT) %d ms, stats: %s", String.valueOf(mi.txt), elapsedMs, _stats2str(stats));
         }
@@ -362,8 +382,10 @@ Android Studio: b/67589184 */
     if (croots == null || croots.isEmpty())
       return;
 
-    for (MenuItemInternal mi: croots)
+    for (MenuItemInternal mi: croots) {
       mi.nativePeer = ourLib.addRootMenu(myWindowHandle, mi.uid, mi.txt);
+      _processChildren(mi);
+    }
 
     if (!SHOW_SWING_MENU)
       ApplicationManager.getApplication().invokeLater(()->{
@@ -581,6 +603,11 @@ Android Studio: b/67589184 */
   }
   private void _handleEvent(int uid, int eventType, boolean doFiltering) {
     // glib main-loop thread
+    if (myWindowHandle == null || myIsDisposed) {
+      if (TRACE_ENABLED) _trace("window was closed when received event '%s', just skip it", _evtype2str(eventType));
+      return;
+    }
+
     final MenuItemInternal mi = _findMenuItem(uid);
     if (mi == null) {
       LOG.error("can't find menu-item by uid " + uid + ", eventType=" + eventType);
@@ -701,7 +728,7 @@ Android Studio: b/67589184 */
     }
 
     try {
-      UrlClassLoader.loadPlatformLibrary("dbm");
+      NativeLibraryLoader.loadPlatformLibrary("dbm");
 
       // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
       // the way we tell CF to interpret our char*

@@ -471,13 +471,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   @Override
   public XmlElementDescriptor getDescriptor() {
     return CachedValuesManager.getCachedValue(this, () -> {
-      final RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      final XmlElementDescriptor descriptor = ourGuard.doPreventingRecursion(this, true, this::computeElementDescriptor);
-      if (stamp.mayCacheNow()) {
-        return Result.create(descriptor, PsiModificationTracker.MODIFICATION_COUNT, externalResourceModificationTracker());
-      }
-      // = do not cache
-      return Result.create(descriptor, ModificationTracker.EVER_CHANGED);
+      XmlElementDescriptor descriptor = ourGuard.doPreventingRecursion(this, true, this::computeElementDescriptor);
+      return Result.create(descriptor, PsiModificationTracker.MODIFICATION_COUNT, externalResourceModificationTracker());
     });
   }
 

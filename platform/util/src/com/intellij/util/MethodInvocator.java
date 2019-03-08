@@ -56,10 +56,7 @@ public class MethodInvocator {
     try {
       return myMethod.invoke(object, arguments);
     }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InvocationTargetException e) {
+    catch (IllegalAccessException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }
   }

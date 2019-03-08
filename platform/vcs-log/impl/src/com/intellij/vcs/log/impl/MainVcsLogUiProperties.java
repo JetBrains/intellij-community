@@ -33,6 +33,7 @@ public interface MainVcsLogUiProperties extends VcsLogUiProperties {
   VcsLogUiProperty<Boolean> TEXT_FILTER_MATCH_CASE = new VcsLogUiProperty<>("TextFilter.MatchCase");
   VcsLogUiProperty<Boolean> TEXT_FILTER_REGEX = new VcsLogUiProperty<>("TextFilter.Regex");
   VcsLogUiProperty<Boolean> SHOW_CHANGES_FROM_PARENTS = new VcsLogUiProperty<>("Changes.ShowChangesFromParents");
+  VcsLogUiProperty<Boolean> SHOW_ONLY_AFFECTED_CHANGES = new VcsLogUiProperty<>("Changes.ShowOnlyAffected");
 
   void addRecentlyFilteredGroup(@NotNull String filterName, @NotNull Collection<String> values);
 

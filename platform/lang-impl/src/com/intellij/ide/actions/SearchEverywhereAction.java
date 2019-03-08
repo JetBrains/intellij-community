@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -33,7 +33,7 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
@@ -82,7 +82,10 @@ import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -578,14 +581,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         else {
           seManager.setShownContributor(searchProviderID);
           String shortcut = KeymapUtil.getEventCallerKeystrokeText(e);
-          FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(searchProviderID, shortcut);
-          SearchEverywhereUsageTriggerCollector.trigger(e.getProject(), SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);
+          FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(searchProviderID, shortcut);
+          SearchEverywhereUsageTriggerCollector.trigger(e.getProject(), SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
         }
         return;
       }
 
-      FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(searchProviderID, null);
-      SearchEverywhereUsageTriggerCollector.trigger(e.getProject(), SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, context);
+      FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(searchProviderID, null);
+      SearchEverywhereUsageTriggerCollector.trigger(e.getProject(), SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, data);
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       String text = GotoActionBase.getInitialTextForNavigation(e.getData(CommonDataKeys.EDITOR));
       seManager.show(searchProviderID, text, e);
@@ -2297,7 +2300,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
            && ((GotoActionModel.ActionWrapper)o).getAction() instanceof ActivateToolWindowAction;
   }
 
-  private void fillConfigurablesIds(String pathToParent, Configurable[] configurables) {
+  private void fillConfigurablesIds(String pathToParent, @NotNull List<Configurable> configurables) {
     for (Configurable configurable : configurables) {
       if (configurable instanceof SearchableConfigurable) {
         final String id = ((SearchableConfigurable)configurable).getId();
@@ -2307,7 +2310,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         myConfigurables.put(id, name);
         if (configurable instanceof SearchableConfigurable.Parent) {
-          fillConfigurablesIds(name, ((SearchableConfigurable.Parent)configurable).getConfigurables());
+          fillConfigurablesIds(name, Arrays.asList(((SearchableConfigurable.Parent)configurable).getConfigurables()));
         }
       }
     }

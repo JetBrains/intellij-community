@@ -131,7 +131,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   }
 
   @Suppress("CAST_NEVER_SUCCEEDS")
-  final override fun getStateStorage(storageSpec: Storage): StateStorage = getOrCreateStorage(
+  final override fun getStateStorage(storageSpec: Storage) = getOrCreateStorage(
     storageSpec.path,
     storageSpec.roamingType,
     storageSpec.storageClass.java,

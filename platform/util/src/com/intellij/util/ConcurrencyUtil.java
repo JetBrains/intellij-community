@@ -46,7 +46,7 @@ public class ConcurrencyUtil {
       return null;
     }
 
-    List<Future<T>> futures = new ArrayList<Future<T>>(tasks.size());
+    List<Future<T>> futures = new ArrayList<>(tasks.size());
     boolean done = false;
     try {
       for (Callable<T> t : tasks) {
@@ -115,7 +115,7 @@ public class ConcurrencyUtil {
   @NotNull
   public static ThreadPoolExecutor newSingleThreadExecutor(@NonNls @NotNull String name, int priority) {
     return new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
-                                  new LinkedBlockingQueue<Runnable>(), newNamedThreadFactory(name, true, priority));
+                                  new LinkedBlockingQueue<>(), newNamedThreadFactory(name, true, priority));
   }
 
   @NotNull
@@ -209,12 +209,7 @@ public class ConcurrencyUtil {
   @NotNull
   @Contract(pure = true)
   public static Runnable underThreadNameRunnable(@NotNull final String name, @NotNull final Runnable runnable) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        runUnderThreadName(name, runnable);
-      }
-    };
+    return () -> runUnderThreadName(name, runnable);
   }
 
   public static void runUnderThreadName(@NotNull final String name, @NotNull final Runnable runnable) {
@@ -237,12 +232,9 @@ public class ConcurrencyUtil {
   @NotNull
   public static Runnable once(@NotNull final Runnable delegate) {
     final AtomicBoolean done = new AtomicBoolean(false);
-    return new Runnable() {
-      @Override
-      public void run() {
-        if (done.compareAndSet(false, true)) {
-          delegate.run();
-        }
+    return () -> {
+      if (done.compareAndSet(false, true)) {
+        delegate.run();
       }
     };
   }

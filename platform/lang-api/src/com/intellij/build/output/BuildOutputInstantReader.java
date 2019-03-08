@@ -4,11 +4,14 @@ package com.intellij.build.output;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
+import java.io.IOException;
+
 /**
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-public interface BuildOutputInstantReader {
+public interface BuildOutputInstantReader extends Closeable, Appendable {
   Object getBuildId();
 
   @Nullable
@@ -23,4 +26,20 @@ public interface BuildOutputInstantReader {
   void pushBack(int numberOfLines);
 
   String getCurrentLine();
+
+  /*
+    redefine below methods without exceptions
+   */
+
+  @Override
+  BuildOutputInstantReader append(CharSequence csq);
+
+  @Override
+  BuildOutputInstantReader append(CharSequence csq, int start, int end);
+
+  @Override
+  BuildOutputInstantReader append(char c);
+
+  @Override
+  void close();
 }

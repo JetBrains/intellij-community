@@ -17,8 +17,6 @@ and build numbers for older releases of IntelliJ IDEA can be found on the page o
 If you intend to make open source contributions to the IntelliJ Platform,
 see [Contributing to the IntelliJ Project](http://www.jetbrains.org/display/IJOS/Contribute) for more information.
 
-_**Tags:**_ The GitHub repository doesn't contain any tags for performance reasons. If you need to check out a tag, fetch it from [the repository mirror](git://git.jetbrains.org/idea/community.git) which contains all of them. There are scripts `fetch-tag.sh` and `list-tags.sh` which simplify the task.
-
 _**Speed Tip:**_ If the complete repository history isn't needed then using a shallow clone (`git clone --depth 1`) will save significant time.
 
 These Git operations can also be done through the [IntelliJ IDEA user interface](https://www.jetbrains.com/help/idea/using-git-integration.html).

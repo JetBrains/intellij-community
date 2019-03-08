@@ -16,7 +16,7 @@ import java.util.Map;
 public class WavePainter2D extends WavePainter {
   private static final float STROKE_WIDTH = 0.7f;
 
-  private static final Map<Color, WavePainter2D> myPainters = new HashMap<Color, WavePainter2D>();
+  private static final Map<Color, WavePainter2D> myPainters = new HashMap<>();
   private static final int PATTERN_WIDTH = 4000;
 
   private final BufferedImage myImage;

@@ -65,17 +65,21 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       myTracker.incModificationCount();
     }
   };
-  private final ExtensionPointAvailabilityListener myExtensionPointAvailabilityListener;
 
   public KeyedExtensionCollector(@NonNls @NotNull String epName) {
+    this(epName, null);
+  }
+
+  public KeyedExtensionCollector(@NonNls @NotNull String epName, @Nullable Disposable parentDisposable) {
     myEpName = epName;
     lock = "lock for KeyedExtensionCollector " + epName;
-    myExtensionPointAvailabilityListener = new ExtensionPointAvailabilityListener() {
+
+    Extensions.getRootArea().addAvailabilityListener(epName, new ExtensionPointAvailabilityListener() {
       @Override
       public void extensionPointRegistered(@NotNull ExtensionPoint extensionPoint) {
         if (extensionPoint.getName().equals(epName)) {
           //noinspection unchecked
-          extensionPoint.addExtensionPointListener(myListener, false, null);
+          extensionPoint.addExtensionPointListener(myListener, false, parentDisposable);
           myCache.clear();
           myTracker.incModificationCount();
         }
@@ -85,25 +89,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       public void extensionPointRemoved(@NotNull ExtensionPoint extensionPoint) {
         // no need to remove myListener - it should deregister automatically
       }
-    };
-    Extensions.getRootArea().addAvailabilityListener(epName, myExtensionPointAvailabilityListener);
-  }
-
-  public KeyedExtensionCollector(@NonNls @NotNull String epName, @Nullable Disposable parentDisposable) {
-    this(epName);
-    if (parentDisposable == null) return;
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ExtensionsArea area = Extensions.getRootArea();
-        area.removeAvailabilityListener(epName, myExtensionPointAvailabilityListener);
-        if (area.hasExtensionPoint(epName)) {
-          ExtensionPoint point = area.getExtensionPoint(epName);
-          //noinspection unchecked
-          point.removeExtensionPointListener(myListener);
-        }
-      }
-    });
+    }, parentDisposable);
   }
 
   public void addExplicitExtension(@NotNull KeyT key, @NotNull T t) {
@@ -164,33 +150,35 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   protected List<T> buildExtensions(@NotNull String stringKey, @NotNull KeyT key) {
     synchronized (lock) {
       List<T> list = myExplicitExtensions.get(stringKey);
-      List<T> result = list == null ? null : new ArrayList<>(list);
-
-      result = buildExtensionsFromExtensionPoint(result, bean -> stringKey.equals(bean.getKey()));
-      return result == null ? Collections.emptyList() : result;
+      return ContainerUtil.notNullize(buildExtensionsFromExtensionPoint(list == null ? null : new ArrayList<>(list), bean -> stringKey.equals(bean.getKey())));
     }
   }
 
-  protected List<T> buildExtensionsFromExtensionPoint(@Nullable List<T> result, @NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean) {
+  protected final List<T> buildExtensionsFromExtensionPoint(@Nullable List<T> result, @NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean) {
     final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
-    if (point != null) {
-      final KeyedLazyInstance<T>[] beans = point.getExtensions();
-      for (KeyedLazyInstance<T> bean : beans) {
-        if (isMyBean.test(bean)) {
-          final T instance;
-          try {
-            instance = bean.getInstance();
-          }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
-          catch (Exception | LinkageError e) {
-            LOG.error(e);
-            continue;
-          }
-          if (result == null) result = new SmartList<>();
-          result.add(instance);
+    if (point == null) {
+      return result;
+    }
+
+    for (KeyedLazyInstance<T> bean : point.getExtensionList()) {
+      if (isMyBean.test(bean)) {
+        final T instance;
+        try {
+          instance = bean.getInstance();
         }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (ExtensionNotApplicableException ignore) {
+          continue;
+        }
+        catch (Exception | LinkageError e) {
+          LOG.error(e);
+          continue;
+        }
+
+        if (result == null) result = new SmartList<>();
+        result.add(instance);
       }
     }
     return result;

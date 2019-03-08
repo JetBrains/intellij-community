@@ -413,6 +413,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
+    public void visitExpressionListStatement(PsiExpressionListStatement statement) {
+      myResult = new ExpressionListEvaluator(ContainerUtil.mapNotNull(statement.getExpressionList().getExpressions(), this::accept));
+    }
+
+    @Override
     public void visitExpressionStatement(PsiExpressionStatement statement) {
       statement.getExpression().accept(this);
     }

@@ -131,7 +131,7 @@ public class AutoPopupController implements Disposable {
         return;
       }
 
-      CompletionAutoPopupHandler.invokeCompletion(completionType, true, myProject, editor, 0, false);
+      CompletionAutoPopupHandler.invokeCompletion(completionType, true, myProject, editor, 0);
     });
   }
 

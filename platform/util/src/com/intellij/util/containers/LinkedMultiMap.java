@@ -29,13 +29,13 @@ public class LinkedMultiMap<K, V> extends MultiMap<K, V> {
   @NotNull
   @Override
   protected Map<K, Collection<V>> createMap() {
-    return new LinkedHashMap<K, Collection<V>>(getEqualityPolicy());
+    return new LinkedHashMap<>(getEqualityPolicy());
   }
 
   @NotNull
   @Override
   protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
-    return new LinkedHashMap<K, Collection<V>>(initialCapacity, loadFactor, getEqualityPolicy());
+    return new LinkedHashMap<>(initialCapacity, loadFactor, getEqualityPolicy());
   }
 
   protected EqualityPolicy<K> getEqualityPolicy() {

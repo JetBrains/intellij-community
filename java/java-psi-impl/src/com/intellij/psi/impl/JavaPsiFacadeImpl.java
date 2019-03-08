@@ -5,9 +5,6 @@ import com.intellij.lang.jvm.JvmClass;
 import com.intellij.lang.jvm.facade.JvmFacade;
 import com.intellij.lang.jvm.facade.JvmFacadeImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.SimpleSmartExtensionPoint;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -41,7 +38,6 @@ import java.util.concurrent.ConcurrentMap;
 public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private static final Logger LOG = Logger.getInstance(JavaPsiFacadeImpl.class);
 
-  private final SimpleSmartExtensionPoint<PsiElementFinder> myElementFinders;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final ConcurrentMap<String, PsiPackage> myPackageCache = ContainerUtil.createConcurrentSoftValueMap();
   private final ConcurrentMap<GlobalSearchScope, Map<String, PsiClass>> myClassCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
@@ -81,13 +77,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
-    myElementFinders = new SimpleSmartExtensionPoint<PsiElementFinder>() {
-      @NotNull
-      @Override
-      protected ExtensionPoint<PsiElementFinder> getExtensionPoint() {
-        return Extensions.getArea(myProject).getExtensionPoint(PsiElementFinder.EP_NAME);
-      }
-    };
   }
 
   @Override
@@ -220,8 +209,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return dumbService.isDumb() && dumbService.isAlternativeResolveEnabled();
   }
 
+  @NotNull
   private List<PsiElementFinder> finders() {
-    return myElementFinders.getExtensions();
+    return PsiElementFinder.EP.getPoint(myProject).getExtensionList();
   }
 
   @Override

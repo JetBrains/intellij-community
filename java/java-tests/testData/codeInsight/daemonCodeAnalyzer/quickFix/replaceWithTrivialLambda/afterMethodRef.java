@@ -11,9 +11,9 @@ public class MethodReferenceConstantValue {
   }
 
   public void test(Optional<String> opt) {
-    X x = (methodReferenceConstantValue, s) -> false;
+    X x = (methodReferenceConstantValue, s1) -> false;
     Boolean aBoolean = opt.map(s -> false)
-      .map(o -> true)
+      .map(o1 -> true)
       .map(o -> false)
       .orElse(false);
     if (opt.isPresent()) {

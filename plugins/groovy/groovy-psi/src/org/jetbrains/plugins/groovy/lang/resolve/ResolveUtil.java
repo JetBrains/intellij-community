@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -101,7 +102,10 @@ public class ResolveUtil {
                                    @NotNull final PsiElement originalPlace,
                                    @NotNull final PsiScopeProcessor processor,
                                    @NotNull final ResolveState state) {
-    final GrClosableBlock maxScope = ResolveUtilKt.processNonCodeMembers(state) ? PsiTreeUtil.getParentOfType(place, GrClosableBlock.class, true, PsiFile.class) : null;
+    PsiElement maxScope = null;
+    if (ResolveUtilKt.processNonCodeMembers(state)) {
+      maxScope = PsiTreeUtil.findFirstParent(place, it -> it instanceof GrClosableBlock || it instanceof GrLambdaExpression);
+    }
 
     return PsiTreeUtil.treeWalkUp(place, maxScope, (scope, lastParent) -> {
       ProgressManager.checkCanceled();

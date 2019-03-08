@@ -55,7 +55,7 @@ public class RefJavaFileImpl extends RefFileImpl {
               RefElement refElement = getRefManager().getReference(element);
               if (refElement instanceof RefJavaElementImpl) {
                 addOutReference(refElement);
-                ((RefJavaElementImpl)refElement).markReferenced(RefJavaFileImpl.this, file, element, false, true, null);
+                ((RefJavaElementImpl)refElement).markReferenced(RefJavaFileImpl.this, false, true, null);
               }
             }
           });

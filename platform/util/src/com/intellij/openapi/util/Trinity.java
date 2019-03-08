@@ -43,7 +43,7 @@ public class Trinity<A, B, C> {
   }
 
   public static <A, B, C> Trinity<A, B, C> create(A first, B second, C third) {
-    return new Trinity<A,B,C>(first, second,third);
+    return new Trinity<>(first, second, third);
   }
 
   public static <T> T getFirst(@Nullable Trinity<T, ?, ?> pair) {

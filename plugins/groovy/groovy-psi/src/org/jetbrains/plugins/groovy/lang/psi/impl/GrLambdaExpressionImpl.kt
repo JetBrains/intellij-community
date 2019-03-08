@@ -9,21 +9,19 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.CachedValueProvider.Result.create
 import com.intellij.psi.util.CachedValuesManager.getCachedValue
 import com.intellij.psi.util.PsiModificationTracker
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl
 
 class GrLambdaExpressionImpl(node: ASTNode) : GrExpressionImpl(node), GrLambdaExpression {
 
-  override fun getParameters(): Array<GrParameter> {
-    return parameterList.parameters
-  }
+  override fun getParameters(): Array<GrParameter> = parameterList.parameters
 
   override fun getParameterList(): GrParameterList = findNotNullChildByClass(GrParameterListImpl::class.java)
 
@@ -31,9 +29,9 @@ class GrLambdaExpressionImpl(node: ASTNode) : GrExpressionImpl(node), GrLambdaEx
 
   override fun isVarArgs(): Boolean = false
 
-  override fun getBody(): PsiElement? {
+  override fun getBody(): GrLambdaBody? {
     val body = lastChild
-    return if (body is GrExpression || body is GrCodeBlock) body else null
+    return if (body is GrLambdaBody) body else null
   }
 
   override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, lastParent: PsiElement?, place: PsiElement): Boolean {
@@ -48,11 +46,13 @@ class GrLambdaExpressionImpl(node: ASTNode) : GrExpressionImpl(node), GrLambdaEx
     }
   }
 
-  override fun getReturnType(): PsiType? = TypeInferenceHelper.getCurrentContext().getExpressionType(this, ::calculateReturnType)
+  override fun getArrow(): PsiElement = findNotNullChildByType(GroovyElementTypes.T_ARROW)
 
-  override fun getType(): PsiType? {
-    return GrClosureType.create(this, true)
-  }
+  override fun getStatements(): Array<GrStatement> = body?.statements ?: emptyArray()
+
+  override fun getReturnType(): PsiType? = body?.returnType
+
+  override fun getType(): PsiType? = GrClosureType.create(this, true)
 
   override fun toString(): String = "Lambda expression"
 }

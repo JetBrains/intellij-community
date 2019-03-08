@@ -3,6 +3,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.*;
 import com.intellij.debugger.engine.*;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
@@ -348,7 +349,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     return new RemoteConnectionBuilder(debuggerInServerMode, transport, debugPort)
       .checkValidity(checkValidity)
       .asyncAgent(addAsyncDebuggerAgent)
-      .memoryAgent(Registry.is("debugger.enable.memory.agent"))
+      .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
       .create(parameters);
   }
 

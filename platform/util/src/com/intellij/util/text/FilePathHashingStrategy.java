@@ -33,6 +33,6 @@ public class FilePathHashingStrategy {
 
   @NotNull
   public static TObjectHashingStrategy<String> create(boolean caseSensitive) {
-    return caseSensitive ? ContainerUtil.<String>canonicalStrategy() : CaseInsensitiveStringHashingStrategy.INSTANCE;
+    return caseSensitive ? ContainerUtil.canonicalStrategy() : CaseInsensitiveStringHashingStrategy.INSTANCE;
   }
 }

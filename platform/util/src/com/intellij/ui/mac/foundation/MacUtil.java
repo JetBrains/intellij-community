@@ -108,12 +108,8 @@ public class MacUtil {
   public static boolean isFullKeyboardAccessEnabled() {
     if (!SystemInfo.isMacOSSnowLeopard) return false;
     final AtomicBoolean result = new AtomicBoolean();
-    executeOnMainThread(true, true, new Runnable() {
-      @Override
-      public void run() {
-          result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").intValue() == 1);
-      }
-    });
+    executeOnMainThread(true, true,
+                        () -> result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").intValue() == 1));
     return result.get();
   }
 
@@ -150,13 +146,7 @@ public class MacUtil {
         Method getNSWindowPtrMethod = cPlatformWindowClass.getDeclaredMethod("getNSWindowPtr");
         windowId = new ID((Long)getNSWindowPtrMethod.invoke(cPlatformWindow));
       }
-      catch (NoSuchMethodException e) {
-        LOG.debug(e);
-      }
-      catch (InvocationTargetException e) {
-        LOG.debug(e);
-      }
-      catch (IllegalAccessException e) {
+      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
         LOG.debug(e);
       }
     }

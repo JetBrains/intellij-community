@@ -43,16 +43,16 @@ import static com.intellij.ui.JBColor.namedColor;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class HgRefManager implements VcsLogRefManager {
-  private static final JBColor TIP_COLOR = namedColor("Hg.Log.Ref.Tip", VcsLogStandardColors.Refs.TIP);
-  private static final JBColor HEAD_COLOR = namedColor("Hg.Log.Ref.Head", VcsLogStandardColors.Refs.LEAF);
-  private static final JBColor BRANCH_COLOR = namedColor("Hg.Log.Ref.Branch", VcsLogStandardColors.Refs.BRANCH);
-  private static final JBColor CLOSED_BRANCH_COLOR = namedColor("Hg.Log.Ref.ClosedBranch",
+  private static final JBColor TIP_COLOR = namedColor("VersionControl.HgLog.tipIconColor", VcsLogStandardColors.Refs.TIP);
+  private static final JBColor HEAD_COLOR = namedColor("VersionControl.HgLog.headIconColor", VcsLogStandardColors.Refs.LEAF);
+  private static final JBColor BRANCH_COLOR = namedColor("VersionControl.HgLog.branchIconColor", VcsLogStandardColors.Refs.BRANCH);
+  private static final JBColor CLOSED_BRANCH_COLOR = namedColor("VersionControl.HgLog.closedBranchIconColor",
                                                                 new JBColor(new Color(0x823139), new Color(0xff5f6f)));
-  private static final JBColor BOOKMARK_COLOR = namedColor("Hg.Log.Ref.Bookmark", VcsLogStandardColors.Refs.BRANCH_REF);
-  private static final JBColor TAG_COLOR = namedColor("Hg.Log.Ref.Tag", VcsLogStandardColors.Refs.TAG);
-  private static final JBColor LOCAL_TAG_COLOR = namedColor("Hg.Log.Ref.LocalTag",
+  private static final JBColor BOOKMARK_COLOR = namedColor("VersionControl.HgLog.bookmarkIconColor", VcsLogStandardColors.Refs.BRANCH_REF);
+  private static final JBColor TAG_COLOR = namedColor("VersionControl.HgLog.tagIconColor", VcsLogStandardColors.Refs.TAG);
+  private static final JBColor LOCAL_TAG_COLOR = namedColor("VersionControl.HgLog.localTagIconColor",
                                                             new JBColor(new Color(0x009090), new Color(0x00f3f3)));
-  private static final JBColor MQ_TAG_COLOR = namedColor("Hg.Log.Ref.MqTag",
+  private static final JBColor MQ_TAG_COLOR = namedColor("VersionControl.HgLog.mqTagIconColor",
                                                          new JBColor(new Color(0x002f90), new Color(0x0055ff)));
 
   public static final VcsRefType TIP = new SimpleRefType("TIP", true, TIP_COLOR);

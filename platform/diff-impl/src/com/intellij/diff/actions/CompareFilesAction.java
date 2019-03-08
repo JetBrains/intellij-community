@@ -74,7 +74,7 @@ public class CompareFilesAction extends BaseShowDiffAction {
 
   @Override
   protected boolean isAvailable(@NotNull AnActionEvent e) {
-    DiffRequest request = getDiffRequest(e);
+    DiffRequest request = e.getData(DIFF_REQUEST);
     if (request != null) {
       return true;
     }

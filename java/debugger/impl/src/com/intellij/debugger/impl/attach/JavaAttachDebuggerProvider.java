@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.engine.RemoteStateState;
@@ -182,6 +182,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
           if (param.startsWith("address")) {
             try {
               address = param.split("=")[1];
+              address = StringUtil.trimStart(address, "*:"); // handle java 9 format: *:5005
               return new DebuggerLocalAttachInfo(socket, address, null, pid, false);
             }
             catch (Exception e) {

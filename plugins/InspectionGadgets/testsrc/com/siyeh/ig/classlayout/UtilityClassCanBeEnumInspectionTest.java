@@ -16,7 +16,8 @@ public class UtilityClassCanBeEnumInspectionTest extends LightInspectionTestCase
            "  public static void driveCar() {}\n" +
            "}");
     checkQuickFix("Convert to 'enum'",
-                  "enum Util {;\n" +
+                  "enum Util {\n" +
+                  "    ;\n" +
                   "\n" +
                   "    public static void driveCar() {}\n" +
                   "}");

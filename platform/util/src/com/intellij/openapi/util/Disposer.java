@@ -34,7 +34,7 @@ public class Disposer {
 
   static {
     try {
-      ourTree = new ObjectTree<Disposable>();
+      ourTree = new ObjectTree<>();
     }
     catch (NoClassDefFoundError e) {
       throw new RuntimeException("loader=" + Disposer.class.getClassLoader(), e);

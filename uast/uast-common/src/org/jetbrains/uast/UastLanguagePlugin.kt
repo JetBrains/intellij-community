@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast
 
 import com.intellij.lang.Language
@@ -21,13 +7,12 @@ import com.intellij.psi.*
 
 interface UastLanguagePlugin {
   companion object {
-    val extensionPointName: ExtensionPointName<UastLanguagePlugin> =
-      ExtensionPointName.create<UastLanguagePlugin>("org.jetbrains.uast.uastLanguagePlugin")
-    private val extensionArray: Array<UastLanguagePlugin> by lazy(LazyThreadSafetyMode.PUBLICATION) { extensionPointName.extensions }
+    val extensionPointName = ExtensionPointName<UastLanguagePlugin>("org.jetbrains.uast.uastLanguagePlugin")
+    private val extensions by lazy(LazyThreadSafetyMode.PUBLICATION) { extensionPointName.extensionList }
 
-    fun getInstances(): Collection<UastLanguagePlugin> = extensionArray.toList()
+    fun getInstances(): Collection<UastLanguagePlugin> = extensions
 
-    fun byLanguage(language: Language): UastLanguagePlugin? = extensionArray.firstOrNull { it.language === language }
+    fun byLanguage(language: Language): UastLanguagePlugin? = extensions.firstOrNull { it.language === language }
   }
 
   data class ResolvedMethod(val call: UCallExpression, val method: PsiMethod)

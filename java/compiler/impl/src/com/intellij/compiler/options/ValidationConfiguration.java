@@ -1,8 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
-import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.Compiler;
+import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.Validator;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -21,9 +22,14 @@ import org.jetbrains.jps.model.serialization.java.compiler.JpsValidationSerializ
 @State(name = JpsValidationSerializer.COMPONENT_NAME, storages = @Storage(JpsValidationSerializer.CONFIG_FILE_NAME))
 public class ValidationConfiguration implements PersistentStateComponent<JpsValidationSerializer.ValidationConfigurationState> {
   private final JpsValidationSerializer.ValidationConfigurationState myState = new JpsValidationSerializer.ValidationConfigurationState();
+  private final Project myProject;
 
-  public static boolean shouldValidate(Compiler validator, CompileContext context) {
-    ValidationConfiguration configuration = getInstance(context.getProject());
+  public ValidationConfiguration(Project project) {
+    myProject = project;
+  }
+
+  public static boolean shouldValidate(Compiler validator, Project project) {
+    ValidationConfiguration configuration = getInstance(project);
     return (configuration.myState.VALIDATE_ON_BUILD) && configuration.isSelected(validator);
   }
 
@@ -46,6 +52,12 @@ public class ValidationConfiguration implements PersistentStateComponent<JpsVali
 
   public void setSelected(Compiler validator, boolean selected) {
     setSelected(validator.getDescription(), selected);
+  }
+
+  public void deselectAllValidators() {
+    for (Validator validator : CompilerManager.getInstance(myProject).getCompilers(Validator.class)) {
+      myState.VALIDATORS.put(validator.getDescription(), false);
+    }
   }
 
   public void setSelected(String validatorDescription, boolean selected) {

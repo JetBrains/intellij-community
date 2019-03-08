@@ -45,7 +45,10 @@ public class PlainTextSplitter extends BaseSplitter {
   @NonNls
   private static final Pattern MAIL =
     Pattern.compile("([\\p{L}0-9\\.\\-\\_\\+]+@([\\p{L}0-9\\-\\_]+(\\.)?)+(com|net|[a-z]{2})?)");
-  
+
+  @NonNls
+  private static final Pattern UUID_PATTERN = Pattern.compile("[a-fA-F0-9]{8}(-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}");
+
   @Override
   public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
     if (StringUtil.isEmpty(text)) {
@@ -87,6 +90,9 @@ public class PlainTextSplitter extends BaseSplitter {
         }
         else if (word.contains("://")) {
           toCheck = excludeByPattern(text, wRange, URL_PATTERN, 0);
+        }
+        else if (word.contains("-")) {
+          toCheck = excludeByPattern(text, wRange, UUID_PATTERN, 0);
         }
         else {
           toCheck = Collections.singletonList(wRange);

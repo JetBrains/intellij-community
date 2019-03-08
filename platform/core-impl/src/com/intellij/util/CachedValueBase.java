@@ -22,6 +22,7 @@ import java.util.List;
  */
 public abstract class CachedValueBase<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.CachedValueImpl");
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("cachedValue");
   private volatile SoftReference<Data<T>> myData;
 
   private Data<T> computeData(@Nullable CachedValueProvider.Result<T> result) {
@@ -230,12 +231,14 @@ public abstract class CachedValueBase<T> {
       return data.getValue();
     }
 
-    RecursionGuard.StackStamp stamp = RecursionManager.createGuard("cachedValue").markStack();
+    RecursionGuard.StackStamp stamp = ourGuard.markStack();
 
-    // compute outside lock to avoid deadlock
-    data = computeData(doCompute(param));
-
-    if (stamp.mayCacheNow()) {
+    Computable<Data<T>> calcData = () -> computeData(doCompute(param));
+    data = ourGuard.doPreventingRecursion(this, true, calcData);
+    if (data == null) {
+      data = calcData.compute();
+    }
+    else if (stamp.mayCacheNow()) {
       while (true) {
         Data<T> alreadyComputed = getRawData();
         boolean reuse = alreadyComputed != null && isUpToDate(alreadyComputed);

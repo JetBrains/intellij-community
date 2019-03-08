@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.compiler.generic;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author nik
+ * @deprecated this class is part of the old deprecated build infrastructure; plug into the external build process instead (see {@link org.jetbrains.jps.builders.BuildTarget})
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "192.0")
 public class GenericCompilerProcessingItem<Item extends CompileItem<?, SourceState, OutputState>, SourceState, OutputState> {
   private final Item myItem;
   private final SourceState myCachedSourceState;

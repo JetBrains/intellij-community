@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -125,6 +126,14 @@ public final class Presentation implements Cloneable {
     return myText;
   }
 
+  /**
+   * Sets the presentation text
+   * @param text presentation text. If mayContainMnemonic is true, it may contain a mnemonic prefixed with '_' or '&'.
+   *             To escape '_' or '&' before the actual mnemonic the character must be duplicated.
+   *             The characters after the actual mnemonic should not be escaped. 
+   *             E.g. "A__b_c__d" will be displayed as "A_bc__d" with mnemonic 'c'.
+   * @param mayContainMnemonic if true, a mnemonic will be extracted from the presentation text
+   */
   public void setText(@Nullable String text, boolean mayContainMnemonic) {
     int oldMnemonic = myMnemonic;
     int oldDisplayedMnemonicIndex = myDisplayedMnemonicIndex;
@@ -148,14 +157,8 @@ public final class Presentation implements Cloneable {
             if (i >= text.length()) break;
             ch = text.charAt(i);
             if (ch != '_' && ch != '&') {
-              if (UISettings.getInstance().getDisableMnemonicsInControls()) {
-                myMnemonic = 0;
-                myDisplayedMnemonicIndex = -1;
-              }
-              else {
-                myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
-                myDisplayedMnemonicIndex = i - 1 - backShift;
-              }
+              myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
+              myDisplayedMnemonicIndex = i - 1 - backShift;
             }
             else {
               backShift++;
@@ -173,20 +176,30 @@ public final class Presentation implements Cloneable {
       myText = null;
     }
 
+    if (UISettings.getInstance().getDisableMnemonicsInControls()) {
+      myMnemonic = 0;
+      myDisplayedMnemonicIndex = -1;
+    }
+
     fireObjectPropertyChange(PROP_TEXT, oldText, myText);
     fireObjectPropertyChange(PROP_MNEMONIC_KEY, oldMnemonic, myMnemonic);
     fireObjectPropertyChange(PROP_MNEMONIC_INDEX, oldDisplayedMnemonicIndex, myDisplayedMnemonicIndex);
   }
 
+  /**
+   * Sets the text with mnemonic.
+   * @param text
+   * @see #setText(String, boolean) 
+   */
   public void setText(String text) {
     setText(text, true);
   }
 
+  /**
+   * @return the text with mnemonic, properly escaped, so it could be passed to {@link #setText(String)} (e.g. to copy the presentation).
+   */
   public String getTextWithMnemonic() {
-    if (myText != null && myDisplayedMnemonicIndex > -1) {
-      return myText.substring(0, myDisplayedMnemonicIndex) + "_" + myText.substring(myDisplayedMnemonicIndex);
-    }
-    return myText;
+    return wrapTextWithMnemonic(myText, myDisplayedMnemonicIndex);
   }
 
   public void restoreTextWithMnemonic(Presentation presentation) {
@@ -194,15 +207,24 @@ public final class Presentation implements Cloneable {
   }
 
   public static String restoreTextWithMnemonic(@Nullable String text, final int mnemonic) {
-    if (text == null) {
-      return null;
-    }
+    if (text == null) return null;
     for (int i = 0; i < text.length(); i++) {
       if (Character.toUpperCase(text.charAt(i)) == mnemonic) {
-        return text.substring(0, i) + "_" + text.substring(i);
+        return wrapTextWithMnemonic(text, i);
       }
     }
-    return text;
+    return wrapTextWithMnemonic(text, -1);
+  }
+
+  @Nullable
+  private static String wrapTextWithMnemonic(@Nullable String text, int mnemonicIndex) {
+    if (text == null) return null;
+    if (mnemonicIndex > -1) {
+      String prefix = StringUtil.escapeMnemonics(text.substring(0, mnemonicIndex));
+      String suffix = text.substring(mnemonicIndex);
+      return prefix + "_" + suffix;
+    }
+    return StringUtil.escapeMnemonics(text);
   }
 
   public String getDescription() {
@@ -332,7 +354,7 @@ public final class Presentation implements Cloneable {
     if (!Objects.equals(myText, presentation.myText) ||
         myDisplayedMnemonicIndex != presentation.myDisplayedMnemonicIndex ||
         myMnemonic != presentation.myMnemonic) {
-      setText(presentation.getTextWithMnemonic(), presentation.myDisplayedMnemonicIndex > -1);
+      setText(presentation.getTextWithMnemonic());
     }
     setDescription(presentation.getDescription());
     setIcon(presentation.getIcon());

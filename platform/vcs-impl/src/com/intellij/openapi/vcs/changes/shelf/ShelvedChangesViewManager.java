@@ -160,7 +160,7 @@ public class ShelvedChangesViewManager implements Disposable {
     PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
     myTree.setDoubleClickHandler(() -> {
       DataContext dc = DataManager.getInstance().getDataContext(myTree);
-      if (!getShelveChanges(dc).isEmpty() || !getBinaryShelveChanges(dc).isEmpty()) {
+      if (!getShelvedLists(dc).isEmpty()) {
         DiffShelvedChangesActionProvider.showShelvedChangesDiff(dc);
       }
     });

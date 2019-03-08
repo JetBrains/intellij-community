@@ -20,13 +20,13 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 
 class MutableDiffRequestChain(var content1: DiffContent, var content2: DiffContent) : DiffRequestChainBase() {
-  private val requestUserData: MutableList<Pair<Key<*>, Any>> = mutableListOf()
+  private val requestUserData: MutableMap<Key<*>, Any> = mutableMapOf()
   var windowTitle: String? = null
   var title1: String? = getTitleFor(content1)
   var title2: String? = getTitleFor(content2)
 
   fun <T : Any> putRequestUserData(key: Key<T>, value: T) {
-    requestUserData.add(Pair(key, value))
+    requestUserData.put(key, value)
   }
 
   override fun getRequests(): List<DiffRequestProducer> {
@@ -37,9 +37,9 @@ class MutableDiffRequestChain(var content1: DiffContent, var content2: DiffConte
 
       override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
         val request = MutableChainDiffRequest(this@MutableDiffRequestChain)
-        for (it in requestUserData) {
+        requestUserData.forEach { key, value ->
           @Suppress("UNCHECKED_CAST")
-          request.putUserData(it.first as Key<Any>, it.second)
+          request.putUserData(key as Key<Any>, value)
         }
         return request
       }

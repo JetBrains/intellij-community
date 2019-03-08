@@ -64,7 +64,7 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
   }
 
   private final CompressedAppendableFile myCompressedAppendableFile;
-  private final boolean testMode = false;
+  private static final boolean testMode = false;
 
   public <Data> Data read(final int addr, KeyDescriptor<Data> descriptor) throws IOException {
     Data tempData = null;
@@ -111,15 +111,15 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
     }
 
     if (myFileLength == 0) return true;
-    DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new LimitedInputStream(new FileInputStream(getPagedFileStorage().getFile()),
-                                                                                                    myFileLength) {
-      @Override
-      public int available() {
-        return remainingLimit();
-      }
-    }, 32768));
 
-    try {
+    try (DataInputStream keysStream = new DataInputStream(
+      new BufferedInputStream(new LimitedInputStream(new FileInputStream(getPagedFileStorage().getFile()),
+                                                     myFileLength) {
+        @Override
+        public int available() {
+          return remainingLimit();
+        }
+      }, 32768))) {
       try {
         while (true) {
           Data key = descriptor.read(keysStream);
@@ -134,9 +134,6 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
         // Done
       }
       return true;
-    }
-    finally {
-      keysStream.close();
     }
   }
 

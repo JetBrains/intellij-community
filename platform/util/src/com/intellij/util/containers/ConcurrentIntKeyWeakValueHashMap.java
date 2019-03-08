@@ -63,6 +63,6 @@ class ConcurrentIntKeyWeakValueHashMap<V> extends ConcurrentIntKeyRefValueHashMa
   @NotNull
   @Override
   protected IntReference<V> createReference(int key, @NotNull V value, @NotNull ReferenceQueue<V> queue) {
-    return new MyRef<V>(key, value, queue);
+    return new MyRef<>(key, value, queue);
   }
 }

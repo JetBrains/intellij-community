@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.util.DiffPlaces;
@@ -64,6 +64,8 @@ import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.ui.SwingHelper.buildHtml;
 import static com.intellij.util.ui.UIUtil.*;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.*;
 
@@ -98,7 +100,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final List<CommitExecutorAction> myExecutorActions;
 
   @NotNull private final CommitOptionsPanel myCommitOptions;
-  @NotNull private final CommitContext myCommitContext;
   @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
   @NotNull private final CommitDialogChangesBrowser myBrowser;
   @NotNull private final JComponent myBrowserBottomPanel = createHorizontalBox();
@@ -243,7 +244,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   CommitChangeListDialog(@NotNull DialogCommitWorkflow workflow) {
     super(workflow.getProject(), true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
-    myCommitContext = new CommitContext();
     myWorkflow = workflow;
     myProject = myWorkflow.getProject();
     myVcsConfiguration = notNull(VcsConfiguration.getInstance(myProject));
@@ -256,7 +256,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       throw new IllegalArgumentException("nothing found to execute commit with");
     }
 
-    myHandlers.addAll(createCheckinHandlers(myProject, this, myCommitContext));
+    myHandlers.addAll(createCheckinHandlers(myProject, this, getCommitContext()));
 
     setTitle(myShowVcsCommit ? DIALOG_TITLE : getExecutorPresentableText(myExecutors.get(0)));
     myCommitActionName = getCommitActionName(myAffectedVcses);
@@ -277,18 +277,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     mySplitter = new Splitter(true);
-    myCommitOptions = new CommitOptionsPanel(this, myHandlers, myShowVcsCommit ? myAffectedVcses : emptySet());
+    myCommitOptions =
+      new CommitOptionsPanel(this, myHandlers, myShowVcsCommit ? myAffectedVcses : emptySet(), myWorkflow.getAdditionalDataConsumer());
     myWarningLabel = new JBLabel();
 
-    JPanel mainPanel;
-    if (!myCommitOptions.isEmpty()) {
-      mainPanel = new JPanel(new MyOptionsLayout(mySplitter, myCommitOptions, JBUI.scale(150), JBUI.scale(400)));
-      mainPanel.add(mySplitter);
-      mainPanel.add(myCommitOptions);
-    }
-    else {
-      mainPanel = mySplitter;
-    }
+    JPanel mainPanel = new JPanel(new MyOptionsLayout(mySplitter, myCommitOptions, JBUI.scale(150), JBUI.scale(400)));
+    mainPanel.add(mySplitter);
+    mainPanel.add(myCommitOptions);
 
     JPanel rootPane = JBUI.Panels.simplePanel(mainPanel).addToBottom(myWarningLabel);
     myDetailsSplitter = createDetailsSplitter(rootPane);
@@ -542,8 +537,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         CheckinHandler.ReturnResult result = performBeforeCommitChecks(executor);
         if (result == CheckinHandler.ReturnResult.COMMIT) {
           close(OK_EXIT_CODE);
-          myWorkflow.doCommit(myBrowser.getSelectedChangeList(), getIncludedChanges(), getCommitMessage(), myHandlers,
-                              myCommitOptions.getAdditionalData());
+          myWorkflow.doCommit(myBrowser.getSelectedChangeList(), getIncludedChanges(), getCommitMessage(), myHandlers);
 
           defaultListCleaner.clean();
         }
@@ -566,7 +560,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     saveComments(true);
 
     if (session instanceof CommitSessionContextAware) {
-      ((CommitSessionContextAware)session).setContext(myCommitContext);
+      ((CommitSessionContextAware)session).setContext(getCommitContext());
     }
 
     ensureDataIsActual(() -> {
@@ -743,7 +737,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     for (CheckinHandler handler : myHandlers) {
       if (!handler.acceptExecutor(executor)) continue;
       LOG.debug("CheckinHandler.beforeCheckin: " + handler);
-      CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myCommitOptions.getAdditionalData());
+      CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myWorkflow.getAdditionalDataConsumer());
       if (result == CheckinHandler.ReturnResult.COMMIT) continue;
       if (result == CheckinHandler.ReturnResult.CANCEL) {
         restartUpdate();
@@ -1004,6 +998,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
+  private CommitContext getCommitContext() {
+    return myWorkflow.getCommitContext();
+  }
+
+  @NotNull
   public CommitDialogChangesBrowser getBrowser() {
     return myBrowser;
   }
@@ -1122,11 +1121,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private static class MyOptionsLayout extends AbstractLayoutManager {
     @NotNull private final JComponent myPanel;
-    @NotNull private final JComponent myOptions;
+    @NotNull private final CommitOptionsPanel myOptions;
     private final int myMinOptionsWidth;
     private final int myMaxOptionsWidth;
 
-    MyOptionsLayout(@NotNull JComponent panel, @NotNull JComponent options, int minOptionsWidth, int maxOptionsWidth) {
+    MyOptionsLayout(@NotNull JComponent panel, @NotNull CommitOptionsPanel options, int minOptionsWidth, int maxOptionsWidth) {
       myPanel = panel;
       myOptions = options;
       myMinOptionsWidth = minOptionsWidth;
@@ -1137,14 +1136,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     public Dimension preferredLayoutSize(Container parent) {
       Dimension size1 = myPanel.getPreferredSize();
       Dimension size2 = myOptions.getPreferredSize();
-      return new Dimension(size1.width + size2.width, Math.max(size1.height, size2.height));
+      return new Dimension(size1.width + size2.width, max(size1.height, size2.height));
     }
 
     @Override
     public void layoutContainer(@NotNull Container parent) {
       Rectangle bounds = parent.getBounds();
       int preferredWidth = myOptions.getPreferredSize().width;
-      int optionsWidth = Math.max(Math.min(myMaxOptionsWidth, preferredWidth), myMinOptionsWidth);
+      int optionsWidth = myOptions.isEmpty() ? 0 : max(min(myMaxOptionsWidth, preferredWidth), myMinOptionsWidth);
       myPanel.setBounds(new Rectangle(0, 0, bounds.width - optionsWidth, bounds.height));
       myOptions.setBounds(new Rectangle(bounds.width - optionsWidth, 0, optionsWidth, bounds.height));
     }

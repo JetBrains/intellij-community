@@ -21,7 +21,7 @@ class EditorConfigTemplateCompletionExpression : Expression() {
     val project = context.project ?: return
     val editor = context.editor ?: return
     AutoPopupController.runTransactionWithEverythingCommitted(project) {
-      CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, project, editor, 0, false)
+      CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, project, editor, 0)
     }
   }
 }

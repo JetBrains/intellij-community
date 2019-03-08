@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -11,11 +11,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -56,8 +53,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     myDumbService = dumbService;
     myDocManager = PsiDocumentManager.getInstance(project);
 
-    final ExtensionPoint<MultiHostInjector> multiPoint = Extensions.getArea(project).getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME);
-    ((ExtensionPointImpl<MultiHostInjector>)multiPoint).addExtensionPointListener(new ExtensionPointListener<MultiHostInjector>() {
+    MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(project).addExtensionPointListener(new ExtensionPointListener<MultiHostInjector>() {
       @Override
       public void extensionAdded(@NotNull MultiHostInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
         clearInjectorCache();
@@ -68,7 +64,8 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         clearInjectorCache();
       }
     }, false, this);
-    final ExtensionPointListener<LanguageInjector> myListener = new ExtensionPointListener<LanguageInjector>() {
+
+    LanguageInjector.EXTENSION_POINT_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<LanguageInjector>() {
       @Override
       public void extensionAdded(@NotNull LanguageInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
         clearInjectorCache();
@@ -78,9 +75,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       public void extensionRemoved(@NotNull LanguageInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
         clearInjectorCache();
       }
-    };
-    final ExtensionPoint<LanguageInjector> psiManagerPoint = Extensions.getRootArea().getExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME);
-    ((ExtensionPointImpl<LanguageInjector>)psiManagerPoint).addExtensionPointListener(myListener, false, this);
+    }, false, this);
   }
 
   PsiDocumentManager getDocManager() {
@@ -199,9 +194,9 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     Disposer.register(parentDisposable, () -> unregisterMultiHostInjector(injector));
   }
 
-  private boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector) {
+  private void unregisterMultiHostInjector(@NotNull MultiHostInjector injector) {
     try {
-      return myManualInjectors.remove(injector);
+      myManualInjectors.remove(injector);
     }
     finally {
       clearInjectorCache();

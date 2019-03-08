@@ -58,11 +58,21 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
   }
   private ExpandedItemRendererComponentWrapper() {}
 
+  @NotNull
   public static ExpandedItemRendererComponentWrapper wrap(@NotNull Component rendererComponent) {
     if (rendererComponent instanceof Accessible) {
       return new MyComponent(rendererComponent, (Accessible)rendererComponent);
     }
     return new ExpandedItemRendererComponentWrapper(rendererComponent);
+  }
+
+  @NotNull
+  public static Component unwrap(@NotNull Component rendererComponent) {
+    if (rendererComponent instanceof ExpandedItemRendererComponentWrapper) {
+      Component component = ((ExpandedItemRendererComponentWrapper)rendererComponent).getDelegate();
+      return component;
+    }
+    return rendererComponent;
   }
 
   private static class MyComponent extends ExpandedItemRendererComponentWrapper implements Accessible {
@@ -114,9 +124,9 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
 
   @Override
   public void setBorder(Border border) {
-    JComponent rendererComponent = getRendererComponent();
-    if (rendererComponent != null) {
-      rendererComponent.setBorder(border);
+    Component c = getDelegate();
+    if (c instanceof JComponent) {
+      ((JComponent)c).setBorder(border);
       return;
     }
     super.setBorder(border);
@@ -124,38 +134,35 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
 
   @Override
   public String getToolTipText() {
-    JComponent rendererComponent = getRendererComponent();
-    if (rendererComponent != null) {
-      return rendererComponent.getToolTipText();
+    Component c = getDelegate();
+    if (c instanceof JComponent) {
+      return ((JComponent)c).getToolTipText();
     }
     return super.getToolTipText();
   }
 
   @Override
   public String getToolTipText(MouseEvent event) {
-    JComponent rendererComponent = getRendererComponent();
-    if (rendererComponent != null) {
-      return rendererComponent.getToolTipText(event);
+    Component c = getDelegate();
+    if (c instanceof JComponent) {
+      return ((JComponent)c).getToolTipText(event);
     }
     return super.getToolTipText(event);
   }
 
   @Override
   public Point getToolTipLocation(MouseEvent event) {
-    JComponent rendererComponent = getRendererComponent();
-    if (rendererComponent != null) {
-      return rendererComponent.getToolTipLocation(event);
+    Component c = getDelegate();
+    if (c instanceof JComponent) {
+      return ((JComponent)c).getToolTipLocation(event);
     }
     return super.getToolTipLocation(event);
   }
 
   @Nullable
-  private JComponent getRendererComponent() {
+  private Component getDelegate() {
     if (getComponentCount() == 1) {
-      Component component = getComponent(0);
-      if (component instanceof JComponent) {
-        return ((JComponent)component);
-      }
+      return getComponent(0);
     }
     return null;
   }

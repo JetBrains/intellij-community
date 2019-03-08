@@ -12,6 +12,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -56,7 +57,11 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
       if (descriptionDirectoryName == null) {
         descriptionDirectoryName = instance.getDescriptionDirectoryName();
       }
-      registerMetaData(new IntentionActionMetaData(instance, extension.getMetadataClassLoader(), categories, descriptionDirectoryName));
+      try {
+        registerMetaData(new IntentionActionMetaData(instance, extension.getMetadataClassLoader(), categories, descriptionDirectoryName));
+      }
+      catch (ExtensionNotApplicableException ignore) {
+      }
     }
   }
 

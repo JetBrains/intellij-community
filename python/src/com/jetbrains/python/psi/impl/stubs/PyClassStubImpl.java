@@ -38,6 +38,11 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   @NotNull
   private final List<String> mySuperClassesText;
 
+  /**
+   * @deprecated Use {@link PyClassStubImpl#PyClassStubImpl(String, StubElement, Map, List, List, QualifiedName, List, String, IStubElementType)} instead.
+   * This constructor will be removed in 2019.2.
+   */
+  @Deprecated
   public PyClassStubImpl(@Nullable String name,
                          @Nullable StubElement parentStub,
                          @NotNull Map<QualifiedName, QualifiedName> superClasses,

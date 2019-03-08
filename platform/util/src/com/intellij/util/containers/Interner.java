@@ -19,15 +19,15 @@ public class Interner<T> {
   private final OpenTHashSet<T> mySet;
 
   public Interner() {
-    mySet = new OpenTHashSet<T>();
+    mySet = new OpenTHashSet<>();
   }
 
   public Interner(@NotNull Collection<? extends T> initialItems) {
-    mySet = new OpenTHashSet<T>(initialItems);
+    mySet = new OpenTHashSet<>(initialItems);
   }
 
   public Interner(@NotNull TObjectHashingStrategy<T> strategy) {
-    mySet = new OpenTHashSet<T>(strategy);
+    mySet = new OpenTHashSet<>(strategy);
   }
 
   @NotNull

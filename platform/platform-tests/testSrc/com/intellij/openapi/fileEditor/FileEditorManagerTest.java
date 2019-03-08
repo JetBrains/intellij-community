@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.ui.UISettings;
@@ -114,8 +114,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testOpenRecentEditorTab() throws Exception {
-    PlatformTestUtil
-      .registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), myFixture.getTestRootDisposable());
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER
+      .getPoint(null).registerExtension(new MyFileEditorProvider(), myFixture.getTestRootDisposable());
 
     openFiles("  <component name=\"FileEditorManager\">\n" +
               "    <leaf>\n" +
@@ -137,8 +137,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testTrackSelectedEditor() {
-    PlatformTestUtil
-      .registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), myFixture.getTestRootDisposable());
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER
+      .getPoint(null).registerExtension(new MyFileEditorProvider(), myFixture.getTestRootDisposable());
     VirtualFile file = getFile("/src/1.txt");
     assertNotNull(file);
     FileEditor[] editors = myManager.openFile(file, true);
@@ -200,10 +200,9 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testOpenInDumbMode() {
-    PlatformTestUtil
-      .registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), myFixture.getTestRootDisposable());
-    PlatformTestUtil
-      .registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new DumbAwareProvider(), myFixture.getTestRootDisposable());
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER
+      .getPoint(null).registerExtension(new MyFileEditorProvider(), myFixture.getTestRootDisposable());
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint(null).registerExtension(new DumbAwareProvider(), myFixture.getTestRootDisposable());
     try {
       DumbServiceImpl.getInstance(getProject()).setDumb(true);
       VirtualFile file = getFile("/src/foo.bar");

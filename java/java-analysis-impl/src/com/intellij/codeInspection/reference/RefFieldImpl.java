@@ -57,14 +57,17 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   }
 
   @Override
-  protected void markReferenced(RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, boolean forWriting, boolean forReading, UExpression expressionFrom) {
+  protected void markReferenced(@NotNull RefElementImpl refFrom,
+                                boolean forWriting,
+                                boolean forReading,
+                                UExpression expressionFrom) {
     addInReference(refFrom);
 
     boolean referencedFromClassInitializer = false;
 
     if (forWriting && expressionFrom != null) {
       UClassInitializer initializer = UastUtils.getParentOfType(expressionFrom, UClassInitializer.class);
-      if (initializer != null && psiFrom == UastUtils.getParentOfType(initializer, UClass.class).getSourcePsi()) {
+      if (initializer != null && refFrom.getPsiElement() == UastUtils.getParentOfType(initializer, UClass.class).getSourcePsi()) {
         UExpression qualifierExpression = expressionFrom instanceof UQualifiedReferenceExpression ? ((UQualifiedReferenceExpression)expressionFrom).getReceiver() : null;
         if (qualifierExpression == null || qualifierExpression instanceof UThisExpression) {
           referencedFromClassInitializer = true;

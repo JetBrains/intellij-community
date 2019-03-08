@@ -56,7 +56,7 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
   @NotNull
   @Override
   protected <T> Key<T> createKey(@NotNull T k, @NotNull TObjectHashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q) {
-    return new SoftKey<T>(k, strategy, q);
+    return new SoftKey<>(k, strategy, q);
   }
 
   private static class SoftKey<T> extends SoftReference<T> implements Key<T> {

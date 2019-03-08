@@ -39,7 +39,7 @@ public class DFSTBuilder<Node> {
   private Comparator<Node> myNComparator;
   private Comparator<Node> myTComparator;
   private final TIntArrayList mySCCs = new TIntArrayList(); // strongly connected component sizes
-  private final TObjectIntHashMap<Node> myNodeToTNumber = new TObjectIntHashMap<Node>(); // node -> number in scc topological order. Independent scc are in reversed loading order
+  private final TObjectIntHashMap<Node> myNodeToTNumber = new TObjectIntHashMap<>(); // node -> number in scc topological order. Independent scc are in reversed loading order
 
   private final Node[] myInvT; // number in (enumerate all nodes scc by scc) order -> node
   private final Node[] myAllNodes;
@@ -82,7 +82,7 @@ public class DFSTBuilder<Node> {
     }
     myGraph = graph;
     int size = graph.getNodes().size();
-    myNodeToNNumber = new TObjectIntHashMap<Node>(size * 2, 0.5f);
+    myNodeToNNumber = new TObjectIntHashMap<>(size * 2, 0.5f);
     myInvN = (Node[])new Object[size];
     myInvT = (Node[])new Object[size];
     new Tarjan().build();
@@ -130,8 +130,8 @@ public class DFSTBuilder<Node> {
       }
     }
 
-    private final Stack<Frame> frames = new Stack<Frame>(); // recursion stack
-    private final TObjectIntHashMap<Node> nodeIndex = new TObjectIntHashMap<Node>();
+    private final Stack<Frame> frames = new Stack<>(); // recursion stack
+    private final TObjectIntHashMap<Node> nodeIndex = new TObjectIntHashMap<>();
     private int dfsIndex;
     private int sccsSizeCombined;
     private final TIntArrayList topo = new TIntArrayList(index.length); // nodes in reverse topological order
@@ -145,7 +145,7 @@ public class DFSTBuilder<Node> {
       for (int i = 0; i < index.length; i++) {
         if (index[i] == -1) {
           frames.push(new Frame(i));
-          List<List<Node>> sccs = new ArrayList<List<Node>>();
+          List<List<Node>> sccs = new ArrayList<>();
 
           strongConnect(sccs);
 
@@ -224,7 +224,7 @@ public class DFSTBuilder<Node> {
         // we are really back, pop a scc
         if (lowLink[i] == index[i]) {
           // found yer
-          List<Node> scc = new ArrayList<Node>();
+          List<Node> scc = new ArrayList<>();
           int pushedI;
           do {
             pushedI = nodesOnStack.pop();
@@ -252,23 +252,13 @@ public class DFSTBuilder<Node> {
   public Comparator<Node> comparator(boolean useNNumber) {
     if (useNNumber) {
       if (myNComparator == null) {
-        myNComparator = new Comparator<Node>() {
-          @Override
-          public int compare(@NotNull Node t, @NotNull Node t1) {
-            return myNodeToNNumber.get(t) - myNodeToNNumber.get(t1);
-          }
-        };
+        myNComparator = Comparator.comparingInt(myNodeToNNumber::get);
       }
       return myNComparator;
     }
     else {
       if (myTComparator == null) {
-        myTComparator = new Comparator<Node>() {
-          @Override
-          public int compare(@NotNull Node t, @NotNull Node t1) {
-            return myNodeToTNumber.get(t) - myNodeToTNumber.get(t1);
-          }
-        };
+        myTComparator = Comparator.comparingInt(myNodeToTNumber::get);
       }
       return myTComparator;
     }
@@ -379,8 +369,8 @@ public class DFSTBuilder<Node> {
 
   @NotNull
   public List<Node> getSortedNodes() {
-    List<Node> result = new ArrayList<Node>(myGraph.getNodes());
-    Collections.sort(result, comparator());
+    List<Node> result = new ArrayList<>(myGraph.getNodes());
+    result.sort(comparator());
     return result;
   }
 }

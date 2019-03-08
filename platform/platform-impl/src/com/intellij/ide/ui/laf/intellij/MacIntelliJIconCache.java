@@ -6,7 +6,7 @@ import com.intellij.util.ui.LafIconLookup;
 import javax.swing.*;
 
 /**
- * @Deprecated use {@link LafIconLookup} instead
+ * @deprecated use {@link LafIconLookup} instead
  */
 @Deprecated
 public class MacIntelliJIconCache {

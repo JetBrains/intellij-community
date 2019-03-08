@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.ide.DataManager;
@@ -25,8 +11,8 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.VcsUserUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,27 +24,16 @@ import java.util.TreeSet;
 /**
  * Show a popup to select a user or enter the user name.
  */
-public class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogUserFilter> {
+public class UserFilterPopupComponent
+  extends MultipleValueFilterPopupComponent<VcsLogUserFilter, FilterModel.SingleFilterModel<VcsLogUserFilter>> {
   public static final String USER_FILER_NAME = "User";
   @NotNull private final VcsLogData myLogData;
 
   UserFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                            @NotNull VcsLogData logData,
-                           @NotNull FilterModel<VcsLogUserFilter> filterModel) {
+                           @NotNull FilterModel.SingleFilterModel<VcsLogUserFilter> filterModel) {
     super(USER_FILER_NAME, uiProperties, filterModel);
     myLogData = logData;
-  }
-
-  @NotNull
-  @Override
-  protected String getText(@NotNull VcsLogUserFilter filter) {
-    return displayableText(myFilterModel.getFilterValues(filter));
-  }
-
-  @Nullable
-  @Override
-  protected String getToolTip(@NotNull VcsLogUserFilter filter) {
-    return tooltip(myFilterModel.getFilterValues(filter));
   }
 
   @Override
@@ -97,6 +72,18 @@ public class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<
     ActionGroup speedsearchGroup = createSpeedSearchActionGroup();
     return new UserLogSpeedSearchPopup(new DefaultActionGroup(actionGroup, speedsearchGroup),
                                        DataManager.getInstance().getDataContext(this));
+  }
+
+  @Override
+  @Nullable
+  protected VcsLogUserFilter createFilter(@NotNull List<String> values) {
+    return myFilterModel.createFilter(values);
+  }
+
+  @Override
+  @NotNull
+  protected List<String> getFilterValues(@NotNull VcsLogUserFilter filter) {
+    return myFilterModel.getFilterValues(filter);
   }
 
   @NotNull

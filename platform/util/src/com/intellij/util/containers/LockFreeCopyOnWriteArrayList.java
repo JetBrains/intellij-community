@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
@@ -77,13 +62,6 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
   }
 
   /**
-   * Test for equality, coping with nulls.
-   */
-  private static boolean eq(Object o1, Object o2) {
-    return o1 == null ? o2 == null : o1.equals(o2);
-  }
-
-  /**
    * static version of indexOf, to allow repeated calls without
    * needing to re-acquire array each time.
    *
@@ -94,21 +72,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    * @return index of element, or -1 if absent
    */
   private static int indexOf(Object o, @NotNull Object[] elements, int index, int fence) {
-    if (o == null) {
-      for (int i = index; i < fence; i++) {
-        if (elements[i] == null) {
-          return i;
-        }
-      }
-    }
-    else {
-      for (int i = index; i < fence; i++) {
-        if (o.equals(elements[i])) {
-          return i;
-        }
-      }
-    }
-    return -1;
+    return ArrayUtil.indexOf(elements, o, index, fence);
   }
 
   /**
@@ -472,7 +436,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     int i;
     for (i = newLen; i != 0; --i) {
       Object element = elements[i];
-      if (eq(o, element)) {
+      if (Objects.equals(o, element)) {
         // found one;  copy remaining and exit
         System.arraycopy(elements, 0, newElements, 0, i);
         break;
@@ -481,7 +445,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     }
 
     // special handling for last cell
-    if (i == 0 && !eq(o, elements[0])) {
+    if (i == 0 && !Objects.equals(o, elements[0])) {
       return null;
     }
     return newElements;
@@ -540,7 +504,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
       int len = elements.length;
       newElements = new Object[len + 1];
       for (int i = 0; i < len; ++i) {
-        if (eq(e, elements[i])) {
+        if (Objects.equals(e, elements[i])) {
           return false; // exit, throwing away copy
         }
         newElements[i] = elements[i];
@@ -691,7 +655,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     do {
       elements = array;
       Set<Object> existing = ContainerUtil.map2Set(elements, Functions.identity());
-      List<Object> toAddList = new ArrayList<Object>(c.size());
+      List<Object> toAddList = new ArrayList<>(c.size());
       for (E e : c) {
         if (!existing.contains(e)) toAddList.add(e);
       }
@@ -842,7 +806,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     List<?> list = (List<?>)o;
     Iterator<?> it = list.iterator();
     for (Object element : array) {
-      if (!it.hasNext() || !eq(element, it.next())) {
+      if (!it.hasNext() || !Objects.equals(element, it.next())) {
         return false;
       }
     }
@@ -917,7 +881,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
       throw new IndexOutOfBoundsException("Index: " + index);
     }
 
-    return elements.length == 0 ? EmptyListIterator.<E>getInstance() : new COWIterator(elements, index);
+    return elements.length == 0 ? EmptyListIterator.getInstance() : new COWIterator(elements, index);
   }
 
   private class COWIterator implements ListIterator<E> {

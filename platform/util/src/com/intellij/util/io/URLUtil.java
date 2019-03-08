@@ -117,12 +117,8 @@ public class URLUtil {
         return ThreeState.NO;
       }
       try {
-        ZipFile file = new ZipFile(paths.first);
-        try {
+        try (ZipFile file = new ZipFile(paths.first)) {
           return ThreeState.fromBoolean(file.getEntry(paths.second) != null);
-        }
-        finally {
-          file.close();
         }
       }
       catch (IOException e) {

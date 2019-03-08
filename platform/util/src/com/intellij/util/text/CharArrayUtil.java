@@ -464,7 +464,7 @@ public class CharArrayUtil {
 
   @NotNull
   public static TextRange[] getIndents(@NotNull CharSequence charsSequence, int shift) {
-    List<TextRange> result = new ArrayList<TextRange>();
+    List<TextRange> result = new ArrayList<>();
     int whitespaceEnd = -1;
     int lastTextFound = 0;
     for(int i = charsSequence.length() - 1; i >= 0; i--){

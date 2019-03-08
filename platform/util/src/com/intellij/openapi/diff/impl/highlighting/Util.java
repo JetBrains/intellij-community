@@ -342,7 +342,7 @@ public class Util {
         return fragments;
       }
       if (secondText.charAt(0) == rightText.charAt(0)) {
-        List<DiffFragment> result = new ArrayList<DiffFragment>();
+        List<DiffFragment> result = new ArrayList<>();
         result.add(side.createFragment(rightText.substring(0, 1), rightText.substring(0, 1), false));
         result.add(side.createFragment(null, DiffString.concatenate(rightText.substring(1), secondText.substring(0, 1)), true));
         result.add(side.createFragment(secondText.substring(1), secondText.substring(1), second.isModified()));

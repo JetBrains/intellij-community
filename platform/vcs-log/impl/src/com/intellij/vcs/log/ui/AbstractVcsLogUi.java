@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.history.ReachableNodesUtilKt;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
@@ -102,6 +103,18 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
     fireFilterChangeEvent(myVisiblePack, permGraphChanged);
     getTable().repaint();
+  }
+
+  public void jumpToNearestCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
+    jumpTo(hash, (model, h) -> {
+      if (!myLogData.getStorage().containsCommit(new CommitId(h, root))) return GraphTableModel.COMMIT_NOT_FOUND;
+      int commitIndex = myLogData.getCommitIndex(h, root);
+      Integer rowIndex = myVisiblePack.getVisibleGraph().getVisibleRowIndex(commitIndex);
+      if (rowIndex == null) {
+        rowIndex = ReachableNodesUtilKt.findVisibleAncestorRow(commitIndex, myVisiblePack);
+      }
+      return rowIndex == null ? GraphTableModel.COMMIT_DOES_NOT_MATCH : rowIndex;
+    }, SettableFuture.create());
   }
 
   protected abstract void onVisiblePackUpdated(boolean permGraphChanged);

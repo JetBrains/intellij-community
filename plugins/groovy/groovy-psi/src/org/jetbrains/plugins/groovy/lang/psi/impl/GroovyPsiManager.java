@@ -10,6 +10,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -81,19 +82,14 @@ public class GroovyPsiManager {
   }
 
   public boolean isCompileStatic(@NotNull PsiMember member) {
-    Boolean aBoolean = myCompileStatic.get(member);
-    if (aBoolean == null) {
-      aBoolean = ConcurrencyUtil.cacheOrGet(myCompileStatic, member, isCompileStaticInner(member));
-    }
-    return aBoolean;
+    return myCompileStatic.computeIfAbsent(member, this::isCompileStaticInner);
   }
 
   private boolean isCompileStaticInner(@NotNull PsiMember member) {
     PsiAnnotation annotation = getCompileStaticAnnotation(member);
     if (annotation != null) return checkForPass(annotation);
-    PsiClass aClass = member.getContainingClass();
-    if (aClass != null) return isCompileStatic(aClass);
-    return false;
+    PsiMember enclosingMember = PsiTreeUtil.getParentOfType(member, PsiMember.class, true);
+    return enclosingMember != null && isCompileStatic(enclosingMember);
   }
 
   @Nullable

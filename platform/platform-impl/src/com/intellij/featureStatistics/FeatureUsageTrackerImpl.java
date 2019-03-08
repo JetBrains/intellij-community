@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
-import com.intellij.internal.statistic.collectors.fus.ProductivityUsageCollector;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -171,7 +170,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
      // TODO: LOG.error("Feature '" + featureId +"' must be registered prior triggerFeatureUsed() is called");
     }
     else {
-      FUCounterUsageLogger.getInstance().logEvent(ProductivityUsageCollector.GROUP_ID, descriptor.getId());
+      FUCounterUsageLogger.getInstance().logEvent("productivity", descriptor.getId());
       descriptor.triggerUsed();
     }
   }

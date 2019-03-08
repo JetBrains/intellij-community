@@ -1,66 +1,100 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:ApiStatus.Experimental
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findTestsTaskToRun
 import java.util.*
 
-
-fun ExternalSystemTaskExecutionSettings.applyTestConfiguration(
+fun <E : PsiElement> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   project: Project,
   testTasksToRun: List<Map<String, List<String>>>,
-  vararg containingClasses: PsiClass,
-  createFilter: (PsiClass) -> String
+  sourceElements: Iterable<E>,
+  createFilter: (E) -> String
 ): Boolean {
-  return applyTestConfiguration(project, containingClasses.toList(), { it }, { it, _ -> createFilter(it) }) { source ->
+  return applyTestConfiguration(project, sourceElements, { it }, { it, _ -> createFilter(it) }) { source ->
     testTasksToRun.mapNotNull { it[source.path] }
   }
 }
 
-fun ExternalSystemTaskExecutionSettings.applyTestConfiguration(
+fun <E : PsiElement> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   project: Project,
-  vararg containingClasses: PsiClass,
-  createFilter: (PsiClass) -> String
+  sourceElements: Iterable<E>,
+  createFilter: (E) -> String
 ): Boolean {
-  return applyTestConfiguration(project, containingClasses.toList(), { it }) { it, _ ->
+  return applyTestConfiguration(project, sourceElements, { it }, { it, _ -> createFilter(it) })
+}
+
+fun <E : PsiElement> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
+  project: Project,
+  testTasksToRun: List<Map<String, List<String>>>,
+  vararg sourceElements: E,
+  createFilter: (E) -> String
+): Boolean {
+  return applyTestConfiguration(project, sourceElements.toList(), { it }, { it, _ -> createFilter(it) }) { source ->
+    testTasksToRun.mapNotNull { it[source.path] }
+  }
+}
+
+fun <E : PsiElement> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
+  project: Project,
+  vararg sourceElements: E,
+  createFilter: (E) -> String
+): Boolean {
+  return applyTestConfiguration(project, sourceElements.toList(), { it }) { it, _ ->
     createFilter(it)
   }
 }
 
-fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
+fun <E : PsiElement, T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
+  project: Project,
+  testTasksToRun: List<Map<String, List<String>>>,
+  tests: Iterable<T>,
+  findSourceElement: (T) -> E?,
+  createFilter: (E, T) -> String): Boolean {
+  return applyTestConfiguration(project, tests, findSourceElement, createFilter) { source ->
+    testTasksToRun.mapNotNull { it[source.path] }
+  }
+}
+
+fun <E : PsiElement, T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   project: Project,
   tests: Iterable<T>,
-  findPsiClass: (T) -> PsiClass?,
-  createFilter: (PsiClass, T) -> String): Boolean {
-  return applyTestConfiguration(project, tests, findPsiClass, createFilter) { source ->
+  findSourceElement: (T) -> E?,
+  createFilter: (E, T) -> String): Boolean {
+  return applyTestConfiguration(project, tests, findSourceElement, createFilter) { source ->
     listOf(findTestsTaskToRun(source, project))
   }
 }
 
-fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
+fun <E : PsiElement, T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   project: Project,
   tests: Iterable<T>,
-  findPsiClass: (T) -> PsiClass?,
-  createFilter: (PsiClass, T) -> String,
+  findSourceElement: (T) -> E?,
+  createFilter: (E, T) -> String,
   getTestsTaskToRun: (VirtualFile) -> List<List<String>>
 ): Boolean {
   val projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project)
   val testRunConfigurations = LinkedHashMap<String, Pair<VirtualFile, MutableList<String>>>()
+  var module: Module? = null
   for (test in tests) {
-    val psiClass = findPsiClass(test) ?: return false
-    val psiFile = psiClass.containingFile ?: return false
-    val virtualFile = psiFile.virtualFile
-    val module = projectFileIndex.getModuleForFile(virtualFile) ?: return false
-    externalProjectPath = GradleRunnerUtil.resolveProjectPath(module) ?: return false
+    val sourceElement = findSourceElement(test) ?: return false
+    val sourceFile = getSourceFile(sourceElement) ?: return false
+    module = projectFileIndex.getModuleForFile(sourceFile) ?: return false
     if (!GradleRunnerUtil.isGradleModule(module)) return false
-    val (_, arguments) = testRunConfigurations.getOrPut(module.name) { Pair(virtualFile, ArrayList()) }
-    arguments.add(createFilter(psiClass, test))
+    val (_, arguments) = testRunConfigurations.getOrPut(module.name) { Pair(sourceFile, ArrayList()) }
+    arguments.add(createFilter(sourceElement, test).trim())
   }
+  if (module == null) return false
+  externalProjectPath = GradleRunnerUtil.resolveProjectPath(module) ?: return false
   val taskSettings = ArrayList<Pair<String, List<String>>>()
   val unorderedParameters = ArrayList<String>()
   for ((source, arguments) in testRunConfigurations.values) {
@@ -76,33 +110,49 @@ fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   if (testRunConfigurations.size > 1) {
     unorderedParameters.add("--continue")
   }
+  setFrom(taskSettings, unorderedParameters)
+  return true
+}
 
+private fun ExternalSystemTaskExecutionSettings.setFrom(taskSettings: List<Pair<String, List<String>>>, unorderedParameters: List<String>) {
   val hasTasksAfterTaskWithArguments = taskSettings.dropWhile { it.second.isEmpty() }.size > 1
   if (hasTasksAfterTaskWithArguments) {
     val joiner = StringJoiner(" ")
     for ((task, arguments) in taskSettings) {
-      joiner.add(task)
-      for (argument in arguments) {
-        joiner.add(argument)
-      }
+      joiner.add(task.escapeIfNeeded())
+      joiner.addAll(arguments)
     }
-    for (argument in unorderedParameters) {
-      joiner.add(argument)
-    }
+    joiner.addAll(unorderedParameters)
     taskNames = emptyList()
     scriptParameters = joiner.toString()
   }
   else {
-    val arguments = taskSettings.lastOrNull()?.second ?: emptyList()
     val joiner = StringJoiner(" ")
-    for (argument in arguments) {
-      joiner.add(argument)
-    }
-    for (argument in unorderedParameters) {
-      joiner.add(argument)
-    }
-    taskNames = taskSettings.map { it.first }
+    joiner.addAll(taskSettings.lastOrNull()?.second ?: emptyList())
+    joiner.addAll(unorderedParameters)
+    taskNames = taskSettings.map { it.first.escapeIfNeeded() }
     scriptParameters = joiner.toString()
   }
-  return true
+}
+
+fun String.escapeIfNeeded() = when {
+  contains(' ') -> "'$this'"
+  else -> this
+}
+
+private fun StringJoiner.addAll(elements: Iterable<String>) = apply {
+  for (element in elements) {
+    add(element)
+  }
+}
+
+fun getSourceFile(sourceElement: PsiElement): VirtualFile? {
+  if (sourceElement is PsiFileSystemItem) {
+    return sourceElement.virtualFile
+  }
+  val containingFile = sourceElement.containingFile
+  if (containingFile != null) {
+    return containingFile.virtualFile
+  }
+  return null
 }

@@ -171,11 +171,16 @@ public class VMOptions {
       return null;
     }
 
+    return new File(location, getCustomVMOptionsFileName());
+  }
+
+  @NotNull
+  public static String getCustomVMOptionsFileName() {
     String fileName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
     if (SystemInfo.is64Bit && !SystemInfo.isMac) fileName += "64";
     if (SystemInfo.isWindows) fileName += ".exe";
     fileName += ".vmoptions";
-    return new File(location, fileName);
+    return fileName;
   }
 
   //<editor-fold desc="Deprecated stuff.">

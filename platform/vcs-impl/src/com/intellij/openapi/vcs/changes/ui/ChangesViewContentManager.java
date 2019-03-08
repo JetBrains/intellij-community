@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.Disposable;
@@ -78,8 +78,7 @@ public class ChangesViewContentManager implements ChangesViewContentI {
 
   private void loadExtensionTabs() {
     final List<Content> contentList = new LinkedList<>();
-    final ChangesViewContentEP[] contentEPs = myProject.getExtensions(ChangesViewContentEP.EP_NAME);
-    for(ChangesViewContentEP ep: contentEPs) {
+    for(ChangesViewContentEP ep: ChangesViewContentEP.EP_NAME.getExtensionList(myProject)) {
       final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
       if (predicate == null || predicate.fun(myProject).equals(Boolean.TRUE)) {
         final Content content = ContentFactory.SERVICE.getInstance().createContent(new ContentStub(ep), ep.getTabName(), false);
@@ -99,7 +98,7 @@ public class ChangesViewContentManager implements ChangesViewContentI {
   }
 
   private void updateExtensionTabs() {
-    final ChangesViewContentEP[] contentEPs = myProject.getExtensions(ChangesViewContentEP.EP_NAME);
+    final ChangesViewContentEP[] contentEPs = ChangesViewContentEP.EP_NAME.getExtensions(myProject);
     for(ChangesViewContentEP ep: contentEPs) {
       final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
       if (predicate == null) continue;

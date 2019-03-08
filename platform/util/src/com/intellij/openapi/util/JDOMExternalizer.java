@@ -125,7 +125,7 @@ public class JDOMExternalizer {
 
   @NotNull
   public static List<String> loadStringsList(Element element, String rootName, String attrName) {
-    final List<String> paths = new LinkedList<String>();
+    final List<String> paths = new LinkedList<>();
     if (element != null) {
       @NotNull final List list = element.getChildren(rootName);
       for (Object o : list) {

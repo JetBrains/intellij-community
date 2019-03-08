@@ -22,12 +22,6 @@ public interface Segment {
   int getStartOffset();
   int getEndOffset();
 
-  Comparator<Segment> BY_START_OFFSET_THEN_END_OFFSET = new Comparator<Segment>() {
-    @Override
-    public int compare(Segment r1, Segment r2) {
-      int result = r1.getStartOffset() - r2.getStartOffset();
-      if (result == 0) result = r1.getEndOffset() - r2.getEndOffset();
-      return result;
-    }
-  };
+  Comparator<Segment> BY_START_OFFSET_THEN_END_OFFSET =
+    Comparator.comparingInt(Segment::getStartOffset).thenComparingInt(Segment::getEndOffset);
 }

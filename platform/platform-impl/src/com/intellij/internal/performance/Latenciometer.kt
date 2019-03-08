@@ -73,14 +73,14 @@ class LatenciometerListener : LatencyListener {
   }
 
   override fun recordTypingLatency(editor: Editor, action: String, latencyInMS: Long) {
-  val key = currentLatencyRecordKey ?: run {
-    val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return
-    LatencyDistributionRecordKey(fileType.name)
-  }
-  val latencyRecord = latencyMap.getOrPut(key) {
-    LatencyDistributionRecord(key)
-  }
-  latencyRecord.update(getActionKey(action), latencyInMS.toInt())
+    val key = currentLatencyRecordKey ?: run {
+      val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return
+      LatencyDistributionRecordKey(fileType.name)
+    }
+    val latencyRecord = latencyMap.getOrPut(key) {
+      LatencyDistributionRecord(key)
+    }
+    latencyRecord.update(getActionKey(action), latencyInMS.toInt())
   }
 }
 

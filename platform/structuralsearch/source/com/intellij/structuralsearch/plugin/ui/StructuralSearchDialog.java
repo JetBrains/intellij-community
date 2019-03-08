@@ -11,6 +11,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -245,27 +246,29 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   private void detectFileType() {
-    PsiElement context = mySearchContext.getFile();
+    myFileType = StructuralSearchUtil.getDefaultFileType();
+    final PsiFile file = mySearchContext.getFile();
+    PsiElement context = file;
 
     final Editor editor = mySearchContext.getEditor();
     if (editor != null && context != null) {
-      context = context.findElementAt(editor.getCaretModel().getOffset());
+      final int offset = editor.getCaretModel().getOffset();
+      context = InjectedLanguageManager.getInstance(getProject()).findInjectedElementAt(file, offset);
+      if (context == null) {
+        context = file.findElementAt(offset);
+      }
       if (context != null) {
         context = context.getParent();
       }
     }
     if (context != null) {
-      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(context);
+      final Language language = context.getLanguage();
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
       if (profile != null) {
         final FileType fileType = profile.detectFileType(context);
-        if (fileType != null) {
-          myFileType = fileType;
-          return;
-        }
+        myFileType = fileType != null ? fileType : language.getAssociatedFileType();
       }
     }
-
-    myFileType = StructuralSearchUtil.getDefaultFileType();
   }
 
   private Configuration createConfiguration(Configuration template) {

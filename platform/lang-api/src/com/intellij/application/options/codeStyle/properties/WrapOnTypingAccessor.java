@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
-public class WrapOnTypingAccessor extends CodeStylePropertyAccessor<Integer,Boolean> {
+public class WrapOnTypingAccessor extends CodeStyleFieldAccessor<Integer,Boolean> {
   WrapOnTypingAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
   }

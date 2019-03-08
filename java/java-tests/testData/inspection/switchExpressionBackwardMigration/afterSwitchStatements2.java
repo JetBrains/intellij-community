@@ -4,7 +4,8 @@ import java.util.*;
 public class Main {
   void foo(E e) {
       switch (e) {
-          case E1, E2:
+          case E1:
+          case E2:
               System.out.println("oops");
               break;
           default:

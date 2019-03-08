@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.memory.filtering;
 
-import com.sun.jdi.Value;
+import com.intellij.debugger.memory.ui.JavaReferenceInfo;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,13 +25,13 @@ public interface FilteringTaskCallback {
   void started(int totalCount);
 
   @NotNull
-  Action matched(@NotNull Value ref);
+  Action matched(@NotNull JavaReferenceInfo ref);
 
   @NotNull
-  Action notMatched(@NotNull Value ref);
+  Action notMatched(@NotNull JavaReferenceInfo ref);
 
   @NotNull
-  Action error(@NotNull Value ref, @NotNull String description);
+  Action error(@NotNull JavaReferenceInfo ref, @NotNull String description);
 
   void completed(@NotNull FilteringResult reason);
 

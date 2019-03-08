@@ -28,7 +28,6 @@ import org.fest.swing.timing.Timeout
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import java.awt.Component
@@ -87,10 +86,6 @@ open class GuiTestCase {
   @Rule
   @JvmField
   val testMethod = TestName()
-
-  @Rule
-  @JvmField
-  val logActionsDuringTest = LogActionsDuringTest()
 
   val projectFolder: String by lazy {
     val dir = File(projectsFolder, testMethod.methodName)

@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="com.android.tools.analytics-library:testing" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.android.tools.analytics-library:testing:26.3.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/analytics-library/testing/26.3.0/testing-26.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

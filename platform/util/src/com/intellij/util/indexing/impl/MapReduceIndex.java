@@ -111,10 +111,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       getWriteLock().lock();
       doClear();
     }
-    catch (StorageException e) {
-      LOG.error(e);
-    }
-    catch (IOException e) {
+    catch (StorageException | IOException e) {
       LOG.error(e);
     }
     finally {
@@ -203,7 +200,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     try {
       lock.lock();
       if (myDisposed) {
-        return new ValueContainerImpl<Value>();
+        return new ValueContainerImpl<>();
       }
       ValueContainerImpl.ourDebugIndexInfo.set(myIndexId);
       return myStorage.read(key);
@@ -221,28 +218,20 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     final UpdateData<Key, Value> updateData =
       myIndexCounters.getMapInputCounter().timeCallable(() -> calculateUpdateData(inputId, content));
 
-    return new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
+    return () -> {
       // Android Studio: Code instrumented to log indexing/index performance.
       return myIndexCounters.getUpdateCounter().timeCallable(() -> {
-        try {
-          updateWithMap(inputId, updateData);
-        }
-        catch (StorageException ex) {
-          LOG.info("Exception during updateWithMap:" + ex);
-          requestRebuild(ex);
-          return Boolean.FALSE;
-        }
-        catch (ProcessCanceledException ex) {
-          LOG.info("Exception during updateWithMap:" + ex);
-          requestRebuild(ex);
-          return Boolean.FALSE;
-        }
-
-        return Boolean.TRUE;
-        });  // Android Studio: Code instrumented to log indexing/index performance.
+      try {
+        updateWithMap(inputId, updateData);
       }
+      catch (StorageException | ProcessCanceledException ex) {
+        LOG.info("Exception during updateWithMap:" + ex);
+        requestRebuild(ex);
+        return Boolean.FALSE;
+      }
+
+      return Boolean.TRUE;
+        });  // Android Studio: Code instrumented to log indexing/index performance.
     };
   }
 
@@ -267,14 +256,14 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     if (myForwardIndex != null) {
       return myForwardIndex.getDiffBuilder(inputId);
     }
-    return new EmptyInputDataDiffBuilder<Key, Value>(inputId);
+    return new EmptyInputDataDiffBuilder<>(inputId);
   }
 
   @NotNull
   protected UpdateData<Key, Value> createUpdateData(@NotNull Map<Key, Value> data,
                                                     @NotNull ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> keys,
                                                     @NotNull ThrowableRunnable<IOException> forwardIndexUpdate) {
-    return new UpdateData<Key, Value>(data, keys, myIndexId, forwardIndexUpdate);
+    return new UpdateData<>(data, keys, myIndexId, forwardIndexUpdate);
   }
 
   @NotNull

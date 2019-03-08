@@ -13,14 +13,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
-import static com.intellij.util.containers.ContainerUtil.map2Set;
 
 public class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
@@ -39,7 +36,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
 
   @NotNull
   public static Set<UsageDescriptor> getDescriptors(@NotNull Project project) {
-    final Set<String> usedFileTypes = new HashSet<>();
+    final Set<UsageDescriptor> descriptors = new HashSet<>();
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager == null) {
       return Collections.emptySet();
@@ -56,14 +53,14 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
         FileTypeIndex.processFiles(fileType, file -> {
           //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
           if (!ProjectKt.getStateStore(project).isProjectFile(file)) {
-            usedFileTypes.add(id);
+            descriptors.add(new UsageDescriptor(id, 1, data));
             return false;
           }
           return true;
         }, GlobalSearchScope.projectScope(project));
       });
     }
-    return map2Set(usedFileTypes, (NotNullFunction<String, UsageDescriptor>)fileType -> new UsageDescriptor(fileType, 1));
+    return descriptors;
   }
 
   @NotNull

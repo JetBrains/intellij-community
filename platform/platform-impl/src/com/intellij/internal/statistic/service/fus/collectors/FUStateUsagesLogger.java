@@ -72,7 +72,7 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
         logger.logState(group, usage.getKey(), eventData);
       }
     }
-    logger.logState(group, INVOKED);
+    logger.logState(group, INVOKED, new FeatureUsageData().addProject(project).build());
   }
 
   @Nullable

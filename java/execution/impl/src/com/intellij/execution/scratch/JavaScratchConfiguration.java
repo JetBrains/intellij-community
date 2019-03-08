@@ -38,6 +38,11 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
   }
 
   @Override
+  public boolean isBuildProjectOnEmptyModuleList() {
+    return false;
+  }
+
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     JavaParametersUtil.checkAlternativeJRE(this);
     final String className = getMainClassName();

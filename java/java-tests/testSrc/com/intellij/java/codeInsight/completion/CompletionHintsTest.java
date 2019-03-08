@@ -1706,6 +1706,18 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     }
   }
 
+  public void testCommasAutoInsertOnNextWord() {
+    configureJava("class C { void m() { Character.to<caret> } }");
+    complete("toChars(int codePoint, char[] dst, int dstIndex)");
+    checkResultWithInlays("class C { void m() { Character.toChars(<HINT text=\"codePoint:\"/><caret><Hint text=\",dst:\"/><Hint text=\",dstIndex:\"/>) } }");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD);
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { Character.toChars(<hint text=\"codePoint:\"/><hint text=\",dst:\"/><hint text=\",dstIndex:\"/>) <caret>} }");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD);
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { Character.toChars(<Hint text=\"codePoint:\"/>, <Hint text=\"dst:\"/>, <HINT text=\"dstIndex:\"/><caret>) } }");
+  }
+
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }

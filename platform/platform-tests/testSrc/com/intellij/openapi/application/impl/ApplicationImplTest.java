@@ -173,7 +173,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   private static void joinWithTimeout(List<Thread> threads) throws TimeoutException {
     for (Thread thread : threads) {
       try {
-        thread.join(10_000);
+        thread.join(20_000);
       }
       catch (InterruptedException e) {
         throw new RuntimeException(e);

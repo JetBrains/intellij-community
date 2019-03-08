@@ -28,6 +28,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,6 +40,7 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.util.ui.JBEmptyBorder;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -99,6 +101,7 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
   private JCheckBox    myCbKeepTrailingSpacesOnCaretLine;
   private JTextField   myRecentLocationsLimitField;
   private JBTextField  mySoftWrapFileMasks;
+  private JLabel       mySoftWrapFileMasksHint;
 
   private static final String ACTIVE_COLOR_SCHEME = ApplicationBundle.message("combobox.richcopy.color.scheme.active");
   private static final UINumericRange RECENT_FILES_RANGE = new UINumericRange(50, 1, 500);
@@ -375,6 +378,12 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
 
     restartDaemons();
     ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.OPTIONS_PANEL_TOPIC).changesApplied();
+  }
+
+  private void createUIComponents() {
+    mySoftWrapFileMasks = new JBTextField();
+    mySoftWrapFileMasksHint = ComponentPanelBuilder.createCommentComponent(ApplicationBundle.message("soft.wraps.file.masks.hint"), true);
+    mySoftWrapFileMasksHint.setBorder(new JBEmptyBorder(ComponentPanelBuilder.computeCommentInsets(mySoftWrapFileMasks, true)));
   }
 
   private static boolean setRecentLocationLimit(@NotNull UISettings uiSettings, @NotNull String recentLocationsLimit) {

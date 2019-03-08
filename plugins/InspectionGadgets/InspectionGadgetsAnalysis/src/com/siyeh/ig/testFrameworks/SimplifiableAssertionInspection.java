@@ -173,7 +173,7 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
         else if (isEqualityComparison(position)) {
           replaceAssertLiteralWithAssertEquals(callExpression, position, assertTrueFalseHint.getMessage(), assertTrueFalseHint.getArgIndex(), "assertNotEquals");
         }
-        else if (assertTrue && isArrayEqualityComparison(position)) {
+        else if (assertTrue && !checkTestNG() && isArrayEqualityComparison(position)) {
           replaceAssertLiteralWithAssertEquals(callExpression, position, assertTrueFalseHint.getMessage(), assertTrueFalseHint.getArgIndex(), "assertArrayEquals");
         }
         else if (BoolUtils.isNegation(position)) {
@@ -467,7 +467,7 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
           else if (isAssertThatCouldBeFail(position, !assertTrue)) {
             registerMethodCallError(expression, "fail()");
           }
-          else if (assertTrue && isArrayEqualityComparison(position)) {
+          else if (assertTrue && !checkTestNG() && isArrayEqualityComparison(position)) {
             registerMethodCallError(expression, "assertArrayEquals");
           }
           else if (BoolUtils.isNegation(position)) {

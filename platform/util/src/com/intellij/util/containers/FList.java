@@ -58,7 +58,7 @@ public class FList<E> extends AbstractList<E> {
   }
 
   public FList<E> prepend(E elem) {
-    return new FList<E>(elem, this, mySize + 1);
+    return new FList<>(elem, this, mySize + 1);
   }
 
   public FList<E> without(E elem) {

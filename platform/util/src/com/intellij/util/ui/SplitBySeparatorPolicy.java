@@ -35,8 +35,8 @@ public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
 
     int currentLength = 0;
 
-    List<String> end = new ArrayList<String>();
-    List<String> begin = new ArrayList<String>();
+    List<String> end = new ArrayList<>();
+    List<String> begin = new ArrayList<>();
 
     int size = components.size();
     int mult = 1;
@@ -76,7 +76,7 @@ public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
   }
 
   private static ArrayList<String> getComponents(File file) {
-    ArrayList<String> result = new ArrayList<String>();
+    ArrayList<String> result = new ArrayList<>();
     File current = file;
     while (current != null) {
       result.add(getFileName(current));

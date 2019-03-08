@@ -63,6 +63,7 @@ public class ParameterInfoComponent extends JPanel {
   private static final Border BOTTOM_BORDER = new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), EMPTY_BORDER);
 
   protected int myWidthLimit = 500;
+  private final int myMaxVisibleRows = Registry.intValue("parameter.info.max.visible.rows");
 
   private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = (o1, o2) -> {
     if (o1.getStartOffset() == o2.getStartOffset()) {
@@ -172,7 +173,7 @@ public class ParameterInfoComponent extends JPanel {
   public Dimension getPreferredSize() {
     long visibleRows = Stream.of(myPanels).filter(Component::isVisible).count();
     final Dimension preferredSize = super.getPreferredSize();
-    if (visibleRows <= 20) {
+    if (visibleRows <= myMaxVisibleRows) {
       return preferredSize;
     }
     else {
@@ -245,6 +246,11 @@ public class ParameterInfoComponent extends JPanel {
 
     @Override
     public void setupRawUIComponentPresentation(String htmlText) {
+      ParameterInfoController.RawSignatureItem item = new ParameterInfoController.RawSignatureItem(htmlText);
+
+      result.current = getCurrentParameterIndex();
+      result.signatures.add(item);
+
       myPanels[i].setup(htmlText, getDefaultParameterColor());
       myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
     }
@@ -319,6 +325,11 @@ public class ParameterInfoComponent extends JPanel {
         setVisible(i, true);
         //noinspection unchecked
         myHandler.updateUI(o, context);
+
+        // ensure that highlighted element is visible
+        if (context.isHighlighted()) {
+          myMainPanel.scrollRectToVisible(myPanels[i].getBounds());
+        }
       }
     }
 

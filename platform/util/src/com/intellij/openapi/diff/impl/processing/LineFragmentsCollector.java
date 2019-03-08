@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 class LineFragmentsCollector {
-  private final ArrayList<LineFragment> myLineFragments = new ArrayList<LineFragment>();
+  private final ArrayList<LineFragment> myLineFragments = new ArrayList<>();
   private int myLine1 = 0;
   private int myLine2 = 0;
   private int myOffset1 = 0;

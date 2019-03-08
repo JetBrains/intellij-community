@@ -266,7 +266,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       Collection<String> buildRootTasks = buildTasksMap.getModifiable(rootProjectPath);
       final String moduleType = getExternalModuleType(module);
 
-      if (!moduleBuildTask.isIncrementalBuild()) {
+      if (!moduleBuildTask.isIncrementalBuild() && !(moduleBuildTask instanceof ModuleFilesBuildTask)) {
         projectInitScripts.add(String.format(FORCE_COMPILE_TASKS_INIT_SCRIPT_TEMPLATE, gradlePath));
       }
       String assembleTask = "assemble";

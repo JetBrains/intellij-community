@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentPa
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.DocumentUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +64,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
   private boolean myDirty; // true if we cannot calculate preferred size now because soft wrap model was invalidated after editor
                            // became hidden. myLineWidths contents is irrelevant in such a state. Previously calculated preferred size
                            // is kept until soft wraps will be recalculated and size calculations will become possible
+  private boolean myAfterLineEndInlayUpdated;
 
   private final List<TextRange> myDeferredRanges = new ArrayList<>();
 
@@ -95,6 +97,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
+    myAfterLineEndInlayUpdated = false;
     myDuringDocumentUpdate = true;
     if (myDocument.isInBulkUpdate()) return;
     myDocumentChangeStartOffset = event.getOffset();
@@ -106,6 +109,10 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     myDuringDocumentUpdate = false;
     if (myDocument.isInBulkUpdate()) return;
     doInvalidateRange(myDocumentChangeStartOffset, myDocumentChangeEndOffset);
+    if (myAfterLineEndInlayUpdated) {
+      int lineEndOffset = DocumentUtil.getLineEndOffset(myDocumentChangeEndOffset, myDocument);
+      doInvalidateRange(lineEndOffset, lineEndOffset);
+    }
     assertValidState();
   }
 
@@ -136,8 +143,19 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   @Override
   public void onUpdated(@NotNull Inlay inlay) {
-    if (myDuringDocumentUpdate || myDocument.isInBulkUpdate() || inlay.getVerticalAlignment() != Inlay.VerticalAlignment.INLINE) return;
-    doInvalidateRange(inlay.getOffset(), inlay.getOffset());
+    if (myDocument.isInBulkUpdate()
+        || inlay.getPlacement() != Inlay.Placement.INLINE && inlay.getPlacement() != Inlay.Placement.AFTER_LINE_END) return;
+    if (myDuringDocumentUpdate) {
+      if (inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
+        myAfterLineEndInlayUpdated = true;
+      }
+      return;
+    }
+    int offset = inlay.getOffset();
+    if (inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
+      offset = DocumentUtil.getLineEndOffset(offset, myDocument);
+    }
+    doInvalidateRange(offset, offset);
   }
 
   private void onSoftWrapRecalculationEnd(IncrementalCacheUpdateEvent event) {
@@ -324,7 +342,8 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     FoldRegion[] topLevelRegions = myEditor.getFoldingModel().fetchTopLevel();
     if (quickEvaluationListener != null &&
         (topLevelRegions == null || topLevelRegions.length == 0) && myEditor.getSoftWrapModel().getRegisteredSoftWraps().isEmpty() &&
-        !myView.getTextLayoutCache().hasCachedLayoutFor(visualLine) && !myEditor.getInlayModel().hasInlineElements()) {
+        !myView.getTextLayoutCache().hasCachedLayoutFor(visualLine)
+        && !myEditor.getInlayModel().hasInlineElements() && !myEditor.getInlayModel().hasAfterLineEndElements()) {
       // fast path - speeds up editor opening
       quickEvaluationListener.run();
       return (int)(myView.getLogicalPositionCache().offsetToLogicalColumn(visualLine,
@@ -342,6 +361,15 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     }
     if (myEditor.getSoftWrapModel().getSoftWrap(maxOffset) != null) {
       x += myEditor.getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+    }
+    else {
+      List<Inlay> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(iterator.getEndLogicalLine());
+      if (!inlays.isEmpty()) {
+        x += myView.getPlainSpaceWidth();
+        for (Inlay inlay : inlays) {
+          x += inlay.getWidthInPixels();
+        }
+      }
     }
     return (int)x;
   }

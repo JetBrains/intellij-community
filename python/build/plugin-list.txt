@@ -14,7 +14,6 @@ intellij.reStructuredText
 intellij.settingsRepository
 intellij.tasks.core
 intellij.terminal
-intellij.vcs.cvs
 intellij.vcs.git
 intellij.vcs.github
 intellij.vcs.hg

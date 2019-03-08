@@ -191,6 +191,30 @@ public class IdeEventQueue extends EventQueue {
     abracadabraDaberBoreh();
 
     IdeKeyEventDispatcher.addDumbModeWarningListener(() -> flushDelayedKeyEvents());
+
+    if (Registry.is("skip.move.resize.events")) {
+      myPostEventListeners.addListener(IdeEventQueue::skipMoveResizeEvents);
+    }
+  }
+
+  private static boolean skipMoveResizeEvents(AWTEvent event) {
+    // JList, JTable and JTree paint every cell/row/column using the following method:
+    //   CellRendererPane.paintComponent(Graphics, Component, Container, int, int, int, int, boolean)
+    // This method sets bounds to a renderer component and invokes the following internal method:
+    //   Component.notifyNewBounds
+    // All default and simple renderers do not post specified events,
+    // but panel-based renderers have to post events by contract.
+    switch (event.getID()) {
+      case ComponentEvent.COMPONENT_MOVED:
+      case ComponentEvent.COMPONENT_RESIZED:
+      case HierarchyEvent.ANCESTOR_MOVED:
+      case HierarchyEvent.ANCESTOR_RESIZED:
+        Object source = event.getSource();
+        if (source instanceof Component && null != UIUtil.getParentOfType(CellRendererPane.class, (Component)source)) {
+          return true;
+        }
+    }
+    return false;
   }
 
   private void abracadabraDaberBoreh() {

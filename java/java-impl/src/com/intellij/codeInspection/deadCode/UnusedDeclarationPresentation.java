@@ -359,7 +359,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (myElement != null) {
         PsiElement element = myElement.getPsiElement();
         if (element != null) {
-          commentOutDead(PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class));
+          commentOutDead(element);
         }
       }
     }
@@ -594,7 +594,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     @Override
     public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
       if (myElement != null && myElement.isValid()) {
-        SafeDeleteHandler.invoke(project, new PsiElement[]{PsiTreeUtil.getParentOfType(myElement.getPsiElement(), PsiModifierListOwner.class)}, false);
+        SafeDeleteHandler.invoke(project, new PsiElement[]{myElement.getPsiElement()}, false);
       }
     }
 

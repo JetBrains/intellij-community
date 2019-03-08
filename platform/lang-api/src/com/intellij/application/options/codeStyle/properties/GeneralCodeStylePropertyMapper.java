@@ -2,6 +2,7 @@
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.containers.ContainerUtil;
@@ -101,5 +102,12 @@ public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMap
     protected boolean isEmpty(@NotNull String value) {
       return StringUtil.isEmpty(value);
     }
+  }
+
+  @Override
+  @Nullable
+  public String getPropertyDescription(@NotNull String externalName) {
+    String key = "codestyle.property.description." + externalName;
+    return OptionsBundle.getBundle().containsKey(key) ? OptionsBundle.message("codestyle.property.description." + externalName) : null;
   }
 }

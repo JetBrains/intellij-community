@@ -26,12 +26,5 @@ public interface NotNullComputable<T> extends Computable<T> {
   @NotNull
   T compute();
 
-  NotNullComputable<Boolean> TRUE = new NotNullComputable<Boolean>() {
-
-    @NotNull
-    @Override
-    public Boolean compute() {
-      return Boolean.TRUE;
-    }
-  };
+  NotNullComputable<Boolean> TRUE = () -> Boolean.TRUE;
 }

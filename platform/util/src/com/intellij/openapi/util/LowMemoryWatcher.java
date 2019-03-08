@@ -32,7 +32,7 @@ public class LowMemoryWatcher {
     ONLY_AFTER_GC
   }
 
-  private static final WeakList<LowMemoryWatcher> ourListeners = new WeakList<LowMemoryWatcher>();
+  private static final WeakList<LowMemoryWatcher> ourListeners = new WeakList<>();
   private final Runnable myRunnable;
   private final LowMemoryWatcherType myType;
 

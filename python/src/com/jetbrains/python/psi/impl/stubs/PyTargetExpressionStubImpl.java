@@ -17,9 +17,9 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyTargetExpression;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import org.jetbrains.annotations.Nullable;
 
