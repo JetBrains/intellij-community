@@ -432,6 +432,16 @@ public class GitUtil {
       .collect(Collectors.toSet());
   }
 
+  @NotNull
+  public static Set<GitRepository> getRepositoriesForFiles(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files)
+    throws VcsException {
+    Set<GitRepository> result = new HashSet<>();
+    for (VirtualFile file : files) {
+      result.add(getRepositoryForFile(project, file));
+    }
+    return result;
+  }
+
   /**
    * Get git time (UNIX time) basing on the date object
    *
