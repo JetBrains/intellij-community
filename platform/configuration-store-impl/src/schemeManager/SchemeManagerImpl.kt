@@ -189,7 +189,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       // because scheme processor should use cumulative event `reloaded` to update runtime state/caches
       val schemeLoader = createSchemeLoader(isDuringLoad = true)
       val isLoadOnlyFromProvider = provider != null && provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
-        catchAndLog(name) {
+        catchAndLog({ "${provider.javaClass.name}: $name" }) {
           val scheme = schemeLoader.loadScheme(name, input, null)
           if (readOnly && scheme != null) {
             schemeListManager.readOnlyExternalizableSchemes.put(processor.getSchemeKey(scheme), scheme)
@@ -205,9 +205,8 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
               continue
             }
 
-            val fileName = file.fileName.toString()
-            catchAndLog(fileName) {
-              schemeLoader.loadScheme(fileName, null, Files.readAllBytes(file))
+            catchAndLog({ file.toString() }) {
+              schemeLoader.loadScheme(file.fileName.toString(), null, Files.readAllBytes(file))
             }
           }
         }
