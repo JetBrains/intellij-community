@@ -714,8 +714,9 @@ object GuiTestUtil {
                      timeout: Timeout,
                      vararg pathStrings: String,
                      predicate: FinderPredicate = Predicate.equality): JTree = step("search '${pathStrings.joinToString()}' in tree") {
+    try {
       GuiTestUtilKt.withPauseWhenNull(
-        conditionText = "tree with path $pathStrings",
+        conditionText = "tree with path ${pathStrings.joinToString()}",
         timeout = timeout) {
         val trees = waitUntilFoundList(container, Timeouts.noTimeout, GuiTestUtilKt.typeMatcher(JTree::class.java) { it.hasValidModel() })
         if(pathStrings.isEmpty()) trees.firstOrNull()
@@ -723,7 +724,11 @@ object GuiTestUtil {
           ExtendedJTreePathFixture(it, pathStrings.toList(), predicate).hasPath()
         }
       }
-  } ?: throw ComponentLookupException("JTree by path [${pathStrings.joinToString()}] not found")
+    }
+    catch (notFound: WaitTimedOutError){
+      throw ComponentLookupException("JTree by path [${pathStrings.joinToString()}] not found")
+    }
+  }
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   /**
