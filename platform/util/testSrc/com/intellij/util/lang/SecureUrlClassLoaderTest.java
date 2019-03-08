@@ -4,7 +4,6 @@ package com.intellij.util.lang;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.util.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
@@ -19,6 +18,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
+import java.util.Base64;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Objects;
@@ -28,8 +28,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 public class SecureUrlClassLoaderTest {
   /**
@@ -60,7 +60,7 @@ public class SecureUrlClassLoaderTest {
       assertNull(error);
     }
     else {
-      assertNotNull(error);
+      assertThat(error).isNotNull();
       assertEquals(SecurityException.class, error.getClass());
     }
 
@@ -139,8 +139,7 @@ public class SecureUrlClassLoaderTest {
   @Test
   public void testLoadJarWithMaliciousManifest() throws Exception {
     SecurityException err = doTestLoadJarWithMaliciousThings(false, true, false, "org.bouncycastle.jce.provider.BouncyCastleProvider");
-    assertNotNull(err);
-    assertEquals("Invalid signature file digest for Manifest main attributes", err.getMessage());
+    assertThat(err).hasMessage("invalid SHA-256 signature file digest for org/bouncycastle/jce/provider/BouncyCastleProvider.class");
   }
 
   /**
@@ -268,7 +267,7 @@ public class SecureUrlClassLoaderTest {
   private static void hackManifest(Manifest manifest, String pathInJar, ByteArrayOutputStream hackedClassBytes) throws Exception {
     Attributes newAttributes = new Attributes();
     byte[] digest = MessageDigest.getInstance("SHA-256").digest(hackedClassBytes.toByteArray());
-    newAttributes.putValue("SHA-256-Digest", Base64.encode(digest));
+    newAttributes.putValue("SHA-256-Digest", Base64.getEncoder().encodeToString(digest));
     Assume.assumeTrue(manifest.getEntries().containsKey(pathInJar));
     manifest.getEntries().put(pathInJar, newAttributes);
   }
