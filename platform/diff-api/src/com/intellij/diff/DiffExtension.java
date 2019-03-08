@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,8 @@ public abstract class DiffExtension {
   /**
    * Can be used to extend existing DiffViewers without registering new DiffTool
    *
-   * @see DiffViewerListener, DiffViewerBase
+   * @see com.intellij.diff.tools.util.base.DiffViewerListener
+   * @see com.intellij.diff.tools.util.base.DiffViewerBase
    */
   @CalledInAwt
   public abstract void onViewerCreated(@NotNull FrameDiffTool.DiffViewer viewer,
