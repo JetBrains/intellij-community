@@ -24,13 +24,13 @@ import java.io.IOException;
 /**
  * @author Eugene Zhuravlev
  */
-public class ProjectTimestamps {
-  private final static boolean USE_TIMESTAMPS = false;
+public class ProjectStamps {
+  private static final boolean USE_TIMESTAMPS = false;
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ProjectStamps");
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ProjectTimestamps");
   private final StampsStorage<? extends StampsStorage.Stamp> myStampsStorage;
 
-  public ProjectTimestamps(final File dataStorageRoot, BuildTargetsState targetsState) throws IOException {
+  public ProjectStamps(File dataStorageRoot, BuildTargetsState targetsState) throws IOException {
     myStampsStorage = USE_TIMESTAMPS
                       ? new TimestampStorage(dataStorageRoot, targetsState)
                       : new HashStorage(dataStorageRoot, targetsState);
