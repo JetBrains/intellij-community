@@ -26,27 +26,27 @@ open class GitDefaultMergeDialogCustomizer(
   private val project: Project
 ) : MergeDialogCustomizer() {
   override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): String {
-    val filesByRoot = GitUtil.sortFilesByGitRoot(project, files)
+    val repos = GitUtil.getRepositoriesForFiles(project, files)
 
-    val mergeBranches = filesByRoot.keys.map { resolveMergeBranch(project, it) }
+    val mergeBranches = repos.map { resolveMergeBranch(it) }
     if (mergeBranches.any { it != null }) {
       return buildString {
         append("<html>Merging ")
         append(mergeBranches.toSet().singleOrNull()?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" } ?: "diverging branches ")
         append(" into ")
-        append(getSingleCurrentBranchName(project, filesByRoot.keys)?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" }
+        append(getSingleCurrentBranchName(project, repos.map { it.root })?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" }
                ?: "diverging branches")
       }
     }
 
-    val rebaseOntoBranches = filesByRoot.keys.map { resolveRebaseOntoBranch(project, it) }
+    val rebaseOntoBranches = repos.map { resolveRebaseOntoBranch(it) }
     if (rebaseOntoBranches.any { it != null }) {
-      val singleCurrentBranch = getSingleCurrentBranchName(project, filesByRoot.keys)
+      val singleCurrentBranch = getSingleCurrentBranchName(project, repos.map { it.root })
       val singleOntoBranch = rebaseOntoBranches.toSet().singleOrNull()
       return getDescriptionForRebase(singleCurrentBranch, singleOntoBranch)
     }
 
-    val cherryPickCommitDetails = filesByRoot.keys.map { loadCherryPickCommitDetails(it) }
+    val cherryPickCommitDetails = repos.map { loadCherryPickCommitDetails(it) }
     if (cherryPickCommitDetails.any { it != null }) {
       val notNullCherryPickCommitDetails = cherryPickCommitDetails.filterNotNull()
       val singleCherryPick = notNullCherryPickCommitDetails.distinctBy { it.authorName + it.commitMessage }.singleOrNull()
@@ -100,15 +100,15 @@ open class GitDefaultMergeDialogCustomizer(
     return super.getRightPanelTitle(file, revisionNumber)
   }
 
-  private fun loadCherryPickCommitDetails(root: VirtualFile): CherryPickDetails? {
+  private fun loadCherryPickCommitDetails(repository: GitRepository): CherryPickDetails? {
     val cherryPickHead = try {
-      GitRevisionNumber.resolve(project, root, CHERRY_PICK_HEAD)
+      GitRevisionNumber.resolve(project, repository.root, CHERRY_PICK_HEAD)
     }
     catch (e: VcsException) {
       return null
     }
 
-    val shortDetails = GitLogUtil.collectShortDetails(project, GitVcs.getInstance(project), root,
+    val shortDetails = GitLogUtil.collectShortDetails(project, GitVcs.getInstance(project), repository.root,
                                                       listOf(cherryPickHead.rev))
 
     val result = shortDetails.singleOrNull() ?: return null
@@ -138,13 +138,7 @@ fun getDefaultRightPanelTitleForBranch(branchName: String, revisionNumber: VcsRe
 }
 
 
-private fun resolveMergeBranch(project: Project, file: VirtualFile): String? {
-  val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file) ?: return null
-  return resolveMergeBranch(repository)
-}
-
-private fun resolveMergeBranchOrCherryPick(project: Project, file: VirtualFile): String? {
-  val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file) ?: return null
+private fun resolveMergeBranchOrCherryPick(repository: GitRepository): String? {
   val mergeBranch = resolveMergeBranch(repository)
   if (mergeBranch != null) {
     return mergeBranch
@@ -155,7 +149,7 @@ private fun resolveMergeBranchOrCherryPick(project: Project, file: VirtualFile):
   }
 
   try {
-    GitRevisionNumber.resolve(project, repository.root, CHERRY_PICK_HEAD)
+    GitRevisionNumber.resolve(repository.project, repository.root, CHERRY_PICK_HEAD)
     return "cherry-pick"
   }
   catch (e: VcsException) {
@@ -173,11 +167,6 @@ private fun resolveMergeBranch(repository: GitRepository): String? {
   }
 
   return resolveBranchName(repository, mergeHeadRevisionNumber)
-}
-
-private fun resolveRebaseOntoBranch(project: Project, file: VirtualFile): String? {
-  val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file) ?: return null
-  return resolveRebaseOntoBranch(repository)
 }
 
 private fun resolveRebaseOntoBranch(repository: GitRepository): String? {
@@ -210,14 +199,15 @@ private fun resolveBranchName(repository: GitRepository, revisionNumber: GitRevi
 
 fun getSingleMergeBranchName(project: Project, roots: Collection<VirtualFile>): String? {
   return roots.asSequence()
-    .mapNotNull { root -> resolveMergeBranchOrCherryPick(project, root) }
+    .mapNotNull { root -> GitRepositoryManager.getInstance(project).getRepositoryForRoot(root) }
+    .mapNotNull { repo -> resolveMergeBranchOrCherryPick(repo) }
     .distinct()
     .singleOrNull()
 }
 
 fun getSingleCurrentBranchName(project: Project, roots: Collection<VirtualFile>): String? {
   return roots.asSequence()
-    .mapNotNull { root -> GitRepositoryManager.getInstance(project).getRepositoryForFile(root) }
+    .mapNotNull { root -> GitRepositoryManager.getInstance(project).getRepositoryForRoot(root) }
     .mapNotNull { repo -> repo.currentBranchName }
     .distinct()
     .singleOrNull()
