@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.driver
 
+import com.intellij.openapi.ui.Splitter
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
 import com.intellij.testGuiFramework.cellReader.ProjectTreeCellReader
 import com.intellij.testGuiFramework.cellReader.SettingsTreeCellReader
@@ -9,6 +11,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.util.*
 import com.intellij.ui.treeStructure.SimpleTree
 import com.intellij.ui.treeStructure.treetable.TreeTable
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import org.fest.assertions.Assertions
 import org.fest.reflect.core.Reflection
@@ -20,6 +23,7 @@ import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Timeout
+import java.awt.Container
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JTree
@@ -116,8 +120,24 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     }
     else {
       val expandControlRange = TreeUtil.getExpandControlRange(this, path)
-      Rectangle(expandControlRange?.from ?: x, bounds.y, bounds.width, bounds.height)
+      val mouseZone = JBUI.scale(Registry.intValue("ide.splitter.mouseZone"))
+      val isSecond = isTreeSecondComponentInParentSplitter(this)
+      val x = expandControlRange?.from ?: x
+      val leftBorder = if(isSecond) {
+        if(x < mouseZone) 0
+        else x - mouseZone
+      }
+      else x
+      Rectangle(leftBorder, bounds.y, bounds.width, bounds.height)
     }
+  }
+
+  private fun isTreeSecondComponentInParentSplitter(container: Container):Boolean{
+      return when {
+        container.parent == null -> false
+        container.parent is Splitter && (container.parent as Splitter).secondComponent == container -> true
+        else -> isTreeSecondComponentInParentSplitter(container.parent)
+      }
   }
 
   private fun JTree.getPathInfo(path: TreePath): PathInfo {
@@ -198,8 +218,16 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
   fun expandPath(tree: JTree, treePath: TreePath) {
     // do not try to expand leaf
     if (GuiTestUtilKt.computeOnEdt { tree.model.isLeaf(treePath.lastPathComponent) } != false) return
-    val info = tree.scrollToPath(treePath)
-    if (tree.isExpanded(treePath).not()) tree.toggleCell(info.expandPoint, info.toggleClickCount)
+    val info = step("scroll to path $treePath") {
+      tree.scrollToPath(treePath)
+    }
+    ScreenshotTaker.take("after scroll to path")
+    step("if path is not expanded"){
+      if (tree.isExpanded(treePath).not())
+        step("... then expand it") {
+          tree.toggleCell(info.expandPoint, info.toggleClickCount)
+        }
+    }
   }
 
   fun collapsePath(tree: JTree, treePath: TreePath) {
