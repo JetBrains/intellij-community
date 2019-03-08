@@ -9,7 +9,6 @@ import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.SimpleDateFormat;
-import java.util.Collections;
 import java.util.TimeZone;
 
 /**
@@ -28,7 +27,7 @@ public abstract class TaskManagerTestCase extends LightPlatformTestCase {
     super.setUp();
 
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
-    removeAllTasks();
+    myTaskManager.prepareForNextTest();
   }
 
   @Override
@@ -39,8 +38,7 @@ public abstract class TaskManagerTestCase extends LightPlatformTestCase {
       if (thread != null) {
         thread.join();
       }
-      myTaskManager.setRepositories(Collections.emptyList());
-      removeAllTasks();
+      myTaskManager.prepareForNextTest();
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -48,12 +46,6 @@ public abstract class TaskManagerTestCase extends LightPlatformTestCase {
     finally {
       myTaskManager = null;
       super.tearDown();
-    }
-  }
-
-  private void removeAllTasks() {
-    for (LocalTask task : myTaskManager.getLocalTasks()) {
-      myTaskManager.removeTask(task);
     }
   }
 

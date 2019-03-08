@@ -140,12 +140,22 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       });
   }
 
+  @TestOnly
+  public void prepareForNextTest() {
+    myTasks.clear();
+    LocalTaskImpl defaultTask = createDefaultTask();
+    addTask(defaultTask);
+    myActiveTask = defaultTask;
+
+    setRepositories(Collections.emptyList());
+  }
+
   @Override
   public TaskRepository[] getAllRepositories() {
     return myRepositories.toArray(new TaskRepository[0]);
   }
 
-  public <T extends TaskRepository> void setRepositories(List<T> repositories) {
+  public <T extends TaskRepository> void setRepositories(@NotNull List<T> repositories) {
     Set<TaskRepository> set = new HashSet<>(myRepositories);
     set.removeAll(repositories);
     myBadRepositories.removeAll(set); // remove all changed reps
