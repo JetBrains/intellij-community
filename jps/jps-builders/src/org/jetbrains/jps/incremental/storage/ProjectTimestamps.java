@@ -25,7 +25,7 @@ import java.io.IOException;
  * @author Eugene Zhuravlev
  */
 public class ProjectTimestamps {
-  private final static boolean USE_TIMESTAMPS = true;
+  private final static boolean USE_TIMESTAMPS = false;
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ProjectTimestamps");
   private final StampsStorage<? extends StampsStorage.Stamp> myStampsStorage;
