@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -591,7 +592,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   @Nullable
   private TypeDescriptor findTypeDescriptorImpl(@Nullable XmlTag rootTag, final String name, String namespace) {
     if (rootTag == null) return null;
-    return RecursionManager.createGuard("findDescriptor").doPreventingRecursion(rootTag, true, () -> {
+    return RecursionManager.doPreventingRecursion(Trinity.create(rootTag, name, namespace), true, () -> {
       XmlNSDescriptorImpl responsibleDescriptor = this;
       if (namespace != null && namespace.length() != 0 && !namespace.equals(getDefaultNamespace())) {
         final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(namespace, true);
@@ -697,9 +698,10 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
               }, false
               );
 
-              if (value.getValue() != null) {
+              TypeDescriptor type = value.getValue();
+              if (type != null) {
                 myTypesMap.put(pair, value);
-                return value.getValue();
+                return type;
               }
             }
           }
