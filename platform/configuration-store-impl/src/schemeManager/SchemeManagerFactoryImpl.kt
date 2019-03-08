@@ -42,6 +42,10 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                                     directoryPath: Path?,
                                                     isAutoSave: Boolean): SchemeManager<T> {
     val path = checkPath(directoryName)
+    val fileChangeSubscriber = when {
+      streamProvider != null && streamProvider.isApplicable(path, roamingType) -> null
+      else -> createFileChangeSubscriber()
+    }
     val manager = SchemeManagerImpl(path,
                                     processor,
                                     streamProvider
@@ -50,8 +54,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                     roamingType,
                                     presentableName,
                                     schemeNameToFileName,
-                                    if (streamProvider != null && streamProvider.isApplicable(path, roamingType)) null
-                                    else createFileChangeSubscriber())
+                                    fileChangeSubscriber)
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
