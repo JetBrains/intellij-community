@@ -369,10 +369,12 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.opensource.org/licenses/zlib-license.html"),
     new LibraryLicense(name: "nekohtml", libraryName: "nekohtml", version: "1.9.14", license: "Apache 2.0",
                        url: "http://nekohtml.sourceforge.net/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0.txt"),
-    new LibraryLicense(name: "netty-codec-http", libraryName: "netty-codec-http", version: "4.1.32", license: "Apache 2.0",
+
+    new LibraryLicense(name: "netty-codec-http", libraryName: "netty-codec-http", version: "4.1.33", license: "Apache 2.0",
                        url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "netty-handler", libraryName: "netty-handler", version: "4.1.32", license: "Apache 2.0",
+    new LibraryLicense(name: "netty-handler", libraryName: "netty-handler", version: "4.1.33", license: "Apache 2.0",
                        url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+
     new LibraryLicense(name: "nosyncbuilder-jarjar", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Objenesis", libraryName: "Objenesis", version: "2.5.1", license: "Apache 2.0", url: "http://objenesis.org/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
