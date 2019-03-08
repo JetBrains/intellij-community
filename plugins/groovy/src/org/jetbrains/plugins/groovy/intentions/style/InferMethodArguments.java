@@ -4,11 +4,22 @@ package org.jetbrains.plugins.groovy.intentions.style;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * @author knisht
@@ -30,7 +41,9 @@ public class InferMethodArguments implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
+    if (editor == null) return false;
+    int offset = editor.getCaretModel().getOffset();
+    return findMethod(file, offset) != null;
   }
 
   @Override
@@ -43,4 +56,23 @@ public class InferMethodArguments implements IntentionAction {
     return true;
   }
 
+  @Nullable
+  private static GrMethod findMethod(PsiFile file, final int offset) {
+    final PsiElement at = file.findElementAt(offset);
+    if (at == null) return null;
+
+    final GrMethod method = PsiTreeUtil.getParentOfType(at, GrMethod.class, false, GrTypeDefinition.class, GrClosableBlock.class);
+    if (method == null) return null;
+
+    final TextRange methodRange = method.getTextRange();
+    if (!methodRange.contains(offset) && !methodRange.contains(offset - 1)) return null;
+
+    GrParameter[] parameters = method.getParameters();
+    if (Arrays.stream(parameters).map(GrParameter::getTypeElementGroovy).anyMatch(Objects::isNull)) {
+      return method;
+    }
+    else {
+      return null;
+    }
+  }
 }
