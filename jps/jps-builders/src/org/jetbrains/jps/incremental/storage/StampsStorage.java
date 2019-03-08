@@ -50,5 +50,6 @@ public interface StampsStorage<T extends Stamp> {
   void close() throws IOException;
 
   interface Stamp {
+    boolean isEqual(Stamp other);
   }
 }

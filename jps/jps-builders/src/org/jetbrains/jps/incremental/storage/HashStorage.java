@@ -153,20 +153,8 @@ public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> imp
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Hash hash = (Hash)o;
-
-      if (!Arrays.equals(myBytes, hash.myBytes)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return Arrays.hashCode(myBytes);
+    public boolean isEqual(StampsStorage.Stamp other) {
+      return other instanceof Hash && Arrays.equals(myBytes, ((Hash)other).myBytes);
     }
   }
 
