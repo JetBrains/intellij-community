@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
@@ -28,13 +15,13 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 class WinExeInstallerBuilder {
   private final BuildContext buildContext
   private final AntBuilder ant
-  private final String jreDirectoryPath
   private final WindowsDistributionCustomizer customizer
+  private final @Nullable String jreDirectoryPath
 
-  WinExeInstallerBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, String jreDirectoryPath) {
-    this.customizer = customizer
+  WinExeInstallerBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, @Nullable String jreDirectoryPath) {
     this.buildContext = buildContext
-    ant = buildContext.ant
+    this.ant = buildContext.ant
+    this.customizer = customizer
     this.jreDirectoryPath = jreDirectoryPath
   }
 
@@ -75,7 +62,6 @@ class WinExeInstallerBuilder {
   }
 
   void buildInstaller(String winDistPath, String additionalDirectoryToInclude, String secondJreSuffix = null, String jre32BitVersionSupported = null) {
-
     if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
       return
@@ -118,13 +104,16 @@ class WinExeInstallerBuilder {
       if (bundleJre) {
         generator.addDirectory(jreDirectoryPath)
       }
+
       generator.generateInstallerFile(new File(box, "nsiconf/idea_win.nsh"))
+
       if (buildContext.bundledJreManager.is32bitArchSupported()) {
         String jre32Dir = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x32)
         if (jre32Dir != null) {
           generator.addDirectory(jre32Dir)
         }
       }
+
       generator.generateUninstallerFile(new File(box, "nsiconf/unidea_win.nsh"))
     }
     catch (IOException e) {
@@ -158,16 +147,12 @@ class WinExeInstallerBuilder {
       }
 
       buildContext.ant.fixcrlf(file: installScriptPath, eol: "unix")
-      ant.exec(executable: "chmod") {
-        arg(line: " u+x \"$installScriptPath\"")
-      }
-      ant.exec(command: "\"$installScriptPath\"" +
-                        " \"${installerToolsDir}\"")
-
+      ant.exec(command: "chmod u+x \"$installScriptPath\"")
+      ant.exec(command: "\"$installScriptPath\" \"$installerToolsDir\"")
       ant.exec(command: "\"${installerToolsDir}/nsis-3.02.1/bin/makensis\"" +
-      " '-X!AddPluginDir \"${box}/NSIS/Plugins/x86-unicode\"'" +
-      " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
-                 " -DNSIS_DIR=\"${box}/NSIS\"" +
+                        " '-X!AddPluginDir \"${box}/NSIS/Plugins/x86-unicode\"'" +
+                        " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
+                        " -DNSIS_DIR=\"${box}/NSIS\"" +
                         " -DCOMMUNITY_DIR=\"$communityHome\"" +
                         " -DIPR=\"${customizer.associateIpr}\"" +
                         " -DOUT_FILE=\"${outFileName}\"" +
@@ -199,8 +184,7 @@ class WinExeInstallerBuilder {
     def extensionsList = getFileAssociations()
     def fileAssociations = extensionsList.isEmpty() ? "NoAssociation" : extensionsList.join(",")
     def linkToJre = customizer.getBaseDownloadUrlForJre() != null ?
-                      "${customizer.getBaseDownloadUrlForJre()}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}" :
-                      null
+                    "${customizer.getBaseDownloadUrlForJre()}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}" : null
     new File(box, "nsiconf/strings.nsi").text = """
 !define MANUFACTURER "${buildContext.applicationInfo.shortCompanyName}"
 !define MUI_PRODUCT  "${customizer.getFullNameIncludingEdition(buildContext.applicationInfo)}"
@@ -219,7 +203,6 @@ class WinExeInstallerBuilder {
 ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDE build has been installed
 ; set to 1 for release build
 !define SHOULD_SET_DEFAULT_INSTDIR "0"
-
 """
 
     def versionString = buildContext.applicationInfo.isEAP ? "\${VER_BUILD}" : "\${MUI_VERSION_MAJOR}.\${MUI_VERSION_MINOR}"
