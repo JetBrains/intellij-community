@@ -33,11 +33,11 @@ import java.util.stream.Collectors;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
- * @author traff
  * <p>
- * All inhertors must be in {@link com.jetbrains.env}.*
+ * All inheritors must be in {@link com.jetbrains.env}.*
  * <p>
  * See "community/python/setup-test-environment/build.gradle"
+ * @author traff
  */
 public abstract class PyEnvTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
@@ -202,7 +202,7 @@ public abstract class PyEnvTestCase {
 
     List<String> roots = getPythonRoots();
 
-    /**
+    /*
      * <p>
      * {@link org.junit.AssumptionViolatedException} here means this test must be <strong>skipped</strong>.
      * TeamCity supports this (if not you should create and issue about that).
