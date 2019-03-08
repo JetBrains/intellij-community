@@ -366,7 +366,7 @@ public class BuildFSState {
   /**
    * @return true if marked something, false otherwise
    */
-  public boolean markAllUpToDate(CompileContext context, final BuildRootDescriptor rd, final StampsStorage<StampsStorage.Stamp> stampsStorage) throws IOException {
+  public boolean markAllUpToDate(CompileContext context, final BuildRootDescriptor rd, final StampsStorage stampsStorage) throws IOException {
     boolean marked = false;
     final BuildTarget<?> target = rd.getTarget();
     final FilesDelta delta = getDelta(target);

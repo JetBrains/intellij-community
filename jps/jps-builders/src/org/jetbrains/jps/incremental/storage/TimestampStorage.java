@@ -166,15 +166,8 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampPerTar
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      return myTimestamp == ((Timestamp)o).myTimestamp;
-    }
-
-    @Override
-    public int hashCode() {
-      return (int)(myTimestamp ^ (myTimestamp >>> 32));
+    public boolean isEqual(Stamp other) {
+      return myTimestamp == ((Timestamp)other).myTimestamp;
     }
   }
 }

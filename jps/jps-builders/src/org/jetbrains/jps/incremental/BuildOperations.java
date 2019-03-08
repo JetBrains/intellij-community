@@ -105,7 +105,7 @@ public class BuildOperations {
         if (target instanceof ModuleBuildTarget) {
           context.clearNonIncrementalMark((ModuleBuildTarget)target);
         }
-        final StampsStorage stampsStorage = pd.projectStamps.getStorage();
+        final StampsStorage<? extends StampsStorage.Stamp>  stampsStorage = pd.projectStamps.getStorage();
         for (BuildRootDescriptor rd : pd.getBuildRootIndex().getTargetRoots(target, context)) {
           marked |= fsState.markAllUpToDate(context, rd, stampsStorage);
         }

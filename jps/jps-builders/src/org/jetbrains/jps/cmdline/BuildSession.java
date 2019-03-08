@@ -413,7 +413,7 @@ final class BuildSession implements Runnable, CanceledStatus {
               fileStamp = stampsStorage.lastModified(file); // lazy init
             }
             StampsStorage.Stamp stamp = stampsStorage.getStamp(file, descriptor.getTarget());
-            if (!stamp.equals(fileStamp)) {
+            if (!stamp.isEqual(fileStamp)) {
               if (!cacheCleared) {
                 cacheCleared = true;
               }
