@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.tasks.context;
 
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-class OpenEditorsContextProvider extends WorkingContextProvider {
+final class OpenEditorsContextProvider extends WorkingContextProvider {
   @Nullable
   private static FileEditorManagerImpl getFileEditorManager(@NotNull Project project) {
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
