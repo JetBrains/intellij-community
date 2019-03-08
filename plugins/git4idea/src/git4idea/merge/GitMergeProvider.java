@@ -4,7 +4,6 @@ package git4idea.merge;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.*;
@@ -12,35 +11,23 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
-import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
-import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import git4idea.util.StringScanner;
-import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
-import static git4idea.GitUtil.CHERRY_PICK_HEAD;
-import static git4idea.GitUtil.MERGE_HEAD;
 import static git4idea.merge.GitMergeUtil.*;
 
 /**
@@ -116,86 +103,6 @@ public class GitMergeProvider implements MergeProvider2 {
     return mergeDataRef.get();
   }
 
-  @Nullable
-  public String resolveMergeBranch(@NotNull VirtualFile file) {
-    GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file);
-    if (repository == null) {
-      return null;
-    }
-    return resolveMergeBranch(repository);
-  }
-
-  @Nullable
-  public String resolveMergeBranchOrCherryPick(@NotNull VirtualFile file) {
-    GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file);
-    if (repository == null) {
-      return null;
-    }
-    String mergeBranch = resolveMergeBranch(repository);
-    if (mergeBranch != null) {
-      return mergeBranch;
-    }
-    String rebaseOntoBranch = resolveRebaseOntoBranch(repository.getRoot());
-    if (rebaseOntoBranch != null) {
-      return rebaseOntoBranch;
-    }
-
-    try {
-      GitRevisionNumber.resolve(myProject, repository.getRoot(), CHERRY_PICK_HEAD);
-      return "cherry-pick";
-    }
-    catch (VcsException e) {
-      return null;
-    }
-  }
-
-  @Nullable
-  public String resolveMergeBranch(GitRepository repository) {
-    GitRevisionNumber mergeHeadRevisionNumber;
-    try {
-      mergeHeadRevisionNumber = GitRevisionNumber.resolve(myProject, repository.getRoot(), MERGE_HEAD);
-    }
-    catch (VcsException e) {
-      return null;
-    }
-    return resolveBranchName(repository, mergeHeadRevisionNumber);
-  }
-
-  @Nullable
-  public String resolveRebaseOntoBranch(@NotNull VirtualFile root) {
-    File rebaseDir = GitRebaseUtils.getRebaseDir(myProject, root);
-    if (rebaseDir == null) {
-      return null;
-    }
-    String ontoHash;
-    try {
-      ontoHash = FileUtil.loadFile(new File(rebaseDir, "onto")).trim();
-    }
-    catch (IOException e) {
-      return null;
-    }
-    GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
-    if (repo == null) {
-      return null;
-    }
-    return resolveBranchName(repo, new GitRevisionNumber(ontoHash));
-  }
-
-  public static String resolveBranchName(GitRepository repository, GitRevisionNumber revisionNumber) {
-    Hash hash = HashImpl.build(revisionNumber.asString());
-    Collection<GitLocalBranch> localBranchesByHash = repository.getBranches().findLocalBranchesByHash(hash);
-    if (localBranchesByHash.size() == 1) {
-      return localBranchesByHash.iterator().next().getName();
-    }
-    if (localBranchesByHash.isEmpty()) {
-      Collection<GitRemoteBranch> remoteBranchesByHash = repository.getBranches().findRemoteBranchesByHash(hash);
-      if (remoteBranchesByHash.size() == 1) {
-        return remoteBranchesByHash.iterator().next().getName();
-      }
-    }
-    return revisionNumber.getShortRev();
-  }
-
   @Override
   public void conflictResolvedForFile(@NotNull VirtualFile file) {
     try {
@@ -219,7 +126,7 @@ public class GitMergeProvider implements MergeProvider2 {
 
   @Override
   public MergeDialogCustomizer createDefaultMergeDialogCustomizer() {
-    return new GitDefaultMergeDialogCustomizer(this);
+    return new GitDefaultMergeDialogCustomizer(myProject);
   }
 
   @NotNull
@@ -228,27 +135,6 @@ public class GitMergeProvider implements MergeProvider2 {
     return branchName != null
            ? title + " (" + branchName + ")"
            : title;
-  }
-
-  @Nullable
-  public String getSingleMergeBranchName(Collection<VirtualFile> roots) {
-    return roots
-      .stream()
-      .map(root -> resolveMergeBranchOrCherryPick(root))
-      .filter(branch -> branch != null)
-      .collect(MoreCollectors.onlyOne())
-      .orElse(null);
-  }
-
-  @Nullable
-  public String getSingleCurrentBranchName(Collection<VirtualFile> roots) {
-    return roots
-      .stream()
-      .map(root -> GitRepositoryManager.getInstance(myProject).getRepositoryForFile(root))
-      .map(repo -> repo == null ? null : repo.getCurrentBranchName())
-      .filter(branch -> branch != null)
-      .collect(MoreCollectors.onlyOne())
-      .orElse(null);
   }
 
   /**
@@ -347,8 +233,8 @@ public class GitMergeProvider implements MergeProvider2 {
             myConflicts.put(f, new GitConflict(VcsUtil.getFilePath(f), root, c.myStatusTheirs, c.myStatusYours));
           }
         }
-        currentBranchName = getSingleCurrentBranchName(filesByRoot.keySet());
-        mergeHeadBranchName = getSingleMergeBranchName(filesByRoot.keySet());
+        currentBranchName = GitDefaultMergeDialogCustomizerKt.getSingleCurrentBranchName(myProject, filesByRoot.keySet());
+        mergeHeadBranchName = GitDefaultMergeDialogCustomizerKt.getSingleMergeBranchName(myProject, filesByRoot.keySet());
       }
       catch (VcsException ex) {
         throw new IllegalStateException("The git operation should not fail in this context", ex);
