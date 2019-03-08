@@ -50,6 +50,8 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   private boolean myDetachPostponed;
   private boolean myDetachingMode;
   private boolean myCancelled;
+  private Disposable myKeyEventDispatcherRemover;
+  private Disposable myStopper;
 
   public MouseDragHelper(Disposable parent, final JComponent dragComponent) {
     myDragComponent = dragComponent;
@@ -81,7 +83,13 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
       }
     });
 
-    Disposer.register(myParentDisposable, () -> stop());
+    myStopper = () -> doStop();
+    Disposer.register(myParentDisposable, myStopper);
+  }
+
+  private void doStop() {
+    detach(false);
+    myStopper = null;
   }
 
   private void attach() {
@@ -93,12 +101,14 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     myGlassPane.addMousePreprocessor(this, myParentDisposable);
     myGlassPane.addMouseMotionPreprocessor(this, myParentDisposable);
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
-    Disposer.register(myParentDisposable,
-                      () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this));
+    myKeyEventDispatcherRemover = () -> removeKeyEventDispatcher();
+    Disposer.register(myParentDisposable, myKeyEventDispatcherRemover);
   }
 
   public void stop() {
-    detach(false);
+    if (myStopper != null) {
+      Disposer.dispose(myStopper); // Calls doStop().
+    }
   }
 
   private void detach(boolean canPostponeDetach) {
@@ -109,9 +119,16 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     if (myGlassPane != null) {
       myGlassPane.removeMousePreprocessor(this);
       myGlassPane.removeMouseMotionPreprocessor(this);
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
+      if (myKeyEventDispatcherRemover != null) {
+        Disposer.dispose(myKeyEventDispatcherRemover); // Calls removeKeyEventDispatcher().
+      }
       myGlassPane = null;
     }
+  }
+
+  private void removeKeyEventDispatcher() {
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
+    myKeyEventDispatcherRemover = null;
   }
 
   @Override
