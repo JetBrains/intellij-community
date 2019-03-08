@@ -7,12 +7,14 @@ import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKey
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
+import com.intellij.vcs.log.ui.table.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -61,6 +63,15 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         for (VcsLogFilterCollection.FilterKey<?> key : VcsLogFilterCollection.STANDARD_KEYS) {
           if (properties.getFilterValues(key.getName()) != null) {
             usages.add(StatisticsUtilKt.getBooleanUsage(key.getName() + "Filter", true));
+          }
+        }
+
+        Set<Integer> currentColumns = ContainerUtil.newHashSet(properties.get(CommonUiProperties.COLUMN_ORDER));
+        Set<Integer> defaultColumns = ContainerUtil.newHashSet(defaultProperties.get(CommonUiProperties.COLUMN_ORDER));
+        for (int column : GraphTableModel.DYNAMIC_COLUMNS) {
+          if (currentColumns.contains(column) != defaultColumns.contains(column)) {
+            usages.add(StatisticsUtilKt.getBooleanUsage(StringUtil.toLowerCase(GraphTableModel.COLUMN_NAMES[column]) + "Column",
+                                                        currentColumns.contains(column)));
           }
         }
 
