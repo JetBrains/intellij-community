@@ -177,6 +177,10 @@ public class CommonTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testNothingChanged() {
+    doTest();
+  }
+
   // Disabled because now several classes with the same qName in different modules are not supporter
   //
   //public void testConflictingClasses() {
