@@ -75,20 +75,20 @@ public class LineSet{
     // if we're breaking or creating a '\r\n' pair, expand the changed range to include it fully
     CharSequence newText = StringUtil.replaceSubSequence(prevText, start, end, replacement);
     if (hasChar(prevText, start - 1, '\r') &&
-        (hasChar(prevText, start, '\n') != hasChar(newText, start, '\n'))) {
+        (hasChar(prevText, start, '\n') || hasChar(newText, start, '\n'))) {
       replacement = new MergingCharSequence("\r", replacement);
       start--;
     }
 
     if (hasChar(prevText, end, '\n') &&
-        (hasChar(prevText, end -1, '\r') != hasChar(newText, start + replacement.length() - 1, '\r'))) {
+        (hasChar(prevText, end -1, '\r') || hasChar(newText, start + replacement.length() - 1, '\r'))) {
       replacement = new MergingCharSequence(replacement, "\n");
       end++;
     }
 
     LineSet result = isSingleLineChange(start, end, replacement)
                      ? updateInsideOneLine(findLineIndex(start), replacement.length() - (end - start))
-                     : genericUpdate(prevText, start, end, replacement);
+                     : genericUpdate(start, end, replacement);
 
     return wholeTextReplaced ? result.clearModificationFlags() : result;
   }
@@ -116,31 +116,21 @@ public class LineSet{
     return new LineSet(starts, flags, myLength + lengthDelta);
   }
 
-  private LineSet genericUpdate(CharSequence prevText, int _start, int _end, CharSequence replacement) {
-    int startLine = findLineIndex(_start);
-    int startOffset = getLineStart(startLine);
-
-    int endLine = findLineIndex(_end);
-    int endOffset = getLineEnd(endLine);
-    if (!isLastEmptyLine(endLine)) endLine++;
-
-    if (startOffset < _start) {
-      replacement = new MergingCharSequence(prevText.subSequence(startOffset, _start), replacement);
-    }
-    if (_end < endOffset) {
-      replacement = new MergingCharSequence(replacement, prevText.subSequence(_end, endOffset));
-    }
+  private LineSet genericUpdate(int startOffset, int endOffset, CharSequence replacement) {
+    int startLine = findLineIndex(startOffset);
+    int endLine = findLineIndex(endOffset);
 
     LineSet patch = createLineSet(replacement, true);
-    return applyPatch(startOffset, endOffset, startLine, endLine, patch);
-  }
 
-  @NotNull
-  private LineSet applyPatch(int startOffset, int endOffset, int startLine, int endLine, @NotNull LineSet patch) {
-    int lineShift = patch.myStarts.length - (endLine - startLine);
     int lengthShift = patch.myLength - (endOffset - startOffset);
 
-    int newLineCount = myStarts.length + lineShift;
+    int startLineStart = getLineStart(startLine);
+    boolean addStartLine = startOffset - startLineStart > 0 || patch.myStarts.length > 0 || endOffset < myLength;
+    boolean addEndLine = endOffset < myLength && patch.myLength > 0 && patch.getSeparatorLength(patch.myStarts.length - 1) > 0;
+    int newLineCount = startLine + (addStartLine ? 1 : 0) +
+                       Math.max(patch.myStarts.length - 1, 0) +
+                       (addEndLine ? 1 : 0) + Math.max(myStarts.length - endLine - 1, 0);
+
     int[] starts = new int[newLineCount];
     byte[] flags = new byte[newLineCount];
 
@@ -148,14 +138,36 @@ public class LineSet{
       starts[i] = myStarts[i];
       flags[i] = myFlags[i];
     }
-    for (int i = 0; i < patch.myStarts.length; i++) {
-      starts[startLine + i] = patch.myStarts[i] + startOffset;
-      flags[startLine + i] = patch.myFlags[i];
+
+    int toIndex = startLine;
+    if (addStartLine) {
+      starts[toIndex] = startLineStart;
+      flags[toIndex] = patch.myStarts.length > 0 ? patch.myFlags[0] : MODIFIED_MASK;
+      toIndex++;
     }
-    for (int i = endLine; i < myStarts.length; i++) {
-      starts[lineShift + i] = myStarts[i] + lengthShift;
-      flags[lineShift + i] = myFlags[i];
+
+    for (int from = 1; from < patch.myStarts.length; from++) {
+      starts[toIndex] = patch.myStarts[from] + startOffset;
+      flags[toIndex] = patch.myFlags[from];
+      toIndex++;
     }
+
+    if (endOffset < myLength) {
+      if (addEndLine) {
+        starts[toIndex] = endOffset + lengthShift;
+        flags[toIndex] = (byte) (myFlags[endLine] | MODIFIED_MASK);
+        toIndex++;
+      } else if (toIndex > 0) {
+        flags[toIndex - 1] = (byte) (myFlags[endLine] | MODIFIED_MASK);
+      }
+    }
+
+    for (int i = endLine + 1; i < myStarts.length; i++) {
+      starts[toIndex] = myStarts[i] + lengthShift;
+      flags[toIndex] = myFlags[i];
+      toIndex++;
+    }
+
     return new LineSet(starts, flags, myLength + lengthShift);
   }
 
@@ -181,7 +193,11 @@ public class LineSet{
   }
 
   private boolean isLastEmptyLine(int index) {
-    return index == myFlags.length && index > 0 && getSeparatorLengthUnsafe(index - 1) > 0;
+    return index == myFlags.length && hasEol(index - 1);
+  }
+
+  private boolean hasEol(int lineIndex) {
+    return lineIndex >= 0 && getSeparatorLengthUnsafe(lineIndex) > 0;
   }
 
   public final int getLineEnd(int index) {
