@@ -206,6 +206,8 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
 
     var isSavedSuccessfully = true
     runInSaveOnFrameDeactivationDisabledMode {
+      edtPoolDispatcherManager.processTasks()
+
       ProgressManager.getInstance().run(object : Task.Modal(componentManager as? Project, "Saving " + (if (componentManager is Application) "Application" else "Project"), /* canBeCancelled = */ false) {
         override fun run(indicator: ProgressIndicator) {
           indicator.isIndeterminate = true
