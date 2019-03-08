@@ -63,8 +63,6 @@ import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyVisitor;
-import org.eclipse.aether.internal.impl.DefaultArtifactResolver;
-import org.eclipse.aether.internal.impl.DefaultRepositorySystem;
 import org.eclipse.aether.repository.LocalRepositoryManager;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
@@ -613,7 +611,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
     legacySupport.setSession(mavenSession);
 
-    /** adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)} */
+    // adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
     try {
       for (AbstractMavenLifecycleParticipant listener : getLifecycleParticipants(Collections.<MavenProject>emptyList())) {
         listener.afterSessionStart(mavenSession);
