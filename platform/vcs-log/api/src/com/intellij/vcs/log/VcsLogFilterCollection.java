@@ -25,7 +25,7 @@ public interface VcsLogFilterCollection {
   FilterKey<VcsLogStructureFilter> STRUCTURE_FILTER = FilterKey.create("structure");
   FilterKey<VcsLogRootFilter> ROOT_FILTER = FilterKey.create("roots");
 
-  Collection<FilterKey<? extends VcsLogFilter>> STANDARD_KEYS = ContainerUtil.newArrayList(BRANCH_FILTER, REVISION_FILTER,
+  Collection<FilterKey<? extends VcsLogFilter>> STANDARD_KEYS = ContainerUtil.newArrayList(BRANCH_FILTER, REVISION_FILTER, RANGE_FILTER,
                                                                                            USER_FILTER, HASH_FILTER, DATE_FILTER,
                                                                                            TEXT_FILTER, STRUCTURE_FILTER, ROOT_FILTER);
 
