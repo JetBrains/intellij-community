@@ -38,7 +38,7 @@ intellij {
 }
 
 patchPluginXml {
-    sinceBuild '172'
+    sinceBuild '182'
 }
 
 group 'org.jetbrains'

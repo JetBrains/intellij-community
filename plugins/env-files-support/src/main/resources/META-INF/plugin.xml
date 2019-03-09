@@ -60,7 +60,6 @@
                      implementationClass="ru.adelf.idea.dotenv.inspections.DuplicateKeyInspection"/>
 
     <lang.syntaxHighlighterFactory language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
-    <lang.findUsagesProvider language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvFindUsagesProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="ru.adelf.idea.dotenv">

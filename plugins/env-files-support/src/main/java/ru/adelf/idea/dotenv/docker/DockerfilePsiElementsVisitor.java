@@ -23,7 +23,10 @@ class DockerfilePsiElementsVisitor extends PsiRecursiveElementVisitor {
 
     private void visitProperty(DockerFileEnvRegularDeclaration envRegularDeclaration) {
         if(StringUtils.isNotBlank(envRegularDeclaration.getDeclaredName().getText()) && envRegularDeclaration.getRegularValue() != null) {
-            collectedItems.add(new KeyValuePsiElement(envRegularDeclaration.getDeclaredName().getText(), envRegularDeclaration.getRegularValue().getText(), envRegularDeclaration.getDeclaredName()));
+            collectedItems.add(new KeyValuePsiElement(
+                    envRegularDeclaration.getDeclaredName().getText(),
+                    envRegularDeclaration.getRegularValue().getText(),
+                    envRegularDeclaration));
         }
     }
 
