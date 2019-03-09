@@ -19,18 +19,35 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewModelBase;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import de.thomasrosenau.diffplugin.psi.DiffContextHunk;
 import de.thomasrosenau.diffplugin.psi.DiffFile;
+import de.thomasrosenau.diffplugin.psi.DiffGitBinaryPatch;
+import de.thomasrosenau.diffplugin.psi.DiffGitDiff;
+import de.thomasrosenau.diffplugin.psi.DiffGitHeader;
+import de.thomasrosenau.diffplugin.psi.DiffMultiDiffPart;
+import de.thomasrosenau.diffplugin.psi.DiffNormalHunk;
+import de.thomasrosenau.diffplugin.psi.DiffUnifiedHunk;
 import org.jetbrains.annotations.NotNull;
 
 public class DiffStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider {
-    public DiffStructureViewModel(PsiFile psiFile) {
-        super(psiFile, new DiffStructureViewElement(psiFile));
+    private static Class[] CLASSES = new Class[] {DiffContextHunk.class, DiffNormalHunk.class, DiffUnifiedHunk.class,
+            DiffGitHeader.class, DiffGitBinaryPatch.class, DiffGitDiff.class, DiffMultiDiffPart.class};
+
+    public DiffStructureViewModel(PsiFile psiFile, Editor editor) {
+        super(psiFile, editor, new DiffStructureViewElement(psiFile));
     }
 
     @NotNull
     public Sorter[] getSorters() {
         return Sorter.EMPTY_ARRAY;
+    }
+
+    @NotNull
+    @Override
+    protected Class[] getSuitableClasses() {
+        return CLASSES;
     }
 
     @Override
@@ -43,4 +60,3 @@ public class DiffStructureViewModel extends StructureViewModelBase implements St
         return element instanceof DiffFile;
     }
 }
-

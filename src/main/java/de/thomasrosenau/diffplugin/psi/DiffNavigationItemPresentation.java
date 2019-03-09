@@ -21,11 +21,6 @@ import javax.swing.*;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import de.thomasrosenau.diffplugin.DiffIcons;
-import de.thomasrosenau.diffplugin.psi.impl.DiffContextHunkImpl;
-import de.thomasrosenau.diffplugin.psi.impl.DiffGitBinaryPatchImpl;
-import de.thomasrosenau.diffplugin.psi.impl.DiffGitDiffImpl;
-import de.thomasrosenau.diffplugin.psi.impl.DiffGitHeaderImpl;
-import de.thomasrosenau.diffplugin.psi.impl.DiffMultiDiffPartImpl;
 
 public class DiffNavigationItemPresentation implements ItemPresentation {
     private PsiElement element;
@@ -36,17 +31,17 @@ public class DiffNavigationItemPresentation implements ItemPresentation {
 
     @Override
     public String getPresentableText() {
-        if (element instanceof DiffMultiDiffPartImpl) {
-            return ((DiffMultiDiffPartImpl) element).getConsoleCommand().getText();
+        if (element instanceof DiffMultiDiffPart) {
+            return ((DiffMultiDiffPart) element).getConsoleCommand().getText();
         }
-        if (element instanceof DiffGitDiffImpl) {
-            return ((DiffGitDiffImpl) element).getConsoleCommand().getText();
+        if (element instanceof DiffGitDiff) {
+            return ((DiffGitDiff) element).getConsoleCommand().getText();
         }
-        if (element instanceof DiffContextHunkImpl) {
-            return ((DiffContextHunkImpl) element).getPlaceholderText();
+        if (element instanceof DiffContextHunkBase) {
+            return ((DiffContextHunkBase) element).getPlaceholderText();
         }
-        if (element instanceof DiffGitHeaderImpl) {
-            return ((DiffGitHeaderImpl) element).getPlaceholderText();
+        if (element instanceof DiffGitHeaderBase) {
+            return ((DiffGitHeaderBase) element).getPlaceholderText();
         }
         return element.getFirstChild().getText();
     }
@@ -61,10 +56,10 @@ public class DiffNavigationItemPresentation implements ItemPresentation {
         if (element instanceof DiffFile) {
             return DiffIcons.FILE;
         }
-        if (element instanceof DiffMultiDiffPartImpl || element instanceof DiffGitDiffImpl) {
+        if (element instanceof DiffMultiDiffPart || element instanceof DiffGitDiff) {
             return DiffIcons.MULTI_DIFF_PART;
         }
-        if (element instanceof DiffGitBinaryPatchImpl) {
+        if (element instanceof DiffGitBinaryPatch) {
             return DiffIcons.BINARY_PATCH;
         }
         // TODO: git header

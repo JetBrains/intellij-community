@@ -34,7 +34,7 @@ public class DiffStructureViewFactory implements PsiStructureViewFactory {
             @NotNull
             @Override
             public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
-                return new DiffStructureViewModel(psiFile);
+                return new DiffStructureViewModel(psiFile, editor);
             }
         };
     }

@@ -34,7 +34,7 @@ repositories {
 }
 
 // version of this plugin
-version '0.0.0-SNAPSHOT'
+version '2.1.1-SNAPSHOT'
 
 intellij {
     // IDE version that will be used for compilation and for :runIde task
@@ -45,7 +45,7 @@ def intellijPublishToken = project.properties['intellijPublishToken'] ?:
         'see http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/deployment.html'
 publishPlugin {
     token intellijPublishToken
-    channels 'alpha'
+    channels 'beta'
 }
 
 patchPluginXml {
@@ -74,6 +74,10 @@ patchPluginXml {
 
     // -- language=HTML
     changeNotes '''
+    <h5>2.1.1</h5>
+    <ul>
+      <li>Fix Autoscroll from Source in Structure View</li>
+    </ul>
     <h5>2.1.0</h5>
     <ul>
       <li>Structure View</li>

@@ -18,7 +18,6 @@ package de.thomasrosenau.diffplugin.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import de.thomasrosenau.diffplugin.psi.impl.DiffContextHunkImpl;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class DiffContextHunkBase extends DiffNavigationItem {
@@ -27,9 +26,9 @@ public abstract class DiffContextHunkBase extends DiffNavigationItem {
     }
 
     public String getPlaceholderText() {
-        PsiElement fromNode = ((DiffContextHunkImpl) this).getContextHunkFrom().getFirstChild();
+        PsiElement fromNode = ((DiffContextHunk) this).getContextHunkFrom().getFirstChild();
         String fromText = fromNode.getText();
-        PsiElement toNode = ((DiffContextHunkImpl) this).getContextHunkTo().getFirstChild();
+        PsiElement toNode = ((DiffContextHunk) this).getContextHunkTo().getFirstChild();
         String toText = toNode.getText();
         return "@@ -" + fromText.substring(4, fromText.length() - 5) + " +" + toText.substring(4, toText.length() - 5) +
                 " @@";
