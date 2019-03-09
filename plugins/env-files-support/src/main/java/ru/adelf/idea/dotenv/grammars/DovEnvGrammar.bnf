@@ -11,6 +11,8 @@
   elementTypeHolderClass="ru.adelf.idea.dotenv.psi.DotEnvTypes"
   elementTypeClass="ru.adelf.idea.dotenv.psi.DotEnvElementType"
   tokenTypeClass="ru.adelf.idea.dotenv.psi.DotEnvTokenType"
+
+  psiImplUtilClass="ru.adelf.idea.dotenv.psi.DotEnvPsiUtil"
 }
 
 dotEnvFile ::= item_*
@@ -21,4 +23,5 @@ key ::= KEY_CHARS
 
 value ::= VALUE_CHARS | QUOTE VALUE_CHARS? QUOTE?
 
-property ::= (key SEPARATOR value? COMMENT?) | key COMMENT?
+property ::= (key SEPARATOR value? COMMENT?) | key COMMENT? {mixin="ru.adelf.idea.dotenv.psi.DotEnvNamedElementImpl"
+    implements="ru.adelf.idea.dotenv.psi.DotEnvNamedElement" methods=[getKeyText getValueText getName setName getNameIdentifier]}

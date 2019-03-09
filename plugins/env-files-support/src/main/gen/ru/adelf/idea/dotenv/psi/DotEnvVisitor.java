@@ -12,10 +12,14 @@ public class DotEnvVisitor extends PsiElementVisitor {
   }
 
   public void visitProperty(@NotNull DotEnvProperty o) {
-    visitPsiElement(o);
+    visitNamedElement(o);
   }
 
   public void visitValue(@NotNull DotEnvValue o) {
+    visitPsiElement(o);
+  }
+
+  public void visitNamedElement(@NotNull DotEnvNamedElement o) {
     visitPsiElement(o);
   }
 
