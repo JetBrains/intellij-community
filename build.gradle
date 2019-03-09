@@ -52,7 +52,7 @@ patchPluginXml {
     sinceBuild = '182.3341.11'
     untilBuild = '191.*'
 
-    // -- language=HTML
+    // language=HTML prefix=<body> suffix=</body>
     pluginDescription '''
     <h1>Syntax highlighting for .diff files and .patch files</h1>
     <p>Supports the common formats: normal, contextual, unified, git patch.</p>
@@ -72,7 +72,7 @@ patchPluginXml {
     <br/>
     '''
 
-    // -- language=HTML
+    // language=HTML prefix=<body> suffix=</body>
     changeNotes '''
     <h5>2.1.1</h5>
     <ul>
