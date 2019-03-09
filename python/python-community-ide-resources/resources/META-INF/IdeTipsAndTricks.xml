@@ -128,5 +128,9 @@
     <tipAndTrick file="PreReleasedPackages.html"/>
     <tipAndTrick file="PytestFixtures.html"/>
     <tipAndTrick file="RedirectingInput.html"/>
+    <tipAndTrick file="JupyterAddCell.html"/>
+    <tipAndTrick file="JupyterExecuteCurrentSelectNext.html"/>
+    <tipAndTrick file="JupyterShortcuts.html"/>
+    <tipAndTrick file="JupyterVariableView.html"/>
   </extensions>
 </idea-plugin>
