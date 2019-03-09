@@ -4,9 +4,7 @@ package org.jetbrains.plugins.groovy.intentions.style;
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiReference
-import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
@@ -18,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
-import java.util.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
 /**
@@ -53,7 +51,7 @@ internal class InferMethodArgumentsIntention : IntentionAction {
       return null
     }
     val parameters = method?.parameters
-    if (parameters != null && method.typeParameters.isNotEmpty()) {
+    if (parameters != null && (parameters.any { it == null } || method.hasTypeParameters())) {
       return method
     }
     else {
@@ -68,11 +66,28 @@ internal class InferMethodArgumentsIntention : IntentionAction {
       return
     }
     val method: GrMethod = findMethod(file, editor.caretModel.offset) ?: return
+
     val methodParameters = method.parameters
-    val typeParameters = method.typeParameters
-    val resolveSession = GroovyInferenceSession(typeParameters, PsiSubstitutor.EMPTY, method)
-    val references = HashSet<PsiReference>()
-    ReferencesSearch.search(method).forEach { references.add(it) }
+    val elementFactory = GroovyPsiElementFactory.getInstance(project)
+    val collectedArgumentTypes = ArrayList<PsiType>()
+    val collectedTypeParameters = ArrayList<PsiTypeParameter>()
+    val additionalTypeParametersIndex = HashMap<PsiTypeParameter, Int>()
+    collectedTypeParameters.addAll(method.typeParameters)
+    for (i in methodParameters.indices) {
+      val currentArgumentParameter = methodParameters[i]
+      if (currentArgumentParameter.typeElement == null) {
+        val newTypeParameter = elementFactory.createTypeParameter("T", PsiClassType.EMPTY_ARRAY)
+        collectedTypeParameters.add(newTypeParameter)
+        collectedArgumentTypes.add(newTypeParameter.type())
+        additionalTypeParametersIndex[newTypeParameter] = i
+      }
+      else {
+        collectedArgumentTypes.add(currentArgumentParameter.type)
+      }
+    }
+
+    val resolveSession = GroovyInferenceSession(collectedTypeParameters.toArray(emptyArray()), PsiSubstitutor.EMPTY, method)
+    val references = ReferencesSearch.search(method).findAll()
     for (occurrence in references) {
       if (occurrence is GrReferenceExpression) {
         val call = occurrence.parent
@@ -81,21 +96,24 @@ internal class InferMethodArgumentsIntention : IntentionAction {
           for (i in args.expressionArguments.indices) {
             val arg = args.expressionArguments[i]
             resolveSession.addConstraint(
-              TypeCompatibilityConstraint(resolveSession.substituteWithInferenceVariables(methodParameters[i].type),
+              TypeCompatibilityConstraint(resolveSession.substituteWithInferenceVariables(collectedArgumentTypes[i]),
                                           arg.type ?: continue))
           }
         }
       }
     }
     val substitutor = resolveSession.inferSubst()
-
-    val factory = GroovyPsiElementFactory.getInstance(project)
-    for (param in typeParameters) {
-      val type = substitutor.substitutionMap[param] ?: return
-      val typeElement = factory.createTypeElement(type)
-      val typeReferences = ReferencesSearch.search(param).findAll()
-      for (ref in typeReferences) {
-        ref.element.firstChild.replace(typeElement)
+    for (typeParameter in collectedTypeParameters) {
+      val type = substitutor.substitutionMap[typeParameter] ?: return
+      if (additionalTypeParametersIndex.containsKey(typeParameter)) {
+        val param: Int = additionalTypeParametersIndex[typeParameter] ?: return
+        methodParameters[param].setType(type)
+      }
+      else {
+        val typeElement = elementFactory.createTypeElement(type)
+        ReferencesSearch
+          .search(typeParameter)
+          .forEach { it.element.firstChild.replace(typeElement) }
       }
     }
     method.typeParameterList?.delete()
