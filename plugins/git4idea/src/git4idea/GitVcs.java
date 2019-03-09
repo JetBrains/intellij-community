@@ -228,7 +228,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     }
     if (path != null) {
       try {
-        VirtualFile root = GitUtil.getRepositoryFor(myProject, path).getRoot();
+        VirtualFile root = GitUtil.getRepositoryForFile(myProject, path).getRoot();
         return GitRevisionNumber.resolve(myProject, root, revision);
       }
       catch (VcsException e) {

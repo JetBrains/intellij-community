@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -103,7 +103,7 @@ public class GitMergeProvider implements MergeProvider2 {
   @NotNull
   public MergeData loadRevisions(@NotNull final VirtualFile file) throws VcsException {
     final Ref<MergeData> mergeDataRef = new Ref<>(new MergeData());
-    final VirtualFile root = GitUtil.getRepositoryFor(myProject, file).getRoot();
+    final VirtualFile root = GitUtil.getRepositoryForFile(myProject, file).getRoot();
     final FilePath path = VcsUtil.getFilePath(file);
 
     VcsRunnable runnable = new VcsRunnable() {
@@ -199,7 +199,7 @@ public class GitMergeProvider implements MergeProvider2 {
   @Override
   public void conflictResolvedForFile(@NotNull VirtualFile file) {
     try {
-      GitFileUtils.addFilesForce(myProject, GitUtil.getRepositoryFor(myProject, file).getRoot(), Collections.singletonList(file));
+      GitFileUtils.addFilesForce(myProject, GitUtil.getRepositoryForFile(myProject, file).getRoot(), Collections.singletonList(file));
     }
     catch (VcsException e) {
       LOG.error("Confirming conflict resolution failed", e);

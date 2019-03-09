@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.google.common.collect.HashMultiset;
@@ -1108,7 +1108,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         // the parent paths for calculating roots in order to account for submodules that contribute
         // to the parent change. The path "." is never is valid change, so there should be no problem
         // with it.
-        GitRepository repository = getRepositoryFor(project, assertNotNull(filePath.getParentPath()));
+        GitRepository repository = getRepositoryForFile(project, assertNotNull(filePath.getParentPath()));
         Collection<Change> changeList = result.computeIfAbsent(repository.getRoot(), key -> new ArrayList<>());
         changeList.add(change);
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -145,7 +145,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
                                        @NotNull final VirtualFile file) throws VcsException {
     setProgressIndicatorText(GitBundle.message("computing.annotation", file.getName()));
 
-    VirtualFile root = GitUtil.getRepositoryFor(myProject, repositoryFilePath).getRoot();
+    VirtualFile root = GitUtil.getRepositoryForFile(myProject, repositoryFilePath).getRoot();
     GitBinaryHandler h = new GitBinaryHandler(myProject, root, GitCommand.BLAME);
     h.setStdoutSuppressed(true);
     h.addParameters("--porcelain", "-l", "-t");
@@ -367,7 +367,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
                                              @NotNull VirtualFile file,
                                              @Nullable VcsRevisionNumber revisionNumber,
                                              @NotNull CachedData data) throws VcsException {
-    VirtualFile root = GitUtil.getRepositoryFor(myProject, repositoryFilePath).getRoot();
+    VirtualFile root = GitUtil.getRepositoryForFile(myProject, repositoryFilePath).getRoot();
     GitFileAnnotation fileAnnotation = new GitFileAnnotation(myProject, file, revisionNumber, data.lines);
 
     loadFileHistoryInBackground(fileAnnotation);

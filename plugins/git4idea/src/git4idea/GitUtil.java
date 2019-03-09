@@ -696,14 +696,14 @@ public class GitUtil {
   }
 
   @NotNull
-  public static GitRepository getRepositoryFor(@NotNull Project project, @NotNull VirtualFile file) throws VcsException {
+  public static GitRepository getRepositoryForFile(@NotNull Project project, @NotNull VirtualFile file) throws VcsException {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
     if (repository == null) throw new GitRepositoryNotFoundException(file);
     return repository;
   }
 
   @NotNull
-  public static GitRepository getRepositoryFor(@NotNull Project project, @NotNull FilePath file) throws VcsException {
+  public static GitRepository getRepositoryForFile(@NotNull Project project, @NotNull FilePath file) throws VcsException {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
     if (repository == null) throw new GitRepositoryNotFoundException(file);
     return repository;
@@ -738,7 +738,7 @@ public class GitUtil {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         try {
-          VirtualFile vcsRoot = getRepositoryFor(project, file).getRoot();
+          VirtualFile vcsRoot = getRepositoryForFile(project, file).getRoot();
           final CommittedChangeList changeList = GitChangeUtils.getRevisionChanges(project, vcsRoot, revision, true, local, revertable);
           UIUtil.invokeLaterIfNeeded(
             () -> AbstractVcsHelper.getInstance(project)

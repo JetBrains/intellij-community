@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -112,7 +112,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     if (VcsRevisionNumber.NULL.equals(revision)) return null;
     try {
       file = VcsUtil.getLastCommitPath(myProject, file);
-      VirtualFile root = GitUtil.getRepositoryFor(myProject, file).getRoot();
+      VirtualFile root = GitUtil.getRepositoryForFile(myProject, file).getRoot();
       return new Date(GitHistoryUtils.getAuthorTime(myProject, root, revision.asString()));
     }
     catch (VcsException e) {
