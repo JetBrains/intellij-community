@@ -10,7 +10,8 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:Groovy",
-        "//tools/idea/platform/util:intellij.platform.util[module]",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
+        "//tools/idea/platform/util-class-loader:intellij.platform.util.classLoader[module]",
         "//tools/idea/plugins/groovy/rt-constants:intellij.groovy.constants.rt[module]",
         "//tools/idea/.idea/libraries:Slf4j",
     ],

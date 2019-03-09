@@ -1524,8 +1524,8 @@ java_library(
 java_library(
     name = "debugger-memory-agent",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/debugger-memory-agent/0.0.7:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/debugger-memory-agent/0.0.7:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/debugger-memory-agent/0.0.8:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/debugger-memory-agent/0.0.8:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1566,12 +1566,4 @@ java_library(
         "//prebuilts/tools/common/m2/repository/org/glassfish/jaxb/txw2/2.3.1:jar",
         "//prebuilts/tools/common/m2/repository/org/jvnet/staxex/stax-ex/1.8:jar",
     ],
-)
-
-# managed by go/iml_to_build
-java_library(
-    name = "rhino",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/mozilla/rhino/1.7.10:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/mozilla/rhino/1.7.10:jar"],
 )

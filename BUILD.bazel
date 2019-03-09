@@ -320,6 +320,7 @@ iml_project(
         "//tools/idea/platform/testFramework:intellij.platform.testFramework",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
         "//tools/idea/platform/usageView:intellij.platform.usageView",
+        "//tools/idea/platform/util-class-loader:intellij.platform.util.classLoader",
         "//tools/idea/platform/util-rt:intellij.platform.util.rt",
         "//tools/idea/platform/util:intellij.platform.util",
         "//tools/idea/platform/util:intellij.platform.util.tests",
@@ -772,7 +773,6 @@ iml_module(
         "//tools/idea/xml/openapi:intellij.xml",
         "//tools/idea/community-resources:intellij.idea.community.resources",
         "//tools/idea/plugins/copyright:intellij.copyright",
-        "//tools/idea/plugins/cvs/cvs-plugin:intellij.vcs.cvs",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework",
         "//tools/idea/plugins/devkit/devkit-core:intellij.devkit",
         "//tools/idea/plugins/git4idea:intellij.vcs.git",
@@ -1024,6 +1024,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Groovy[test]",
         "//tools/idea/jps/model-impl:intellij.platform.jps.model.impl[module, test]",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
+        "//tools/idea/jps/jps-builders-6:intellij.platform.jps.build.javac.rt[module, test]",
     ],
 )
 

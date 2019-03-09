@@ -13,6 +13,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/util-rt:intellij.platform.util.rt",
+        "//tools/idea/platform/util-class-loader:intellij.platform.util.classLoader",
     ],
     # do not sort: must match IML order
     deps = [
@@ -23,6 +24,7 @@ iml_module(
         "//tools/idea/platform/platform-resources-en:intellij.platform.resources.en[module]",
         "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/util-rt:intellij.platform.util.rt[module]",
+        "//tools/idea/platform/util-class-loader:intellij.platform.util.classLoader[module]",
         "//tools/idea/.idea/libraries:jna",
         "//tools/idea/.idea/libraries:OroMatcher",
         "//tools/idea/.idea/libraries:imgscalr",

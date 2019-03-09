@@ -60,6 +60,7 @@ iml_module(
         "//tools/idea/.idea/libraries:XmlBeans",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea/.idea/libraries:mockito[test]",
         "//tools/idea/plugins/groovy:intellij.groovy[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
@@ -81,6 +82,8 @@ iml_module(
         "//tools/idea/plugins/maven/maven3-server-common:intellij.maven.server.m3.common[module, test]",
         "//tools/idea/.idea/libraries:assertJ[test]",
         "//tools/idea/.idea/libraries:NanoXML",
+        "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
+        "//tools/idea/.idea/libraries:hamcrest[test]",
     ],
 )
 
@@ -93,13 +96,24 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/plugins/maven/error-prone-compiler:intellij.maven.errorProne.compiler",
-        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
     ],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/platform/usageView:intellij.platform.usageView",
+        "//tools/idea/RegExpSupport:intellij.regexp",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
+        "//tools/idea/spellchecker:intellij.spellchecker",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
+    ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/maven/maven-server-api:intellij.maven.server[module]",
