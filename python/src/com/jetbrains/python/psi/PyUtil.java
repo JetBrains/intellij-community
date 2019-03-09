@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.Collections2;
@@ -1704,35 +1704,6 @@ public class PyUtil {
       final PyElement element = classMemberInfo.getMember();
       return (element instanceof PyClass) && PyNames.OBJECT.equals(element.getName());
     }
-  }
-
-  /**
-   * Sometimes you do not know real FQN of some class, but you know class name and its package.
-   * I.e. {@code django.apps.conf.AppConfig} is not documented, but you know
-   * {@code AppConfig} and {@code django} package.
-   *
-   * @param symbol          element to check (class or function)
-   * @param expectedPackage package like "django"
-   * @param expectedName    expected name (i.e. AppConfig)
-   * @return true if element in package
-   * @deprecated use {@link com.jetbrains.python.nameResolver.FQNamesProvider#isNameMatches(PyQualifiedNameOwner)}
-   * Remove in 2018
-   */
-  @Deprecated
-  public static boolean isSymbolInPackage(@NotNull final PyQualifiedNameOwner symbol,
-                                          @NotNull final String expectedPackage,
-                                          @NotNull final String expectedName) {
-    final String qualifiedNameString = symbol.getQualifiedName();
-    if (qualifiedNameString == null) {
-      return false;
-    }
-    final QualifiedName qualifiedName = QualifiedName.fromDottedString(qualifiedNameString);
-    final String aPackage = qualifiedName.getFirstComponent();
-    if (!(expectedPackage.equals(aPackage))) {
-      return false;
-    }
-    final String symbolName = qualifiedName.getLastComponent();
-    return expectedName.equals(symbolName);
   }
 
   public static boolean isObjectClass(@NotNull PyClass cls) {
