@@ -772,19 +772,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
-  /**
-   * Preform a merge commit
-   *
-   * @param project          a project
-   * @param root             a vcs root
-   * @param added            added files
-   * @param removed          removed files
-   * @param messageFile      a message file for commit
-   * @param author           an author
-   * @param exceptions       the list of exceptions to report
-   * @param partialOperation
-   * @return true if merge commit was successful
-   */
   private boolean mergeCommit(@NotNull Project project,
                               @NotNull VirtualFile root,
                               @NotNull Collection<? extends CommitChange> rootChanges,
