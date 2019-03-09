@@ -197,6 +197,15 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
 
     @Override
+    void setFilter(@Nullable BranchFilters filters) {
+      triggerFilterSet(filters, BranchFilters::getBranchFilter, myFilter, BRANCH_FILTER.getName());
+      triggerFilterSet(filters, BranchFilters::getRevisionFilter, myFilter, REVISION_FILTER.getName());
+      triggerFilterSet(filters, BranchFilters::getRangeFilter, myFilter, RANGE_FILTER.getName());
+
+      super.setFilter(filters);
+    }
+
+    @Override
     protected void saveFilterToProperties(@Nullable BranchFilters filters) {
       if (filters == null || filters.getBranchFilter() == null) {
         myUiProperties.saveFilterValues(BRANCH_FILTER.getName(), null);
