@@ -4,6 +4,7 @@ package com.intellij.debugger.memory.agent;
 import com.intellij.debugger.engine.ReferringObject;
 import com.intellij.debugger.engine.ReferringObjectsProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,18 +13,18 @@ import java.util.List;
 import java.util.Map;
 
 public class MemoryAgentReferringObjectsProvider implements ReferringObjectsProvider {
-  private final MemoryAgent myAgent;
   private final int myObjectsToRequestLimit;
   private final Map<ObjectReference, ReferringObjectsInfo> myCachedRequests = new HashMap<>();
 
-  public MemoryAgentReferringObjectsProvider(@NotNull MemoryAgent agent, int limit) {
-    myAgent = agent;
+  public MemoryAgentReferringObjectsProvider(int limit) {
     myObjectsToRequestLimit = limit;
   }
 
   @NotNull
   @Override
-  public List<ReferringObject> getReferringObjects(@NotNull ObjectReference value, long limit) throws EvaluateException {
+  public List<ReferringObject> getReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
+                                                   @NotNull ObjectReference value,
+                                                   long limit) throws EvaluateException {
     if (myCachedRequests.containsKey(value)) {
       return myCachedRequests.get(value).getReferringObjects(value, limit);
     }
@@ -34,7 +35,7 @@ public class MemoryAgentReferringObjectsProvider implements ReferringObjectsProv
       }
     }
 
-    ReferringObjectsInfo roots = myAgent.findGcRoots(value, myObjectsToRequestLimit);
+    ReferringObjectsInfo roots = MemoryAgent.using(evaluationContext).findReferringObjects(value, myObjectsToRequestLimit);
     myCachedRequests.put(value, roots);
     return roots.getReferringObjects(value, limit);
   }

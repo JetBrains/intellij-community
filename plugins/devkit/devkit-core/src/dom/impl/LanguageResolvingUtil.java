@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInsight.completion.CompletionConfidenceEP;
 import com.intellij.codeInsight.completion.CompletionContributorEP;
 import com.intellij.codeInspection.dataFlow.StringExpressionHelper;
 import com.intellij.icons.AllIcons;
-import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -94,7 +93,7 @@ class LanguageResolvingUtil {
   private static List<LanguageDefinition> collectLibraryLanguages(final ConvertContext context,
                                                                   final Collection<PsiClass> allLanguages) {
     return ContainerUtil.mapNotNull(Language.getRegisteredLanguages(), (NullableFunction<Language, LanguageDefinition>)language -> {
-      if (language.getID().isEmpty() || language instanceof DependentLanguage) {
+      if (language.getID().isEmpty()) {
         return null;
       }
       final PsiClass psiClass = DomJavaUtil.findClass(language.getClass().getName(), context.getInvocationElement(), true);

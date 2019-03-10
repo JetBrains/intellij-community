@@ -39,7 +39,7 @@ abstract class PyLineMarkerNavigator<T extends PsiElement> implements GutterIcon
       }
       return true;
     });
-    /**
+    /*
      * For test purposes, we should be able to access list of methods to check em.
      * {@link PsiElementListNavigator} simply opens then (hence it is swing-based) and can't be used in tests.
      * So, in unit tests we save data in element and data could be obtained with {@link #getNavigationTargets(UserDataHolder)}

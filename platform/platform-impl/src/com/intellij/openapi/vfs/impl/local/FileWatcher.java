@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -16,6 +15,7 @@ import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,10 +26,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
@@ -69,17 +69,20 @@ public class FileWatcher {
     }
   }
 
+  private static ExecutorService executor() {
+    boolean async = Registry.is("vfs.filewatcher.works.in.async.way");
+    return async ? AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) : MoreExecutors.newDirectExecutorService();
+  }
+
   private final ManagingFS myManagingFS;
   private final MyFileWatcherNotificationSink myNotificationSink;
   private final PluggableFileWatcher[] myWatchers;
   private final AtomicBoolean myFailureShown = new AtomicBoolean(false);
+  private final ExecutorService myFileWatcherExecutor = executor();
+  private final AtomicInteger myRootSettingOps = new AtomicInteger(0);
 
   private volatile CanonicalPathMap myPathMap = new CanonicalPathMap();
   private volatile List<Collection<String>> myManualWatchRoots = Collections.emptyList();
-  
-  private final ExecutorService myFileWatcherExecutor = Registry.is("vfs.filewatcher.works.in.async.way") ?
-                                                        AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) :
-                                                        MoreExecutors.newDirectExecutorService();
 
   FileWatcher(@NotNull ManagingFS managingFS) {
     myManagingFS = managingFS;
@@ -87,18 +90,37 @@ public class FileWatcher {
     myWatchers = PluggableFileWatcher.EP_NAME.getExtensions();
 
     myFileWatcherExecutor.submit(() -> {
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.initialize(myManagingFS, myNotificationSink);
+      try {
+        for (PluggableFileWatcher watcher : myWatchers) {
+          watcher.initialize(myManagingFS, myNotificationSink);
+        }
+      }
+      catch (RuntimeException | Error e) {
+        LOG.error(e);
       }
     });
   }
 
+  private void clearQueue() {
+    if (myFileWatcherExecutor instanceof BoundedTaskExecutor) {
+      ((BoundedTaskExecutor)myFileWatcherExecutor).clearAndCancelAll();
+    }
+  }
+
   public void dispose() {
-    waitForFuture(myFileWatcherExecutor.submit(() -> {
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.dispose();
-      }
-    }));
+    myFileWatcherExecutor.shutdown();
+    clearQueue();
+
+    try {
+      myFileWatcherExecutor.awaitTermination(1, TimeUnit.HOURS);
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+    }
+
+    for (PluggableFileWatcher watcher : myWatchers) {
+      watcher.dispose();
+    }
   }
 
   public boolean isOperational() {
@@ -109,24 +131,13 @@ public class FileWatcher {
   }
 
   public boolean isSettingRoots() {
-    flushCommandQueue();
-    
+    if (myRootSettingOps.get() > 0) {
+      return true;
+    }
     for (PluggableFileWatcher watcher : myWatchers) {
       if (watcher.isSettingRoots()) return true;
     }
     return false;
-  }
-
-  private void flushCommandQueue() {
-    waitForFuture(myFileWatcherExecutor.submit(EmptyRunnable.getInstance()));
-  }
-
-  private void waitForFuture(@NotNull Future<?> future) {
-    try {
-      future.get();
-    }
-    catch (InterruptedException | ExecutionException ignore) {
-    }
   }
 
   @NotNull
@@ -155,14 +166,24 @@ public class FileWatcher {
    * Clients should take care of not calling this method in parallel.
    */
   void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
-    CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
+    myRootSettingOps.incrementAndGet();
 
-    myPathMap = pathMap;
-    myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
-
+    clearQueue();
     myFileWatcherExecutor.submit(() -> {
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
+      try {
+        CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
+
+        myPathMap = pathMap;
+        myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
+
+        for (PluggableFileWatcher watcher : myWatchers) {
+          watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
+        }
+
+        myRootSettingOps.decrementAndGet();
+      }
+      catch (RuntimeException | Error e) {
+        LOG.error(e);
       }
     });
   }

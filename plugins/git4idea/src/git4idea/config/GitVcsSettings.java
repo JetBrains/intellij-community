@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.dvcs.branch.DvcsBranchInfo;
@@ -52,7 +52,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public String RECENT_GIT_ROOT_PATH = null;
     public Map<String, String> RECENT_BRANCH_BY_REPOSITORY = new HashMap<>();
     public String RECENT_COMMON_BRANCH = null;
-    public boolean AUTO_COMMIT_ON_CHERRY_PICK = false;
+    public boolean AUTO_COMMIT_ON_CHERRY_PICK = true;
     public boolean AUTO_COMMIT_ON_REVERT = false;
     public boolean WARN_ABOUT_CRLF = true;
     public boolean WARN_ABOUT_DETACHED_HEAD = true;

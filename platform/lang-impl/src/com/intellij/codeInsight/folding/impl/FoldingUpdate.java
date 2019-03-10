@@ -90,11 +90,14 @@ public class FoldingUpdate {
     AtomicBoolean alreadyExecuted = new AtomicBoolean();
     Runnable runnable = () -> {
       if (alreadyExecuted.compareAndSet(false, true)) {
-        if (documentTimestamp != editor.getDocument().getModificationStamp()) {
-          LOG.error("Document has changed since fold regions were calculated");
-        }
-        else if (documentLength != editor.getDocument().getTextLength()) {
-          LOG.error("Document length has changed since fold regions were calculated");
+        long curStamp = editor.getDocument().getModificationStamp();
+        int curLength = editor.getDocument().getTextLength();
+        if (documentTimestamp != curStamp || documentLength != curLength) {
+          LOG.error("Document has changed since fold regions were calculated: " +
+                    "stamps " + documentTimestamp + " vs " + curStamp + ", " +
+                    "lengths " + documentLength + " vs " + curLength + ", " +
+                    "document=" + document + ", " +
+                    "committed=" + PsiDocumentManager.getInstance(project).isCommitted(document));
         }
         editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
       }

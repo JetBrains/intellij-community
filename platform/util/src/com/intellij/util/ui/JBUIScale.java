@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.CopyableIcon;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
 import gnu.trove.TDoubleObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,10 +11,11 @@ import java.awt.image.ImageObserver;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
-import static com.intellij.util.ui.JBUI.sysScale;
 import static com.intellij.util.ui.JBUIScale.DerivedScaleType.*;
 import static com.intellij.util.ui.JBUIScale.ScaleType.*;
 
@@ -111,7 +110,7 @@ public class JBUIScale {
   }
 
   /**
-   * The scale factors derived from the {@link ScaleType} scale factors. Used for convenuence.
+   * The scale factors derived from the {@link ScaleType} scale factors. Used for convenience.
    */
   public enum DerivedScaleType {
     /**
@@ -120,7 +119,7 @@ public class JBUIScale {
      */
     EFF_USR_SCALE,
     /**
-     * The device scale factor. In JRE-HiDPI mode equals {@link ScaleType#SYS_SCALE}, in IDE-HiDPI mode eqauls 1.0
+     * The device scale factor. In JRE-HiDPI mode equals {@link ScaleType#SYS_SCALE}, in IDE-HiDPI mode equals 1.0
      * (in IDE-HiDPI the user space and the device space are equal and so the transform b/w the spaces is 1.0)
      */
     DEV_SCALE,
@@ -180,10 +179,9 @@ public class JBUIScale {
       return type;
     }
 
-    @NotNull
-    Scale newOrThis(double value) {
-      if (this.value == value) return this;
-      return type.of(value);
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj; // can rely on default impl due to caching
     }
 
     @Override
@@ -239,6 +237,7 @@ public class JBUIScale {
     }
   }
 
+  // [tav] todo: [User]ScaleContext is thread-unsafe, should it be thread-safe?
   /**
    * Represents a snapshot of the user space scale factors: {@link ScaleType#USR_SCALE} and {@link ScaleType#OBJ_SCALE}).
    * The context can be associated with a UI object (see {@link ScaleContextAware}) to define its HiDPI behaviour.
@@ -253,6 +252,7 @@ public class JBUIScale {
     protected double pixScale = usrScale.value;
 
     private List<UpdateListener> listeners;
+    private EnumSet<ScaleType> overriddenScales;
 
     protected UserScaleContext() {
     }
@@ -271,7 +271,7 @@ public class JBUIScale {
     @NotNull
     public static UserScaleContext create(@NotNull Scale... scales) {
       UserScaleContext ctx = create();
-      for (Scale s : scales) ctx.update(s);
+      for (Scale s : scales) ctx.setScale(s);
       return ctx;
     }
 
@@ -295,6 +295,64 @@ public class JBUIScale {
 
     protected double derivePixScale() {
       return usrScale.value * objScale.value;
+    }
+
+    /**
+     * Permanently overrides the provided scale (the scale won't be changed on subsequent {@link #update()}).
+     * Can be used to make a UI object user scale independent:
+     * <p>
+     * <code>
+     * ((ScaleContextAware)uiObject).getScaleContext().overrideScale(USR_SCALE.of(1.0));
+     * </code>
+     *
+     * @param scale the new scale to override
+     * @return whether the new scale updated the current value
+     * @see ScaleType#of(double)
+     */
+    public boolean overrideScale(@NotNull Scale scale) {
+      if (overriddenScales != null) {
+        overriddenScales.remove(scale.type); // previous override should not prevent this override
+      }
+      boolean updated = setScale(scale);
+
+      if (overriddenScales == null) {
+        overriddenScales = EnumSet.of(scale.type);
+      }
+      else {
+        overriddenScales.add(scale.type);
+      }
+      return updated;
+    }
+
+    protected boolean isScaleOverridden(@NotNull Scale scale) {
+      return overriddenScales != null && overriddenScales.contains(scale.type);
+    }
+
+    /**
+     * Sets the new scale (system scale is ignored). Use {@link ScaleType#of(double)} to provide the new scale.
+     * Note, the new scale value can be change on subsequent {@link #update()}. Use {@link #overrideScale(Scale)}
+     * to set a scale permanently.
+     *
+     * @param scale the new scale to set
+     * @return whether the new scale updated the current value
+     * @see ScaleType#of(double)
+     */
+    public boolean setScale(@NotNull Scale scale) {
+      if (isScaleOverridden(scale)) return false;
+
+      boolean updated = false;
+      switch (scale.type) {
+        case USR_SCALE:
+          updated = !usrScale.equals(scale);
+          usrScale = scale;
+          break;
+        case OBJ_SCALE:
+          updated = !objScale.equals(scale);
+          objScale = scale;
+          break;
+        case SYS_SCALE: return false;
+      }
+      return onUpdated(updated);
     }
 
     /**
@@ -340,23 +398,7 @@ public class JBUIScale {
      * @return whether any of the scale factors has been updated
      */
     public boolean update() {
-      return onUpdated(update(usrScale, JBUI.scale(1f)));
-    }
-
-    /**
-     * Updates the provided scale if necessary (system scale is ignored)
-     *
-     * @param scale the new scale
-     * @return whether the scale factor has been updated
-     */
-    public boolean update(@NotNull Scale scale) {
-      boolean updated = false;
-      switch (scale.type) {
-        case USR_SCALE: updated = update(usrScale, scale.value); break;
-        case OBJ_SCALE: updated = update(objScale, scale.value); break;
-        case SYS_SCALE: break;
-      }
-      return onUpdated(updated);
+      return onUpdated(setScale(USR_SCALE.of(JBUI.scale(1f))));
     }
 
     /**
@@ -371,8 +413,8 @@ public class JBUIScale {
     }
 
     protected <T extends UserScaleContext> boolean updateAll(@NotNull T ctx) {
-      boolean updated = update(usrScale, ctx.usrScale.value);
-      return update(objScale, ctx.objScale.value) || updated;
+      boolean updated = setScale(ctx.usrScale);
+      return setScale(ctx.objScale) || updated;
     }
 
     @Override
@@ -421,17 +463,6 @@ public class JBUIScale {
       }
     }
 
-    protected boolean update(@NotNull Scale scale, double value) {
-      Scale newScale = scale.newOrThis(value);
-      if (newScale == scale) return false;
-      switch (scale.type) {
-        case USR_SCALE: usrScale = newScale; break;
-        case OBJ_SCALE: objScale = newScale; break;
-        case SYS_SCALE: break;
-      }
-      return true;
-    }
-
     @NotNull
     public <T extends UserScaleContext> T copy() {
       UserScaleContext ctx = createIdentity();
@@ -471,7 +502,7 @@ public class JBUIScale {
         Pair<Double, D> data = myData.get();
         double scale = ctx.getScale(PIX_SCALE);
         if (data == null || Double.compare(scale, data.first) != 0) {
-          myData.set(data = Pair.create(scale, myDataProvider.fun(ctx)));
+          myData.set(data = Pair.create(scale, myDataProvider.apply(ctx)));
         }
         return data.second;
       }
@@ -495,7 +526,7 @@ public class JBUIScale {
    */
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static class ScaleContext extends UserScaleContext {
-    protected Scale sysScale = SYS_SCALE.of(sysScale());
+    protected Scale sysScale = SYS_SCALE.of(JBUI.sysScale());
 
     @Nullable
     protected WeakReference<Component> compRef;
@@ -505,12 +536,7 @@ public class JBUIScale {
     }
 
     protected ScaleContext(@NotNull Scale scale) {
-      switch (scale.type) {
-        case USR_SCALE: update(usrScale, scale.value); break;
-        case SYS_SCALE: update(sysScale, scale.value); break;
-        case OBJ_SCALE: update(objScale, scale.value); break;
-      }
-      pixScale = derivePixScale();
+      setScale(scale);
     }
 
     /**
@@ -536,7 +562,7 @@ public class JBUIScale {
      */
     @NotNull
     public static ScaleContext create(@Nullable Component comp) {
-      final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(sysScale(comp)));
+      final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(JBUI.sysScale(comp)));
       if (comp != null) ctx.compRef = new WeakReference<>(comp);
       return ctx;
     }
@@ -546,7 +572,7 @@ public class JBUIScale {
      */
     @NotNull
     public static ScaleContext create(@Nullable GraphicsConfiguration gc) {
-      return new ScaleContext(SYS_SCALE.of(sysScale(gc)));
+      return new ScaleContext(SYS_SCALE.of(JBUI.sysScale(gc)));
     }
 
     /**
@@ -554,7 +580,7 @@ public class JBUIScale {
      */
     @NotNull
     public static ScaleContext create(Graphics2D g) {
-      return new ScaleContext(SYS_SCALE.of(sysScale(g)));
+      return new ScaleContext(SYS_SCALE.of(JBUI.sysScale(g)));
     }
 
     /**
@@ -571,7 +597,7 @@ public class JBUIScale {
     @NotNull
     public static ScaleContext create(@NotNull Scale... scales) {
       ScaleContext ctx = create();
-      for (Scale s : scales) ctx.update(s);
+      for (Scale s : scales) ctx.setScale(s);
       return ctx;
     }
 
@@ -616,10 +642,10 @@ public class JBUIScale {
      */
     @Override
     public boolean update() {
-      boolean updated = update(usrScale, JBUI.scale(1f));
+      boolean updated = setScale(USR_SCALE.of(JBUI.scale(1f)));
       if (compRef != null) {
         Component comp = compRef.get();
-        if (comp != null) updated = update(sysScale, sysScale(comp)) || updated;
+        if (comp != null) updated = setScale(SYS_SCALE.of(JBUI.sysScale(comp))) || updated;
       }
       return onUpdated(updated);
     }
@@ -629,9 +655,15 @@ public class JBUIScale {
      * Also includes the system scale.
      */
     @Override
-    public boolean update(@NotNull Scale scale) {
-      if (scale.type == SYS_SCALE) return onUpdated(update(sysScale, scale.value));
-      return super.update(scale);
+    public boolean setScale(@NotNull Scale scale) {
+      if (isScaleOverridden(scale)) return false;
+
+      if (scale.type == SYS_SCALE) {
+        boolean updated = !sysScale.equals(scale);
+        sysScale = scale;
+        return onUpdated(updated);
+      }
+      return super.setScale(scale);
     }
 
     @Override
@@ -643,18 +675,7 @@ public class JBUIScale {
       if (compRef != null) compRef.clear();
       compRef = context.compRef;
 
-      return update(sysScale, context.sysScale.value) || updated;
-    }
-
-    @Override
-    protected boolean update(@NotNull Scale scale, double value) {
-      if (scale.type == SYS_SCALE) {
-        Scale newScale = scale.newOrThis(value);
-        if (newScale == scale) return false;
-        sysScale = newScale;
-        return true;
-      }
-      return super.update(scale, value);
+      return setScale(context.sysScale) || updated;
     }
 
     @Override
@@ -734,18 +755,18 @@ public class JBUIScale {
     double getScale(@NotNull DerivedScaleType type);
 
     /**
-     * Updates the provided scale in the context
+     * Sets the new scale in the context
      *
-     * @return whether the provided scale has been changed
+     * @return whether the provided scale updated the current value
      */
-    boolean updateScale(@NotNull Scale scale);
+    boolean setScale(@NotNull Scale scale);
   }
 
-  public static class ScaleContextAwareImpl<T extends UserScaleContext> implements ScaleContextAware {
+  private static abstract class AbstractScaleContextAware<T extends UserScaleContext> implements ScaleContextAware {
     @NotNull
     private final T myScaleContext;
 
-    public ScaleContextAwareImpl(@NotNull T ctx) {
+    AbstractScaleContextAware(@NotNull T ctx) {
       myScaleContext = ctx;
     }
 
@@ -771,24 +792,24 @@ public class JBUIScale {
     }
 
     @Override
-    public boolean updateScale(@NotNull Scale scale) {
-      return getScaleContext().update(scale);
+    public boolean setScale(@NotNull Scale scale) {
+      return getScaleContext().setScale(scale);
     }
   }
 
   /**
-   * Support for {@link UserScaleContext} (device scale independant).
+   * Support for {@link UserScaleContext} (device scale independent).
    */
-  public static class UserScaleContextSupport extends ScaleContextAwareImpl<UserScaleContext> {
+  public static class UserScaleContextSupport extends AbstractScaleContextAware<UserScaleContext> {
     public UserScaleContextSupport() {
       super(UserScaleContext.create());
     }
   }
 
   /**
-   * Support for {@link ScaleContext} (device scale dependant).
+   * Support for {@link ScaleContext} (device scale dependent).
    */
-  public static class ScaleContextSupport extends ScaleContextAwareImpl<ScaleContext> {
+  public static class ScaleContextSupport extends AbstractScaleContextAware<ScaleContext> {
     public ScaleContextSupport() {
       super(ScaleContext.create());
     }

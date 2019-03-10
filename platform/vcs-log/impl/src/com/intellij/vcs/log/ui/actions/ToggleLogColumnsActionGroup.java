@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +67,8 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      VcsLogUsageTriggerCollector.triggerUsage(e, this);
+
       VcsLogUiProperties properties = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
       assert properties.exists(CommonUiProperties.COLUMN_ORDER);
 

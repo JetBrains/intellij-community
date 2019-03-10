@@ -24,8 +24,6 @@ import java.util.List;
 
 /**
  * Provides custom tag names.
- *
- * @see HtmlCustomTagNameProvider
  */
 public interface XmlTagNameProvider {
   ExtensionPointName<XmlTagNameProvider> EP_NAME = new ExtensionPointName<>("com.intellij.xml.tagNameProvider");

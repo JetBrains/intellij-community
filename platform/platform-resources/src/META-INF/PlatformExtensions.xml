@@ -498,12 +498,12 @@
     <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider"/>
-    <editorNotificationProviderApp implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
     <frameEditorComponentProvider implementation="com.intellij.openapi.wm.ex.DefaultFrameEditorComponentProvider"/>
 
-    <editorNotificationProviderApp implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
-    <editorNotificationProviderApp implementation="com.intellij.ide.FileChangedNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider"/>
 
     <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.ide.impl.dataRules.ProjectFileDirectoryRule"/>
@@ -600,28 +600,28 @@
 
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
 
-    <stalledStorage file="statistics.toolbar.clicks.xml">
+    <obsoleteStorage file="statistics.toolbar.clicks.xml">
       <components>
         <component>ToolbarClicksCollector</component>
       </components>
-    </stalledStorage>
-    <stalledStorage file="statistics.main_menu.xml">
+    </obsoleteStorage>
+    <obsoleteStorage file="statistics.main_menu.xml">
       <components>
         <component>MainMenuCollector</component>
       </components>
-    </stalledStorage>
-    <stalledStorage file="statistics.shortcuts.xml">
+    </obsoleteStorage>
+    <obsoleteStorage file="statistics.shortcuts.xml">
       <components>
         <component>ShortcutsCollector</component>
       </components>
-    </stalledStorage>
-    <stalledStorage file="statistics.application.usages.xml">
+    </obsoleteStorage>
+    <obsoleteStorage file="statistics.application.usages.xml">
       <components>
         <component>StatisticsApplicationUsages</component>
         <component>UsageTrigger</component>
       </components>
-    </stalledStorage>
-    <stalledStorage file="usage.statistics.xml">
+    </obsoleteStorage>
+    <obsoleteStorage file="usage.statistics.xml">
       <components>
         <component>StatisticsApplicationUsages</component>
         <component>UsageTrigger</component>
@@ -634,18 +634,18 @@
         <component>ActionsCollector</component>
         <component>FUSApplicationUsageTrigger</component>
       </components>
-    </stalledStorage>
+    </obsoleteStorage>
 
-    <stalledStorage file="usage.statistics.xml" isProjectLevel="true">
+    <obsoleteStorage file="usage.statistics.xml" isProjectLevel="true">
       <components>
         <component>FUSProjectUsageTrigger</component>
       </components>
-    </stalledStorage>
-    <stalledStorage file="workspace.xml" isProjectLevel="true">
+    </obsoleteStorage>
+    <obsoleteStorage file="workspace.xml" isProjectLevel="true">
       <components>
         <component>FUSProjectUsageTrigger</component>
       </components>
-    </stalledStorage>
+    </obsoleteStorage>
 
     <postStartupActivity implementation="com.intellij.ide.StartUpPerformanceReporter" order="last"/>
   </extensions>

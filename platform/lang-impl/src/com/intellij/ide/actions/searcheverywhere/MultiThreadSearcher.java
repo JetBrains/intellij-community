@@ -439,7 +439,7 @@ class MultiThreadSearcher implements SESearcher {
     }
 
     /**
-     * could be used only when current thread owns {@link lock}
+     * could be used only when current thread owns {@link #lock}
      */
     private void stopSearchIfNeeded() {
       if (sections.keySet().stream().allMatch(contributor -> isContributorFinished(contributor))) {

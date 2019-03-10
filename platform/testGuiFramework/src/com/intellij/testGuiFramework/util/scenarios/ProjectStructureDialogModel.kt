@@ -44,16 +44,12 @@ val GuiTestCase.projectStructureDialogModel by ProjectStructureDialogModel
 fun ProjectStructureDialogModel.connectDialog(): JDialogFixture =
   testCase.dialog(projectStructureTitle, true)
 
-fun ProjectStructureDialogModel.checkInProjectStructure(actions: GuiTestCase.()->Unit){
-  with(guiTestCase){
+fun ProjectStructureDialogModel.checkInProjectStructure(actions: GuiTestCase.() -> Unit) {
+  with(guiTestCase) {
     val dialog = connectDialog()
-    try {
-      this.actions()
-    }
-    finally {
-      step("close '$projectStructureTitle' dialog with Cancel") {
-        dialog.button(buttonCancel).click()
-      }
+    actions()
+    step("close '$projectStructureTitle' dialog with Cancel") {
+      dialog.button(buttonCancel).click()
     }
   }
 }

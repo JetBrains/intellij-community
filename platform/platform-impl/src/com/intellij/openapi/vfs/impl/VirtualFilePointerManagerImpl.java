@@ -154,14 +154,17 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       url = VirtualFileManager.constructUrl(protocol, path);
     }
 
-    if (fileSystem == TEMP_FILE_SYSTEM) {
-      // for tests, recreate always
+    if (fileSystem == TEMP_FILE_SYSTEM && listener == null) {
+      // Since VFS events work correctly in temp FS as well, ideally, this branch shouldn't exist and normal VFPointer should be used in all tests
+      // but we have so many tests that create pointers, not dispose and leak them,
+      // so for now we create normal pointers only when there are listeners.
+      // maybe, later we'll fix all those tests
       VirtualFile found = file == null ? VirtualFileManager.getInstance().findFileByUrl(url) : file;
       return found == null ? new LightFilePointer(url) : new LightFilePointer(found);
     }
 
     boolean isJar = fileSystem instanceof VfpCapableArchiveFileSystem;
-    if (fileSystem != LOCAL_FILE_SYSTEM && !isJar) {
+    if (fileSystem != LOCAL_FILE_SYSTEM && fileSystem != TEMP_FILE_SYSTEM && !isJar) {
       // we are unable to track alien file systems for now
       VirtualFile found = fileSystem == null ? null : file != null ? file : VirtualFileManager.getInstance().findFileByUrl(url);
       // if file is null, this pointer will never be alive

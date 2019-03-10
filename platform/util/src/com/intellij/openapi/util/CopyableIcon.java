@@ -17,4 +17,12 @@ public interface CopyableIcon extends Icon {
    */
   @NotNull
   Icon copy();
+
+  /**
+   * Returns a copy of this icon (see {@link #copy()}) trying to deep-copy composited icons when applicable.
+   */
+  @NotNull
+  default Icon deepCopy() {
+    return copy();
+  }
 }

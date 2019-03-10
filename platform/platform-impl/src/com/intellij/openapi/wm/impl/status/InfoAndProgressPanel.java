@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -57,6 +58,7 @@ import java.util.*;
 import static com.intellij.icons.AllIcons.Process.*;
 
 public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.InfoAndProgressPanel");
   private final ProcessPopup myPopup;
 
   private final StatusPanel myInfoPanel = new StatusPanel();
@@ -693,7 +695,12 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     private ProgressButton createSuspendButton() {
       InplaceButton suspendButton = new InplaceButton("", AllIcons.Actions.Pause, e -> {
-        ProgressSuspender suspender = Objects.requireNonNull(getSuspender());
+        ProgressSuspender suspender = getSuspender();
+        if (suspender == null) {
+          LOG.assertTrue(myOriginal == null, "The process is expected to be finished at this point");
+          return;
+        }
+
         if (suspender.isSuspended()) {
           suspender.resumeProcess();
         } else {

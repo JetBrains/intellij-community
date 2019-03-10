@@ -47,7 +47,7 @@ public abstract class CompositeIconPaintTestHelper {
     JBUI.setUserScaleFactor((float)ctx.getScale(USR_SCALE));
 
     ScaleContext ctx_noObjScale = ctx.copy();
-    ctx_noObjScale.update(OBJ_SCALE.of(1));
+    ctx_noObjScale.setScale(OBJ_SCALE.of(1));
 
     String[] cellIconsPaths = getCellIconsPaths();
     int count = cellIconsPaths.length;

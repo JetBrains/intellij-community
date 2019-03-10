@@ -2,6 +2,8 @@
 package com.intellij.ide
 
 import com.google.gson.stream.JsonWriter
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAware
@@ -86,12 +88,16 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
   private fun logStats(end: Long, activationNumber: Int) {
     val items = mutableListOf<Item>()
     val activities = THashMap<String, MutableList<Item>>()
+
     StartUpMeasurer.processAndClear(Consumer { item ->
-      if (item.name.first() == '_') {
-        activities.getOrPut(item.name) { mutableListOf() }.add(item)
+      fun addActivity(name: String) {
+        activities.getOrPut(name) { mutableListOf() }.add(item)
       }
-      else {
-        items.add(item)
+
+      when {
+        item.name.first() == '_' -> addActivity(item.name)
+        item.level != null -> addActivity("${item.level!!.jsonFieldNamePrefix}${item.name.capitalize()}")
+        else -> items.add(item)
       }
     })
 
@@ -108,7 +114,8 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.setIndent("  ")
     writer.beginObject()
 
-    writer.name("version").value("2")
+    writer.name("version").value("4")
+    writeServiceStats(writer)
 
     val startTime = if (activationNumber == 0) StartUpMeasurer.getStartTime() else items.first().start
 
@@ -160,10 +167,50 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
   }
 }
 
+private fun writeServiceStats(writer: JsonWriter) {
+  class StatItem(val name: String) {
+    var app = 0
+    var project = 0
+    var module = 0
+  }
+
+  // components can be inferred from data, but to verify that items reported correctly (and because for items threshold is applied (not all are reported))
+  val component = StatItem("component")
+  val service = StatItem("service")
+
+  val plugins = PluginManagerCore.getLoadedPlugins(null)
+  for (plugin in plugins) {
+    service.app += (plugin as IdeaPluginDescriptorImpl).appServices.size
+    service.project += plugin.projectServices.size
+    service.module += plugin.moduleServices.size
+
+    component.app += plugin.appComponents.size
+    component.project += plugin.projectComponents.size
+    component.module += plugin.moduleComponents.size
+  }
+
+  writer.name("stats")
+  writer.beginObject()
+
+  writer.name("plugin").value(plugins.size)
+
+  for (statItem in listOf(component, service)) {
+    writer.name(statItem.name)
+    writer.beginObject()
+    writer.name("app").value(statItem.app)
+    writer.name("project").value(statItem.project)
+    writer.name("module").value(statItem.module)
+    writer.endObject()
+  }
+
+  writer.endObject()
+}
+
 private fun activityNameToJsonFieldName(name: String): String {
+  val firstIndex = if (name.startsWith('_')) 1 else 0
   return when {
-    name.last() == 'y' -> name.substring(1, name.length - 1) + "ies"
-    else -> name.substring(1) + 's'
+    name.last() == 'y' -> name.substring(firstIndex, name.length - 1) + "ies"
+    else -> name.substring(firstIndex) + 's'
   }
 }
 

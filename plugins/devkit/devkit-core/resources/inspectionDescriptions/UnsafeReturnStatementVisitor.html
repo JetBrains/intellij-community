@@ -1,5 +1,6 @@
 <html>
 <body>
-This inspection detects recursive visitors which process return statements despite that they belong to another class/lambda expression. In most cases it's a bug.
+Reports recursive java element visitors which process <b>PsiReturnStatement</b>s
+even if they belong to another <b>PsiClass</b> or <b>PsiLambdaExpression</b>. In most cases it's a bug.
 </body>
 </html>

@@ -10,20 +10,41 @@ export interface Item {
 }
 
 export interface InputData {
-  version: string
+  readonly version: string
 
-  items: Array<Item>
+  readonly stats: Stats
 
-  appComponents?: Array<Item>
-  projectComponents?: Array<Item>
+  readonly items: Array<Item>
 
-  appServices?: Array<Item>
-  projectServices?: Array<Item>
+  readonly appComponents?: Array<Item>
+  readonly projectComponents?: Array<Item>
+  readonly moduleComponents?: Array<Item>
 
-  preloadActivities?: Array<Item>
-  appOptionsTopHitProviders?: Array<Item>
-  projectOptionsTopHitProviders?: Array<Item>
+  readonly appServices?: Array<Item>
+  readonly projectServices?: Array<Item>
+  readonly moduleServices?: Array<Item>
 
-  totalDurationComputed: number
-  totalDurationActual: number
+  readonly appExtensions?: Array<Item>
+  readonly projectExtensions?: Array<Item>
+  readonly moduleExtensions?: Array<Item>
+
+  readonly preloadActivities?: Array<Item>
+  readonly appOptionsTopHitProviders?: Array<Item>
+  readonly projectOptionsTopHitProviders?: Array<Item>
+
+  readonly totalDurationComputed: number
+  readonly totalDurationActual: number
+}
+
+export interface Stats {
+  readonly plugin: number
+
+  readonly component: StatItem
+  readonly service: StatItem
+}
+
+export interface StatItem {
+  readonly app: number
+  readonly project: number
+  readonly module: number
 }

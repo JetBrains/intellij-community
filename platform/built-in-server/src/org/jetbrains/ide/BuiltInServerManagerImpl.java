@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide;
 
 import com.intellij.idea.StartupUtil;
@@ -8,7 +8,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -33,9 +32,8 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-public class BuiltInServerManagerImpl extends BuiltInServerManager implements BaseComponent {
+public final class BuiltInServerManagerImpl extends BuiltInServerManager {
   private static final Logger LOG = Logger.getInstance(BuiltInServerManager.class);
 
   public static final NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = new NotNullLazyValue<NotificationGroup>() {
@@ -50,10 +48,15 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager implements Ba
   public static final String PROPERTY_RPC_PORT = "rpc.port";
   private static final int PORTS_COUNT = 20;
 
-  private final AtomicBoolean started = new AtomicBoolean(false);
+  @Nullable
+  private Future<?> serverStartFuture;
 
   @Nullable
   private BuiltInServer server;
+
+  public BuiltInServerManagerImpl() {
+    serverStartFuture = ApplicationManager.getApplication().isUnitTestMode() ? null : startServerInPooledThread();
+  }
 
   @Override
   public int getPort() {
@@ -62,14 +65,22 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager implements Ba
 
   @Override
   public BuiltInServerManager waitForStart() {
-    Future<?> serverStartFuture = startServerInPooledThread();
-    if (serverStartFuture != null) {
-      LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || !ApplicationManager.getApplication().isDispatchThread());
-      try {
-        serverStartFuture.get();
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || !ApplicationManager.getApplication().isDispatchThread());
+
+    Future<?> future;
+    //noinspection SynchronizeOnThis
+    synchronized (this) {
+      future = serverStartFuture;
+      if (future == null) {
+        future = startServerInPooledThread();
+        serverStartFuture = future;
       }
-      catch (InterruptedException | ExecutionException ignored) {
-      }
+    }
+
+    try {
+      future.get();
+    }
+    catch (InterruptedException | ExecutionException ignored) {
     }
     return this;
   }
@@ -84,16 +95,8 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager implements Ba
     }
   }
 
-  @Override
-  public void initComponent() {
-    startServerInPooledThread();
-  }
-
+  @NotNull
   private Future<?> startServerInPooledThread() {
-    if (!started.compareAndSet(false, true)) {
-      return null;
-    }
-
     return ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         BuiltInServer mainServer = StartupUtil.getServer();

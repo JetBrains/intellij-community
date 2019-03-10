@@ -38,7 +38,12 @@
     }
 
     navigate(): void {
-      this.$router.push({query: {tab: this.activeName}})
+      this.$router.push({
+        query: {
+          ...this.$route.query,
+          tab: this.activeName,
+        },
+      })
     }
   }
 </script>

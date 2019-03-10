@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyListener;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -171,10 +170,6 @@ public class JavaFxHtmlPanel implements Disposable {
     runInPlatformWhenAvailable(
       () -> getWebViewGuaranteed().getEngine().load(null)
     );
-  }
-
-  public void addKeyListener(KeyListener l) {
-    runInPlatformWhenAvailable(() -> myPanel.addKeyListener(l));
   }
 
 

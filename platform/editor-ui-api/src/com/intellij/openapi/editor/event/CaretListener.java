@@ -15,7 +15,7 @@ public interface CaretListener extends EventListener {
   /**
    * Called when the caret position has changed.
    *
-   * @param e the event containing information about the caret movement.
+   * @param event the event containing information about the caret movement.
    */
   default void caretPositionChanged(@NotNull CaretEvent event) {
   }

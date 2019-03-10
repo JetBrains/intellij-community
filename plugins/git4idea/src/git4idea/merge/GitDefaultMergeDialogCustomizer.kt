@@ -20,7 +20,7 @@ open class GitDefaultMergeDialogCustomizer(
   private val project = gitMergeProvider.project
 
   override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): String {
-    val filesByRoot = GitUtil.sortFilesByGitRoot(files)
+    val filesByRoot = GitUtil.sortFilesByGitRoot(project, files)
 
     val mergeBranches = filesByRoot.keys.map { gitMergeProvider.resolveMergeBranch(it) }
     if (mergeBranches.any { it != null }) {

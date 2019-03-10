@@ -366,7 +366,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
 
       if (canBeModified) {
-        MemoryAgentUtil.loadAgentProxy(this, agent -> myMemoryAgent = agent);
+        MemoryAgentUtil.setupAgent(this);
       }
 
       // breakpoints should be initialized after all processAttached listeners work

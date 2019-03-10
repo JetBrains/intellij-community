@@ -11,9 +11,3 @@
   export default class App extends Vue {
   }
 </script>
-<style>
-.activityChart {
-  width: 100%;
-  height: 380px;
-}
-</style>

@@ -63,7 +63,7 @@ public class GitChangeProvider implements ChangeProvider {
     if (LOG.isDebugEnabled()) LOG.debug("after adding nested vcs roots to dirt: " + dirtyScope);
 
     final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRoots();
-    Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(affected);
+    Set<VirtualFile> roots = GitUtil.getRootsForFilesIfAny(myProject, affected);
 
     List<FilePath> newDirtyPaths = new ArrayList<>();
 

@@ -68,7 +68,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
   @Override
   public void invoke(@NotNull Project project,
                      @NotNull PsiFile file,
-                     @Nullable("is null when called from inspection") final Editor editor,
+                     @Nullable final Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiElement myPsiElement = startElement;

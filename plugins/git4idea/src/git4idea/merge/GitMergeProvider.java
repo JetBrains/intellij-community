@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -103,7 +103,7 @@ public class GitMergeProvider implements MergeProvider2 {
   @NotNull
   public MergeData loadRevisions(@NotNull final VirtualFile file) throws VcsException {
     final Ref<MergeData> mergeDataRef = new Ref<>(new MergeData());
-    final VirtualFile root = GitUtil.getGitRoot(file);
+    final VirtualFile root = GitUtil.getRepositoryForFile(myProject, file).getRoot();
     final FilePath path = VcsUtil.getFilePath(file);
 
     VcsRunnable runnable = new VcsRunnable() {
@@ -199,7 +199,7 @@ public class GitMergeProvider implements MergeProvider2 {
   @Override
   public void conflictResolvedForFile(@NotNull VirtualFile file) {
     try {
-      GitFileUtils.addFilesForce(myProject, GitUtil.getGitRoot(file), Collections.singletonList(file));
+      GitFileUtils.addFilesForce(myProject, GitUtil.getRepositoryForFile(myProject, file).getRoot(), Collections.singletonList(file));
     }
     catch (VcsException e) {
       LOG.error("Confirming conflict resolution failed", e);
@@ -278,7 +278,7 @@ public class GitMergeProvider implements MergeProvider2 {
     MyMergeSession(List<VirtualFile> filesToMerge) {
       // get conflict type by the file
       try {
-        Map<VirtualFile, List<VirtualFile>> filesByRoot = GitUtil.sortFilesByGitRoot(filesToMerge);
+        Map<VirtualFile, List<VirtualFile>> filesByRoot = GitUtil.sortFilesByGitRoot(myProject, filesToMerge);
         for (Map.Entry<VirtualFile, List<VirtualFile>> e : filesByRoot.entrySet()) {
           Map<String, Conflict> cs = new HashMap<>();
           VirtualFile root = e.getKey();

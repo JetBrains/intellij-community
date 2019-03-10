@@ -52,8 +52,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
 
   @NotNull
   private static Editor createEditor() {
-    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    return createEditor(defaultProject, createDocument(defaultProject));
+    return createEditor(null, createDocument(ProjectManager.getInstance().getDefaultProject()));
   }
 
   @NotNull

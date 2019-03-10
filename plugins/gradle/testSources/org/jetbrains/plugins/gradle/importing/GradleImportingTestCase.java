@@ -64,7 +64,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
   @NotNull
-  @org.junit.runners.Parameterized.Parameter(0)
+  @org.junit.runners.Parameterized.Parameter()
   public String gradleVersion;
   private GradleProjectSettings myProjectSettings;
   private String myJdkHome;
@@ -117,12 +117,13 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
         Messages.setTestDialog(TestDialog.DEFAULT);
         deleteBuildSystemDirectory();
       },
-      () -> super.tearDown()
+      super::tearDown
     ).run();
   }
 
   @Override
   protected void collectAllowedRoots(final List<String> roots) {
+    super.collectAllowedRoots(roots);
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
@@ -158,6 +159,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     ExternalSystemApiUtil.subscribe(myProject, GradleConstants.SYSTEM_ID, new ExternalSystemSettingsListenerAdapter() {
       @Override
       public void onProjectsLinked(@NotNull Collection settings) {
+        super.onProjectsLinked(settings);
         final Object item = ContainerUtil.getFirstItem(settings);
         if (item instanceof GradleProjectSettings) {
           ((GradleProjectSettings)item).setGradleJvm(GRADLE_JDK_NAME);

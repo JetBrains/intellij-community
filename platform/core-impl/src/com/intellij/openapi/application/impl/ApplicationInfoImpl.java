@@ -191,7 +191,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE = "tips-available";
   private static final String ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA = "additional-form-data";
 
-  private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
+  static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
+  static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
 
   ApplicationInfoImpl() {
     String resource = IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
@@ -832,13 +833,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
-    final String pluginsHost = System.getProperty("idea.plugins.host");
+    final String pluginsHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
     if (pluginsHost != null) {
       myPluginManagerUrl = StringUtil.trimEnd(pluginsHost, "/");
       myPluginsListUrl = myChannelsListUrl = myPluginsDownloadUrl = null;
     }
 
-    myPluginManagerUrl = ObjectUtils.coalesce(myPluginsListUrl, DEFAULT_PLUGINS_HOST);
+    myPluginManagerUrl = ObjectUtils.coalesce(myPluginManagerUrl, DEFAULT_PLUGINS_HOST);
     myPluginsListUrl = ObjectUtils.coalesce(myPluginsListUrl, myPluginManagerUrl + "/plugins/list/");
     myChannelsListUrl = ObjectUtils.coalesce(myChannelsListUrl, myPluginManagerUrl + "/channels/list/");
     myPluginsDownloadUrl = ObjectUtils.coalesce(myPluginsDownloadUrl, myPluginManagerUrl + "/pluginManager/");

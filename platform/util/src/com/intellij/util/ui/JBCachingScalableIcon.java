@@ -35,7 +35,7 @@ public abstract class JBCachingScalableIcon<T extends JBCachingScalableIcon> ext
 
     if (myScaledIconCache == null || myScaledIconCache.getScale() != scale) {
       myScaledIconCache = copy();
-      myScaledIconCache.updateScale(OBJ_SCALE.of(scale));
+      myScaledIconCache.setScale(OBJ_SCALE.of(scale));
     }
     return myScaledIconCache;
   }

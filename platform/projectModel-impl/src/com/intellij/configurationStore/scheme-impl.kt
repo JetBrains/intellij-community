@@ -17,19 +17,11 @@ import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 
-interface SchemeNameToFileName {
-  fun schemeNameToFileName(name: String): String
-}
+typealias SchemeNameToFileName = (name: String) -> String
 
-val OLD_NAME_CONVERTER: SchemeNameToFileName = object : SchemeNameToFileName {
-  override fun schemeNameToFileName(name: String) = FileUtil.sanitizeFileName(name, true)
-}
-val CURRENT_NAME_CONVERTER: SchemeNameToFileName = object : SchemeNameToFileName {
-  override fun schemeNameToFileName(name: String) = FileUtil.sanitizeFileName(name, false)
-}
-val MODERN_NAME_CONVERTER: SchemeNameToFileName = object : SchemeNameToFileName {
-  override fun schemeNameToFileName(name: String) = sanitizeFileName(name)
-}
+val OLD_NAME_CONVERTER: SchemeNameToFileName = { FileUtil.sanitizeFileName(it, true) }
+val CURRENT_NAME_CONVERTER: SchemeNameToFileName = { FileUtil.sanitizeFileName(it, false) }
+val MODERN_NAME_CONVERTER: SchemeNameToFileName = { sanitizeFileName(it) }
 
 interface SchemeDataHolder<in T> {
   /**

@@ -55,8 +55,8 @@
     <renameHandler implementation="org.editorconfig.language.codeinsight.refactoring.EditorConfigRenameHandler"/>
     <elementDescriptionProvider
         implementation="org.editorconfig.language.codeinsight.documentation.EditorConfigElementDescriptionProvider"/>
-    <editorNotificationProviderApp implementation="org.editorconfig.language.messages.EditorConfigWrongFileNameNotificationProvider"/>
-    <editorNotificationProviderApp implementation="org.editorconfig.language.messages.EditorConfigWrongFileEncodingNotificationProvider"/>
+    <editorNotificationProvider implementation="org.editorconfig.language.messages.EditorConfigWrongFileNameNotificationProvider"/>
+    <editorNotificationProvider implementation="org.editorconfig.language.messages.EditorConfigWrongFileEncodingNotificationProvider"/>
     <fileBasedIndex implementation="org.editorconfig.language.index.EditorConfigIdentifierIndex"/>
     <gotoSymbolContributor implementation="org.editorconfig.language.codeinsight.findusages.EditorConfigGoToSymbolContributor"/>
     <gotoTargetRendererProvider

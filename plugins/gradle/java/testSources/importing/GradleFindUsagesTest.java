@@ -3,12 +3,15 @@ package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.wrapper.PathAssembler;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +44,7 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
 
   @Override
   protected void collectAllowedRoots(List<String> roots, PathAssembler.LocalDistribution distribution) {
+    super.collectAllowedRoots(roots, distribution);
     File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
     File generatedGradleJarsDir = new File(gradleUserHomeDir, "caches/" + gradleVersion + "/generated-gradle-jars");
     roots.add(generatedGradleJarsDir.getPath());
@@ -214,11 +218,11 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
     PsiClass aClass = psiClasses[0];
     if (methodName != null) {
       PsiMethod[] methods = runInEdtAndGet(() -> aClass.findMethodsByName(methodName, false));
-      int actualUsagesCount = 0;
+      List<UsageInfo> actualUsages = ContainerUtil.newArrayList();
       for (PsiMethod method : methods) {
-        actualUsagesCount += findUsages(method).size();
+        actualUsages.addAll(findUsages(method));
       }
-      assertEquals(count, actualUsagesCount);
+      assertUsagesCount(count, actualUsages);
     }
     else {
       assertUsagesCount(count, aClass);
@@ -229,19 +233,38 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
     assertUsages(fqn, GlobalSearchScope.projectScope(myProject), count);
   }
 
-  private void assertUsages(Trinity<String, GlobalSearchScope, Integer>... classUsageCount) throws Exception {
+  @SafeVarargs
+  private final void assertUsages(Trinity<String, GlobalSearchScope, Integer>... classUsageCount) throws Exception {
     for (Trinity<String, GlobalSearchScope, Integer> trinity : classUsageCount) {
       assertUsages(trinity.first, trinity.second, trinity.third);
     }
   }
 
-  private void assertUsages(Pair<String, Integer>... classUsageCount) throws Exception {
+  @SafeVarargs
+  private final void assertUsages(Pair<String, Integer>... classUsageCount) throws Exception {
     for (Pair<String, Integer> pair : classUsageCount) {
       assertUsages(Trinity.create(pair.first, GlobalSearchScope.projectScope(myProject), pair.second));
     }
   }
 
-  private static void assertUsagesCount(int expectedUsagesCount, PsiElement resolved) throws Exception {
-    assertEquals(expectedUsagesCount, findUsages(resolved).size());
+  private static void assertUsagesCount(int expectedUsagesCount, PsiElement element) throws Exception {
+    assertUsagesCount(expectedUsagesCount, findUsages(element));
+  }
+
+  private static void assertUsagesCount(int expectedUsagesCount, Collection<UsageInfo> usages) throws Exception {
+    String message = "Found usges: " + runInEdtAndGet(() -> {
+      StringBuilder buf = new StringBuilder();
+      for (UsageInfo usage : usages) {
+        buf.append(usage).append(", from ").append(usage.getVirtualFile().getPath());
+        Segment navigationRange = usage.getNavigationRange();
+        if (navigationRange != null) {
+          buf.append(": ").append(usage.getNavigationRange().getStartOffset())
+            .append(",").append(usage.getNavigationRange().getEndOffset());
+        }
+      }
+
+      return buf.toString();
+    });
+    assertEquals(message, expectedUsagesCount, usages.size());
   }
 }

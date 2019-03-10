@@ -48,7 +48,7 @@ public interface PyAssignmentStatement extends PyStatement, PyNamedElementContai
   @Nullable
   PyExpression getAssignedValue();
 
-  /**
+  /*
    * Applies a visitor to every element of left-hand side. Tuple elements are flattened down to their most nested
    * parts. E.g. if the target is <tt>a, b[1], (c(2).d, e.f)</tt>, then expressions
    * <tt>a</tt>, <tt>b[1]</tt>, <tt>c(2).d</tt>, <tt>e.f</tt> will be visited.

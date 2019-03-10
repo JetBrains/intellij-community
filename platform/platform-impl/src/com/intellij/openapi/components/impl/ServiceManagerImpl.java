@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
+import static com.intellij.util.pico.DefaultPicoContainer.getMeasureTokenLevel;
+
 public final class ServiceManagerImpl implements Disposable {
   private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
 
@@ -231,9 +233,7 @@ public final class ServiceManagerImpl implements Disposable {
 
     @NotNull
     private Object createAndInitialize(@NotNull PicoContainer container) {
-      // if it will be module service, then get rid of such component instead of measurement
-      boolean appComponent = myComponentManager instanceof Application;
-      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(appComponent ? Activities.APP_SERVICE : Activities.PROJECT_SERVICE);
+      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(Activities.SERVICE, getMeasureTokenLevel(container));
       Object instance = getDelegate().getComponentInstance(container);
       if (instance instanceof Disposable) {
         Disposer.register(myComponentManager, (Disposable)instance);

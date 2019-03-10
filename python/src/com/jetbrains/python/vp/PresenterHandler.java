@@ -37,7 +37,7 @@ class PresenterHandler<C> implements InvocationHandler {
 
   @Override
   public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-    /**
+    /*
      * TODO: Implement async call.
      * The idea is void methods marked with @Async should be called in background thread.
      * That will allow presenter to be agnostic about EDT

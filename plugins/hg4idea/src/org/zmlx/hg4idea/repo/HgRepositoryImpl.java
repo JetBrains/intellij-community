@@ -91,11 +91,11 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     return myInfo.getState();
   }
 
-  @Nullable
-  @Override
   /**
    * Return active bookmark name if exist or heavy branch name otherwise
    */
+  @Nullable
+  @Override
   public String getCurrentBranchName() {
     String branchOrBookMarkName = getCurrentBookmark();
     if (StringUtil.isEmptyOrSpaces(branchOrBookMarkName)) {

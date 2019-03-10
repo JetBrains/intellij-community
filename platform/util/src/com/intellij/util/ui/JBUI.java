@@ -625,6 +625,11 @@ public class JBUI {
       public static Color hoverBorder() {
         return JBColor.namedColor("ActionButton.hoverBorderColor", Gray.xDF);
       }
+
+      @NotNull
+      public static Color hoverSeparatorColor() {
+        return JBColor.namedColor("ActionButton.hoverSeparatorColor", new JBColor(Gray.xB3, Gray.x6B));
+      }
     }
 
     public static class CustomFrameDecorations {
@@ -1133,6 +1138,10 @@ public class JBUI {
     public boolean update(@Nullable BaseScaleContext ctx) {
       return super.update(ctx);
     }
+
+    public boolean update(@NotNull Scale scale) {
+      return setScale(scale);
+    }
   }
 
   /**
@@ -1162,12 +1171,7 @@ public class JBUI {
     }
 
     protected ScaleContext(@NotNull Scale scale) {
-      switch (scale.type()) {
-        case USR_SCALE: update(usrScale, scale.value()); break;
-        case SYS_SCALE: update(sysScale, scale.value()); break;
-        case OBJ_SCALE: update(objScale, scale.value()); break;
-      }
-      pixScale = derivePixScale();
+      setScale(scale);
     }
   }
 

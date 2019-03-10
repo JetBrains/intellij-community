@@ -53,10 +53,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginDescriptor");
 
+  private static final String APPLICATION_SERVICE = "com.intellij.applicationService";
+  private static final String PROJECT_SERVICE = "com.intellij.projectService";
+  private static final String MODULE_SERVICE = "com.intellij.moduleService";
+
   @SuppressWarnings("SSBasedInspection")
-  public static final List<String> SERVICE_QUALIFIED_ELEMENT_NAMES = Arrays.asList("com.intellij.applicationService",
-                                                                                   "com.intellij.projectService",
-                                                                                   "com.intellij.moduleService");
+  public static final List<String> SERVICE_QUALIFIED_ELEMENT_NAMES = Arrays.asList(APPLICATION_SERVICE, PROJECT_SERVICE, MODULE_SERVICE);
 
   private final File myPath;
   private final boolean myBundled;
@@ -293,20 +295,19 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
             String qualifiedExtensionPointName = stringInterner.intern(ExtensionsAreaImpl.extractPointName(extensionElement, ns));
             List<ServiceDescriptor> services;
-            // compare by identity - interned by PluginXmlFactory
-            if (qualifiedExtensionPointName == "com.intellij.applicationService") {
+            if (qualifiedExtensionPointName.equals(APPLICATION_SERVICE)) {
               if (myAppServices == null) {
                 myAppServices = new ArrayList<>();
               }
               services = myAppServices;
             }
-            else if (qualifiedExtensionPointName == "com.intellij.projectService") {
+            else if (qualifiedExtensionPointName.equals(PROJECT_SERVICE)) {
               if (myProjectServices == null) {
                 myProjectServices = new ArrayList<>();
               }
               services = myProjectServices;
             }
-            else if (qualifiedExtensionPointName == "com.intellij.moduleService") {
+            else if (qualifiedExtensionPointName.equals(MODULE_SERVICE)) {
               if (myModuleServices == null) {
                 myModuleServices = new ArrayList<>();
               }

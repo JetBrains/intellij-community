@@ -283,9 +283,7 @@ public class RefreshWorker {
   }
 
   private static class NewChildRecord {
-    @NotNull
     final String name;
-    @NotNull
     final FileAttributes attributes;
     final boolean isEmptyDir;
     final String symlinkTarget;

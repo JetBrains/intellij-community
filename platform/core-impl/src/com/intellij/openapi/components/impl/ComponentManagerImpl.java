@@ -44,6 +44,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.util.pico.DefaultPicoContainer.getMeasureTokenLevel;
+
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
@@ -481,9 +483,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
             return instance;
           }
 
-          // if it will be module component, then get rid of such component instead of measurement
-          boolean appComponent = ComponentManagerImpl.this instanceof Application;
-          StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(appComponent ? Activities.APP_COMPONENT : Activities.PROJECT_COMPONENT);
+          StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(Activities.COMPONENT, getMeasureTokenLevel(picoContainer));
           instance = super.getComponentInstance(picoContainer);
 
           if (myInitializing) {

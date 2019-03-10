@@ -656,7 +656,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/openapi/intellij.python.community.iml" filepath="$PROJECT_DIR$/python/openapi/intellij.python.community.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.impl.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pluginCore/intellij.python.community.plugin.iml" filepath="$PROJECT_DIR$/python/pluginCore/intellij.python.community.plugin.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/build/patches/intellij.python.community.plugin.buildPatches.iml" filepath="$PROJECT_DIR$/python/build/patches/intellij.python.community.plugin.buildPatches.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/build/dependencies/intellij.python.community.plugin.dependencies.iml" filepath="$PROJECT_DIR$/python/build/dependencies/intellij.python.community.plugin.dependencies.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pluginJava/intellij.python.community.plugin.java.iml" filepath="$PROJECT_DIR$/python/pluginJava/intellij.python.community.plugin.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.plugin.main.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.plugin.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pluginMinor/intellij.python.community.plugin.minor.iml" filepath="$PROJECT_DIR$/python/pluginMinor/intellij.python.community.plugin.minor.iml" />

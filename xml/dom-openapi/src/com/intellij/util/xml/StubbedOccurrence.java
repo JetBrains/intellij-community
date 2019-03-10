@@ -21,7 +21,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks occurrence of element for querying via {@link DomElementClassIndex}.
+ * Marks occurrence of element for querying via {@link com.intellij.util.xml.stubs.index.DomElementClassIndex}.
  */
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = ElementType.TYPE)

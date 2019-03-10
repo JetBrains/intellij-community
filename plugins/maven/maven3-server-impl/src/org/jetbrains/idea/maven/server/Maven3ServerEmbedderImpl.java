@@ -613,7 +613,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
     legacySupport.setSession(mavenSession);
 
-    /** adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)} */
+    // adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
     try {
       for (AbstractMavenLifecycleParticipant listener : getLifecycleParticipants(Collections.<MavenProject>emptyList())) {
         listener.afterSessionStart(mavenSession);

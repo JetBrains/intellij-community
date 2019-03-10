@@ -25,7 +25,7 @@ class PythonCommunityPluginModules {
   ]
 
   static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
-    pythonPlugin(PYTHON_COMMUNITY_PLUGIN_MODULE, "python-ce", "intellij.python.community.plugin.buildPatches",
+    pythonPlugin(PYTHON_COMMUNITY_PLUGIN_MODULE, "python-ce", "intellij.python.community.plugin.dependencies",
                  COMMUNITY_MODULES) {
       withProjectLibrary("markdown4j")  // Required for ipnb
       PYCHARM_ONLY_PLUGIN_MODULES.each { module ->

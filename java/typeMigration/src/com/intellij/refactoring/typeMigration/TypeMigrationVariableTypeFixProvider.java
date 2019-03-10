@@ -49,7 +49,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
       @Override
       public void invoke(@NotNull Project project,
                          @NotNull PsiFile file,
-                         @Nullable("is null when called from inspection") Editor editor,
+                         @Nullable Editor editor,
                          @NotNull PsiElement startElement,
                          @NotNull PsiElement endElement) {
         runTypeMigrationOnVariable((PsiVariable)startElement, getReturnType(), editor, optimizeImports, true);
@@ -59,7 +59,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
 
   public static void runTypeMigrationOnVariable(@NotNull PsiVariable variable,
                                                 @NotNull PsiType targetType,
-                                                @Nullable("is null when called from inspection") Editor editor,
+                                                @Nullable Editor editor,
                                                 boolean optimizeImports,
                                                 boolean allowDependentRoots) {
     Project project = variable.getProject();

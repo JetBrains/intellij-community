@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
 
 import java.util.regex.Pattern
+
 /**
  * @author nik
  */
@@ -57,7 +58,6 @@ class NsisFileListGenerator {
   private static String toWinPath(String dir) {
     return dir.replace('/', '\\')
   }
-
 
   private void processDirectory(File directory, String relativePath, List<Pattern> excludePatterns) {
     def files = directory.listFiles()

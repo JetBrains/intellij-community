@@ -324,11 +324,11 @@ public final class IconLoader {
     }
   }
 
-  @Contract("null, _->null; !null, _->!null")
-  public static Icon copy(@Nullable Icon icon, @Nullable Component ancestor) {
+  @Contract("null, _, _->null; !null, _, _->!null")
+  public static Icon copy(@Nullable Icon icon, @Nullable Component ancestor, boolean deepCopy) {
     if (icon == null) return null;
     if (icon instanceof CopyableIcon) {
-      return ((CopyableIcon)icon).copy();
+      return deepCopy ? ((CopyableIcon)icon).deepCopy() : ((CopyableIcon)icon).copy();
     }
     BufferedImage image = UIUtil.createImage(ancestor, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = image.createGraphics();
@@ -738,7 +738,7 @@ public final class IconLoader {
         ScaleContext ctx = getScaleContext();
         if (scale != 1) {
           ctx = ctx.copy();
-          ctx.update(OBJ_SCALE.of(scale));
+          ctx.setScale(OBJ_SCALE.of(scale));
         }
 
         ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(key(ctx)));
@@ -941,7 +941,7 @@ public final class IconLoader {
     @NotNull
     @Override
     public Icon copy() {
-      return IconLoader.copy(getOrComputeIcon(), null);
+      return IconLoader.copy(getOrComputeIcon(), null, false);
     }
   }
 

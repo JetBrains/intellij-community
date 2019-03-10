@@ -30,18 +30,8 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     myContentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     Disposer.register(disposable, this);
 
-    myBrowser.addListener(new VcsLogChangesBrowser.Listener() {
-      @Override
-      public void onModelUpdated() {
-        updatePreview(getComponent().isShowing());
-      }
-    }, this);
-
-    myBrowser.getViewer().addSelectionListener(() -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        updatePreview(getComponent().isShowing());
-      });
-    }, this);
+    myBrowser.addListener(() -> updatePreviewLater(), this);
+    myBrowser.getViewer().addSelectionListener(this::updatePreviewLater, this);
   }
 
   @NotNull
@@ -72,6 +62,10 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     if (path != null) {
       TreeUtil.selectPath(tree, path, false);
     }
+  }
+
+  private void updatePreviewLater() {
+    ApplicationManager.getApplication().invokeLater(() -> updatePreview(getComponent().isShowing()));
   }
 
   public void updatePreview(boolean state) {

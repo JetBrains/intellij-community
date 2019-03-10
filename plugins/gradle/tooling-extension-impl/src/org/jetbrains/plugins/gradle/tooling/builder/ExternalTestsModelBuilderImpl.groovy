@@ -41,7 +41,10 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
       def sourceDirectorySet = sourceSet.allSource
       def sourceFolders = sourceDirectorySet.srcDirs.collect { it -> it.absolutePath }
       for (def classDirectory : getPaths(sourceSet.output)) {
-        def storedSourceFolders = classesDirToSourceDirs.getOrDefault(classDirectory, new LinkedHashSet<>())
+        def storedSourceFolders = classesDirToSourceDirs.get(classDirectory)
+        if (storedSourceFolders == null) {
+          storedSourceFolders = new LinkedHashSet<String>()
+        }
         storedSourceFolders.addAll(sourceFolders)
         classesDirToSourceDirs.put(classDirectory, storedSourceFolders)
       }

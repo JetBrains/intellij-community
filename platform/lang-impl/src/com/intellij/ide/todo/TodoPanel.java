@@ -55,7 +55,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -126,7 +125,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     public static class GroupByActionGroup extends DefaultActionGroup {
     {
       getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
-      getTemplatePresentation().setText("View Options");
+      getTemplatePresentation().setText(IdeBundle.message("group.view.options"));
       setPopup(true);
     }
 
@@ -225,8 +224,6 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
     // Create tool bars and register custom shortcuts
 
-    JPanel toolBarPanel = new JPanel(new GridLayout());
-
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(new PreviousOccurenceToolbarAction(myOccurenceNavigator));
     toolbarGroup.add(new NextOccurenceToolbarAction(myOccurenceNavigator));
@@ -239,9 +236,8 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     }
 
     toolbarGroup.add(new MyPreviewAction());
-    toolBarPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, toolbarGroup, false).getComponent());
 
-    setToolbar(toolBarPanel);
+    setToolbar(ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, toolbarGroup, false).getComponent());
   }
 
   @NotNull

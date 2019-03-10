@@ -14,6 +14,7 @@ import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
@@ -42,13 +43,15 @@ import org.jetbrains.idea.devkit.util.PsiUtil
 class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   private TempDirTestFixture myTempDirFixture
+  private PluginXmlDomInspection myInspection
 
   @Override
   protected void setUp() throws Exception {
     super.setUp()
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
     myTempDirFixture.setUp()
-    myFixture.enableInspections(new PluginXmlDomInspection())
+    myInspection = new PluginXmlDomInspection()
+    myFixture.enableInspections(myInspection)
   }
 
   @Override
@@ -84,6 +87,8 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("core-api", coreApiJar)
     String editorUIApi = PathUtil.getJarPathForClass(AnAction.class)
     moduleBuilder.addLibrary("editor-ui-api", editorUIApi)
+    String coreImpl = PathUtil.getJarPathForClass(ServiceDescriptor.class)
+    moduleBuilder.addLibrary("coreImpl", coreImpl)
   }
 
   void testExtensionsHighlighting() {
@@ -517,6 +522,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   void testActionHighlighting() {
     configureByFile()
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
+    myFixture.addClass("""package foo; class PackagePrivateActionBase extends com.intellij.openapi.actionSystem.AnAction {
+                                        PackagePrivateActionBase() {}
+                                    } """)
+    myFixture.addClass("package foo; public class ActionWithDefaultConstructor extends PackagePrivateActionBase { }")
     myFixture.addClass("package foo.bar; public class BarGroup extends com.intellij.openapi.actionSystem.ActionGroup { }")
     myFixture.addClass("package foo.bar; public class GroupWithCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup { " +
                        "  public boolean canBePerformed(com.intellij.openapi.actionSystem.DataContext context) {" +
@@ -537,7 +546,14 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   void testRegistrationCheck() {
     Module anotherModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "anotherModule",
                                                  myTempDirFixture.findOrCreateDir("../anotherModuleDir"))
+    Module additionalModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "additionalModule",
+                                                 myTempDirFixture.findOrCreateDir("../additionalModuleDir"))
     ModuleRootModificationUtil.addDependency(myModule, anotherModule)
+    ModuleRootModificationUtil.addDependency(myModule, additionalModule)
+    def moduleSet = new PluginXmlDomInspection.PluginModuleSet()
+    moduleSet.modules.add(myModule.name)
+    moduleSet.modules.add(additionalModule.name)
+    myInspection.PLUGINS_MODULES.add(moduleSet)
 
     def dependencyModuleClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClass.java",
                                                             "../anotherModuleDir/DependencyModuleClass.java")
@@ -545,6 +561,8 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                                                   "../anotherModuleDir/DependencyModuleClassWithEpName.java")
     def dependencyModulePlugin = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModulePlugin.xml",
                                                              "../anotherModuleDir/META-INF/DependencyModulePlugin.xml")
+    def additionalModuleClass = myFixture.copyFileToProject("registrationCheck/additionalModule/AdditionalModuleClass.java",
+                                                                "../additionalModuleDir/AdditionalModuleClass.java")
     def mainModuleClass = myFixture.copyFileToProject("registrationCheck/module/MainModuleClass.java",
                                                       "MainModuleClass.java")
     def mainModulePlugin = myFixture.copyFileToProject("registrationCheck/module/MainModulePlugin.xml",
@@ -553,6 +571,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.configureFromExistingVirtualFile(dependencyModuleClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleClassWithEp)
     myFixture.configureFromExistingVirtualFile(dependencyModulePlugin)
+    myFixture.configureFromExistingVirtualFile(additionalModuleClass)
     myFixture.configureFromExistingVirtualFile(mainModuleClass)
     myFixture.configureFromExistingVirtualFile(mainModulePlugin)
 
@@ -616,6 +635,9 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
 
   void testRedundantComponentInterfaceClass() {
     doHighlightingTest("redundantComponentInterfaceClass.xml")
-    //TODO test fix
+  }
+
+  void testRedundantServiceInterfaceClass() {
+    doHighlightingTest("redundantServiceInterfaceClass.xml")
   }
 }

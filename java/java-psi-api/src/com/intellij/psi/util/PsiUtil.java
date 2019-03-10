@@ -29,7 +29,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -1101,32 +1100,22 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean hasDefaultConstructor(@NotNull PsiClass clazz, boolean allowProtected) {
-    return hasDefaultConstructor(clazz, allowProtected, true);
+    return hasDefaultConstructor(clazz, allowProtected, false);
   }
 
-  public static boolean hasDefaultConstructor(@NotNull PsiClass clazz, boolean allowProtected, boolean checkModifiers) {
-    return hasDefaultCtrInHierarchy(clazz, allowProtected, checkModifiers, null);
-  }
-
-  private static boolean hasDefaultCtrInHierarchy(@NotNull PsiClass clazz, boolean allowProtected, boolean checkModifiers, @Nullable Set<PsiClass> visited) {
+  public static boolean hasDefaultConstructor(@NotNull PsiClass clazz, boolean allowProtected, boolean allowPrivateAndPackagePrivate) {
     final PsiMethod[] constructors = clazz.getConstructors();
-    if (constructors.length > 0) {
-      for (PsiMethod cls: constructors) {
-        if ((!checkModifiers || cls.hasModifierProperty(PsiModifier.PUBLIC) ||
-             allowProtected && cls.hasModifierProperty(PsiModifier.PROTECTED)) &&
-            cls.getParameterList().isEmpty()) {
-          return true;
-        }
-      }
+    if (constructors.length == 0) {
+      return true;
     }
-    else {
-      final PsiClass superClass = clazz.getSuperClass();
-      if (superClass == null) {
+
+    for (PsiMethod cls: constructors) {
+      if ((cls.hasModifierProperty(PsiModifier.PUBLIC)
+           || allowProtected && cls.hasModifierProperty(PsiModifier.PROTECTED)
+           || allowPrivateAndPackagePrivate && !cls.hasModifierProperty(PsiModifier.PROTECTED))
+          && cls.getParameterList().isEmpty()) {
         return true;
       }
-      if (visited == null) visited = new THashSet<>();
-      if (!visited.add(clazz)) return false;
-      return hasDefaultCtrInHierarchy(superClass, true, true, visited);
     }
     return false;
   }

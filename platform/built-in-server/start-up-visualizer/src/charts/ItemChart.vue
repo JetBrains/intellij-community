@@ -5,7 +5,7 @@
 
 <script lang="ts">
   import {Component, Prop, Watch} from "vue-property-decorator"
-  import {ComponentChartManager, ItemChartManager, ServiceChartManager, TopHitProviderChart} from "./ItemChartManager"
+  import {ComponentChartManager, ItemChartManager} from "./ItemChartManager"
   import {ItemChartType} from "@/charts/ItemChartDescriptor"
   import {BaseChartComponent} from "@/charts/BaseChartComponent"
 
@@ -34,10 +34,13 @@
         return new ComponentChartManager(chartContainer)
       }
       else if (type === "services") {
-        return new ServiceChartManager(chartContainer)
+        return new ItemChartManager(chartContainer, ["appServices", "projectServices", "moduleServices"])
+      }
+      else if (type === "extensions") {
+        return new ItemChartManager(chartContainer, ["appExtensions", "projectExtensions", "moduleExtensions"])
       }
       else if (type === "topHitProviders") {
-        return new TopHitProviderChart(chartContainer)
+        return new ItemChartManager(chartContainer, ["appOptionsTopHitProviders", "projectOptionsTopHitProviders"])
       }
       else {
         throw new Error(`Unknown chart type: ${type}`)

@@ -352,7 +352,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       layoutData.borderColor = BORDER_COLOR;
     }
 
-    boolean actions = !notification.getActions().isEmpty();
+    boolean actions = !notification.getActions().isEmpty() || notification.getContextHelpAction() != null;
     boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationFullContent;
 
     final JEditorPane text = new JEditorPane() {

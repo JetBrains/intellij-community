@@ -20,10 +20,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -229,19 +226,29 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   private void resolveLinksToBundledSchemes() {
+    List<EditorColorsScheme> brokenSchemesList = new ArrayList<>();
     for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
-      if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
-        try {
-          ((AbstractColorsScheme)scheme).resolveParent(name -> mySchemeManager.findSchemeByName(name));
-        }
-        catch (InvalidDataException e) {
-          String message = "Color scheme '" + scheme.getName() + "'" +
-                           " points to incorrect or non-existent default (base) scheme " +
-                           e.getMessage();
-          Notifications.Bus.notify(
-            new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Incompatible color scheme", message, NotificationType.ERROR));
-        }
+      try {
+        resolveSchemeParent(scheme);
       }
+      catch (InvalidDataException e) {
+        brokenSchemesList.add(scheme);
+        String message = "Color scheme '" + scheme.getName() + "'" +
+                         " points to incorrect or non-existent default (base) scheme " +
+                         e.getMessage();
+        Notifications.Bus.notify(
+          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Incompatible color scheme", message, NotificationType.ERROR));
+      }
+    }
+    for (EditorColorsScheme brokenScheme : brokenSchemesList) {
+      mySchemeManager.removeScheme(brokenScheme);
+    }
+  }
+
+  @Override
+  public void resolveSchemeParent(@NotNull EditorColorsScheme scheme) {
+    if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
+      ((AbstractColorsScheme)scheme).resolveParent(name -> mySchemeManager.findSchemeByName(name));
     }
   }
 

@@ -199,7 +199,6 @@
     <extensionPoint name="nonProjectFileWritingAccessExtension" area="IDEA_PROJECT" interface="com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension"/>
 
     <extensionPoint name="editorNotificationProvider" area="IDEA_PROJECT" interface="com.intellij.ui.EditorNotifications$Provider"/>
-    <extensionPoint name="editorNotificationProviderApp" interface="com.intellij.ui.EditorNotifications$Provider"/>
 
     <extensionPoint name="featureStatBundle" interface="com.intellij.featureStatistics.FeatureStatisticsBundleProvider"/>
     <extensionPoint name="featureStatisticsBundle" beanClass="com.intellij.featureStatistics.FeatureStatisticsBundleEP"/>
@@ -215,7 +214,6 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.EditorHighlighterProvider"/>
     </extensionPoint>
     <extensionPoint name="fileDocumentManagerListener" interface="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
-    <extensionPoint name="exceptionFilter" interface="com.intellij.execution.filters.ExceptionFilterFactory"/>
     <extensionPoint name="fileDocumentSynchronizationVetoer" interface="com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer"/>
 
     <extensionPoint name="itemPresentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
@@ -319,7 +317,7 @@
 
     <extensionPoint name="reporting.sendPermission" interface="com.intellij.reporting.DataSendPermission"/>
 
-    <extensionPoint name="tasks.contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider" area="IDEA_PROJECT"/>
+    <extensionPoint name="tasks.contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider"/>
     <extensionPoint name="smartSelectProvider" interface="com.intellij.openapi.ide.SmartSelectProvider"/>
 
     <extensionPoint name="sshCredentialProvider" interface="com.intellij.remote.SshCredentialProvider"/>
@@ -348,6 +346,6 @@
 
     <extensionPoint qualifiedName="com.intellij.search.traverseUiHelper" interface="com.intellij.ide.ui.search.TraverseUIHelper"/>
 
-    <extensionPoint name="stalledStorage" beanClass="com.intellij.configurationStore.StalledStorageBean"/>
+    <extensionPoint name="obsoleteStorage" beanClass="com.intellij.configurationStore.ObsoleteStorageBean"/>
   </extensionPoints>
 </idea-plugin>

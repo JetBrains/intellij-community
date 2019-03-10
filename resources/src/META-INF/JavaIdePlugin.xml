@@ -150,13 +150,6 @@
     <xi:fallback/>
   </xi:include>
 
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.openapi.projectRoots.impl.DefaultJdkConfigurator</implementation-class>
-      <headless-implementation-class/>
-    </component>
-  </application-components>
-
   <project-components>
     <component>
       <implementation-class>com.intellij.framework.detection.impl.FrameworkDetectionManager</implementation-class>
@@ -184,7 +177,6 @@
   </project-components>
 
   <extensionPoints>
-
     <extensionPoint name="antBuildGen"
                     interface="com.intellij.compiler.ant.ChunkBuildExtension"/>
 
@@ -220,10 +212,6 @@
     <extensionPoint name="projectImportProvider" interface="com.intellij.projectImport.ProjectImportProvider"/>
     <extensionPoint name="projectImportBuilder" interface="com.intellij.projectImport.ProjectImportBuilder"/>
     <extensionPoint name="projectStructureDetector" interface="com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector"/>
-
-    <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.lang.WordCompletionElementFilter"/>
-    </extensionPoint>
 
     <extensionPoint name="projectStructureConfigurableFilter"
                     interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter"/>
@@ -328,6 +316,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.openapi.projectRoots.impl.DefaultJdkConfigurator"/>
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
 
@@ -493,10 +482,10 @@
                              key="title.path.variables" bundle="messages.ApplicationBundle"/>
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
-    <editorNotificationProviderApp implementation="com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider"/>
-    <editorNotificationProviderApp implementation="com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider"/>
     <projectSdkSetupValidator id="javaSdk" implementation="com.intellij.codeInsight.daemon.impl.JavaProjectSdkSetupValidator"/>
-    <editorNotificationProviderApp implementation="com.intellij.debugger.ui.AlternativeSourceNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.debugger.ui.AlternativeSourceNotificationProvider"/>
 
     <attachSourcesProvider implementation="com.intellij.jarFinder.InternetAttachSourceProvider"/>
     <attachSourcesProvider implementation="com.intellij.jarFinder.IvyAttachSourceProvider"/>
@@ -608,7 +597,7 @@
 
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
 
-    <editorNotificationProviderApp implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
+    <editorNotificationProvider implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
 
     <applicationService serviceInterface="com.intellij.debugger.engine.DebuggerUtils"
                         serviceImplementation="com.intellij.debugger.impl.DebuggerUtilsImpl"/>

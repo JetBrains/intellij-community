@@ -3,7 +3,7 @@ package com.intellij.internal.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -126,6 +126,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       });
 
       BorderLayoutPanel panel = JBUI.Panels.simplePanel(pane);
+
+      panel.addToTop(createToolbar());
 
       JPanel southPanel = new JPanel();
       southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.X_AXIS));
@@ -672,6 +674,85 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         createPanel());
 
       return JBUI.Panels.simplePanel().addToTop(panel);
+    }
+
+    private int counter = 5;
+    private JComponent createToolbar() {
+      AnAction[] actionsArray = new AnAction[3];
+      actionsArray[0] = new MyAction("Play", AllIcons.Actions.Execute) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          if (--counter == 0) {
+            e.getPresentation().setEnabled(false);
+          }
+          System.out.println(e.getPresentation().getDescription() + ", counter = " + counter);
+        }
+      };
+
+      actionsArray[1] = new MyAction("Stop", AllIcons.Actions.Suspend) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          counter = 5;
+          actionsArray[0].getTemplatePresentation().setEnabled(true);
+          System.out.println(e.getPresentation().getDescription() + ", counter = " + counter);
+        }
+      };
+
+      actionsArray[2] = new MyToggleAction("Mute", AllIcons.Debugger.MuteBreakpoints) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          selected = !selected;
+          if (selected) {
+            System.out.println("Unmute buttons");
+            actionsArray[0].getTemplatePresentation().setEnabled(true);
+            actionsArray[1].getTemplatePresentation().setEnabled(true);
+          }
+          else {
+            System.out.println("Mute buttons");
+            actionsArray[0].getTemplatePresentation().setEnabled(false);
+            actionsArray[1].getTemplatePresentation().setEnabled(false);
+          }
+
+          e.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, selected);
+        }
+      };
+
+      DefaultActionGroup actions = new DefaultActionGroup("Simple group", false);
+      actions.addAll(actionsArray);
+
+      DefaultActionGroup subActions = new DefaultActionGroup("Ratings", true);
+      subActions.getTemplatePresentation().setIcon(AllIcons.Ide.Rating);
+      subActions.addAll(new MyAction("Rating one", AllIcons.Ide.Rating1),
+                        new MyAction("Rating two", AllIcons.Ide.Rating2),
+                        new MyAction("Rating three", AllIcons.Ide.Rating3),
+                        new MyAction("Rating four", AllIcons.Ide.Rating4));
+      actions.add(subActions);
+
+      DefaultActionGroup toolbarActions = new DefaultActionGroup();
+      toolbarActions.add(new SplitButtonAction(actions));
+
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TOP", toolbarActions, true);
+      JComponent toolbarComponent = toolbar.getComponent();
+      toolbarComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
+      return toolbarComponent;
+    }
+  }
+
+  private static class MyAction extends DumbAwareAction {
+    private MyAction(String name, Icon icon) {
+      super(name, name + " track", icon);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      System.out.println(e.getPresentation().getDescription());
+    }
+  }
+
+  private static class MyToggleAction extends MyAction implements Toggleable {
+    protected boolean selected;
+    private MyToggleAction(String name, Icon icon) {
+      super(name, icon);
     }
   }
 }
