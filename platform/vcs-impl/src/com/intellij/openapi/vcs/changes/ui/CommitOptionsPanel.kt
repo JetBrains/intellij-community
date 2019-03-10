@@ -27,10 +27,7 @@ import kotlin.collections.set
 
 private val VCS_COMPARATOR = compareBy<AbstractVcs<*>, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
 
-class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
-                         handlers: Collection<CheckinHandler>,
-                         vcses: Collection<AbstractVcs<*>>,
-                         additionalData: PairConsumer<Any, Any>) : BorderLayoutPanel(), Disposable {
+class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel) : BorderLayoutPanel(), Disposable {
   private val perVcsOptionsPanels = mutableMapOf<AbstractVcs<*>, JPanel>()
   private val vcsOptionsPanel = simplePanel()
   private val beforeOptionsPanel = simplePanel()
@@ -49,15 +46,6 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
 
   init {
     buildLayout()
-
-    setVcsOptions(
-      vcses.sortedWith(VCS_COMPARATOR)
-        .associateWith { it.checkinEnvironment?.createAdditionalOptionsPanel(myCommitPanel, additionalData) }
-        .filterValues { it != null }
-        .mapValues { it.value!! }
-    )
-    setBeforeOptions(handlers.mapNotNull { it.beforeCheckinConfigurationPanel })
-    setAfterOptions(handlers.mapNotNull { it.getAfterCheckinConfigurationPanel(this) })
   }
 
   fun saveState() = allOptions.forEach { it.saveState() }
@@ -89,33 +77,46 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
     addToCenter(optionsPane).withBorder(JBUI.Borders.emptyLeft(10))
   }
 
-  private fun setVcsOptions(newOptions: Map<AbstractVcs<*>, RefreshableOnComponent>) {
-    vcsOptions += newOptions
+  fun setVcsOptions(newOptions: Map<AbstractVcs<*>, RefreshableOnComponent>) {
+    if (vcsOptions != newOptions) {
+      vcsOptions.clear()
+      perVcsOptionsPanels.clear()
+      vcsOptionsPanel.removeAll()
 
-    vcsOptions.forEach { vcs, options ->
-      val panel = verticalPanel(vcs.displayName).apply { add(options.component) }
-      vcsOptionsPanel.add(panel)
-      perVcsOptionsPanels[vcs] = panel
+      vcsOptions += newOptions
+      vcsOptions.forEach { vcs, options ->
+        val panel = verticalPanel(vcs.displayName).apply { add(options.component) }
+        vcsOptionsPanel.add(panel)
+        perVcsOptionsPanels[vcs] = panel
+      }
     }
   }
 
-  private fun setBeforeOptions(newOptions: List<RefreshableOnComponent>) {
-    beforeOptions += newOptions
+  fun setBeforeOptions(newOptions: List<RefreshableOnComponent>) {
+    if (beforeOptions != newOptions) {
+      beforeOptions.clear()
+      beforeOptionsPanel.removeAll()
 
-    if (beforeOptions.isNotEmpty()) {
-      val panel = verticalPanel(message("border.standard.checkin.options.group", actionName))
-      beforeOptions.forEach { panel.add(it.component) }
-      beforeOptionsPanel.add(panel)
+      beforeOptions += newOptions
+      if (beforeOptions.isNotEmpty()) {
+        val panel = verticalPanel(message("border.standard.checkin.options.group", actionName))
+        beforeOptions.forEach { panel.add(it.component) }
+        beforeOptionsPanel.add(panel)
+      }
     }
   }
 
-  private fun setAfterOptions(newOptions: List<RefreshableOnComponent>) {
-    afterOptions += newOptions
+  fun setAfterOptions(newOptions: List<RefreshableOnComponent>) {
+    if (afterOptions != newOptions) {
+      afterOptions.clear()
+      afterOptionsPanel.removeAll()
 
-    if (afterOptions.isNotEmpty()) {
-      val panel = verticalPanel(message("border.standard.after.checkin.options.group", actionName))
-      afterOptions.forEach { panel.add(it.component) }
-      afterOptionsPanel.add(panel)
+      afterOptions += newOptions
+      if (afterOptions.isNotEmpty()) {
+        val panel = verticalPanel(message("border.standard.after.checkin.options.group", actionName))
+        afterOptions.forEach { panel.add(it.component) }
+        afterOptionsPanel.add(panel)
+      }
     }
   }
 
@@ -123,5 +124,22 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
     fun verticalPanel(title: String) = JPanel(VerticalFlowLayout(0, 5)).apply {
       border = createTitledBorder(title)
     }
+
+    @JvmStatic
+    fun getVcsOptions(commitPanel: CheckinProjectPanel,
+                      vcses: Collection<AbstractVcs<*>>,
+                      additionalData: PairConsumer<Any, Any>): Map<AbstractVcs<*>, RefreshableOnComponent> =
+      vcses.sortedWith(VCS_COMPARATOR)
+        .associateWith { it.checkinEnvironment?.createAdditionalOptionsPanel(commitPanel, additionalData) }
+        .filterValues { it != null }
+        .mapValues { it.value!! }
+
+    @JvmStatic
+    fun getBeforeOptions(handlers: Collection<CheckinHandler>): List<RefreshableOnComponent> =
+      handlers.mapNotNull { it.beforeCheckinConfigurationPanel }
+
+    @JvmStatic
+    fun getAfterOptions(handlers: Collection<CheckinHandler>, parent: Disposable): List<RefreshableOnComponent> =
+      handlers.mapNotNull { it.getAfterCheckinConfigurationPanel(parent) }
   }
 }
