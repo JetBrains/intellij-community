@@ -58,6 +58,7 @@ import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.VcsBundle.message;
+import static com.intellij.openapi.vcs.changes.ui.CommitOptionsPanel.*;
 import static com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter.moveToFailedList;
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
 import static com.intellij.util.ArrayUtil.isEmpty;
@@ -282,8 +283,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     mySplitter = new Splitter(true);
-    myCommitOptions =
-      new CommitOptionsPanel(this, myHandlers, myShowVcsCommit ? myAffectedVcses : emptySet(), myWorkflow.getAdditionalDataConsumer());
+    myCommitOptions = new CommitOptionsPanel(this);
     myWarningLabel = new JBLabel();
 
     JPanel mainPanel = new JPanel(new MyOptionsLayout(mySplitter, myCommitOptions, JBUI.scale(150), JBUI.scale(400)));
@@ -314,11 +314,21 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       initComment(myWorkflow.getInitialCommitMessage());
     }
 
-    restoreState();
+    initOptions();
 
     myWarningLabel.setForeground(JBColor.RED);
     myWarningLabel.setBorder(JBUI.Borders.empty(5, 5, 0, 5));
     updateWarning();
+  }
+
+  private void initOptions() {
+    if (myShowVcsCommit) {
+      myCommitOptions.setVcsOptions(getVcsOptions(this, myAffectedVcses, myWorkflow.getAdditionalDataConsumer()));
+    }
+    myCommitOptions.setBeforeOptions(getBeforeOptions(myHandlers));
+    myCommitOptions.setAfterOptions(getAfterOptions(myHandlers, getDisposable()));
+
+    restoreState();
   }
 
   private void afterInit() {
