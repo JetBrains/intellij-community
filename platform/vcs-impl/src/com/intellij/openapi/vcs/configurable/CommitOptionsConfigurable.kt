@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable
 
 import com.intellij.openapi.Disposable
@@ -8,8 +8,8 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.createCheckinHandlers
 import com.intellij.openapi.vcs.changes.ui.CommitOptionsPanel.Companion.verticalPanel
+import com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.UIUtil.removeMnemonic
@@ -19,7 +19,7 @@ import java.io.File
 class CommitOptionsConfigurable(val project: Project) : JBPanel<CommitOptionsConfigurable>(GridLayout()), UnnamedConfigurable, Disposable {
   private val checkinPanel = CheckinPanel(project)
   private val commitContext = CommitContext()
-  private val checkinHandlers = createCheckinHandlers(project, checkinPanel, commitContext)
+  private val checkinHandlers = getCommitHandlers(checkinPanel, commitContext)
   private val beforeSettings = checkinHandlers.mapNotNull { it.beforeCheckinSettings }
 
   init {
