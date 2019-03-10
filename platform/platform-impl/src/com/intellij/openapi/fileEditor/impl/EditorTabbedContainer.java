@@ -68,7 +68,7 @@ import java.util.Map;
 public final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget {
   private final EditorWindow myWindow;
   private final Project myProject;
-  private final JBTabsEx myTabs;
+  private final JBEditorTabsBase myTabs;
 
   @NonNls public static final String HELP_ID = "ideaInterface.editor";
 
@@ -327,10 +327,11 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     tab.setTestableUi(new MyQueryable(tab));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
-    tabActions.add(new CloseTab(comp, file));
+    Disposable tabDisposable = Disposer.newDisposable();
+    tabActions.add(new CloseTab(comp, file, tabDisposable));
 
     tab.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
-    myTabs.addTabSilently(tab, indexToInsert);
+    myTabs.addTabSilently(tab, indexToInsert, tabDisposable);
   }
 
   boolean isEmptyVisible() {
@@ -398,9 +399,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   private final class CloseTab extends AnAction implements DumbAware {
     private final VirtualFile myFile;
 
-    CloseTab(@NotNull JComponent c, @NotNull VirtualFile file) {
+    CloseTab(@NotNull JComponent c, @NotNull VirtualFile file, @NotNull Disposable tabDisposable) {
       myFile = file;
-      new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c, (Disposable) myTabs);
+      new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c, tabDisposable);
     }
 
     @Override

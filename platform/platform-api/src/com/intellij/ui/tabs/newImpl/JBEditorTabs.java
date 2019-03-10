@@ -6,6 +6,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -14,6 +16,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBEditorTabsBase;
 import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsPresentation;
+import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.newImpl.singleRow.CompressibleSingleRowLayout;
 import com.intellij.ui.tabs.newImpl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.newImpl.singleRow.SingleRowLayout;
@@ -21,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -28,6 +33,7 @@ import java.util.function.Supplier;
  */
 public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
+  private final Map<TabInfo, Disposable> myTabDisposables = new HashMap<>();
 
   /**
    * @Deprecated use {@link #myTabPainter}.
@@ -65,6 +71,25 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   @Override
   public boolean isEditorTabs() {
     return true;
+  }
+
+  @Override
+  @NotNull
+  public TabInfo addTabSilently(@NotNull TabInfo info, int index, @NotNull Disposable tabDisposable) {
+    TabInfo tab = super.addTabSilently(info, index);
+    Disposer.register(this, tabDisposable);
+    myTabDisposables.put(tab, tabDisposable);
+    return tab;
+  }
+
+  @Override
+  @NotNull
+  public ActionCallback removeTab(@NotNull TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus) {
+    Disposable tabDisposable = myTabDisposables.remove(info);
+    if (tabDisposable != null) {
+      Disposer.dispose(tabDisposable);
+    }
+    return super.removeTab(info, forcedSelectionTransfer, transferFocus);
   }
 
   @Override
