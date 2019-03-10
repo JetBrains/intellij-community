@@ -20,6 +20,11 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @see com.intellij.openapi.actionSystem.IdeActions#DIFF_VIEWER_TOOLBAR
+ * @see com.intellij.openapi.actionSystem.IdeActions#DIFF_VIEWER_POPUP
+ * @see com.intellij.openapi.actionSystem.IdeActions#GROUP_DIFF_EDITOR_POPUP
+ */
 public abstract class DiffExtension {
   public static final ExtensionPointName<DiffExtension> EP_NAME = ExtensionPointName.create("com.intellij.diff.DiffExtension");
 
