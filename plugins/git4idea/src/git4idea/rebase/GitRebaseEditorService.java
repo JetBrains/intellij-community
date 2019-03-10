@@ -16,12 +16,8 @@
 package git4idea.rebase;
 
 import com.intellij.ide.XmlRpcServer;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
@@ -101,17 +97,11 @@ public class GitRebaseEditorService {
    * @return the handler identifier
    */
   @NotNull
-  public UUID registerHandler(@NotNull GitRebaseEditorHandler handler, @NotNull Disposable parentDisposable) {
+  public UUID registerHandler(@NotNull GitRebaseEditorHandler handler) {
     addInternalHandler();
     synchronized (myHandlersLock) {
       UUID key = UUID.randomUUID();
       myHandlers.put(key, handler);
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          myHandlers.remove(key);
-        }
-      });
       return key;
     }
   }
@@ -144,18 +134,6 @@ public class GitRebaseEditorService {
       return h;
     }
   }
-
-  /**
-   * Configure handler with editor
-   *
-   * @param h        the handler to configure
-   * @param editorNo the editor number
-   */
-  public void configureHandler(GitLineHandler h, @NotNull UUID editorNo) {
-    h.addCustomEnvironmentVariable(GitCommand.GIT_EDITOR_ENV, getEditorCommand());
-    h.addCustomEnvironmentVariable(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, editorNo.toString());
-  }
-
 
   /**
    * The internal xml rcp handler
