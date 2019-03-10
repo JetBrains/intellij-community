@@ -9,12 +9,16 @@ import com.intellij.openapi.ui.Messages.getWarningIcon
 import com.intellij.openapi.ui.Messages.showYesNoDialog
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.getExecutorPresentableText
+import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
@@ -22,6 +26,7 @@ import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.NullableFunction
 import com.intellij.util.PairConsumer
+import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.UIUtil.addBorder
@@ -48,11 +53,20 @@ open class DialogCommitWorkflow(val project: Project,
   protected val additionalDataConsumer: PairConsumer<Any, Any> get() = _additionalData
   protected val additionalData: NullableFunction<Any, Any> get() = _additionalData
 
+  private val _commitHandlers = mutableListOf<CheckinHandler>()
+  val commitHandlers: List<CheckinHandler> get() = newUnmodifiableList(_commitHandlers)
+
+  private fun initCommitHandlers(handlers: List<CheckinHandler>) {
+    _commitHandlers.clear()
+    _commitHandlers += handlers
+  }
+
   fun showDialog(): Boolean {
     val dialog = CommitChangeListDialog(this)
     val handler = SingleChangeListCommitWorkflowHandler(this, dialog)
 
     Disposer.register(dialog.disposable, handler)
+    initCommitHandlers(getCommitHandlers(dialog, commitContext))
     initDialog(dialog)
     dialog.init()
     return dialog.showAndGet()
@@ -76,9 +90,9 @@ open class DialogCommitWorkflow(val project: Project,
     return true
   }
 
-  protected open fun doCommit(changeList: LocalChangeList, changes: List<Change>, commitMessage: String, handlers: List<CheckinHandler>) {
+  protected open fun doCommit(changeList: LocalChangeList, changes: List<Change>, commitMessage: String) {
     LOG.debug("Do actual commit")
-    val committer = SingleChangeListCommitter(project, changeList, changes, commitMessage, handlers, additionalData, vcsToCommit,
+    val committer = SingleChangeListCommitter(project, changeList, changes, commitMessage, commitHandlers, additionalData, vcsToCommit,
                                               DIALOG_TITLE, isDefaultChangeListFullyIncluded)
 
     committer.addResultHandler(resultHandler ?: DefaultCommitResultHandler(committer))
@@ -110,6 +124,18 @@ open class DialogCommitWorkflow(val project: Project,
     browser.setInclusionChangedListener { dialog.inclusionChanged() }
     browser.setSelectedListChangeListener { dialog.selectedChangeListChanged() }
     browser.viewer.addSelectionListener { dialog.changeDetails(browser.viewer.isModelUpdateInProgress) }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getCommitHandlerFactories(project: Project): List<BaseCheckinHandlerFactory> =
+      CheckinHandlersManager.getInstance().getRegisteredCheckinHandlerFactories(ProjectLevelVcsManager.getInstance(project).allActiveVcss)
+
+    @JvmStatic
+    fun getCommitHandlers(commitPanel: CheckinProjectPanel, commitContext: CommitContext) =
+      getCommitHandlerFactories(commitPanel.project)
+        .map { it.createHandler(commitPanel, commitContext) }
+        .filter { it != CheckinHandler.DUMMY }
   }
 }
 

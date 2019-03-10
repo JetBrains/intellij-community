@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser
 import com.intellij.openapi.vcs.changes.ui.DefaultCommitResultHandler
 import com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vfs.VirtualFile
 
 class AlienCommitWorkflow(val vcs: AbstractVcs<*>, changeListName: String, changes: List<Change>, commitMessage: String?) :
@@ -23,8 +22,8 @@ class AlienCommitWorkflow(val vcs: AbstractVcs<*>, changeListName: String, chang
 
   override fun canExecute(executor: CommitExecutor, changes: Collection<Change>) = true
 
-  override fun doCommit(changeList: LocalChangeList, changes: List<Change>, commitMessage: String, handlers: List<CheckinHandler>) {
-    val committer = AlienCommitter(vcs, changes, commitMessage, handlers, additionalData)
+  override fun doCommit(changeList: LocalChangeList, changes: List<Change>, commitMessage: String) {
+    val committer = AlienCommitter(vcs, changes, commitMessage, commitHandlers, additionalData)
 
     committer.addResultHandler(DefaultCommitResultHandler(committer))
     committer.runCommit(DIALOG_TITLE, false)
