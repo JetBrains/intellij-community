@@ -971,7 +971,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
         XBreakpoint<?> breakpoint = null;
         if (threadInfo.isStopOnBreakpoint()) {
-          final PySourcePosition position = frames.get(0).getPosition();
+          final PySourcePosition framePosition = frames.get(0).getPosition();
+          PySourcePosition position = myPositionConverter.convertFrameToPython(framePosition);
           breakpoint = myRegisteredBreakpoints.get(position);
           if (breakpoint == null) {
             myDebugger.removeTempBreakpoint(position.getFile(), position.getLine());

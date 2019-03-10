@@ -222,7 +222,7 @@ public class ProtocolParser {
     final String file = readString(reader, "file", null);
     final int line = readInt(reader, "line", 0);
 
-    return new PyStackFrameInfo(threadId, id, name, positionConverter.create(file, line));
+    return new PyStackFrameInfo(threadId, id, name, positionConverter.convertPythonToFrame(file, line));
   }
 
   @NotNull
