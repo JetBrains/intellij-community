@@ -9,7 +9,6 @@ import git4idea.branch.GitRebaseParams
 import git4idea.commands.*
 import git4idea.push.GitPushParams
 import git4idea.rebase.GitInteractiveRebaseEditorHandler
-import git4idea.rebase.GitRebaseEditorService
 import git4idea.repo.GitRepository
 import java.io.File
 
@@ -80,8 +79,7 @@ class TestGitImpl : GitImpl() {
                             commitListAware: Boolean): GitInteractiveRebaseEditorHandler {
     if (interactiveRebaseEditor == null) return super.createEditor(project, root, handler, commitListAware)
 
-    val service = GitRebaseEditorService.getInstance()
-    val editor = object: GitInteractiveRebaseEditorHandler(service, project, root) {
+    val editor = object : GitInteractiveRebaseEditorHandler(project, root) {
       override fun handleUnstructuredEditor(path: String): Boolean {
         val plainTextEditor = interactiveRebaseEditor!!.plainTextEditor
         return if (plainTextEditor != null) handleEditor(path, plainTextEditor) else super.handleUnstructuredEditor(path)
@@ -97,13 +95,12 @@ class TestGitImpl : GitImpl() {
           val file = File(path)
           FileUtil.writeToFile(file, editor(FileUtil.loadFile(file)))
         }
-        catch(e: Exception) {
+        catch (e: Exception) {
           LOG.error(e)
         }
         return true
       }
     }
-    service.configureHandler(handler, editor.handlerNo)
     return editor
   }
 

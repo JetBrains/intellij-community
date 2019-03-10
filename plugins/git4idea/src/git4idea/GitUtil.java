@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.OpenTHashSet;
@@ -1021,6 +1022,22 @@ public class GitUtil {
 
   public static void proposeUpdateGitignore(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
     VcsImplUtil.proposeUpdateIgnoreFile(project, GitVcs.getInstance(project), ignoreFileRoot);
+  }
+
+  public static <T extends Throwable> void tryRunOrClose(@NotNull AutoCloseable closeable,
+                                                         @NotNull ThrowableRunnable<T> runnable) throws T {
+    try {
+      runnable.run();
+    }
+    catch (Throwable e) {
+      try {
+        closeable.close();
+      }
+      catch (Throwable e2) {
+        e.addSuppressed(e2);
+      }
+      throw e;
+    }
   }
 
   private static class GitRepositoryNotFoundException extends VcsException {
