@@ -155,36 +155,27 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
     });
     final TreeCellRenderer treeCellRenderer = myTree.getCellRenderer();
-    myTree.setCellRenderer(new TreeCellRenderer() {
-      @Override
-      public Component getTreeCellRendererComponent(JTree tree,
-                                                    Object value,
-                                                    boolean selected,
-                                                    boolean expanded,
-                                                    boolean leaf,
-                                                    int row,
-                                                    boolean hasFocus) {
-        final Component rendererComponent =
-          treeCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-        if (rendererComponent instanceof SimpleColoredComponent) {
-          Color bg = UIUtil.getTreeBackground(selected, true);
-          Color fg = UIUtil.getTreeForeground(selected, true);
-          if (selected) {
-            for (SimpleColoredComponent.ColoredIterator it = ((SimpleColoredComponent)rendererComponent).iterator(); it.hasNext(); ) {
-              it.next();
-              int offset = it.getOffset();
-              int endOffset = it.getEndOffset();
-              SimpleTextAttributes currentAttributes = it.getTextAttributes();
-              SimpleTextAttributes newAttributes =
-                new SimpleTextAttributes(bg, fg, currentAttributes.getWaveColor(), currentAttributes.getStyle());
-              it.split(endOffset - offset, newAttributes);
-            }
+    myTree.setCellRenderer((tree, value, selected, expanded, leaf, row, hasFocus) -> {
+      final Component rendererComponent =
+        treeCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+      if (rendererComponent instanceof SimpleColoredComponent) {
+        Color bg = UIUtil.getTreeBackground(selected, true);
+        Color fg = UIUtil.getTreeForeground(selected, true);
+        if (selected) {
+          for (SimpleColoredComponent.ColoredIterator it = ((SimpleColoredComponent)rendererComponent).iterator(); it.hasNext(); ) {
+            it.next();
+            int offset = it.getOffset();
+            int endOffset = it.getEndOffset();
+            SimpleTextAttributes currentAttributes = it.getTextAttributes();
+            SimpleTextAttributes newAttributes =
+              new SimpleTextAttributes(bg, fg, currentAttributes.getWaveColor(), currentAttributes.getStyle());
+            it.split(endOffset - offset, newAttributes);
           }
-
-          SpeedSearchUtil.applySpeedSearchHighlighting(treeTable, (SimpleColoredComponent)rendererComponent, true, selected);
         }
-        return rendererComponent;
+
+        SpeedSearchUtil.applySpeedSearchHighlighting(treeTable, (SimpleColoredComponent)rendererComponent, true, selected);
       }
+      return rendererComponent;
     });
     new TreeTableSpeedSearch(treeTable).setComparator(new SpeedSearchComparator(false));
     treeTable.setTableHeader(null);
@@ -461,12 +452,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     final MessageEvent.Kind eventKind = messageEvent.getKind();
     if (!(groupNodeResult instanceof MessageEventResult) ||
         ((MessageEventResult)groupNodeResult).getKind().compareTo(eventKind) > 0) {
-      messagesGroupNode.setResult(new MessageEventResult() {
-        @Override
-        public MessageEvent.Kind getKind() {
-          return eventKind;
-        }
-      });
+      messagesGroupNode.setResult((MessageEventResult)() -> eventKind);
     }
     if (messageEvent instanceof FileMessageEvent) {
       ExecutionNode fileParentNode = messagesGroupNode;
