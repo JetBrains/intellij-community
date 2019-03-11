@@ -467,7 +467,7 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="ProjectViewPopupMenuRefactoringGroup" class="com.intellij.openapi.actionSystem.DefaultCompactActionGroup">
+    <group id="ProjectViewPopupMenuRefactoringGroup" compact="true">
       <reference ref="RefactoringMenu"/>
     </group>
 
