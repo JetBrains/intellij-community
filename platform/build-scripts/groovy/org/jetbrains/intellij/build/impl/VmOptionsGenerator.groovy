@@ -29,11 +29,8 @@ class VmOptionsGenerator {
                                           "-Djdk.http.auth.tunneling.disabledSchemes=\"\" " +
                                           "-XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow"
 
-  static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties, String yourkitSessionName = null) {
+  static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties) {
     String options = vmOptionsForArch(arch, productProperties) + " " + computeCommonVmOptions(isEAP)
-    if (yourkitSessionName != null) {
-      options += " " + yourkitOptions(yourkitSessionName, arch.fileSuffix)
-    }
     return options
   }
 
@@ -53,10 +50,6 @@ class VmOptionsGenerator {
       case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64 ?: "-Xms128m -Xmx750m -XX:ReservedCodeCacheSize=240m"
     }
     throw new AssertionError(arch)
-  }
-
-  static String yourkitOptions(String sessionName, String fileSuffix) {
-    "-agentlib:yjpagent$fileSuffix=probe_disable=*,disablealloc,disabletracing,onlylocal,disableexceptiontelemetry,delay=10000,sessionname=$sessionName".trim()
   }
 }
 
