@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "    Element:name:pluginName\n" +
                   "    Element:depends:anotherPlugin\n" +
                   "      Attribute:config-file:anotherPlugin.xml\n" +
+                  "      Attribute:optional:true\n" +
                   "    Element:module\n" +
                   "      Attribute:value:myModule\n" +
                   "    Element:extensionPoints\n" +
