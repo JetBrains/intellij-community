@@ -24,6 +24,7 @@ public final class StartUpMeasurer {
     public static final String FIX_PROCESS_ENV = "fix process env";
     public static final String LOAD_SYSTEM_LIBS = "load system libs";
     public static final String INIT_DEFAULT_LAF = "init default LaF";
+    public static final String UPDATE_WINDOW_ICON = "update window icon";
     public static final String REGISTER_BUNDLED_FONTS = "register bundled fonts";
 
     // this phase name is not fully clear - it is time from `IdeaApplication.initApplication` to `IdeaApplication.run`
@@ -189,8 +190,11 @@ public final class StartUpMeasurer {
       }
     }
 
-    public void close() {
+    @Override
+    @NotNull
+    public MeasureToken endAndStart(@NotNull String name) {
       end();
+      return new Item(name, /* description = */null, /* start = */end, /* parent = */null, /* level = */null);
     }
 
     @Override
@@ -201,6 +205,13 @@ public final class StartUpMeasurer {
 
   public interface MeasureToken {
     void end(@Nullable String description);
+
+    /**
+     * Convenient method to end token and start a new sibling one.
+     * So, start of new is always equals to this item end and yet another System.nanoTime() call is avoided.
+     */
+    @NotNull
+    MeasureToken endAndStart(@NotNull String name);
 
     void endWithThreshold(@NotNull Class<?> clazz);
 

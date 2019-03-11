@@ -86,7 +86,9 @@
     }
 
     private doGetFromRunningInstance(port: number, processed: () => void) {
-      const host = `localhost:${port}`
+      // localhost blocked by Firefox, but 127.0.0.1 not.
+      // Google Chrome correctly resolves localhost, but Firefox doesn't.
+      const host = `127.0.0.1:${port}`
 
       const showError = (reason: string) => {
         this.$notify.error({
