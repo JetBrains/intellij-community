@@ -30,7 +30,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -194,8 +193,6 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
                 if (!pair.second.isValid()) return;
 
                 PsiDocumentManager.getInstance(myProject).commitDocument(document);
-                FileDocumentManagerImpl fileDocumentManager = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
-                fileDocumentManager.saveDocumentAsIs(document);
                 Long beforeImport = pair.second.getUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT);
                 Long current = pair.second.getUserData(CRC_WITHOUT_SPACES_CURRENT);
                 if (current != null && current.equals(beforeImport)) {
