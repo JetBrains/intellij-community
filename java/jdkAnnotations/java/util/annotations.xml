@@ -51,12 +51,6 @@
   <item name='java.util.ArrayDeque void push(E) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='java.util.ArrayDeque.DeqIterator E next()'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='java.util.ArrayDeque.DescendingIterator E next()'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
   <item name="java.util.ArrayList ArrayList(java.util.Collection&lt;? extends E&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
     <annotation name='org.intellij.lang.annotations.Flow'>
