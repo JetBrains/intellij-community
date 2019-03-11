@@ -86,7 +86,7 @@ public class GitRebaseEditorService {
     synchronized (myScriptLock) {
       if (myEditorCommand == null) {
         ScriptGenerator generator = new ScriptGenerator(GIT_REBASE_EDITOR_PREFIX, GitRebaseEditorMain.class);
-        generator.addInternal(Integer.toString(BuiltInServerManager.getInstance().getPort()));
+        generator.addInternal(Integer.toString(BuiltInServerManager.getInstance().waitForStart().getPort()));
         generator.addClasses(XmlRpcClientLite.class, DecoderException.class);
         myEditorCommand = generator.commandLine();
       }
