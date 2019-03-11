@@ -15,6 +15,14 @@ public class SuspiciousIntegerDivAssignmentFixTest extends IGQuickFixesTestCase 
     doTest();
   }
 
+  public void testCharacterDivision() {
+    doTest();
+  }
+
+  public void testParenthesizedRhs() {
+    doTest();
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();

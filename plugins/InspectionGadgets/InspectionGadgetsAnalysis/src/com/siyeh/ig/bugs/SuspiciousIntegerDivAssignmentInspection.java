@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -14,6 +15,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.JavaPsiMathUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,22 +58,19 @@ public class SuspiciousIntegerDivAssignmentInspection extends BaseInspection {
       if (!JavaTokenType.ASTERISKEQ.equals(tokenType) && !JavaTokenType.DIVEQ.equals(tokenType)) {
         return;
       }
-      final PsiBinaryExpression rhs = ObjectUtils.tryCast(expression.getRExpression(), PsiBinaryExpression.class);
+      final PsiBinaryExpression rhs = getRhs(expression);
       if (rhs == null) {
         return;
       }
       final CommentTracker tracker = new CommentTracker();
       final PsiExpression operand = rhs.getLOperand();
-      if (operand instanceof PsiLiteralExpression) {
-        if (!TypeConversionUtil.isIntegralNumberType(operand.getType())) {
-          return;
-        }
-        final String replacement = String.format("%s.0", ((PsiLiteralExpression)operand).getValue());
-        PsiReplacementUtil.replaceExpression(operand, replacement, tracker);
-        return;
+      final Number number = JavaPsiMathUtil.getNumberFromLiteral(operand);
+      if (number != null) {
+        PsiReplacementUtil.replaceExpression(operand, number + ".0", tracker);
       }
-      final String replacement = "(double)" + operand.getText();
-      PsiReplacementUtil.replaceExpression(operand, replacement, tracker);
+      else {
+        PsiReplacementUtil.replaceExpression(operand, "(double)" + operand.getText(), tracker);
+      }
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -90,23 +89,28 @@ public class SuspiciousIntegerDivAssignmentInspection extends BaseInspection {
       if (!assignmentTokenType.equals(JavaTokenType.ASTERISKEQ) && !assignmentTokenType.equals(JavaTokenType.DIVEQ)) {
         return;
       }
-      final PsiBinaryExpression rhs = ObjectUtils.tryCast(assignment.getRExpression(), PsiBinaryExpression.class);
-      if (rhs == null ||
-          !rhs.getOperationTokenType().equals(JavaTokenType.DIV) ||
-          !TypeConversionUtil.isIntegralNumberType(rhs.getType())) {
+      final PsiBinaryExpression rhs = getRhs(assignment);
+      if (rhs == null) {
         return;
       }
-      final Number result = (Number)ExpressionUtils.computeConstantExpression(rhs);
-      if (result != null) {
-        final Number dividend = (Number)ExpressionUtils.computeConstantExpression(rhs.getLOperand());
-        final Number divisor = (Number)ExpressionUtils.computeConstantExpression(rhs.getROperand());
-        if (dividend != null && divisor != null) {
-          if (result.longValue() * divisor.longValue() == dividend.longValue()) {
-            return;
-          }
-        }
+      final Number dividend = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(rhs.getLOperand()), Number.class);
+      final Number divisor = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(rhs.getROperand()), Number.class);
+      if (dividend != null && divisor != null && dividend.longValue() % divisor.longValue() == 0) {
+        return;
       }
       registerError(assignment);
     }
+  }
+
+  @Nullable
+  private static PsiBinaryExpression getRhs(@NotNull PsiAssignmentExpression assignment) {
+    final PsiBinaryExpression rhs =
+      ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()), PsiBinaryExpression.class);
+    if (rhs == null ||
+        !rhs.getOperationTokenType().equals(JavaTokenType.DIV) ||
+        !TypeConversionUtil.isIntegralNumberType(rhs.getType())) {
+      return null;
+    }
+    return rhs;
   }
 }
