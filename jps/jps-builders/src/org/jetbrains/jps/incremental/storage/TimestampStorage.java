@@ -149,7 +149,7 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampPerTar
     }
   }
 
-  static class Timestamp implements StampsStorage.Stamp {
+  static class Timestamp implements HashStorage.Stamp {
     static final Timestamp MINUS_ONE = new Timestamp(-1L);
     private final long myTimestamp;
 
