@@ -13,13 +13,11 @@ import com.intellij.psi.stubs.StubTreeBuilder;
 import com.intellij.psi.stubsHierarchy.StubHierarchyIndexer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.*;
@@ -29,6 +27,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector.isScriptFile;
 
 public class GrStubIndexer extends StubHierarchyIndexer {
   @Override
@@ -83,12 +83,7 @@ public class GrStubIndexer extends StubHierarchyIndexer {
   }
 
   private static boolean isNormalGroovyFile(final PsiFile file) {
-    return file instanceof GroovyFile && !hasSpecialScriptType((GroovyFile)file);
-  }
-
-  private static boolean hasSpecialScriptType(GroovyFile file) {
-    return file.isScript() &&
-           ContainerUtil.exists(GroovyScriptTypeDetector.EP_NAME.getExtensions(), detector -> detector.isSpecificScriptFile(file));
+    return file instanceof GroovyFile && !isScriptFile((GroovyFile)file);
   }
 
   @Nullable
