@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.cherrypick;
 
 import com.intellij.dvcs.cherrypick.VcsCherryPicker;
@@ -15,6 +15,7 @@ import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandlerListener;
+import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -111,7 +112,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   private boolean isAutoCommit() {
-    return GitVcsSettings.getInstance(myProject).isAutoCommitOnCherryPick();
+    return GitVcsApplicationSettings.getInstance().isAutoCommitOnCherryPick();
   }
 
   @Override
