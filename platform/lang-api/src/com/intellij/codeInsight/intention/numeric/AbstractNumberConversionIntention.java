@@ -25,8 +25,6 @@ import java.util.stream.Collectors;
 public abstract class AbstractNumberConversionIntention implements IntentionAction {
   private static final String TITLE = "Convert number to...";
   private String myText;
-  private NumberConverter myConverter;
-  private NumberConversionContext myContext;
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
@@ -46,11 +44,7 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     List<NumberConverter> converters = getConverters(file);
     if (converters.isEmpty()) return false;
-    int offset = editor.getCaretModel().getOffset();
-    NumberConversionContext context = getContext(file, offset);
-    if (context == null && offset > 0) {
-      context = getContext(file, offset - 1);
-    }
+    NumberConversionContext context = getContext(file, editor);
     if (context == null) return false;
     Number number = context.myNumber;
     String text = context.myText;
@@ -60,8 +54,6 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
       if (convertedText != null) {
         if (singleConverter != null) {
           myText = null;
-          myConverter = null;
-          myContext = context;
           return true;
         }
         singleConverter = converter;
@@ -70,15 +62,19 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
     if (singleConverter == null) return false;
     String convertedText = singleConverter.getConvertedText(text, number);
     myText = getActionName(singleConverter, convertedText);
-    myConverter = singleConverter;
-    myContext = context;
     return true;
   }
 
   @Nullable
-  public NumberConversionContext getContext(PsiFile file, int offset) {
+  private NumberConversionContext getContext(@NotNull PsiFile file, @NotNull Editor editor) {
+    int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
-    return element == null ? null : extract(element);
+    NumberConversionContext context = element == null ? null : extract(element);
+    if (context == null && offset > 0) {
+      element = file.findElementAt(offset - 1);
+      context = element == null ? null : extract(element);
+    }
+    return context;
   }
 
   public String getActionName(NumberConverter converter, String convertedText) {
@@ -87,9 +83,12 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (myContext == null) return;
-    Number number = myContext.myNumber;
-    String text = myContext.myText;
+    List<NumberConverter> converters = getConverters(file);
+    if (converters.isEmpty()) return;
+    NumberConversionContext context = getContext(file, editor);
+    if (context == null) return;
+    Number number = context.myNumber;
+    String text = context.myText;
     class Conversion {
       final NumberConverter myConverter;
       final String myResult;
@@ -100,12 +99,16 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
       }
 
       void convert() {
-        WriteCommandAction.runWriteCommandAction(project, getActionName(myConverter, myResult), null, () -> {
-          PsiElement element = myContext.getElement();
+        WriteCommandAction.runWriteCommandAction(project, getName(), null, () -> {
+          PsiElement element = context.getElement();
           if (element != null) {
             replace(element, myResult);
           }
         }, file);
+      }
+
+      private String getName() {
+        return getActionName(myConverter, myResult);
       }
 
       @Override
@@ -117,8 +120,8 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
       .map(converter -> new Conversion(converter, converter.getConvertedText(text, number)))
       .filter(conversion -> conversion.myResult != null)
       .collect(Collectors.toList());
-    if (myConverter != null) {
-      list.stream().filter(c -> c.myConverter.equals(myConverter)).findFirst().ifPresent(Conversion::convert);
+    if (myText != null) {
+      list.stream().filter(c -> c.getName().equals(myText)).findFirst().ifPresent(Conversion::convert);
       // For some reason preselected conversion is not available anymore: do nothing
       return;
     }
