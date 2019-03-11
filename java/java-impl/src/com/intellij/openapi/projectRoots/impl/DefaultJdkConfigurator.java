@@ -1,46 +1,46 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Collection;
+import java.util.List;
 
-final class DefaultJdkConfigurator implements ApplicationInitializedListener {
-  DefaultJdkConfigurator() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      throw ExtensionNotApplicableException.INSTANCE;
-    }
+public class DefaultJdkConfigurator implements BaseComponent {
+  private final JavaSdk myJavaSdk;
+  private final PropertiesComponent myPropertiesComponent;
+  private final ProjectJdkTable myProjectJdkTable;
+
+  public DefaultJdkConfigurator(JavaSdk javaSdk, PropertiesComponent propertiesComponent, ProjectJdkTable projectJdkTable) {
+    myJavaSdk = javaSdk;
+    myPropertiesComponent = propertiesComponent;
+    myProjectJdkTable = projectJdkTable;
   }
 
   @Override
-  public void componentsInitialized() {
-    PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-
-    if (propertiesComponent.getBoolean("defaultJdkConfigured", false)) {
-      return;
-    }
-
-    ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
-    JavaSdk javaSdk = JavaSdk.getInstance();
-    if (projectJdkTable.getSdksOfType(javaSdk).isEmpty()) {
-      Collection<String> homePaths = javaSdk.suggestHomePaths();
-      String homePath = ContainerUtil.getFirstItem(homePaths);
-      if (homePath != null && javaSdk.isValidSdkHome(homePath)) {
-        String suggestedName = JdkUtil.suggestJdkName(javaSdk.getVersionString(homePath));
-        if (suggestedName != null) {
-          ApplicationManager.getApplication().runWriteAction(
-            () -> projectJdkTable.addJdk(javaSdk.createJdk(suggestedName, homePath, false))
-          );
+  public void initComponent() {
+    if (!myPropertiesComponent.getBoolean("defaultJdkConfigured", false)) {
+      List<Sdk> jdks = myProjectJdkTable.getSdksOfType(myJavaSdk);
+      if (jdks.isEmpty()) {
+        Collection<String> homePaths = myJavaSdk.suggestHomePaths();
+        String homePath = ContainerUtil.getFirstItem(homePaths);
+        if (homePath != null && myJavaSdk.isValidSdkHome(homePath)) {
+          String suggestedName = JdkUtil.suggestJdkName(myJavaSdk.getVersionString(homePath));
+          if (suggestedName != null) {
+            ApplicationManager.getApplication().runWriteAction(
+              () -> myProjectJdkTable.addJdk(myJavaSdk.createJdk(suggestedName, homePath, false))
+            );
+          }
         }
       }
+      myPropertiesComponent.setValue("defaultJdkConfigured", true);
     }
-    propertiesComponent.setValue("defaultJdkConfigured", true);
   }
 }
