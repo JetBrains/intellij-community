@@ -80,7 +80,7 @@ object IdeControl {
   }
 
   fun resumeTest(method: FrameworkMethod, resumeTestLabel: String) {
-    val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name, additionalInfo = mapOf<String, Any>(Pair(RESUME_LABEL, resumeTestLabel)))
+    val jUnitTestContainer = JUnitTestContainer(method.declaringClass.canonicalName, method.name, additionalInfo = mapOf<String, Any>(Pair(RESUME_LABEL, resumeTestLabel)))
     myServer.send(TransportMessage(MessageType.RESUME_TEST, jUnitTestContainer))
   }
 

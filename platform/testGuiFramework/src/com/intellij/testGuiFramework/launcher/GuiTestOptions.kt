@@ -42,7 +42,7 @@ object GuiTestOptions {
   val isDebug: Boolean by lazy { getSystemProperty("idea.debug.mode", false) }
   val isPassPrivacyPolicy: Boolean by lazy { getSystemProperty("idea.pass.privacy.policy", true) }
   val isPassDataSharing: Boolean by lazy { getSystemProperty("idea.pass.data.sharing", true) }
-  val suspendDebug: String by lazy { if (isDebug) "y" else "n" }
+  val suspendDebug: String by lazy { getSystemProperty("idea.debug.suspend", "n") }
   val isInternal: Boolean by lazy { getSystemProperty("idea.is.internal", true) }
   val useAppleScreenMenuBar: Boolean by lazy { getSystemProperty("apple.laf.useScreenMenuBar", false) }
   val debugPort: Int by lazy { getSystemProperty("idea.gui.test.debug.port", 5009) }
