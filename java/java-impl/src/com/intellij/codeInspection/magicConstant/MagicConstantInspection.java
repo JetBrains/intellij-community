@@ -695,7 +695,8 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
       if (same(expression, minusOne, manager)) return true;
       if (expression instanceof PsiPolyadicExpression) {
         IElementType tokenType = ((PsiPolyadicExpression)expression).getOperationTokenType();
-        if (JavaTokenType.OR.equals(tokenType) || JavaTokenType.AND.equals(tokenType) || JavaTokenType.PLUS.equals(tokenType)) {
+        if (JavaTokenType.OR.equals(tokenType) || JavaTokenType.XOR.equals(tokenType) || 
+            JavaTokenType.AND.equals(tokenType) || JavaTokenType.PLUS.equals(tokenType)) {
           for (PsiExpression operand : ((PsiPolyadicExpression)expression).getOperands()) {
             if (!isAllowed(operand, scope, allowedValues, manager, visited)) return false;
           }
