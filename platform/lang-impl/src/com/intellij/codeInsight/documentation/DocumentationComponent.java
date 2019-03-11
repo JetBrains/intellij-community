@@ -353,6 +353,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                   Rectangle bounds = a.getBounds();
                   int width = (int)super.getPreferredSpan(View.X_AXIS);
                   int height = (int)super.getPreferredSpan(View.Y_AXIS);
+                  if (width <= 0 || height <= 0) return;
                   @SuppressWarnings("UndesirableClassUsage")
                   BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                   Graphics2D graphics = image.createGraphics();
