@@ -401,6 +401,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   @Nullable
   private EditorColorsScheme getEditableCopy(EditorColorsScheme scheme) {
+    if (isTempScheme(scheme)) return scheme;
     String editableCopyName = getEditableCopyName(scheme);
     if (editableCopyName != null) {
       EditorColorsScheme editableCopy = getScheme(editableCopyName);
