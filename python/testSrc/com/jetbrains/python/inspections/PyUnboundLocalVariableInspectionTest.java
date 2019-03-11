@@ -310,6 +310,11 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
   }
 
+  // PY-4537
+  public void testConditionallyDeleted() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -148,11 +148,14 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
             return;
           }
           registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", name));
-        } else if (scope.isGlobal(name)) {
+        }
+        else if (scope.isGlobal(name)) {
           registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", name));
-        } else if (isNonLocal) {
+        }
+        else if (isNonLocal) {
           registerProblem(node, PyBundle.message("INSP.unbound.local.variable", name));
-        } else {
+        }
+        else {
           registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                           null,
