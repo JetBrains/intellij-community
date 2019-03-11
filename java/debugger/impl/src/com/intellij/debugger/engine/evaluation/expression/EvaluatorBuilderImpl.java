@@ -329,10 +329,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     public void visitForeachStatement(PsiForeachStatement statement) {
       CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
       try {
-        String iterationParameterName = statement.getIterationParameter().getName();
+        PsiParameter parameter = statement.getIterationParameter();
+        String iterationParameterName = parameter.getName();
         myCurrentFragmentEvaluator.setInitialValue(iterationParameterName, null);
         SyntheticVariableEvaluator iterationParameterEvaluator =
-          new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, iterationParameterName);
+          new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, iterationParameterName, null);
 
         Evaluator iteratedValueEvaluator = accept(statement.getIteratedValue());
         Evaluator bodyEvaluator = accept(statement.getBody());
@@ -730,7 +731,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           // psiVariable may live in PsiCodeFragment not only in debugger editors, for example Fabrique has such variables.
           // So treat it as synthetic var only when this code fragment is located in DebuggerEditor,
           // that's why we need to check that containing code fragment is the one we visited
-          myResult = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, ((PsiVariable)element).getName());
+          myResult = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, ((PsiVariable)element).getName(),
+                                                    JVMNameUtil.getJVMQualifiedName(((PsiVariable)element).getType()));
           return;
         }
         // local variable
