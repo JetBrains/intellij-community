@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusFactory;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
@@ -1213,11 +1212,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       if (children.isEmpty()) {
         Pair<String, String> key = indexKey(from);
         Element el = index.get(key);
-        if (el == null) {
+        org.jdom.Parent parent = to.getParent();
+        if (el == null && parent != null) {
           if (!"".equals(from.getAttributeValue("value"))) {
-            to.getParent().addContent(from.clone());
+            parent.addContent(from.clone());
           }
-          to.getParent().removeContent(to);
+          parent.removeContent(to);
         }
       } else {
         for (Element child : children) {
