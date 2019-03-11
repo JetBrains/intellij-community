@@ -383,16 +383,22 @@ FunctionEnd
 
 Function ConfirmDesktopShortcut
   !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
-  ; shortcut for 64-bit launcher.
-  StrCpy $R0 "${MUI_PRODUCT} launcher"
-  StrCpy $R1 ""
-  ; not suggest user to create shortcut for 32Bit launcher if bundled jre does not support 32Bit.
-  StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" get_installation_options_positions 0
+  StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" 0 jre_32bit_version_supported
+    ; shortcut for 64-bit launcher.
+    StrCpy $R0 "64-bit launcher"
+    StrCpy $R1 ""
+    Goto get_installation_options_positions
+
+jre_32bit_version_supported:
   ${StrRep} $0 ${PRODUCT_EXE_FILE} "64.exe" ".exe"
   ${If} $0 == ${PRODUCT_EXE_FILE}
   ; shortcuts for 32-bit and 64-bit.
     StrCpy $R0 "32-bit launcher"
     StrCpy $R1 "64-bit launcher"
+  ${Else}
+    ;there is only one launcher and it is 64-bit.
+    StrCpy $R0 "${MUI_PRODUCT} launcher"
+    StrCpy $R1 ""
   ${EndIf}
 
 get_installation_options_positions:
