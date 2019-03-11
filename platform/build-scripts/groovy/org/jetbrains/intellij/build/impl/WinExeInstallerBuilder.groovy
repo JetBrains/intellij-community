@@ -131,7 +131,7 @@ class WinExeInstallerBuilder {
       buildContext.messages.error("Failed to generated list of files for NSIS installer: $e")
     }
 
-    prepareConfigurationFiles(box, winDistPath)
+    prepareConfigurationFiles(box, winDistPath, jre32BitVersionSupported)
     customizer.customNsiConfigurationFiles.each {
       ant.copy(file: it, todir: "$box/nsiconf", overwrite: "true")
     }
