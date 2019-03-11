@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.tabs.newImpl
+package com.intellij.ui.tabs
 
+import com.intellij.ui.tabs.newImpl.JBTabsImpl
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import java.awt.Graphics2D
