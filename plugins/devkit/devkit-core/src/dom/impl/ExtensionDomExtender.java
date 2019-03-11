@@ -40,14 +40,14 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
   private static final Converter LANGUAGE_CONVERTER = new LanguageResolvingConverter();
 
-  private static final DomExtender EXTENSION_EXTENDER = new DomExtender() {
+  private static final DomExtender<Extension> EXTENSION_EXTENDER = new DomExtender<Extension>() {
 
     private final XmlName OS_XML_NAME = new XmlName("os");
     private final XmlName IMPLEMENTATION_XML_NAME = new XmlName("implementation");
 
     @Override
-    public void registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
-      final ExtensionPoint extensionPoint = (ExtensionPoint)domElement.getChildDescription().getDomDeclaration();
+    public void registerExtensions(@NotNull final Extension extension, @NotNull final DomExtensionsRegistrar registrar) {
+      final ExtensionPoint extensionPoint = (ExtensionPoint)extension.getChildDescription().getDomDeclaration();
       assert extensionPoint != null;
 
       final String interfaceName = extensionPoint.getInterface().getStringValue();
