@@ -730,13 +730,12 @@ public abstract class UsefulTestCase extends TestCase {
 
   @SafeVarargs
   public static <T> void assertOneOf(T value, @NotNull T... values) {
-    boolean found = false;
     for (T v : values) {
       if (Objects.equals(value, v)) {
-        found = true;
+        return;
       }
     }
-    Assert.assertTrue(value + " should be equal to one of " + Arrays.toString(values), found);
+    Assert.fail(value + " should be equal to one of " + Arrays.toString(values));
   }
 
   public static void printThreadDump() {
