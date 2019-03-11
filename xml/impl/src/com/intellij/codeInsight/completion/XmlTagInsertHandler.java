@@ -46,6 +46,7 @@ import com.intellij.xml.actions.GenerateXmlTagAction;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -365,7 +366,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   }
 
   private static void completeTagTail(Template template, XmlElementDescriptor descriptor, PsiFile file, XmlTag context, boolean firstLevel) {
-    boolean completeIt = !firstLevel || descriptor.getAttributesDescriptors(null).length == 0;
+    boolean completeIt = !firstLevel || !canHaveAttributes(descriptor, context, file);
     switch (descriptor.getContentType()) {
       case XmlElementDescriptor.CONTENT_TYPE_UNKNOWN:
         return;
@@ -396,6 +397,15 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
          }
          break;
     }
+  }
+
+  private static boolean canHaveAttributes(XmlElementDescriptor descriptor, XmlTag context, PsiFile file) {
+    XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(context);
+    XmlExtension extension = XmlExtension.getExtension(file);
+    int required = WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes() ?
+                   ArraysKt.count(attributes, (attribute) -> extension.shouldBeInserted(attribute) && context.getAttribute(attribute.getName()) == null) :
+                   0;
+    return attributes.length - required > 0 ;
   }
 
   private static void addTagEnd(Template template, XmlElementDescriptor descriptor, XmlTag context) {
