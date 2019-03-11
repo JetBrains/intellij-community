@@ -29,6 +29,14 @@ public class ExternalSystemJdkUtil {
 
   @Nullable
   public static Sdk getJdk(@Nullable Project project, @Nullable String jdkName) throws ExternalSystemJdkException {
+    return getJdk(project, null, jdkName);
+  }
+
+  @Nullable
+  public static Sdk getJdk(@Nullable Project project,
+                           @Nullable Sdk projectSdk,
+                           @Nullable String jdkName
+  ) throws ExternalSystemJdkException {
     if (jdkName == null) return null;
 
     if (USE_INTERNAL_JAVA.equals(jdkName)) {
@@ -36,6 +44,8 @@ public class ExternalSystemJdkUtil {
     }
 
     if (USE_PROJECT_JDK.equals(jdkName)) {
+      if (projectSdk != null) return projectSdk;
+
       if (project != null) {
         Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
         if (res != null) return res;
