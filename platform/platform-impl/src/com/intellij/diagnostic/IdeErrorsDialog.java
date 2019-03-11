@@ -75,7 +75,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private final MessagePool myMessagePool;
   private final Project myProject;
-  private final boolean myDevelopersListVisible;
+  private final boolean myAssigneeVisible;
   private final Set<String> myAcceptedNotices;
   private final List<MessageCluster> myMessageClusters = new ArrayList<>();  // exceptions with the same stacktrace
   private int myIndex, myLastIndex = -1;
@@ -99,14 +99,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     super(project, true);
     myMessagePool = messagePool;
     myProject = project;
-    myDevelopersListVisible = ApplicationManager.getApplication().isInternal() || PluginManager.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID));
+    myAssigneeVisible = ApplicationManager.getApplication().isInternal() || PluginManager.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID));
 
     setTitle(DiagnosticBundle.message("error.list.title"));
     setModal(false);
     init();
     setCancelButtonText(CommonBundle.message("close.action.name"));
 
-    if (myDevelopersListVisible) {
+    if (myAssigneeVisible) {
       loadDevelopersList();
     }
 
@@ -273,7 +273,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     });
 
-    if (myDevelopersListVisible) {
+    if (myAssigneeVisible) {
       myAssigneeCombo = new ComboBox<>();
       myAssigneeCombo.setRenderer(new ListCellRendererWrapper<Developer>() {
         @Override
@@ -331,7 +331,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     attachmentsPanel.add(scrollPane(myAttachmentArea, 500, 350), BorderLayout.CENTER);
 
     JPanel accountRow = new JPanel(new BorderLayout());
-    if (myDevelopersListVisible) accountRow.add(myAssigneePanel, BorderLayout.WEST);
+    if (myAssigneeVisible) accountRow.add(myAssigneePanel, BorderLayout.WEST);
     accountRow.add(myCredentialsLabel, BorderLayout.EAST);
     myNoticePanel = new JPanel(new GridBagLayout());
     myNoticePanel.add(new JBLabel(UIUtil.getBalloonWarningIcon()), new GridBagConstraints(0, 0, 1, 1, 0, 0, NORTH, NONE, JBUI.insets(7, 0, 0, 5), 0, 0));
@@ -360,7 +360,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   protected Action[] createActions() {
     List<Action> actions = new ArrayList<>();
-    if (myDevelopersListVisible && myProject != null && !myProject.isDefault()) {
+    if (myAssigneeVisible && myProject != null && !myProject.isDefault()) {
       AnAction action = ActionManager.getInstance().getAction("Unscramble");
       if (action != null) {
         actions.add(new AnalyzeAction(action));
@@ -430,7 +430,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     updateLabels(cluster);
     updateDetails(cluster);
-    if (myDevelopersListVisible) {
+    if (myAssigneeVisible) {
       updateAssigneePanel(cluster);
     }
     updateCredentialsPanel(submitter);
