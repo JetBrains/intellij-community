@@ -1266,21 +1266,23 @@
             text="Show control flow" internal="true">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
+    <group id="TodoMainGroup" text="TODO">
+      <add-to-group group-id="Other.KeymapGroup"/>
+      <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup">
+        <separator text="Group by"/>
+        <action class="com.intellij.ide.todo.TodoPanel$MyShowModulesAction" id="TodoViewGroupByShowModules">
+          <keyboard-shortcut first-keystroke="control M" keymap="$default"/>
+        </action>
 
-    <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup">
-      <separator text="Group by"/>
-      <action class="com.intellij.ide.todo.TodoPanel$MyShowModulesAction" id="TodoViewGroupByShowModules">
-        <keyboard-shortcut first-keystroke="control M" keymap="$default" />
-      </action>
+        <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages">
+          <keyboard-shortcut first-keystroke="control P" keymap="$default"/>
+        </action>
 
-      <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages">
-        <keyboard-shortcut first-keystroke="control P" keymap="$default" />
-      </action>
+        <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage">
+          <keyboard-shortcut first-keystroke="control F" keymap="$default"/>
+        </action>
 
-      <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage">
-        <keyboard-shortcut first-keystroke="control F" keymap="$default" />
-      </action>
-
+      </group>
     </group>
   </actions>
 </idea-plugin>
