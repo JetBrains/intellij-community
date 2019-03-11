@@ -90,14 +90,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull private final Project myProject;
   @NotNull private final VcsConfiguration myVcsConfiguration;
-  private final boolean myShowVcsCommit;
   @NotNull private final DialogCommitWorkflow myWorkflow;
   @NotNull private final EventDispatcher<CommitExecutorListener> myExecutorEventDispatcher =
     EventDispatcher.create(CommitExecutorListener.class);
   @NotNull private final List<DataProvider> myDataProviders = newArrayList();
 
-  @NotNull private final Set<? extends AbstractVcs<?>> myAffectedVcses;
-  @NotNull private final List<? extends CommitExecutor> myExecutors;
   @NotNull private final String myCommitActionName;
 
   @NotNull private final Map<String, String> myListComments = newHashMap();
@@ -245,18 +242,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myWorkflow = workflow;
     myProject = myWorkflow.getProject();
     myVcsConfiguration = notNull(VcsConfiguration.getInstance(myProject));
-    myShowVcsCommit = myWorkflow.isDefaultCommitEnabled();
-    myAffectedVcses = myWorkflow.getAffectedVcses();
-    myExecutors = myWorkflow.getExecutors();
 
-    if (!myShowVcsCommit && ContainerUtil.isEmpty(myExecutors)) {
+    List<? extends CommitExecutor> executors = myWorkflow.getExecutors();
+    if (!isDefaultCommitEnabled() && ContainerUtil.isEmpty(executors)) {
       throw new IllegalArgumentException("nothing found to execute commit with");
     }
 
-    setTitle(myShowVcsCommit ? DIALOG_TITLE : getExecutorPresentableText(myExecutors.get(0)));
-    myCommitActionName = getCommitActionName(myAffectedVcses);
-    myExecutorActions = createExecutorActions(myExecutors);
-    if (myShowVcsCommit) {
+    setTitle(isDefaultCommitEnabled() ? DIALOG_TITLE : getExecutorPresentableText(executors.get(0)));
+    myCommitActionName = getCommitActionName(getWorkflowVcses());
+    myExecutorActions = createExecutorActions(executors);
+    if (isDefaultCommitEnabled()) {
       myCommitAction = new CommitAction(myCommitActionName);
       myCommitAction.setOptions(myExecutorActions);
     }
@@ -264,10 +259,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myCommitAction = null;
       myExecutorActions.get(0).putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
-    myHelpId = myShowVcsCommit ? HELP_ID : getHelpId(myExecutors);
+    myHelpId = isDefaultCommitEnabled() ? HELP_ID : getHelpId(executors);
 
     myDiffDetails = new MyChangeProcessor(myProject, myWorkflow.isPartialCommitEnabled());
-    myCommitMessageArea = new CommitMessage(myProject, true, true, myShowVcsCommit);
+    myCommitMessageArea = new CommitMessage(myProject, true, true, isDefaultCommitEnabled());
     myBrowser = myWorkflow.createBrowser();
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
@@ -311,8 +306,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void initOptions() {
-    if (myShowVcsCommit) {
-      myCommitOptions.setVcsOptions(getVcsOptions(this, myAffectedVcses, myWorkflow.getAdditionalDataConsumer()));
+    if (isDefaultCommitEnabled()) {
+      myCommitOptions.setVcsOptions(getVcsOptions(this, getWorkflowVcses(), myWorkflow.getAdditionalDataConsumer()));
     }
     myCommitOptions.setBeforeOptions(getBeforeOptions(getHandlers()));
     myCommitOptions.setAfterOptions(getAfterOptions(getHandlers(), getDisposable()));
@@ -388,7 +383,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if(executors.isEmpty()) return emptyList();
     List<CommitExecutorAction> result = newArrayList();
 
-    if (myShowVcsCommit && UISettings.getShadowInstance().getAllowMergeButtons()) {
+    if (isDefaultCommitEnabled() && UISettings.getShadowInstance().getAllowMergeButtons()) {
       ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("Vcs.CommitExecutor.Actions");
 
       result.addAll(map(group.getChildren(null), CommitExecutorAction::new));
@@ -825,7 +820,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Deprecated
   @NotNull
   public Set<? extends AbstractVcs> getAffectedVcses() {
-    return myShowVcsCommit ? myAffectedVcses : emptySet();
+    return isDefaultCommitEnabled() ? getWorkflowVcses() : emptySet();
   }
 
   @NotNull
@@ -874,7 +869,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   public boolean vcsIsAffected(String name) {
     return ProjectLevelVcsManager.getInstance(myProject).checkVcsIsActive(name) &&
-           exists(myAffectedVcses, vcs -> Comparing.equal(vcs.getName(), name));
+           exists(getWorkflowVcses(), vcs -> Comparing.equal(vcs.getName(), name));
   }
 
   @Override
@@ -1004,6 +999,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   private List<CheckinHandler> getHandlers() {
     return myWorkflow.getCommitHandlers();
+  }
+
+  private boolean isDefaultCommitEnabled() {
+    return myWorkflow.isDefaultCommitEnabled();
+  }
+
+  @NotNull
+  private Set<? extends AbstractVcs<?>> getWorkflowVcses() {
+    return myWorkflow.getAffectedVcses();
   }
 
   @NotNull
