@@ -127,11 +127,11 @@
     <renameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultRenameHelper"/>
     <astTransformationSupport order="after defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.FieldScriptTransformationSupport"/>
-    <astTransformationSupport id="delegateSupport" order="after defaultSupport"
-                              implementation="org.jetbrains.plugins.groovy.transformations.impl.DelegateTransformationSupport"/>
-    <astTransformationSupport id="traitSupport" order="last"
+    <astTransformationSupport id="traitSupport" order="after defaultSupport, before delegateSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.TraitTransformationSupport"/>
     <renameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.TraitRenameHelper"/>
+    <astTransformationSupport id="delegateSupport" order="after defaultSupport"
+                              implementation="org.jetbrains.plugins.groovy.transformations.impl.DelegateTransformationSupport"/>
 
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.listenerList.ListenerListTransformationSupport"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.transformations.listenerList.ListenerListAnnotationChecker"/>
