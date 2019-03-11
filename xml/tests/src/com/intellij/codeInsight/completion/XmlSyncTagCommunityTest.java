@@ -138,6 +138,12 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
     myFixture.checkResult("<div></div>");
   }
 
+  public void testWordExpand() {
+    myFixture.configureByText(XmlFileType.INSTANCE, "<di<caret>v></div>");
+    myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION);
+    myFixture.checkResult("<divv></divv>");
+  }
+
   public void testDeletingIncorrectTag() {
     doTest("<div>text</span><caret></div>", "\b\b\b\b\b\b\b", "<div>text</div>");
   }
