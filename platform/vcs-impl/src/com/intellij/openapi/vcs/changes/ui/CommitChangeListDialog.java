@@ -92,7 +92,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final VcsConfiguration myVcsConfiguration;
   private final boolean myShowVcsCommit;
   @NotNull private final DialogCommitWorkflow myWorkflow;
-  @Nullable private final CommitResultHandler myResultHandler;
   @NotNull private final EventDispatcher<CommitExecutorListener> myExecutorEventDispatcher =
     EventDispatcher.create(CommitExecutorListener.class);
   @NotNull private final List<DataProvider> myDataProviders = newArrayList();
@@ -249,7 +248,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myShowVcsCommit = myWorkflow.isDefaultCommitEnabled();
     myAffectedVcses = myWorkflow.getAffectedVcses();
     myExecutors = myWorkflow.getExecutors();
-    myResultHandler = myWorkflow.getResultHandler();
 
     if (!myShowVcsCommit && ContainerUtil.isEmpty(myExecutors)) {
       throw new IllegalArgumentException("nothing found to execute commit with");
@@ -595,12 +593,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           getHandlers().forEach(handler -> handler.checkinFailed(singletonList(new VcsException(e))));
         }
         finally {
-          if (myResultHandler != null) {
+          CommitResultHandler resultHandler = myWorkflow.getResultHandler();
+          if (resultHandler != null) {
             if (success) {
-              myResultHandler.onSuccess(getCommitMessage());
+              resultHandler.onSuccess(getCommitMessage());
             }
             else {
-              myResultHandler.onFailure();
+              resultHandler.onFailure();
             }
           }
         }
