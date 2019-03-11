@@ -169,7 +169,7 @@ public class StartupUtil {
     if (!Main.isHeadless()) {
       measureToken = StartUpMeasurer.start(Phases.UPDATE_WINDOW_ICON);
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
-      measureToken.endAndStart(Phases.REGISTER_BUNDLED_FONTS);
+      measureToken = measureToken.endAndStart(Phases.REGISTER_BUNDLED_FONTS);
       AppUIUtil.registerBundledFonts();
       measureToken.end();
       AppUIUtil.showUserAgreementAndConsentsIfNeeded();
