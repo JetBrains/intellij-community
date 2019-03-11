@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -37,12 +36,12 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
   public void applyTransformation(@NotNull TransformationContext context) {
     Map<PsiType, PsiAnnotation> declaredTypes = ContainerUtil.newLinkedHashMap();
     GrTypeDefinition codeClass = context.getCodeClass();
-    for (GrField field : codeClass.getCodeFields()) {
+    for (GrField field : context.getFields()) {
       final PsiAnnotation annotation = PsiImplUtil.getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
       if (annotation == null) continue;
       declaredTypes.putIfAbsent(field.getDeclaredType(), annotation);
     }
-    for (GrMethod method : codeClass.getCodeMethods()) {
+    for (PsiMethod method : context.getMethods()) {
       final PsiAnnotation annotation = PsiImplUtil.getAnnotation(method, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
       if (annotation == null) continue;
       if (!method.getParameterList().isEmpty()) continue;
