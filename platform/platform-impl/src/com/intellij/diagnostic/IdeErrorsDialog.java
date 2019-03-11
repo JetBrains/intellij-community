@@ -612,6 +612,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (submitter == null) return false;
     AbstractMessage message = cluster.first;
 
+    message.setAssigneeVisible(myAssigneeVisible);
     message.setDevelopersUpdateTimestamp(myDevelopersUpdateTimestamp);
     message.setSubmitting(true);
 

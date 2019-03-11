@@ -20,6 +20,7 @@ public abstract class AbstractMessage {
   private SubmittedReportInfo mySubmissionInfo;
   private String myAdditionalInfo;
   private Integer myAssigneeId;
+  private boolean myAssigneeVisible;
   private Long myDevelopersUpdateTimestamp;
 
   public abstract @NotNull Throwable getThrowable();
@@ -95,6 +96,14 @@ public abstract class AbstractMessage {
 
   public void setAssigneeId(@Nullable Integer assigneeId) {
     myAssigneeId = assigneeId;
+  }
+
+  boolean isAssigneeVisible() {
+    return myAssigneeVisible;
+  }
+
+  void setAssigneeVisible(boolean assigneeVisible) {
+    myAssigneeVisible = assigneeVisible;
   }
 
   public @Nullable Long getDevelopersUpdateTimestamp() {
