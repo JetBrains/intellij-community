@@ -734,6 +734,7 @@ public class ExpectedHighlightingData {
   private static boolean haveSamePresentation(@NotNull HighlightInfo info1, @NotNull HighlightInfo info2, boolean strictMatch) {
     return info1.startOffset == info2.startOffset &&
            info1.endOffset == info2.endOffset &&
+           Objects.equals(info1.forcedTextAttributesKey, info2.forcedTextAttributesKey) &&
            info1.isAfterEndOfLine() == info2.isAfterEndOfLine() &&
            (Comparing.strEqual(info1.getDescription(), info2.getDescription()) ||
             !strictMatch && Comparing.strEqual(ANY_TEXT, info2.getDescription()));
