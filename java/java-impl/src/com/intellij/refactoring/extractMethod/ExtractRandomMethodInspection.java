@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -36,6 +37,7 @@ public class ExtractRandomMethodInspection extends LocalInspectionTool {
       List<PsiCodeBlock> codeBlocks =
         Stream.concat(Arrays.stream(initializers).map(PsiClassInitializer::getBody),
                       Arrays.stream(methods).map(PsiMethod::getBody))
+          .filter(Objects::nonNull)
           .collect(Collectors.toList());
       if (!codeBlocks.isEmpty()) {
         for (int attempt = 0; attempt < 10; attempt++) {
