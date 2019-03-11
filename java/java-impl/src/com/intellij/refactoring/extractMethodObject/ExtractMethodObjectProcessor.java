@@ -588,6 +588,11 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
 
       @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {
+        // do not visit lambdas
+      }
+
+      @Override
       public void visitClass(PsiClass aClass) {
         // do not visit sub classes
       }
