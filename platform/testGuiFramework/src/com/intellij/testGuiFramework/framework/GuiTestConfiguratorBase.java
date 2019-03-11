@@ -15,7 +15,6 @@
  */
 package com.intellij.testGuiFramework.framework;
 
-import com.intellij.testGuiFramework.idea.IdeGuiTest;
 import org.fest.reflect.reference.TypeRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,11 +26,6 @@ import java.util.Map;
 import static org.fest.reflect.core.Reflection.method;
 import static org.junit.Assert.assertNotNull;
 
-/**
- * Collects configuration information from a UI test method's {@link IdeGuiTest} and {@link IdeGuiTestSetup} annotations and applies it
- * to the test before execution, using the the IDE's {@code ClassLoader} (which is the {@code ClassLoader} used by UI tests, to be able to
- * access IDE's services, state and components.)
- */
 public class GuiTestConfiguratorBase {
   private static final String CLOSE_PROJECT_BEFORE_EXECUTION_KEY = "closeProjectBeforeExecution";
   private static final String RETRY_COUNT_KEY = "retryCount";
