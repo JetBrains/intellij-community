@@ -1,35 +1,50 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
+import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.ui.UIUtil
 import java.awt.Font
-import java.awt.Graphics
-import java.util.concurrent.TimeUnit
+import javax.swing.Timer
+import javax.swing.event.AncestorEvent
 
 internal class BlinkingLabel internal constructor(text: String) : JBLabel(text) {
 
-  private var myFirstPainting = true
+  private var myPlainFont: Boolean = true
+  private val myTimer: Timer = Timer(750) { onTimer() }
 
-  override fun paintComponent(g: Graphics) {
-    super.paintComponent(g)
+  init {
+    myTimer.isRepeats = false
 
-    if (myFirstPainting) {
-      myFirstPainting = false
+    addAncestorListener(object: AncestorListenerAdapter() {
+      override fun ancestorAdded(event: AncestorEvent?) {
+        this@BlinkingLabel.removeAncestorListener(this)
 
-      after(750) {
-        reverseBold()
-        after(750) { reverseBold() }
+        myTimer.start()
       }
+    })
+
+    val sampleLabel = JBLabel(text)
+    sampleLabel.font = font.deriveFont(font.style or Font.BOLD)
+    minimumSize = sampleLabel.minimumSize
+    preferredSize = sampleLabel.preferredSize
+  }
+
+  private fun onTimer() {
+    if (myPlainFont) {
+      setBoldFont()
+      myTimer.restart()
+    } else {
+      setPlainFont()
     }
   }
 
-  private fun reverseBold() {
-    font = font.deriveFont(font.style xor Font.BOLD)
+  private fun setPlainFont() {
+    myPlainFont = true
+    font = font.deriveFont(font.style and Font.BOLD.inv())
   }
 
-  private fun after(delay: Long, f: () -> Unit) {
-    AppExecutorUtil.getAppScheduledExecutorService().schedule({ UIUtil.invokeLaterIfNeeded(f) }, delay, TimeUnit.MILLISECONDS)
+  private fun setBoldFont() {
+    myPlainFont = false
+    font = font.deriveFont(font.style or Font.BOLD)
   }
 }
