@@ -402,7 +402,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Proxy Vole", libraryName: "proxy-vole", version: "1.0.5", license: "Apache 2.0",
                        url: "https://github.com/MarkusBernhardt/proxy-vole",
                        licenseUrl: "https://github.com/MarkusBernhardt/proxy-vole/blob/master/LICENSE.md"),
-    new LibraryLicense(name: "pty4j", libraryName: "pty4j", version: "0.9.0", license: "Eclipse Public License v1.0",
+    new LibraryLicense(name: "pty4j", libraryName: "pty4j", version: "0.9.1", license: "Eclipse Public License v1.0",
                        url: "https://github.com/JetBrains/pty4j"),
     new LibraryLicense(name: "PureJavaComm", libraryName: "pty4j", version: "0.0.11.1", license: "BSD",
                        url: "https://github.com/nyholku/purejavacomm"),

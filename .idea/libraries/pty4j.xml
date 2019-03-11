@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="pty4j" type="repository">
-    <properties maven-id="org.jetbrains.pty4j:pty4j:0.9.0">
+    <properties maven-id="org.jetbrains.pty4j:pty4j:0.9.1">
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
         <dependency maven-id="com.google.guava:guava" />
@@ -10,12 +10,12 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.9.0/pty4j-0.9.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.9.1/pty4j-0.9.1.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/purejavacomm/0.0.11.1/purejavacomm-0.0.11.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.9.0/pty4j-0.9.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.9.1/pty4j-0.9.1-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/purejavacomm/0.0.11.1/purejavacomm-0.0.11.1-sources.jar!/" />
     </SOURCES>
   </library>
