@@ -3534,9 +3534,8 @@ public class UIUtil {
 
   @Nullable
   public static <T extends JComponent> T findComponentOfType(JComponent parent, Class<T> cls) {
-    if (parent == null || cls.isAssignableFrom(parent.getClass())) {
-      @SuppressWarnings("unchecked") final T t = (T)parent;
-      return t;
+    if (parent == null || cls.isInstance(parent)) {
+      return cls.cast(parent);
     }
     for (Component component : parent.getComponents()) {
       if (component instanceof JComponent) {
