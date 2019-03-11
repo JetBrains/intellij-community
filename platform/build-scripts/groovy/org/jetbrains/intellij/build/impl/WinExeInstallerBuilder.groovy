@@ -74,7 +74,8 @@ class WinExeInstallerBuilder {
     customizer.fileAssociations.collect { !it.startsWith(".") ? ".$it" : it}
   }
 
-  void buildInstaller(String winDistPath, String additionalDirectoryToInclude, String secondJreSuffix = null) {
+  void buildInstaller(String winDistPath, String additionalDirectoryToInclude, String secondJreSuffix = null, boolean jre32BitVersionSupported) {
+
     if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
       return
@@ -183,7 +184,7 @@ class WinExeInstallerBuilder {
     buildContext.notifyArtifactBuilt(installerPath)
   }
 
-  private void prepareConfigurationFiles(String box, String winDistPath) {
+  private void prepareConfigurationFiles(String box, String winDistPath, boolean jre32BitVersionSupported) {
     def productProperties = buildContext.productProperties
     def x64LauncherName = "${productProperties.baseFileName}64.exe"
     def mainExeLauncherName = customizer.include32BitLauncher ? "${productProperties.baseFileName}.exe" : x64LauncherName
@@ -213,6 +214,7 @@ class WinExeInstallerBuilder {
 !define ASSOCIATION "$fileAssociations"
 !define UNINSTALL_WEB_PAGE "${customizer.getUninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
 !define LINK_TO_JRE "$linkToJre"
+!define JRE_32BIT_VERSION_SUPPORTED "${jre32BitVersionSupported ? 1 : 0 }"
 
 ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDE build has been installed
 ; set to 1 for release build
