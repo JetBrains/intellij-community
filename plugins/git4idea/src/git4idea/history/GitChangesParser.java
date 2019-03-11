@@ -75,12 +75,12 @@ public class GitChangesParser {
         status = FileStatus.MODIFIED;
         final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, false);
         before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, false);
-        after = GitContentRevision.createRevision(filePath, thisRevision, project, null);
+        after = GitContentRevision.createRevision(filePath, thisRevision, project);
         break;
       case DELETED:
         status = FileStatus.DELETED;
         final FilePath filePathDeleted = GitContentRevision.createPath(vcsRoot, path, false);
-        before = GitContentRevision.createRevision(filePathDeleted, parentRevision, project, null);
+        before = GitContentRevision.createRevision(filePathDeleted, parentRevision, project);
         after = null;
         break;
       case MOVED:
@@ -89,7 +89,7 @@ public class GitChangesParser {
         final FilePath filePathAfterRename = GitContentRevision.createPath(vcsRoot, secondPath == null ? path : secondPath,
                                                                            false);
         before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, false);
-        after = GitContentRevision.createRevision(filePathAfterRename, thisRevision, project, null);
+        after = GitContentRevision.createRevision(filePathAfterRename, thisRevision, project);
         break;
       default:
         throw new AssertionError("Unknown file status: " + statusInfo);

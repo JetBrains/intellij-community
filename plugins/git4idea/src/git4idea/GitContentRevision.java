@@ -114,7 +114,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
                                                Project project,
                                                boolean unescapePath) throws VcsException {
     FilePath file = createPath(vcsRoot, path, unescapePath);
-    return createRevision(file, revisionNumber, project, null);
+    return createRevision(file, revisionNumber, project);
   }
 
   @Nullable
@@ -149,7 +149,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
     } else {
       filePath = createPath(vcsRoot, path, unescapePath);
     }
-    return createRevision(filePath, revisionNumber, project, null);
+    return createRevision(filePath, revisionNumber, project);
   }
 
   @NotNull
@@ -171,6 +171,13 @@ public class GitContentRevision implements ByteBackedContentRevision {
                                                @Nullable VcsRevisionNumber revisionNumber,
                                                @NotNull Project project) {
     FilePath filePath = VcsUtil.getFilePath(file);
+    return createRevision(filePath, revisionNumber, project);
+  }
+
+  @NotNull
+  public static ContentRevision createRevision(@NotNull FilePath filePath,
+                                               @Nullable VcsRevisionNumber revisionNumber,
+                                               @NotNull Project project) {
     return createRevision(filePath, revisionNumber, project, null);
   }
 
