@@ -147,17 +147,6 @@ abstract class ProductProperties {
   boolean buildSourcesArchive = false
 
   /**
-   * Path to a directory containing yjpagent*.dll, libyjpagent-linux*.so and libyjpagent.jnilib files, which will be copied to 'bin'
-   * directories of Windows, Linux and macOS distributions. If {@code null} no agent files will be bundled.
-   */
-  String yourkitAgentBinariesDirectoryPath = null
-
-  /**
-   * If {@code true} YourKit agent will be automatically attached when an EAP build of the product starts. It makes sense only if {@link #yourkitAgentBinariesDirectoryPath} is non-null.
-   */
-  boolean enableYourkitAgentInEAP = false
-
-  /**
    * Specifies how Maven artifacts for IDE modules should be generated, by default no artifacts are generated.
    */
   MavenArtifactsProperties mavenArtifacts = new MavenArtifactsProperties()

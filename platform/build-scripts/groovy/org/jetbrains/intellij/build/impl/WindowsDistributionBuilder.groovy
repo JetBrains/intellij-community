@@ -42,11 +42,6 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
           exclude(name: "breakgen*")
         }
       }
-      if (buildContext.productProperties.yourkitAgentBinariesDirectoryPath != null) {
-        fileset(dir: buildContext.productProperties.yourkitAgentBinariesDirectoryPath) {
-          include(name: "yjpagent*.dll")
-        }
-      }
     }
     BuildTasksImpl.unpackPty4jNative(buildContext, winDistPath, "win")
 
@@ -171,9 +166,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateVMOptions(String winDistPath, Collection<JvmArchitecture> architectures) {
     architectures.each {
-      def yourkitSessionName = buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP ? buildContext.systemSelector : null
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.exe.vmoptions"
-      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties, yourkitSessionName)
+      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties)
       new File(winDistPath, "bin/$fileName").text = vmOptions.replace(' ', '\n') + "\n"
     }
 

@@ -90,11 +90,6 @@ abstract class MacDistributionCustomizer {
    */
   boolean associateIpr = false
 
-  /**
-   * If {@code true} YourKit agent will be automatically attached when an EAP build of the product starts under macOS. This property is
-   * taken into account only if {@link ProductProperties#enableYourkitAgentInEAP} is {@code true}.
-   */
-  boolean enableYourkitAgentInEAP = true
 
   /**
    * Relative paths to files in macOS distribution which should take 'executable' permissions
