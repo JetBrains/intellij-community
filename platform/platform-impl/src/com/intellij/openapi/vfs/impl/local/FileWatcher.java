@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,10 +25,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -79,7 +77,7 @@ public class FileWatcher {
   private final PluggableFileWatcher[] myWatchers;
   private final AtomicBoolean myFailureShown = new AtomicBoolean(false);
   private final ExecutorService myFileWatcherExecutor = executor();
-  private final AtomicInteger myRootSettingOps = new AtomicInteger(0);
+  private final AtomicReference<Future<?>> myLastTask = new AtomicReference<>(null);
 
   private volatile CanonicalPathMap myPathMap = new CanonicalPathMap();
   private volatile List<Collection<String>> myManualWatchRoots = Collections.emptyList();
@@ -101,21 +99,19 @@ public class FileWatcher {
     });
   }
 
-  private void clearQueue() {
-    if (myFileWatcherExecutor instanceof BoundedTaskExecutor) {
-      ((BoundedTaskExecutor)myFileWatcherExecutor).clearAndCancelAll();
-    }
-  }
-
   public void dispose() {
     myFileWatcherExecutor.shutdown();
-    clearQueue();
 
-    try {
-      myFileWatcherExecutor.awaitTermination(1, TimeUnit.HOURS);
-    }
-    catch (InterruptedException e) {
-      LOG.error(e);
+    Future<?> lastTask = myLastTask.get();
+    if (lastTask != null) {
+      lastTask.cancel(false);
+      try {
+        lastTask.get();
+      }
+      catch (CancellationException ignored) { }
+      catch (InterruptedException | ExecutionException e) {
+        LOG.error(e);
+      }
     }
 
     for (PluggableFileWatcher watcher : myWatchers) {
@@ -131,7 +127,8 @@ public class FileWatcher {
   }
 
   public boolean isSettingRoots() {
-    if (myRootSettingOps.get() > 0) {
+    Future<?> lastTask = myLastTask.get();  // a new task may come after the read, but this seem to be an acceptable race
+    if (lastTask != null && !lastTask.isDone()) {
       return true;
     }
     for (PluggableFileWatcher watcher : myWatchers) {
@@ -166,10 +163,7 @@ public class FileWatcher {
    * Clients should take care of not calling this method in parallel.
    */
   void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
-    myRootSettingOps.incrementAndGet();
-
-    clearQueue();
-    myFileWatcherExecutor.submit(() -> {
+    Future<?> prevTask = myLastTask.getAndSet(myFileWatcherExecutor.submit(() -> {
       try {
         CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
 
@@ -179,13 +173,14 @@ public class FileWatcher {
         for (PluggableFileWatcher watcher : myWatchers) {
           watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
         }
-
-        myRootSettingOps.decrementAndGet();
       }
       catch (RuntimeException | Error e) {
         LOG.error(e);
       }
-    });
+    }));
+    if (prevTask != null) {
+      prevTask.cancel(false);
+    }
   }
 
   public void notifyOnFailure(@NotNull String cause, @Nullable NotificationListener listener) {
