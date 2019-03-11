@@ -34,6 +34,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Download = IconLoader.getIcon("/actions/download.svg");
     /** 16x16 */ public static final Icon Dump = IconLoader.getIcon("/actions/dump.svg");
     /** 16x16 */ public static final Icon Edit = IconLoader.getIcon("/actions/edit.svg");
+    /** 16x16 */ public static final Icon EditScheme = IconLoader.getIcon("/actions/editScheme.svg");
     /** 16x16 */ public static final Icon EditSource = IconLoader.getIcon("/actions/editSource.svg");
     /** 16x16 */ public static final Icon Execute = IconLoader.getIcon("/actions/execute.svg");
     /** 16x16 */ public static final Icon Exit = IconLoader.getIcon("/actions/exit.svg");
