@@ -95,28 +95,6 @@ public class GitContentRevision implements ByteBackedContentRevision {
     return myFile.hashCode() + myRevision.hashCode();
   }
 
-  /**
-   * Create revision
-   *
-   *
-   * @param vcsRoot        a vcs root for the repository
-   * @param path           an path inside with possibly escape sequences
-   * @param revisionNumber a revision number, if null the current revision will be created
-   * @param project        the context project
-   * @param unescapePath
-   * @return a created revision
-   * @throws VcsException if there is a problem with creating revision
-   */
-  @NotNull
-  public static ContentRevision createRevision(@NotNull VirtualFile vcsRoot,
-                                               @NotNull String path,
-                                               @Nullable VcsRevisionNumber revisionNumber,
-                                               Project project,
-                                               boolean unescapePath) throws VcsException {
-    FilePath file = createPath(vcsRoot, path, unescapePath);
-    return createRevision(file, revisionNumber, project);
-  }
-
   @Nullable
   public static GitSubmodule getRepositoryIfSubmodule(@NotNull Project project, @NotNull FilePath path) {
     VirtualFile file = path.getVirtualFile();
@@ -136,18 +114,13 @@ public class GitContentRevision implements ByteBackedContentRevision {
   }
 
   @NotNull
-  public static ContentRevision createRevisionForTypeChange(@NotNull Project project,
-                                                            @NotNull VirtualFile vcsRoot,
-                                                            @NotNull String path,
+  public static ContentRevision createRevisionForTypeChange(@NotNull FilePath filePath,
                                                             @Nullable VcsRevisionNumber revisionNumber,
-                                                            boolean unescapePath) throws VcsException {
-    FilePath filePath;
+                                                            @NotNull Project project) {
     if (revisionNumber == null) {
-      File file = new File(makeAbsolutePath(vcsRoot, path, unescapePath));
+      File file = filePath.getIOFile();
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-      filePath = virtualFile == null ? VcsUtil.getFilePath(file, false) : VcsUtil.getFilePath(virtualFile);
-    } else {
-      filePath = createPath(vcsRoot, path, unescapePath);
+      if (virtualFile != null) filePath = VcsUtil.getFilePath(virtualFile);
     }
     return createRevision(filePath, revisionNumber, project);
   }
