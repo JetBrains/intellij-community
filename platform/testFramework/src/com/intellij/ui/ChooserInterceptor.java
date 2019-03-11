@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.UIUtil;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.RegExp;
@@ -10,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -39,10 +39,9 @@ public class ChooserInterceptor extends UiInterceptors.UiInterceptor<JBPopup> {
   @Override
   protected void doIntercept(JBPopup popup) {
     JComponent component = popup.getContent();
-    JBList<?> content = StreamEx.ofTree((Component)component, Container.class, c -> StreamEx.of(c.getComponents()))
-      .select(JBList.class).findFirst().orElse(null);
+    JBList<?> content = UIUtil.findComponentOfType(component, JBList.class);
     if (content == null) {
-      fail("Expected chooser; got: " + component);
+      fail("JBList not found under " + component);
     }
     ListModel<?> model = content.getModel();
     List<String> actualOptions = IntStreamEx.range(model.getSize()).mapToObj(model::getElementAt).map(Object::toString).toList();

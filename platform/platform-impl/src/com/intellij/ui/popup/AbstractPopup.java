@@ -406,6 +406,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showCenteredInCurrentWindow(@NotNull Project project) {
+    if (UiInterceptors.tryIntercept(this)) return;
     Window window = null;
 
     Component focusedComponent = getWndManager().getFocusedComponent(project);
@@ -760,6 +761,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   public void show(Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
+    if (UiInterceptors.tryIntercept(this)) return;
     if (ApplicationManagerEx.getApplicationEx() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (isDisposed()) {
       throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");
