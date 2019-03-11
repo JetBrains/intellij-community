@@ -57,6 +57,33 @@ public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> imp
   }
 
   @Override
+  public Hash getStamp(File file, BuildTarget<?> target) throws IOException {
+    final HashPerTarget[] state = getState(file);
+    if (state != null) {
+      int targetId = myTargetsState.getBuildTargetId(target);
+      for (HashPerTarget hashPerTarget : state) {
+        if (hashPerTarget.targetId == targetId) {
+          return Hash.fromBytes(hashPerTarget.hash);
+        }
+      }
+    }
+    return Hash.ZERO;
+  }
+
+  @Override
+  public Hash lastModified(File file) throws IOException {
+    // todo: check file size ad ready with buffered reader
+    byte[] bytes = Files.readAllBytes(file.toPath());
+    byte[] digest = md.digest(bytes);
+    return Hash.fromBytes(digest);
+  }
+
+  @Override
+  public Hash lastModified(File file, @NotNull BasicFileAttributes attrs) throws IOException {
+    return lastModified(file);
+  }
+
+  @Override
   public void saveStamp(File file, BuildTarget<?> target, Hash stamp) throws IOException {
     int targetId = myTargetsState.getBuildTargetId(target);
     update(file, updateTimestamp(getState(file), targetId, stamp.asBytes()));
@@ -98,33 +125,6 @@ public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> imp
     }
   }
 
-  @Override
-  public Hash getStamp(File file, BuildTarget<?> target) throws IOException {
-    final HashPerTarget[] state = getState(file);
-    if (state != null) {
-      int targetId = myTargetsState.getBuildTargetId(target);
-      for (HashPerTarget hashPerTarget : state) {
-        if (hashPerTarget.targetId == targetId) {
-          return Hash.fromBytes(hashPerTarget.hash);
-        }
-      }
-    }
-    return Hash.ZERO;
-  }
-
-  @Override
-  public Hash lastModified(File file) throws IOException {
-    // todo: check file size ad ready with buffered reader
-    byte[] bytes = Files.readAllBytes(file.toPath());
-    byte[] digest = md.digest(bytes);
-    return Hash.fromBytes(digest);
-  }
-
-  @Override
-  public Hash lastModified(File file, @NotNull BasicFileAttributes attrs) throws IOException {
-    return lastModified(file);
-  }
-
   static class HashPerTarget {
     public final int targetId;
     public final byte[] hash;
@@ -132,29 +132,6 @@ public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> imp
     private HashPerTarget(int targetId, byte[] hash) {
       this.targetId = targetId;
       this.hash = hash;
-    }
-  }
-
-  static class Hash implements StampsStorage.Stamp {
-    static Hash ZERO = new Hash(new byte[]{});
-
-    private final byte[] myBytes;
-
-    Hash(byte[] bytes) {
-      myBytes = bytes;
-    }
-
-    byte[] asBytes() {
-      return myBytes;
-    }
-
-    static Hash fromBytes(byte[] bytes) {
-      return new Hash(bytes);
-    }
-
-    @Override
-    public boolean isEqual(StampsStorage.Stamp other) {
-      return other instanceof Hash && Arrays.equals(myBytes, ((Hash)other).myBytes);
     }
   }
 
@@ -179,6 +156,29 @@ public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> imp
         targets[i] = new HashPerTarget(id, bytes);
       }
       return targets;
+    }
+  }
+
+  static class Hash implements StampsStorage.Stamp {
+    static Hash ZERO = new Hash(new byte[]{});
+
+    private final byte[] myBytes;
+
+    Hash(byte[] bytes) {
+      myBytes = bytes;
+    }
+
+    byte[] asBytes() {
+      return myBytes;
+    }
+
+    static Hash fromBytes(byte[] bytes) {
+      return new Hash(bytes);
+    }
+
+    @Override
+    public boolean isEqual(Stamp other) {
+      return other instanceof Hash && Arrays.equals(myBytes, ((Hash)other).myBytes);
     }
   }
 }
