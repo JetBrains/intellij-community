@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,7 @@ import java.awt.*;
 
 public abstract class UndoRedoAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(UndoRedoAction.class);
+  public static final Key<Boolean> ALLOW_UNDO_OUTSIDE_OF_TEXT_FIELD = new Key<>("ALLOW_UNDO_OUTSIDE_OF_TEXT_FIELD");
 
   private boolean myActionInProgress;
 
@@ -68,7 +70,11 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     Editor e = dataContext.getData(CommonDataKeys.EDITOR);
     if (component instanceof JTextComponent && (e == null || component != e.getContentComponent())) {
-      return SwingUndoManagerWrapper.fromContext(dataContext);
+      UndoManager undoManager = SwingUndoManagerWrapper.fromContext(dataContext);
+      if (isAvailable(editor, undoManager) ||
+          ((JTextComponent)component).getClientProperty(ALLOW_UNDO_OUTSIDE_OF_TEXT_FIELD) != Boolean.TRUE) {
+        return undoManager;
+      }
     }
     JRootPane rootPane = null;
     JBPopup popup = null;
