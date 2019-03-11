@@ -1,10 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.fields.ExpandableSupport;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
@@ -91,8 +94,10 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
   }
 
   @NotNull
-  protected EditorTextField createPopupEditor(@NotNull EditorTextField field, String text) {
-    return new EditorTextField(text, field.getProject(), field.getFileType());
+  protected EditorTextField createPopupEditor(@NotNull EditorTextField field, @NotNull String text) {
+    Document document = Comparing.equal(text, field.getDocument().getText()) ? field.getDocument() :
+                        EditorFactory.getInstance().createDocument(text);
+    return new EditorTextField(document, field.getProject(), field.getFileType());
   }
 
   private static void copyCaretPosition(@NotNull Editor destination, Editor source) {
