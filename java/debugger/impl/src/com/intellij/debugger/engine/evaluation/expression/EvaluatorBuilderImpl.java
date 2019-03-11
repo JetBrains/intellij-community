@@ -137,7 +137,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       lExpression.accept(this);
       Evaluator lEvaluator = myResult;
 
-      rEvaluator = handleAssignmentBoxingAndPrimitiveTypeConversions(lType, rType, rEvaluator);
+      rEvaluator = handleAssignmentBoxingAndPrimitiveTypeConversions(lType, rType, rEvaluator, expression.getProject());
 
       if (assignmentType != JavaTokenType.EQ) {
         IElementType opType = TypeConversionUtil.convertEQtoOperation(assignmentType);
@@ -151,7 +151,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     // returns rEvaluator possibly wrapped with boxing/unboxing and casting evaluators
-    private static Evaluator handleAssignmentBoxingAndPrimitiveTypeConversions(PsiType lType, PsiType rType, Evaluator rEvaluator) {
+    private static Evaluator handleAssignmentBoxingAndPrimitiveTypeConversions(PsiType lType,
+                                                                               PsiType rType,
+                                                                               Evaluator rEvaluator,
+                                                                               Project project) {
       final PsiType unboxedLType = PsiPrimitiveType.getUnboxedType(lType);
 
       if (unboxedLType != null) {
@@ -174,6 +177,13 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
             if (!lType.equals(_rType)) {
               rEvaluator = createTypeCastEvaluator(rEvaluator, lType);
             }
+          }
+        }
+        else if (lType instanceof PsiClassType && rType instanceof PsiPrimitiveType && !PsiType.NULL.equals(rType)) {
+          final PsiClassType rightBoxed =
+            ((PsiPrimitiveType)rType).getBoxedType(PsiManager.getInstance(project), ((PsiClassType)lType).getResolveScope());
+          if (rightBoxed != null && TypeConversionUtil.isAssignable(lType, rightBoxed)) {
+            rEvaluator = new BoxingEvaluator(rEvaluator);
           }
         }
       }
@@ -651,7 +661,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
                 localVarReference.accept(this);
                 Evaluator lEvaluator = myResult;
-                rEvaluator = handleAssignmentBoxingAndPrimitiveTypeConversions(localVarReference.getType(), rType, rEvaluator);
+                rEvaluator = handleAssignmentBoxingAndPrimitiveTypeConversions(localVarReference.getType(), rType, rEvaluator,
+                                                                               statement.getProject());
 
                 Evaluator assignment = new AssignmentEvaluator(lEvaluator, rEvaluator);
                 evaluators.add(assignment);
