@@ -70,6 +70,10 @@ public class CodeStyle {
    */
   @NotNull
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
+    for (FileCodeStyleProvider provider : FileCodeStyleProvider.EP_NAME.getExtensionList()) {
+      CodeStyleSettings fileSettings = provider.getSettings(file);
+      if (fileSettings != null) return fileSettings;
+    }
     return CodeStyleCachingUtil.getCachedCodeStyle(file);
   }
 
