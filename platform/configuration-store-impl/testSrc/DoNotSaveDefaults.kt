@@ -90,6 +90,7 @@ internal class DoNotSaveDefaultsTest {
     propertyComponent.unsetValue("CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2")
     propertyComponent.unsetValue("ts.lib.d.ts.version")
     propertyComponent.unsetValue("nodejs_interpreter_path.stuck_in_default_project")
+    propertyComponent.unsetValue("android-component-compatibility-check")
 
     val useModCountOldValue = System.getProperty("store.save.use.modificationCount")
     try {
