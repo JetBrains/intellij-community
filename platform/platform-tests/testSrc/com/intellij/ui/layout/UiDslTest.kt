@@ -103,6 +103,11 @@ class UiDslTest {
   }
 
   @Test
+  fun `checkbox that acts as label`() {
+    doTest { checkBoxFollowedBySpinner() }
+  }
+
+  @Test
   fun `titled rows`() {
     // failed on TC but for now no 10.14 agents to test
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
