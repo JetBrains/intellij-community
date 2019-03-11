@@ -10,14 +10,15 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.ExtendableSettingsEditor
-import com.intellij.openapi.options.SettingsEditorGroup
 import com.intellij.openapi.options.ExtensionSettingsEditor
+import com.intellij.openapi.options.SettingsEditorGroup
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.util.SmartList
 import gnu.trove.THashMap
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 private val RUN_EXTENSIONS = Key.create<List<Element>>("run.extension.elements")
@@ -129,6 +130,7 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
     }
   }
 
+  @ApiStatus.Experimental
   @Throws(ExecutionException::class)
   open fun patchCommandLine(configuration: U,
                             runnerSettings: RunnerSettings?,
