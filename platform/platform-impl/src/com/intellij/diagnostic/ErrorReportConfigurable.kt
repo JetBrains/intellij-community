@@ -5,33 +5,71 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.SERVICE_NAME_PREFIX
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.util.io.decodeBase64
+import com.intellij.util.xmlb.XmlSerializer
+import org.jdom.Element
 
-@State(name = "ErrorReportConfigurable", storages = [(Storage(value = "other.xml", deprecated = true, roamingType = RoamingType.DISABLED))])
-internal class ErrorReportConfigurable : PersistentStateComponent<OldState> {
+@State(name = "ErrorReportConfigurable", storages = [Storage(value = "other.xml", deprecated = true, roamingType = RoamingType.DISABLED), Storage(value = "errorReporting.xml")])
+internal class ErrorReportConfigurable : PersistentStateComponent<Element> {
   companion object {
+
+    private const val ITN_LOGIN = "ITN_LOGIN"
+    private const val ITN_PASSWORD_CRYPT = "ITN_PASSWORD_CRYPT"
+
     @JvmStatic
     val SERVICE_NAME = "$SERVICE_NAME_PREFIX — JetBrains Account"
+
+    @JvmStatic
+    val instance: ErrorReportConfigurable
+      get() = ServiceManager.getService(ErrorReportConfigurable::class.java)
 
     @JvmStatic
     fun getCredentials() = PasswordSafe.instance.get(CredentialAttributes(SERVICE_NAME))
   }
 
-  override fun getState() = OldState()
+  private var myState: State? = null
 
-  override fun loadState(state: OldState) {
-    if (!state.ITN_LOGIN.isNullOrEmpty() || !state.ITN_PASSWORD_CRYPT.isNullOrEmpty()) {
-      PasswordSafe.instance.set(CredentialAttributes(SERVICE_NAME, state.ITN_LOGIN), Credentials(state.ITN_LOGIN, state.ITN_PASSWORD_CRYPT!!.decodeBase64()))
+  var cachedDeveloper: CachedDevelopers?
+    get() = myState?.let { CachedDevelopers(it.developers.toList(), it.timestamp) }
+    set(value) {
+      myState = value?.let { State(it.developers.toList(), it.timestamp) }
     }
+
+  override fun getState(): Element? {
+    return myState?.let { XmlSerializer.serialize(it) }
+  }
+
+  override fun loadState(state: Element) {
+    loadOldState(state)
+    myState = XmlSerializer.deserialize(state, State::class.java)
+  }
+
+  private fun loadOldState(element: Element) {
+    val options = element.getChildren("option")
+
+    fun getOptionValue(name: String): String? =
+      options.find { it.getAttributeValue("name") == name }?.getAttributeValue("value")
+
+    val login = getOptionValue(ITN_LOGIN)
+    val password = getOptionValue(ITN_PASSWORD_CRYPT)
+
+    if (!login.isNullOrEmpty() || !password.isNullOrEmpty()) {
+      PasswordSafe.instance.set(CredentialAttributes(SERVICE_NAME, login), Credentials(login, password?.decodeBase64()))
+    }
+  }
+
+  internal data class State(var developers: List<Developer>, var timestamp: Long) {
+    private constructor(): this(emptyList(), 0) // need for xml serialization
   }
 }
 
-@Suppress("PropertyName")
-internal class OldState {
-  var ITN_LOGIN: String? = null
-  var ITN_PASSWORD_CRYPT: String? = null
+internal data class CachedDevelopers(val developers: List<Developer>, val timestamp: Long) {
+  companion object {
+    private const val UPDATE_INTERVAL = 24L * 60 * 60 * 1000 // 24 hours
+  }
+
+  fun isUpToDateAt(timestamp: Long): Boolean {
+    return (timestamp - this.timestamp < UPDATE_INTERVAL) && developers.isNotEmpty()
+  }
 }

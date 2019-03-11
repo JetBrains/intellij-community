@@ -121,9 +121,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void loadDevelopersList() {
-    InternalErrorReportConfigurable internalConfigurable = InternalErrorReportConfigurable.getInstance();
-    if (internalConfigurable.isDevelopersListObsolete()) {
-      loadConfigurable(internalConfigurable);
+    ErrorReportConfigurable configurable = ErrorReportConfigurable.getInstance();
+    CachedDevelopers cachedDevelopers = configurable.getCachedDeveloper();
+    if (cachedDevelopers != null && cachedDevelopers.isUpToDateAt(System.currentTimeMillis())) {
+      loadCachedDevelopers(cachedDevelopers);
     }
     else {
       new Task.Backgroundable(null, "Loading Developers List", true) {
@@ -132,9 +133,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
           try {
             List<Developer> developers = ITNProxy.fetchDevelopers(indicator);
             UIUtil.invokeLaterIfNeeded(() -> {
-              internalConfigurable.setDevelopers(developers);
+              CachedDevelopers cachedDevelopers = new CachedDevelopers(developers, System.currentTimeMillis());
+              configurable.setCachedDeveloper(cachedDevelopers);
               if (isShowing()) {
-                loadConfigurable(internalConfigurable);
+                loadCachedDevelopers(cachedDevelopers);
               }
             });
           }
@@ -142,7 +144,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
             LOG.debug(e);
             UIUtil.invokeLaterIfNeeded(() -> {
               if (isShowing()) {
-                loadConfigurable(internalConfigurable);
+                loadCachedDevelopers(cachedDevelopers);
               }
             });
           }
@@ -152,9 +154,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private void loadConfigurable(InternalErrorReportConfigurable configurable) {
-    myAssigneeCombo.setModel(new CollectionComboBoxModel<>(configurable.getDevelopers()));
-    myDevelopersUpdateTimestamp = configurable.getDevelopersUpdateTimestamp();
+  private void loadCachedDevelopers(@Nullable CachedDevelopers cachedDevelopers) {
+    if (cachedDevelopers != null) {
+      myAssigneeCombo.setModel(new CollectionComboBoxModel<>(cachedDevelopers.getDevelopers()));
+      myDevelopersUpdateTimestamp = cachedDevelopers.getTimestamp();
+    }
   }
 
   private int selectMessage(@Nullable LogMessage defaultMessage) {

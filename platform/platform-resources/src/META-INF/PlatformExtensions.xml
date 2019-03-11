@@ -82,8 +82,6 @@
 
     <applicationService serviceInterface="com.intellij.diagnostic.ErrorReportConfigurable"
                         serviceImplementation="com.intellij.diagnostic.ErrorReportConfigurable"/>
-    <applicationService serviceInterface="com.intellij.diagnostic.InternalErrorReportConfigurable"
-                        serviceImplementation="com.intellij.diagnostic.InternalErrorReportConfigurable"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.impl.http.RemoteFileManager"
                         serviceImplementation="com.intellij.openapi.vfs.impl.http.RemoteFileManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.RefreshQueue"
