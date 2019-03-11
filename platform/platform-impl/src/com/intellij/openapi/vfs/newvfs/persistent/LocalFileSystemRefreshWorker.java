@@ -211,6 +211,7 @@ class LocalFileSystemRefreshWorker {
 
       RefreshingFileVisitor refreshingFileVisitor = new RefreshingFileVisitor(dir, refreshContext, null, Arrays.asList(children));
       refreshingFileVisitor.visit(dir);
+      if (myCancelled) break;
 
       // generating events unless a directory was changed in between
       boolean hasEvents = ReadAction.compute(() -> {
@@ -247,6 +248,7 @@ class LocalFileSystemRefreshWorker {
       if (cached.isEmpty() && wanted.isEmpty()) return;
       RefreshingFileVisitor refreshingFileVisitor = new RefreshingFileVisitor(dir, refreshContext, wanted, cached);
       refreshingFileVisitor.visit(dir);
+      if (myCancelled) break;
 
       // generating events unless a directory was changed in between
       boolean hasEvents = ReadAction.compute(() -> {
