@@ -75,6 +75,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   private volatile boolean myDefaultProjectWasDisposed;
   private final ProjectManagerListener myBusPublisher;
+  private final ExcludeRootsCache myExcludeRootsCache;
 
   @NotNull
   private static List<ProjectManagerListener> getListeners(@NotNull Project project) {
@@ -137,6 +138,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       }
     });
+    myExcludeRootsCache = new ExcludeRootsCache(messageBus);
   }
 
   private static void handleListenerError(@NotNull Throwable e, @NotNull ProjectManagerListener listener) {
@@ -342,6 +344,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @NotNull
   public synchronized Project getDefaultProject() {
     LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project has been already disposed!");
+    LOG.warn("WTF", new Throwable());
     if (myDefaultProject == null) {
       LOG.assertTrue(!ApplicationManager.getApplication().isDisposeInProgress(), "Application being disposed!");
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
@@ -892,5 +895,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       myProject = null;
       super.expire();
     }
+  }
+
+  @NotNull
+  public String[] getAllExcludedUrls() {
+    return myExcludeRootsCache.getExcludedUrls();
   }
 }
