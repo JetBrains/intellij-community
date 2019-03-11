@@ -44,24 +44,26 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    myText = null;
-    myConverter = null;
-    myContext = null;
     List<NumberConverter> converters = getConverters(file);
     if (converters.isEmpty()) return false;
     int offset = editor.getCaretModel().getOffset();
-    myContext = getContext(file, offset);
-    if (myContext == null && offset > 0) {
-      myContext = getContext(file, offset - 1);
+    NumberConversionContext context = getContext(file, offset);
+    if (context == null && offset > 0) {
+      context = getContext(file, offset - 1);
     }
-    if (myContext == null) return false;
-    Number number = myContext.myNumber;
-    String text = myContext.myText;
+    if (context == null) return false;
+    Number number = context.myNumber;
+    String text = context.myText;
     NumberConverter singleConverter = null;
     for (NumberConverter converter : converters) {
       String convertedText = converter.getConvertedText(text, number);
       if (convertedText != null) {
-        if (singleConverter != null) return true;
+        if (singleConverter != null) {
+          myText = null;
+          myConverter = null;
+          myContext = context;
+          return true;
+        }
         singleConverter = converter;
       }
     }
@@ -69,6 +71,7 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
     String convertedText = singleConverter.getConvertedText(text, number);
     myText = getActionName(singleConverter, convertedText);
     myConverter = singleConverter;
+    myContext = context;
     return true;
   }
 
