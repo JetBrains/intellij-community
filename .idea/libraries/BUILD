@@ -684,8 +684,8 @@ java_library(
 java_library(
     name = "winp",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.27:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.27:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.28:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.28:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1524,8 +1524,8 @@ java_library(
 java_library(
     name = "debugger-memory-agent",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/debugger-memory-agent/0.0.9:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/debugger-memory-agent/0.0.9:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/debugger-memory-agent/0.0.10:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/debugger-memory-agent/0.0.10:jar"],
 )
 
 # managed by go/iml_to_build
