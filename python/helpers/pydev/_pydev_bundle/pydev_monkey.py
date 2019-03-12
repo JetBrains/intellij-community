@@ -45,8 +45,13 @@ def _get_host_port():
 
 
 def _is_managed_arg(arg):
-    if arg.endswith('pydevd.py'):
-        return True
+    return arg.endswith('pydevd.py')
+
+
+def _is_already_patched(args):
+    for arg in args:
+        if 'pydevd' in arg:
+            return True
     return False
 
 
@@ -138,6 +143,9 @@ def patch_args(args):
             ind_c = get_c_option_index(args)
 
             if ind_c != -1:
+                if _is_already_patched(args):
+                    return args
+
                 host, port = _get_host_port()
 
                 if port is not None:

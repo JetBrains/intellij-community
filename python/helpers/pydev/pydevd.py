@@ -1478,15 +1478,19 @@ class DispatchReader(ReaderThread):
             self.killReceived = True
 
 
-DISPATCH_APPROACH_NEW_CONNECTION = 1 # Used by PyDev
-DISPATCH_APPROACH_EXISTING_CONNECTION = 2 # Used by PyCharm
-DISPATCH_APPROACH = DISPATCH_APPROACH_NEW_CONNECTION
+def _should_use_existing_connection(setup):
+    '''
+    The new connection dispatch approach is used by PyDev when the `multiprocess` option is set,
+    the existing connection approach is used by PyCharm when the `multiproc` option is set.
+    '''
+    return setup.get('multiproc', False)
+
 
 def dispatch():
     setup = SetupHolder.setup
     host = setup['client']
     port = setup['port']
-    if DISPATCH_APPROACH == DISPATCH_APPROACH_EXISTING_CONNECTION:
+    if _should_use_existing_connection(setup):
         dispatcher = Dispatcher()
         try:
             dispatcher.connect(host, port)
@@ -1616,8 +1620,6 @@ def main():
 
         elif setup['multiproc']: # PyCharm
             pydev_log.debug("Started in multiproc mode\n")
-            global DISPATCH_APPROACH
-            DISPATCH_APPROACH = DISPATCH_APPROACH_EXISTING_CONNECTION
 
             dispatcher = Dispatcher()
             try:
