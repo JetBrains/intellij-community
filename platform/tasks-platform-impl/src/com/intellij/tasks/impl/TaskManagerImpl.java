@@ -341,6 +341,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
 
     unshelveChanges(task);
+
+    if (newTask)
+      return;     // branch created already by VcsOpenTaskPanel
     List<BranchInfo> branches = task.getBranches(false);
     // we should have exactly one branch per repo
     MultiMap<String, BranchInfo> multiMap = new MultiMap<>();
