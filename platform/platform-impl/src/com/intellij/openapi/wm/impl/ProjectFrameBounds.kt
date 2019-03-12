@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.WindowManagerImpl.FrameBoundsConverter.convertToDeviceSpace
+import com.intellij.ui.ScreenUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import org.jdom.Element
@@ -58,6 +59,10 @@ class FrameInfo : BaseState() {
 
 fun WindowManagerImpl.getFrameInfoInDeviceSpace(project: Project, prev: FrameInfo?): FrameInfo? {
   val frame = getFrame(project) ?: return null
+
+  if (!ScreenUtil.intersectsVisibleScreen(frame)) {
+    logger<Rectangle>().warn("Looks like the frame ${frame.bounds} is outside the screen bounds")
+  }
 
   // save bounds even if maximized because on unmaximize we must restore previous frame bounds
   val deviceSpaceBounds = convertToDeviceSpace(frame.graphicsConfiguration, myDefaultFrameInfo.bounds!!)
