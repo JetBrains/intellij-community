@@ -51,7 +51,7 @@ public class GtkPreferredJComboBoxRendererInspection extends DevKitInspectionBas
         final PsiMethod method = (PsiMethod)target;
         if (!SETTER_METHOD_NAME.equals(method.getName())) return;
 
-        final Project project = expression.getProject();
+        final Project project = holder.getProject();
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
 
         final PsiClass comboClass = facade.findClass(COMBO_BOX_CLASS_NAME, GlobalSearchScope.allScope(project));
