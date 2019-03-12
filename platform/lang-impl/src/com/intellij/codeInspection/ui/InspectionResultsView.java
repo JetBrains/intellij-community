@@ -112,7 +112,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     myScope = globalInspectionContext.getCurrentScope();
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
-    myTree = new InspectionTree(globalInspectionContext, this);
+    myTree = new InspectionTree(this);
 
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(globalInspectionContext.getProject()).SPLITTER_PROPORTION);
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
