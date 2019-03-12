@@ -29,7 +29,7 @@ public class CompletionStatsCollectorSettings implements PersistentStateComponen
     myState.rankingEnabled = value;
   }
 
-  void setDataSendAllowed(boolean value) {
+  public void setDataSendAllowed(boolean value) {
     myState.dataSendAllowed = value;
   }
 

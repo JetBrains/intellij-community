@@ -1,13 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion
 
+import com.intellij.completion.settings.CompletionStatsCollectorSettings
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.reporting.isSendAllowed
 
 class NotificationManager : StartupActivity {
   companion object {
@@ -16,30 +19,40 @@ class NotificationManager : StartupActivity {
       "Data about your code completion usage will be anonymously reported. " +
       "No personal data or code will be sent."
 
-    private const val MESSAGE_TEXT_EAP = "$MESSAGE_TEXT This is only enabled in EAP builds."
-
-    private const val MESSAGE_SHOWN_KEY = "completion.stats.allow.message.shown"
+    private const val MESSAGE_SHOWN_KEY = "completion.stats.allow.question.shown"
   }
 
   private fun isMessageShown() = PropertiesComponent.getInstance().getBoolean(MESSAGE_SHOWN_KEY, false)
 
-  private fun setMessageShown(value: Boolean) = PropertiesComponent.getInstance().setValue(MESSAGE_SHOWN_KEY, value)
+  private fun fireMessageShown() = PropertiesComponent.getInstance().setValue(MESSAGE_SHOWN_KEY, true)
 
   override fun runActivity(project: Project) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    val application = ApplicationManager.getApplication()
+    if (application.isUnitTestMode) {
       return
     }
 
-    // Show message in EAP build or if additional plugin installed
-    if (!isMessageShown() && isSendAllowed()) {
+    // Show message once only in EAP builds
+    if (application.isEAP && StatisticsUploadAssistant.isSendAllowed() && !isMessageShown()) {
       notify(project)
-      setMessageShown(true)
+      fireMessageShown()
     }
   }
 
   private fun notify(project: Project) {
-    val messageText = if (ApplicationManager.getApplication().isEAP) MESSAGE_TEXT_EAP else MESSAGE_TEXT
-    val notification = Notification(PLUGIN_NAME, PLUGIN_NAME, messageText, NotificationType.INFORMATION)
+    val notification = Notification(PLUGIN_NAME, PLUGIN_NAME, MESSAGE_TEXT, NotificationType.INFORMATION)
+      .addAction(object : NotificationAction("Allow") {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          CompletionStatsCollectorSettings.getInstance().isDataSendAllowed = true
+          notification.expire()
+        }
+      })
+      .addAction(object : NotificationAction("Deny") {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          CompletionStatsCollectorSettings.getInstance().isDataSendAllowed = false
+          notification.expire()
+        }
+      })
     notification.notify(project)
   }
 }
