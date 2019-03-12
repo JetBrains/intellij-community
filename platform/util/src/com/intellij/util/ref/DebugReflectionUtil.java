@@ -101,7 +101,7 @@ public class DebugReflectionUtil {
   }
 
   private static boolean isTrivial(@NotNull Class<?> type) {
-    return type.isPrimitive() || type == String.class || type == Class.class || type.isArray() && isTrivial(type.getComponentType());
+    return type.isPrimitive() || type == Class.class; // Android Studio: consider Strings and primitive arrays nontrivial for BLeak
   }
 
   public static boolean isInitialized(@NotNull Class root) {
