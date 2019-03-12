@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class EditorModificationUtil {
-  public static final Key<String> READ_ONLY_VIEW_MESSAGE_KEY = Key.create("READ_ONLY_VIEW_MESSAGE_KEY");
+  private static final Key<String> READ_ONLY_VIEW_HINT_KEY = Key.create("READ_ONLY_VIEW_MESSAGE_KEY");
 
   private EditorModificationUtil() { }
 
@@ -387,8 +388,16 @@ public class EditorModificationUtil {
     if (!editor.isViewer()) return true;
     if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor instanceof TextComponentEditor) return false;
 
-    String data = READ_ONLY_VIEW_MESSAGE_KEY.get(editor);
-    HintManager.getInstance().showInformationHint(editor, data == null ? EditorBundle.message("editing.viewer.hint") : data);
+    String message = ObjectUtils.chooseNotNull(READ_ONLY_VIEW_HINT_KEY.get(editor), EditorBundle.message("editing.viewer.hint"));
+    HintManager.getInstance().showInformationHint(editor, message);
     return false;
+  }
+
+  /**
+   * Change hint that is displayed on attempt to modify text when editor is in view mode.
+   * Pass {@code null} to reset to default message.
+   */
+  public static void setReadOnlyHint(@NotNull Editor editor, @Nullable String message) {
+    editor.putUserData(READ_ONLY_VIEW_HINT_KEY, message);
   }
 }
