@@ -794,6 +794,10 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     myDisposable.add(disposable);
   }
 
+  void unregisterOnDispose(@NotNull Disposable disposable) {
+    myDisposable.remove(disposable);
+  }
+
   void checkModuleExtensionModification() {
     if (myExtensionToStateDigest == null || myExtensionToStateDigest.isEmpty()) {
       return;
