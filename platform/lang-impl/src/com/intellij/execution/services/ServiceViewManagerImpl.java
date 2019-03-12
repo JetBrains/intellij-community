@@ -24,11 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-@State(
-  name = "ServiceViewManager",
-  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
-)
-public class ServiceViewManagerImpl implements ServiceViewManager, PersistentStateComponent<ServiceViewManagerImpl.State> {
+@State(name = "ServiceViewManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public final class ServiceViewManagerImpl implements ServiceViewManager, PersistentStateComponent<ServiceViewManagerImpl.State> {
   static final ExtensionPointName<ServiceViewContributor> EP_NAME =
     ExtensionPointName.create("com.intellij.serviceViewContributor");
 
