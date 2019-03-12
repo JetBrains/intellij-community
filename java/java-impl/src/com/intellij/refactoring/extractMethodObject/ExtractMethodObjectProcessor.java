@@ -565,6 +565,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private void adjustTargetClassReferences(final PsiElement body) throws IncorrectOperationException {
     PsiManager manager = PsiManager.getInstance(myProject);
     PsiClass targetClass = getMethod().getContainingClass();
+    //Actually we should go into lambdas as this/super expressions inside them still refer to the outer class instance.
+    //Visiting returns inside lambdas is safe as they never have GENERATED_RETURN inside
+    //noinspection UnsafeReturnStatementVisitor
     body.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitReturnStatement(PsiReturnStatement statement) {
@@ -585,11 +588,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         if (expression.getQualifier() == null) {
           expression.replace(RefactoringChangeUtil.createSuperExpression(manager, targetClass));
         }
-      }
-
-      @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
-        // do not visit lambdas
       }
 
       @Override
