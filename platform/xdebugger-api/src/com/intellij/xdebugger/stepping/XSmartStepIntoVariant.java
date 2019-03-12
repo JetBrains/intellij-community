@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.stepping;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -19,21 +18,10 @@ public abstract class XSmartStepIntoVariant {
   public abstract String getText();
 
   /**
-   * Returns an element to highlight in the editor when this variant is selected in a popup.
-   * @deprecated use {@link #getHighlightRange()}
-   */
-  @Nullable
-  @Deprecated
-  public PsiElement getHighlightElement() {
-    return null;
-  }
-
-  /**
    * Returns a range to highlight in the editor when this variant is selected.
    */
   @Nullable
   public TextRange getHighlightRange() {
-    PsiElement element = getHighlightElement();
-    return element != null ? element.getTextRange() : null;
+    return null;
   }
 }
