@@ -33,8 +33,10 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -692,7 +694,19 @@ public class HintManagerImpl extends HintManager {
 
   @Override
   public void showInformationHint(@NotNull Editor editor, @NotNull String text, @PositionFlags short position) {
-    JComponent label = HintUtil.createInformationLabel(text);
+    showInformationHint(editor, text, null, position);
+  }
+
+  @Override
+  public void showInformationHint(@NotNull Editor editor, @NotNull String text, @Nullable HyperlinkListener listener) {
+    showInformationHint(editor, text, listener, ABOVE);
+  }
+
+  private void showInformationHint(@NotNull Editor editor,
+                                   @NotNull String text,
+                                   @Nullable HyperlinkListener listener,
+                                   @PositionFlags short position) {
+    JComponent label = HintUtil.createInformationLabel(text, listener, null, null);
     showInformationHint(editor, label, position);
   }
 

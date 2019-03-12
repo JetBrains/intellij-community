@@ -6,8 +6,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.awt.RelativePoint;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 
 /**
@@ -56,10 +58,8 @@ public abstract class HintManager {
   public void showInformationHint(@NotNull Editor editor, @NotNull String text) {
     showInformationHint(editor, text, ABOVE);
   }
-
-  public abstract void showInformationHint(@NotNull Editor editor,
-                                           @NotNull String text,
-                                           @PositionFlags short position);
+  public abstract void showInformationHint(@NotNull Editor editor, @NotNull String text, @PositionFlags short position);
+  public abstract void showInformationHint(@NotNull Editor editor, @NotNull String text, @Nullable HyperlinkListener listener);
 
   public abstract void showInformationHint(@NotNull Editor editor, @NotNull JComponent component);
 

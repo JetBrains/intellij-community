@@ -18,6 +18,7 @@ import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkListener;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -27,7 +28,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class EditorModificationUtil {
-  private static final Key<String> READ_ONLY_VIEW_HINT_KEY = Key.create("READ_ONLY_VIEW_MESSAGE_KEY");
+  private static final Key<ReadOnlyHint> READ_ONLY_VIEW_HINT_KEY = Key.create("READ_ONLY_VIEW_MESSAGE_KEY");
 
   private EditorModificationUtil() { }
 
@@ -388,16 +389,37 @@ public class EditorModificationUtil {
     if (!editor.isViewer()) return true;
     if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor instanceof TextComponentEditor) return false;
 
-    String message = ObjectUtils.chooseNotNull(READ_ONLY_VIEW_HINT_KEY.get(editor), EditorBundle.message("editing.viewer.hint"));
-    HintManager.getInstance().showInformationHint(editor, message);
+    ReadOnlyHint hint = ObjectUtils.chooseNotNull(READ_ONLY_VIEW_HINT_KEY.get(editor), ReadOnlyHint.DEFAULT);
+    HintManager.getInstance().showInformationHint(editor, hint.message, hint.linkListener);
     return false;
   }
 
   /**
-   * Change hint that is displayed on attempt to modify text when editor is in view mode.
-   * Pass {@code null} to reset to default message.
+   * @see #setReadOnlyHint(Editor, String, HyperlinkListener)
    */
   public static void setReadOnlyHint(@NotNull Editor editor, @Nullable String message) {
-    editor.putUserData(READ_ONLY_VIEW_HINT_KEY, message);
+    setReadOnlyHint(editor, message, null);
+  }
+
+  /**
+   * Change hint that is displayed on attempt to modify text when editor is in view mode.
+   *
+   * @param message      New hint message or {@code null} if default message should be used instead.
+   * @param linkListener Callback for html hyperlinks that can be used in hint message.
+   */
+  public static void setReadOnlyHint(@NotNull Editor editor, @Nullable String message, @Nullable HyperlinkListener linkListener) {
+    editor.putUserData(READ_ONLY_VIEW_HINT_KEY, message != null ? new ReadOnlyHint(message, linkListener) : null);
+  }
+
+  private static class ReadOnlyHint {
+    private static final ReadOnlyHint DEFAULT = new ReadOnlyHint(EditorBundle.message("editing.viewer.hint"), null);
+
+    @NotNull public final String message;
+    @Nullable public final HyperlinkListener linkListener;
+
+    private ReadOnlyHint(@NotNull String message, @Nullable HyperlinkListener linkListener) {
+      this.message = message;
+      this.linkListener = linkListener;
+    }
   }
 }
