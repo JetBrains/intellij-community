@@ -33,8 +33,8 @@ envs {
 
   python "python27", "2.7.15"
   python "python35", "3.5.4"
-  python "python36", "3.6.7"
-  python "python37", "3.7.1"
+  python "python36", "3.6.8"
+  python "python37", "3.7.2"
 
 //  conda "Anaconda3", "Anaconda3-5.0.0", "64", []
 }

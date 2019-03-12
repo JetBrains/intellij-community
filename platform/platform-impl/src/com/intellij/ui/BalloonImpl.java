@@ -551,7 +551,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       each.beforeShown(new LightweightWindowEvent(this));
     }
 
-    runAnimation(true, myLayeredPane, null);
+    if (isAnimationEnabled()) {
+      runAnimation(true, myLayeredPane, null);
+    }
 
     myLayeredPane.revalidate();
     myLayeredPane.repaint();
@@ -998,7 +1000,18 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     if (myLayeredPane != null) {
       myLayeredPane.removeComponentListener(myComponentListener);
 
-      runAnimation(false, myLayeredPane, disposeRunnable);
+      if (isAnimationEnabled()) {
+        runAnimation(false, myLayeredPane, disposeRunnable);
+      } else {
+        if (myAnimator != null) {
+          Disposer.dispose(myAnimator);
+        }
+
+        myLayeredPane.remove(myComp);
+        myLayeredPane.revalidate();
+        myLayeredPane.repaint();
+        disposeRunnable.run();
+      }
     }
     else {
       disposeRunnable.run();

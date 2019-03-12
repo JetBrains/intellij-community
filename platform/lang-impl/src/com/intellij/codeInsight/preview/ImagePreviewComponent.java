@@ -24,6 +24,9 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.JBColor;
+import com.intellij.util.SVGLoader;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,6 +122,11 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
 
   @NotNull
   public static BufferedImage readImageFromBytes(@NotNull byte[] content) throws IOException {
+    try {
+      Image image = SVGLoader.load(new ByteArrayInputStream(content), JBUI.sysScale());
+      if (image != null) return ImageUtil.toBufferedImage(image);
+    } catch (IOException ignored) {}
+
     InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
     try (ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream)) {
       Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(imageInputStream);

@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser;
 
 import java.util.Set;
@@ -29,10 +30,11 @@ public class ArtifactDownloadScanning implements MavenLoggedEventParser {
 
   @Override
   public boolean checkLogLine(@NotNull ExternalSystemTaskId id,
-                              @NotNull String line,
-                              @Nullable LogMessageType type,
+                              @NotNull MavenLogEntryReader.MavenLogEntry logLine,
+                              @NotNull MavenLogEntryReader logEntryReader,
                               @NotNull Consumer<? super BuildEvent> messageConsumer) {
-    if (line.startsWith(DOWNLOADING)) {
+    String line = logLine.getLine();
+    if (logLine.getLine().startsWith(DOWNLOADING)) {
       int resourceIdx = line.indexOf(':');
       if (resourceIdx < 0) {
         return false;

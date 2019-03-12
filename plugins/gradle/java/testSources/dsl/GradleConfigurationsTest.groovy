@@ -17,6 +17,24 @@ import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesT
 class GradleConfigurationsTest extends GradleHighlightingBaseTest implements ResolveTest {
 
   @Test
+  void configurationsTest() {
+    importProject("")
+    'configurations closure delegate'()
+    'configuration via unqualified property reference'()
+    'configuration via unqualified method call'()
+    'configuration closure delegate in unqualified method call'()
+    'configuration member via unqualified method call closure delegate'()
+    'configuration via qualified property reference'()
+    'configuration via qualified method call'()
+    'configuration closure delegate in qualified method call'()
+    'configuration member via qualified method call closure delegate'()
+  }
+
+  @Override
+  protected List<String> getParentCalls() {
+    return super.getParentCalls() + 'buildscript'
+  }
+
   void 'configurations closure delegate'() {
     doTest('configurations { <caret> }') {
       def closure = elementUnderCaret(GrClosableBlock)
@@ -26,7 +44,6 @@ class GradleConfigurationsTest extends GradleHighlightingBaseTest implements Res
     }
   }
 
-  @Test
   void 'configuration via unqualified property reference'() {
     doTest('configurations { <caret>foo }') {
       def ref = elementUnderCaret(GrReferenceExpression)
@@ -35,7 +52,6 @@ class GradleConfigurationsTest extends GradleHighlightingBaseTest implements Res
     }
   }
 
-  @Test
   void 'configuration via unqualified method call'() {
     doTest('configurations { <caret>foo {} }') {
       def call = elementUnderCaret(GrMethodCall)
@@ -44,7 +60,6 @@ class GradleConfigurationsTest extends GradleHighlightingBaseTest implements Res
     }
   }
 
-  @Test
   void 'configuration closure delegate in unqualified method call'() {
     doTest('configurations { foo { <caret> } }') {
       def closure = elementUnderCaret(GrClosableBlock)
@@ -54,7 +69,6 @@ class GradleConfigurationsTest extends GradleHighlightingBaseTest implements Res
     }
   }
 
-  @Test
   void 'configuration member via unqualified method call closure delegate'() {
     doTest('configurations { foo { <caret>extendsFrom() } }') {
       def call = elementUnderCaret(GrMethodCall)
@@ -64,7 +78,6 @@ class GradleConfigurationsTest extends GradleHighlightingBaseTest implements Res
     }
   }
 
-  @Test
   void 'configuration via qualified property reference'() {
     doTest('configurations { foo }; configurations.<caret>foo') {
       def ref = elementUnderCaret(GrReferenceExpression)
@@ -73,7 +86,6 @@ class GradleConfigurationsTest extends GradleHighlightingBaseTest implements Res
     }
   }
 
-  @Test
   void 'configuration via qualified method call'() {
     doTest('configurations { foo }; configurations.<caret>foo {}') {
       def call = elementUnderCaret(GrMethodCall)
@@ -82,7 +94,6 @@ class GradleConfigurationsTest extends GradleHighlightingBaseTest implements Res
     }
   }
 
-  @Test
   void 'configuration closure delegate in qualified method call'() {
     doTest('configurations { foo }; configurations.foo { <caret> }') {
       def closure = elementUnderCaret(GrClosableBlock)
@@ -92,7 +103,6 @@ class GradleConfigurationsTest extends GradleHighlightingBaseTest implements Res
     }
   }
 
-  @Test
   void 'configuration member via qualified method call closure delegate'() {
     doTest('configurations { foo }; configurations.foo { <caret>extendsFrom() }') {
       def call = elementUnderCaret(GrMethodCall)

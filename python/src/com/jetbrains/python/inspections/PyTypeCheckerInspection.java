@@ -105,6 +105,22 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Override
+    public void visitPyTargetExpression(PyTargetExpression node) {
+      // TODO: Check types in class-level assignments
+      final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
+      if (owner instanceof PyClass) return;
+      final PyExpression value = node.findAssignedValue();
+      if (value == null) return;
+      final PyType expected = myTypeEvalContext.getType(node);
+      final PyType actual = myTypeEvalContext.getType(value);
+      if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
+        registerProblem(value, String.format("Expected type '%s', got '%s' instead",
+                                             PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext),
+                                             PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext)));
+      }
+    }
+
+    @Override
     public void visitPyFunction(PyFunction node) {
       final PyAnnotation annotation = node.getAnnotation();
       final String typeCommentAnnotation = node.getTypeCommentAnnotation();

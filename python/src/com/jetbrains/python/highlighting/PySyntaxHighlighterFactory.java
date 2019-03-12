@@ -35,13 +35,20 @@ public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   @Override
   @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(@Nullable final Project project, @Nullable final VirtualFile virtualFile) {
-    final LanguageLevel level = project != null && virtualFile != null ?
-                                PyUtil.getLanguageLevelForVirtualFile(project, virtualFile) :
-                                LanguageLevel.getDefault();
+    final LanguageLevel level = getLanguageLevel(project, virtualFile);
     if (useConsoleLexer(project, virtualFile)) {
       return myConsoleMap.get(level);
     }
     return getSyntaxHighlighterForLanguageLevel(level);
+  }
+
+  /**
+   * Returns a syntax highlighter for Python console.
+   */
+  @NotNull
+  public SyntaxHighlighter getConsoleSyntaxHighlighter(@Nullable final Project project, @Nullable final VirtualFile virtualFile) {
+    final LanguageLevel level = getLanguageLevel(project, virtualFile);
+    return myConsoleMap.get(level);
   }
 
   /**
@@ -50,6 +57,13 @@ public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   @NotNull
   public SyntaxHighlighter getSyntaxHighlighterForLanguageLevel(@NotNull LanguageLevel level) {
     return myMap.get(level);
+  }
+
+  @NotNull
+  private static LanguageLevel getLanguageLevel(@Nullable final Project project, @Nullable final VirtualFile virtualFile) {
+    return project != null && virtualFile != null ?
+           PyUtil.getLanguageLevelForVirtualFile(project, virtualFile) :
+           LanguageLevel.getDefault();
   }
 
   private static boolean useConsoleLexer(@Nullable final Project project, @Nullable final VirtualFile virtualFile) {

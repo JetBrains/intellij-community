@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+@FunctionalInterface
 public interface BooleanGetter {
   BooleanGetter TRUE = () -> true;
 

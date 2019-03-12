@@ -28,8 +28,9 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExpressionStub, PyTargetExpression> {
-  private List<CustomTargetExpressionStubType> myCustomStubTypes;
+public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExpressionStub, PyTargetExpression>
+  implements
+  PyCustomizableStubElementType<PyTargetExpression, CustomTargetExpressionStub, CustomTargetExpressionStubType<? extends CustomTargetExpressionStub>> {
 
   public PyTargetExpressionElementType() {
     super("TARGET_EXPRESSION");
@@ -37,13 +38,6 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
 
   public PyTargetExpressionElementType(@NotNull @NonNls String debugName) {
     super(debugName);
-  }
-
-  private List<CustomTargetExpressionStubType> getCustomStubTypes() {
-    if (myCustomStubTypes == null) {
-      myCustomStubTypes = CustomTargetExpressionStubType.EP_NAME.getExtensionList();
-    }
-    return myCustomStubTypes;
   }
 
   @Override
@@ -66,12 +60,11 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     final String typeComment = psi.getTypeCommentAnnotation();
     final String annotation = psi.getAnnotationValue();
 
-    for (CustomTargetExpressionStubType customStubType : getCustomStubTypes()) {
-      CustomTargetExpressionStub customStub = customStubType.createStub(psi);
-      if (customStub != null) {
-        return new PyTargetExpressionStubImpl(name, docString, typeComment, annotation, psi.hasAssignedValue(), customStub, parentStub);
-      }
+    CustomTargetExpressionStub customStub = createCustomStub(psi);
+    if (customStub != null) {
+      return new PyTargetExpressionStubImpl(name, docString, typeComment, annotation, psi.hasAssignedValue(), customStub, parentStub);
     }
+
     PyTargetExpressionStub.InitializerType initializerType = PyTargetExpressionStub.InitializerType.Other;
     QualifiedName initializer = null;
     if (assignedValue instanceof PyReferenceExpression) {
@@ -100,8 +93,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     stream.writeBoolean(stub.hasAssignedValue());
     final CustomTargetExpressionStub customStub = stub.getCustomStub(CustomTargetExpressionStub.class);
     if (customStub != null) {
-      stream.writeName(customStub.getTypeClass().getCanonicalName());
-      customStub.serialize(stream);
+      serializeCustomStub(customStub, stream);
     }
     else {
       QualifiedName.serialize(stub.getInitializer(), stream);
@@ -122,14 +114,8 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     String annotation = stream.readNameString();
     final boolean hasAssignedValue = stream.readBoolean();
     if (initializerType == PyTargetExpressionStub.InitializerType.Custom) {
-      final String typeName = stream.readNameString();
-      for(CustomTargetExpressionStubType type: getCustomStubTypes()) {
-        if (type.getClass().getCanonicalName().equals(typeName)) {
-          CustomTargetExpressionStub stub = type.deserializeStub(stream);
-          return new PyTargetExpressionStubImpl(name, docString, typeComment, annotation, hasAssignedValue, stub, parentStub);
-        }
-      }
-      throw new IOException("Unknown custom stub type " + typeName);
+      CustomTargetExpressionStub stub = deserializeCustomStub(stream);
+      return new PyTargetExpressionStubImpl(name, docString, typeComment, annotation, hasAssignedValue, stub, parentStub);
     }
     QualifiedName initializer = QualifiedName.deserialize(stream);
     boolean isQualified = stream.readBoolean();
@@ -167,8 +153,14 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
         sink.occurrence(PyVariableNameIndex.KEY, name);
       }
     }
-    for (CustomTargetExpressionStubType stubType : getCustomStubTypes()) {
+    for (CustomTargetExpressionStubType stubType : getExtensions()) {
       stubType.indexStub(stub, sink);
     }
+  }
+
+  @NotNull
+  @Override
+  public List<CustomTargetExpressionStubType<? extends CustomTargetExpressionStub>> getExtensions() {
+    return CustomTargetExpressionStubType.EP_NAME.getExtensionList();
   }
 }

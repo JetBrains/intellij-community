@@ -23,7 +23,6 @@ import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 
 /**
@@ -36,9 +35,8 @@ public class MavenFileTypeFactory extends FileTypeFactory implements FileTypeUsa
     consumer.consume(XmlFileType.INSTANCE, MavenConstants.POM_EXTENSION);
   }
 
-  @Nullable
   @Override
-  public String describeSchema(@NotNull VirtualFile file) {
-    return file.getFileType() == XmlFileType.INSTANCE && FileUtil.namesEqual(file.getName(), MavenConstants.POM_XML) ? "Maven" : null;
+  public boolean describes(@NotNull VirtualFile file) {
+    return file.getFileType() == XmlFileType.INSTANCE && FileUtil.namesEqual(file.getName(), MavenConstants.POM_XML);
   }
 }

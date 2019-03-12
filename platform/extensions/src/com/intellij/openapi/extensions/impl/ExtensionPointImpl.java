@@ -524,23 +524,29 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   @Override
   public void unregisterExtension(@NotNull Class<? extends T> extensionClass) {
     String classNameToUnregister = extensionClass.getCanonicalName();
-    if (unregisterExtension((className, adapter) -> !className.equals(classNameToUnregister))) {
+    if (!unregisterExtensions((className, adapter) -> !className.equals(classNameToUnregister), /* stopAfterFirstMatch = */ true)) {
       LOG.warn("Extension to be removed not found: " + extensionClass);
     }
   }
 
   @Override
-  public synchronized boolean unregisterExtension(@NotNull BiPredicate<String, ExtensionComponentAdapter> extensionClassFilter) {
+  public synchronized boolean unregisterExtensions(@NotNull BiPredicate<String, ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch) {
     // here both myAdapters and myLoadedAdapters are checked because goal if this method - unregister extension without instantiation
+    boolean found = false;
     for (ExtensionComponentAdapter adapter : ContainerUtil.concat(myAdapters, myLoadedAdapters)) {
       if (extensionClassFilter.test(adapter.getAssignableToClassName(), adapter)) {
         continue;
       }
 
       unregisterExtensionAdapter(adapter);
-      return true;
+      if (stopAfterFirstMatch) {
+        return true;
+      }
+      else {
+        found = true;
+      }
     }
-    return false;
+    return found;
   }
 
   private void notifyListenersOnRemove(@NotNull T extensionObject,

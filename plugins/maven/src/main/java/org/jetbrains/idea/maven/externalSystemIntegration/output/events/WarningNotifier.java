@@ -5,12 +5,15 @@ import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.MessageEventImpl;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -25,12 +28,16 @@ public class WarningNotifier implements MavenLoggedEventParser {
 
   @Override
   public boolean checkLogLine(@NotNull ExternalSystemTaskId id,
-                              @NotNull String line,
-                              @Nullable LogMessageType type,
+                              @NotNull MavenLogEntryReader.MavenLogEntry logLine,
+                              @NotNull MavenLogEntryReader logEntryReader,
                               @NotNull Consumer<? super BuildEvent> messageConsumer) {
 
+    String line = logLine.getLine();
+
     if (warnings.add(line)) {
-      messageConsumer.accept(new MessageEventImpl(id, MessageEvent.Kind.WARNING, "Warning", line, line));
+      List<MavenLogEntryReader.MavenLogEntry> toConcat = logEntryReader.readUntil(l -> l.getType() == LogMessageType.WARNING);
+      String contatenated = line + "\n" + StringUtil.join(toConcat, MavenLogEntryReader.MavenLogEntry::getLine, "\n");
+      messageConsumer.accept(new MessageEventImpl(id, MessageEvent.Kind.WARNING, "Warning", line, contatenated));
       return true;
     }
     return false;

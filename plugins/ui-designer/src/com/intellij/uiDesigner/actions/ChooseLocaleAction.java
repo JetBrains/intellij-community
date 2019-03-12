@@ -31,9 +31,9 @@ public class ChooseLocaleAction extends ComboBoxAction {
   }
 
   @NotNull
-  @Override public JComponent createCustomComponent(@NotNull Presentation presentation) {
+  @Override public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     myPresentation = presentation;
-    return super.createCustomComponent(presentation);
+    return super.createCustomComponent(presentation, place);
   }
 
   @Override

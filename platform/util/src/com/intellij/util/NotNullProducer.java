@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
 
+@FunctionalInterface
 public interface NotNullProducer<T> extends Producer<T> {
   @Override
   @NotNull

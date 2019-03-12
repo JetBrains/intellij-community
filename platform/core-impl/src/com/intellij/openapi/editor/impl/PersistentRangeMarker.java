@@ -41,7 +41,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   private LinesCols myLinesCols;
 
   PersistentRangeMarker(@NotNull DocumentEx document, int startOffset, int endOffset, boolean register) {
-    super(document, startOffset, endOffset, register);
+    super(document, startOffset, endOffset, register, false);
     myLinesCols = ObjectUtils.assertNotNull(storeLinesAndCols(document, getStartOffset(), getEndOffset()));
   }
 

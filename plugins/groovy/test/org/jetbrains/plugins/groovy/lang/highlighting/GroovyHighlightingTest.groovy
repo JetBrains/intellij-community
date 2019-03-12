@@ -1435,8 +1435,8 @@ def bar() {
 
 def testConfig = bar()
 print testConfig.list[0]
-print <warning descr="Method call is ambiguous">testConfig.foo<warning descr="'testConfig.foo' cannot be applied to '()'">()</warning></warning>
-''', true, false, false, GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
+print <weak_warning descr="Cannot infer argument types">testConfig.foo<warning descr="'testConfig.foo' cannot be applied to '()'">()</warning></weak_warning>
+''', true, false, true, GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 
   void testGStringInjectionLFs() {

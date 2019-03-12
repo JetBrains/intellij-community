@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
  *  Please use {@link java.util.function.Supplier} instead
  *  @author dsl
  */
+@FunctionalInterface
 public interface Computable <T> {
 
   T compute();

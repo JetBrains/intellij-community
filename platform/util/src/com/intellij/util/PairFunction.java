@@ -19,6 +19,7 @@ package com.intellij.util;
  * Please use {@link java.util.function.BiFunction}
  * @author max
  */
+@FunctionalInterface
 public interface PairFunction<Arg1, Arg2, ResultType> {
 
   ResultType fun(Arg1 t, Arg2 v);

@@ -49,9 +49,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.apache.maven.shared:maven-dependency-tree:1.2" type="repository">
-        <properties maven-id="org.apache.maven.shared:maven-dependency-tree:1.2" >
+        <properties maven-id="org.apache.maven.shared:maven-dependency-tree:1.2">
           <exclude>
-             <dependency maven-id="org.apache.maven:maven-project"/>
+            <dependency maven-id="org.apache.maven:maven-project" />
           </exclude>
         </properties>
         <CLASSES>

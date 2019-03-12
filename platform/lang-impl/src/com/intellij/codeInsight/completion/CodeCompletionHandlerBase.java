@@ -108,12 +108,7 @@ public class CodeCompletionHandlerBase {
   }
 
   public final void invokeCompletion(final Project project, final Editor editor) {
-    try {
-      invokeCompletion(project, editor, 1);
-    }
-    catch (IndexNotReadyException e) {
-      DumbService.getInstance(project).showDumbModeNotification("Code completion is not available here while indices are being built");
-    }
+    invokeCompletion(project, editor, 1);
   }
 
   public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time) {
@@ -131,7 +126,7 @@ public class CodeCompletionHandlerBase {
     invokeCompletion(project, editor, time, hasModifiers, editor.getCaretModel().getPrimaryCaret());
   }
 
-  public final void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, @NotNull Caret caret) {
+  private void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, @NotNull Caret caret) {
     markCaretAsProcessed(caret);
 
     if (invokedExplicitly) {
@@ -184,10 +179,17 @@ public class CodeCompletionHandlerBase {
 
       doComplete(context, hasModifiers, hasValidContext, startingTime);
     };
-    if (autopopup) {
-      CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
-    } else {
-      CommandProcessor.getInstance().executeCommand(project, initCmd, null, null, editor.getDocument());
+    try {
+      if (autopopup) {
+        CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
+      } else {
+        CommandProcessor.getInstance().executeCommand(project, initCmd, null, null, editor.getDocument());
+      }
+    }
+    catch (IndexNotReadyException e) {
+      if (invokedExplicitly) {
+        DumbService.getInstance(project).showDumbModeNotification("Code completion is not available here while indices are being built");
+      }
     }
   }
 

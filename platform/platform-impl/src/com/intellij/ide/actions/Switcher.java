@@ -85,6 +85,8 @@ public class Switcher extends AnAction implements DumbAware {
   private static volatile SwitcherPanel SWITCHER = null;
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
 
+  private static final int MINIMUM_HEIGHT = JBUI.scale(100);
+
   @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
   private static final Color ON_MOUSE_OVER_BG_COLOR = new JBColor(new Color(231, 242, 249), new Color(77, 80, 84));
   private static int CTRL_KEY;
@@ -575,6 +577,7 @@ public class Switcher extends AnAction implements DumbAware {
         .setCancelOnWindowDeactivation(true)
         .setCancelOnOtherWindowOpen(true)
         .setMovable(pinned)
+        .setMinSize(new Dimension(myTopPanel.getMinimumSize().width, MINIMUM_HEIGHT))
         .setCancelKeyEnabled(false)
         .setCancelCallback(() -> {
           Container popupFocusAncestor = getPopupFocusAncestor();
@@ -714,6 +717,7 @@ public class Switcher extends AnAction implements DumbAware {
       size.height = JBUI.scale(29);
       size.width = titleLabel.getPreferredSize().width + showOnlyEditedFilesCheckBox.getPreferredSize().width + JBUI.scale(50);
       topPanel.setPreferredSize(size);
+      topPanel.setMinimumSize(size);
       topPanel.setBorder(JBUI.Borders.empty(5, 8));
 
       if (isMovable) {

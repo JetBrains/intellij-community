@@ -58,12 +58,12 @@ public abstract class ThreeStateCheckboxAction extends AnAction implements Custo
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     // this component cannot be stored right here because of action system architecture:
     // one action can be shown on multiple toolbars simultaneously
     ThreeStateCheckBox checkBox = new ThreeStateCheckBox();
     updateCustomComponent(checkBox, presentation);
-    return CheckboxAction.createCheckboxComponent(checkBox, this);
+    return CheckboxAction.createCheckboxComponent(checkBox, this, place);
   }
 
   protected void updateCustomComponent(ThreeStateCheckBox checkBox, Presentation presentation) {

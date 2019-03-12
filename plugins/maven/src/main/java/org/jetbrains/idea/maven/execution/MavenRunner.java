@@ -12,9 +12,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.buildtool.BuildToolWindowMavenConsole;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -173,7 +173,7 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new SoutMavenConsole();
     }
-    return MavenConsole.createGuiMavenConsole(myProject, title, workingDirPath);
+    return MavenConsole.createGuiMavenConsole(myProject, title, workingDirPath, ToolWindowId.RUN);
   }
 
   private MavenExecutor createExecutor(MavenRunnerParameters taskParameters,

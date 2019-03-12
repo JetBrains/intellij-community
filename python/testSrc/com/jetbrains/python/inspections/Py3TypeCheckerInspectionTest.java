@@ -345,4 +345,29 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testInitializingTypeVar() {
     doTest();
   }
+
+  // PY-24832
+  public void testAssignment() {
+    doTest();
+  }
+
+  // PY-24832
+  public void testReAssignment() {
+    doTest();
+  }
+
+  // PY-24832
+  public void testTypeCommentAssignment() {
+    doTest();
+  }
+
+  // PY-24832
+  public void testTypeDeclarationAndAssignment() {
+    doTest();
+  }
+
+  // PY-24832
+  public void testClassLevelAssignment() {
+    doTest();
+  }
 }

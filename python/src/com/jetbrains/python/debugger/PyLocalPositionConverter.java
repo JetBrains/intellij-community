@@ -56,7 +56,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
 
   @Override
   @NotNull
-  final public PySourcePosition create(@NotNull final String filePath, final int line) {
+  public PySourcePosition create(@NotNull final String filePath, final int line) {
     File file = new File(filePath);
 
     if (file.exists()) {
@@ -69,7 +69,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
 
   @Override
   @NotNull
-  public final PySourcePosition convertToPython(@NotNull final XSourcePosition position) {
+  public PySourcePosition convertToPython(@NotNull final XSourcePosition position) {
     return convertToPython(convertFilePath(position.getFile().getPath()), convertLocalLineToRemote(position.getFile(), position.getLine()));
   }
 
@@ -163,7 +163,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     }
   }
   @Nullable
-  protected static XSourcePosition createXSourcePosition(@Nullable VirtualFile vFile, int line) {
+  public static XSourcePosition createXSourcePosition(@Nullable VirtualFile vFile, int line) {
     if (vFile != null) {
       return XDebuggerUtil.getInstance().createPosition(vFile, convertRemoteLineToLocal(vFile, line));
     }

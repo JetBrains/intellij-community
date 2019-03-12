@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.junit;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
@@ -125,10 +126,11 @@ public class InheritorChooser {
 
       //suggest to run all inherited tests 
       classes.add(0, null);
+      String locationName = psiMethod != null ? psiMethod.getName() : containingClass.getName();
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(classes)
         .setRenderer(renderer)
-        .setTitle("Choose executable classes to run " + (psiMethod != null ? psiMethod.getName() : containingClass.getName()))
+        .setTitle(ExecutionBundle.message("test.cases.choosing.popup.title", locationName))
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)

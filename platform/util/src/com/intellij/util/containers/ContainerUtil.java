@@ -40,6 +40,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  @SafeVarargs
   @Contract(pure=true)
   public static <K, V> Map<K, V> newHashMap(@NotNull Pair<? extends K, ? extends V> first, @NotNull Pair<? extends K, ? extends V>... entries) {
     return ContainerUtilRt.newHashMap(first, entries);
@@ -82,6 +83,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  @SafeVarargs
   @Contract(pure=true)
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Pair<? extends K, ? extends V> first, @NotNull Pair<? extends K, ? extends V>... entries) {
     return ContainerUtilRt.newLinkedHashMap(first, entries);
@@ -149,6 +151,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return new ArrayList<>();
   }
 
+  @SafeVarargs
   @NotNull
   @Contract(pure=true)
   public static <E> ArrayList<E> newArrayList(@NotNull E... array) {
@@ -1422,6 +1425,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @SuppressWarnings("unchecked")
+  @SafeVarargs
   @NotNull
   @Contract(pure=true)
   public static <T> Iterable<T> concat(@NotNull final Iterable<? extends T>... iterables) {
@@ -1475,6 +1479,7 @@ public class ContainerUtil extends ContainerUtilRt {
    * @return read-only list consisting of the lists added together
    */
   @NotNull
+  @SafeVarargs
   @Contract(pure=true)
   public static <T> List<T> concat(@NotNull final List<? extends T>... lists) {
     int size = 0;
@@ -2170,6 +2175,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  @SafeVarargs
   @Contract(pure=true)
   public static <T> List<T> list(@NotNull T... items) {
     return Arrays.asList(items);

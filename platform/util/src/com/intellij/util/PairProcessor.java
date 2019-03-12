@@ -19,6 +19,7 @@ package com.intellij.util;
 /**
  * @author Gregory.Shrago
  */
+@FunctionalInterface
 public interface PairProcessor<S, T> {
   PairProcessor TRUE = (o, o1) -> true;
   PairProcessor FALSE = (o, o1) -> false;

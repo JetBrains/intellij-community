@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import java.util.ArrayList
+import kotlin.collections.LinkedHashSet
 
 open class GradleBuildScriptBuilder {
 
@@ -106,8 +107,8 @@ open class GradleBuildScriptBuilder {
    * dependencies { ... }
    * ...
    */
-  fun addPrefix(prefix: String) = apply {
-    prefixes.add(prefix)
+  fun addPrefix(vararg prefix: String) = apply {
+    prefixes.addAll(prefix)
   }
 
   /**
@@ -139,8 +140,8 @@ open class GradleBuildScriptBuilder {
    * ...
    * [postfix]
    */
-  fun addPostfix(postfix: String) = apply {
-    postfixes.add(postfix)
+  fun addPostfix(vararg postfix: String) = apply {
+    postfixes.addAll(postfix)
   }
 
   /**

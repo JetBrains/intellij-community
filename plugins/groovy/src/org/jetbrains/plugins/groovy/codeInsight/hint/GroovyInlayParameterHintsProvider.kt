@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMirrorElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
@@ -41,7 +41,7 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
     // - varargs which contain literals
     // - prefix unary expressions with numeric literal arguments
     fun shouldShowHint(arg: PsiElement): Boolean {
-      if (arg is GrClosableBlock) return true
+      if (arg is GrFunctionalExpression) return true
       if (arg is GrLiteral) return true
       if (arg is GrUnaryExpression) return arg.operand.let { it is GrLiteral && it.value is Number }
       return false

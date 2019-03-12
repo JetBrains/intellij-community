@@ -6,6 +6,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -22,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.TasksToRun;
-
-import java.util.List;
-import java.util.Map;
 
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.getSourceFile;
@@ -49,7 +47,6 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, configurationData.module)) return false;
 
     TasksToRun tasksToRun = findTestsTaskToRun(configurationData.source, context.getProject());
-    if (tasksToRun.isEmpty()) return false;
 
     sourceElement.set(configurationData.sourceElement);
 
@@ -89,23 +86,21 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
       performRunnable.run();
       return;
     }
-    TasksChooser tasksChooser = new TasksChooser() {
-      @Override
-      protected void choosesTasks(@NotNull List<? extends Map<String, ? extends List<String>>> tasks) {
+    String locationName = String.format("'%s'", extractLocationName(configurationData.psiPackage, configurationData.module));
+    DataContext dataContext = TestTasksChooser.contextWithLocationName(context.getDataContext(), locationName);
+    PsiElement[] sourceElements = ArrayUtil.toObjectArray(PsiElement.class, configurationData.sourceElement);
+    getTestTasksChooser().chooseTestTasks(context.getProject(), dataContext, sourceElements, tasks -> {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiElement, String> createFilter = (e) -> createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/false);
-        PsiElement[] sourceElements = ArrayUtil.toObjectArray(PsiElement.class, configurationData.sourceElement);
-        if (!applyTestConfiguration(settings, context.getProject(), tasks, sourceElements, createFilter)) {
+        if (!applyTestConfiguration(settings, context.getModule(), tasks, sourceElements, createFilter)) {
           LOG.warn("Cannot apply package test configuration, uses raw run configuration");
           performRunnable.run();
           return;
         }
         configuration.setName(suggestName(configurationData.psiPackage, configurationData.module));
         performRunnable.run();
-      }
-    };
-    tasksChooser.runTaskChoosing(context, configurationData.sourceElement);
+    });
   }
 
   @Nullable
@@ -147,10 +142,12 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
     return sourceDirs[0];
   }
 
+  private static String extractLocationName(@NotNull PsiPackage aPackage, @NotNull Module module) {
+    return aPackage.getQualifiedName().isEmpty() ? module.getName() : aPackage.getQualifiedName();
+  }
+
   private static String suggestName(@NotNull PsiPackage aPackage, @NotNull Module module) {
-    return aPackage.getQualifiedName().isEmpty()
-           ? ExecutionBundle.message("test.in.scope.presentable.text", module.getName())
-           : ExecutionBundle.message("test.in.scope.presentable.text", aPackage.getQualifiedName());
+    return ExecutionBundle.message("test.in.scope.presentable.text", extractLocationName(aPackage, module));
   }
 
   private static class ConfigurationData {

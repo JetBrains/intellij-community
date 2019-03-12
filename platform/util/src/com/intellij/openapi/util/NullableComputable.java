@@ -21,6 +21,7 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.Nullable;
 
+@FunctionalInterface
 public interface NullableComputable<T> extends Computable<T> {
   @Override
   @Nullable

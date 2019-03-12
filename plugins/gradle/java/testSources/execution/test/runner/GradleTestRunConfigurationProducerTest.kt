@@ -118,4 +118,16 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       projectData["project"]["GroovyTestCase"]["test2"].element
     )
   }
+
+  @Test
+  fun `test configuration different tasks in single module`() {
+    currentExternalProjectSettings.isResolveModulePerSourceSet = false
+    val projectData = generateAndImportTemplateProject()
+    assertConfigurationFromContext<PatternGradleConfigurationProducer>(
+      """:cleanTest :test --tests "TestCase" :cleanAutoTest :autoTest --tests "AutomationTestCase" --continue""",
+      projectData["project"]["TestCase"].element,
+      projectData["project"]["AutomationTestCase"].element,
+      testTasksFilter = { it in setOf("test", "autoTest") }
+    )
+  }
 }

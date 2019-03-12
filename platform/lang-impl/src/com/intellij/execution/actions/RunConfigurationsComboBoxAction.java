@@ -127,7 +127,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull final Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
     myButton = new ComboBoxButton(presentation) {
       @Override
       public Dimension getPreferredSize() {

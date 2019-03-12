@@ -77,7 +77,7 @@ public class GradleRerunFailedTestsAction extends JavaRerunFailedTestsAction {
         Function2<PsiClass, GradleSMTestProxy, String> createFilter = (psiClass, test) -> {
           String testName = test.getName();
           String className = test.getClassName();
-          return TestMethodGradleConfigurationProducer.createTestFilter(className, testName);
+          return TestMethodGradleConfigurationProducer.createTestFilter(className, testName)  ;
         };
         Function1<VirtualFile, List<List<String>>> getTestsTaskToRun = source -> {
           List<? extends List<String>> foundTasksToRun = findAllTestsTaskToRun(source, project);
@@ -96,7 +96,8 @@ public class GradleRerunFailedTestsAction extends JavaRerunFailedTestsAction {
           }
           return tasksToRun;
         };
-        if (applyTestConfiguration(settings, project, tests, findPsiClass, createFilter, getTestsTaskToRun)) {
+        String projectPath = settings.getExternalProjectPath();
+        if (applyTestConfiguration(settings, projectPath, tests, findPsiClass, createFilter, getTestsTaskToRun)) {
           runProfile.getSettings().setFrom(settings);
         }
         return runProfile.getState(executor, environment);

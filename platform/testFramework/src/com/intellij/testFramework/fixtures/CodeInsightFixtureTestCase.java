@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -13,7 +12,6 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author yole
@@ -44,8 +42,6 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder>
   
   @Override
   protected void tearDown() throws Exception {
-    DaemonCodeAnalyzerImpl.waitForAllEditorsFinallyLoaded(getProject(), 10, TimeUnit.SECONDS);
-
     myModule = null;
     try {
       myFixture.tearDown();

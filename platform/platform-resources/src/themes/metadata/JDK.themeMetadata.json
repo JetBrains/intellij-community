@@ -3,7 +3,8 @@
   "fixed": true,
   "ui": [
     {
-      "key": "ActionButton.hoverBackground"
+      "key": "ActionButton.hoverBackground",
+      "description": "A toolbar button under an icon"
     },
     {
       "key": "ActionButton.hoverBorderColor"
@@ -15,100 +16,129 @@
       "key": "ActionButton.pressedBorderColor"
     },
     {
-      "key": "activeCaption"
+      "key": "activeCaption",
+      "deprecated": true
     },
     {
-      "key": "activeCaptionBorder"
+      "key": "activeCaptionBorder",
+      "deprecated": true
     },
     {
-      "key": "activeCaptionText"
+      "key": "activeCaptionText",
+      "deprecated": true
     },
     {
-      "key": "Button.arc"
+      "key": "Button.arc",
+      "description": "Button corner radius"
     },
     {
-      "key": "Button.background"
+      "key": "Button.background",
+      "description": "Empty area around a button. Must be the same color as Panel.background."
     },
     {
-      "key": "Button.darkShadow"
+      "key": "Button.darkShadow",
+      "deprecated": true
     },
     {
-      "key": "Button.default.borderColor"
+      "key": "Button.default.borderColor",
+      "deprecated": true
     },
     {
-      "key": "Button.default.endBackground"
+      "key": "Button.default.endBackground",
+      "description": "Gradient bottom color"
     },
     {
-      "key": "Button.default.endBorderColor"
+      "key": "Button.default.endBorderColor",
+      "description": "Gradient bottom color"
     },
     {
-      "key": "Button.default.focusColor"
+      "key": "Button.default.focusColor",
+      "description": "Outer border when focused. For the Dark theme only."
     },
     {
-      "key": "Button.default.focusedBorderColor"
+      "key": "Button.default.focusedBorderColor",
+      "description": "Inner 1px-wide border when focused"
     },
     {
-      "key": "Button.default.foreground"
+      "key": "Button.default.foreground",
+      "description": "\"Default\" is the blue button in dialogs that triggers an action on Enter or Ctrl+Enter."
     },
     {
-      "key": "Button.default.shadowColor"
+      "key": "Button.default.shadowColor",
+      "description": "Light shadow under the default button"
     },
     {
-      "key": "Button.default.startBackground"
+      "key": "Button.default.startBackground",
+      "description": "Gradient top color"
     },
     {
-      "key": "Button.default.startBorderColor"
+      "key": "Button.default.startBorderColor",
+      "description": "Gradient top color"
     },
     {
       "key": "Button.disabledBorderColor"
     },
     {
-      "key": "Button.disabledText"
+      "key": "Button.disabledText",
+      "description": "Foreground of a disabled button"
     },
     {
-      "key": "Button.endBackground"
+      "key": "Button.endBackground",
+      "description": "Gradient bottom color"
     },
     {
-      "key": "Button.endBorderColor"
+      "key": "Button.endBorderColor",
+      "description": "Gradient bottom color"
     },
     {
-      "key": "Button.focusedBorderColor"
+      "key": "Button.focusedBorderColor",
+      "description": "Inner 1px-wide border when focused. The Outer focus border is Component.focusColor."
     },
     {
       "key": "Button.foreground"
     },
     {
-      "key": "Button.highlight"
+      "key": "Button.highlight",
+      "deprecated": true
     },
     {
-      "key": "Button.light"
+      "key": "Button.light",
+      "deprecated": true
     },
     {
-      "key": "Button.paintShadow"
+      "key": "Button.paintShadow",
+      "deprecated": true
     },
     {
-      "key": "Button.select"
+      "key": "Button.select",
+      "deprecated": true
     },
     {
-      "key": "Button.shadow"
+      "key": "Button.shadow",
+      "deprecated": true
     },
     {
-      "key": "Button.shadowColor"
+      "key": "Button.shadowColor",
+      "description": "Light shadow under a button"
     },
     {
-      "key": "Button.shadowWidth"
+      "key": "Button.shadowWidth",
+      "description": "Light shadow under a button. Height in pixels"
     },
     {
-      "key": "Button.startBackground"
+      "key": "Button.startBackground",
+      "description": "Gradient top color"
     },
     {
-      "key": "Button.startBorderColor"
+      "key": "Button.startBorderColor",
+      "description": "Gradient top color"
     },
     {
       "key": "CheckBox.background"
     },
     {
-      "key": "CheckBox.disabledText"
+      "key": "CheckBox.disabledText",
+      "description": "Foreground of a disabled checkbox"
     },
     {
       "key": "CheckBox.foreground"
@@ -117,7 +147,8 @@
       "key": "CheckBox.select"
     },
     {
-      "key": "CheckBoxMenuItem.acceleratorForeground"
+      "key": "CheckBoxMenuItem.acceleratorForeground",
+      "description": "The JBCheckboxMenuItem component. Example: context menu for the editor status icon"
     },
     {
       "key": "CheckBoxMenuItem.acceleratorSelectionForeground"
@@ -156,166 +187,219 @@
       "key": "ComboBox.ArrowButton.disabledIconColor"
     },
     {
-      "key": "ComboBox.ArrowButton.iconColor"
+      "key": "ComboBox.ArrowButton.iconColor",
+      "description": "The triangle icon"
     },
     {
-      "key": "ComboBox.ArrowButton.nonEditableBackground"
+      "key": "ComboBox.ArrowButton.nonEditableBackground",
+      "description": "Right-side button in a non-editable combo-box"
     },
     {
-      "key": "ComboBox.background"
+      "key": "ComboBox.background",
+      "description": "Drop-down menu background. Editable combo box background is TextField.background. Non-editable combo box background is ComboBox.nonEditableBackground"
     },
     {
-      "key": "ComboBox.buttonBackground"
+      "key": "ComboBox.buttonBackground",
+      "deprecated": true
     },
     {
-      "key": "ComboBox.buttonDarkShadow"
+      "key": "ComboBox.buttonDarkShadow",
+      "deprecated": true
     },
     {
-      "key": "ComboBox.buttonHighlight"
+      "key": "ComboBox.buttonHighlight",
+      "deprecated": true
     },
     {
-      "key": "ComboBox.buttonShadow"
+      "key": "ComboBox.buttonShadow",
+      "deprecated": true
     },
     {
-      "key": "ComboBox.disabledBackground"
+      "key": "ComboBox.disabledBackground",
+      "deprecated": true
     },
     {
-      "key": "ComboBox.disabledForeground"
+      "key": "ComboBox.disabledForeground",
+      "description": "Disabled non-editable combo box"
     },
     {
-      "key": "ComboBox.foreground"
+      "key": "ComboBox.foreground",
+      "description": "Non-editable combo box. Editable combo box foreground is TextField.foreground"
     },
     {
-      "key": "ComboBox.nonEditableBackground"
+      "key": "ComboBox.nonEditableBackground",
+      "description": "Non-editable combo box"
     },
     {
-      "key": "ComboBox.selectionBackground"
+      "key": "ComboBox.selectionBackground",
+      "description": "Background of the selected item in a drop-down menu"
     },
     {
-      "key": "ComboBox.selectionForeground"
+      "key": "ComboBox.selectionForeground",
+      "description": "Foreground of the selected item in a drop-down menu"
     },
     {
-      "key": "ComboBoxButton.background"
+      "key": "ComboBoxButton.background",
+      "description": "The ComboBoxButton component. Usually appears in toolbars. Other colors are inherited from the button"
     },
     {
-      "key": "Component.arc"
+      "key": "Component.arc",
+      "description": "Corner radius for combo boxes and spinners"
     },
     {
-      "key": "Component.borderColor"
+      "key": "Component.borderColor",
+      "description": "Border for a text field, combo box, or spinner"
     },
     {
-      "key": "Component.disabledBorderColor"
+      "key": "Component.disabledBorderColor",
+      "description": "Border for a disabled text field, combo box, or spinner"
     },
     {
-      "key": "Component.errorFocusColor"
+      "key": "Component.errorFocusColor",
+      "description": "Validated error state. See the \"Validation Dialog Test\" action in internal mode (press Enter for validation in the dialog)"
     },
     {
-      "key": "Component.focusColor"
+      "key": "Component.focusColor",
+      "description": "Outer border for a button, text field, combo box, or spinner when focused"
     },
     {
-      "key": "Component.focusedBorderColor"
+      "key": "Component.focusedBorderColor",
+      "description": "Inner 1 px-wide border for a text field, combo box, or spinner when focused"
     },
     {
-      "key": "Component.focusWidth"
+      "key": "Component.focusWidth",
+      "description": "Border width when focused"
     },
     {
       "key": "Component.hoverIconColor"
     },
     {
-      "key": "Component.iconColor"
+      "key": "Component.iconColor",
+      "description": "A hardcocded icon inside a component (not an svg icon). Note that the arrow icon for a combobox has its own color keys."
     },
     {
-      "key": "Component.inactiveErrorFocusColor"
+      "key": "Component.inactiveErrorFocusColor",
+      "description": "Validated error state for an unfocused component"
     },
     {
-      "key": "Component.inactiveWarningFocusColor"
+      "key": "Component.inactiveWarningFocusColor",
+      "description": "Validated warning state for an unfocused component"
     },
     {
-      "key": "Component.infoForeground"
+      "key": "Component.infoForeground",
+      "description": "Gray info text in a text field, combo box, list, tree, table, or in empty areas"
     },
     {
-      "key": "Component.warningFocusColor"
+      "key": "Component.warningFocusColor",
+      "description": "Validated warning state. See the \"Show Standard Panels\" action in internal mode (enter text into the fields for validation)"
     },
     {
-      "key": "control"
+      "key": "control",
+      "deprecated": true
     },
     {
-      "key": "controlDkShadow"
+      "key": "controlDkShadow",
+      "deprecated": true
     },
     {
-      "key": "controlHighlight"
+      "key": "controlHighlight",
+      "deprecated": true
     },
     {
-      "key": "controlLtHighlight"
+      "key": "controlLtHighlight",
+      "deprecated": true
     },
     {
-      "key": "controlShadow"
+      "key": "controlShadow",
+      "deprecated": true
     },
     {
-      "key": "controlText"
+      "key": "controlText",
+      "deprecated": true
     },
     {
-      "key": "darcula.background"
+      "key": "darcula.background",
+      "deprecated": true
     },
     {
-      "key": "darcula.caretForeground"
+      "key": "darcula.caretForeground",
+      "deprecated": true
     },
     {
-      "key": "darcula.foreground"
+      "key": "darcula.foreground",
+      "deprecated": true
     },
     {
-      "key": "darcula.inactiveBackground"
+      "key": "darcula.inactiveBackground",
+      "deprecated": true
     },
     {
-      "key": "darcula.selectionBackground"
+      "key": "darcula.selectionBackground",
+      "deprecated": true
     },
     {
-      "key": "darcula.selectionBackgroundInactive"
+      "key": "darcula.selectionBackgroundInactive",
+      "deprecated": true
     },
     {
-      "key": "darcula.selectionForeground"
+      "key": "darcula.selectionForeground",
+      "deprecated": true
     },
     {
-      "key": "darcula.selectionForegroundInactive"
+      "key": "darcula.selectionForegroundInactive",
+      "deprecated": true
     },
     {
-      "key": "darcula.selectionInactiveBackground"
+      "key": "darcula.selectionInactiveBackground",
+      "deprecated": true
     },
     {
-      "key": "darcula.selectionInactiveForeground"
+      "key": "darcula.selectionInactiveForeground",
+      "deprecated": true
     },
     {
-      "key": "darcula.textBackground"
+      "key": "darcula.textBackground",
+      "deprecated": true
     },
     {
-      "key": "darcula.textForeground"
+      "key": "darcula.textForeground",
+      "deprecated": true
     },
     {
-      "key": "desktop"
+      "key": "desktop",
+      "deprecated": true
     },
     {
-      "key": "Desktop.background"
+      "key": "Desktop.background",
+      "deprecated": true
     },
     {
-      "key": "DesktopIcon.background"
+      "key": "DesktopIcon.background",
+      "deprecated": true
     },
     {
-      "key": "DesktopIcon.borderColor"
+      "key": "DesktopIcon.borderColor",
+      "deprecated": true
     },
     {
-      "key": "DesktopIcon.borderRimColor"
+      "key": "DesktopIcon.borderRimColor",
+      "deprecated": true
     },
     {
-      "key": "DesktopIcon.foreground"
+      "key": "DesktopIcon.foreground",
+      "deprecated": true
     },
     {
-      "key": "DesktopIcon.labelBackground"
+      "key": "DesktopIcon.labelBackground",
+      "deprecated": true
     },
     {
-      "key": "DesktopIcon.width"
+      "key": "DesktopIcon.width",
+      "deprecated": true
     },
     {
-      "key": "DragAndDrop.areaBackground"
+      "key": "DragAndDrop.areaBackground",
+      "description": "Drag and drop area on the Welcome screen"
     },
     {
       "key": "DragAndDrop.areaBorderColor"
@@ -333,7 +417,8 @@
       "key": "EditorPane.foreground"
     },
     {
-      "key": "EditorPane.inactiveBackground"
+      "key": "EditorPane.inactiveBackground",
+      "description": "The read-only panes with descriptions in Settings. See \"Settings | Editor | File and Code Templates\" for an example."
     },
     {
       "key": "EditorPane.inactiveForeground"
@@ -345,7 +430,8 @@
       "key": "EditorPane.selectionForeground"
     },
     {
-      "key": "Focus.color"
+      "key": "Focus.color",
+      "deprecated": true
     },
     {
       "key": "FormattedTextField.background"
@@ -369,40 +455,51 @@
       "key": "FormattedTextField.selectionForeground"
     },
     {
-      "key": "Hyperlink.linkColor"
+      "key": "Hyperlink.linkColor",
+      "deprecated": true
     },
     {
-      "key": "inactiveCaption"
+      "key": "inactiveCaption",
+      "deprecated": true
     },
     {
-      "key": "inactiveCaptionBorder"
+      "key": "inactiveCaptionBorder",
+      "deprecated": true
     },
     {
-      "key": "inactiveCaptionText"
+      "key": "inactiveCaptionText",
+      "deprecated": true
     },
     {
-      "key": "info"
+      "key": "info",
+      "deprecated": true
     },
     {
-      "key": "infoText"
+      "key": "infoText",
+      "deprecated": true
     },
     {
-      "key": "InternalFrame.activeTitleForeground"
+      "key": "InternalFrame.activeTitleForeground",
+      "deprecated": true
     },
     {
-      "key": "InternalFrame.background"
+      "key": "InternalFrame.background",
+      "deprecated": true
     },
     {
-      "key": "InternalFrame.inactiveTitleForeground"
+      "key": "InternalFrame.inactiveTitleForeground",
+      "deprecated": true
     },
     {
       "key": "Label.background"
     },
     {
-      "key": "Label.disabledForeground"
+      "key": "Label.disabledForeground",
+      "description": "Also used for a disabled list"
     },
     {
-      "key": "Label.disabledShadow"
+      "key": "Label.disabledShadow",
+      "deprecated": true
     },
     {
       "key": "Label.foreground"
@@ -432,7 +529,8 @@
       "key": "List.foreground"
     },
     {
-      "key": "List.selectionBackground"
+      "key": "List.selectionBackground",
+      "description": "Also used for ActionMenuItem (used in context and main menus)"
     },
     {
       "key": "List.selectionForeground"
@@ -444,7 +542,8 @@
       "key": "List.selectionInactiveForeground"
     },
     {
-      "key": "menu"
+      "key": "menu",
+      "deprecated": true
     },
     {
       "key": "Menu.acceleratorForeground"
@@ -453,10 +552,12 @@
       "key": "Menu.acceleratorSelectionForeground"
     },
     {
-      "key": "Menu.background"
+      "key": "Menu.background",
+      "description": "Context menu, main menu and menu bar (Windows/Linux), the search history popup"
     },
     {
-      "key": "Menu.borderColor"
+      "key": "Menu.borderColor",
+      "description": "Context menu, main menu (Windows/Linux), the search history popup"
     },
     {
       "key": "Menu.disabledBackground"
@@ -465,28 +566,37 @@
       "key": "Menu.disabledForeground"
     },
     {
-      "key": "Menu.foreground"
+      "key": "Menu.foreground",
+      "description": "Menu item with a submenu, the main menu bar on Windows/Linux"
     },
     {
-      "key": "Menu.selectionBackground"
+      "key": "Menu.selectionBackground",
+      "deprecated": true,
+      "description": "List.selectionBackground is used instead"
     },
     {
-      "key": "Menu.selectionForeground"
+      "key": "Menu.selectionForeground",
+      "description": "Menu item with a submenu, the main menu bar on Windows/Linux"
     },
     {
       "key": "Menu.separatorColor"
     },
     {
-      "key": "MenuBar.background"
+      "key": "MenuBar.background",
+      "description": "Does not work. Use Menu.background for the main menu bar on Windows/Linux.",
+      "deprecated": true
     },
     {
-      "key": "MenuBar.borderColor"
+      "key": "MenuBar.borderColor",
+      "description": "Border under the main menu bar on Windows/Linux"
     },
     {
-      "key": "MenuBar.darcula.borderColor"
+      "key": "MenuBar.darcula.borderColor",
+      "deprecated": true
     },
     {
-      "key": "MenuBar.darcula.borderShadowColor"
+      "key": "MenuBar.darcula.borderShadowColor",
+      "deprecated": true
     },
     {
       "key": "MenuBar.disabledBackground"
@@ -510,31 +620,40 @@
       "key": "MenuBar.shadow"
     },
     {
-      "key": "MenuItem.acceleratorForeground"
+      "key": "MenuItem.acceleratorForeground",
+      "description": "Shortcuts in a context and the main menu"
     },
     {
-      "key": "MenuItem.acceleratorSelectionForeground"
+      "key": "MenuItem.acceleratorSelectionForeground",
+      "description": "Not used. MenuItem.selectionForeground is used instead",
+      "deprecated": true
     },
     {
-      "key": "MenuItem.background"
+      "key": "MenuItem.background",
+      "description": "Menu items without a submenu. Overlays the common Menu.background color."
     },
     {
       "key": "MenuItem.disabledBackground"
     },
     {
-      "key": "MenuItem.disabledForeground"
+      "key": "MenuItem.disabledForeground",
+      "description": "Menu items without a submenu"
     },
     {
-      "key": "MenuItem.foreground"
+      "key": "MenuItem.foreground",
+      "description": "Menu items without a submenu"
     },
     {
-      "key": "MenuItem.selectionBackground"
+      "key": "MenuItem.selectionBackground",
+      "description": "The JBMenuItem component. See editor status icon's context menu. Works on Windows/Linux only."
     },
     {
-      "key": "MenuItem.selectionForeground"
+      "key": "MenuItem.selectionForeground",
+      "description": "The JBMenuItem component. See editor status icon's context menu."
     },
     {
-      "key": "menuText"
+      "key": "menuText",
+      "deprecated": true
     },
     {
       "key": "OptionPane.background"
@@ -546,10 +665,12 @@
       "key": "OptionPane.messageForeground"
     },
     {
-      "key": "Panel.background"
+      "key": "Panel.background",
+      "description": "Background for dialogs and disabled input components"
     },
     {
-      "key": "Panel.foreground"
+      "key": "Panel.foreground",
+      "description": "Foreground for navbar, status bar, editor inactive tabs (when appearing in dialogs), the Settings dialog breadcrumbs"
     },
     {
       "key": "PasswordField.background"
@@ -564,7 +685,9 @@
       "key": "PasswordField.foreground"
     },
     {
-      "key": "PasswordField.inactiveBackground"
+      "key": "PasswordField.inactiveBackground",
+      "description": "Does not work. Panel.background is used instead",
+      "deprecated": true
     },
     {
       "key": "PasswordField.inactiveForeground"
@@ -576,31 +699,38 @@
       "key": "PasswordField.selectionForeground"
     },
     {
-      "key": "Popup.borderColor"
+      "key": "Popup.borderColor",
+      "description": "On Mac, set Popup.paintBorder to true to see the border"
     },
     {
       "key": "Popup.Header.activeBackground"
     },
     {
-      "key": "Popup.Header.inactiveBackground"
+      "key": "Popup.Header.inactiveBackground",
+      "description": "A popup when not in focus"
     },
     {
-      "key": "Popup.inactiveBorderColor"
+      "key": "Popup.inactiveBorderColor",
+      "description": "Also used in editor completion and search field completion (e.g. in Settings | Plugins)"
     },
     {
-      "key": "Popup.Toolbar.background"
+      "key": "Popup.Toolbar.background",
+      "description": "Toolbar in popups, see the File Structure popup"
     },
     {
       "key": "Popup.Toolbar.borderColor"
     },
     {
-      "key": "PopupMenu.background"
+      "key": "PopupMenu.background",
+      "description": "Background under the context or the main menu separators"
     },
     {
-      "key": "PopupMenu.borderInsets"
+      "key": "PopupMenu.borderInsets",
+      "description": "Inner insets along the context or the main menu's borders. Default is \"1,1,1,1\" on Windows/Linux, \"4,0,4,0\" on Mac"
     },
     {
-      "key": "PopupMenu.borderWidth"
+      "key": "PopupMenu.borderWidth",
+      "description": "The default is 1 on Windows/Linux, 0 on Mac"
     },
     {
       "key": "PopupMenu.foreground"
@@ -615,13 +745,16 @@
       "key": "PopupMenu.translucentBackground"
     },
     {
-      "key": "PopupMenuSeparator.height"
+      "key": "PopupMenuSeparator.height",
+      "description": "The context or the main menu separator area height in pixels. The default is 3 on Windows/Linus, 12 on Mac"
     },
     {
-      "key": "PopupMenuSeparator.stripeIndent"
+      "key": "PopupMenuSeparator.stripeIndent",
+      "description": "The inset above the separator 1px line, in pixels. The default is 1 on Windows/Linux, 5 on Mac"
     },
     {
-      "key": "PopupMenuSeparator.stripeWidth"
+      "key": "PopupMenuSeparator.stripeWidth",
+      "description": "The height of the separator line. The default is 1 on Windows/Linux, 2 on Mac"
     },
     {
       "key": "ProgressBar.background"
@@ -651,25 +784,31 @@
       "key": "RadioButton.background"
     },
     {
-      "key": "RadioButton.darkShadow"
+      "key": "RadioButton.darkShadow",
+      "deprecated": true
     },
     {
-      "key": "RadioButton.disabledText"
+      "key": "RadioButton.disabledText",
+      "description": "Disabled foreground"
     },
     {
       "key": "RadioButton.foreground"
     },
     {
-      "key": "RadioButton.highlight"
+      "key": "RadioButton.highlight",
+      "deprecated": true
     },
     {
-      "key": "RadioButton.light"
+      "key": "RadioButton.light",
+      "deprecated": true
     },
     {
-      "key": "RadioButton.select"
+      "key": "RadioButton.select",
+      "deprecated": true
     },
     {
-      "key": "RadioButton.shadow"
+      "key": "RadioButton.shadow",
+      "deprecated": true
     },
     {
       "key": "RadioButtonMenuItem.acceleratorForeground"
@@ -678,7 +817,8 @@
       "key": "RadioButtonMenuItem.acceleratorSelectionForeground"
     },
     {
-      "key": "RadioButtonMenuItem.background"
+      "key": "RadioButtonMenuItem.background",
+      "description": "The JRadioButtonMenuItem component. See editor status icon's context menu"
     },
     {
       "key": "RadioButtonMenuItem.disabledBackground"
@@ -696,13 +836,16 @@
       "key": "RadioButtonMenuItem.selectionForeground"
     },
     {
-      "key": "scrollbar"
+      "key": "scrollbar",
+      "deprecated": true
     },
     {
-      "key": "ScrollBar.background"
+      "key": "ScrollBar.background",
+      "description": "The background of the whole scrollbar area. Visible only if the track background is smaller than the whole scrollbar area. Appears when there is an icon above the scrollbar and the track ends just below the icon. See expandable text area for an example."
     },
     {
-      "key": "ScrollBar.foreground"
+      "key": "ScrollBar.foreground",
+      "deprecated": true
     },
     {
       "key": "ScrollBar.hoverThumbBorderColor"
@@ -720,10 +863,12 @@
       "key": "ScrollBar.Mac.thumbBorderColor"
     },
     {
-      "key": "ScrollBar.Mac.thumbColor"
+      "key": "ScrollBar.Mac.thumbColor",
+      "description": "For Mac. The movable rectangle that corresponds to the visible content's size."
     },
     {
-      "key": "ScrollBar.Mac.trackColor"
+      "key": "ScrollBar.Mac.trackColor",
+      "description": "For Mac. The area along which the scroll bar thumb moves. Used with the \"Show always\" system setting for scroll bars."
     },
     {
       "key": "ScrollBar.Mac.Transparent.hoverThumbBorderColor"
@@ -738,10 +883,12 @@
       "key": "ScrollBar.Mac.Transparent.thumbBorderColor"
     },
     {
-      "key": "ScrollBar.Mac.Transparent.thumbColor"
+      "key": "ScrollBar.Mac.Transparent.thumbColor",
+      "description": "For Mac. Used with the \"Show when scrolling\" system setting for scroll bars. Do not forget to set the hover state color."
     },
     {
-      "key": "ScrollBar.Mac.Transparent.trackColor"
+      "key": "ScrollBar.Mac.Transparent.trackColor",
+      "description": "For Mac. Used with the \"Show when scrolling\" system setting for scroll bars. Do not forget to set the hover state color."
     },
     {
       "key": "ScrollBar.thumb"
@@ -750,7 +897,8 @@
       "key": "ScrollBar.thumbBorderColor"
     },
     {
-      "key": "ScrollBar.thumbColor"
+      "key": "ScrollBar.thumbColor",
+      "description": "The movable rectangle that corresponds to the visible content's size."
     },
     {
       "key": "ScrollBar.thumbDarkShadow"
@@ -765,7 +913,8 @@
       "key": "ScrollBar.track"
     },
     {
-      "key": "ScrollBar.trackColor"
+      "key": "ScrollBar.trackColor",
+      "description": "The area along which the scroll bar thumb moves. Used for tables only."
     },
     {
       "key": "ScrollBar.trackHighlight"
@@ -783,10 +932,12 @@
       "key": "ScrollBar.Transparent.thumbBorderColor"
     },
     {
-      "key": "ScrollBar.Transparent.thumbColor"
+      "key": "ScrollBar.Transparent.thumbColor",
+      "description": "Used for all controls except the table. Do not forget to set the hover state color."
     },
     {
-      "key": "ScrollBar.Transparent.trackColor"
+      "key": "ScrollBar.Transparent.trackColor",
+      "description": "Used for all controls except the table. Do not forget to set the hover state color."
     },
     {
       "key": "ScrollPane.background"
@@ -795,19 +946,25 @@
       "key": "ScrollPane.foreground"
     },
     {
-      "key": "Separator.background"
+      "key": "Separator.background",
+      "deprecated": true
     },
     {
-      "key": "Separator.foreground"
+      "key": "Separator.foreground",
+      "description": "Use *.separatorColor keys instead",
+      "deprecated": true
     },
     {
-      "key": "Separator.highlight"
+      "key": "Separator.highlight",
+      "deprecated": true
     },
     {
-      "key": "Separator.separatorColor"
+      "key": "Separator.separatorColor",
+      "description": "Separator line in toolbars and single-line separators (e.g., Settings | Editor | Font)"
     },
     {
-      "key": "Separator.shadow"
+      "key": "Separator.shadow",
+      "deprecated": true
     },
     {
       "key": "Slider.background"
@@ -828,10 +985,13 @@
       "key": "Slider.tickColor"
     },
     {
-      "key": "Spinner.background"
+      "key": "Spinner.background",
+      "description": "The area around a spinner"
     },
     {
-      "key": "Spinner.foreground"
+      "key": "Spinner.foreground",
+      "description": "TextField.foreground is used instead",
+      "deprecated": true
     },
     {
       "key": "SplitPane.background"
@@ -852,22 +1012,28 @@
       "key": "StatusBar.borderColor"
     },
     {
-      "key": "StatusBar.bottomColor"
+      "key": "StatusBar.bottomColor",
+      "deprecated": true
     },
     {
-      "key": "StatusBar.top2Color"
+      "key": "StatusBar.top2Color",
+      "deprecated": true
     },
     {
-      "key": "StatusBar.topColor"
+      "key": "StatusBar.topColor",
+      "deprecated": true
     },
     {
-      "key": "TabbedPane.background"
+      "key": "TabbedPane.background",
+      "description": "Tabs background"
     },
     {
-      "key": "TabbedPane.contentAreaColor"
+      "key": "TabbedPane.contentAreaColor",
+      "description": "Tabs area border color"
     },
     {
-      "key": "TabbedPane.darkShadow"
+      "key": "TabbedPane.darkShadow",
+      "deprecated": true
     },
     {
       "key": "TabbedPane.disabledForeground"
@@ -885,37 +1051,47 @@
       "key": "TabbedPane.foreground"
     },
     {
-      "key": "TabbedPane.highlight"
+      "key": "TabbedPane.highlight",
+      "deprecated": true
     },
     {
       "key": "TabbedPane.hoverColor"
     },
     {
-      "key": "TabbedPane.light"
+      "key": "TabbedPane.light",
+      "deprecated": true
     },
     {
-      "key": "TabbedPane.nonSelectedTabTitleNormalColor"
+      "key": "TabbedPane.nonSelectedTabTitleNormalColor",
+      "deprecated": true
     },
     {
-      "key": "TabbedPane.selectedTabTitleDisabledColor"
+      "key": "TabbedPane.selectedTabTitleDisabledColor",
+      "deprecated": true
     },
     {
-      "key": "TabbedPane.selectedTabTitleNormalColor"
+      "key": "TabbedPane.selectedTabTitleNormalColor",
+      "deprecated": true
     },
     {
-      "key": "TabbedPane.selectedTabTitlePressedColor"
+      "key": "TabbedPane.selectedTabTitlePressedColor",
+      "deprecated": true
     },
     {
-      "key": "TabbedPane.selectedTabTitleShadowDisabledColor"
+      "key": "TabbedPane.selectedTabTitleShadowDisabledColor",
+      "deprecated": true
     },
     {
-      "key": "TabbedPane.selectedTabTitleShadowNormalColor"
+      "key": "TabbedPane.selectedTabTitleShadowNormalColor",
+      "deprecated": true
     },
     {
-      "key": "TabbedPane.shadow"
+      "key": "TabbedPane.shadow",
+      "deprecated": true
     },
     {
-      "key": "TabbedPane.underlineColor"
+      "key": "TabbedPane.underlineColor",
+      "description": "The blue line under the selected tab"
     },
     {
       "key": "Table.background"
@@ -963,7 +1139,8 @@
       "key": "TableHeader.foreground"
     },
     {
-      "key": "text"
+      "key": "text",
+      "deprecated": true
     },
     {
       "key": "TextArea.background"
@@ -999,7 +1176,9 @@
       "key": "TextField.darkShadow"
     },
     {
-      "key": "TextField.disabledBackground"
+      "key": "TextField.disabledBackground",
+      "deprecated": true,
+      "description": "Does not work. Panel.background is used instead"
     },
     {
       "key": "TextField.foreground"
@@ -1008,13 +1187,17 @@
       "key": "TextField.highlight"
     },
     {
-      "key": "TextField.inactiveBackground"
+      "key": "TextField.inactiveBackground",
+      "deprecated": true,
+      "description": "Does not work. Panel.background is used instead"
     },
     {
-      "key": "TextField.inactiveForeground"
+      "key": "TextField.inactiveForeground",
+      "description": "Disabled foreground"
     },
     {
-      "key": "TextField.light"
+      "key": "TextField.light",
+      "deprecated": true
     },
     {
       "key": "TextField.selectionBackground"
@@ -1023,16 +1206,20 @@
       "key": "TextField.selectionForeground"
     },
     {
-      "key": "TextField.shadow"
+      "key": "TextField.shadow",
+      "deprecated": true
     },
     {
-      "key": "textHighlight"
+      "key": "textHighlight",
+      "deprecated": true
     },
     {
-      "key": "textHighlightText"
+      "key": "textHighlightText",
+      "deprecated": true
     },
     {
-      "key": "textInactiveText"
+      "key": "textInactiveText",
+      "deprecated": true
     },
     {
       "key": "TextPane.background"
@@ -1062,10 +1249,12 @@
       "key": "TitledBorder.titleColor"
     },
     {
-      "key": "ToggleButton.background"
+      "key": "ToggleButton.background",
+      "description": "An on/off button that appears in the Search Everywhere popup for actions"
     },
     {
-      "key": "ToggleButton.darkShadow"
+      "key": "ToggleButton.darkShadow",
+      "deprecated": true
     },
     {
       "key": "ToggleButton.disabledText"
@@ -1074,13 +1263,16 @@
       "key": "ToggleButton.foreground"
     },
     {
-      "key": "ToggleButton.highlight"
+      "key": "ToggleButton.highlight",
+      "deprecated": true
     },
     {
-      "key": "ToggleButton.light"
+      "key": "ToggleButton.light",
+      "deprecated": true
     },
     {
-      "key": "ToggleButton.shadow"
+      "key": "ToggleButton.shadow",
+      "deprecated": true
     },
     {
       "key": "ToolBar.background"
@@ -1113,25 +1305,30 @@
       "key": "ToolTip.foreground"
     },
     {
-      "key": "ToolTip.infoForeground"
+      "key": "ToolTip.infoForeground",
+      "description": "\"Inspection Info\" text in inspection error tooltips"
     },
     {
       "key": "Tree.background"
     },
     {
-      "key": "Tree.dropLineColor"
+      "key": "Tree.dropLineColor",
+      "deprecated": true
     },
     {
       "key": "Tree.foreground"
     },
     {
-      "key": "Tree.hash"
+      "key": "Tree.hash",
+      "deprecated": true
     },
     {
-      "key": "Tree.line"
+      "key": "Tree.line",
+      "deprecated": true
     },
     {
-      "key": "Tree.rowHeight"
+      "key": "Tree.rowHeight",
+      "description": "Line height in pixels"
     },
     {
       "key": "Tree.selectionBackground"
@@ -1143,13 +1340,17 @@
       "key": "Tree.selectionInactiveBackground"
     },
     {
-      "key": "Tree.selectionInactiveForeground"
+      "key": "Tree.selectionInactiveForeground",
+      "description": "Doesn't work. Tree.foreground is used",
+      "deprecated": true
     },
     {
-      "key": "Tree.textBackground"
+      "key": "Tree.textBackground",
+      "deprecated": true
     },
     {
-      "key": "Tree.textForeground"
+      "key": "Tree.textForeground",
+      "deprecated": true
     },
     {
       "key": "Viewport.background"

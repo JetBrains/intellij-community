@@ -110,6 +110,8 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
       needRebuild = !forceClean && (versionFileExisted || indexRootHasChildren);
       if (needRebuild) {
         LOG.info("Version has changed for stub index " + extension.getKey() + ". The index will be rebuilt.");
+      } else {
+        LOG.info("Stub index " + indexKey + " will be built.");
       }
       if (indexRootHasChildren) FileUtil.deleteWithRenaming(indexRootDir);
       IndexingStamp.rewriteVersion(indexKey, version); // todo snapshots indices

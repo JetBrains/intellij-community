@@ -13,7 +13,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl
@@ -29,10 +28,7 @@ class GrLambdaExpressionImpl(node: ASTNode) : GrExpressionImpl(node), GrLambdaEx
 
   override fun isVarArgs(): Boolean = false
 
-  override fun getBody(): GrLambdaBody? {
-    val body = lastChild
-    return if (body is GrLambdaBody) body else null
-  }
+  override fun getBody(): GrLambdaBody? = lastChild as? GrLambdaBody
 
   override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, lastParent: PsiElement?, place: PsiElement): Boolean {
     return processParameters(processor, state) && processClosureClassMembers(processor, state, lastParent, place)
@@ -47,8 +43,6 @@ class GrLambdaExpressionImpl(node: ASTNode) : GrExpressionImpl(node), GrLambdaEx
   }
 
   override fun getArrow(): PsiElement = findNotNullChildByType(GroovyElementTypes.T_ARROW)
-
-  override fun getStatements(): Array<GrStatement> = body?.statements ?: emptyArray()
 
   override fun getReturnType(): PsiType? = body?.returnType
 

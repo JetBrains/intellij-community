@@ -6,9 +6,11 @@ import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
@@ -18,11 +20,9 @@ import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.MapDataContext
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.util.findChildByElementType
-import org.jetbrains.plugins.gradle.util.findChildByType
-import org.jetbrains.plugins.gradle.util.findChildrenByType
-import org.jetbrains.plugins.gradle.util.runReadActionAndWait
+import org.jetbrains.plugins.gradle.util.*
 import org.junit.runners.Parameterized
+import java.util.function.Consumer
 
 abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestCase() {
 
@@ -53,11 +53,13 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
 
   protected inline fun <reified P : GradleTestRunConfigurationProducer> assertConfigurationFromContext(
     expectedSettings: String,
-    vararg elements: PsiElement
+    vararg elements: PsiElement,
+    noinline testTasksFilter: (TestName) -> Boolean = { true }
   ) = runReadActionAndWait {
     val context = getContextByLocation(*elements)
     val configurationFromContext = getConfigurationFromContext(context)
     val producer = configurationFromContext.configurationProducer as P
+    producer.setTestTasksChooser(testTasksFilter)
     val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
     assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
     if (producer !is PatternGradleConfigurationProducer) {
@@ -65,6 +67,17 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     }
     producer.onFirstRun(configurationFromContext, context, Runnable {})
     assertEquals(expectedSettings, configuration.settings.toString().trim())
+  }
+
+  protected fun GradleTestRunConfigurationProducer.setTestTasksChooser(testTasksFilter: (TestName) -> Boolean) {
+    testTasksChooser = object : TestTasksChooser() {
+      override fun chooseTestTasks(project: Project,
+                                   context: DataContext,
+                                   testTasks: Map<TestName, Map<SourcePath, TasksToRun>>,
+                                   consumer: Consumer<List<Map<SourcePath, TestTasks>>>) {
+        consumer.accept(testTasks.filterKeys(testTasksFilter).values.toList())
+      }
+    }
   }
 
   protected fun generateAndImportTemplateProject(): ProjectData {
@@ -164,9 +177,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     createProjectSubFile("module/build.gradle", moduleBuildScript.generate())
     createProjectSubFile("my module/build.gradle", moduleBuildScript.generate())
     importProject(buildScript.generate())
-    assertModules("project", "project.main", "project.test", "project.automation",
-                  "project.module", "project.module.main", "project.module.test",
-                  "project.my_module", "project.my_module.main", "project.my_module.test")
+    assertModulesContains("project", "project.module", "project.my_module")
     val automationTestCase = extractJavaClassData(automationTestCaseFile)
     val testCase = extractJavaClassData(testCaseFile)
     val abstractTestCase = extractJavaClassData(abstractTestCaseFile)

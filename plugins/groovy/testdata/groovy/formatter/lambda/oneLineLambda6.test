@@ -1,0 +1,4 @@
+<option>SPACE_AROUND_LAMBDA_ARROW=false</option>
+def a=(a,b)->c
+-----
+def a = (a, b)->c

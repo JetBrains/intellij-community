@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output.events;
 
 import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.FinishEventImpl;
 import com.intellij.build.events.impl.StartEventImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
@@ -9,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser;
 
 import java.util.function.Consumer;
@@ -26,13 +28,14 @@ public class ProjectScanning implements MavenLoggedEventParser {
 
   @Override
   public boolean checkLogLine(@NotNull ExternalSystemTaskId id,
-                              @NotNull String line,
-                              @Nullable LogMessageType type,
+                              @NotNull MavenLogEntryReader.MavenLogEntry logLine,
+                              @NotNull MavenLogEntryReader logEntryReader,
                               @NotNull Consumer<? super BuildEvent> messageConsumer) {
     if (completed) {
       return false;
     }
 
+    String line = logLine.getLine();
     if (inScan && line.startsWith("--")) {
       messageConsumer.accept(new FinishEventImpl(NAME, id, System.currentTimeMillis(), NAME, new SuccessResultImpl()));
       completed = true;
@@ -44,5 +47,12 @@ public class ProjectScanning implements MavenLoggedEventParser {
     }
 
     return inScan;
+  }
+
+  @Override
+  public void finish(@NotNull ExternalSystemTaskId taskId, @NotNull Consumer<? super BuildEvent> messageConsumer) {
+    if (inScan) {
+      messageConsumer.accept(new FinishEventImpl(NAME, taskId, System.currentTimeMillis(), NAME, new FailureResultImpl("Failed", null)));
+    }
   }
 }

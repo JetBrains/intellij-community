@@ -15,7 +15,9 @@
  */
 package com.intellij.util.io;
 
+import com.google.common.base.Charsets;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
 
 import java.io.File;
@@ -23,6 +25,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+import static org.junit.Assert.assertArrayEquals;
 
 public class PagedFileStorageTest extends TestCase {
   private final PagedFileStorage.StorageLock lock = new PagedFileStorage.StorageLock();
@@ -114,6 +118,26 @@ public class PagedFileStorageTest extends TestCase {
       assertEquals(1234, file.getInt(Integer.MAX_VALUE - 20));
       t = System.currentTimeMillis() - t;
       System.out.println("done in " + t + " ms");
+
+      file.close();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  public void testResizeableMappedFile2() throws Exception {
+    lock.lock();
+    try {
+      int initialSize = 4096;
+      ResizeableMappedFile file = new ResizeableMappedFile(f, initialSize, lock.myDefaultStorageLockContext, PagedFileStorage.MB, false);
+      byte[] bytes = StringUtil.repeat("1", initialSize + 2).getBytes(Charsets.UTF_8);
+      assertTrue(bytes.length > initialSize);
+      
+      file.put(0, bytes, 0, bytes.length);
+      int written_bytes = (int)file.length();
+      byte[] newBytes = new byte[written_bytes];
+      file.get(0, newBytes, 0, written_bytes);
+      assertArrayEquals(bytes, newBytes);
 
       file.close();
     } finally {

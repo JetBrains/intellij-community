@@ -253,11 +253,20 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
+    boolean available = isActionAvailable(event);
+    if (event.isFromContextMenu()) {
+      presentation.setEnabledAndVisible(available);
+    }
+    else {
+      presentation.setEnabled(available);
+    }
+  }
+
+  private static boolean isActionAvailable(AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null){
-      presentation.setEnabled(false);
-      return;
+      return false;
     }
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -267,26 +276,22 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     if (editor != null){
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null || file.getVirtualFile() == null) {
-        presentation.setEnabled(false);
-        return;
+        return false;
       }
 
-      if (LanguageFormatting.INSTANCE.forContext(file)  != null) {
-        presentation.setEnabled(true);
-        return;
+      if (LanguageFormatting.INSTANCE.forContext(file) != null) {
+        return true;
       }
     }
     else if (files!= null && containsAtLeastOneFile(files)) {
       boolean anyFormatters = false;
       for (VirtualFile virtualFile : files) {
         if (virtualFile.isDirectory()) {
-          presentation.setEnabled(false);
-          return;
+          return false;
         }
         final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
         if (psiFile == null) {
-          presentation.setEnabled(false);
-          return;
+          return false;
         }
         final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(psiFile);
         if (builder != null) {
@@ -294,8 +299,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         }
       }
       if (!anyFormatters) {
-        presentation.setEnabled(false);
-        return;
+        return false;
       }
     }
     else if (files != null && files.length == 1) {
@@ -305,18 +309,16 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
              PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) {
-        presentation.setEnabled(false);
-        return;
+        return false;
       }
       if (!(element instanceof PsiDirectory)) {
         PsiFile file = element.getContainingFile();
         if (file == null || LanguageFormatting.INSTANCE.forContext(file) == null) {
-          presentation.setEnabled(false);
-          return;
+          return false;
         }
       }
     }
-    presentation.setEnabled(true);
+    return true;
   }
 
   @Nullable

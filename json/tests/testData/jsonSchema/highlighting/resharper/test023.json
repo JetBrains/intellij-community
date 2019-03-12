@@ -2,7 +2,8 @@
 
   "a": {
     "a": {
-      "a": <warning descr="Type is not allowed. Expected: object.">5</warning>
+      "a": <warning descr="Incompatible types.
+ Required: object. Actual: integer.">5</warning>
     }
   }
 } 

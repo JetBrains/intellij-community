@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
+@FunctionalInterface
 public interface NotNullFactory<T> extends Factory<T>{
   @Override
   @NotNull

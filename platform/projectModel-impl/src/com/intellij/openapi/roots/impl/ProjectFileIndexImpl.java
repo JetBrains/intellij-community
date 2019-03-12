@@ -2,7 +2,8 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.injected.editor.VirtualFileDelegate;
+import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -90,7 +91,8 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Nullable
   @Override
   public Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
-    if (file instanceof VirtualFileDelegate) file = ((VirtualFileDelegate)file).getDelegate();
+    if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
+    if (file instanceof BackedVirtualFile) file = ((BackedVirtualFile)file).getOriginFile();
     DirectoryInfo info = getInfoForFileOrDirectory(file);
     if (info.isInProject(file) || !honorExclusion && info.isExcluded(file)) {
       return info.getModule();
@@ -214,7 +216,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   public SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
     return myDirectoryIndex.getSourceRootFolder(getInfoForFileOrDirectory(fileOrDir));
   }
-
+  
   @Override
   protected boolean isScopeDisposed() {
     return myProject.isDisposed();

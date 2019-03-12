@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.StatementEffectFunctionCallQuickFix;
@@ -76,6 +77,10 @@ public class PyStatementEffectInspection extends PyInspection {
         if (statementList.getStatements().length == 1 && statementList.getStatements()[0] == node) {
           return;
         }
+      }
+      if (ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensionList(),
+                               extension -> extension.ignoreNoEffectStatement(node))) {
+        return;
       }
       if (expression instanceof PyReferenceExpression && !((PyReferenceExpression)expression).isQualified()) {
         registerProblem(expression, PyBundle.message("INSP.NAME.statement.message"));

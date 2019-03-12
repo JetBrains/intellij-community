@@ -14,9 +14,7 @@ import javax.swing.*;
  */
 public class PivotalTrackerRepositoryEditor extends BaseRepositoryEditor<PivotalTrackerRepository> {
   private JTextField myProjectId;
-  private JTextField myAPIKey;
   private JBLabel myProjectIDLabel;
-  private JBLabel myAPIKeyLabel;
 
   public PivotalTrackerRepositoryEditor(final Project project,
                                         final PivotalTrackerRepository repository,
@@ -24,11 +22,8 @@ public class PivotalTrackerRepositoryEditor extends BaseRepositoryEditor<Pivotal
     super(project, repository, changeListener);
     myUserNameText.setVisible(false);
     myUsernameLabel.setVisible(false);
-    myPasswordText.setVisible(false);
-    myPasswordLabel.setVisible(false);
-
+    myPasswordLabel.setText("API Token:");
     myProjectId.setText(repository.getProjectId());
-    myAPIKey.setText(repository.getAPIKey());
     myUseHttpAuthenticationCheckBox.setVisible(false);
   }
 
@@ -36,7 +31,6 @@ public class PivotalTrackerRepositoryEditor extends BaseRepositoryEditor<Pivotal
   public void apply() {
     super.apply();
     myRepository.setProjectId(myProjectId.getText().trim());
-    myRepository.setAPIKey(myAPIKey.getText().trim());
   }
 
   @Nullable
@@ -45,10 +39,8 @@ public class PivotalTrackerRepositoryEditor extends BaseRepositoryEditor<Pivotal
     myProjectIDLabel = new JBLabel("Project ID:", SwingConstants.RIGHT);
     myProjectId = new JTextField();
     installListener(myProjectId);
-    myAPIKeyLabel = new JBLabel("API Token:", SwingConstants.RIGHT);
-    myAPIKey = new JTextField();
-    installListener(myAPIKey);
-    return FormBuilder.createFormBuilder().addLabeledComponent(myProjectIDLabel, myProjectId).addLabeledComponent(myAPIKeyLabel, myAPIKey)
+    return FormBuilder.createFormBuilder()
+      .addLabeledComponent(myProjectIDLabel, myProjectId)
       .getPanel();
   }
 
@@ -56,6 +48,5 @@ public class PivotalTrackerRepositoryEditor extends BaseRepositoryEditor<Pivotal
   public void setAnchor(@Nullable final JComponent anchor) {
     super.setAnchor(anchor);
     myProjectIDLabel.setAnchor(anchor);
-    myAPIKeyLabel.setAnchor(anchor);
   }
 }

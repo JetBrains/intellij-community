@@ -20,6 +20,11 @@ i = 0
     assert i + j + k + l + n+ m <= 2 : "assert description"
     int y = 2 > 3 ? 7 + 8 + 9 : 11 + 12 + 13
     super.getFoo().foo().getBar().bar()
+    def oneLineLambda = (a,b,c)->{print b}
+    def multiLineLambda = (a,b,c)->{
+      def d = a
+      print d
+    }
 
     label:
     if (2 < 3) return else if (2 > 3) return else return

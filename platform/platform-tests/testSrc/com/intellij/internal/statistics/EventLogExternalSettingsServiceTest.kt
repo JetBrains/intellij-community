@@ -3,10 +3,13 @@ package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService
 import com.intellij.internal.statistic.persistence.ApprovedGroupsCacheConfigurable
+import com.intellij.internal.statistic.service.fus.FUSWhitelist
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.util.containers.ContainerUtil
+import org.junit.Assert
 import org.junit.Test
 import java.util.*
 
@@ -28,7 +31,7 @@ class EventLogExternalSettingsServiceTest : UsefulTestCase() {
       myFixture?.tearDown()
     }
     catch (e: Throwable) {
-      addSuppressedException(e);
+      addSuppressedException(e)
     }
     finally {
       myFixture = null
@@ -37,44 +40,137 @@ class EventLogExternalSettingsServiceTest : UsefulTestCase() {
 
   @Test
   fun testCachedGroupsForActualCache() {
-    assertEquals(mutableSetOf("cachedGroup1", "cachedGroup2"), WorkingEventLogExternalSettingsService().getApprovedGroups(ActualCache()))
+    assertEquals(
+      WhitelistBuilder().add("cachedGroup1").add("cachedGroup2").build(),
+      WorkingEventLogExternalSettingsService().getApprovedGroups(ActualCache())
+    )
+  }
+
+  @Test
+  fun testCachedGroupsForActualCacheWithVersionFrom() {
+    val whitelist = WhitelistBuilder().add(
+      "cachedGroup1",
+      FUSWhitelist.VersionRange.create("2", "5"),
+      FUSWhitelist.VersionRange.create(null, "5"),
+      FUSWhitelist.VersionRange.create(null, null)
+    ).add(
+      "cachedGroup2",
+      FUSWhitelist.VersionRange.create("4", "5"),
+      FUSWhitelist.VersionRange.create("4", null)
+    ).build()
+    assertEquals(whitelist, WorkingEventLogExternalSettingsServiceWithVersion().getApprovedGroups(ActualCacheWithVersions()))
   }
 
   @Test
   fun testReturnActualGroupsForNullableCache() {
-    assertEquals(mutableSetOf("actualGroup1", "actualGroup2"), WorkingEventLogExternalSettingsService().getApprovedGroups(StaleCache()))
+    assertEquals(
+      WhitelistBuilder().add("actualGroup1").add("actualGroup2").build(),
+      WorkingEventLogExternalSettingsService().getApprovedGroups(StaleCache())
+    )
+  }
+
+  @Test
+  fun testReturnActualGroupsForNullableCacheWithVersions() {
+    val whitelist = WhitelistBuilder().add(
+      "actualGroup1",
+      FUSWhitelist.VersionRange.create(null, "5"),
+      FUSWhitelist.VersionRange.create(null, null)
+    ).add(
+      "actualGroup2",
+      FUSWhitelist.VersionRange.create("6", null)
+    ).build()
+    val approvedGroups = WorkingEventLogExternalSettingsServiceWithVersion().getApprovedGroups(StaleCache())
+    assertEquals(whitelist, approvedGroups)
   }
 
   @Test
   fun testCachedGroupsForActualCacheAndBrokenService() {
-    assertEquals(mutableSetOf("cachedGroup1", "cachedGroup2"), BrokenEventLogExternalSettingsService().getApprovedGroups(ActualCache()))
+    assertEquals(
+      WhitelistBuilder().add("cachedGroup1").add("cachedGroup2").build(),
+      BrokenEventLogExternalSettingsService().getApprovedGroups(ActualCache())
+    )
+  }
+
+  @Test
+  fun testCachedGroupsForActualCacheAndBrokenServiceWithVersion() {
+    val whitelist = WhitelistBuilder().add(
+      "cachedGroup1",
+      FUSWhitelist.VersionRange.create("2", "5"),
+      FUSWhitelist.VersionRange.create(null, "5"),
+      FUSWhitelist.VersionRange.create(null, null)
+    ).add(
+      "cachedGroup2",
+      FUSWhitelist.VersionRange.create("4", "5"),
+      FUSWhitelist.VersionRange.create("4", null)
+    ).build()
+    assertEquals(whitelist, BrokenEventLogExternalSettingsService().getApprovedGroups(ActualCacheWithVersions()))
   }
 
   @Test
   fun testEmptySetInCaseOfNothing() {
-    assertEmpty(BrokenEventLogExternalSettingsService().getApprovedGroups(StaleCache()))
+    Assert.assertTrue(BrokenEventLogExternalSettingsService().getApprovedGroups(StaleCache()).isEmpty())
   }
 
   private class BrokenEventLogExternalSettingsService : EventLogExternalSettingsService() {
-    override fun getWhitelistedGroups(): MutableSet<String>? {
+    override fun getWhitelistedGroups(): FUSWhitelist? {
       return null
     }
   }
 
   private class WorkingEventLogExternalSettingsService : EventLogExternalSettingsService() {
-    override fun getWhitelistedGroups(): MutableSet<String>? {
-      return mutableSetOf("actualGroup1", "actualGroup2")
+    override fun getWhitelistedGroups(): FUSWhitelist? {
+      return FUSWhitelist.create(mutableMapOf(
+        Pair("actualGroup1", ContainerUtil.emptyList()),
+        Pair("actualGroup2", ContainerUtil.emptyList())
+      ))
+    }
+  }
+
+  private class WorkingEventLogExternalSettingsServiceWithVersion : EventLogExternalSettingsService() {
+    override fun getWhitelistedGroups(): FUSWhitelist? {
+      return WhitelistBuilder().add(
+        "actualGroup1",
+        FUSWhitelist.VersionRange.create(null, "5"),
+        FUSWhitelist.VersionRange.create(null, null)
+      ).add(
+        "actualGroup2",
+        FUSWhitelist.VersionRange.create("6", null)
+      ).build()
     }
   }
 
   private class ActualCache : ApprovedGroupsCacheConfigurable() {
-    override fun getCachedGroups(date: Date, cacheActualDuration: Long, currentBuild: BuildNumber?): MutableSet<String> {
-      return mutableSetOf("cachedGroup1", "cachedGroup2")
+    override fun getCachedGroups(date: Date,
+                                 cacheActualDuration: Long,
+                                 currentBuild: BuildNumber?): FUSWhitelist {
+      return FUSWhitelist.create(mutableMapOf(
+        Pair("cachedGroup1", ContainerUtil.emptyList()),
+        Pair("cachedGroup2", ContainerUtil.emptyList())
+      ))
+    }
+  }
+
+  private class ActualCacheWithVersions : ApprovedGroupsCacheConfigurable() {
+    override fun getCachedGroups(date: Date,
+                                 cacheActualDuration: Long,
+                                 currentBuild: BuildNumber?): FUSWhitelist {
+      return WhitelistBuilder().add(
+        "cachedGroup1",
+        FUSWhitelist.VersionRange.create("2", "5"),
+        FUSWhitelist.VersionRange.create(null, "5"),
+        FUSWhitelist.VersionRange.create(null, null)
+      ).add(
+        "cachedGroup2",
+        FUSWhitelist.VersionRange.create("4", "5"),
+        FUSWhitelist.VersionRange.create("4", null)
+      ).build()
     }
   }
 
   private class StaleCache : ApprovedGroupsCacheConfigurable() {
-    override fun getCachedGroups(date: Date, cacheActualDuration: Long, currentBuild: BuildNumber?): MutableSet<String>? {
+    override fun getCachedGroups(date: Date,
+                                 cacheActualDuration: Long,
+                                 currentBuild: BuildNumber?): FUSWhitelist? {
       return null
     }
   }

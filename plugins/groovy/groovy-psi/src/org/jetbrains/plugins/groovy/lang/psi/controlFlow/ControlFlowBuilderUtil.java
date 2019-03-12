@@ -9,14 +9,14 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ObjectIntHashMap;
 import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrBlockLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
@@ -127,8 +127,8 @@ public class ControlFlowBuilderUtil {
       }
     }
 
-    else if (parent instanceof GrClosableBlock || parent instanceof GrLambdaBody) {
-      return st == ArrayUtil.getLastElement(((GrControlFlowOwner)parent).getStatements());
+    else if (parent instanceof GrClosableBlock || parent instanceof GrBlockLambdaBody) {
+      return st == ArrayUtil.getLastElement(((GrCodeBlock)parent).getStatements());
     }
 
     else if (parent instanceof GroovyFileBase) {

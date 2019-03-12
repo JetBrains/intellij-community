@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
@@ -677,6 +676,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myInvocationCount == 0;
   }
 
+  int getInvocationCount() {
+    return myInvocationCount;
+  }
+
   @Override
   @NotNull
   public Project getProject() {
@@ -737,18 +740,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       ((CompletionPhase.CommittingDocuments)oldPhase).replaced = true;
     }
 
-    final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(this, myEditor);
-    CompletionServiceImpl.setCompletionPhase(phase);
-    phase.ignoreCurrentDocumentChange();
-
-    final Project project = getProject();
-    AutoPopupController.runTransactionWithEverythingCommitted(project, () -> {
-      if (phase.checkExpired()) return;
-
-      CompletionAutoPopupHandler.invokeCompletion(myCompletionType,
-                                                  isAutopopupCompletion(), project, myEditor, myInvocationCount
-      );
-    });
+    CompletionPhase.CommittingDocuments.scheduleAsyncCompletion(myEditor, myCompletionType, null, getProject(), this);
   }
 
   @Override

@@ -179,7 +179,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
   @TestOnly
   public static void completeAsyncTasks() {
-    NonBlockingReadActionImpl.completeAsyncTasks();
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
 }

@@ -323,5 +323,33 @@ public class UsageViewPresentation {
     result = 31 * result + (myMergeDupLinesAvailable ? 1 : 0);
     return result;
   }
+
+  public UsageViewPresentation copy() {
+    UsageViewPresentation copyInstance = new UsageViewPresentation();
+    copyInstance.myTabText = myTabText;
+    copyInstance.myScopeText = myScopeText;
+    copyInstance.myContextText = myContextText;
+    copyInstance.myUsagesString = myUsagesString;
+    copyInstance.myTargetsNodeText = myTargetsNodeText;
+    copyInstance.myNonCodeUsagesString = myNonCodeUsagesString;
+    copyInstance.myCodeUsagesString = myCodeUsagesString;
+    copyInstance.myUsagesInGeneratedCodeString = myUsagesInGeneratedCodeString;
+    copyInstance.myShowReadOnlyStatusAsRed = myShowReadOnlyStatusAsRed;
+    copyInstance.myShowCancelButton = myShowCancelButton;
+    copyInstance.myOpenInNewTab = myOpenInNewTab;
+    copyInstance.myCodeUsages = myCodeUsages;
+    copyInstance.myUsageTypeFilteringAvailable = myUsageTypeFilteringAvailable;
+    copyInstance.myUsagesWord = myUsagesWord;
+    copyInstance.myTabName = myTabName;
+    copyInstance.myToolwindowTitle = myToolwindowTitle;
+    copyInstance.myDetachedMode = myDetachedMode;
+    copyInstance.myDynamicCodeUsagesString = myDynamicCodeUsagesString;
+    copyInstance.myMergeDupLinesAvailable = myMergeDupLinesAvailable;
+    copyInstance.myExcludeAvailable = myExcludeAvailable;
+    copyInstance.mySearchPattern = mySearchPattern;
+    copyInstance.myReplacePattern = myReplacePattern;
+    copyInstance.myReplaceMode = myReplaceMode;
+    return copyInstance;
+  }
 }
 

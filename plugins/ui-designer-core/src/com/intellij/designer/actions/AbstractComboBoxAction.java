@@ -57,7 +57,7 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     myPresentation = presentation;
     update();
 

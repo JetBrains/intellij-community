@@ -5,8 +5,10 @@ import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Experimental
 public class BuildToolConsoleProcessAdapter extends ProcessAdapter {
   private final MavenBuildEventProcessor myEventParser;
   private final AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
