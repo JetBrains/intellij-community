@@ -74,7 +74,7 @@ public class ExternalProjectDataCache {
   @Nullable
   public ExternalProject getRootExternalProject(@NotNull String externalProjectPath) {
     ExternalProject externalProject = myExternalRootProjects.get(externalProjectPath);
-    if (LOG.isDebugEnabled()) {
+    if (externalProject == null && LOG.isDebugEnabled()) {
       LOG.debug("Can not find data for project at: " + externalProjectPath);
       LOG.debug("Existing imported projects paths: " + ContainerUtil.map(
         myExternalRootProjects.entrySet(),
