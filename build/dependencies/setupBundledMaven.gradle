@@ -31,7 +31,7 @@ dependencies {
 }
 
 def communityPluginsDir = project.file("../../plugins")
-def mavenServerLibDir = "$communityPluginsDir/maven/maven36-server-impl/lib/"
+def mavenServerLibDir = "$communityPluginsDir/maven/maven3-server-impl/lib/"
 def mavenDistName = "apache-maven-$bundledMavenVersion"
 
 task unpackMavenDistribution( type: Copy) {
