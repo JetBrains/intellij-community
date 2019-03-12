@@ -520,6 +520,26 @@ public class IconUtil {
     return scale(icon, ancestor, scale);
   }
 
+  /**
+   * Overrides the provided scale in the icon's scale context and in the composited icon's scale contexts (when applicable).
+   *
+   * @see JBUI.BaseScaleContext#overrideScale(JBUI.Scale)
+   */
+  @NotNull
+  public static Icon overrideScale(@NotNull Icon icon, JBUI.Scale scale) {
+    if (icon instanceof CompositeIcon) {
+      CompositeIcon compositeIcon = (CompositeIcon)icon;
+      for (int i = 0; i < compositeIcon.getIconCount(); i++) {
+        Icon subIcon = compositeIcon.getIcon(i);
+        if (subIcon != null) overrideScale(subIcon, scale);
+      }
+    }
+    if (icon instanceof ScaleContextAware) {
+      ((ScaleContextAware)icon).getScaleContext().overrideScale(scale);
+    }
+    return icon;
+  }
+
   @NotNull
   public static Icon colorize(@NotNull Icon source, @NotNull Color color) {
     return colorize(source, color, false);

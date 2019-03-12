@@ -33,6 +33,7 @@ import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -802,6 +803,7 @@ public class JBUI {
     protected Scale pixScale = PIX_SCALE.of(usrScale.value);
 
     private List<UpdateListener> listeners;
+    private EnumSet<ScaleType> overriddenScales;
 
     private BaseScaleContext() {
     }
@@ -844,6 +846,37 @@ public class JBUI {
 
     protected double derivePixScale() {
       return usrScale.value * objScale.value;
+    }
+
+    /**
+     * Permanently overrides the provided scale (the scale won't be changed on subsequent {@link #update()}).
+     * Can be used to make a UI object user scale independent:
+     * <p>
+     * <code>
+     * ((ScaleContextAware)uiObject).getScaleContext().overrideScale(USR_SCALE.of(1.0));
+     * </code>
+     *
+     * @param scale the new scale to override
+     * @return whether the new scale updated the current value
+     * @see ScaleType#of(double)
+     */
+    public boolean overrideScale(@NotNull Scale scale) {
+      if (overriddenScales != null) {
+        overriddenScales.remove(scale.type); // previous override should not prevent this override
+      }
+      boolean updated = update(scale);
+
+      if (overriddenScales == null) {
+        overriddenScales = EnumSet.of(scale.type);
+      }
+      else {
+        overriddenScales.add(scale.type);
+      }
+      return updated;
+    }
+
+    protected boolean isScaleOverridden(@NotNull Scale scale) {
+      return overriddenScales != null && overriddenScales.contains(scale.type);
     }
 
     /**
@@ -898,6 +931,8 @@ public class JBUI {
      * @return whether the scale factor has been updated
      */
     public boolean update(@NotNull Scale scale) {
+      if (isScaleOverridden(scale)) return false;
+
       boolean updated = false;
       switch (scale.type) {
         case USR_SCALE: updated = update(usrScale, scale.value); break;
@@ -1201,6 +1236,8 @@ public class JBUI {
      */
     @Override
     public boolean update(@NotNull Scale scale) {
+      if (isScaleOverridden(scale)) return false;
+
       if (scale.type == SYS_SCALE) return onUpdated(update(sysScale, scale.value));
       return super.update(scale);
     }
