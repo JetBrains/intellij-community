@@ -40,7 +40,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ProblemPreviewEditorPresentation {
-  private final static int VIEW_ADDITIONAL_OFFSET = 4;
+  private static final int VIEW_ADDITIONAL_OFFSET = 4;
+  private static final int SHOWN_LINES_COUNT = 2;
 
   static void setupFoldingsAndHighlightProblems(@NotNull EditorEx editor, @NotNull InspectionResultsView view) {
     List<UsageInfo> usages = Arrays.stream(view.getTree().getAllValidSelectedDescriptors())
@@ -128,8 +129,8 @@ public class ProblemPreviewEditorPresentation {
   private static boolean makeVisible(SortedSet<PreviewEditorFoldingRegion> foldingRegions, Segment toShowRange, Document document) {
     if (toShowRange == null) return false;
     boolean isUpdated = false;
-    final int startLine = Math.max(0, document.getLineNumber(toShowRange.getStartOffset()) - 1);
-    final int endLine = Math.min(document.getLineCount(), document.getLineNumber(toShowRange.getEndOffset()) + 2);
+    final int startLine = Math.max(0, document.getLineNumber(toShowRange.getStartOffset()) - SHOWN_LINES_COUNT);
+    final int endLine = Math.min(document.getLineCount(), document.getLineNumber(toShowRange.getEndOffset()) + SHOWN_LINES_COUNT + 1);
     for (PreviewEditorFoldingRegion range : new ArrayList<>(foldingRegions)) {
       final boolean startInRegion = range.contain(startLine);
       final boolean endInRegion = range.contain(endLine);
