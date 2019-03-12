@@ -9,6 +9,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -176,6 +177,10 @@ public class JBScrollPane extends JScrollPane {
                       oldListener.mouseWheelMoved(event);
                     }
                   }
+                }
+                if (!event.isConsumed()) {
+                  // try to process a mouse wheel event by outer scroll pane
+                  MouseEventAdapter.redispatch(event, UIUtil.getParentOfType(JScrollPane.class, pane.getParent()));
                 }
               }
             }
