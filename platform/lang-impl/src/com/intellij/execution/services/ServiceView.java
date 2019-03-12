@@ -18,7 +18,6 @@ import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -64,9 +63,6 @@ import static com.intellij.execution.services.ServiceViewManager.SERVICE_VIEW_MA
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
 class ServiceView extends JPanel implements Disposable {
-  private static final ExtensionPointName<ServiceViewContributor> EP_NAME =
-    ExtensionPointName.create("com.intellij.serviceViewContributor");
-
   @NonNls private static final String SERVICE_VIEW_NODE_TOOLBAR = "ServiceViewNodeToolbar";
   @NonNls private static final String SERVICE_VIEW_NODE_POPUP = "ServiceViewNodePopup";
   @NonNls private static final String SERVICE_VIEW_TREE_TOOLBAR = "ServiceViewTreeToolbar";
@@ -441,7 +437,7 @@ class ServiceView extends JPanel implements Disposable {
     private List<?> getRootChildren() {
       Set<Object> rootChildren = new LinkedHashSet<>();
       Map<TreePath, GroupNode> groupNodes = FactoryMap.create(GroupNode::new);
-      for (@SuppressWarnings("unchecked") ServiceViewContributor<Object, Object, Object> contributor : EP_NAME.getExtensions()) {
+      for (@SuppressWarnings("unchecked") ServiceViewContributor<Object, Object, Object> contributor : ServiceViewManagerImpl.EP_NAME.getExtensions()) {
         for (Object node : contributor.getNodes(myProject)) {
           if (node instanceof NodeDescriptor) {
             ((NodeDescriptor)node).update();
