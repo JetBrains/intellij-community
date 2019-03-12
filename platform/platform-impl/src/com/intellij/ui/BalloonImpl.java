@@ -763,6 +763,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   @Override
   public void revalidate(@NotNull PositionTracker<Balloon> tracker) {
+    if (ApplicationManager.getApplication().isDisposeInProgress()) {
+      return;
+    }
     RelativePoint newPosition = tracker.recalculateLocation(this);
 
     if (newPosition != null) {
