@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +10,6 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
-import io.netty.handler.codec.http.cors.CorsConfig;
 import io.netty.handler.codec.http.cors.CorsConfigBuilder;
 import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
@@ -47,7 +46,17 @@ public final class NettyUtil {
   }
 
   public static void log(@NotNull Throwable throwable, @NotNull Logger log) {
-    if (isAsWarning(throwable)) {
+    String message = throwable.getMessage();
+    if (message == null) {
+      log.error(throwable);
+      return;
+    }
+
+    if (message.startsWith("Connection reset")) {
+      return;
+    }
+
+    if (isAsWarning(message, throwable)) {
       log.warn(throwable);
     }
     else {
@@ -55,10 +64,9 @@ public final class NettyUtil {
     }
   }
 
-  private static boolean isAsWarning(@NotNull Throwable throwable) {
-    String message = throwable.getMessage();
-    if (message == null) {
-      return false;
+  private static boolean isAsWarning(@NotNull String message, @NotNull Throwable throwable) {
+    if (message.equals("Operation timed out") || message.equals("Connection timed out")) {
+      return true;
     }
 
     if (throwable instanceof IOException) {
@@ -66,9 +74,7 @@ public final class NettyUtil {
              message.equals("An existing connection was forcibly closed by the remote host") ||
              message.equals("\u0423\u0434\u0430\u043b\u0435\u043d\u043d\u044b\u0439 \u0445\u043e\u0441\u0442 \u043f\u0440\u0438\u043d\u0443\u0434\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u0440\u0430\u0437\u043e\u0440\u0432\u0430\u043b \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0435 \u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435");
     }
-
-    return (throwable instanceof ChannelException && message.startsWith("Failed to bind to: ")) ||
-           (message.startsWith("Connection reset") || message.equals("Operation timed out") || message.equals("Connection timed out"));
+    return (throwable instanceof ChannelException && message.startsWith("Failed to bind to: "));
   }
 
   @NotNull
@@ -92,25 +98,14 @@ public final class NettyUtil {
     if (pipeline.get(ChunkedWriteHandler.class) == null) {
       pipeline.addLast("chunkedWriteHandler", new ChunkedWriteHandler());
     }
-    pipeline.addLast("corsHandler", new CorsHandlerDoNotUseOwnLogger(CorsConfigBuilder
-                                                                       .forAnyOrigin()
-                                                                       .shortCircuit()
-                                                                       .allowCredentials()
-                                                                       .allowNullOrigin()
-                                                                       .allowedRequestMethods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.PATCH)
-                                                                       .allowedRequestHeaders("origin", "accept", "authorization", "content-type", "x-ijt", "x-requested-with")
-                                                                       .build()));
-  }
-
-  private static final class CorsHandlerDoNotUseOwnLogger extends CorsHandler {
-    CorsHandlerDoNotUseOwnLogger(@NotNull CorsConfig config) {
-      super(config);
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext context, Throwable cause) {
-      context.fireExceptionCaught(cause);
-    }
+    pipeline.addLast("corsHandler", new CorsHandler(CorsConfigBuilder
+                                                      .forAnyOrigin()
+                                                      .shortCircuit()
+                                                      .allowCredentials()
+                                                      .allowNullOrigin()
+                                                      .allowedRequestMethods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.PATCH)
+                                                      .allowedRequestHeaders("origin", "accept", "authorization", "content-type", "x-ijt", "x-requested-with")
+                                                      .build()));
   }
 
   @TestOnly
