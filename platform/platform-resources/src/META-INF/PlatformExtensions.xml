@@ -648,5 +648,8 @@
     </obsoleteStorage>
 
     <postStartupActivity implementation="com.intellij.ide.StartUpPerformanceReporter" order="last"/>
+
+    <toolWindow id="Packages" anchor="right" secondary="true"
+                factoryClass="com.intellij.openapi.ui.PackagesToolWindowFactory"/>
   </extensions>
 </idea-plugin>

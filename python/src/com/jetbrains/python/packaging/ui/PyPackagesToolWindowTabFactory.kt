@@ -2,26 +2,25 @@
 package com.jetbrains.python.packaging.ui
 
 import com.intellij.ProjectTopics
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.ui.PackagesToolWindowTab
+import com.intellij.openapi.ui.PackagesToolWindowTabFactory
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.ui.content.ContentFactory
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.sdk.PythonSdkType
 
-class PyPackagesToolWindowFactory : ToolWindowFactory, DumbAware {
+class PyPackagesToolWindowTabFactory : PackagesToolWindowTabFactory {
 
   /**
    * Allows to reduce updates if shown sdk has not been changed.
@@ -34,12 +33,11 @@ class PyPackagesToolWindowFactory : ToolWindowFactory, DumbAware {
    */
   private var currentPackages: List<PyPackage>? = null
 
-  override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+  override fun createContent(project: Project, parentDisposable: Disposable): PackagesToolWindowTab {
     val panel = PyInstalledPackagesPanel(project, PackagesNotificationPanel())
     updateForCurrentFile(project, panel, true)
 
-    val content = ContentFactory.SERVICE.getInstance().createContent(panel, null, false)
-    val connection = project.messageBus.connect(content)
+    val connection = project.messageBus.connect(parentDisposable)
 
     // another file has been opened
     connection.subscribe(
@@ -66,7 +64,7 @@ class PyPackagesToolWindowFactory : ToolWindowFactory, DumbAware {
       }
     )
 
-    toolWindow.contentManager.addContent(content)
+    return PackagesToolWindowTab("Python", panel)
   }
 
   private fun updateForCurrentFile(project: Project, panel: PyInstalledPackagesPanel, force: Boolean) {

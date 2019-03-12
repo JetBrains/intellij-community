@@ -75,8 +75,7 @@
     <toolWindow id="Python Console" anchor="bottom" icon="PythonIcons.Python.PythonConsoleToolWindow" canCloseContents="true"
                 factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
 
-    <toolWindow id="Python Packages" anchor="right" secondary="true"
-                factoryClass="com.jetbrains.python.packaging.ui.PyPackagesToolWindowFactory"/>
+    <packaging.packagesToolWindowTabFactory implementation="com.jetbrains.python.packaging.ui.PyPackagesToolWindowTabFactory"/>
 
     <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>
 

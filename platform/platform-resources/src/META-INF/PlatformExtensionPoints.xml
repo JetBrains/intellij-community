@@ -350,5 +350,8 @@
     <extensionPoint name="obsoleteStorage" beanClass="com.intellij.configurationStore.ObsoleteStorageBean"/>
 
     <extensionPoint name="feedbackDescriptionProvider" interface="com.intellij.ide.FeedbackDescriptionProvider"/>
+
+    <extensionPoint qualifiedName="com.intellij.packaging.packagesToolWindowTabFactory"
+                    interface="com.intellij.openapi.ui.PackagesToolWindowTabFactory"/>
   </extensionPoints>
 </idea-plugin>
