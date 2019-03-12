@@ -7,6 +7,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
@@ -28,6 +29,9 @@ import javax.swing.*;
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public class ServiceViewManagerImpl implements ServiceViewManager, PersistentStateComponent<ServiceViewManagerImpl.State> {
+  static final ExtensionPointName<ServiceViewContributor> EP_NAME =
+    ExtensionPointName.create("com.intellij.serviceViewContributor");
+
   // TODO [konstantin.aleev] provide help id
   @NonNls private static final String HELP_ID = "run-dashboard.reference";
 
@@ -41,7 +45,14 @@ public class ServiceViewManagerImpl implements ServiceViewManager, PersistentSta
     myProject.getMessageBus().connect(myProject).subscribe(ServiceViewContributor.TOPIC, this::updateToolWindow);
   }
 
-  public void createToolWindowContent(@NotNull ToolWindow toolWindow) {
+  boolean hasServices() {
+    for (@SuppressWarnings("unchecked") ServiceViewContributor<Object, Object, Object> contributor : EP_NAME.getExtensions()) {
+      if (!contributor.getNodes(myProject).isEmpty()) return true;
+    }
+    return false;
+  }
+
+  void createToolWindowContent(@NotNull ToolWindow toolWindow) {
     myServiceView = new ServiceView(myProject, myState.viewState);
 
     Content toolWindowContent = ContentFactory.SERVICE.getInstance().createContent(myServiceView, null, false);
@@ -74,7 +85,7 @@ public class ServiceViewManagerImpl implements ServiceViewManager, PersistentSta
         return;
       }
 
-      boolean available = true; //TODO [konstantin.aleev] hasContent();
+      boolean available = hasServices();
       ToolWindow toolWindow = toolWindowManager.getToolWindow(ToolWindowId.SERVICES);
       if (toolWindow == null) {
         toolWindow = createToolWindow(toolWindowManager, available);
