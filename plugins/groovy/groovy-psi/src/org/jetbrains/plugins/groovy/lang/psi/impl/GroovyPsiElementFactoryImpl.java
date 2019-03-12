@@ -365,12 +365,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @NotNull
   @Override
   public GrLambdaExpression createLambdaFromText(@NotNull String lambdaText, PsiElement context) throws IncorrectOperationException {
-    GroovyFile psiFile = createGroovyFileChecked("def __hdsjfghkl_sdhjfshglk_foo  = " + lambdaText, false, context);
-    final GrStatement st = psiFile.getStatements()[0];
-    LOG.assertTrue(st instanceof GrVariableDeclaration, lambdaText);
-    final GrExpression initializer = ((GrVariableDeclaration)st).getVariables()[0].getInitializerGroovy();
-    LOG.assertTrue(initializer instanceof GrLambdaExpression, lambdaText);
-    return ((GrLambdaExpression)initializer);
+    return createElementFromText(lambdaText, context, LAMBDA_EXPRESSION, GrLambdaExpression.class);
   }
 
   private GroovyFileImpl createDummyFile(@NotNull CharSequence text, boolean physical) {
