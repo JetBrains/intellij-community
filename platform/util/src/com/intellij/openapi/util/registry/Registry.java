@@ -198,7 +198,15 @@ public class Registry  {
   }
 
   public static void addKey(@NotNull String key, @NotNull String description, @NotNull String defaultValue, boolean restartRequired) {
-    getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, defaultValue, restartRequired));
+    addKey(key, description, defaultValue, restartRequired, false);
+  }
+
+  public static void addKey(@NotNull String key,
+                            @NotNull String description,
+                            @NotNull String defaultValue,
+                            boolean restartRequired,
+                            boolean contributedByThirdPartyPlugin) {
+    getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, defaultValue, restartRequired, contributedByThirdPartyPlugin));
   }
 
   public static void addKey(@NotNull String key, @NotNull String description, int defaultValue, boolean restartRequired) {

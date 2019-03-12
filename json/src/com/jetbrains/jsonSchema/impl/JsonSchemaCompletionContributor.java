@@ -416,6 +416,11 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(hasValue, insertComma));
       }
 
+      String deprecationMessage = jsonSchemaObject.getDeprecationMessage();
+      if (deprecationMessage != null) {
+        builder = builder.withTailText(" (deprecated)", true).withStrikeoutness(true);
+      }
+
       myVariants.add(builder);
     }
 

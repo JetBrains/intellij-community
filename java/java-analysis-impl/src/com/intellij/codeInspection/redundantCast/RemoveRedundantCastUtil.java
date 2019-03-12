@@ -19,7 +19,8 @@ public class RemoveRedundantCastUtil {
     PsiExpression operand = castExpression.getOperand();
     if (operand instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parExpr = (PsiParenthesizedExpression)operand;
-      if (parent instanceof PsiExpression && !PsiPrecedenceUtil.areParenthesesNeeded(parExpr.getExpression(), (PsiExpression)parent, true)) {
+      if (!(parent instanceof PsiExpression) || 
+          !PsiPrecedenceUtil.areParenthesesNeeded(parExpr.getExpression(), (PsiExpression)parent, true)) {
         operand = parExpr.getExpression();
       }
     }

@@ -17,65 +17,68 @@ package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.dashboard.RunDashboardContent;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.awt.*;
+
+import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getTargets;
+import static com.intellij.execution.services.ServiceViewManager.SERVICE_VIEW_MASTER_COMPONENT;
 
 /**
  * @author konstantin.aleev
  */
-public class RemoveConfigurationAction extends RunConfigurationTreeAction {
-  public RemoveConfigurationAction() {
-    super(ExecutionBundle.message("run.dashboard.remove.configuration.action.name"),
-          ExecutionBundle.message("run.dashboard.remove.configuration.action.description"),
-          AllIcons.General.Remove);
-  }
-
+public class RemoveConfigurationAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
-    if (e.getPresentation().isEnabled()) {
-      RunDashboardContent content = getTreeContent(e);
-      e.getPresentation().setEnabled(content != null && Comparing.equal(content.getBuilder().getTree(),
-                                                                        e.getData(PlatformDataKeys.CONTEXT_COMPONENT)));
+    Project project = e.getProject();
+    if (project == null || !RunDashboardManager.getInstance(project).isShowConfigurations()) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
     }
+
+    Component contextComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    if (!Boolean.TRUE.equals(UIUtil.getClientProperty(contextComponent, SERVICE_VIEW_MASTER_COMPONENT))) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
+    JBIterable<RunDashboardRunConfigurationNode> targets = getTargets(e);
+    RunManager runManager = RunManager.getInstance(project);
+    boolean enabled = targets.isNotEmpty() && targets.filter(node -> !runManager.hasSettings(node.getConfigurationSettings())).isEmpty();
+    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setVisible(targets.isNotEmpty());
   }
 
   @Override
-  protected boolean isEnabled4(RunDashboardRunConfigurationNode node) {
-    Project project = node.getProject();
-    return !project.isDisposed() && RunDashboardManager.getInstance(project).isShowConfigurations() &&
-           RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
-  }
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) return;
 
-  @Override
-  protected boolean isMultiSelectionAllowed() {
-    return true;
-  }
+    JBIterable<RunDashboardRunConfigurationNode> nodes = getTargets(e);
+    if (nodes.isEmpty()) return;
 
-  @Override
-  protected void doActionPerformed(@NotNull RunDashboardContent content, @NotNull AnActionEvent e, List<RunDashboardRunConfigurationNode> nodes) {
-    if (Messages.showYesNoDialog((Project)null,
-                                 ExecutionBundle.message("run.dashboard.remove.configuration.dialog.message"),
+    int size = nodes.size();
+    if (Messages.showYesNoDialog(project,
+                                 "Delete " + size + " " + StringUtil.pluralize("configuration", size) + "?",
                                  ExecutionBundle.message("run.dashboard.remove.configuration.dialog.title"),
                                  Messages.getWarningIcon())
         != Messages.YES) {
       return;
     }
-    super.doActionPerformed(content, e, nodes);
-  }
 
-  @Override
-  protected void doActionPerformed(RunDashboardRunConfigurationNode node) {
-    RunManager.getInstance(node.getProject()).removeConfiguration(node.getConfigurationSettings());
+    RunManager runManager = RunManager.getInstance(project);
+    for (RunDashboardRunConfigurationNode node : nodes) {
+      runManager.removeConfiguration(node.getConfigurationSettings());
+    }
   }
 }

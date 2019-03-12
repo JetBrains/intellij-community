@@ -18,22 +18,10 @@ public final class GradleIcons {
     return IconLoader.getIcon(path, clazz);
   }
 
-  /**
-   * 16x16
-   */
-  public static final Icon Gradle = load("/icons/gradle.svg");
-  /**
-   * 16x16
-   */
-  public static final Icon GradleFile = load("/icons/gradleFile.svg");
-  /**
-   * 16x16
-   */
-  public static final Icon GradleNavigate = load("/icons/gradleNavigate.svg");
-  /**
-   * 13x13
-   */
-  public static final Icon ToolWindowGradle = load("/icons/toolWindowGradle.svg");
+  /** 16x16 */ public static final Icon Gradle = load("/icons/gradle.svg");
+  /** 16x16 */ public static final Icon GradleFile = load("/icons/gradleFile.svg");
+  /** 16x16 */ public static final Icon GradleNavigate = load("/icons/gradleNavigate.svg");
+  /** 13x13 */ public static final Icon ToolWindowGradle = load("/icons/toolWindowGradle.svg");
 
   /** @deprecated to be removed in IDEA 2020 */
   @SuppressWarnings("unused")

@@ -606,36 +606,11 @@ public class HighlightClassUtil {
 
   @Nullable
   static HighlightInfo checkCyclicInheritance(@NotNull PsiClass aClass) {
-    PsiClass circularClass = getCircularClass(aClass, new HashSet<>());
+    PsiClass circularClass = InheritanceUtil.getCircularClass(aClass);
     if (circularClass != null) {
       String description = JavaErrorMessages.message("cyclic.inheritance", HighlightUtil.formatClass(circularClass));
       TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(description).create();
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PsiClass getCircularClass(@NotNull PsiClass aClass, @NotNull Collection<? super PsiClass> usedClasses) {
-    if (usedClasses.contains(aClass)) {
-      return aClass;
-    }
-    try {
-      usedClasses.add(aClass);
-      PsiClass[] superTypes = aClass.getSupers();
-      for (PsiElement superType : superTypes) {
-        while (superType instanceof PsiClass) {
-          if (!CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)superType).getQualifiedName())) {
-            PsiClass circularClass = getCircularClass((PsiClass)superType, usedClasses);
-            if (circularClass != null) return circularClass;
-          }
-          // check class qualifier
-          superType = superType.getParent();
-        }
-      }
-    }
-    finally {
-      usedClasses.remove(aClass);
     }
     return null;
   }

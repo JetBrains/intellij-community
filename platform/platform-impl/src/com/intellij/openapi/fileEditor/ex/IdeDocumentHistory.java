@@ -48,8 +48,8 @@ public abstract class IdeDocumentHistory {
   public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getChangePlaces();
   public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getBackPlaces();
 
-  public abstract void removeChangePlace(@NotNull Project project, @NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo);
-  public abstract void removeBackPlace(@NotNull Project project, @NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo);
+  public abstract void removeChangePlace(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo);
+  public abstract void removeBackPlace(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo);
 
   public abstract void gotoPlaceInfo(@NotNull IdeDocumentHistoryImpl.PlaceInfo info);
 }

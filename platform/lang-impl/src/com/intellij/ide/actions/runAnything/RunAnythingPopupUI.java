@@ -223,7 +223,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
       if (group != null) {
         myCurrentWorker.doWhenProcessed(() -> {
           myCalcThread = new CalcThread(project, pattern, true);
-          model.triggerMoreStatistics(project, group);
+          RunAnythingUsageCollector.Companion.triggerMoreStatistics(project, group, model.getClass());
           myCurrentWorker = myCalcThread.insert(index, group);
         });
 
@@ -232,7 +232,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
 
     if (model != null) {
-      model.triggerExecCategoryStatistics(project, index);
+      RunAnythingUsageCollector.Companion.triggerExecCategoryStatistics(project, model.getGroups(), model.getClass(), index);
     }
     DataContext dataContext = createDataContext(myDataContext, ALT_IS_PRESSED.get());
     if (SHIFT_IS_PRESSED.get()) {

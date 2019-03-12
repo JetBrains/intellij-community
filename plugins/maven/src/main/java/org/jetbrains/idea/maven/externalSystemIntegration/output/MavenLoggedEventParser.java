@@ -11,7 +11,6 @@ import java.util.function.Consumer;
 
 @ApiStatus.Experimental
 public interface MavenLoggedEventParser {
-  String COMPILER_MESSAGES_GROUP = "Java compiler";
 
   boolean supportsType(@Nullable LogMessageType type);
 

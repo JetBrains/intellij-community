@@ -412,7 +412,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
   }
 
-  private void readColors(Element childNode) {
+  public void readColors(@NotNull Element childNode) {
     for (Element colorElement : childNode.getChildren(OPTION_ELEMENT)) {
       String keyName = colorElement.getAttributeValue(NAME_ATTR);
       Color valueColor = myValueReader.read(Color.class, colorElement);

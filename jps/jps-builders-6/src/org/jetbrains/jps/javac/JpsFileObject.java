@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.CharArrayCharSequence;
 
-import javax.tools.SimpleJavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.URI;
 import java.nio.CharBuffer;
@@ -85,5 +85,16 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
     finally {
       stream.close();
     }
+  }
+
+  @Override
+  public int hashCode() {
+    return toUri().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    // todo: check if this is fast enough to rely on URI.equals() here
+    return this == obj || (obj instanceof JpsFileObject && toUri().equals(((JpsFileObject)obj).toUri()));
   }
 }

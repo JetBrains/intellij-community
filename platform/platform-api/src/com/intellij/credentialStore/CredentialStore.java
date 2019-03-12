@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * <a href="https://github.com/JetBrains/intellij-community/blob/master/platform/credential-store/readme.md">See documentation</a>
+ * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_sensitive_data.html">Storing Sensitive Data</a>.
  */
 public interface CredentialStore {
   @Nullable

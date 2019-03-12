@@ -6,10 +6,10 @@
           "mdn_url": "https://developer.mozilla.org/docs/Web/SVG/Element/feComposite",
           "support": {
             "chrome": {
-              "version_added": false
+              "version_added": "1"
             },
             "chrome_android": {
-              "version_added": false
+              "version_added": true
             },
             "edge": {
               "version_added": true
@@ -39,7 +39,7 @@
               "version_added": null
             },
             "webview_android": {
-              "version_added": null
+              "version_added": true
             }
           },
           "status": {
@@ -52,10 +52,10 @@
           "__compat": {
             "support": {
               "chrome": {
-                "version_added": false
+                "version_added": "1"
               },
               "chrome_android": {
-                "version_added": false
+                "version_added": true
               },
               "edge": {
                 "version_added": true
@@ -85,7 +85,7 @@
                 "version_added": null
               },
               "webview_android": {
-                "version_added": null
+                "version_added": true
               }
             },
             "status": {
@@ -99,10 +99,10 @@
           "__compat": {
             "support": {
               "chrome": {
-                "version_added": false
+                "version_added": "1"
               },
               "chrome_android": {
-                "version_added": false
+                "version_added": true
               },
               "edge": {
                 "version_added": true
@@ -132,7 +132,7 @@
                 "version_added": null
               },
               "webview_android": {
-                "version_added": null
+                "version_added": true
               }
             },
             "status": {
@@ -146,10 +146,10 @@
           "__compat": {
             "support": {
               "chrome": {
-                "version_added": null
+                "version_added": "1"
               },
               "chrome_android": {
-                "version_added": null
+                "version_added": true
               },
               "edge": {
                 "version_added": null
@@ -167,7 +167,7 @@
                 "version_added": null
               },
               "opera": {
-                "version_added": null
+                "version_added": false
               },
               "opera_android": {
                 "version_added": null
@@ -179,7 +179,7 @@
                 "version_added": null
               },
               "webview_android": {
-                "version_added": null
+                "version_added": true
               }
             },
             "status": {
@@ -193,10 +193,10 @@
           "__compat": {
             "support": {
               "chrome": {
-                "version_added": null
+                "version_added": "1"
               },
               "chrome_android": {
-                "version_added": null
+                "version_added": true
               },
               "edge": {
                 "version_added": null
@@ -214,7 +214,7 @@
                 "version_added": null
               },
               "opera": {
-                "version_added": null
+                "version_added": false
               },
               "opera_android": {
                 "version_added": null
@@ -226,7 +226,7 @@
                 "version_added": null
               },
               "webview_android": {
-                "version_added": null
+                "version_added": true
               }
             },
             "status": {
@@ -240,10 +240,10 @@
           "__compat": {
             "support": {
               "chrome": {
-                "version_added": null
+                "version_added": "1"
               },
               "chrome_android": {
-                "version_added": null
+                "version_added": true
               },
               "edge": {
                 "version_added": null
@@ -261,7 +261,7 @@
                 "version_added": null
               },
               "opera": {
-                "version_added": null
+                "version_added": false
               },
               "opera_android": {
                 "version_added": null
@@ -273,7 +273,7 @@
                 "version_added": null
               },
               "webview_android": {
-                "version_added": null
+                "version_added": true
               }
             },
             "status": {
@@ -287,10 +287,10 @@
           "__compat": {
             "support": {
               "chrome": {
-                "version_added": null
+                "version_added": "1"
               },
               "chrome_android": {
-                "version_added": null
+                "version_added": true
               },
               "edge": {
                 "version_added": null
@@ -308,7 +308,7 @@
                 "version_added": null
               },
               "opera": {
-                "version_added": null
+                "version_added": false
               },
               "opera_android": {
                 "version_added": null
@@ -320,7 +320,7 @@
                 "version_added": null
               },
               "webview_android": {
-                "version_added": null
+                "version_added": true
               }
             },
             "status": {
@@ -382,10 +382,10 @@
           "__compat": {
             "support": {
               "chrome": {
-                "version_added": false
+                "version_added": "1"
               },
               "chrome_android": {
-                "version_added": false
+                "version_added": true
               },
               "edge": {
                 "version_added": true
@@ -415,7 +415,7 @@
                 "version_added": null
               },
               "webview_android": {
-                "version_added": null
+                "version_added": true
               }
             },
             "status": {

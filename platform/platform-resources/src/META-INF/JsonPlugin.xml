@@ -81,6 +81,10 @@
                      bundle="com.intellij.json.JsonBundle" key="json.schema.inspection.compliance.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection"/>
+    <localInspection language="JSON" shortName="JsonSchemaDeprecation"
+                     bundle="com.intellij.json.JsonBundle" key="json.schema.inspection.deprecation.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.jetbrains.jsonSchema.impl.inspections.JsonSchemaDeprecationInspection"/>
     <localInspection language="JSON" shortName="JsonSchemaRefReference"
                      bundle="com.intellij.json.JsonBundle" key="json.schema.ref.refs.inspection.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="WARNING"

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
@@ -20,14 +21,14 @@ import java.util.Collections;
 
 public class YamlPropertyAdapter implements JsonPropertyAdapter {
 
-  private final YAMLKeyValue myProperty;
+  private final PsiElement myProperty;
 
-  public YamlPropertyAdapter(@NotNull YAMLKeyValue property) {myProperty = property;}
+  public YamlPropertyAdapter(@NotNull PsiElement property) {myProperty = property;}
 
   @Nullable
   @Override
   public String getName() {
-    return myProperty.getKeyText();
+    return myProperty instanceof YAMLKeyValue ? ((YAMLKeyValue)myProperty).getKeyText() : myProperty.getText();
   }
 
   @Nullable
@@ -39,7 +40,7 @@ public class YamlPropertyAdapter implements JsonPropertyAdapter {
   @NotNull
   @Override
   public Collection<JsonValueAdapter> getValues() {
-    YAMLValue value = myProperty.getValue();
+    YAMLValue value = myProperty instanceof YAMLKeyValue ? ((YAMLKeyValue)myProperty).getValue() : null;
     return value != null
            ? Collections.singletonList(createValueAdapterByType(value))
            : ContainerUtil.createMaybeSingletonList(createEmptyValueAdapter(myProperty, false));
@@ -54,7 +55,9 @@ public class YamlPropertyAdapter implements JsonPropertyAdapter {
   @Nullable
   @Override
   public JsonObjectValueAdapter getParentObject() {
-    return myProperty.getParentMapping() != null ? new YamlObjectAdapter(myProperty.getParentMapping()) : null;
+    YAMLMapping parentMapping = myProperty instanceof YAMLKeyValue ? ((YAMLKeyValue)myProperty).getParentMapping() :
+                                ObjectUtils.tryCast(myProperty.getParent(), YAMLMapping.class);
+    return parentMapping != null ? new YamlObjectAdapter(parentMapping) : null;
   }
 
   @NotNull

@@ -18,10 +18,7 @@ public final class JavaDebuggerStreamsIcons {
     return IconLoader.getIcon(path, clazz);
   }
 
-  /**
-   * 16x16
-   */
-  public static final Icon Stream_debugger = load("/icons/stream_debugger.svg");
+  /** 16x16 */ public static final Icon Stream_debugger = load("/icons/stream_debugger.svg");
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Console */
   @SuppressWarnings("unused")

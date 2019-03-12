@@ -18,26 +18,11 @@ public final class ImagesIcons {
     return IconLoader.getIcon(path, clazz);
   }
 
-  /**
-   * 16x16
-   */
-  public static final Icon ImagesFileType = load("/org/intellij/images/icons/ImagesFileType.svg");
-  /**
-   * 75x86
-   */
-  public static final Icon ThumbnailBlank = load("/org/intellij/images/icons/ThumbnailBlank.png");
-  /**
-   * 75x82
-   */
-  public static final Icon ThumbnailDirectory = load("/org/intellij/images/icons/ThumbnailDirectory.png");
-  /**
-   * 13x13
-   */
-  public static final Icon ThumbnailToolWindow = load("/org/intellij/images/icons/ThumbnailToolWindow.svg");
-  /**
-   * 16x16
-   */
-  public static final Icon ToggleTransparencyChessboard = load("/org/intellij/images/icons/ToggleTransparencyChessboard.svg");
+  /** 16x16 */ public static final Icon ImagesFileType = load("/org/intellij/images/icons/ImagesFileType.svg");
+  /** 75x86 */ public static final Icon ThumbnailBlank = load("/org/intellij/images/icons/ThumbnailBlank.png");
+  /** 75x82 */ public static final Icon ThumbnailDirectory = load("/org/intellij/images/icons/ThumbnailDirectory.png");
+  /** 13x13 */ public static final Icon ThumbnailToolWindow = load("/org/intellij/images/icons/ThumbnailToolWindow.svg");
+  /** 16x16 */ public static final Icon ToggleTransparencyChessboard = load("/org/intellij/images/icons/ToggleTransparencyChessboard.svg");
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Graph.Grid */
   @SuppressWarnings("unused")

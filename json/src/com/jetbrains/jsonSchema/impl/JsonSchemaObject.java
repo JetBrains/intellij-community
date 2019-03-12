@@ -110,6 +110,8 @@ public class JsonSchemaObject {
   @Nullable private JsonSchemaObject myElse;
   private boolean myShouldValidateAgainstJSType;
 
+  @Nullable private String myDeprecationMessage;
+
   public boolean isValidByExclusion() {
     return myIsValidByExclusion;
   }
@@ -278,7 +280,7 @@ public class JsonSchemaObject {
     if (other.myNot != null) myNot = other.myNot;
     if (other.myIfThenElse != null) {
       if (myIfThenElse == null) myIfThenElse = other.myIfThenElse;
-      else myIfThenElse.addAll(other.myIfThenElse);
+      else myIfThenElse = ContainerUtil.concat(myIfThenElse, other.myIfThenElse);
     }
     myShouldValidateAgainstJSType |= other.myShouldValidateAgainstJSType;
   }
@@ -490,6 +492,15 @@ public class JsonSchemaObject {
 
   public void setAdditionalItemsAllowed(@Nullable Boolean additionalItemsAllowed) {
     myAdditionalItemsAllowed = additionalItemsAllowed;
+  }
+
+  @Nullable
+  public String getDeprecationMessage() {
+    return myDeprecationMessage;
+  }
+
+  public void setDeprecationMessage(@Nullable String deprecationMessage) {
+    myDeprecationMessage = deprecationMessage;
   }
 
   @Nullable

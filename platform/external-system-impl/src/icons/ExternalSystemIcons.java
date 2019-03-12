@@ -18,10 +18,7 @@ public final class ExternalSystemIcons {
     return IconLoader.getIcon(path, clazz);
   }
 
-  /**
-   * 16x16
-   */
-  public static final Icon Task = load("/icons/task.svg");
+  /** 16x16 */ public static final Icon Task = load("/icons/task.svg");
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.ConfigFolder */
   @SuppressWarnings("unused")

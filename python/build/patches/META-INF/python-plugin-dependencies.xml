@@ -6,6 +6,4 @@
   <depends optional="true" config-file="intellilang-python-support.xml">org.intellij.intelliLang</depends>
   <depends optional="true" config-file="python-terminal-plugin.xml">org.jetbrains.plugins.terminal</depends>
 
-  <xi:include href="/META-INF/ipython-notebook.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
 </idea-plugin>

@@ -103,7 +103,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     String login = usernameAndUrl.first;
     if (login == null) {
-      LOG.warn("askPassword. Could not find username");
+      LOG.debug("askPassword. Could not find username in URL");
       return "";
     }
     String password = null;

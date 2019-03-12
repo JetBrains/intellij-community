@@ -3,6 +3,7 @@ package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -75,6 +76,8 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
                                                   int currDepth) {
     FoldingStack localFoldingStack = isCustomFoldingRoot(node) ? new FoldingStack(node) : foldingStack;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      ProgressManager.checkCanceled();
+      
       if (isCustomRegionStart(child)) {
         localFoldingStack.push(child);
       }

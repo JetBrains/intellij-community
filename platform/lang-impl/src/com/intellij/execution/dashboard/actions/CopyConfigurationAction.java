@@ -13,40 +13,36 @@ import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author konstantin.aleev
  */
-public class CopyConfigurationAction extends RunConfigurationTreeAction {
-  public CopyConfigurationAction() {
-    super(ExecutionBundle.message("copy.configuration.action.name"),
-          ExecutionBundle.message("copy.configuration.action.name"),
-          PlatformIcons.COPY_ICON);
-  }
-
+public class CopyConfigurationAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    Project project = e.getProject();
+    RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTargets(e).single();
+    boolean enabled = node != null && RunDashboardManager.getInstance(project).isShowConfigurations() &&
+                      RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
+    e.getPresentation().setEnabled(enabled);
+    boolean popupPlace = ActionPlaces.isPopupPlace(e.getPlace());
+    e.getPresentation().setVisible(enabled || !popupPlace);
+    if (popupPlace) {
       e.getPresentation().setText(ExecutionBundle.message("copy.configuration.action.name") + "...");
     }
   }
 
   @Override
-  protected boolean isEnabled4(RunDashboardRunConfigurationNode node) {
-    Project project = node.getProject();
-    return !project.isDisposed() && RunDashboardManager.getInstance(project).isShowConfigurations() &&
-           RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
-  }
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTargets(e).single();
+    if (node == null) return;
 
-  @Override
-  @SuppressWarnings("unchecked")
-  protected void doActionPerformed(RunDashboardRunConfigurationNode node) {
-    RunManager runManager = RunManager.getInstance(node.getProject());
+    RunManager runManager = RunManager.getInstance(project);
     RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
 
     RunnerAndConfigurationSettings copiedSettings = ((RunnerAndConfigurationSettingsImpl)settings).clone();
@@ -57,14 +53,14 @@ public class CopyConfigurationAction extends RunConfigurationTreeAction {
     RunConfiguration configuration = settings.getConfiguration();
     //noinspection deprecation
     if (factory instanceof ConfigurationFactoryEx) {
-      //noinspection deprecation
+      //noinspection deprecation,unchecked
       ((ConfigurationFactoryEx)factory).onConfigurationCopied(configuration);
     }
     if (configuration instanceof RunConfigurationBase) {
       ((RunConfigurationBase)configuration).onConfigurationCopied();
     }
 
-    if (RunDialog.editConfiguration(node.getProject(), copiedSettings,
+    if (RunDialog.editConfiguration(project, copiedSettings,
                                     ExecutionBundle.message("run.dashboard.edit.configuration.dialog.title"))) {
       copiedSettings.setShared(settings.isShared());
       runManager.addConfiguration(copiedSettings);

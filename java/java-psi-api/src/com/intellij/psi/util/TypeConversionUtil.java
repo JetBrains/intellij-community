@@ -320,8 +320,12 @@ public class TypeConversionUtil {
     final PsiClassType.ClassResolveResult result = superType.resolveGenerics();
     final PsiClass superClass = result.getElement();
     if (superClass != null) {
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(typeParameter.getProject());
+      if (superClass instanceof PsiTypeParameter && InheritanceUtil.getCircularClass(superClass) != null) {
+        return factory.createTypeByFQClassName(JAVA_LANG_OBJECT, typeParameter.getResolveScope());
+      }
       final PsiSubstitutor substitutor = result.getSubstitutor().put(typeParameter, null);
-      return JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(superClass, substitutor);
+      return factory.createType(superClass, substitutor);
     }
     return superType;
   }

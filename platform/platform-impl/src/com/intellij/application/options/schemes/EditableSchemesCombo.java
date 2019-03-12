@@ -38,6 +38,7 @@ public class EditableSchemesCombo<T extends Scheme> {
 
   private final static KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
   private final static KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
+  private final static Color MODIFIED_ITEM_FOREGROUND = JBColor.namedColor("ComboBox.modifiedItemForeground", JBColor.BLUE);
 
   public EditableSchemesCombo(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
@@ -157,7 +158,7 @@ public class EditableSchemesCombo<T extends Scheme> {
                ? SimpleTextAttributes.REGULAR_ATTRIBUTES
                : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
         if (mySchemesPanel.highlightNonDefaultSchemes() && model.canResetScheme(scheme) && model.differsFromDefault(scheme)) {
-          return baseAttributes.derive(-1, JBColor.BLUE, null, null);
+          return baseAttributes.derive(-1, MODIFIED_ITEM_FOREGROUND, null, null);
         }
         return baseAttributes;
       }

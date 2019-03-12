@@ -612,6 +612,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule("html { padding-bottom: 5px; }");
     editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(getLinkColor()) + "; text-decoration: none;}");
     editorKit.getStyleSheet().addRule(".definition { padding: 3px 17px 1px 7px; border-bottom: thin solid #" + ColorUtil.toHex(borderColor) + "; }");
+    editorKit.getStyleSheet().addRule(".definition-only { padding: 3px 17px 0 7px; }");
     editorKit.getStyleSheet().addRule(".content { padding: 5px 16px 0 7px; max-width: 100% }");
     editorKit.getStyleSheet().addRule(".bottom { padding: 3px 16px 0 7px; }");
     editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 16px 0 7px; }");
@@ -944,18 +945,22 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     text = StringUtil.replaceIgnoreCase(text, "</html>", "");
     text = StringUtil.replaceIgnoreCase(text, "</body>", "");
     boolean hasContent = text.contains(DocumentationMarkup.CONTENT_START);
-    if (!hasContent && !text.contains(DocumentationMarkup.DEFINITION_START)) {
-      int bodyStart = findContentStart(text);
-      if (bodyStart > 0) {
-        text = text.substring(0, bodyStart) +
-               DocumentationMarkup.CONTENT_START +
-               text.substring(bodyStart) +
-               DocumentationMarkup.CONTENT_END;
+    if (!hasContent) {
+      if (!text.contains(DocumentationMarkup.DEFINITION_START)) {
+        int bodyStart = findContentStart(text);
+        if (bodyStart > 0) {
+          text = text.substring(0, bodyStart) +
+                 DocumentationMarkup.CONTENT_START +
+                 text.substring(bodyStart) +
+                 DocumentationMarkup.CONTENT_END;
+        }
+        else {
+          text = DocumentationMarkup.CONTENT_START + text + DocumentationMarkup.CONTENT_END;
+        }
+        hasContent = true;
+      } else if (!text.contains(DocumentationMarkup.SECTIONS_START)){
+        text = StringUtil.replaceIgnoreCase(text, DocumentationMarkup.DEFINITION_START, "<div class='definition-only'><pre>");
       }
-      else {
-        text = DocumentationMarkup.CONTENT_START + text + DocumentationMarkup.CONTENT_END;
-      }
-      hasContent = true;
     }
     String location = getLocationText();
     if (location != null) {

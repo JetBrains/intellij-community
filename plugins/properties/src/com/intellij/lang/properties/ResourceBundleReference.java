@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -37,6 +38,11 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
 
   public ResourceBundleReference(final PsiElement element, boolean soft) {
     super(element, soft);
+    myBundleName = getValue().replace('/', '.');
+  }
+
+  public ResourceBundleReference(final PsiElement element, TextRange textRange, boolean soft) {
+    super(element, textRange, soft);
     myBundleName = getValue().replace('/', '.');
   }
 

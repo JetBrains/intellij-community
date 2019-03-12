@@ -78,12 +78,10 @@ class SourceResolver(private val rawSources: List<String>,
     return if (resolveByCanonicalizedUrls != -1) resolveByCanonicalizedUrls else resolver.resolve(rawSources)
   }
 
-  fun findSourceIndex(sourceUrls: List<Url>, sourceFile: VirtualFile?, localFileUrlOnly: Boolean): Int {
-    for (sourceUrl in sourceUrls) {
-      val index = canonicalizedUrlToSourceIndex.get(sourceUrl)
-      if (index != -1) {
-        return index
-      }
+  fun findSourceIndex(sourceUrl: Url, sourceFile: VirtualFile?, localFileUrlOnly: Boolean): Int {
+    val index = canonicalizedUrlToSourceIndex.get(sourceUrl)
+    if (index != -1) {
+      return index
     }
 
     if (sourceFile != null) {

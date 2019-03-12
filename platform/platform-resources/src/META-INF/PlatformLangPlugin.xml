@@ -65,7 +65,7 @@
                         serviceImplementation="com.intellij.openapi.roots.PlatformModifiableModelsProvider"/>
 
 
-    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler"/>
+    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyFilesOrDirectories"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler" id="moveFileOrDir"/>
 
     <treeStructureProvider implementation="com.intellij.platform.PlatformProjectViewStructureProvider"/>

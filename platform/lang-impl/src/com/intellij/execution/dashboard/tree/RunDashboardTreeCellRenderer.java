@@ -1,11 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard.tree;
 
-import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardContributor;
+import com.intellij.execution.dashboard.RunDashboardGroup;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
@@ -18,7 +22,17 @@ import java.awt.event.MouseEvent;
  * @author Konstantin Aleev
  */
 public class RunDashboardTreeCellRenderer extends JPanel implements TreeCellRenderer {
-  private final ColoredTreeCellRenderer myNodeRender = new NodeRenderer();
+  private final ColoredTreeCellRenderer myNodeRender = new NodeRenderer() {
+    @Nullable
+    @Override
+    protected ItemPresentation getPresentation(Object node) {
+      if (node instanceof RunDashboardGroup) {
+        RunDashboardGroup group = (RunDashboardGroup)node;
+        return new PresentationData(group.getName(), null, group.getIcon(), null);
+      }
+      return super.getPresentation(node);
+    }
+  };
   private final JLabel myLabel = new JLabel();
 
   public RunDashboardTreeCellRenderer() {

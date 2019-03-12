@@ -27,12 +27,6 @@ import org.jetbrains.annotations.NotNull;
  * @author konstantin.aleev
  */
 public class RunAction extends ExecutorAction {
-  public RunAction() {
-    super(ExecutionBundle.message("run.dashboard.run.action.name"),
-          ExecutionBundle.message("run.dashboard.run.action.description"),
-          AllIcons.Actions.Execute);
-  }
-
   @Override
   protected Executor getExecutor() {
     return DefaultRunExecutor.getRunExecutorInstance();

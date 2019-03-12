@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.TokenSet
 import kotlin.reflect.KClass
 
 inline fun <reified T : PsiElement> PsiElement.parentOfType(): T? = parentOfType(T::class)
@@ -23,4 +24,19 @@ inline fun <reified T : PsiElement> PsiElement.contextOfType(): T? = contextOfTy
 
 fun <T : PsiElement> PsiElement.contextOfType(vararg classes: KClass<out T>): T? {
   return PsiTreeUtil.getContextOfType(this, *classes.map { it.java }.toTypedArray())
+}
+
+fun PsiElement.siblings(forward: Boolean = true): Sequence<PsiElement> {
+  return generateSequence(this) {
+    if (forward) {
+      it.nextSibling
+    }
+    else {
+      it.prevSibling
+    }
+  }
+}
+
+fun <T : PsiElement> Sequence<T>.skipTokens(tokens: TokenSet): Sequence<T> {
+  return filter { it.node.elementType !in tokens }
 }

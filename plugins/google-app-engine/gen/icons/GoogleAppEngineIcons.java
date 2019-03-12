@@ -14,8 +14,5 @@ public final class GoogleAppEngineIcons {
     return IconLoader.getIcon(path, GoogleAppEngineIcons.class);
   }
 
-  /**
-   * 16x16
-   */
-  public static final Icon AppEngine = load("/icons/appEngine.svg");
+  /** 16x16 */ public static final Icon AppEngine = load("/icons/appEngine.svg");
 }

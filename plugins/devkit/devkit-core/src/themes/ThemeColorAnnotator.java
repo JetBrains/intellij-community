@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorChooser;
 import com.intellij.ui.ColorLineMarkerProvider;
 import com.intellij.ui.ColorUtil;
@@ -32,15 +33,15 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class ThemeColorAnnotator implements Annotator {
+
   private static final Pattern COLOR_HEX_PATTERN_RGB = Pattern.compile("^#([A-Fa-f0-9]{6})$");
   private static final Pattern COLOR_HEX_PATTERN_RGBA = Pattern.compile("^#([A-Fa-f0-9]{8})$");
   private static final int HEX_COLOR_LENGTH_RGB = 7;
   private static final int HEX_COLOR_LENGTH_RGBA = 9;
 
-
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (!isColorLineMarkerProviderEnabled() || !isTargetElement(element)) return;
+    if (!isColorLineMarkerProviderEnabled() || !isTargetElement(element, holder.getCurrentAnnotationSession().getFile())) return;
 
     Annotation annotation = holder.createInfoAnnotation(element, null);
     JsonStringLiteral literal = (JsonStringLiteral)element;
@@ -52,8 +53,12 @@ public class ThemeColorAnnotator implements Annotator {
   }
 
   static boolean isTargetElement(@NotNull PsiElement element) {
+    return isTargetElement(element, element.getContainingFile());
+  }
+
+  private static boolean isTargetElement(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
     if (!(element instanceof JsonStringLiteral)) return false;
-    if (!ThemeJsonUtil.isThemeFilename(element.getContainingFile().getName())) return false;
+    if (!ThemeJsonUtil.isThemeFilename(containingFile.getName())) return false;
 
     String text = ((JsonStringLiteral)element).getValue();
     return isColorCode(text);

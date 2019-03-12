@@ -34,11 +34,11 @@
             },
             "safari": {
               "version_added": "3",
-              "notes": "Until Safari 6, textPath was not re-rendered when the referenced path was changed dynamically (see <a href='https://bugs.webkit.org/show_bug.cgi?id=15799'>bug 15799</a>)"
+              "notes": "Until Safari 6, textPath was not re-rendered when the referenced path was changed dynamically (see <a href='https://webkit.org/b/15799'>bug 15799</a>)"
             },
             "safari_ios": {
               "version_added": "3",
-              "notes": "Until Safari 6, textPath was not re-rendered when the referenced path was changed dynamically (see <a href='https://bugs.webkit.org/show_bug.cgi?id=15799'>bug 15799</a>)"
+              "notes": "Until Safari 6, textPath was not re-rendered when the referenced path was changed dynamically (see <a href='https://webkit.org/b/15799'>bug 15799</a>)"
             },
             "webview_android": {
               "version_added": true

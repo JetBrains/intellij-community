@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * Represents 'run anything' list group.
@@ -85,8 +86,17 @@ public abstract class RunAnythingGroup {
    */
   @Nullable
   public static String getTitle(@NotNull Collection<RunAnythingGroup> groups, int titleIndex) {
-    return groups.stream().filter(runAnythingGroup -> titleIndex == runAnythingGroup.myTitleIndex).findFirst()
-                 .map(RunAnythingGroup::getTitle).orElse(null);
+    return Optional.ofNullable(findGroup(groups, titleIndex)).map(RunAnythingGroup::getTitle).orElse(null);
+  }
+
+  /**
+   * Finds group by {@code titleIndex}.
+   *
+   * @return group if {@code titleIndex} is equals to group {@link #myTitleIndex} and {@code null} if nothing found
+   */
+  @Nullable
+  public static RunAnythingGroup findGroup(@NotNull Collection<RunAnythingGroup> groups, int titleIndex) {
+    return groups.stream().filter(runAnythingGroup -> titleIndex == runAnythingGroup.myTitleIndex).findFirst().orElse(null);
   }
 
   /**

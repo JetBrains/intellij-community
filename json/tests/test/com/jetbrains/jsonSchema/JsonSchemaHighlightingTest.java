@@ -1077,4 +1077,13 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                        "  \"postal_code\": <warning descr=\"String is violating the pattern: '[0-9]{4} [A-Z]{2}'\">\"20500\"</warning>\n" +
                        "}");
   }
+
+  public void testDeprecation() throws Exception {
+    doTest("{\"properties\": {\n" +
+           "    \"myPropertyXxx\": {\n" +
+           "      \"deprecationMessage\": \"Baz\",\n" +
+           "      \"description\": \"Foo bar\"\n" +
+           "    }\n" +
+           "  }}", "{ <weak_warning descr=\"Property 'myPropertyXxx' is deprecated: Baz\">\"myPropertyXxx\"</weak_warning>: \"a\" }");
+  }
 }

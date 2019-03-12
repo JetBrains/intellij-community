@@ -16,12 +16,15 @@
 
 package com.intellij.execution.util;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.PasteProvider;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AnActionButton;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -195,7 +198,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       StringBuilder sb = new StringBuilder();
       List<EnvironmentVariable> variables = getSelection();
       for (EnvironmentVariable environmentVariable : variables) {
-        if (environmentVariable.getIsPredefined() || isEmpty(environmentVariable)) continue;
+        if (isEmpty(environmentVariable)) continue;
         if (sb.length() > 0) sb.append(';');
         sb.append(StringUtil.escapeChars(environmentVariable.getName(), '=', ';')).append('=')
           .append(StringUtil.escapeChars(environmentVariable.getValue(), '=', ';'));
@@ -241,6 +244,39 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     public boolean isPasteEnabled(@NotNull DataContext dataContext) {
       return myPasteEnabled;
     }
+  }
+
+  @NotNull
+  @Override
+  protected AnActionButton[] createExtraActions() {
+    AnActionButton copyButton = new AnActionButton(ActionsBundle.message("action.EditorCopy.text"), AllIcons.Actions.Copy) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        myPanel.performCopy(e.getDataContext());
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return myPanel.isCopyEnabled(DataContext.EMPTY_CONTEXT);
+      }
+    };
+    AnActionButton pasteButton = new AnActionButton(ActionsBundle.message("action.EditorPaste.text"), AllIcons.Actions.Menu_paste) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        myPanel.performPaste(e.getDataContext());
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return myPanel.isPasteEnabled(DataContext.EMPTY_CONTEXT);
+      }
+
+      @Override
+      public boolean isVisible() {
+        return myPanel.isPastePossible(DataContext.EMPTY_CONTEXT);
+      }
+    };
+    return new AnActionButton[]{copyButton, pasteButton};
   }
 
   public static Map<String, String> parseEnvsFromText(String content) {

@@ -77,6 +77,13 @@
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaHighlightingInspection"/>
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLSchemaDeprecation"
+                     key="inspections.schema.deprecation.name"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDeprecationInspection"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.json">

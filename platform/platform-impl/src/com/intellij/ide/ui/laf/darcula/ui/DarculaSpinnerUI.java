@@ -266,7 +266,8 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
         Path2D shape = new Path2D.Float();
         int w = getWidth() - JBUI.scale(1);
         int h = getHeight() - JBUI.scale(1);
-        float arc = COMPONENT_ARC.getFloat() - bw - lw;
+        float arc = COMPONENT_ARC.getFloat();
+        arc = arc > bw + lw ? arc - bw - lw : 0.0f;
 
         switch (direction) {
           case SOUTH:

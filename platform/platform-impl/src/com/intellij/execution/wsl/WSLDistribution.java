@@ -177,14 +177,14 @@ public class WSLDistribution {
     Map<String, String> additionalEnvs = new THashMap<>(commandLine.getEnvironment());
     commandLine.getEnvironment().clear();
 
-    LOG.info("[" + getId() + "] " +
-             "Patching: " +
-             commandLine.getCommandLineString() +
-             "; working dir: " +
-             remoteWorkingDir +
-             "; envs: " +
-             additionalEnvs.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).collect(Collectors.joining(", ")) +
-             (askForSudo ? "; with sudo" : ": without sudo")
+    LOG.debug("[" + getId() + "] " +
+              "Patching: " +
+              commandLine.getCommandLineString() +
+              "; working dir: " +
+              remoteWorkingDir +
+              "; envs: " +
+              additionalEnvs.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).collect(Collectors.joining(", ")) +
+              (askForSudo ? "; with sudo" : ": without sudo")
     );
 
     StringBuilder commandLineString = new StringBuilder();
@@ -247,7 +247,7 @@ public class WSLDistribution {
     parametersList.add(getRunCommandLineParameter());
     parametersList.add(commandLineString.toString());
 
-    LOG.info("[" + getId() + "] " + "Patched as: " + commandLine.getCommandLineString());
+    LOG.debug("[" + getId() + "] " + "Patched as: " + commandLine.getCommandLineString());
     return commandLine;
   }
 

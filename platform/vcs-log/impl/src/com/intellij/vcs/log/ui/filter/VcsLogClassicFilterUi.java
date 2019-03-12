@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -11,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -24,6 +26,7 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -77,7 +80,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     myUserFilterModel = new UserFilterModel(dataPackGetter, myUiProperties, filters);
     myDateFilterModel = new DateFilterModel(dataPackGetter, myUiProperties, filters);
     myStructureFilterModel = new FileFilterModel(dataPackGetter, myLogData.getLogProviders().keySet(), myUiProperties, filters);
-    myTextFilterModel = new TextFilterModel(dataPackGetter, myUiProperties, filters);
+    myTextFilterModel = new TextFilterModel(dataPackGetter, myUiProperties, filters, ui);
 
     updateUiOnFilterChange();
     myUi.applyFiltersAndUpdateUi(getFilters());
@@ -298,8 +301,22 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @Nullable private String myText;
 
     TextFilterModel(@NotNull NotNullComputable<? extends VcsLogDataPack> dataPackProvider, @NotNull MainVcsLogUiProperties properties,
-                    @Nullable VcsLogFilterCollection filters) {
+                    @Nullable VcsLogFilterCollection filters, @NotNull Disposable parentDisposable) {
       super(VcsLogFilterCollection.TEXT_FILTER, VcsLogFilterCollection.HASH_FILTER, dataPackProvider, properties, filters);
+      VcsLogUiProperties.PropertiesChangeListener listener = new VcsLogUiProperties.PropertiesChangeListener() {
+        @Override
+        public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
+          if (MainVcsLogUiProperties.TEXT_FILTER_REGEX.equals(property) ||
+              MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE.equals(property)) {
+            if (getFilter1() != null) {
+              myFilter = getFilterFromProperties();
+              notifyFiltersChanged();
+            }
+          }
+        }
+      };
+      properties.addChangeListener(listener);
+      Disposer.register(parentDisposable, () -> properties.removeChangeListener(listener));
     }
 
     @Nullable

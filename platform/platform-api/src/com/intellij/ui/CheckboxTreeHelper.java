@@ -194,7 +194,7 @@ public class CheckboxTreeHelper {
         if (checkBounds.height == 0) checkBounds.height = checkBounds.width = rowBounds.height;
 
         final CheckedTreeNode node = (CheckedTreeNode)o;
-        if (checkBounds.contains(e.getPoint())) {
+        if (checkBounds.contains(e.getPoint()) && cellRenderer.myCheckbox.isVisible()) {
           if (node.isEnabled()) {
             toggleNode(tree, node);
             tree.setSelectionRow(row);

@@ -14,8 +14,5 @@ public final class OpenapiIcons {
     return IconLoader.getIcon(path, OpenapiIcons.class);
   }
 
-  /**
-   * 16x16
-   */
-  public static final Icon RepositoryLibraryLogo = load("/icons/repositoryLibraryLogo.svg");
+  /** 16x16 */ public static final Icon RepositoryLibraryLogo = load("/icons/repositoryLibraryLogo.svg");
 }

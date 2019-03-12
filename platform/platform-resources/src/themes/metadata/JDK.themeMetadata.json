@@ -227,6 +227,10 @@
       "description": "Non-editable combo box. Editable combo box foreground is TextField.foreground"
     },
     {
+      "key": "ComboBox.modifiedItemForeground",
+      "description": "Changed objects that have not been saved yet. Blue by default"
+    },
+    {
       "key": "ComboBox.nonEditableBackground",
       "description": "Non-editable combo box"
     },
@@ -854,10 +858,16 @@
       "key": "ScrollBar.hoverThumbColor"
     },
     {
+      "key": "ScrollBar.hoverTrackColor"
+    },
+    {
       "key": "ScrollBar.Mac.hoverThumbBorderColor"
     },
     {
       "key": "ScrollBar.Mac.hoverThumbColor"
+    },
+    {
+      "key": "ScrollBar.Mac.hoverTrackColor"
     },
     {
       "key": "ScrollBar.Mac.thumbBorderColor"
@@ -1316,6 +1326,10 @@
       "deprecated": true
     },
     {
+      "key": "Tree.errorForeground",
+      "description": "Red text color for tree items with errors"
+    },
+    {
       "key": "Tree.foreground"
     },
     {
@@ -1325,6 +1339,10 @@
     {
       "key": "Tree.line",
       "deprecated": true
+    },
+    {
+      "key": "Tree.modifiedItemForeground",
+      "description": "Changed objects that have not been saved yet. Blue by default"
     },
     {
       "key": "Tree.rowHeight",

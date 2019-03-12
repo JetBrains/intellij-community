@@ -30,6 +30,10 @@ abstract class FilterModel<Filter> {
   void setFilter(@Nullable Filter filter) {
     myFilter = filter;
     saveFilterToProperties(filter);
+    notifyFiltersChanged();
+  }
+
+  protected void notifyFiltersChanged() {
     for (Runnable listener : mySetFilterListeners) {
       listener.run();
     }

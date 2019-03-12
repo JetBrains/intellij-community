@@ -554,39 +554,38 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
     myExpandedHandle = null;
     myCollapsedHandle = null;
-    myExpandedHandle = null;
+    myEmptyHandle = null;
   }
 
+  @Deprecated
   public Icon getHandleIcon(DefaultMutableTreeNode node, TreePath path) {
     if (node.getChildCount() == 0) return getEmptyHandle();
-
-
     return isExpanded(path) ? getExpandedHandle() : getCollapsedHandle();
 
   }
 
+  @Deprecated
   public Icon getExpandedHandle() {
     if (myExpandedHandle == null) {
       myExpandedHandle = UIUtil.getTreeExpandedIcon();
     }
-
     return myExpandedHandle;
   }
 
+  @Deprecated
   public Icon getCollapsedHandle() {
     if (myCollapsedHandle == null) {
       myCollapsedHandle = UIUtil.getTreeCollapsedIcon();
     }
-
     return myCollapsedHandle;
   }
 
+  @Deprecated
   public Icon getEmptyHandle() {
     if (myEmptyHandle == null) {
       final Icon expand = getExpandedHandle();
       myEmptyHandle = expand != null ? EmptyIcon.create(expand) : EmptyIcon.create(0);
     }
-
     return myEmptyHandle;
   }
 

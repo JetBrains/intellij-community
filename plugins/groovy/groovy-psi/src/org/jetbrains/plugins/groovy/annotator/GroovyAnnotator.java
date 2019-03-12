@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.ClassUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -1959,7 +1958,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   private static void checkCyclicInheritance(AnnotationHolder holder,
                                              @NotNull GrTypeDefinition typeDefinition) {
-    final PsiClass psiClass = HighlightClassUtil.getCircularClass(typeDefinition, new HashSet<>());
+    final PsiClass psiClass = InheritanceUtil.getCircularClass(typeDefinition);
     if (psiClass != null) {
       String qname = psiClass.getQualifiedName();
       assert qname != null;

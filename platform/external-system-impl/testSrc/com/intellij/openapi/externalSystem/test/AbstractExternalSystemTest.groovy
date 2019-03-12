@@ -15,6 +15,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.ui.UIUtil
+import one.util.streamex.StreamEx
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
@@ -42,7 +43,8 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
     projectDir = new File(tmpDir, getTestName(false))
     projectDir.mkdirs()
 
-    PlatformTestUtil.maskExtensions(ExternalSystemManager.EP_NAME, Collections.singletonList(new TestExternalSystemManager(project)), testRootDisposable)
+    def externalSystemManagers = StreamEx.of(ExternalSystemManager.EP_NAME.extensions()).append(new TestExternalSystemManager(project)).toList()
+    PlatformTestUtil.maskExtensions(ExternalSystemManager.EP_NAME, externalSystemManagers, testRootDisposable)
   }
 
   private static void ensureTempDirCreated() {

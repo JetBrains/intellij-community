@@ -16,6 +16,7 @@ public final class RunManagerConfig {
 
   @NonNls private static final String RECENTS_LIMIT = "recentsLimit";
   @NonNls private static final String RESTART_REQUIRES_CONFIRMATION = "restartRequiresConfirmation";
+  @NonNls private static final String DELETION_FROM_POPUP_REQUIRES_CONFIRMATION = "deletionFromPopupRequiresConfirmation";
   @NonNls private static final String STOP_INCOMPATIBLE_REQUIRES_CONFIRMATION = "stopIncompatibleRequiresConfirmation";
 
   public RunManagerConfig(@NotNull PropertiesComponent propertiesComponent) {
@@ -36,6 +37,14 @@ public final class RunManagerConfig {
 
   public void setRestartRequiresConfirmation(boolean restartRequiresConfirmation) {
     myPropertiesComponent.setValue(RESTART_REQUIRES_CONFIRMATION, restartRequiresConfirmation, true);
+  }
+
+  public boolean isDeletionFromPopupRequiresConfirmation() {
+    return myPropertiesComponent.getBoolean(DELETION_FROM_POPUP_REQUIRES_CONFIRMATION, true);
+  }
+
+  public void setDeletionFromPopupRequiresConfirmation(boolean deletionFromPopupRequiresConfirmation) {
+    myPropertiesComponent.setValue(DELETION_FROM_POPUP_REQUIRES_CONFIRMATION, deletionFromPopupRequiresConfirmation, true);
   }
 
   public boolean isStopIncompatibleRequiresConfirmation() {

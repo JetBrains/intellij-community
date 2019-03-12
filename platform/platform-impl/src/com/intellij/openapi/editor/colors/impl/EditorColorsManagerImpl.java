@@ -38,9 +38,11 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.JdomKt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -314,7 +316,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
         continue;
       }
       try {
-        ((AbstractColorsScheme)editorColorsScheme).readAttributes(JdomKt.loadElement(URLUtil.openStream(resource)));
+        Element root = JdomKt.loadElement(URLUtil.openStream(resource));
+        Element attrs = ObjectUtils.notNull(root.getChild("attributes"), root);
+        Element colors = root.getChild("colors");
+        AbstractColorsScheme scheme = (AbstractColorsScheme)editorColorsScheme;
+        scheme.readAttributes(attrs);
+        if (colors != null) {
+          scheme.readColors(colors);
+        }
       }
       catch (Exception e) {
         LOG.error(e);

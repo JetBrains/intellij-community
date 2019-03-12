@@ -176,7 +176,7 @@
                 "version_added": true
               },
               "safari_ios": {
-                "version_added": "6"
+                "version_added": false
               },
               "webview_android": {
                 "version_added": false
@@ -223,7 +223,7 @@
                 "version_added": true
               },
               "safari_ios": {
-                "version_added": "6"
+                "version_added": false
               },
               "webview_android": {
                 "version_added": false

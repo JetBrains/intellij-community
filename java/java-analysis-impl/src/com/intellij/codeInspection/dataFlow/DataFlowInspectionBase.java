@@ -96,7 +96,12 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         DataFlowInstructionVisitor visitor =
           analyzeDfaWithNestedClosures(aClass, holder, runner, Collections.singletonList(runner.createMemoryState()));
         List<DfaMemoryState> states = visitor.getEndOfInitializerStates();
+        boolean physical = aClass.isPhysical();
         for (PsiMethod method : aClass.getConstructors()) {
+          if (physical && !method.isPhysical()) {
+            // Constructor could be provided by, e.g. Lombok plugin: ignore it, we won't report any problems inside anyway
+            continue;
+          }
           List<DfaMemoryState> initialStates;
           PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
           if (JavaPsiConstructorUtil.isChainedConstructorCall(call) || (call == null && DfaUtil.hasImplicitImpureSuperCall(aClass, method))) {

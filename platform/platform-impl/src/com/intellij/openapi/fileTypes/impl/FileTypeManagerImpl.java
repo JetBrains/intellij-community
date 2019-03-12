@@ -901,6 +901,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public void registerFileType(@NotNull final FileType type, @NotNull final List<FileNameMatcher> defaultAssociations) {
+    DeprecatedMethodException.report("Use FileTypeFactory instead.");
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
       registerFileTypeWithoutNotification(type, defaultAssociations, true);
