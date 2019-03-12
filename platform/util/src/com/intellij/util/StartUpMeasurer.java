@@ -26,7 +26,6 @@ public final class StartUpMeasurer {
     public static final String INIT_DEFAULT_LAF = "init default LaF";
     public static final String UPDATE_WINDOW_ICON = "update window icon";
     public static final String REGISTER_BUNDLED_FONTS = "register bundled fonts";
-    public static final String CHECK_LICENSE = "check license";
 
     // this phase name is not fully clear - it is time from `IdeaApplication.initApplication` to `IdeaApplication.run`
     public static final String INIT_APP = "app initialization";
