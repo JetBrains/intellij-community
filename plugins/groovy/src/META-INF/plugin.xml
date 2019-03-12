@@ -186,6 +186,8 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultMethodReferenceTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultRangeTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultUnaryExpressionTypeCalculator"/>
 
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector"/>
 
