@@ -14,10 +14,10 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
@@ -33,6 +33,87 @@ public class JavaSourceInference {
   public static final int MAX_CONTRACT_COUNT = 10;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.inference.JavaSourceInference");
 
+  private static class MethodInferenceData {
+    static final MethodInferenceData UNKNOWN =
+      new MethodInferenceData(Mutability.UNKNOWN, Nullability.UNKNOWN, Collections.emptyList(), false, new BitSet());
+    
+    final @NotNull Mutability myMutability;
+    final @NotNull Nullability myNullability;
+    final @NotNull List<StandardMethodContract> myContracts;
+    final boolean myPure;
+    final @NotNull BitSet myNotNullParameters;
+
+    MethodInferenceData(@NotNull Mutability mutability,
+                        @NotNull Nullability nullability,
+                        @NotNull List<StandardMethodContract> contracts,
+                        boolean pure,
+                        @NotNull BitSet parameters) {
+      myMutability = mutability;
+      myNullability = nullability;
+      myContracts = contracts;
+      myPure = pure;
+      myNotNullParameters = parameters;
+    }
+  }
+
+  @NotNull
+  private static MethodInferenceData infer(PsiMethodImpl method) {
+    InferenceFromSourceUtil.InferenceMode mode = InferenceFromSourceUtil.getInferenceMode(method);
+    if (mode == InferenceFromSourceUtil.InferenceMode.DISABLED ||
+        mode == InferenceFromSourceUtil.InferenceMode.PARAMETERS && method.getParameterList().isEmpty()) {
+      return MethodInferenceData.UNKNOWN;
+    }
+
+    MethodData data = ContractInferenceIndexKt.getIndexedData(method);
+    if (data == null) return MethodInferenceData.UNKNOWN;
+    BitSet parameters = data.getNotNullParameters();
+    if (mode == InferenceFromSourceUtil.InferenceMode.PARAMETERS) {
+      return parameters.isEmpty() ? MethodInferenceData.UNKNOWN :
+             new MethodInferenceData(Mutability.UNKNOWN, Nullability.UNKNOWN, Collections.emptyList(), false, parameters);
+    }
+    
+    Function0<PsiCodeBlock> body = data.methodBody(method);
+    PsiType type = method.getReturnType();
+    
+    Nullability nullability = Nullability.UNKNOWN;
+    Mutability mutability = Mutability.UNKNOWN;
+    if (type != null && !(type instanceof PsiPrimitiveType)) {
+      MethodReturnInferenceResult result = data.getMethodReturn();
+      if (result != null) {
+        nullability = RecursionManager.doPreventingRecursion(method, true, () -> result.getNullability(method, body));
+        if (nullability == null) nullability = Nullability.UNKNOWN;
+        if (!ClassUtils.isImmutable(type, false)) {
+          mutability = RecursionManager.doPreventingRecursion(method, true, () -> result.getMutability(method, body));
+          if (mutability == null) mutability = Mutability.UNKNOWN;
+        }
+      }
+    }
+    
+    boolean pure = false;
+    if (!PsiType.VOID.equals(type)) {
+      PurityInferenceResult result = data.getPurity();
+      if (result != null) {
+        pure = Boolean.TRUE.equals(RecursionManager.doPreventingRecursion(method, true, () -> result.isPure(method, body)));
+      }
+    }
+
+    List<PreContract> preContracts = data.getContracts();
+    List<StandardMethodContract> contracts = RecursionManager.doPreventingRecursion(
+      method, true, () -> postProcessContracts(method, data, preContracts));
+    if (contracts == null) contracts = Collections.emptyList();
+
+    return new MethodInferenceData(mutability, nullability, contracts, pure, parameters);
+  }
+  
+  @NotNull
+  private static MethodInferenceData getInferenceData(PsiMethod method) {
+    if (!(method instanceof PsiMethodImpl)) {
+      return MethodInferenceData.UNKNOWN;
+    }
+    return CachedValuesManager.getCachedValue(
+      method, () -> CachedValueProvider.Result.create(infer((PsiMethodImpl)method), method, PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
   /**
    * Infer method return type nullability
    *
@@ -41,23 +122,7 @@ public class JavaSourceInference {
    */
   @NotNull
   public static Nullability inferNullability(PsiMethodImpl method) {
-    if (!InferenceFromSourceUtil.shouldInferFromSource(method, false)) {
-      return Nullability.UNKNOWN;
-    }
-
-    PsiType type = method.getReturnType();
-    if (type == null || type instanceof PsiPrimitiveType) {
-      return Nullability.UNKNOWN;
-    }
-
-    return CachedValuesManager.getCachedValue(method, () -> {
-      MethodData data = ContractInferenceIndexKt.getIndexedData(method);
-      MethodReturnInferenceResult result = data == null ? null : data.getMethodReturn();
-      Nullability nullability = result == null ? null : RecursionManager
-        .doPreventingRecursion(method, true, () -> result.getNullability(method, data.methodBody(method)));
-      if (nullability == null) nullability = Nullability.UNKNOWN;
-      return CachedValueProvider.Result.create(nullability, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-    });
+    return getInferenceData(method).myNullability;
   }
 
   /**
@@ -71,22 +136,16 @@ public class JavaSourceInference {
     PsiParameterList parent = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);
     if (parent == null) return Nullability.UNKNOWN;
     PsiMethodImpl method = ObjectUtils.tryCast(parent.getParent(), PsiMethodImpl.class);
-    if (method == null || !InferenceFromSourceUtil.shouldInferFromSource(method, true)) return Nullability.UNKNOWN;
+    if (method == null) return Nullability.UNKNOWN;
 
-    return CachedValuesManager.getCachedValue(parameter, () -> {
-      Nullability nullability = Nullability.UNKNOWN;
-      MethodData data = ContractInferenceIndexKt.getIndexedData(method);
-      if (data != null) {
-        BitSet notNullParameters = data.getNotNullParameters();
-        if (!notNullParameters.isEmpty()) {
-          int index = ArrayUtil.indexOf(parent.getParameters(), parameter);
-          if (notNullParameters.get(index)) {
-            nullability = Nullability.NOT_NULL;
-          }
-        }
+    BitSet notNullParameters = getInferenceData(method).myNotNullParameters;
+    if (!notNullParameters.isEmpty()) {
+      int index = parent.getParameterIndex(parameter);
+      if (notNullParameters.get(index)) {
+        return Nullability.NOT_NULL;
       }
-      return CachedValueProvider.Result.create(nullability, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-    });
+    }
+    return Nullability.UNKNOWN;
   }
 
   /**
@@ -97,23 +156,7 @@ public class JavaSourceInference {
    */
   @NotNull
   public static Mutability inferMutability(PsiMethodImpl method) {
-    if (!InferenceFromSourceUtil.shouldInferFromSource(method, false)) {
-      return Mutability.UNKNOWN;
-    }
-
-    PsiType type = method.getReturnType();
-    if (type == null || ClassUtils.isImmutable(type, false)) {
-      return Mutability.UNKNOWN;
-    }
-
-    return CachedValuesManager.getCachedValue(method, () -> {
-      MethodData data = ContractInferenceIndexKt.getIndexedData(method);
-      MethodReturnInferenceResult result = data == null ? null : data.getMethodReturn();
-      Mutability mutability = result == null ? null : RecursionManager
-        .doPreventingRecursion(method, true, () -> result.getMutability(method, data.methodBody(method)));
-      if (mutability == null) mutability = Mutability.UNKNOWN;
-      return CachedValueProvider.Result.create(mutability, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-    });
+    return getInferenceData(method).myMutability;
   }
 
   /**
@@ -124,17 +167,7 @@ public class JavaSourceInference {
    */
   @NotNull
   public static List<StandardMethodContract> inferContracts(@NotNull PsiMethodImpl method) {
-    if (!InferenceFromSourceUtil.shouldInferFromSource(method, false)) {
-      return Collections.emptyList();
-    }
-
-    return CachedValuesManager.getCachedValue(method, () -> {
-      MethodData data = ContractInferenceIndexKt.getIndexedData(method);
-      List<PreContract> preContracts = data == null ? Collections.emptyList() : data.getContracts();
-      List<StandardMethodContract> result = RecursionManager.doPreventingRecursion(method, true, () -> postProcessContracts(method, data, preContracts));
-      if (result == null) result = Collections.emptyList();
-      return CachedValueProvider.Result.create(result, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-    });
+    return getInferenceData(method).myContracts;
   }
 
   /**
@@ -144,16 +177,7 @@ public class JavaSourceInference {
    * @return true if method was inferred to be pure; false if method is not pure or cannot be analyzed
    */
   public static boolean inferPurity(@NotNull PsiMethodImpl method) {
-    if (!InferenceFromSourceUtil.shouldInferFromSource(method, false) || PsiType.VOID.equals(method.getReturnType())) {
-      return false;
-    }
-
-    return CachedValuesManager.getCachedValue(method, () -> {
-      MethodData data = ContractInferenceIndexKt.getIndexedData(method);
-      PurityInferenceResult result = data == null ? null : data.getPurity();
-      Boolean pure = RecursionManager.doPreventingRecursion(method, true, () -> result != null && result.isPure(method, data.methodBody(method)));
-      return CachedValueProvider.Result.create(pure == Boolean.TRUE, method);
-    });
+    return getInferenceData(method).myPure;
   }
 
   @NotNull

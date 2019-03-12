@@ -9,29 +9,30 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class InferenceFromSourceUtil {
-  static boolean shouldInferFromSource(@NotNull PsiMethodImpl method, boolean allowOverridden) {
-    if (!allowOverridden && PsiUtil.canBeOverridden(method)) return false;
-    return CachedValuesManager.getCachedValue(method, () -> CachedValueProvider.Result
-      .create(calcShouldInferFromSource(method), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+  enum InferenceMode {
+    DISABLED, ENABLED, PARAMETERS
   }
-
-  private static boolean calcShouldInferFromSource(@NotNull PsiMethod method) {
+  
+  static InferenceMode getInferenceMode(@NotNull PsiMethodImpl method) {
     if (isLibraryCode(method) ||
-        method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-        method.hasModifierProperty(PsiModifier.NATIVE)) {
-      return false;
+        ((PsiMethod)method).hasModifierProperty(PsiModifier.ABSTRACT) ||
+        ((PsiMethod)method).hasModifierProperty(PsiModifier.NATIVE)) {
+      return InferenceMode.DISABLED;
     }
 
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return true;
+    if (((PsiMethod)method).hasModifierProperty(PsiModifier.STATIC)) return InferenceMode.ENABLED;
+    if (PsiUtil.canBeOverridden(method)) return InferenceMode.PARAMETERS;
+    if (isUnusedInAnonymousClass(method)) return InferenceMode.DISABLED;
 
-    return !isUnusedInAnonymousClass(method);
+    return InferenceMode.ENABLED;
   }
 
   private static boolean isUnusedInAnonymousClass(@NotNull PsiMethod method) {
