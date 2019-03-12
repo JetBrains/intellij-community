@@ -533,13 +533,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     });
   }
 
-  void execute(@NotNull CommitExecutor commitExecutor) {
-    CommitSession session = commitExecutor.createCommitSession();
-    if (session == CommitSession.VCS_COMMIT) {
-      executeDefaultCommitSession(commitExecutor);
-      return;
-    }
-
+  void execute(@NotNull CommitExecutor commitExecutor, @NotNull CommitSession session) {
     if (!myWorkflow.canExecute(commitExecutor, getIncludedChanges())) return;
     if (!saveDialogState()) return;
     saveComments(true);
