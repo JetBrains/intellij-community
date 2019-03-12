@@ -2356,6 +2356,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                       "   };\n" +
                       "}";
     assertEquals("match statement body correctly", 1, findMatchesCount(source2, pattern7));
+
+    String source3 = "class LambdaParameter {\n" +
+                     "\n" +
+                     "    void x() {\n" +
+                     "        Runnable r = (var a) -> a = \"\";\n" +
+                     "    }\n" +
+                     "}";
+    String pattern8 = "String '_x;";
+    assertEquals("avoid IncorrectOperationException", 0, findMatchesCount(source3, pattern8));
   }
 
   public void testFindDefaultMethods() {
