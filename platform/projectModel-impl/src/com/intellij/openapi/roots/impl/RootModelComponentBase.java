@@ -41,7 +41,10 @@ public abstract class RootModelComponentBase implements Disposable {
 
   @Override
   public void dispose() {
-    myDisposed = true;
+    if (!myDisposed) {
+      myRootModel.unregisterOnDispose(this);
+      myDisposed = true;
+    }
   }
 
   public boolean isDisposed() {
