@@ -522,4 +522,8 @@ public class ScreenUtil {
 
     return false;
   }
+
+  public static boolean intersectsVisibleScreen (Window window) {
+    return window.getGraphicsConfiguration().getBounds().intersects(window.getBounds());
+  }
 }
