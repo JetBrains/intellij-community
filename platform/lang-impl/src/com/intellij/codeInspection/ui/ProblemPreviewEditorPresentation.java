@@ -67,17 +67,19 @@ public class ProblemPreviewEditorPresentation {
     if (documentManager.isUncommited(doc)) {
       WriteAction.run(() -> documentManager.commitDocument(doc));
     }
-    final SortedSet<PreviewEditorFoldingRegion> foldingRegions = new TreeSet<>();
-    foldingRegions.add(new PreviewEditorFoldingRegion(0, doc.getLineCount()));
-    boolean isUpdated = false;
-    for (UsageInfo usage : usages) {
-      if (usage == null) {
-        return;
+    if (usages.size() > 1) {
+      SortedSet<PreviewEditorFoldingRegion> foldingRegions = new TreeSet<>();
+      foldingRegions.add(new PreviewEditorFoldingRegion(0, doc.getLineCount()));
+      boolean isUpdated = false;
+      for (UsageInfo usage : usages) {
+        if (usage == null) {
+          return;
+        }
+        isUpdated |= makeVisible(foldingRegions, usage.getSegment(), doc);
       }
-      isUpdated |= makeVisible(foldingRegions, usage.getSegment(), doc);
-    }
-    if (isUpdated) {
-      setupFoldings(editor, foldingRegions);
+      if (isUpdated) {
+        setupFoldings(editor, foldingRegions);
+      }
     }
 
     highlightProblems(editor, editorContainer, usages, project);
