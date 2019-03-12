@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitExecutorBase
+import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.vcs.changes.CommitWorkflowHandler
 
 class SingleChangeListCommitWorkflowHandler(
@@ -21,14 +22,31 @@ class SingleChangeListCommitWorkflowHandler(
     })
   }
 
-  override fun executorCalled(executor: CommitExecutor?) = executor?.let { ui.execute(it) } ?: ui.executeDefaultCommitSession(null)
+  override fun executorCalled(executor: CommitExecutor?) = executor?.let { execute(it) } ?: executeDefault(null)
 
   override fun getExecutor(executorId: String): CommitExecutor? = workflow.executors.find { it.id == executorId }
 
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean =
     ui.hasDiffs() || (executor is CommitExecutorBase && !executor.areChangesRequired())
 
-  override fun execute(executor: CommitExecutor) = ui.execute(executor)
+  override fun execute(executor: CommitExecutor) {
+    val session = executor.createCommitSession()
+
+    if (session === CommitSession.VCS_COMMIT) {
+      executeDefault(executor)
+    }
+    else {
+      executeCustom(executor, session)
+    }
+  }
+
+  private fun executeDefault(executor: CommitExecutor?) {
+    ui.executeDefaultCommitSession(executor)
+  }
+
+  private fun executeCustom(executor: CommitExecutor, session: CommitSession) {
+    ui.execute(executor, session)
+  }
 
   override fun dispose() = Unit
 }
