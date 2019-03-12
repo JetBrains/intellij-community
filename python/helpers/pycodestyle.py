@@ -78,7 +78,7 @@ try:
 except ImportError:
     from ConfigParser import RawConfigParser
 
-__version__ = '2.4.0'
+__version__ = '2.5.0'
 
 DEFAULT_EXCLUDE = '.svn,CVS,.bzr,.hg,.git,__pycache__,.tox'
 DEFAULT_IGNORE = 'E121,E123,E126,E226,E24,E704,W503,W504'
@@ -207,7 +207,7 @@ def tabs_or_spaces(physical_line, indent_char):
     tabs and spaces.  When using -tt these warnings become errors.
     These options are highly recommended!
 
-    Okay: if a == 0:\n        a = 1\n        b = 1
+    Okay: if a == 0:\n    a = 1\n    b = 1
     E101: if a == 0:\n        a = 1\n\tb = 1
     """
     indent = INDENT_REGEX.match(physical_line).group(1)
@@ -357,6 +357,16 @@ def blank_lines(logical_line, blank_lines, indent_level, line_number,
           ):
         yield 0, "E303 too many blank lines (%d)" % blank_lines
     elif STARTSWITH_TOP_LEVEL_REGEX.match(logical_line):
+        # If this is a one-liner (i.e. the next line is not more
+        # indented), and the previous line is also not deeper
+        # (it would be better to check if the previous line is part
+        # of another def/class at the same level), don't require blank
+        # lines around this.
+        prev_line = lines[line_number - 2] if line_number >= 2 else ''
+        next_line = lines[line_number] if line_number < len(lines) else ''
+        if (expand_indent(prev_line) <= indent_level and
+                expand_indent(next_line) <= indent_level):
+            return
         if indent_level:
             if not (blank_before == method_lines or
                     previous_indent_level < indent_level or
@@ -523,6 +533,10 @@ def indentation(logical_line, previous_logical, indent_char,
         yield 0, tmpl % (2 + c, "expected an indented block")
     elif not indent_expect and indent_level > previous_indent_level:
         yield 0, tmpl % (3 + c, "unexpected indentation")
+
+    expected_indent_level = previous_indent_level + 4
+    if indent_expect and indent_level > expected_indent_level:
+        yield 0, tmpl % (7, 'over-indented')
 
 
 @register_check
@@ -1495,12 +1509,15 @@ def python_3000_backticks(logical_line):
 
 
 @register_check
-def python_3000_invalid_escape_sequence(logical_line, tokens):
+def python_3000_invalid_escape_sequence(logical_line, tokens, noqa):
     r"""Invalid escape sequences are deprecated in Python 3.6.
 
     Okay: regex = r'\.png$'
     W605: regex = '\.png$'
     """
+    if noqa:
+        return
+
     # https://docs.python.org/3/reference/lexical_analysis.html#string-and-bytes-literals
     valid = [
         '\n',
@@ -1569,12 +1586,19 @@ def python_3000_async_await_keywords(logical_line, tokens):
     for token_type, text, start, end, line in tokens:
         error = False
 
+        if token_type == tokenize.NL:
+            continue
+
         if state is None:
             if token_type == tokenize.NAME:
                 if text == 'async':
                     state = ('async_stmt', start)
                 elif text == 'await':
                     state = ('await', start)
+                elif (token_type == tokenize.NAME and
+                      text in ('def', 'for')):
+                    state = ('define', start)
+
         elif state[0] == 'async_stmt':
             if token_type == tokenize.NAME and text in ('def', 'with', 'for'):
                 # One of funcdef, with_stmt, or for_stmt. Return to
@@ -1587,8 +1611,15 @@ def python_3000_async_await_keywords(logical_line, tokens):
                 # An await expression. Return to looking for async/await
                 # names.
                 state = None
+            elif token_type == tokenize.OP and text == '(':
+                state = None
             else:
                 error = True
+        elif state[0] == 'define':
+            if token_type == tokenize.NAME and text in ('async', 'await'):
+                error = True
+            else:
+                state = None
 
         if error:
             yield (
