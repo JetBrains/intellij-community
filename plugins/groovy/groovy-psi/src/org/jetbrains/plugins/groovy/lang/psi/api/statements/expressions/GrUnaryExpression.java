@@ -6,13 +6,13 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 
 public interface GrUnaryExpression extends GrExpression {
 
   @NotNull
   @Override
-  GroovyReference getReference();
+  GroovyCallReference getReference();
 
   /**
    * @return type of this expression with regard to whether this expression is prefix or postfix
