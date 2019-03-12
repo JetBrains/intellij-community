@@ -60,17 +60,12 @@ class FrameInfo : BaseState() {
 fun WindowManagerImpl.getFrameInfoInDeviceSpace(project: Project, prev: FrameInfo?): FrameInfo? {
   val frame = getFrame(project) ?: return null
 
-  if (!ScreenUtil.intersectsVisibleScreen(frame)) {
-    logger<Rectangle>().warn("Looks like the frame ${frame.bounds} is outside the screen bounds")
-  }
-
   // save bounds even if maximized because on unmaximize we must restore previous frame bounds
   val deviceSpaceBounds = convertToDeviceSpace(frame.graphicsConfiguration, myDefaultFrameInfo.bounds!!)
-  if (deviceSpaceBounds.x < 0 || deviceSpaceBounds.x < 0 || deviceSpaceBounds.width < 0 || deviceSpaceBounds.height < 0) {
-    // don't report if was already reported
-    if (prev?.bounds != deviceSpaceBounds) {
-      logger<WindowInfoImpl>().error("Frame bounds are invalid: $deviceSpaceBounds")
-    }
+
+  // don't report if was already reported
+  if (prev?.bounds != deviceSpaceBounds && !ScreenUtil.intersectsVisibleScreen(frame)) {
+    logger<WindowInfoImpl>().error("Frame bounds are invalid: $deviceSpaceBounds")
   }
 
   val frameInfo = FrameInfo()
