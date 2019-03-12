@@ -96,6 +96,10 @@ public class InsertionContext {
     return key;
   }
 
+  public void setStartOffset(final int offset) {
+    myOffsetMap.addOffset(CompletionInitializationContext.START_OFFSET, offset);
+  }
+
   public int getStartOffset() {
     return myOffsetMap.getOffset(CompletionInitializationContext.START_OFFSET);
   }
