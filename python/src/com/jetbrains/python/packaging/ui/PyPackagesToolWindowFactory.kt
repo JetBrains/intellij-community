@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.packaging
+package com.jetbrains.python.packaging.ui
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -16,7 +16,9 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.content.ContentFactory
 import com.intellij.webcore.packaging.PackagesNotificationPanel
-import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel
+import com.jetbrains.python.packaging.PyPackage
+import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.sdk.PythonSdkType
 
 class PyPackagesToolWindowFactory : ToolWindowFactory, DumbAware {

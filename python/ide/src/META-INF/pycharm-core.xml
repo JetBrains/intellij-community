@@ -76,7 +76,7 @@
                 factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
 
     <toolWindow id="Python Packages" anchor="right" secondary="true"
-                factoryClass="com.jetbrains.python.packaging.PyPackagesToolWindowFactory"/>
+                factoryClass="com.jetbrains.python.packaging.ui.PyPackagesToolWindowFactory"/>
 
     <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>
 
