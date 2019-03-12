@@ -35,7 +35,7 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
   }
 
   override fun getModificationCount(): Long {
-    val frameInfoInDeviceSpace = (WindowManager.getInstance() as? WindowManagerImpl)?.getFrameInfoInDeviceSpace(project)
+    val frameInfoInDeviceSpace = (WindowManager.getInstance() as? WindowManagerImpl)?.getFrameInfoInDeviceSpace(project, rawFrameInfo)
     if (frameInfoInDeviceSpace != null) {
       if (rawFrameInfo == null) {
         rawFrameInfo = frameInfoInDeviceSpace
@@ -56,13 +56,16 @@ class FrameInfo : BaseState() {
   @get:Attribute var fullScreen by property(false)
 }
 
-fun WindowManagerImpl.getFrameInfoInDeviceSpace(project: Project): FrameInfo? {
+fun WindowManagerImpl.getFrameInfoInDeviceSpace(project: Project, prev: FrameInfo?): FrameInfo? {
   val frame = getFrame(project) ?: return null
 
   // save bounds even if maximized because on unmaximize we must restore previous frame bounds
   val deviceSpaceBounds = convertToDeviceSpace(frame.graphicsConfiguration, myDefaultFrameInfo.bounds!!)
   if (deviceSpaceBounds.x < 0 || deviceSpaceBounds.x < 0 || deviceSpaceBounds.width < 0 || deviceSpaceBounds.height < 0) {
-    logger<WindowInfoImpl>().error("Frame bounds are invalid: $deviceSpaceBounds")
+    // don't report if was already reported
+    if (prev?.bounds != deviceSpaceBounds) {
+      logger<WindowInfoImpl>().error("Frame bounds are invalid: $deviceSpaceBounds")
+    }
   }
 
   val frameInfo = FrameInfo()
