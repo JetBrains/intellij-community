@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -65,6 +66,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private final PendingTasksRunner myOnResizedRunner;
   private final TerminalConsoleContentHelper myContentHelper = new TerminalConsoleContentHelper(this);
 
+  private LineSeparator myEnterKeyLineSeparator = null;
   private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();
 
   {
@@ -113,6 +115,12 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   public void setAutoNewLineMode(boolean enabled) {
     myKeyEncoder.setAutoNewLine(enabled);
+  }
+
+  @NotNull
+  public TerminalExecutionConsole withEnterKeyLineSeparator(@NotNull LineSeparator lineSeparator) {
+    myEnterKeyLineSeparator = lineSeparator;
+    return this;
   }
 
   public void addMessageFilter(Project project, Filter filter) {
@@ -332,11 +340,13 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       return new TerminalStarter(terminal, connector, myDataStream) {
         @Override
         public byte[] getCode(int key, int modifiers) {
-          if (key == 10) {
+          if (key == KeyEvent.VK_ENTER) {
+            if (modifiers == 0 && myEnterKeyLineSeparator != null) {
+              return myEnterKeyLineSeparator.getSeparatorBytes();
+            }
             return myKeyEncoder.getCode(key, modifiers);
-          } else {
-            return super.getCode(key, modifiers);
           }
+          return super.getCode(key, modifiers);
         }
       };
     }
