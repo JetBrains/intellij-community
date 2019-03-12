@@ -7,8 +7,6 @@ import com.intellij.codeInspection.actions.RunInspectionAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +23,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.regex.Matcher;
@@ -68,19 +65,7 @@ public class InspectionNodeInfo extends JPanel {
     description.setEditable(false);
     description.setOpaque(false);
     description.setBackground(UIUtil.getLabelBackground());
-    description.addHyperlinkListener(new HyperlinkAdapter() {
-      @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
-        String prefix = SingleInspectionProfilePanel.SETTINGS;
-        String description = e.getDescription();
-        if (description.startsWith(prefix)) {
-          String id = description.substring(prefix.length());
-          ShowSettingsUtilImpl.showSettingsDialog(project, id, "");
-        } else {
-          BrowserUtil.browse(description);
-        }
-      }
-    });
+    description.addHyperlinkListener(SingleInspectionProfilePanel.createSettingsHyperlinkListener(project));
     String descriptionText = toolWrapper.loadDescription();
     if (descriptionText == null) {
       InspectionEP extension = toolWrapper.getExtension();
