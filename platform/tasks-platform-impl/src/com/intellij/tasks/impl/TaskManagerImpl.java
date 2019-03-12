@@ -302,6 +302,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public LocalTask activateTask(@NotNull final Task origin, boolean clearContext) {
+    return activateTask(origin, clearContext, false);
+  }
+
+  public LocalTask activateTask(@NotNull final Task origin, boolean clearContext, boolean newTask) {
     LocalTask activeTask = getActiveTask();
     if (origin.equals(activeTask)) return activeTask;
 
@@ -314,11 +318,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     final LocalTask task = doActivate(origin, true);
 
-    restoreVcsContext(task);
+    restoreVcsContext(task, newTask);
     return task;
   }
 
-  private void restoreVcsContext(LocalTask task) {
+  private void restoreVcsContext(LocalTask task, boolean newTask) {
     if (!isVcsEnabled())
       return;
 
