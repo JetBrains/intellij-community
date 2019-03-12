@@ -31,7 +31,6 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.structuralsearch.plugin.util.DuplicateFilteringResultSink;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -317,11 +316,11 @@ public class Matcher {
    * @throws UnsupportedPatternException
    */
   public List<MatchResult> testFindMatches(String source,
-                                              MatchOptions options,
-                                              boolean fileContext,
-                                              FileType sourceFileType,
-                                              String sourceExtension,
-                                              boolean physicalSourceFile)
+                                           MatchOptions options,
+                                           boolean fileContext,
+                                           FileType sourceFileType,
+                                           String sourceExtension,
+                                           boolean physicalSourceFile)
     throws MalformedPatternException, UnsupportedPatternException {
 
     CollectingMatchResultSink sink = new CollectingMatchResultSink();
@@ -335,11 +334,6 @@ public class Matcher {
 
       options.setScope(new LocalSearchScope(elements));
       testFindMatches(sink, options);
-    }
-    catch (IncorrectOperationException e) {
-      MalformedPatternException exception = new MalformedPatternException();
-      exception.initCause(e);
-      throw exception;
     } finally {
       options.setScope(null);
     }
