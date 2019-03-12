@@ -82,7 +82,7 @@ object GuiTestLocalLauncher {
                     testClassNames: List<String> = emptyList(),
                     additionalJvmOptions: List<Pair<String, String>> = emptyList()) {
     val args = createArgs(ide = ide, port = port, testClassNames = testClassNames, additionalJvmOptions = additionalJvmOptions)
-    return startIde(ide = ide, ideaStartTest = ProcessBuilder().command(args))
+    return startIde(ide = ide, ideaStartTest = ProcessBuilder().inheritIO().command(args))
   }
 
   fun runIdeWithDTraceLocally(ide: Ide = Ide(CommunityIde(), 0, 0),
