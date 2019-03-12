@@ -3,15 +3,21 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithm
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrUnaryOperatorReference;
+import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
+
+import java.util.Objects;
 
 public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryExpression {
 
@@ -30,6 +36,23 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
   @Override
   public String toString() {
     return "Unary expression";
+  }
+
+  @Nullable
+  @Override
+  public PsiType getType() {
+    if (isPostfix()) {
+      return Objects.requireNonNull(getOperand()).getType();
+    }
+    else {
+      return getOperationType();
+    }
+  }
+
+  @Nullable
+  @Override
+  public PsiType getOperationType() {
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, GrTypeCalculator::getTypeFromCalculators);
   }
 
   @Override
