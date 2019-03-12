@@ -13,7 +13,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -41,14 +40,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -201,28 +197,6 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  private static boolean shouldSkipAutoPopup(Editor editor, PsiFile psiFile) {
-    int offset = editor.getCaretModel().getOffset();
-    int psiOffset = Math.max(0, offset - 1);
-
-    PsiElement elementAt = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, psiOffset);
-    if (elementAt == null) {
-      elementAt = psiFile.findElementAt(psiOffset);
-    }
-    if (elementAt == null) return true;
-
-    Language language = PsiUtilCore.findLanguageFromElement(elementAt);
-
-    for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
-      final ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
-      if (result != ThreeState.UNSURE) {
-        LOG.debug(confidence + " has returned shouldSkipAutopopup=" + result);
-        return result == ThreeState.YES;
-      }
-    }
-    return false;
-  }
-
   @NotNull
   private LookupImpl obtainLookup(Editor editor, Project project) {
     CompletionAssertions.checkEditorValid(editor);
@@ -275,7 +249,7 @@ public class CodeCompletionHandlerBase {
     }
 
     Future<?> future = indicator.getCompletionThreading().startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () -> {
-      CompletionParameters parameters = prepareCompletionParameters(initContext, indicator);
+      CompletionParameters parameters = CompletionInitializationUtil.prepareCompletionParameters(initContext, indicator);
       if (parameters != null) {
         indicator.runContributors(initContext);
       }
@@ -314,15 +288,6 @@ public class CodeCompletionHandlerBase {
         LOG.error(e);
       }
     }
-  }
-
-  @Nullable
-  private CompletionParameters prepareCompletionParameters(CompletionInitializationContext initContext,
-                                                           CompletionProgressIndicator indicator) {
-    if (autopopup && shouldSkipAutoPopup(initContext.getEditor(), initContext.getFile())) {
-      return null;
-    }
-    return CompletionInitializationUtil.prepareCompletionParameters(initContext, indicator);
   }
 
   private static void checkNotSync(CompletionProgressIndicator indicator, List<LookupElement> allItems) {
