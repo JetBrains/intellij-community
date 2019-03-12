@@ -822,6 +822,34 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  public void testPythonSubprocessWithCParameter() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_python_subprocess_with_c_parameter.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getFilePath("test_python_subprocess_with_c_parameter.py"), 6);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("ret").hasValue("0");
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron", "-jython");
+      }
+    });
+  }
+
+  @Test
   public void testPyQtQThreadInheritor() {
     Assume.assumeFalse("Don't run under Windows",UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 

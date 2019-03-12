@@ -334,21 +334,6 @@ def create_warn_multiproc(original_name):
         return getattr(os, original_name)(*args)
     return new_warn_multiproc
 
-def create_execl(original_name):
-    def new_execl(path, *args):
-        """
-        os.execl(path, arg0, arg1, ...)
-        os.execle(path, arg0, arg1, ..., env)
-        os.execlp(file, arg0, arg1, ...)
-        os.execlpe(file, arg0, arg1, ..., env)
-        """
-        import os
-        args = patch_args(args)
-        if is_python_args(args):
-            send_process_will_be_substituted()
-        return getattr(os, original_name)(path, *args)
-    return new_execl
-
 
 def create_execv(original_name):
     def new_execv(path, args):
@@ -528,14 +513,10 @@ def patch_new_process_functions():
     # os.execve(path, args, env)
     # os.execvp(file, args)
     # os.execvpe(file, args, env)
-    monkey_patch_os('execl', create_execl)
-    monkey_patch_os('execle', create_execl)
-    monkey_patch_os('execlp', create_execl)
-    monkey_patch_os('execlpe', create_execl)
+
+    # All other exec* functions use these two under the hood.
     monkey_patch_os('execv', create_execv)
     monkey_patch_os('execve', create_execve)
-    monkey_patch_os('execvp', create_execv)
-    monkey_patch_os('execvpe', create_execve)
 
     # os.spawnl(mode, path, ...)
     # os.spawnle(mode, path, ..., env)
@@ -572,14 +553,8 @@ def patch_new_process_functions():
 
 
 def patch_new_process_functions_with_warning():
-    monkey_patch_os('execl', create_warn_multiproc)
-    monkey_patch_os('execle', create_warn_multiproc)
-    monkey_patch_os('execlp', create_warn_multiproc)
-    monkey_patch_os('execlpe', create_warn_multiproc)
     monkey_patch_os('execv', create_warn_multiproc)
     monkey_patch_os('execve', create_warn_multiproc)
-    monkey_patch_os('execvp', create_warn_multiproc)
-    monkey_patch_os('execvpe', create_warn_multiproc)
     monkey_patch_os('spawnl', create_warn_multiproc)
     monkey_patch_os('spawnle', create_warn_multiproc)
     monkey_patch_os('spawnlp', create_warn_multiproc)
