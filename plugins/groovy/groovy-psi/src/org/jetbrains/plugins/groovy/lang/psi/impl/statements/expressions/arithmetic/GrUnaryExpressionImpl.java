@@ -9,11 +9,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrUnaryOperatorReference;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
@@ -21,7 +21,7 @@ import java.util.Objects;
 
 public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryExpression {
 
-  private final GroovyReference myReference = new GrUnaryOperatorReference(this);
+  private final GroovyCallReference myReference = new GrUnaryOperatorReference(this);
 
   public GrUnaryExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -29,7 +29,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
 
   @NotNull
   @Override
-  public GroovyReference getReference() {
+  public GroovyCallReference getReference() {
     return myReference;
   }
 
