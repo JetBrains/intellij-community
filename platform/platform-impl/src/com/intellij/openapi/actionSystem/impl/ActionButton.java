@@ -61,8 +61,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myAction = action;
     myPresentation = presentation;
     myPlace = place;
-    // Button should be focusable if screen reader is active
-    setFocusable(ScreenReader.isActive());
+    setFocusable(true);
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
     // Pressing the SPACE key is the same as clicking the button
     addKeyListener(new KeyAdapter() {
