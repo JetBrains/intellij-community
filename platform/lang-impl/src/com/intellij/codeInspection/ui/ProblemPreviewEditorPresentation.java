@@ -18,6 +18,7 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
@@ -64,6 +65,7 @@ public class ProblemPreviewEditorPresentation {
                                                        @NotNull List<? extends UsageInfo> usages, @NotNull Project project) {
     final Document doc = editor.getDocument();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     if (documentManager.isUncommited(doc)) {
       WriteAction.run(() -> documentManager.commitDocument(doc));
     }
@@ -75,7 +77,11 @@ public class ProblemPreviewEditorPresentation {
         if (usage == null) {
           return;
         }
-        isUpdated |= makeVisible(foldingRegions, usage.getSegment(), doc);
+        PsiElement element = usage.getElement();
+        Segment segment = usage.getSegment();
+        assert element != null;
+        assert segment != null;
+        isUpdated |= makeVisible(foldingRegions, injectedLanguageManager.injectedToHost(element, TextRange.create(segment)), doc);
       }
       if (isUpdated) {
         setupFoldings(editor, foldingRegions);
@@ -87,6 +93,7 @@ public class ProblemPreviewEditorPresentation {
 
   private static void highlightProblems(EditorEx editor, Container editorContainer, List<? extends UsageInfo> usages, @NotNull Project project) {
     List<UsageInfo> validUsages = ContainerUtil.filter(usages, Objects::nonNull);
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(() -> {
       if (!editor.isDisposed()) {
         editorContainer.invalidate();
@@ -95,9 +102,11 @@ public class ProblemPreviewEditorPresentation {
         if (validUsages.size() == 1) {
           final PsiElement element = validUsages.get(0).getElement();
           if (element != null) {
+            final TextRange range = injectedLanguageManager.injectedToHost(element, element.getTextRange());
+
             final Document document = editor.getDocument();
-            final int offset = Math.min(element.getTextRange().getEndOffset() + VIEW_ADDITIONAL_OFFSET,
-                                        document.getLineEndOffset(document.getLineNumber(element.getTextRange().getEndOffset())));
+            final int offset = Math.min(range.getEndOffset() + VIEW_ADDITIONAL_OFFSET,
+                                        document.getLineEndOffset(document.getLineNumber(range.getEndOffset())));
             editor.getScrollingModel().scrollTo(editor.offsetToLogicalPosition(offset), ScrollType.CENTER);
             return;
           }
