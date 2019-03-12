@@ -366,7 +366,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   }
 
   private static void completeTagTail(Template template, XmlElementDescriptor descriptor, PsiFile file, XmlTag context, boolean firstLevel) {
-    boolean completeIt = !firstLevel || !canHaveAttributes(descriptor, context, file);
+    boolean completeIt = !firstLevel || !canHaveAttributes(descriptor, context);
     switch (descriptor.getContentType()) {
       case XmlElementDescriptor.CONTENT_TYPE_UNKNOWN:
         return;
@@ -399,11 +399,10 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     }
   }
 
-  private static boolean canHaveAttributes(XmlElementDescriptor descriptor, XmlTag context, PsiFile file) {
+  private static boolean canHaveAttributes(XmlElementDescriptor descriptor, XmlTag context) {
     XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(context);
-    XmlExtension extension = XmlExtension.getExtension(file);
     int required = WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes() ?
-                   ArraysKt.count(attributes, (attribute) -> extension.shouldBeInserted(attribute) && context.getAttribute(attribute.getName()) == null) :
+                   ArraysKt.count(attributes, (attribute) -> attribute.isRequired() && context.getAttribute(attribute.getName()) == null) :
                    0;
     return attributes.length - required > 0 ;
   }
