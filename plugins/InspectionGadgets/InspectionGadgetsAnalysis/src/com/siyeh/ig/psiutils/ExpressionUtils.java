@@ -1035,11 +1035,14 @@ public class ExpressionUtils {
       // red code
       return false;
     }
-    @NonNls final String text = literal.getText();
-    if (text.charAt(0) != '0' || text.length() < 2) {
+    return isOctalLiteralText(literal.getText());
+  }
+
+  public static boolean isOctalLiteralText(String literalText) {
+    if (literalText.charAt(0) != '0' || literalText.length() < 2) {
       return false;
     }
-    final char c1 = text.charAt(1);
+    final char c1 = literalText.charAt(1);
     return c1 == '_' || (c1 >= '0' && c1 <= '7');
   }
 

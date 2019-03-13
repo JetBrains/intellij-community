@@ -86,9 +86,9 @@ abstract class FilterModel<Filter> {
 
     @Override
     void setFilter(@Nullable Filter filter) {
-      super.setFilter(filter);
+      if (!ObjectUtils.equals(myFilter, filter) && filter != null) triggerFilterSet(myFilterKey.getName());
 
-      if (filter != null) triggerFilterSet(myFilterKey.getName());
+      super.setFilter(filter);
     }
 
     @Nullable

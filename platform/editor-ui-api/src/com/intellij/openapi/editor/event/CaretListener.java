@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.event;
 
+import com.intellij.openapi.editor.CaretModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -8,8 +9,8 @@ import java.util.EventListener;
 /**
  * Allows to receive notifications about caret movement, and caret additions/removal
  *
- * @see com.intellij.openapi.editor.CaretModel#addCaretListener(CaretListener)
- * @see EditorEventMulticaster#TOPIC
+ * @see CaretModel#addCaretListener(CaretListener)
+ * @see EditorEventMulticaster#addCaretListener(CaretListener)
  */
 public interface CaretListener extends EventListener {
   /**

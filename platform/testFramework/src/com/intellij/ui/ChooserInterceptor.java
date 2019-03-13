@@ -50,7 +50,7 @@ public class ChooserInterceptor extends UiInterceptors.UiInterceptor<JBPopup> {
     }
     List<String> matched = StreamEx.of(actualOptions).filter(opt -> myToSelect.matcher(opt).matches()).toList();
     if (matched.isEmpty()) {
-      fail("No option matches " + myToSelect);
+      fail("No option matches pattern " + myToSelect + " (available options: " + String.join(", ", actualOptions) + ")");
     }
     if (matched.size() > 1) {
       fail("Several options matched: " + matched + " (pattern: " + myToSelect + ")");

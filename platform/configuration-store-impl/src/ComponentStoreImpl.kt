@@ -470,8 +470,8 @@ abstract class ComponentStoreImpl : IComponentStore {
       return false
     }
 
-    val changedStoragesEmpty = changedStorages.isEmpty()
-    initComponent(info, if (changedStoragesEmpty) null else changedStorages, changedStoragesEmpty)
+    val isChangedStoragesEmpty = changedStorages.isEmpty()
+    initComponent(info, if (isChangedStoragesEmpty) null else changedStorages, isChangedStoragesEmpty)
     return true
   }
 

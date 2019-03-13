@@ -38,6 +38,20 @@ public class ExceptionUtilRt {
     }
   }
 
+
+  public static <T> T findCause(Throwable e, Class<T> klass) {
+    while (e != null && !klass.isInstance(e)) {
+      e = e.getCause();
+    }
+    //noinspection unchecked
+    return (T)e;
+  }
+
+  public static boolean causedBy(Throwable e, Class klass) {
+    return findCause(e, klass) != null;
+  }
+
+
   @NotNull
   public static String getThrowableText(@NotNull Throwable aThrowable, @NotNull String stackFrameSkipPattern) {
     final String prefix = "\tat ";

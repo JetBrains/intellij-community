@@ -659,9 +659,17 @@ public class PyPackageRequirementsInspection extends PyInspection {
       return false;
     }
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
+      return "Add requirement";
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getName() {
       return String.format("Add requirement '%s' to %s", myPackageName, calculateTarget());
     }
 

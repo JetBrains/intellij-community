@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiMethod
+import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
 
@@ -147,17 +148,61 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       """:cleanTest :test --tests *""",
       projectData["project"].root.subDirectory("src", "test")
     )
-    assertConfigurationFromContext<AllInPackageGradleConfigurationProducer>(
+    assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
       """:cleanTest :test --tests *""",
       projectData["project"].root.subDirectory("src", "test", "java")
     )
     assertConfigurationFromContext<AllInPackageGradleConfigurationProducer>(
+      """:cleanTest :test --tests "pkg.*"""",
+      projectData["project"].root.subDirectory("src", "test", "java", "pkg")
+    )
+    assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
       """:cleanAutoTest :autoTest --tests * :cleanAutomationTest :automationTest --tests * --continue""",
       projectData["project"].root.subDirectory("automation")
     )
     assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
       """:module:cleanTest :module:test --tests *""",
       projectData["module"].root
+    )
+  }
+
+  @Test
+  fun `test producer choosing per run`() {
+    currentExternalProjectSettings.isResolveModulePerSourceSet = false
+    currentExternalProjectSettings.testRunner = TestRunner.CHOOSE_PER_TEST
+    val projectData = generateAndImportTemplateProject()
+    assertProducersFromContext(
+      projectData["project"].root,
+      "AllInPackageConfigurationProducer",
+      "AllInDirectoryGradleConfigurationProducer"
+    )
+    assertProducersFromContext(
+      projectData["project"].root.subDirectory("src"),
+      "AllInDirectoryGradleConfigurationProducer"
+    )
+    assertProducersFromContext(
+      projectData["project"].root.subDirectory("src", "test"),
+      "AllInDirectoryGradleConfigurationProducer"
+    )
+    assertProducersFromContext(
+      projectData["project"].root.subDirectory("src", "test", "java"),
+      "AbstractAllInDirectoryConfigurationProducer",
+      "AllInDirectoryGradleConfigurationProducer"
+    )
+    assertProducersFromContext(
+      projectData["project"].root.subDirectory("src", "test", "java", "pkg"),
+      "AbstractAllInDirectoryConfigurationProducer",
+      "AllInPackageGradleConfigurationProducer"
+    )
+    assertProducersFromContext(
+      projectData["project"].root.subDirectory("automation"),
+      "AbstractAllInDirectoryConfigurationProducer",
+      "AllInDirectoryGradleConfigurationProducer"
+    )
+    assertProducersFromContext(
+      projectData["module"].root,
+      "AllInPackageConfigurationProducer",
+      "AllInDirectoryGradleConfigurationProducer"
     )
   }
 

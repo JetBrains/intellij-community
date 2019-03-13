@@ -19,7 +19,7 @@ public class VFileCreateEvent extends VFileEvent {
   private final boolean myDirectory;
   private final FileAttributes myAttributes;
   private final String mySymlinkTarget;
-  private final boolean myEmptyDirectory;
+  private final ChildInfo[] myChildren;
   private VirtualFile myCreatedFile;
 
   public VFileCreateEvent(Object requestor,
@@ -29,14 +29,15 @@ public class VFileCreateEvent extends VFileEvent {
                           @Nullable("null means should read from the created file") FileAttributes attributes,
                           @Nullable String symlinkTarget,
                           boolean isFromRefresh,
-                          boolean isEmptyDirectory) {
+                          @Nullable // null means children are unknown or not applicable
+                          ChildInfo[] children) {
     super(requestor, isFromRefresh);
     myParent = parent;
     myChildName = childName;
     myDirectory = isDirectory;
     myAttributes = attributes;
     mySymlinkTarget = symlinkTarget;
-    myEmptyDirectory = isEmptyDirectory;
+    myChildren = children;
   }
 
   @NotNull
@@ -65,7 +66,7 @@ public class VFileCreateEvent extends VFileEvent {
 
   /** @return true if the newly created file is a directory which has no children. */
   public boolean isEmptyDirectory() {
-    return isDirectory() && myEmptyDirectory;
+    return isDirectory() && myChildren != null && myChildren.length == 0;
   }
 
   @NotNull
@@ -121,6 +122,12 @@ public class VFileCreateEvent extends VFileEvent {
   @Override
   public String toString() {
     String kind = myDirectory ? (isEmptyDirectory() ? "(empty) " : "") + "dir " : "file ";
-    return "VfsEvent[create " + kind + myChildName + " in " + myParent.getUrl() + "]";
+    return "VfsEvent[create " + kind + myParent.getUrl() + "/"+ myChildName +"]"
+           + (myChildren == null ? "" : " with children:\n"+StringUtil.join(myChildren, Object::toString, "\n"));
+  }
+
+  @Nullable // null means children not available (e.g. the created file is not a directory) or unknown
+  public ChildInfo[] getChildren() {
+    return myChildren;
   }
 }

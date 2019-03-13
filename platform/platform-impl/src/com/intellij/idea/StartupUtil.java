@@ -146,8 +146,7 @@ public class StartupUtil {
     startLogging(log);
     measureToken = StartUpMeasurer.start(Phases.LOAD_SYSTEM_LIBS);
     loadSystemLibraries(log);
-    measureToken.end();
-    measureToken = StartUpMeasurer.start(Phases.FIX_PROCESS_ENV);
+    measureToken = measureToken.endAndStart(Phases.FIX_PROCESS_ENV);
     fixProcessEnvironment(log);
     measureToken.end();
 
@@ -168,8 +167,9 @@ public class StartupUtil {
     }
 
     if (!Main.isHeadless()) {
+      measureToken = StartUpMeasurer.start(Phases.UPDATE_WINDOW_ICON);
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
-      measureToken = StartUpMeasurer.start(Phases.REGISTER_BUNDLED_FONTS);
+      measureToken = measureToken.endAndStart(Phases.REGISTER_BUNDLED_FONTS);
       AppUIUtil.registerBundledFonts();
       measureToken.end();
       AppUIUtil.showUserAgreementAndConsentsIfNeeded();

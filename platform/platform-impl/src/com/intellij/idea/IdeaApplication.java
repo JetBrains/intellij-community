@@ -67,8 +67,7 @@ public class IdeaApplication {
 
   @SuppressWarnings("SSBasedInspection")
   public static void initApplication(@NotNull String[] args) {
-    PluginManager.startupStart.end();
-    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.INIT_APP);
+    StartUpMeasurer.MeasureToken measureToken = PluginManager.startupStart.endAndStart(StartUpMeasurer.Phases.INIT_APP);
     IdeaApplication app = new IdeaApplication(args);
     // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
     SwingUtilities.invokeLater(() -> {

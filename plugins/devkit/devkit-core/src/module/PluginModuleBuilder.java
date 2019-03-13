@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.module;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -19,9 +18,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.HyperlinkLabel;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -29,12 +25,6 @@ import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.run.PluginConfigurationType;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
-
-import javax.swing.*;
-import java.awt.*;
-
-import static java.awt.GridBagConstraints.CENTER;
-import static java.awt.GridBagConstraints.HORIZONTAL;
 
 public class PluginModuleBuilder extends JavaModuleBuilder {
 
@@ -109,16 +99,16 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
     final ModuleWizardStep step = StdModuleTypes.JAVA.modifyProjectTypeStep(settingsStep, this);
     if (step == null) return null;
 
-    final BorderLayoutPanel panel = JBUI.Panels.simplePanel(0, 4);
-    final HyperlinkLabel linkLabel = new HyperlinkLabel();
-    linkLabel.setIcon(AllIcons.General.BalloonWarning);
-    linkLabel.setHtmlText("Using Plugin DevKit to create new projects is not recommended. " +
-                          "Use <a>Gradle-based setup</a>");
-    linkLabel.setHyperlinkTarget("http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started.html");
-    panel.addToCenter(linkLabel);
-
-    final JComponent component = step.getComponent();
-    component.add(panel, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, CENTER, HORIZONTAL, JBUI.insetsTop(8), 0, 0));
+    //final BorderLayoutPanel panel = JBUI.Panels.simplePanel(0, 4);
+    //final HyperlinkLabel linkLabel = new HyperlinkLabel();
+    //linkLabel.setIcon(AllIcons.General.BalloonWarning);
+    //linkLabel.setHtmlText("Using Plugin DevKit to create new projects is not recommended. " +
+    //                      "Use <a>Gradle-based setup</a>");
+    //linkLabel.setHyperlinkTarget("http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started.html");
+    //panel.addToCenter(linkLabel);
+    //
+    //final JComponent component = step.getComponent();
+    //component.add(panel, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, CENTER, HORIZONTAL, JBUI.insetsTop(8), 0, 0));
     return step;
   }
 }

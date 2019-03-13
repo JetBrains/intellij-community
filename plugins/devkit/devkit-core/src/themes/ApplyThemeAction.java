@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.themes;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
@@ -85,5 +86,12 @@ public class ApplyThemeAction extends DumbAwareAction {
     }
     catch (IOException ignore) {}
     return false;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (LafManager.getInstance().getCurrentLookAndFeel() instanceof TempUIThemeBasedLookAndFeelInfo) {
+      e.getPresentation().setIcon(AllIcons.Actions.Rerun);
+    }
   }
 }

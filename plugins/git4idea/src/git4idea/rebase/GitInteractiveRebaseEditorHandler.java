@@ -15,11 +15,9 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 
 import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.CommonBundle.getOkButtonText;
@@ -34,13 +32,10 @@ import static git4idea.rebase.GitRebaseEditorMain.ERROR_EXIT_CODE;
  * dialog with the specified file. If user accepts the changes, it saves file and returns 0,
  * otherwise it just returns error code.
  */
-public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEditorHandler {
+public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler {
   private final static Logger LOG = Logger.getInstance(GitInteractiveRebaseEditorHandler.class);
-  private final GitRebaseEditorService myService;
   private final Project myProject;
   private final VirtualFile myRoot;
-  @NotNull private final UUID myHandlerNo;
-  private boolean myIsClosed;
 
   /**
    * If interactive rebase editor (with the list of commits) was shown, this is true.
@@ -51,16 +46,13 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
   private boolean myCommitListCancelled;
   private boolean myUnstructuredEditorCancelled;
 
-  public GitInteractiveRebaseEditorHandler(@NotNull GitRebaseEditorService service, @NotNull Project project, @NotNull VirtualFile root) {
-    myService = service;
+  public GitInteractiveRebaseEditorHandler(@NotNull Project project, @NotNull VirtualFile root) {
     myProject = project;
     myRoot = root;
-    myHandlerNo = service.registerHandler(this, project);
   }
 
   @Override
   public int editCommits(@NotNull String path) {
-    ensureOpen();
     try {
       if (myRebaseEditorShown) {
         myUnstructuredEditorCancelled = !handleUnstructuredEditor(path);
@@ -168,28 +160,6 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    */
   public void setRebaseEditorShown() {
     myRebaseEditorShown = true;
-  }
-
-  /**
-   * Check that handler has not yet been closed
-   */
-  private void ensureOpen() {
-    if (myIsClosed) {
-      throw new IllegalStateException("The handler was already closed");
-    }
-  }
-
-  @Override
-  public void close() {
-    ensureOpen();
-    myIsClosed = true;
-    myService.unregisterHandler(myHandlerNo);
-  }
-
-  @Override
-  @NotNull
-  public UUID getHandlerNo() {
-    return myHandlerNo;
   }
 
   @Override

@@ -284,7 +284,6 @@ public class GraphTableController {
 
       int row = myTable.rowAtPoint(e.getPoint());
       if ((row >= 0 && row < myTable.getRowCount()) && e.getClickCount() == 1) {
-        VcsLogUsageTriggerCollector.triggerUsage("TableRowClick");
         if (column == ROOT_COLUMN) {
           performRootColumnAction();
         }

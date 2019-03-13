@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("KotlinUtils")
 
 package com.intellij.util
@@ -22,3 +22,5 @@ fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> {
 }
 
 fun <T> lazyPub(initializer: () -> T): Lazy<T> = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
+
+inline fun <reified T> Any?.castSafelyTo(): T? = this as? T

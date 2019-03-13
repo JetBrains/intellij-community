@@ -80,11 +80,11 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final DetailsHandler myDetailsHandler;
   private final TableColumn myTimeColumn;
   private final String myWorkingDir;
-  private volatile int myTimeColumnWidth;
   private final AtomicBoolean myDisposed = new AtomicBoolean();
   private final StructureTreeModel<SimpleTreeStructure> myTreeModel;
   private final TreeTableTree myTree;
   private final ExecutionNode myRootNode;
+  private volatile int myTimeColumnWidth;
 
   public BuildTreeConsoleView(Project project, BuildDescriptor buildDescriptor) {
     myProject = project;
@@ -155,36 +155,27 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
     });
     final TreeCellRenderer treeCellRenderer = myTree.getCellRenderer();
-    myTree.setCellRenderer(new TreeCellRenderer() {
-      @Override
-      public Component getTreeCellRendererComponent(JTree tree,
-                                                    Object value,
-                                                    boolean selected,
-                                                    boolean expanded,
-                                                    boolean leaf,
-                                                    int row,
-                                                    boolean hasFocus) {
-        final Component rendererComponent =
-          treeCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-        if (rendererComponent instanceof SimpleColoredComponent) {
-          Color bg = UIUtil.getTreeBackground(selected, true);
-          Color fg = UIUtil.getTreeForeground(selected, true);
-          if (selected) {
-            for (SimpleColoredComponent.ColoredIterator it = ((SimpleColoredComponent)rendererComponent).iterator(); it.hasNext(); ) {
-              it.next();
-              int offset = it.getOffset();
-              int endOffset = it.getEndOffset();
-              SimpleTextAttributes currentAttributes = it.getTextAttributes();
-              SimpleTextAttributes newAttributes =
-                new SimpleTextAttributes(bg, fg, currentAttributes.getWaveColor(), currentAttributes.getStyle());
-              it.split(endOffset - offset, newAttributes);
-            }
+    myTree.setCellRenderer((tree, value, selected, expanded, leaf, row, hasFocus) -> {
+      final Component rendererComponent =
+        treeCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+      if (rendererComponent instanceof SimpleColoredComponent) {
+        Color bg = UIUtil.getTreeBackground(selected, true);
+        Color fg = UIUtil.getTreeForeground(selected, true);
+        if (selected) {
+          for (SimpleColoredComponent.ColoredIterator it = ((SimpleColoredComponent)rendererComponent).iterator(); it.hasNext(); ) {
+            it.next();
+            int offset = it.getOffset();
+            int endOffset = it.getEndOffset();
+            SimpleTextAttributes currentAttributes = it.getTextAttributes();
+            SimpleTextAttributes newAttributes =
+              new SimpleTextAttributes(bg, fg, currentAttributes.getWaveColor(), currentAttributes.getStyle());
+            it.split(endOffset - offset, newAttributes);
           }
-
-          SpeedSearchUtil.applySpeedSearchHighlighting(treeTable, (SimpleColoredComponent)rendererComponent, true, selected);
         }
-        return rendererComponent;
+
+        SpeedSearchUtil.applySpeedSearchHighlighting(treeTable, (SimpleColoredComponent)rendererComponent, true, selected);
       }
+      return rendererComponent;
     });
     new TreeTableSpeedSearch(treeTable).setComparator(new SpeedSearchComparator(false));
     treeTable.setTableHeader(null);
@@ -249,12 +240,12 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   }
 
   @Override
-  public void setOutputPaused(boolean value) {
+  public boolean isOutputPaused() {
+    return false;
   }
 
   @Override
-  public boolean isOutputPaused() {
-    return false;
+  public void setOutputPaused(boolean value) {
   }
 
   @Override
@@ -461,12 +452,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     final MessageEvent.Kind eventKind = messageEvent.getKind();
     if (!(groupNodeResult instanceof MessageEventResult) ||
         ((MessageEventResult)groupNodeResult).getKind().compareTo(eventKind) > 0) {
-      messagesGroupNode.setResult(new MessageEventResult() {
-        @Override
-        public MessageEvent.Kind getKind() {
-          return eventKind;
-        }
-      });
+      messagesGroupNode.setResult((MessageEventResult)() -> eventKind);
     }
     if (messageEvent instanceof FileMessageEvent) {
       ExecutionNode fileParentNode = messagesGroupNode;
@@ -522,41 +508,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     }
     return parentNode;
   }
-
-  @NotNull
-  private static ExecutionNode getOrCreateMessagesNode(MessageEvent messageEvent,
-                                                       String nodeId,
-                                                       ExecutionNode parentNode,
-                                                       String nodeName,
-                                                       String nodeTitle,
-                                                       boolean autoExpandNode,
-                                                       @Nullable Supplier<? extends Icon> iconProvider,
-                                                       @Nullable Navigatable navigatable,
-                                                       Map<Object, ExecutionNode> nodesMap,
-                                                       Project project) {
-    ExecutionNode node = nodesMap.get(nodeId);
-    if (node == null) {
-      node = new ExecutionNode(project, parentNode);
-      node.setName(nodeName);
-      node.setTitle(nodeTitle);
-      if (autoExpandNode) {
-        node.setAutoExpandNode(true);
-      }
-      node.setStartTime(messageEvent.getEventTime());
-      node.setEndTime(messageEvent.getEventTime());
-      if (iconProvider != null) {
-        node.setIconProvider(iconProvider);
-      }
-      if (navigatable != null) {
-        node.setNavigatable(navigatable);
-      }
-      parentNode.add(node);
-      nodesMap.put(nodeId, node);
-    }
-    return node;
-  }
-
-
 
   public void hideRootNode() {
     UIUtil.invokeLaterIfNeeded(() -> {
@@ -617,16 +568,49 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return myTree;
   }
 
+  @NotNull
+  private static ExecutionNode getOrCreateMessagesNode(MessageEvent messageEvent,
+                                                       String nodeId,
+                                                       ExecutionNode parentNode,
+                                                       String nodeName,
+                                                       String nodeTitle,
+                                                       boolean autoExpandNode,
+                                                       @Nullable Supplier<? extends Icon> iconProvider,
+                                                       @Nullable Navigatable navigatable,
+                                                       Map<Object, ExecutionNode> nodesMap,
+                                                       Project project) {
+    ExecutionNode node = nodesMap.get(nodeId);
+    if (node == null) {
+      node = new ExecutionNode(project, parentNode);
+      node.setName(nodeName);
+      node.setTitle(nodeTitle);
+      if (autoExpandNode) {
+        node.setAutoExpandNode(true);
+      }
+      node.setStartTime(messageEvent.getEventTime());
+      node.setEndTime(messageEvent.getEventTime());
+      if (iconProvider != null) {
+        node.setIconProvider(iconProvider);
+      }
+      if (navigatable != null) {
+        node.setNavigatable(navigatable);
+      }
+      parentNode.add(node);
+      nodesMap.put(nodeId, node);
+    }
+    return node;
+  }
+
   private static class DetailsHandler {
     private final ThreeComponentsSplitter mySplitter;
-    @Nullable
-    private ExecutionNode myExecutionNode;
     private final ConsoleView myConsole;
     private final JPanel myPanel;
+    @Nullable
+    private ExecutionNode myExecutionNode;
 
     DetailsHandler(Project project,
-                          TreeTableTree tree,
-                          ThreeComponentsSplitter threeComponentsSplitter) {
+                   TreeTableTree tree,
+                   ThreeComponentsSplitter threeComponentsSplitter) {
       myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
       mySplitter = threeComponentsSplitter;
       myPanel = new JPanel(new BorderLayout());

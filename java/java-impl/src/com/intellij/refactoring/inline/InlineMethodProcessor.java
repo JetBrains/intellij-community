@@ -1446,17 +1446,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       PsiCall call = PsiTreeUtil.getParentOfType(ref, PsiCall.class);
       @NonNls String text = "new Object() { " + myMethod.getReturnTypeElement().getText() + " evaluate() { return " + call.getText() + ";}}.evaluate";
       PsiExpression callExpr = JavaPsiFacade.getInstance(myProject).getParserFacade().createExpressionFromText(text, call);
-      PsiElement classExpr = ref.replace(callExpr);
-      classExpr.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitReturnStatement(final PsiReturnStatement statement) {
-          super.visitReturnStatement(statement);
-          PsiExpression expr = statement.getReturnValue();
-          if (expr instanceof PsiMethodCallExpression) {
-            refsVector.add(((PsiMethodCallExpression) expr).getMethodExpression());
-          }
-        }
-      });
+      PsiReferenceExpression classExpr = (PsiReferenceExpression)ref.replace(callExpr);
+      PsiNewExpression newObject = (PsiNewExpression)Objects.requireNonNull(classExpr.getQualifierExpression());
+      PsiMethod evaluateMethod = Objects.requireNonNull(newObject.getAnonymousClass()).getMethods()[0];
+      PsiExpression retVal = ((PsiReturnStatement)Objects.requireNonNull(evaluateMethod.getBody())
+        .getStatements()[0]).getReturnValue();
+      if (retVal instanceof PsiMethodCallExpression) {
+        refsVector.add(((PsiMethodCallExpression) retVal).getMethodExpression());
+      }
       if (classExpr.getParent() instanceof PsiMethodCallExpression) {
         PsiExpressionList args = ((PsiMethodCallExpression)classExpr.getParent()).getArgumentList();
         PsiExpression[] argExpressions = args.getExpressions();

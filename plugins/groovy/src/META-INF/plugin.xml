@@ -127,11 +127,11 @@
     <renameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultRenameHelper"/>
     <astTransformationSupport order="after defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.FieldScriptTransformationSupport"/>
-    <astTransformationSupport id="delegateSupport" order="after defaultSupport"
-                              implementation="org.jetbrains.plugins.groovy.transformations.impl.DelegateTransformationSupport"/>
-    <astTransformationSupport id="traitSupport" order="last"
+    <astTransformationSupport id="traitSupport" order="after defaultSupport, before delegateSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.TraitTransformationSupport"/>
     <renameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.TraitRenameHelper"/>
+    <astTransformationSupport id="delegateSupport" order="after defaultSupport"
+                              implementation="org.jetbrains.plugins.groovy.transformations.impl.DelegateTransformationSupport"/>
 
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.listenerList.ListenerListTransformationSupport"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.transformations.listenerList.ListenerListAnnotationChecker"/>
@@ -179,13 +179,15 @@
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultBuiltinTypeClassTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression" order="last"
-                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultSafeCaseTypeCalculator"/>
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultSafeCastTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultConditionalTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultMethodReferenceTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultRangeTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultUnaryExpressionTypeCalculator"/>
 
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector"/>
 

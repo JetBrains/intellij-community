@@ -960,7 +960,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename, filename2, true))
         eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename2, filename, true))
         eventList.add(new VFileDeleteEvent(null, file, true))
-        eventList.add(new VFileCreateEvent(null, file.parent, filename, false, null, null, true, false))
+        eventList.add(new VFileCreateEvent(null, file.parent, filename, false, null, null, true, null))
       }
 
       IndexedFilesListener indexedFilesListener = ((FileBasedIndexImpl)FileBasedIndex.instance).changedFilesCollector

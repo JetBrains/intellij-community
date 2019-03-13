@@ -24,6 +24,8 @@ class GdkArgumentMapping(
 
   override fun expectedType(argument: Argument): PsiType? = original.expectedType(argument)
 
+  override fun isVararg(parameter: PsiParameter): Boolean = original.isVararg(parameter)
+
   override val expectedTypes: Iterable<Pair<PsiType, Argument>>
     get() {
       return (sequenceOf(Pair(receiverParameter.type, receiverArgument)) + original.expectedTypes).asIterable()

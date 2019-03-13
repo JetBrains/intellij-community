@@ -2,15 +2,19 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
@@ -50,13 +54,16 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private final Set<VirtualFilePointerContainerImpl> myContainers = ContainerUtil.newIdentityTroveSet();  // guarded by myContainers
   @NotNull private final VirtualFileManager myVirtualFileManager;
   @NotNull private final MessageBus myBus;
+  @NotNull private final FileTypeManager myFileTypeManager;
 
   VirtualFilePointerManagerImpl(@NotNull VirtualFileManager virtualFileManager,
                                 @NotNull MessageBus bus,
                                 @NotNull TempFileSystem tempFileSystem,
-                                @NotNull LocalFileSystem localFileSystem) {
+                                @NotNull LocalFileSystem localFileSystem,
+                                @NotNull FileTypeManager fileTypeManager) {
     myVirtualFileManager = virtualFileManager;
     myBus = bus;
+    myFileTypeManager = fileTypeManager;
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
     TEMP_FILE_SYSTEM = tempFileSystem;
     LOCAL_FILE_SYSTEM = localFileSystem;
@@ -367,22 +374,25 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       incModificationCount();
       for (VFileEvent event : events) {
         if (event instanceof VFileDeleteEvent) {
-          final VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
+          VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
           addRelevantPointers(deleteEvent.getFile(), false, "", toFireEvents, true);
         }
         else if (event instanceof VFileCreateEvent) {
-          final VFileCreateEvent createEvent = (VFileCreateEvent)event;
+          VFileCreateEvent createEvent = (VFileCreateEvent)event;
+          String createdFileName = createEvent.getChildName();
+          FileType fileType = myFileTypeManager.getFileTypeByExtension(FileUtilRt.getExtension(createdFileName));
           // when a new empty directory "/a/b" is created, there's no need to fire any deeper pointers like "/a/b/c/d.txt" - they're not created yet
           // OTOH when refresh found a new directory "/a/b" which is non-empty, we must fire deeper pointers because they may exist already
-          boolean fireSubdirectoryPointers = createEvent.isDirectory() && !createEvent.isEmptyDirectory();
-          addRelevantPointers(createEvent.getParent(), true, createEvent.getChildName(), toFireEvents, fireSubdirectoryPointers);
+          boolean fireSubdirectoryPointers = createEvent.isDirectory() && !createEvent.isEmptyDirectory()
+                                             || fileType instanceof ArchiveFileType; // if the .jar file created, there may be many file hiding inside
+          addRelevantPointers(createEvent.getParent(), true, createdFileName, toFireEvents, fireSubdirectoryPointers);
         }
         else if (event instanceof VFileCopyEvent) {
-          final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
+          VFileCopyEvent copyEvent = (VFileCopyEvent)event;
           addRelevantPointers(copyEvent.getNewParent(), true, copyEvent.getNewChildName(), toFireEvents, true);
         }
         else if (event instanceof VFileMoveEvent) {
-          final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
+          VFileMoveEvent moveEvent = (VFileMoveEvent)event;
           VirtualFile eventFile = moveEvent.getFile();
           addRelevantPointers(moveEvent.getNewParent(), true, eventFile.getName(), toFireEvents, true);
 
@@ -392,7 +402,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
           collectNodes(nodes, toUpdateUrl);
         }
         else if (event instanceof VFilePropertyChangeEvent) {
-          final VFilePropertyChangeEvent change = (VFilePropertyChangeEvent)event;
+          VFilePropertyChangeEvent change = (VFilePropertyChangeEvent)event;
           if (VirtualFile.PROP_NAME.equals(change.getPropertyName())
               && !Comparing.equal(change.getOldValue(), change.getNewValue())) {
             VirtualFile eventFile = change.getFile();

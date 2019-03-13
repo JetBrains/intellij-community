@@ -383,19 +383,25 @@ FunctionEnd
 
 Function ConfirmDesktopShortcut
   !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
-  ; shortcut for 64-bit launcher.
-  StrCpy $R0 "${MUI_PRODUCT} launcher"
-  StrCpy $R1 ""
-  ; not suggest user to create shortcut for 32Bit launcher if bundled jre does not support 32Bit.
-  StrCmp "${JRE_32BIT_VERSION_SUPPORTED}" "null" getInstallationOptionsPositions 0
+  StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" 0 jre_32bit_version_supported
+    ; shortcut for 64-bit launcher.
+    StrCpy $R0 "64-bit launcher"
+    StrCpy $R1 ""
+    Goto get_installation_options_positions
+
+jre_32bit_version_supported:
   ${StrRep} $0 ${PRODUCT_EXE_FILE} "64.exe" ".exe"
   ${If} $0 == ${PRODUCT_EXE_FILE}
   ; shortcuts for 32-bit and 64-bit.
     StrCpy $R0 "32-bit launcher"
     StrCpy $R1 "64-bit launcher"
+  ${Else}
+    ;there is only one launcher and it is 64-bit.
+    StrCpy $R0 "${MUI_PRODUCT} launcher"
+    StrCpy $R1 ""
   ${EndIf}
 
-getInstallationOptionsPositions:
+get_installation_options_positions:
   Call getInstallationOptionsPositions
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Text" $R0
 
@@ -414,7 +420,7 @@ getInstallationOptionsPositions:
     Pop $R0
   ${EndIf}
 
-  StrCmp "${JRE_32BIT_VERSION_SUPPORTED}" "null" custom_pre_actions 0
+  StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" custom_pre_actions 0
   ; if jre x86 for the build is available then add checkbox to Installation Options dialog
   StrCmp "${LINK_TO_JRE}" "null" custom_pre_actions 0
   inetc::head /SILENT /TOSTACK /CONNECTTIMEOUT 2 ${LINK_TO_JRE} "" /END
@@ -1212,6 +1218,7 @@ Section "IDEA Files" CopyIdeaFiles
 
 shortcuts:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $launcherShortcut" "State"
+  StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" shortcut_for_exe_64 0
   StrCmp $R2 1 "" exe_64
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
@@ -1219,6 +1226,7 @@ shortcuts:
 exe_64:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $secondLauncherShortcut" "State"
   StrCmp $R2 1 "" add_to_path
+shortcut_for_exe_64:
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
   ${LogText} "Create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE_64}"

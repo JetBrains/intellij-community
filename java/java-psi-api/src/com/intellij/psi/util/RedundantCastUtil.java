@@ -41,7 +41,7 @@ public class RedundantCastUtil {
     return new ArrayList<>(visitor.myFoundCasts);
   }
 
-  public static boolean isCastRedundant (PsiTypeCastExpression typeCast) {
+  public static boolean isCastRedundant(PsiTypeCastExpression typeCast) {
     PsiElement parent = typeCast.getParent();
     PsiExpression operand = typeCast.getOperand();
     if (operand != null && operand.getType() != null && operand.getType().equals(typeCast.getType())) return true;
@@ -49,9 +49,9 @@ public class RedundantCastUtil {
     if (parent instanceof PsiExpressionList) parent = parent.getParent();
     if (parent instanceof PsiReferenceExpression) parent = parent.getParent();
     if (parent instanceof PsiAnonymousClass) parent = parent.getParent();
-    MyIsRedundantVisitor visitor = new MyIsRedundantVisitor(true);
+    MyIsRedundantVisitor visitor = new MyIsRedundantVisitor();
     parent.accept(visitor);
-    return visitor.isRedundant;
+    return visitor.foundRedundantCast == typeCast;
   }
 
   @Nullable
@@ -62,10 +62,6 @@ public class RedundantCastUtil {
 
   private static class MyCollectingVisitor extends MyIsRedundantVisitor {
     private final Set<PsiTypeCastExpression> myFoundCasts = new HashSet<>();
-
-    private MyCollectingVisitor() {
-      super(true);
-    }
 
     @Override
     public void visitClass(PsiClass aClass) {
@@ -90,24 +86,14 @@ public class RedundantCastUtil {
     }
   }
 
+  @SuppressWarnings("UnsafeReturnStatementVisitor")
   private static class MyIsRedundantVisitor extends JavaRecursiveElementWalkingVisitor {
-    private boolean isRedundant;
-    private final boolean myRecursive;
-
-    private MyIsRedundantVisitor(final boolean recursive) {
-      myRecursive = recursive;
-    }
-
-    @Override
-    public void visitElement(final PsiElement element) {
-      if (myRecursive) {
-        super.visitElement(element);
-      }
-    }
+    private PsiTypeCastExpression foundRedundantCast;
 
     protected void addToResults(@NotNull PsiTypeCastExpression typeCast){
       if (!isTypeCastSemantic(typeCast)) {
-        isRedundant = true;
+        foundRedundantCast = typeCast;
+        stopWalking();
       }
     }
 

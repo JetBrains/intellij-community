@@ -40,7 +40,7 @@
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"
                       rootTagName="idea-plugin"
-                      stubVersion="10"/>
+                      stubVersion="11"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
@@ -374,8 +374,8 @@
     <!-- Theme Toolbar -->
     <group id="DevKit.ThemeEditorToolbar">
       <action class="org.jetbrains.idea.devkit.themes.ApplyThemeAction" id="DevKit.ApplyTheme" text="Apply Theme" icon="AllIcons.Actions.Execute"/>
-      <action class="org.jetbrains.idea.devkit.themes.RollbackThemeAction" id="DevKit.RollbackTheme" text="Reset to Original Theme" icon="AllIcons.Actions.Rollback"/>
-      <action class="org.jetbrains.idea.devkit.themes.EditThemeEditorColorSchemeAction" id="DevKit.EditThemeEditorColorScheme" text="Edit Color Scheme" icon="AllIcons.Actions.EditSource"/>
+      <action class="org.jetbrains.idea.devkit.themes.RollbackThemeAction" id="DevKit.RollbackTheme" text="Reset to Original Theme" icon="AllIcons.Actions.Suspend"/>
+      <action class="org.jetbrains.idea.devkit.themes.EditThemeEditorColorSchemeAction" id="DevKit.EditThemeEditorColorScheme" text="Edit Color Scheme" icon="AllIcons.Actions.EditScheme"/>
     </group>
 
   </actions>

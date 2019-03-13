@@ -385,13 +385,13 @@ public class JavaFxPsiUtil {
             final PsiType type = parameters[0].getType();
             if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
               if (psiClass.equals(PsiUtil.resolveClassInType(method.getReturnType()))) {
-                return CachedValueProvider.Result.create(method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+                return CachedValueProvider.Result.create(method, PsiModificationTracker.MODIFICATION_COUNT);
               }
             }
           }
         }
       }
-      return CachedValueProvider.Result.create(null, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -451,11 +451,11 @@ public class JavaFxPsiUtil {
           final PsiMethod getter = findPropertyGetter(aClass, propertyName);
           if (getter != null) {
             final PsiType propertyType = eraseFreeTypeParameters(getter.getReturnType(), getter);
-            return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+            return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.MODIFICATION_COUNT);
           }
         }
       }
-      return CachedValueProvider.Result.create(null, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -498,7 +498,7 @@ public class JavaFxPsiUtil {
       for (PsiMethod constructor : psiClass.getConstructors()) {
         final PsiParameter[] parameters = constructor.getParameterList().getParameters();
         if (parameters.length == 0) {
-          return CachedValueProvider.Result.create(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
         }
         boolean annotated = true;
         for (PsiParameter parameter : parameters) {
@@ -507,9 +507,9 @@ public class JavaFxPsiUtil {
             break;
           }
         }
-        if (annotated) return CachedValueProvider.Result.create(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        if (annotated) return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
       }
-      return CachedValueProvider.Result.create(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(false, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -529,11 +529,11 @@ public class JavaFxPsiUtil {
             }
             return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(returnType));
           })) {
-            return CachedValueProvider.Result.create(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+            return CachedValueProvider.Result.create(false, PsiModificationTracker.MODIFICATION_COUNT);
           }
         }
       }
-      return CachedValueProvider.Result.create(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -672,7 +672,7 @@ public class JavaFxPsiUtil {
       final PsiClass fieldClass = resolveResult.getElement();
       if (fieldClass == null) {
         final PsiType propertyType = eraseFreeTypeParameters(fieldType, field);
-        return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.MODIFICATION_COUNT);
       }
       PsiType substitute = null;
       for (String typeName : typeMap.keySet()) {
@@ -684,7 +684,7 @@ public class JavaFxPsiUtil {
       if (substitute == null) {
         if (!InheritanceUtil.isInheritor(fieldType, JavaFxCommonNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE)) {
           final PsiType propertyType = eraseFreeTypeParameters(fieldType, field);
-          return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.MODIFICATION_COUNT);
         }
         final PsiClass aClass = JavaPsiFacade.getInstance(project)
           .findClass(JavaFxCommonNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE, GlobalSearchScope.allScope(project));
@@ -697,7 +697,7 @@ public class JavaFxPsiUtil {
       }
 
       final PsiType propertyType = eraseFreeTypeParameters(substitute, field);
-      return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -732,16 +732,16 @@ public class JavaFxPsiUtil {
       final boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
       if (isStatic && parameters.length == 2 || !isStatic && parameters.length == 1) {
         final PsiType argumentType = eraseFreeTypeParameters(parameters[parameters.length - 1].getType(), method);
-        return CachedValueProvider.Result.create(argumentType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return CachedValueProvider.Result.create(argumentType, PsiModificationTracker.MODIFICATION_COUNT);
       }
-      return CachedValueProvider.Result.create(null, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
   private static PsiType getGetterReturnType(@NotNull PsiMethod method) {
     return CachedValuesManager.getCachedValue(method, () -> {
       final PsiType returnType = eraseFreeTypeParameters(method.getReturnType(), method);
-      return CachedValueProvider.Result.create(returnType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(returnType, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -864,7 +864,7 @@ public class JavaFxPsiUtil {
   public static Map<String, PsiMember> getReadableProperties(@Nullable PsiClass psiClass) {
     if (psiClass != null) {
       return CachedValuesManager.getCachedValue(psiClass, () ->
-        CachedValueProvider.Result.create(prepareReadableProperties(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+        CachedValueProvider.Result.create(prepareReadableProperties(psiClass), PsiModificationTracker.MODIFICATION_COUNT));
     }
     return Collections.emptyMap();
   }
@@ -887,7 +887,7 @@ public class JavaFxPsiUtil {
   public static Map<String, PsiMember> getWritableProperties(@Nullable PsiClass psiClass) {
     if (psiClass != null) {
       return CachedValuesManager.getCachedValue(psiClass, () ->
-        CachedValueProvider.Result.create(prepareWritableProperties(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+        CachedValueProvider.Result.create(prepareWritableProperties(psiClass), PsiModificationTracker.MODIFICATION_COUNT));
     }
     return Collections.emptyMap();
   }
@@ -965,7 +965,7 @@ public class JavaFxPsiUtil {
   public static Set<String> getConstructorNamedArgProperties(@Nullable PsiClass psiClass) {
     if (psiClass != null) {
       return CachedValuesManager.getCachedValue(psiClass, () -> CachedValueProvider.Result.create(
-        prepareConstructorNamedArgProperties(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+        prepareConstructorNamedArgProperties(psiClass), PsiModificationTracker.MODIFICATION_COUNT));
     }
     return Collections.emptySet();
   }
@@ -1128,7 +1128,7 @@ public class JavaFxPsiUtil {
                                           .map(PsiField::getName)
                                           .map(String::toUpperCase)
                                           .collect(Collectors.toCollection(THashSet::new)),
-                                        PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+                                        PsiModificationTracker.MODIFICATION_COUNT));
     if (!constantNames.contains(name.toUpperCase())) {
       return "No enum constant '" + name + "' in " + enumClass.getQualifiedName();
     }
@@ -1266,7 +1266,7 @@ public class JavaFxPsiUtil {
         String qualifiedName = ref != null ? ref.getQualifiedName() : null;
         return qualifiedName != null && qualifiedName.startsWith("javafx.") && ref.resolve() != null;
       });
-      return CachedValueProvider.Result.create(javafx, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(javafx, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 }

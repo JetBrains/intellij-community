@@ -201,9 +201,10 @@ public class ThreadTracker {
     if (stackTrace.length == 0) {
       return true; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
     }
-    if (isIdleApplicationPoolThread(stackTrace)) return true;
-    return isIdleCommonPoolThread(thread, stackTrace) ||
-           isCoroutineSchedulerPoolThread(thread, stackTrace);
+    return isIdleApplicationPoolThread(stackTrace)
+           || isIdleCommonPoolThread(thread, stackTrace)
+           || isFutureTaskAboutToFinish(stackTrace)
+           || isCoroutineSchedulerPoolThread(thread, stackTrace);
   }
 
   private static boolean isWellKnownOffender(@NotNull String threadName) {
@@ -229,6 +230,33 @@ public class ThreadTracker {
       .anyMatch(element -> element.getMethodName().equals("awaitWork")
                            && element.getClassName().equals("java.util.concurrent.ForkJoinPool"));
     return insideAwaitWork;
+  }
+
+  // in newer JDKs strange long hangups observed in Unsafe.unpark:
+  // "Document Committing Pool" (alive) TIMED_WAITING
+  //	at sun.misc.Unsafe.unpark(Native Method)
+  //	at java.util.concurrent.locks.LockSupport.unpark(LockSupport.java:141)
+  //	at java.util.concurrent.FutureTask.finishCompletion(FutureTask.java:372)
+  //	at java.util.concurrent.FutureTask.set(FutureTask.java:233)
+  //	at java.util.concurrent.FutureTask.run(FutureTask.java:274)
+  //	at com.intellij.util.concurrency.BoundedTaskExecutor.doRun(BoundedTaskExecutor.java:207)
+  //	at com.intellij.util.concurrency.BoundedTaskExecutor.access$100(BoundedTaskExecutor.java:29)
+  //	at com.intellij.util.concurrency.BoundedTaskExecutor$1.lambda$run$0(BoundedTaskExecutor.java:185)
+  //	at com.intellij.util.concurrency.BoundedTaskExecutor$1$$Lambda$157/1473781324.run(Unknown Source)
+  //	at com.intellij.util.ConcurrencyUtil.runUnderThreadName(ConcurrencyUtil.java:208)
+  //	at com.intellij.util.concurrency.BoundedTaskExecutor$1.run(BoundedTaskExecutor.java:181)
+  //	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+  //	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+  //	at java.lang.Thread.run(Thread.java:748)
+  private static boolean isFutureTaskAboutToFinish(@NotNull StackTraceElement[] stackTrace) {
+    if (stackTrace.length < 5) {
+      return false;
+    }
+
+    return stackTrace[0].getClassName().equals("sun.misc.Unsafe")
+      && stackTrace[0].getMethodName().equals("unpark")
+      && stackTrace[2].getClassName().equals("java.util.concurrent.FutureTask")
+      && stackTrace[2].getMethodName().equals("finishCompletion");
   }
 
   private static boolean isCoroutineSchedulerPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {

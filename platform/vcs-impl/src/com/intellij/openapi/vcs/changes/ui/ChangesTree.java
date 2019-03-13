@@ -334,7 +334,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return myModelUpdateInProgress;
   }
 
-  private void resetTreeState() {
+  protected void resetTreeState() {
     TreeUtil.expandAll(this);
 
     int selectedTreeRow = -1;

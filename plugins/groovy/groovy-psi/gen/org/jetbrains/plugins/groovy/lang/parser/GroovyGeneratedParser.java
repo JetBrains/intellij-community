@@ -872,7 +872,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // call_argument_list lazy_closure* | empty_argument_list lazy_closure+
+  // call_argument_list (mb_nl lazy_closure)* | empty_argument_list (mb_nl lazy_closure)+
   public static boolean application_call(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "application_call")) return false;
     boolean r;
@@ -883,7 +883,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // call_argument_list lazy_closure*
+  // call_argument_list (mb_nl lazy_closure)*
   private static boolean application_call_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "application_call_0")) return false;
     boolean r;
@@ -894,18 +894,29 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // lazy_closure*
+  // (mb_nl lazy_closure)*
   private static boolean application_call_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "application_call_0_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!lazy_closure(b, l + 1)) break;
+      if (!application_call_0_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "application_call_0_1", c)) break;
     }
     return true;
   }
 
-  // empty_argument_list lazy_closure+
+  // mb_nl lazy_closure
+  private static boolean application_call_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "application_call_0_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_nl(b, l + 1);
+    r = r && lazy_closure(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // empty_argument_list (mb_nl lazy_closure)+
   private static boolean application_call_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "application_call_1")) return false;
     boolean r;
@@ -916,17 +927,28 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // lazy_closure+
+  // (mb_nl lazy_closure)+
   private static boolean application_call_1_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "application_call_1_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = lazy_closure(b, l + 1);
+    r = application_call_1_1_0(b, l + 1);
     while (r) {
       int c = current_position_(b);
-      if (!lazy_closure(b, l + 1)) break;
+      if (!application_call_1_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "application_call_1_1", c)) break;
     }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // mb_nl lazy_closure
+  private static boolean application_call_1_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "application_call_1_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_nl(b, l + 1);
+    r = r && lazy_closure(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }

@@ -50,6 +50,20 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     return RunConfigurationProducer.getInstance(P::class.java)
   }
 
+  protected fun assertProducersFromContext(
+    element: PsiElement,
+    vararg producerTypes: String
+  ) = runReadActionAndWait {
+    val context = getContextByLocation(element)
+    val producers = context.configurationsFromContext!!
+      .map { it as ConfigurationFromContextImpl }
+      .map { it.configurationProducer }
+    assertEquals(producerTypes.size, producers.size)
+    for ((producer, producerType) in producers.zip(producerTypes)) {
+      assertEquals(producerType, producer::class.java.simpleName)
+    }
+  }
+
   protected inline fun <reified P : GradleTestRunConfigurationProducer> assertConfigurationFromContext(
     expectedSettings: String,
     vararg elements: PsiElement,

@@ -795,8 +795,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       // When there is no namespace declarations then qualified names should be just used in dtds
       // this implies that we may have "" namespace prefix ! (see last paragraph in Namespaces in Xml, Section 5)
 
-      String result = ourGuard.doPreventingRecursion("getNsByPrefix", true, () -> {
+      String result = ourGuard.doPreventingRecursion(Trinity.create("getNsByPrefix", this, prefix), true, () -> {
         final String nsFromEmptyPrefix = getNamespaceByPrefix("");
+        if (nsFromEmptyPrefix.isEmpty()) return nsFromEmptyPrefix;
+
         final XmlNSDescriptor nsDescriptor = getNSDescriptor(nsFromEmptyPrefix, false);
         final XmlElementDescriptor descriptor = nsDescriptor != null ? nsDescriptor.getElementDescriptor(this) : null;
         final String nameFromRealDescriptor =
@@ -984,7 +986,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @NotNull
-  protected XmlAttribute createAttribute(String qname, String value) {
+  protected XmlAttribute createAttribute(@NotNull String qname, @NotNull String value) {
     return XmlElementFactory.getInstance(getProject()).createAttribute(qname, value, this);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -29,15 +29,6 @@ public class GrReferenceHighlighterFactory implements TextEditorHighlightingPass
   }
 
   private static boolean isSpecificScriptFile(@NotNull GroovyFileBase file) {
-    if (!(file instanceof GroovyFile)) return false;
-    if (!file.isScript()) return false;
-
-    final GroovyFile groovyFile = (GroovyFile)file;
-    for (GroovyScriptTypeDetector detector : GroovyScriptTypeDetector.EP_NAME.getExtensions()) {
-      if (detector.isSpecificScriptFile(groovyFile)) {
-        return true;
-      }
-    }
-    return false;
+    return file instanceof GroovyFile && GroovyScriptTypeDetector.isScriptFile((GroovyFile)file);
   }
 }

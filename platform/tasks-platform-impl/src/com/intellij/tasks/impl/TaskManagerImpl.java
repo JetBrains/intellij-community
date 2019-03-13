@@ -317,6 +317,10 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   @Override
   public LocalTask activateTask(@NotNull final Task origin, boolean clearContext) {
+    return activateTask(origin, clearContext, false);
+  }
+
+  public LocalTask activateTask(@NotNull final Task origin, boolean clearContext, boolean newTask) {
     LocalTask activeTask = getActiveTask();
     if (origin.equals(activeTask)) return activeTask;
 
@@ -330,11 +334,11 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
     final LocalTask task = doActivate(origin, true);
 
-    restoreVcsContext(task);
+    restoreVcsContext(task, newTask);
     return task;
   }
 
-  private void restoreVcsContext(LocalTask task) {
+  private void restoreVcsContext(LocalTask task, boolean newTask) {
     if (!isVcsEnabled())
       return;
 
@@ -354,6 +358,9 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     }
 
     unshelveChanges(task);
+
+    if (newTask)
+      return;     // branch created already by VcsOpenTaskPanel
     List<BranchInfo> branches = task.getBranches(false);
     // we should have exactly one branch per repo
     MultiMap<String, BranchInfo> multiMap = new MultiMap<>();

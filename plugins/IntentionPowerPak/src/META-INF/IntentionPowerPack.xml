@@ -11,37 +11,7 @@
 
     <!-- Numbers -->
     <intentionAction>
-      <className>com.siyeh.ipp.integer.ConvertIntegerToDecimalIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.numbers</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.integer.ConvertIntegerToHexIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.numbers</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.integer.ConvertToScientificNotationIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.numbers</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.integer.ConvertToPlainIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.numbers</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.integer.ConvertIntegerToOctalIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.numbers</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.integer.ConvertIntegerToBinaryIntention</className>
+      <className>com.siyeh.ipp.integer.JavaNumberConversionIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.numbers</categoryKey>
     </intentionAction>

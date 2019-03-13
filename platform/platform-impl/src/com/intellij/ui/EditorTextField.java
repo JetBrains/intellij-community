@@ -21,8 +21,10 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -31,6 +33,7 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.AbstractDelegatingToRootTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
@@ -485,8 +488,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       }
     }
 
-    if (myProject != null && myFileType != null) {
-      editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFileType));
+    if (myProject != null) {
+      EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
+      VirtualFile virtualFile = myDocument == null ? null : FileDocumentManager.getInstance().getFile(myDocument);
+      EditorHighlighter highlighter = virtualFile != null ? highlighterFactory.createEditorHighlighter(myProject, virtualFile) :
+                                      myFileType != null ? highlighterFactory.createEditorHighlighter(myProject, myFileType) : null;
+      if (highlighter != null) editor.setHighlighter(highlighter);
     }
 
     editor.getSettings().setCaretRowShown(false);

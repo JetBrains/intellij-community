@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.project.Project;
@@ -167,9 +168,9 @@ public class MavenProjectsProcessor {
     }
     MavenLog.LOG.error(e);
     new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                     "Unable to import maven project",
+                     "Unable to import Maven project",
                      "See logs for details",
                      NotificationType.ERROR
-    ).notify(myProject);
+    ).addAction(ActionManager.getInstance().getAction("ShowLog")).notify(myProject);
   }
 }
