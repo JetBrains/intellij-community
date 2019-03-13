@@ -2,11 +2,12 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,8 @@ import java.util.stream.Stream;
  * @author Pavel.Dolgov
  */
 public class ExtractRandomMethodInspection extends LocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance(ExtractRandomMethodInspection.class);
+
   @Nullable
   @Override
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
@@ -49,14 +52,12 @@ public class ExtractRandomMethodInspection extends LocalInspectionTool {
         if (codeBlock != null) {
           PsiElement[] elements = getRandomElements(codeBlock.getStatements());
           if (elements.length != 0 && !isTooSimple(elements)) {
-            JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(elements, "Extract random method");
-            if (processor.prepare(false)) {
-              PsiElement parent = elements[0].getParent();
-              int start = elements[0].getTextRangeInParent().getStartOffset();
-              int end = elements[elements.length - 1].getTextRangeInParent().getEndOffset();
-              ProblemDescriptor descriptor = manager.createProblemDescriptor(parent, new TextRange(start, end), "May extract random method",
+            JavaDuplicatesExtractMethodProcessor processor = createProcessor(elements);
+            if (processor != null) {
+              ProblemDescriptor descriptor = manager.createProblemDescriptor(elements[0], elements[elements.length - 1],
+                                                                             "May extract random method",
                                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
-                                                                             new ExtractRandomMethodFix(elements.length));
+                                                                             new ExtractRandomMethodFix());
               return new ProblemDescriptor[]{descriptor};
             }
           }
@@ -106,40 +107,37 @@ public class ExtractRandomMethodInspection extends LocalInspectionTool {
 
   private static boolean hasKnownIssue(@NotNull PsiCodeBlock codeBlock) {
     PsiElement parent = codeBlock.getParent();
-    if (parent instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)parent;
-      if (method.isConstructor()) {
-        Ref<Boolean> refFound = new Ref<>(Boolean.FALSE);
+    if (parent instanceof PsiMethod && ((PsiMethod)parent).isConstructor() || parent instanceof PsiClassInitializer) {
+      PsiClass containingClass = ((PsiMember)parent).getContainingClass();
+      Ref<Boolean> refFound = new Ref<>(Boolean.FALSE);
 
-        codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            if (PsiUtil.isOnAssignmentLeftHand(expression)) {
-              PsiElement resolved = expression.resolve();
-              if (resolved instanceof PsiField) {
-                PsiField field = (PsiField)resolved;
-                if (field.getContainingClass() == method.getContainingClass() &&
-                    field.hasModifierProperty(PsiModifier.FINAL) && !field.hasModifierProperty(PsiModifier.STATIC)) {
-                  refFound.set(Boolean.TRUE);
-                  stopWalking();
-                }
+      codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
+          super.visitReferenceExpression(expression);
+          if (PsiUtil.isOnAssignmentLeftHand(expression)) {
+            PsiElement resolved = expression.resolve();
+            if (resolved instanceof PsiField) {
+              PsiField field = (PsiField)resolved;
+              if (field.getContainingClass() == containingClass && field.hasModifierProperty(PsiModifier.FINAL)) {
+                refFound.set(Boolean.TRUE);
+                stopWalking();
               }
             }
           }
+        }
 
-          @Override
-          public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            String name = expression.getMethodExpression().getReferenceName();
-            if (PsiKeyword.THIS.equals(name) || PsiKeyword.SUPER.equals(name)) {
-              refFound.set(Boolean.TRUE);
-              stopWalking();
-            }
+        @Override
+        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+          super.visitMethodCallExpression(expression);
+          String name = expression.getMethodExpression().getReferenceName();
+          if (PsiKeyword.THIS.equals(name) || PsiKeyword.SUPER.equals(name)) {
+            refFound.set(Boolean.TRUE);
+            stopWalking();
           }
-        });
-        return refFound.get();
-      }
+        }
+      });
+      return refFound.get();
     }
     return false;
   }
@@ -210,19 +208,6 @@ public class ExtractRandomMethodInspection extends LocalInspectionTool {
   }
 
   private static class ExtractRandomMethodFix implements LocalQuickFix {
-    private final int myLength;
-
-    ExtractRandomMethodFix(int length) {
-      myLength = length;
-    }
-
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
-    @Override
-    public String getName() {
-      return myLength != 1 ? "Extract random method from " + myLength + " statements" : "Extract random method from the statement";
-    }
-
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -233,7 +218,48 @@ public class ExtractRandomMethodInspection extends LocalInspectionTool {
     @Override
     public void applyFix(@NotNull Project project,
                          @NotNull ProblemDescriptor descriptor) {
+      PsiElement startElement = descriptor.getStartElement();
+      PsiElement endElement = descriptor.getEndElement();
+      PsiFile containingFile = startElement.getContainingFile();
 
+      int startOffset = startElement.getTextRange().getStartOffset();
+      int endOffset = endElement.getTextRange().getEndOffset();
+      String startText = ArrayUtil.getFirstElement(startElement.getText().split("\n"));
+      String endText = startElement != endElement ? ArrayUtil.getFirstElement(endElement.getText().split("\n")) : "";
+
+      try {
+        List<PsiElement> elements = new ArrayList<>();
+        for (PsiElement element = startElement; element != null; element = element.getNextSibling()) {
+          elements.add(element);
+          if (element == endElement) break;
+        }
+        JavaDuplicatesExtractMethodProcessor processor = createProcessor(elements.toArray(PsiElement.EMPTY_ARRAY));
+        if (processor == null) {
+          LOG.warn("Failed to prepare");
+          logDetails(containingFile, startOffset, endOffset, startText, endText);
+          return;
+        }
+
+        processor.applyDefaults("randomMethod", PsiModifier.PRIVATE);
+        ExtractMethodHandler.extractMethod(project, processor);
+      }
+      catch (Exception e) {
+        LOG.error("Failed to extract method", e);
+        logDetails(containingFile, startOffset, endOffset, startText, endText);
+      }
     }
+
+    private static void logDetails(PsiFile containingFile, int startOffset, int endOffset, String startText, String endText) {
+      LOG.warn("File: " + containingFile);
+      LOG.warn("TextRange " + startOffset + "-" + endOffset);
+      if (startText != null && !startText.isEmpty()) LOG.warn(startText);
+      if (endText != null && !endText.isEmpty()) LOG.warn(endText);
+    }
+  }
+
+  @Nullable
+  private static JavaDuplicatesExtractMethodProcessor createProcessor(PsiElement[] elements) {
+    JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(elements, "Extract random method");
+    return processor.prepare(false) ? processor : null;
   }
 }
