@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.EndOfInitializerInstruction;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -10,6 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -285,6 +287,22 @@ public class CommonDataflow {
     DataflowResult result = getDataflowResult(expression);
     if (result == null) return null;
     return result.getExpressionFact(PsiUtil.skipParenthesizedExprDown(expression), type);
+  }
+
+  /**
+   * Returns long range set for expression or null if range is unknown.
+   * This method first tries to compute expression using {@link com.intellij.psi.impl.ConstantExpressionEvaluator}
+   * and only then calls {@link #getExpressionFact(PsiExpression, DfaFactType)}.
+   *
+   * @param expression expression to get its range
+   * @return long range set
+   */
+  @Nullable
+  public static LongRangeSet getExpressionRange(@Nullable PsiExpression expression) {
+    Object value = ExpressionUtils.computeConstantExpression(expression);
+    LongRangeSet rangeSet = LongRangeSet.fromConstant(value);
+    if (rangeSet != null) return rangeSet;
+    return getExpressionFact(expression, DfaFactType.RANGE);
   }
 
   private static class CommonDataflowVisitor extends StandardInstructionVisitor {
