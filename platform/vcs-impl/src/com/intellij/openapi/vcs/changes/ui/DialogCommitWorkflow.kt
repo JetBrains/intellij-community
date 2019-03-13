@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.getWarningIcon
@@ -13,7 +14,7 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
+import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction.addUnversionedFilesToVcs
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.getExecutorPresentableText
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
@@ -72,8 +73,12 @@ open class DialogCommitWorkflow(val project: Project,
     return dialog.showAndGet()
   }
 
-  protected open fun prepareCommit(unversionedFiles: List<VirtualFile>, browser: CommitDialogChangesBrowser): Boolean =
-    ScheduleForAdditionAction.addUnversioned(project, unversionedFiles, browser)
+  fun addUnversionedFiles(changeList: LocalChangeList, unversionedFiles: List<VirtualFile>, callback: (List<Change>) -> Unit): Boolean {
+    if (unversionedFiles.isEmpty()) return true
+
+    FileDocumentManager.getInstance().saveAllDocuments()
+    return addUnversionedFilesToVcs(project, changeList, unversionedFiles, callback, null)
+  }
 
   protected open fun doRunBeforeCommitChecks(changeList: LocalChangeList, checks: Runnable) =
     PartialChangesUtil.runUnderChangeList(project, changeList, checks)
