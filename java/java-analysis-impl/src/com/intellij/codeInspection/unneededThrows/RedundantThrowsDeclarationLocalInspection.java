@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.JavaOverridingMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +18,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@SuppressWarnings("InspectionDescriptionNotFoundInspection") // delegates
 public class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   private final RedundantThrowsDeclarationInspection myGlobalTool;
 
