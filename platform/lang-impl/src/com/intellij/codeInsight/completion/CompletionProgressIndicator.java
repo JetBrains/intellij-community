@@ -135,13 +135,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHostOffsets = hostOffsets;
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
-    myThreading = ApplicationManager.getApplication().isWriteAccessAllowed() || handler.isExecutedProgrammatically() ? new SyncCompletion() : new AsyncCompletion();
+    myThreading = ApplicationManager.getApplication().isWriteAccessAllowed() || handler.isTestingMode() ? new SyncCompletion() : new AsyncCompletion();
 
     myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
     myArranger = new CompletionLookupArrangerImpl(this);
-    if (handler.isExecutedProgrammatically()) {
-      myArranger.withAllItemsVisible();
+    if (handler.isTestingMode()) {
+      myArranger.setConsiderAllItemsVisible();
     }
     myLookup.setArranger(myArranger);
 
@@ -410,7 +410,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!isRunning()) return;
     ProgressManager.checkCanceled();
 
-    if (!myHandler.isExecutedProgrammatically()) {
+    if (!myHandler.isTestingMode()) {
       LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     }
 
@@ -543,7 +543,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   boolean blockingWaitForFinish(int timeoutMs) {
-    if (myHandler.isExecutedProgrammatically() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
+    if (myHandler.isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       if (!myFinishSemaphore.waitFor(100 * 1000)) {
         throw new AssertionError("Too long completion");
       }
@@ -717,7 +717,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   @Override
   public void scheduleRestart() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myHandler.isExecutedProgrammatically() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
+    if (myHandler.isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       closeAndFinish(false);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       new CodeCompletionHandlerBase(myCompletionType, false, false, true).invokeCompletion(getProject(), myEditor, myInvocationCount);

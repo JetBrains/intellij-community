@@ -250,7 +250,7 @@ public class CodeCompletionHandlerBase {
     Future<?> future = indicator.getCompletionThreading().startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () -> {
       CompletionParameters parameters = CompletionInitializationUtil.prepareCompletionParameters(initContext, indicator);
       if (parameters != null) {
-        parameters.setExecutedProgrammatically(isExecutedProgrammatically());
+        parameters.setIsTestingMode(isTestingMode());
         indicator.runContributors(initContext);
       }
     }));
@@ -518,7 +518,7 @@ public class CodeCompletionHandlerBase {
         }
         indicator.disposeIndicator();
       };
-      if (isExecutedProgrammatically()) {
+      if (isTestingMode()) {
         wrapper.run();
       }
       else {
@@ -682,7 +682,7 @@ public class CodeCompletionHandlerBase {
 
   @Nullable
   private <T> T withTimeout(long maxDurationMillis, @NotNull Computable<T> task) {
-    if (isExecutedProgrammatically()) {
+    if (isTestingMode()) {
       return task.compute();
     }
 
@@ -699,7 +699,7 @@ public class CodeCompletionHandlerBase {
     ourAutoInsertItemTimeout = timeout;
   }
 
-  protected boolean isExecutedProgrammatically() {
+  protected boolean isTestingMode() {
     return ApplicationManager.getApplication().isUnitTestMode();
   }
 }

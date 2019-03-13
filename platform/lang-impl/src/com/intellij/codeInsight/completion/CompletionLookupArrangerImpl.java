@@ -73,6 +73,10 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     return this;
   }
 
+  public void setConsiderAllItemsVisible() {
+    myConsiderAllItemsVisible = true;
+  }
+
   private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(Iterable<LookupElement> source) {
     MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = MultiMap.createLinked();
     for (LookupElement element : source) {
