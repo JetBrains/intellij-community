@@ -13,11 +13,10 @@ import net.miginfocom.swing.MigLayout
 import java.awt.Color
 import java.awt.Dimension
 import javax.accessibility.AccessibleContext
-import javax.security.auth.Destroyable
 import javax.swing.*
 import javax.swing.plaf.basic.BasicButtonUI
 
-open class CustomFrameTitleButtons constructor(myCloseAction: Action) : Destroyable {
+open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
   companion object {
     private val closeIcon = freezeIconUserSize(AllIcons.Windows.CloseActive)
     private val closeHoverIcon = freezeIconUserSize(AllIcons.Windows.CloseHover)

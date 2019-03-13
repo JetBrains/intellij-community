@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
@@ -53,7 +55,6 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     super.installUI(c);
 
     installLayout(myRootPane);
-    installBorder(myRootPane);
 
     updateState();
   }
@@ -91,14 +92,6 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
     myLayoutManager = null;
     myRootPane = null;
-  }
-
-  public void installBorder(JRootPane root) {
-    root.setBorder(new LineBorder(JBColor.namedColor("MenuBar.borderColor", new JBColor(Gray.xCD, Gray.x51))));
-  }
-
-  private static void uninstallBorder(JRootPane root) {
-    LookAndFeel.uninstallBorder(root);
   }
 
   private void installWindowListeners(JRootPane root, Component parent) {
@@ -154,8 +147,6 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
    * @param root Root pane.
    */
   private void installClientDecorations(JRootPane root) {
-    installBorder(root);
-
     JComponent titlePane = createTitlePane(root);
 
     setTitlePane(root, titlePane);
@@ -191,6 +182,9 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
     if (oldTitlePane != null) {
       layeredPane.remove(oldTitlePane);
+      if(oldTitlePane instanceof Disposable) {
+        Disposer.dispose((Disposable)oldTitlePane);
+      }
     }
     if (titlePane != null) {
       layeredPane.add(titlePane, JLayeredPane.FRAME_CONTENT_LAYER);

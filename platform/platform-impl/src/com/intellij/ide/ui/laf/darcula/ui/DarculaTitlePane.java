@@ -3,23 +3,23 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.CustomFrameIdeMenuBar;
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.CustomFrameTitleButtons;
+import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.DescriptionLabel;
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.ResizableCustomFrameTitleButtons;
 import com.intellij.jdkEx.JdkEx;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.wm.impl.IdeMenuBar;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaTitlePane extends JPanel {
+public class DarculaTitlePane extends JPanel implements Disposable {
 
   private PropertyChangeListener myPropertyChangeListener;
   private ComponentListener myComponentListener;
@@ -45,9 +45,14 @@ public class DarculaTitlePane extends JPanel {
 
   private CustomFrameTitleButtons buttonPanes;
   private final JLabel titleLabel = new JLabel();
+  private final DescriptionLabel projectLabel = new DescriptionLabel();
 
   private final Color myInactiveForeground = UIManager.getColor("inactiveCaptionText");
   private Color myActiveForeground = null;
+
+  private static final int menuBarGap = 7;
+  private static final int resizeGap = JBUI.scale(2);
+
 
   public DarculaTitlePane(JRootPane root, DarculaRootPaneUI ui) {
     this.myRootPane = root;
@@ -61,7 +66,6 @@ public class DarculaTitlePane extends JPanel {
 
     setOpaque(true);
     setBackground(JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground());
-   // setBorder(new DarculaMenuBarBorder());
   }
 
   private void uninstall() {
@@ -75,8 +79,6 @@ public class DarculaTitlePane extends JPanel {
       myWindowListener = createWindowListener();
 
       myWindow.addWindowListener(myWindowListener);
-      myPropertyChangeListener = createWindowPropertyChangeListener();
-      myWindow.addPropertyChangeListener(myPropertyChangeListener);
 
       myComponentListener = new ComponentAdapter() {
         @Override
@@ -91,17 +93,12 @@ public class DarculaTitlePane extends JPanel {
   private void uninstallListeners() {
     if (myWindow != null) {
       myWindow.removeWindowListener(myWindowListener);
-      myWindow.removePropertyChangeListener(myPropertyChangeListener);
       removeComponentListener(myComponentListener);
     }
   }
 
   private WindowListener createWindowListener() {
     return new WindowHandler();
-  }
-
-  private PropertyChangeListener createWindowPropertyChangeListener() {
-    return new PropertyChangeHandler();
   }
 
   @Override
@@ -134,10 +131,31 @@ public class DarculaTitlePane extends JPanel {
 
   private void setCustomDecorationHitTestSpots() {
     List<Rectangle> hitTestSpots = new ArrayList<>();
-    for (Component comp : getComponents()) {
-      hitTestSpots.add(comp.getBounds());
-    }
+
+    Rectangle iconRect = new RelativeRectangle(myMenuBar).getRectangleOn(this);
+    iconRect.y += resizeGap;
+    iconRect.x += resizeGap;
+    hitTestSpots.add(iconRect);
+
+    Rectangle menuRect = new RelativeRectangle(myIdeMenu).getRectangleOn(this);
+    menuRect.y += resizeGap;
+    hitTestSpots.add(menuRect);
+
+    hitTestSpots.addAll(projectLabel.getListenerBoundses());
+
+    Rectangle buttonsRect = new RelativeRectangle(buttonPanes.getView()).getRectangleOn(this);
+    buttonsRect.y+= resizeGap;
+    buttonsRect.x+= resizeGap;
+    buttonsRect.width -= resizeGap;
+
+    hitTestSpots.add(buttonsRect);
+
     JdkEx.setCustomDecorationHitTestSpots(myWindow, hitTestSpots);
+  }
+
+  @Override
+  public void dispose() {
+    Disposer.dispose(projectLabel);
   }
 
   @Override
@@ -147,8 +165,6 @@ public class DarculaTitlePane extends JPanel {
     uninstallListeners();
     myWindow = null;
   }
-
-  private static final int menuBarGap = 7;
 
   private void installSubcomponents() {
     int decorationStyle = getWindowDecorationStyle();
@@ -162,18 +178,17 @@ public class DarculaTitlePane extends JPanel {
       myMenuBar = createMenuBar();
       add(myMenuBar);
       if (myRootPane instanceof IdeRootPane) {
-        myIdeMenu = new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()) {
-          @Override
-          public Border getBorder() {
-            return JBUI.Borders.empty();
-          }
-        };
-        JPanel pane = new JPanel(new MigLayout("fillx, ins 0, novisualpadding, ", "[pref!]"));
-        pane.add(myIdeMenu);
+        myIdeMenu = new CustomFrameIdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance(), this);
 
-        add(pane, "wmin 0");
+        JPanel pane = new JPanel(new MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"));
+        pane.setOpaque(false);
+        pane.add(myIdeMenu, "wmin 0, wmax pref, top");
+        pane.add(projectLabel.getView(), "center, gapbottom 2, growx, wmin 0, gapbefore "+menuBarGap+", gapafter "+menuBarGap);
+
+        add(pane, "wmin 0, growx");
+
       } else {
-        add(titleLabel, "growx");
+        add(titleLabel, "growx, snap 2");
       }
       add(buttonPanes.getView(), "top, wmin pref");
     }
@@ -196,9 +211,6 @@ public class DarculaTitlePane extends JPanel {
 
   private void determineColors() {
     switch (getWindowDecorationStyle()) {
-      case JRootPane.FRAME:
-        myActiveForeground = UIManager.getColor("activeCaptionText");
-        break;
       case JRootPane.ERROR_DIALOG:
         myActiveForeground = UIManager.getColor("OptionPane.errorDialog.titlePane.foreground");
         break;
@@ -216,7 +228,7 @@ public class DarculaTitlePane extends JPanel {
         myActiveForeground = UIManager.getColor("activeCaptionText");
         break;
     }
-    myActiveForeground = JBColor.foreground();//UIManager.getColor("activeCaptionText");
+    //myActiveForeground = JBColor.foreground();//UIManager.getColor("activeCaptionText");
   }
 
   private void installDefaults() {
@@ -360,14 +372,6 @@ public class DarculaTitlePane extends JPanel {
       Frame frame = getFrame();
 
       if (frame != null) {
-        JRootPane rootPane = getRootPane();
-
-        if (((state & Frame.MAXIMIZED_BOTH) != 0) &&
-            (rootPane.getBorder() == null ||
-             (rootPane.getBorder() instanceof UIResource)) &&
-            frame.isShowing()) {
-          rootPane.setBorder(null);
-        }
         if (frame.isResizable()) {
           if ((state & Frame.MAXIMIZED_BOTH) != 0) {
             myMaximizeAction.setEnabled(false);
@@ -470,31 +474,6 @@ public class DarculaTitlePane extends JPanel {
     @Override
     public void actionPerformed(ActionEvent e) {
       maximize();
-    }
-  }
-
-  private class PropertyChangeHandler implements PropertyChangeListener {
-    @Override
-    public void propertyChange(PropertyChangeEvent pce) {
-      String name = pce.getPropertyName();
-
-      if ("resizable".equals(name) || "state".equals(name)) {
-        Frame frame = getFrame();
-
-        if (frame != null) {
-          setState(frame.getExtendedState(), true);
-        }
-        if ("resizable".equals(name)) {
-          getRootPane().repaint();
-        }
-      }
-      else if ("title".equals(name)) {
-        repaint();
-      }
-      else if ("componentOrientation" == name) {
-        revalidate();
-        repaint();
-      }
     }
   }
 
