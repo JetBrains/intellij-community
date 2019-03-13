@@ -298,11 +298,14 @@ public class Java8MigrationUtils {
     private final PsiParameter myIterParam;
     private final boolean myIsEntrySet;
     private final PsiReferenceExpression myMapExpression;
+    private final PsiVariable myMap;
 
-    private MapLoopCondition(@NotNull PsiParameter iterParam, boolean isEntrySet, @NotNull PsiReferenceExpression mapExpression) {
+    private MapLoopCondition(@NotNull PsiParameter iterParam, boolean isEntrySet,
+                             @NotNull PsiReferenceExpression mapExpression, @NotNull PsiVariable map) {
       myIterParam = iterParam;
       myIsEntrySet = isEntrySet;
       myMapExpression = mapExpression;
+      myMap = map;
     }
 
     /**
@@ -317,7 +320,7 @@ public class Java8MigrationUtils {
         ObjectUtils.tryCast(ControlFlowUtils.stripBraces(statement.getBody()), PsiExpressionStatement.class);
       if (putStatement == null) return null;
       PsiMethodCallExpression putCall = extractMapMethodCall(putStatement.getExpression(), "put");
-      if (putCall == null || !isMap(putCall.getMethodExpression().getQualifierExpression())) return null;
+      if (putCall == null || !isMapRef(putCall.getMethodExpression().getQualifierExpression())) return null;
       return putCall;
     }
 
@@ -334,10 +337,20 @@ public class Java8MigrationUtils {
     }
 
     /**
-     * Check if given expression is entry.getValue() call (for entry set based loop).
+     * Check if given expression is entry.getValue() call (for entry set based loop) or map.get(key) (for key based loop).
      */
     public boolean isValueAccess(@NotNull PsiExpression expression) {
-      return myIsEntrySet && isParamCall(expression, "getValue");
+      if (myIsEntrySet) return isParamCall(expression, "getValue");
+      return isGetCall(expression);
+    }
+
+    private boolean isGetCall(@NotNull PsiExpression expression) {
+      PsiMethodCallExpression call = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
+      if (call == null) return false;
+      String name = call.getMethodExpression().getReferenceName();
+      if (!"get".equals(name) || !isMapRef(call.getMethodExpression().getQualifierExpression())) return false;
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      return args.length == 1 && ExpressionUtils.isReferenceTo(args[0], myIterParam);
     }
 
     /**
@@ -353,6 +366,10 @@ public class Java8MigrationUtils {
       return myIterParam;
     }
 
+    public PsiVariable getMap() {
+      return myMap;
+    }
+
     public boolean isEntrySet() {
       return myIsEntrySet;
     }
@@ -364,7 +381,7 @@ public class Java8MigrationUtils {
       return expectedName.equals(name) && isParamCall(call);
     }
 
-    private boolean isMap(@Nullable PsiElement element) {
+    private boolean isMapRef(@Nullable PsiElement element) {
       return element != null && PsiEquivalenceUtil.areElementsEquivalent(myMapExpression, element);
     }
 
@@ -388,7 +405,9 @@ public class Java8MigrationUtils {
     private static MapLoopCondition create(@NotNull PsiParameter iterParam, boolean isEntrySet, @Nullable PsiExpression qualifier) {
       PsiReferenceExpression ref = ObjectUtils.tryCast(qualifier, PsiReferenceExpression.class);
       if (ref == null) return null;
-      return new MapLoopCondition(iterParam, isEntrySet, ref);
+      PsiVariable map = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
+      if (map == null) return null;
+      return new MapLoopCondition(iterParam, isEntrySet, ref, map);
     }
   }
 }
