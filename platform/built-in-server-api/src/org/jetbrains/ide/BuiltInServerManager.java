@@ -13,31 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.ide;
+package org.jetbrains.ide
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.Url;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.util.Url
 
-import java.net.URLConnection;
+import java.net.URLConnection
 
-public abstract class BuiltInServerManager {
-  public static BuiltInServerManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(BuiltInServerManager.class);
+abstract class BuiltInServerManager {
+  companion object {
+    @JvmStatic
+    fun getInstance(): BuiltInServerManager = ApplicationManager.getApplication().getComponent(BuiltInServerManager::class.java)
   }
 
-  public abstract int getPort();
+  abstract val port: Int
 
-  public abstract BuiltInServerManager waitForStart();
+  abstract val serverDisposable: Disposable?
 
-  @Nullable
-  public abstract Disposable getServerDisposable();
+  abstract fun waitForStart(): BuiltInServerManager
 
-  public abstract boolean isOnBuiltInWebServer(@Nullable Url url);
+  abstract fun isOnBuiltInWebServer(url: Url?): Boolean
 
-  public abstract void configureRequestToWebServer(@NotNull URLConnection connection);
+  abstract fun configureRequestToWebServer(connection: URLConnection)
 
-  public abstract Url addAuthToken(@NotNull Url url);
+  abstract fun addAuthToken(url: Url): Url
 }
