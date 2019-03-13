@@ -103,20 +103,9 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
   }
 
   private fun createPlaceLinePairs(project: Project, changed: Boolean): List<RecentLocationItem> {
-    val places = getPlaces(project, changed)
-    if (places.isEmpty()) {
-      return emptyList()
-    }
-
-    val items = arrayListOf<RecentLocationItem>()
-    for (placeInfo in places.stream().limit(UISettings.instance.recentLocationsLimit.toLong())) {
-      val editor = createEditor(project, placeInfo)
-      if (editor != null) {
-        items.add(RecentLocationItem(editor, placeInfo))
-      }
-    }
-
-    return items
+    return getPlaces(project, changed)
+      .mapNotNull { RecentLocationItem(createEditor(project, it) ?: return@mapNotNull null, it) }
+      .take(UISettings.instance.recentLocationsLimit)
   }
 
   private fun getPlaces(project: Project, changed: Boolean): List<IdeDocumentHistoryImpl.PlaceInfo> {
