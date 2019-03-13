@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.Keymap;
@@ -192,12 +191,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           super.dispose();
         }
 
-        @NotNull
-        @Override
-        protected Action[] createLeftSideActions() {
-          return new Action[0];
-        }
-
         @Nullable
         @Override
         protected Border createContentPaneBorder() {
@@ -259,7 +252,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       final AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
       JRootPane root = ((RootPaneContainer)w).getRootPane();
 
-      IdeGlassPaneImpl glass = (IdeGlassPaneImpl)(myDialog.getRootPane().getGlassPane());
+      IdeGlassPaneImpl glass = (IdeGlassPaneImpl)myDialog.getRootPane().getGlassPane();
       int i = Registry.intValue("ide.popup.resizable.border.sensitivity", 4);
       WindowResizeListener resizeListener = new WindowResizeListener(
         root,
@@ -319,7 +312,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
               if (oppositeWindow == w || oppositeWindow != null && oppositeWindow.getOwner() == w) {
                 return;
               }
-              if (canBeClosed() || (!myIsPinned.get() && oppositeWindow != null)) {
+              if (canBeClosed() || !myIsPinned.get() && oppositeWindow != null) {
                 //closeImmediately();
                 myDialog.doCancelAction();
               }

@@ -369,7 +369,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
           }
         }
       };
-      escAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this.getRootPane(), myDisposable);
+      escAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, getRootPane(), myDisposable);
     }
   }
 
@@ -471,9 +471,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
       // (UsagePreviewPanel.highlight)
       if (component instanceof EditorTextField) {
         final Document document = ((EditorTextField)component).getDocument();
-        if (document != null) {
-          PsiDocumentManager.getInstance(myProject).commitDocument(document);
-        }
+        PsiDocumentManager.getInstance(myProject).commitDocument(document);
       }
 
       final AtomicInteger resultsCount = new AtomicInteger();
@@ -1100,7 +1098,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     gbConstraints.weightx = 0;
     gbConstraints.gridx = 2;
     mySelectDirectoryButton = new FixedSizeButton(myDirectoryComboBox);
-    TextFieldWithBrowseButton.MyDoClickAction.addTo(mySelectDirectoryButton, myDirectoryComboBox);
+    ComponentWithBrowseButton.MyDoClickAction.addTo(mySelectDirectoryButton, myDirectoryComboBox);
     mySelectDirectoryButton.setMargin(new Insets(0, 0, 0, 0));
     scopePanel.add(mySelectDirectoryButton, gbConstraints);
 

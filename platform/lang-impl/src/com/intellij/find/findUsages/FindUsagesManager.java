@@ -216,14 +216,11 @@ public class FindUsagesManager {
     startFindUsages(findUsagesOptions, handler, scopeFile, editor);
   }
 
-  void startFindUsages(@NotNull PsiElement psiElement,
-                       @NotNull FindUsagesOptions findUsagesOptions,
-                       PsiFile scopeFile,
-                       FileEditor editor) {
+  void startFindUsages(@NotNull PsiElement psiElement, @NotNull FindUsagesOptions findUsagesOptions) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     FindUsagesHandler handler = getFindUsagesHandler(psiElement, false);
     if (handler == null) return;
-    startFindUsages(findUsagesOptions, handler, scopeFile, editor);
+    startFindUsages(findUsagesOptions, handler, null, null);
   }
 
   private void startFindUsages(@NotNull FindUsagesOptions findUsagesOptions,

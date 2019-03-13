@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -42,7 +43,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.xml.XmlEntityCache;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -228,12 +228,13 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
           resourceUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1) + s;
         }
 
+        String refName = s.substring(s.lastIndexOf('/') + 1);
+        if (absoluteUrl) {
+          refName = Integer.toHexString(s.hashCode()) + "_" + refName;
+        }
         String resourcePath;
-
-        String refname = s.substring(s.lastIndexOf('/') + 1);
-        if (absoluteUrl) refname = Integer.toHexString(s.hashCode()) + "_" + refname;
         try {
-          resourcePath = fetchOneFile(indicator, resourceUrl, project, extResourcesPath, refname);
+          resourcePath = fetchOneFile(indicator, resourceUrl, project, extResourcesPath, refName);
         }
         catch (IOException e) {
           nestedException[0] = new FetchingResourceIOException(e, resourceUrl);
@@ -325,7 +326,6 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       return null;
     }
 
-    int slashIndex = resourceUrl.lastIndexOf('/');
     String resPath = extResourcesPath + File.separatorChar;
 
     if (refname != null) { // resource is known under ref.name so need to save it
@@ -339,6 +339,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       }
     }
     else {
+      int slashIndex = resourceUrl.lastIndexOf('/');
       resPath += Integer.toHexString(resourceUrl.hashCode()) + "_" + resourceUrl.substring(slashIndex + 1);
     }
 
@@ -358,14 +359,14 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     return resPath;
   }
 
-  protected boolean resultIsValid(final Project project, ProgressIndicator indicator, final String resourceUrl, FetchResult result) {
+  private boolean resultIsValid(final Project project, ProgressIndicator indicator, final String resourceUrl, FetchResult result) {
     if (myForceResultIsValid) {
       return true;
     }
     if (!ApplicationManager.getApplication().isUnitTestMode() &&
         result.contentType != null &&
         result.contentType.contains(HTML_MIME) &&
-        new String(result.bytes).contains("<html")) {
+        new String(result.bytes, CharsetToolkit.UTF8_CHARSET).contains("<html")) {
       ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(project,
                                                                                      XmlBundle.message("invalid.url.no.xml.file.at.location", resourceUrl),
                                                                                      XmlBundle.message("invalid.url.title"),
@@ -376,71 +377,68 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   }
 
   private static Set<String> extractEmbeddedFileReferences(XmlFile file, XmlFile context, final String url) {
-    final Set<String> result = new LinkedHashSet<>();
     if (context != null) {
       XmlEntityCache.copyEntityCaches(file, context);
     }
 
+    Set<String> result = new LinkedHashSet<>();
     XmlUtil.processXmlElements(
       file,
-      new PsiElementProcessor() {
-        @Override
-        public boolean execute(@NotNull PsiElement element) {
-          if (element instanceof XmlEntityDecl) {
-            String candidateName = null;
+      element -> {
+        if (element instanceof XmlEntityDecl) {
+          String candidateName = null;
 
-            for (PsiElement e = element.getLastChild(); e != null; e = e.getPrevSibling()) {
-              if (e instanceof XmlAttributeValue && candidateName == null) {
-                candidateName = e.getText().substring(1, e.getTextLength() - 1);
-              }
-              else if (e instanceof XmlToken &&
-                       candidateName != null &&
-                       (((XmlToken)e).getTokenType() == XmlTokenType.XML_DOCTYPE_PUBLIC ||
-                        ((XmlToken)e).getTokenType() == XmlTokenType.XML_DOCTYPE_SYSTEM
-                       )
-                ) {
-                result.add(candidateName);
-                break;
-              }
+          for (PsiElement e = element.getLastChild(); e != null; e = e.getPrevSibling()) {
+            if (e instanceof XmlAttributeValue && candidateName == null) {
+              candidateName = e.getText().substring(1, e.getTextLength() - 1);
+            }
+            else if (e instanceof XmlToken &&
+                     candidateName != null &&
+                     (((XmlToken)e).getTokenType() == XmlTokenType.XML_DOCTYPE_PUBLIC ||
+                      ((XmlToken)e).getTokenType() == XmlTokenType.XML_DOCTYPE_SYSTEM
+                     )
+              ) {
+              result.add(candidateName);
+              break;
             }
           }
-          else if (element instanceof XmlTag) {
-            final XmlTag tag = (XmlTag)element;
-            String schemaLocation = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
-
-            if (schemaLocation != null) {
-              // processing xsd:import && xsd:include
-              final PsiReference[] references = tag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT).getValueElement().getReferences();
-              if (references.length > 0) {
-                String extension = FileUtilRt.getExtension(new File(url).getName());
-                final String namespace = tag.getAttributeValue("namespace");
-                if (namespace != null &&
-                    schemaLocation.indexOf('/') == -1 &&
-                    !extension.equals(FileUtilRt.getExtension(schemaLocation))) {
-                  result.add(namespace.substring(0, namespace.lastIndexOf('/') + 1) + schemaLocation);
-                }
-                else {
-                  result.add(schemaLocation);
-                }
-              }
-            }
-            else {
-              schemaLocation = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT, XmlUtil.XML_SCHEMA_INSTANCE_URI);
-              if (schemaLocation != null) {
-                final StringTokenizer tokenizer = new StringTokenizer(schemaLocation);
-
-                while (tokenizer.hasMoreTokens()) {
-                  tokenizer.nextToken();
-                  if (!tokenizer.hasMoreTokens()) break;
-                  String location = tokenizer.nextToken();
-                  result.add(location);
-                }
-              }
-            }
-          }
-
-          return true;
         }
+        else if (element instanceof XmlTag) {
+          final XmlTag tag = (XmlTag)element;
+          String schemaLocation = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
+
+          if (schemaLocation != null) {
+            // processing xsd:import && xsd:include
+            final PsiReference[] references = tag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT).getValueElement().getReferences();
+            if (references.length > 0) {
+              String extension = FileUtilRt.getExtension(new File(url).getName());
+              final String namespace = tag.getAttributeValue("namespace");
+              if (namespace != null &&
+                  schemaLocation.indexOf('/') == -1 &&
+                  !extension.equals(FileUtilRt.getExtension(schemaLocation))) {
+                result.add(namespace.substring(0, namespace.lastIndexOf('/') + 1) + schemaLocation);
+              }
+              else {
+                result.add(schemaLocation);
+              }
+            }
+          }
+          else {
+            schemaLocation = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT, XmlUtil.XML_SCHEMA_INSTANCE_URI);
+            if (schemaLocation != null) {
+              final StringTokenizer tokenizer = new StringTokenizer(schemaLocation);
+
+              while (tokenizer.hasMoreTokens()) {
+                tokenizer.nextToken();
+                if (!tokenizer.hasMoreTokens()) break;
+                String location = tokenizer.nextToken();
+                result.add(location);
+              }
+            }
+          }
+        }
+
+        return true;
       },
       true,
       true
@@ -472,14 +470,11 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   @Nullable
   private static FetchResult fetchData(final Project project, final String dtdUrl, final ProgressIndicator indicator) throws IOException {
     try {
-      return HttpRequests.request(dtdUrl).accept("text/xml,application/xml,text/html,*/*").connect(new HttpRequests.RequestProcessor<FetchResult>() {
-        @Override
-        public FetchResult process(@NotNull HttpRequests.Request request) throws IOException {
-          FetchResult result = new FetchResult();
-          result.bytes = request.readBytes(indicator);
-          result.contentType = request.getConnection().getContentType();
-          return result;
-        }
+      return HttpRequests.request(dtdUrl).accept("text/xml,application/xml,text/html,*/*").connect(request -> {
+        FetchResult result = new FetchResult();
+        result.bytes = request.readBytes(indicator);
+        result.contentType = request.getConnection().getContentType();
+        return result;
       });
     }
     catch (MalformedURLException e) {
