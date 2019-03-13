@@ -1,1 +1,2 @@
 skip: *
+skipSync: tips
