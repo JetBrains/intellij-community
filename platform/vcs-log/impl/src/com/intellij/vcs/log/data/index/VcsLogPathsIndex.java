@@ -56,7 +56,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     myPathsIndexer.setFatalErrorConsumer(e -> fatalErrorHandler.consume(this, e));
   }
 
-  @NotNull
+  @Nullable
   @Override
   protected ForwardIndex<Integer, List<VcsLogPathsIndex.ChangeKind>> createForwardIndex(@NotNull IndexExtension<Integer, List<ChangeKind>, VcsIndexableDetails> extension)
     throws IOException {
