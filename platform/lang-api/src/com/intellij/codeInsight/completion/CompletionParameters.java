@@ -19,7 +19,7 @@ public final class CompletionParameters {
   private final int myOffset;
   private final int myInvocationCount;
   private final CompletionProcess myProcess;
-  private boolean isExecutedProgrammatically = false;
+  private boolean isTestingMode = false;
 
   CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
                        @NotNull CompletionType completionType, int offset, int invocationCount, @NotNull Editor editor,
@@ -110,11 +110,11 @@ public final class CompletionParameters {
     return myProcess;
   }
 
-  public boolean isExecutedProgrammatically() {
-    return isExecutedProgrammatically;
+  public boolean isTestingMode() {
+    return isTestingMode;
   }
 
-  public void setExecutedProgrammatically(boolean runProgrammatically) {
-    isExecutedProgrammatically = runProgrammatically;
+  public void setIsTestingMode(boolean runTestingMode) {
+    isTestingMode = runTestingMode;
   }
 }

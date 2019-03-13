@@ -18,10 +18,7 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
@@ -43,7 +40,6 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiComment
@@ -56,7 +52,6 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.layout.*
-import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.UIUtil
 import java.util.*
 import javax.swing.DefaultComboBoxModel
@@ -67,8 +62,26 @@ import javax.swing.JLabel
 /**
  * @author traff
  */
+
+private data class CompletionTime(var cnt: Int, var time: Long)
+
+private data class CompletionParameters(
+  val project: Project,
+  val path: String,
+  val editor: Editor,
+  val text: String,
+  val startIndex: Int,
+  val word: String,
+  val stats: CompletionStats,
+  val indicator: ProgressIndicator,
+  val completionTime : CompletionTime = CompletionTime(0, 0)) {}
+
+private val RANK_EXCESS_LETTERS: Int = -2
+private val RANK_NOT_FOUND: Int = -1
+
 class CompletionQualityStatsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
+    val application = ApplicationManager.getApplication()
     val editor = e.getData(CommonDataKeys.EDITOR) as? EditorImpl
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
 
@@ -80,67 +93,65 @@ class CompletionQualityStatsAction : AnAction() {
 
     val task = object : Task.Backgroundable(project, "Emulating completion", true) {
       override fun run(indicator: ProgressIndicator) {
-        val files = if (dialog.scope is GlobalSearchScope) {
-          ReadAction.compute<Collection<VirtualFile>, Exception> {
+        val files = (if (dialog.scope is GlobalSearchScope) {
+          application.runReadAction<Collection<VirtualFile>, Exception> {
             FileTypeIndex.getFiles(fileType, dialog.scope as GlobalSearchScope)
           }
         }
         else {
           (dialog.scope as LocalSearchScope).virtualFiles.asList()
-        }
+        }).sortedBy { it.name } // sort files to have same order each run
 
-        val wordSet = HashMap<String, Int>() // we don't want to complete the same words more than twice
+        // map to count words frequency
+        // we don't want to complete the same words more than twice
+        val wordsFrequencyMap = HashMap<String, Int>()
 
+        var filesProcessed = 0 // for show progress fraction info
         for (file in files) {
           if (indicator.isCanceled) {
             stats.finished = false
             return
           }
 
+          filesProcessed += 1
+          val procentage = filesProcessed.toDouble() / files.size.toDouble()
+          indicator.setFraction(procentage)
+
           indicator.text = file.path
 
-          val document = ReadAction.compute<Document, Exception> { FileDocumentManager.getInstance().getDocument(file) }
+          val document = application.runReadAction<Document, Exception> { FileDocumentManager.getInstance().getDocument(file) }
 
-          val completionAttempts = ReadAction.compute<List<Pair<Int, String>>, Exception> {
-            getCompletionAttempts(PsiManager.getInstance(project).findFile(file)!!, wordSet)
+          val completionAttempts = application.runReadAction<List<Pair<Int, String>>, Exception> {
+            getCompletionAttempts(PsiManager.getInstance(project).findFile(file)!!, wordsFrequencyMap)
           }
 
           if (completionAttempts.isNotEmpty()) {
-            val semaphore = Semaphore()
-            semaphore.down()
-
-            val application = ApplicationManager.getApplication()
+            lateinit var newEditor: Editor
             application.invokeAndWait(Runnable {
-              val newEditor = WriteAction.compute<Editor, Exception> {
+              newEditor = application.runWriteAction<Editor, Exception> {
                 val descriptor = OpenFileDescriptor(project, file)
                 FileEditorManager.getInstance(project).openTextEditor(descriptor, true)
               }
-
-              val text = document.text
-
-              application.executeOnPooledThread {
-                try {
-                  for (pair in completionAttempts) {
-                    if (indicator.isCanceled) {
-                      break
-                    }
-                    val line = StringUtil.offsetToLineNumber(text, pair.first)
-                    evalCompletionAt(project, file.path + ":$line", newEditor, text, pair.first, pair.second, stats, indicator)
-                  }
-                }
-                finally {
-                  semaphore.up()
-                  application.invokeAndWait(Runnable {
-                    WriteAction.run<Exception> {
-                      document.setText(text)
-                      FileDocumentManager.getInstance().saveDocument(document)
-                    }
-                  })
-                }
-              }
             }, ModalityState.NON_MODAL)
 
-            semaphore.waitFor()
+            val text = document.text
+            try {
+              for ((offset, word) in completionAttempts) {
+                if (indicator.isCanceled) {
+                  break
+                }
+                val line = StringUtil.offsetToLineNumber(text, offset)
+                evalCompletionAt(CompletionParameters(project, file.path + ":$line", newEditor, text, offset, word, stats, indicator))
+              }
+            }
+            finally {
+              application.invokeAndWait(Runnable {
+                application.runWriteAction {
+                  document.setText(text)
+                  FileDocumentManager.getInstance().saveDocument(document)
+                }
+              })
+            }
 
             stats.totalFiles += 1
           }
@@ -164,9 +175,10 @@ class CompletionQualityStatsAction : AnAction() {
     console.print(text, ConsoleViewContentType.NORMAL_OUTPUT)
   }
 
+  // Find offsets to words and words on which we want to try completion
   private fun getCompletionAttempts(file: PsiFile, wordSet: HashMap<String, Int>): List<Pair<Int, String>> {
+    val max_word_frequency = 2
     val res = Lists.newArrayList<Pair<Int, String>>()
-
     val text = file.text
 
     for (range in StringUtil.getWordIndicesIn(text)) {
@@ -176,7 +188,7 @@ class CompletionQualityStatsAction : AnAction() {
 
         if (el != null && el !is PsiComment) {
           val word = range.substring(text)
-          if (!word.isEmpty() && wordSet.getOrDefault(word, 0) < 2) {
+          if (!word.isEmpty() && wordSet.getOrDefault(word, 0) < max_word_frequency) {
             res.add(Pair(startIndex - 1, word))
             wordSet[word] = wordSet.getOrDefault(word, 0) + 1
           }
@@ -187,66 +199,48 @@ class CompletionQualityStatsAction : AnAction() {
     return res
   }
 
-  private fun evalCompletionAt(project: Project,
-                               path: String,
-                               editor: Editor,
-                               text: String,
-                               startIndex: Int,
-                               existingCompletion: String,
-                               stats: CompletionStats,
-                               indicator: ProgressIndicator) {
-    val completionTime = CompletionTime(0, 0)
-    val (rank0, total0) = findCorrectElementRank(editor, text, startIndex, 0, project, existingCompletion, completionTime)
-    if (indicator.isCanceled) {
-      return
+  private fun evalCompletionAt(params: CompletionParameters) {
+    with(params) {
+      val (rank0, total0) = findCorrectElementRank(0, params)
+      if (indicator.isCanceled) {
+        return
+      }
+      val (rank1, total1) = findCorrectElementRank(1, params)
+      if (indicator.isCanceled) {
+        return
+      }
+      val (rank3, total3) = findCorrectElementRank(3, params)
+      if (indicator.isCanceled) {
+        return
+      }
+
+      val maxChars = 10
+
+      val cache = arrayOfNulls<Pair<Int, Int>>(maxChars)
+
+      val charsToFirst = calcCharsToFirstN(rank0, rank1, rank3, 1, maxChars, cache, params)
+
+      val charsToFirst3 = calcCharsToFirstN(rank0, rank1, rank3, 3, maxChars, cache, params)
+
+      stats.completions.add(
+        Completion(path, startIndex, word, rank0, total0, rank1, total1, rank3, total3, charsToFirst, charsToFirst3,
+                   completionTime.cnt, completionTime.time))
     }
-    val (rank1, total1) = findCorrectElementRank(editor, text, startIndex, 1, project, existingCompletion, completionTime)
-    if (indicator.isCanceled) {
-      return
-    }
-    val (rank3, total3) = findCorrectElementRank(editor, text, startIndex, 3, project, existingCompletion, completionTime)
-    if (indicator.isCanceled) {
-      return
-    }
-
-    val maxChars = 10
-
-    val cache = arrayOfNulls<Pair<Int, Int>>(maxChars)
-
-    val charsToFirst = calcCharsToFirstN(rank0, rank1, rank3, 1, editor, text, startIndex, project, existingCompletion, completionTime,
-                                         indicator,
-                                         maxChars,
-                                         cache)
-
-    val charsToFirst3 = calcCharsToFirstN(rank0, rank1, rank3, 3, editor, text, startIndex, project, existingCompletion, completionTime,
-                                          indicator,
-                                          maxChars,
-                                          cache)
-
-
-    stats.completions.add(
-      Completion(path, startIndex, existingCompletion, rank0, total0, rank1, total1, rank3, total3, charsToFirst, charsToFirst3,
-                 completionTime.cnt, completionTime.time))
   }
 
+  // Calculate number of letters needed to type to have necessary word in top N
   private fun calcCharsToFirstN(rank0: Int,
                                 rank1: Int,
                                 rank3: Int,
                                 N: Int,
-                                editor: Editor,
-                                text: String,
-                                startIndex: Int,
-                                project: Project,
-                                existingCompletion: String,
-                                completionTime: CompletionTime,
-                                indicator: ProgressIndicator,
                                 max: Int,
-                                cache: Array<Pair<Int, Int>?>): Int {
+                                cache: Array<Pair<Int, Int>?>,
+                                params: CompletionParameters): Int {
     return when {
       rank0 in 0 until N -> 0
       rank1 in 0 until N -> 1
       rank3 in 0 until N -> {
-        val (rank2, _) = findCorrectElementRank(editor, text, startIndex, 2, project, existingCompletion, completionTime)
+        val (rank2, _) = findCorrectElementRank(2, params)
         if (rank2 in 0 until N) {
           2
         }
@@ -255,120 +249,111 @@ class CompletionQualityStatsAction : AnAction() {
         }
       }
       else -> {
-        findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, indicator, 4, max, N, cache, completionTime)
+        calcCharsToFirstN(4, max, N, cache, params)
       }
     }
   }
 
-  private fun findNumberOfCharsToWin(editor: Editor,
-                                     text: String,
-                                     startIndex: Int,
-                                     project: Project,
-                                     existingCompletion: String,
-                                     indicator: ProgressIndicator,
-                                     from: Int,
-                                     to: Int,
-                                     resultInFirstN: Int,
-                                     cache: Array<Pair<Int, Int>?>,
-                                     timeStats: CompletionTime): Int {
+  // Iterate and check from 'from' to 'to'
+  private fun calcCharsToFirstN(from: Int,
+                                to: Int,
+                                N: Int,
+                                cache: Array<Pair<Int, Int>?>,
+                                params: CompletionParameters): Int {
+    with (params) {
+     for (mid in from until to) {
+       if (indicator.isCanceled) {
+         return -1
+       }
 
-    for (mid in from until to) {
-      if (indicator.isCanceled) {
-        return -1
-      }
+       val (rank, total) = cache[mid] ?: findCorrectElementRank(mid, params)
 
-      val (rank, total) = if (cache[mid] != null) {
-        cache[mid]!!
-      }
-      else {
-        findCorrectElementRank(editor, text, startIndex, mid, project, existingCompletion, timeStats)
-      }
-      if (cache[mid] == null) {
-        cache[mid] = Pair(rank, total)
-      }
+       if (cache[mid] == null) {
+         cache[mid] = kotlin.Pair(rank, total)
+       }
 
-      if (rank == -2) {
-        return -1
-      }
+       if (rank == RANK_EXCESS_LETTERS) {
+         return -1
+       }
 
-      if (rank < resultInFirstN) {
-        return mid
-      }
+       if (rank < N) {
+         return mid
+       }
+     }
+     return -1
     }
 
-    return -1
   }
 
-  private data class CompletionTime(var cnt: Int, var time: Long)
+  // Find position necessary word in lookup list after 'charsTyped' typed letters
+  private fun findCorrectElementRank(charsTyped: Int, params: CompletionParameters): Pair<Int, Int> {
+    with (params) {
+      if (charsTyped > word.length) {
+        return Pair(RANK_EXCESS_LETTERS, 0)
+      }
+      if (charsTyped == word.length) {
+        return Pair(0, 1)
+      }
 
-  private fun findCorrectElementRank(editor: Editor,
-                                     text: String,
-                                     startIndex: Int,
-                                     charsTyped: Int,
-                                     project: Project,
-                                     existingCompletion: String,
-                                     timeStats: CompletionTime): Pair<Int, Int> {
-    if (charsTyped > existingCompletion.length) {
-      return Pair(-2, 0)
-    }
-    if (charsTyped == existingCompletion.length) {
-      return Pair(0, 1)
-    }
-    val newText = text.substring(0, startIndex + 1 + charsTyped) + text.substring(startIndex + existingCompletion.length + 1)
+      // text with prefix of word of charsTyped length in completion site
+      val newText = text.substring(0, startIndex + 1 + charsTyped) + text.substring(startIndex + word.length + 1)
 
-    val result = Ref.create(-1)
-    val total = Ref.create(0)
-    ApplicationManager.getApplication().invokeAndWait(Runnable {
-      try {
+      var result = RANK_NOT_FOUND
+      var total = 0
+      ApplicationManager.getApplication().invokeAndWait(Runnable {
+        try {
+          fun getLookupItems() : List<LookupElement>? {
+            var lookupItems: List<LookupElement>? = null
 
-        val ref: Ref<List<LookupElement>> = Ref.create()
+            CommandProcessor.getInstance().executeCommand(project, {
+              WriteAction.run<Exception> {
+                editor.document.setText(newText)
+                FileDocumentManager.getInstance().saveDocument(editor.document)
+                editor.caretModel.moveToOffset(startIndex + 1 + charsTyped)
+                editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+              }
 
-        val start = System.currentTimeMillis()
-        CommandProcessor.getInstance().executeCommand(project, {
-          WriteAction.run<Exception> {
-            editor.document.setText(newText)
-            FileDocumentManager.getInstance().saveDocument(editor.document)
-            editor.caretModel.moveToOffset(startIndex + 1 + charsTyped)
-            editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
-          }
+              val handler = object : CodeCompletionHandlerBase(CompletionType.BASIC, false, false, true) {
+                override fun completionFinished(indicator: CompletionProgressIndicator, hasModifiers: Boolean) {
+                  super.completionFinished(indicator, hasModifiers)
+                  lookupItems = indicator.lookup!!.items
+                }
 
-          val handler = object : CodeCompletionHandlerBase(CompletionType.BASIC, false, false, true) {
-            override fun completionFinished(indicator: CompletionProgressIndicator, hasModifiers: Boolean) {
-              super.completionFinished(indicator, hasModifiers)
-              ref.set(indicator.lookup!!.items)
+                override fun isTestingMode() = true
+              }
+              handler.invokeCompletion(project, editor, 1)
+
+            }, null, null, editor.document)
+
+            val lookup = LookupManager.getActiveLookup(editor)
+            if (lookup != null && lookup is LookupImpl) {
+              ScrollingUtil.moveUp(lookup.list, 0)
+              lookup.refreshUi(false, false)
+              lookupItems = lookup.items
+              lookup.hideLookup(true)
             }
 
-            override fun isExecutedProgrammatically() = true
+            return lookupItems
           }
-          handler.invokeCompletion(project, editor, 1)
 
-        }, null, null, editor.document)
+          val timeStart = System.currentTimeMillis()
 
-        val lookup = LookupManager.getActiveLookup(editor)
-        if (lookup != null && lookup is LookupImpl) {
-          ScrollingUtil.moveUp(lookup.list, 0)
-          lookup.refreshUi(false, false)
-          ref.set(lookup.items)
-          lookup.hideLookup(true)
+          val lookupItems = getLookupItems()
+          if (lookupItems != null) {
+            result = lookupItems.indexOfFirst { it.lookupString == word }
+            total = lookupItems.size
+          }
+
+          completionTime.cnt += 1
+          completionTime.time += System.currentTimeMillis() - timeStart
         }
-
-        if (!ref.isNull) {
-          result.set(ref.get().indexOfFirst { it.lookupString == existingCompletion })
-          total.set(ref.get().size)
+        catch (e: Throwable) {
+          LOG.error(e)
         }
+      }, ModalityState.NON_MODAL)
 
-        timeStats.cnt += 1
-        timeStats.time += System.currentTimeMillis() - start
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-      }
-      finally {
-      }
-    }, ModalityState.NON_MODAL)
-
-
-    return Pair(result.get(), total.get())
+      return Pair(result, total)
+    }
   }
 
   override fun update(e: AnActionEvent) {
@@ -376,7 +361,6 @@ class CompletionQualityStatsAction : AnAction() {
     e.presentation.text = "Completion Quality Statistics"
   }
 }
-
 
 class CompletionQualityDialog(project: Project, private val editor: Editor?) : DialogWrapper(project) {
   private var fileTypeCombo: JComboBox<FileType>
