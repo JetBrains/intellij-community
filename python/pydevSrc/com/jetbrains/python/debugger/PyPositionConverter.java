@@ -1,6 +1,7 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.xdebugger.XSourcePosition;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ public interface PyPositionConverter {
    * @return position in Python file which is used when showing Frames window and suspended position. It must be compatible with
    * Python side, but also navigatable in the IDE editor.
    */
+  @ApiStatus.Experimental
   @NotNull
   default PySourcePosition convertPythonToFrame(@NotNull final String file, final int line) {
     return create(file, line);
@@ -25,6 +27,7 @@ public interface PyPositionConverter {
    * @param position shown in Frames window
    * @return position on Python side
    */
+  @ApiStatus.Experimental
   @NotNull
   default PySourcePosition convertFrameToPython(@NotNull PySourcePosition position) {
     return position;
