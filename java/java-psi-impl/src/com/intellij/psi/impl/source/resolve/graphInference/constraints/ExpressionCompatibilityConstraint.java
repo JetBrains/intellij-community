@@ -132,7 +132,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       PsiTypeParameter[] typeParams = null;
       final JavaResolveResult resolveResult = candidateProperties != null ? null : PsiDiamondType
         .getDiamondsAwareResolveResult((PsiCall)expression);
-      final PsiMethod method = InferenceSession.getCalledMethod((PsiCall)expression);
+      PsiMethod method = candidateProperties != null ? candidateProperties.getMethod() :
+                         resolveResult instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resolveResult).getElement() :
+                         null;
 
       if (method != null && !method.isConstructor()) {
         returnType = method.getReturnType();
