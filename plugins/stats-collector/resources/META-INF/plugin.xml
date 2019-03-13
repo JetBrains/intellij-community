@@ -69,7 +69,7 @@
     <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementPositionTracker"
                         serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementPositionTracker"/>
 
-    <reporting.sendPermission implementation="com.intellij.reporting.AllowedOnlyInEAP"/>
+    <reporting.sendPermission implementation="com.intellij.reporting.UserChoicePermission"/>
   </extensions>
 
   <application-components>

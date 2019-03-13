@@ -15,10 +15,11 @@
  */
 package com.intellij.reporting
 
+import com.intellij.completion.settings.CompletionStatsCollectorSettings
 import com.intellij.openapi.application.ApplicationManager
 
-class AllowedOnlyInEAP : DataSendPermission {
-  override fun isDataSendAllowed(): Boolean = ApplicationManager.getApplication().isEAP
+class UserChoicePermission : DataSendPermission {
+  override fun isDataSendAllowed(): Boolean = CompletionStatsCollectorSettings.getInstance().isDataSendAllowed
 }
 
 fun isSendAllowed(): Boolean {

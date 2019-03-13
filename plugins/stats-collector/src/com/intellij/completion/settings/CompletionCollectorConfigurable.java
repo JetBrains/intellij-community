@@ -28,26 +28,26 @@ public class CompletionCollectorConfigurable extends ConfigurableBase<Completion
   public void reset(@NotNull CompletionStatsCollectorSettings settings) {
     JBRadioButton shouldBeSelected;
     if (settings.isRankingEnabled()) {
-      shouldBeSelected = settings.isDataSendAllowed() ? myRbRankAndSend : myRbRankAndNotSend;
+      shouldBeSelected = settings.isCompletionLogsSendAllowed() ? myRbRankAndSend : myRbRankAndNotSend;
     }
     else {
-      shouldBeSelected = settings.isDataSendAllowed() ? myRbNotRankAndSend : myRbNotRankAndNotSend;
+      shouldBeSelected = settings.isCompletionLogsSendAllowed() ? myRbNotRankAndSend : myRbNotRankAndNotSend;
     }
     shouldBeSelected.setSelected(true);
   }
 
   @Override
   public boolean isModified(@NotNull CompletionStatsCollectorSettings settings) {
-    return settings.isDataSendAllowed() != isDataSendAllowed() || settings.isRankingEnabled() != isRankingEnabled();
+    return settings.isCompletionLogsSendAllowed() != isCompletionLogsSendAllowed() || settings.isRankingEnabled() != isRankingEnabled();
   }
 
   @Override
   public void apply(@NotNull CompletionStatsCollectorSettings settings) {
     settings.setRankingEnabled(isRankingEnabled());
-    settings.setDataSendAllowed(isDataSendAllowed());
+    settings.setCompletionLogsSendAllowed(isCompletionLogsSendAllowed());
   }
 
-  private boolean isDataSendAllowed() {
+  private boolean isCompletionLogsSendAllowed() {
     return myRbNotRankAndSend.isSelected() || myRbRankAndSend.isSelected();
   }
 
