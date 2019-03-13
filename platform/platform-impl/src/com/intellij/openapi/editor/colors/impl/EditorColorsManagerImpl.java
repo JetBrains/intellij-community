@@ -9,6 +9,7 @@ import com.intellij.configurationStore.SchemeExtensionProvider;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
+import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
 import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -464,6 +465,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   public EditorColorsScheme getSchemeForCurrentUITheme() {
     LookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentLookAndFeel();
     EditorColorsScheme scheme = null;
+    if (lookAndFeelInfo instanceof TempUIThemeBasedLookAndFeelInfo) {
+      EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+      if (isTempScheme(globalScheme)) {
+        return globalScheme;
+      }
+    }
     if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
       UITheme theme = ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).getTheme();
       String schemeName = theme.getEditorSchemeName();
