@@ -32,7 +32,7 @@ class NotificationManager : StartupActivity {
       return
     }
 
-    // Show message once only in EAP builds
+    // Show message once only in EAP builds if user allows to send statistics
     if (application.isEAP && StatisticsUploadAssistant.isSendAllowed() && !isMessageShown()) {
       notify(project)
       fireMessageShown()
@@ -43,13 +43,13 @@ class NotificationManager : StartupActivity {
     val notification = Notification(PLUGIN_NAME, PLUGIN_NAME, MESSAGE_TEXT, NotificationType.INFORMATION)
       .addAction(object : NotificationAction("Allow") {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          CompletionStatsCollectorSettings.getInstance().isDataSendAllowed = true
+          CompletionStatsCollectorSettings.getInstance().setCompletionLogsSendAllowed(true)
           notification.expire()
         }
       })
       .addAction(object : NotificationAction("Deny") {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          CompletionStatsCollectorSettings.getInstance().isDataSendAllowed = false
+          CompletionStatsCollectorSettings.getInstance().setCompletionLogsSendAllowed(false)
           notification.expire()
         }
       })
