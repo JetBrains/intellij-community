@@ -520,6 +520,9 @@
       "key": "SearchEverywhere.Tab.selectedForeground"
     },
     {
+      "key": "SearchField.errorBackground"
+    },
+    {
       "key": "SearchMatch.endBackground",
       "description": "The yellow rectangle under the search match text"
     },
