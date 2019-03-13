@@ -536,6 +536,7 @@ public class JBUIScale {
     }
 
     protected ScaleContext(@NotNull Scale scale) {
+      this();
       setScale(scale);
     }
 

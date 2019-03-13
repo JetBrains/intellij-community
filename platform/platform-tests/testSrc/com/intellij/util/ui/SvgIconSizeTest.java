@@ -40,6 +40,16 @@ public class SvgIconSizeTest {
     test(ScaleContext.create(SYS_SCALE.of(1)));
     test(ScaleContext.create(SYS_SCALE.of(2)));
 
+    float currentSysScale = JBUI.sysScale();
+    if (currentSysScale != 2) {
+      JBUI.setSystemScaleFactor(2);
+      /*
+       * Test with the system scale equal to the current system scale.
+       */
+      test(ScaleContext.create(SYS_SCALE.of(2)));
+      JBUI.setSystemScaleFactor(currentSysScale);
+    }
+
     /*
      * Test overridden size.
      */
