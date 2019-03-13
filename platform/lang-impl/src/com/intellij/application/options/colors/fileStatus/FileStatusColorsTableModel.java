@@ -15,10 +15,12 @@
  */
 package com.intellij.application.options.colors.fileStatus;
 
+import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NotNull;
@@ -143,6 +145,9 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
     }
     if (myScheme instanceof AbstractColorsScheme) {
       ((AbstractColorsScheme)myScheme).setSaveNeeded(true);
+    }
+    if (EditorColorsManagerImpl.isTempScheme(myScheme)) {
+      ColorAndFontOptions.writeTempScheme(myScheme);
     }
   }
 
