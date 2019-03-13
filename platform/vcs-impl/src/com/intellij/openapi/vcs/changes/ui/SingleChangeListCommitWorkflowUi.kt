@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,6 +15,7 @@ interface SingleChangeListCommitWorkflowUi : DataProvider {
   fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable)
 
   fun getChangeList(): LocalChangeList
+  fun getIncludedChanges(): List<Change>
   fun getIncludedUnversionedFiles(): List<VirtualFile>
 
   fun includeIntoCommit(items: Collection<*>)
