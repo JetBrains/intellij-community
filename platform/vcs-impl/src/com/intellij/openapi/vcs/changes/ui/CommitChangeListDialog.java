@@ -533,7 +533,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   void execute(@NotNull CommitExecutor commitExecutor, @NotNull CommitSession session) {
-    if (!myWorkflow.canExecute(commitExecutor, getIncludedChanges())) return;
     if (!saveDialogState()) return;
     saveComments(true);
 
@@ -923,14 +922,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
-  private List<Change> getIncludedChanges() {
-    return myBrowser.getIncludedChanges();
-  }
-
-  @NotNull
   private List<FilePath> getIncludedPaths() {
     List<FilePath> paths = new ArrayList<>();
-    for (Change change : myBrowser.getIncludedChanges()) {
+    for (Change change : getIncludedChanges()) {
       paths.add(ChangesUtil.getFilePath(change));
     }
     for (VirtualFile file : getIncludedUnversionedFiles()) {
@@ -988,6 +982,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   public LocalChangeList getChangeList() {
     return myBrowser.getSelectedChangeList();
+  }
+
+  @NotNull
+  @Override
+  public List<Change> getIncludedChanges() {
+    return myBrowser.getIncludedChanges();
   }
 
   @NotNull

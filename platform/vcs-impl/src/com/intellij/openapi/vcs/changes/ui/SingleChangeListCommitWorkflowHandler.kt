@@ -15,6 +15,7 @@ class SingleChangeListCommitWorkflowHandler(
 ) : CommitWorkflowHandler, CommitExecutorListener, Disposable {
 
   private fun getChangeList() = ui.getChangeList()
+  private fun getIncludedChanges() = ui.getIncludedChanges()
   private fun getIncludedUnversionedFiles() = ui.getIncludedUnversionedFiles()
 
   init {
@@ -50,6 +51,8 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   private fun executeCustom(executor: CommitExecutor, session: CommitSession) {
+    if (!workflow.canExecute(executor, getIncludedChanges())) return
+
     ui.execute(executor, session)
   }
 
