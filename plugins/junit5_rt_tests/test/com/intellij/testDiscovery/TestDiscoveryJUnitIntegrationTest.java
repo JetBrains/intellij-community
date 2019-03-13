@@ -2,6 +2,8 @@
 package com.intellij.testDiscovery;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.junit.JUnitConfiguration;
@@ -21,6 +23,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.EdtRule;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -37,8 +40,10 @@ import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -146,6 +151,12 @@ public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkComp
       .collect(Collectors.toSet());
     String module = assertOneElement(modules);
     assertEquals(myModule.getName(), module);
+
+    for (Pair<String, String> test : expectedTests) {
+      assertTrue(testDiscoveryIndex.hasTestTrace(test.getFirst(), test.getSecond(), JUnitConfiguration.FRAMEWORK_ID));
+    }
+    assertFalse(testDiscoveryIndex.hasTestTrace("dummy test name", "123", JUnitConfiguration.FRAMEWORK_ID));
+
   }
 
   private static Pair<String, String> t(String testClassName, String testMethodName) {
@@ -155,12 +166,12 @@ public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkComp
   private void runTestConfiguration(@NotNull PsiElement psiElement) throws ExecutionException {
     MapDataContext context = new MapDataContext();
     context.put(LangDataKeys.MODULE, myModule);
-    RunConfiguration configuration = createConfiguration(psiElement, context);
+    JUnitConfiguration configuration = createConfiguration(psiElement, context);
     ProcessOutput processOutput = doStartTestsProcess(configuration);
     TestDiscoveryDataSocketListener socketListener =
-      ((RunConfigurationBase)configuration).getUserData(TestDiscoveryExtension.SOCKET_LISTENER_KEY);
+      configuration.getUserData(TestDiscoveryExtension.SOCKET_LISTENER_KEY);
     socketListener.awaitTermination();
-    ((RunConfigurationBase)configuration).putUserData(TestDiscoveryExtension.SOCKET_LISTENER_KEY, null);
+    configuration.putUserData(TestDiscoveryExtension.SOCKET_LISTENER_KEY, null);
     assertEmpty(processOutput.err);
   }
 

@@ -79,7 +79,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
                            @NotNull IndexStorage<Key, Value> storage,
                            @Nullable com.intellij.util.indexing.impl.forward.ForwardIndex forwardIndex,
                            @Nullable ForwardIndexAccessor<Key, Value, Input> forwardIndexAccessor) {
-    this(extension, storage, forwardIndex == null && forwardIndexAccessor == null ? null : wrapWithOldForwardIndex(forwardIndex, forwardIndexAccessor));
+    this(extension, storage, forwardIndex == null || forwardIndexAccessor == null ? null : new MyNewForwardIndexWrapper<>(forwardIndexAccessor, forwardIndex));
   }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
@@ -91,6 +91,16 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myStorage = storage;
     myValueExternalizer = extension.getValueExternalizer();
     myForwardIndex = forwardIndex;
+  }
+
+  public com.intellij.util.indexing.impl.forward.ForwardIndex getForwardIndexMap() {
+    //TODO simplify and rename (inheritors already have getForwardIndex() method) when will be rewritting
+    return myForwardIndex instanceof MyNewForwardIndexWrapper<?, ?, ?> ? ((MyNewForwardIndexWrapper)myForwardIndex).myForwardIndex : null;
+  }
+
+  public ForwardIndexAccessor<Key, Value, Input> getForwardIndexAccessor() {
+    //TODO simplify when will be rewritting
+    return myForwardIndex instanceof MyNewForwardIndexWrapper<?, ?, ?> ? ((MyNewForwardIndexWrapper)myForwardIndex).myForwardIndexAccessor : null;
   }
 
   @NotNull
@@ -364,38 +374,41 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   }
 
-  @NotNull
-  private static <Key, Value, Input> ForwardIndex<Key, Value> wrapWithOldForwardIndex(com.intellij.util.indexing.impl.forward.ForwardIndex forwardIndex,
-                                                                                      ForwardIndexAccessor<Key, Value, Input> forwardIndexAccessor) {
-    LOG.assertTrue(forwardIndex != null);
-    LOG.assertTrue(forwardIndexAccessor != null);
-    return new ForwardIndex<Key, Value>() {
-      @NotNull
-      @Override
-      public InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId) throws IOException {
-        return forwardIndexAccessor.getDiffBuilder(inputId, forwardIndex.get(inputId));
-      }
+  private static class MyNewForwardIndexWrapper<Key, Value, Input> implements ForwardIndex<Key, Value> {
+    private final ForwardIndexAccessor<Key, Value, Input> myForwardIndexAccessor;
+    private final com.intellij.util.indexing.impl.forward.ForwardIndex myForwardIndex;
 
-      @Override
-      public void putInputData(int inputId, @NotNull Map<Key, Value> data) throws IOException {
-        forwardIndex.put(inputId, forwardIndexAccessor.serializeIndexedData(data, null));
-      }
+    MyNewForwardIndexWrapper(@NotNull ForwardIndexAccessor<Key, Value, Input> forwardIndexAccessor,
+                                    @NotNull com.intellij.util.indexing.impl.forward.ForwardIndex forwardIndex) {
+      myForwardIndexAccessor = forwardIndexAccessor;
+      myForwardIndex = forwardIndex;
+    }
 
-      @Override
-      public void flush() {
-        forwardIndex.force();
-      }
+    @NotNull
+    @Override
+    public InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId) throws IOException {
+      return myForwardIndexAccessor.getDiffBuilder(inputId, myForwardIndex.get(inputId));
+    }
 
-      @Override
-      public void clear() throws IOException {
-        forwardIndex.clear();
-      }
+    @Override
+    public void putInputData(int inputId, @NotNull Map<Key, Value> data) throws IOException {
+      myForwardIndex.put(inputId, myForwardIndexAccessor.serializeIndexedData(data, null));
+    }
 
-      @Override
-      public void close() throws IOException {
-        forwardIndex.close();
-      }
-    };
+    @Override
+    public void flush() {
+      myForwardIndex.force();
+    }
+
+    @Override
+    public void clear() throws IOException {
+      myForwardIndex.clear();
+    }
+
+    @Override
+    public void close() throws IOException {
+      myForwardIndex.close();
+    }
   }
 }
 

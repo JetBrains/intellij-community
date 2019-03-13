@@ -30,10 +30,16 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType, Input> 
 
   protected abstract DataType convertToDataType(@Nullable Map<Key, Value> map, @Nullable Input content) throws IOException;
 
+  @Nullable
+  public DataType deserializeData(@Nullable ByteArraySequence sequence) throws IOException {
+    if (sequence == null) return null;
+    return deserializeFromByteSeq(sequence, myDataTypeExternalizer);
+  }
+
   @NotNull
   @Override
   public InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
-    return createDiffBuilder(inputId, sequence == null ? null : deserializeFromByteSeq(sequence, myDataTypeExternalizer));
+    return createDiffBuilder(inputId, deserializeData(sequence));
   }
 
   @Nullable
