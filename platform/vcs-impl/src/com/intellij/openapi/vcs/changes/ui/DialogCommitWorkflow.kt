@@ -83,7 +83,7 @@ open class DialogCommitWorkflow(val project: Project,
   protected open fun doRunBeforeCommitChecks(changeList: LocalChangeList, checks: Runnable) =
     PartialChangesUtil.runUnderChangeList(project, changeList, checks)
 
-  protected open fun canExecute(executor: CommitExecutor, changes: Collection<Change>): Boolean {
+  open fun canExecute(executor: CommitExecutor, changes: Collection<Change>): Boolean {
     if (!executor.supportsPartialCommit()) {
       val hasPartialChanges = changes.any { getPartialTracker(project, it)?.hasPartialChangesToCommit() ?: false }
       if (hasPartialChanges) {
