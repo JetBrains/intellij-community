@@ -221,6 +221,27 @@ public abstract class NullableNotNullManager {
   }
 
   /**
+   * Returns information about explicit nullability annotation (without looking into external/inferred annotations, 
+   * but looking into container annotations). This method is rarely useful in client code, it's designed mostly 
+   * to aid the inference procedure.
+   *
+   * @param owner element to get the info about
+   * @return the annotation info or null if no explicit annotation found
+   */
+  @Nullable
+  public NullabilityAnnotationInfo findExplicitNullability(PsiModifierListOwner owner) {
+    PsiAnnotation annotation = findAnnotation(owner, getNotNullsWithNickNames(), true);
+    if (annotation != null) {
+      return new NullabilityAnnotationInfo(annotation, Nullability.NOT_NULL, false);
+    }
+    annotation = findAnnotation(owner, getNullablesWithNickNames(), true);
+    if (annotation != null) {
+      return new NullabilityAnnotationInfo(annotation, Nullability.NULLABLE, false);
+    }
+    return findNullityDefaultInHierarchy(owner);
+  }
+
+  /**
    * Returns nullability annotation info which has effect for given element.
    *
    * @param owner element to find an annotation for

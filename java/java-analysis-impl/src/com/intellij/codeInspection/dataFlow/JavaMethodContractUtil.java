@@ -139,19 +139,7 @@ public class JavaMethodContractUtil {
       final PsiAnnotation contractAnno = findContractAnnotation(method);
       ContractInfo info = ContractInfo.EMPTY;
       if (contractAnno != null) {
-        String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
-        List<StandardMethodContract> contracts = Collections.emptyList();
-        if (text != null) {
-          try {
-            final int paramCount = method.getParameterList().getParametersCount();
-            List<StandardMethodContract> collection = StandardMethodContract.parseContract(text);
-            if (collection.stream().allMatch(c -> c.getParameterCount() == paramCount)) {
-              contracts = collection;
-            }
-          }
-          catch (StandardMethodContract.ParseException ignored) {
-          }
-        }
+        List<StandardMethodContract> contracts = parseContracts(method, contractAnno);
         boolean pure = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(contractAnno, "pure"));
         MutationSignature mutationSignature = MutationSignature.UNKNOWN;
         if (pure) {
@@ -169,8 +157,34 @@ public class JavaMethodContractUtil {
         boolean explicit = !AnnotationUtil.isInferredAnnotation(contractAnno);
         info = new ContractInfo(contracts, pure, explicit, mutationSignature);
       }
-      return CachedValueProvider.Result.create(info, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(info, method, PsiModificationTracker.MODIFICATION_COUNT);
     });
+  }
+
+  /**
+   * Parse contracts for given method. Calling this method is rarely necessary in client code; it exists mainly to
+   * aid the inference procedure. Use {@link #getMethodContracts(PsiMethod)} instead.
+   * 
+   * @param method method to parse contracts for
+   * @param contractAnno a contract annotation
+   * @return a list of parsed contracts
+   */
+  @NotNull
+  public static List<StandardMethodContract> parseContracts(@NotNull PsiMethod method, @Nullable PsiAnnotation contractAnno) {
+    if (contractAnno == null) return Collections.emptyList();
+    String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
+    if (text != null) {
+      try {
+        final int paramCount = method.getParameterList().getParametersCount();
+        List<StandardMethodContract> parsed = StandardMethodContract.parseContract(text);
+        if (parsed.stream().allMatch(c -> c.getParameterCount() == paramCount)) {
+          return parsed;
+        }
+      }
+      catch (StandardMethodContract.ParseException ignored) {
+      }
+    }
+    return Collections.emptyList();
   }
 
   /**
