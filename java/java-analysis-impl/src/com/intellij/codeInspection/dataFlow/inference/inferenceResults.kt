@@ -96,20 +96,13 @@ interface MethodReturnInferenceResult {
   @Suppress("EqualsOrHashCode")
   data class Predefined(internal val value: Nullability) : MethodReturnInferenceResult {
     override fun hashCode(): Int = value.ordinal
-    override fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability = when {
-      value == Nullability.NULLABLE && InferenceFromSourceUtil.suppressNullable(
-        method) -> Nullability.UNKNOWN
-      else -> value
-    }
+    override fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability = value
   }
 
   data class FromDelegate(internal val value: Nullability, internal val delegateCalls: List<ExpressionRange>) : MethodReturnInferenceResult {
     override fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability {
-      if (value == Nullability.NULLABLE) {
-        return if (InferenceFromSourceUtil.suppressNullable(method)) Nullability.UNKNOWN
-        else Nullability.NULLABLE
-      }
       return when {
+        value == Nullability.NULLABLE -> Nullability.NULLABLE 
         delegateCalls.all { range -> isNotNullCall(range, body()) } -> Nullability.NOT_NULL
         else -> Nullability.UNKNOWN
       }

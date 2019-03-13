@@ -171,10 +171,7 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
   }
 
   private boolean hasExplicitNullability(PsiModifierListOwner owner) {
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-    return findAnnotation(owner, manager.getNotNulls(), true) != null ||
-           findAnnotation(owner, manager.getNullables(), true) != null ||
-           manager.findNullityDefaultInHierarchy(owner) != null;
+    return NullableNotNullManager.getInstance(myProject).findExplicitNullability(owner) != null;
   }
 
   @Nullable
