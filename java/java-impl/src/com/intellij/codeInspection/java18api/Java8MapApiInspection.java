@@ -115,10 +115,18 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
         if (!condition.isKeyAccess(key)) return;
         PsiExpression value = args[1];
         if (condition.isEntrySet() && isUsedAsReference(value, condition)) return;
+        if (hasMapUsages(condition, value)) return;
+        if (!LambdaGenerationUtil.canBeUncheckedLambda(value, variable -> condition.getMap().equals(variable))) return;
 
         ReplaceWithSingleMapOperation fix = ReplaceWithSingleMapOperation.create("replaceAll", putCall, value);
-        holder.registerProblem(statement.getFirstChild(), QuickFixBundle.message("java.8.map.api.inspection.description", fix.myMethodName),
-                               fix);
+        holder.registerProblem(statement.getFirstChild(),
+                               QuickFixBundle.message("java.8.map.api.inspection.description", fix.myMethodName), fix);
+      }
+
+      private boolean hasMapUsages(@NotNull MapLoopCondition condition, @Nullable PsiExpression value) {
+        return !VariableAccessUtils.getVariableReferences(condition.getMap(), value).stream()
+          .map(ExpressionUtils::getCallForQualifier)
+          .allMatch(call -> condition.isValueAccess(call));
       }
 
       private boolean isUsedAsReference(@NotNull PsiElement value, @NotNull MapLoopCondition condition) {
@@ -389,23 +397,21 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
                                                                 @NotNull MapLoopCondition loopCondition,
                                                                 @NotNull PsiExpression value,
                                                                 @NotNull CommentTracker tracker) {
+      if (value instanceof PsiMethodCallExpression) {
+        if (loopCondition.isKeyAccess(value)) return factory.createExpressionFromText("(" + kVar + "," + vVar + ") ->" + kVar, value);
+        if (loopCondition.isValueAccess(value)) return factory.createExpressionFromText("(" + kVar + "," + vVar + ") ->" + vVar, value);
+      }
       if (!loopCondition.isEntrySet()) {
         PsiParameter param = loopCondition.getIterParam();
         VariableAccessUtils.getVariableReferences(param, value).forEach(ref -> ExpressionUtils.bindReferenceTo(ref, kVar));
       }
-      else {
-        if (value instanceof PsiMethodCallExpression) {
-          if (loopCondition.isKeyAccess(value)) return factory.createExpressionFromText("(" + kVar + "," + vVar + ") ->" + kVar, value);
-          if (loopCondition.isValueAccess(value)) return factory.createExpressionFromText("(" + kVar + "," + vVar + ") ->" + vVar, value);
+      Collection<PsiMethodCallExpression> calls = PsiTreeUtil.collectElementsOfType(value, PsiMethodCallExpression.class);
+      for (PsiMethodCallExpression call : calls) {
+        if (loopCondition.isKeyAccess(call)) {
+          tracker.replace(call, kVar);
         }
-        Collection<PsiMethodCallExpression> calls = PsiTreeUtil.collectElementsOfType(value, PsiMethodCallExpression.class);
-        for (PsiMethodCallExpression call : calls) {
-          if (loopCondition.isKeyAccess(call)) {
-            tracker.replace(call, kVar);
-          }
-          else if (loopCondition.isValueAccess(call)) {
-            tracker.replace(call, vVar);
-          }
+        else if (loopCondition.isValueAccess(call)) {
+          tracker.replace(call, vVar);
         }
       }
       return factory.createExpressionFromText("(" + kVar + "," + vVar + ") ->" + tracker.text(value), value);
