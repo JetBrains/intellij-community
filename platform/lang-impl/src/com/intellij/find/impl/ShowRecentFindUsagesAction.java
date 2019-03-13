@@ -28,14 +28,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,7 +45,13 @@ public class ShowRecentFindUsagesAction extends AnAction {
   public void update(@NotNull final AnActionEvent e) {
     UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
     Project project = e.getData(CommonDataKeys.PROJECT);
-    e.getPresentation().setEnabled(usageView != null && project != null);
+    if (usageView != null
+        && project != null
+        && ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getHistory().getAll().size() > 1) {
+      e.getPresentation().setEnabled(true);
+      return;
+    }
+    e.getPresentation().setEnabled(false);
   }
 
   @Override
@@ -94,13 +97,6 @@ public class ShowRecentFindUsagesAction extends AnAction {
           });
         }
       };
-    RelativePoint point;
-    if (e.getInputEvent() instanceof MouseEvent) {
-      point = new RelativePoint((MouseEvent) e.getInputEvent());
-    }
-    else {
-      point = new RelativePoint(usageView.getComponent(), new Point(4, 4));
-    }
-    JBPopupFactory.getInstance().createListPopup(step).show(point);
+    JBPopupFactory.getInstance().createListPopup(step).showInCenterOf(usageView.getPreferredFocusableComponent());
   }
 }

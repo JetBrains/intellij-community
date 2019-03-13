@@ -9,6 +9,7 @@ import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -818,9 +819,10 @@ public class UsageViewImpl implements UsageViewEx {
     DefaultActionGroup group = new DefaultActionGroup();
     group.setPopup(true);
     group.getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
+    group.getTemplatePresentation().setDescription(UsageViewBundle.message("action.group.by.title"));
     final AnAction[] groupingActions = createGroupingActions();
     if (groupingActions.length > 0) {
-      group.add(new Separator(UsageViewBundle.message("action.group.by.prefix")));//todo use message bundle instead
+      group.add(new Separator(UsageViewBundle.message("action.group.by.title")));
       group.addAll(groupingActions);
       group.add(new Separator());
     }
@@ -906,12 +908,8 @@ public class UsageViewImpl implements UsageViewEx {
     for (UsageGroupingRuleProvider provider : providers) {
       ContainerUtil.addAll(list, provider.createGroupingActions(this));
     }
-    list.sort(new Comparator<AnAction>() {
-      @Override
-      public int compare(AnAction o1, AnAction o2) {
-        return Comparing.compare(o1.getTemplateText(), o2.getTemplateText());
-      }
-    });
+    ActionUtil.sortAlphabetically(list);
+    ActionUtil.moveActionTo(list, "Module", "Flatten Modules", true);
     return list.toArray(AnAction.EMPTY_ARRAY);
   }
 

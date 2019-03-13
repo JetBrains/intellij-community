@@ -680,8 +680,7 @@
       <reference ref="TreeNodeExclusion"/>
       <action id="UsageView.Remove" class="com.intellij.usages.actions.RemoveUsageAction" use-shortcut-of="$Cut"/>
       <separator/>
-      <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="AllIcons.Actions.Back"
-              use-shortcut-of="RecentFiles"/>
+      <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" use-shortcut-of="ShowSearchHistory"/>
       <separator/>
       <reference ref="AddToFavorites"/>
       <separator/>
@@ -1269,7 +1268,7 @@
     <group id="TodoMainGroup" text="TODO">
       <add-to-group group-id="Other.KeymapGroup"/>
       <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup">
-        <separator text="Group by"/>
+        <separator text="Group By"/>
         <action class="com.intellij.ide.todo.TodoPanel$MyShowModulesAction" id="TodoViewGroupByShowModules">
           <keyboard-shortcut first-keystroke="control M" keymap="$default"/>
         </action>
