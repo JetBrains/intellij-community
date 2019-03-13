@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.launcher
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.testGuiFramework.framework.GuiTestPaths
 import com.intellij.testGuiFramework.impl.GuiTestStarter
 import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder.Companion.toClasspathJarFile
 import com.intellij.testGuiFramework.launcher.classpath.PathUtils
@@ -82,7 +83,7 @@ object GuiTestLocalLauncher {
                     testClassNames: List<String> = emptyList(),
                     additionalJvmOptions: List<Pair<String, String>> = emptyList()) {
     val args = createArgs(ide = ide, port = port, testClassNames = testClassNames, additionalJvmOptions = additionalJvmOptions)
-    return startIde(ide = ide, ideaStartTest = ProcessBuilder().inheritIO().command(args))
+    return startIde(ide = ide, ideaStartTest = ProcessBuilder().redirectOutput(GuiTestPaths.ideaOutputFile).command(args))
   }
 
   fun runIdeWithDTraceLocally(ide: Ide = Ide(CommunityIde(), 0, 0),
