@@ -30,7 +30,7 @@
 
     NSTouchBarItem * result = (*_jcreator)([identifier UTF8String]);
     if (result == nil)
-        nserror(@"tb [%@]: can't make item for uid '%@'", identifier);
+        nserror(@"tb [%@]: can't make item for uid '%@'", self.name, identifier);
     return result;
 }
 
