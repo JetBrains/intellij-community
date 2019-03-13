@@ -7,16 +7,12 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
-import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser
 import com.intellij.openapi.vcs.changes.ui.DefaultCommitResultHandler
 import com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow
-import com.intellij.openapi.vfs.VirtualFile
 
 class AlienCommitWorkflow(val vcs: AbstractVcs<*>, changeListName: String, changes: List<Change>, commitMessage: String?) :
   DialogCommitWorkflow(vcs.project, changes, vcsToCommit = vcs, initialCommitMessage = commitMessage) {
   val changeList = AlienLocalChangeList(changes, changeListName)
-
-  override fun prepareCommit(unversionedFiles: List<VirtualFile>, browser: CommitDialogChangesBrowser) = true
 
   override fun doRunBeforeCommitChecks(changeList: LocalChangeList, checks: Runnable) = checks.run()
 
