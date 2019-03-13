@@ -70,6 +70,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   @NonNls private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
 
   private ToolWindowHeader myHeader;
+  private final AncestorListener myAncestorListener;
   private final ActionGroup myToggleToolbarGroup;
 
   InternalDecorator(final Project project, @NotNull WindowInfoImpl info, final ToolWindowImpl toolWindow, boolean dumbAware) {
@@ -99,6 +100,31 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       protected void hideToolWindow() {
         fireHidden();
       }
+    };
+
+    myAncestorListener = new AncestorListener() {
+      private static final String FOCUS_EDITOR_ACTION_KEY = "FOCUS_EDITOR_ACTION_KEY";
+
+      @Override
+      public void ancestorAdded(AncestorEvent event) {
+        registerEscapeAction();
+      }
+
+      @Override
+      public void ancestorMoved(AncestorEvent event) {}
+
+      private void registerEscapeAction() {
+        getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), FOCUS_EDITOR_ACTION_KEY);
+        getActionMap().put(FOCUS_EDITOR_ACTION_KEY, new AbstractAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            ToolWindowManager.getInstance(myProject).activateEditorComponent();
+          }
+        });
+      }
+
+      @Override
+      public void ancestorRemoved(AncestorEvent event) {}
     };
 
     init(dumbAware);
@@ -187,6 +213,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   final void dispose() {
+    removeAncestorListener(myAncestorListener);
     removeAll();
 
     Disposer.dispose(myHeader);
@@ -249,35 +276,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       setBackground(new JBColor(Gray._200, Gray._90));
     }
 
-    AncestorListener ancestorListener = new AncestorListener() {
-
-      private static final String FOCUS_EDITOR_ACTION_KEY = "FOCUS_EDITOR_ACTION_KEY";
-
-      @Override
-      public void ancestorAdded(AncestorEvent event) {
-        registerEscapeAction();
-      }
-
-      @Override
-      public void ancestorMoved(AncestorEvent event) {}
-
-      private void registerEscapeAction() {
-
-        getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(
-          KeyEvent.VK_ESCAPE, 0),FOCUS_EDITOR_ACTION_KEY);
-        getActionMap().put(FOCUS_EDITOR_ACTION_KEY, new AbstractAction() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            ToolWindowManager.getInstance(myProject).activateEditorComponent();
-          }
-        });
-      }
-
-      @Override
-      public void ancestorRemoved(AncestorEvent event) {}
-    };
-    addAncestorListener(ancestorListener);
-    Disposer.register(myProject, () -> removeAncestorListener(ancestorListener));
+    addAncestorListener(myAncestorListener);
   }
 
   public void setTitleActions(@NotNull AnAction[] actions) {
