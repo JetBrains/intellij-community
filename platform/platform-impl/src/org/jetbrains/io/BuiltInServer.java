@@ -1,168 +1,140 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.io;
+package org.jetbrains.io
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.NotNullProducer;
-import com.intellij.util.SystemProperties;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.*;
-import io.netty.channel.oio.OioEventLoopGroup;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.ArrayUtil
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.NotNullProducer
+import com.intellij.util.SystemProperties
+import com.intellij.util.io.MultiThreadEventLoopGroup
+import io.netty.bootstrap.ServerBootstrap
+import io.netty.channel.*
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.Random;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.util.Random
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.atomic.AtomicInteger
 
-import static com.intellij.util.io.NettyKt.MultiThreadEventLoopGroup;
-import static com.intellij.util.io.NettyKt.serverBootstrap;
+import com.intellij.util.io.serverBootstrap
 
-public class BuiltInServer implements Disposable {
-  // Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
-  private static final int[] FORBIDDEN_PORTS = {6953, 6969, 6970};
+// Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
+private val FORBIDDEN_PORTS = intArrayOf(6953, 6969, 6970)
 
-  private final EventLoopGroup eventLoopGroup;
-  private final int port;
-  private final ChannelRegistrar channelRegistrar;
+class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val port: Int, private val channelRegistrar: ChannelRegistrar) : Disposable {
+  val isRunning: Boolean
+    get() = !channelRegistrar.isEmpty
 
-  static {
-    // IDEA-120811
-    if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
-      System.setProperty("io.netty.machineId", "28:f0:76:ff:fe:16:65:0e");
-      System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
-      System.setProperty("io.netty.serviceThreadPrefix", "Netty ");
-    }
-  }
-
-  private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup, int port, @NotNull ChannelRegistrar channelRegistrar) {
-    this.eventLoopGroup = eventLoopGroup;
-    this.port = port;
-    this.channelRegistrar = channelRegistrar;
-  }
-
-  @NotNull
-  public EventLoopGroup getEventLoopGroup() {
-    return eventLoopGroup;
-  }
-
-  public int getPort() {
-    return port;
-  }
-
-  public boolean isRunning() {
-    return !channelRegistrar.isEmpty();
-  }
-
-  @Override
-  public void dispose() {
-    channelRegistrar.close();
-    Logger.getInstance(BuiltInServer.class).info("web server stopped");
-  }
-
-  @NotNull
-  public static BuiltInServer start(int workerCount,
-                                    int firstPort,
-                                    int portsCount,
-                                    boolean tryAnyPort,
-                                    @Nullable NotNullProducer<? extends ChannelHandler> handler) throws Exception {
-    return start(MultiThreadEventLoopGroup(workerCount, new BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler);
-  }
-
-  @NotNull
-  public static BuiltInServer startNioOrOio(int workerCount,
-                                            int firstPort,
-                                            int portsCount,
-                                            boolean tryAnyPort,
-                                            @Nullable NotNullProducer<? extends ChannelHandler> handler) throws Exception {
-    BuiltInServerThreadFactory threadFactory = new BuiltInServerThreadFactory();
-    EventLoopGroup loopGroup;
-    try {
-      loopGroup = MultiThreadEventLoopGroup(workerCount, threadFactory);
-    }
-    catch (IllegalStateException e) {
-      Logger.getInstance(BuiltInServer.class).warn(e);
-      loopGroup = new OioEventLoopGroup(1, threadFactory);
-    }
-    return start(loopGroup, true, firstPort, portsCount, tryAnyPort, handler);
-  }
-
-  @NotNull
-  public static BuiltInServer start(@NotNull EventLoopGroup eventLoopGroup,
-                                    boolean isEventLoopGroupOwner,
-                                    int firstPort,
-                                    int portsCount,
-                                    boolean tryAnyPort,
-                                    @Nullable NotNullProducer<? extends ChannelHandler> handler) throws Exception {
-    ChannelRegistrar channelRegistrar = new ChannelRegistrar();
-    ServerBootstrap bootstrap = serverBootstrap(eventLoopGroup);
-    configureChildHandler(bootstrap, channelRegistrar, handler);
-    int port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar, isEventLoopGroupOwner);
-    return new BuiltInServer(eventLoopGroup, port, channelRegistrar);
-  }
-
-  static void configureChildHandler(@NotNull ServerBootstrap bootstrap,
-                                    @NotNull final ChannelRegistrar channelRegistrar,
-                                    @Nullable final NotNullProducer<? extends ChannelHandler> channelHandler) {
-    final PortUnificationServerHandler portUnificationServerHandler = channelHandler == null ? new PortUnificationServerHandler() : null;
-    bootstrap.childHandler(new ChannelInitializer() {
-      @Override
-      protected void initChannel(@NotNull Channel channel) {
-        channel.pipeline().addLast(channelRegistrar, channelHandler == null ? portUnificationServerHandler : channelHandler.produce());
-      }
-    });
-  }
-
-  private static int bind(int firstPort,
-                          int portsCount,
-                          boolean tryAnyPort,
-                          @NotNull ServerBootstrap bootstrap,
-                          @NotNull ChannelRegistrar channelRegistrar,
-                          boolean isEventLoopGroupOwner) throws Exception {
-    InetAddress address = InetAddress.getLoopbackAddress();
-
-    for (int i = 0; i < portsCount; i++) {
-      int port = firstPort + i;
-
-      if (ArrayUtil.indexOf(FORBIDDEN_PORTS, i) >= 0) {
-        continue;
-      }
-
-      ChannelFuture future = bootstrap.bind(address, port).awaitUninterruptibly();
-      if (future.isSuccess()) {
-        channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner);
-        return port;
-      }
-      else if (!tryAnyPort && i == portsCount - 1) {
-        ExceptionUtil.rethrowAll(future.cause());
+  companion object {
+    init {
+      // IDEA-120811
+      if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
+        System.setProperty("io.netty.machineId", "28:f0:76:ff:fe:16:65:0e")
+        System.setProperty("io.netty.processId", Integer.toString(Random().nextInt(65535)))
+        System.setProperty("io.netty.serviceThreadPrefix", "Netty ")
       }
     }
 
-    Logger.getInstance(BuiltInServer.class).info("We cannot bind to our default range, so, try to bind to any free port");
-    ChannelFuture future = bootstrap.bind(address, 0).awaitUninterruptibly();
-    if (future.isSuccess()) {
-      channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner);
-      return ((InetSocketAddress)future.channel().localAddress()).getPort();
+    @Throws(Exception::class)
+    fun start(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: (() -> ChannelHandler)?): BuiltInServer {
+      return start(MultiThreadEventLoopGroup(workerCount, BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler)
     }
-    ExceptionUtil.rethrowAll(future.cause());
 
-    return -1;  // unreachable
+    @Throws(Exception::class)
+    @JvmStatic
+    fun startNioOrOio(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: (() -> ChannelHandler)?): BuiltInServer {
+      val threadFactory = BuiltInServerThreadFactory()
+      val loopGroup: EventLoopGroup = try {
+        MultiThreadEventLoopGroup(workerCount, threadFactory)
+      }
+      catch (e: IllegalStateException) {
+        logger<BuiltInServer>().warn(e)
+        @Suppress("DEPRECATION")
+        io.netty.channel.oio.OioEventLoopGroup(1, threadFactory)
+      }
+
+      return start(loopGroup, true, firstPort, portsCount, tryAnyPort, handler)
+    }
+
+    @Throws(Exception::class)
+    fun start(eventLoopGroup: EventLoopGroup,
+              isEventLoopGroupOwner: Boolean,
+              firstPort: Int,
+              portsCount: Int,
+              tryAnyPort: Boolean,
+              handler: (() -> ChannelHandler)?): BuiltInServer {
+      val channelRegistrar = ChannelRegistrar()
+      val bootstrap = serverBootstrap(eventLoopGroup)
+      configureChildHandler(bootstrap, channelRegistrar, handler)
+      val port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar, isEventLoopGroupOwner)
+      return BuiltInServer(eventLoopGroup, port, channelRegistrar)
+    }
+
+    @JvmStatic
+    fun configureChildHandler(bootstrap: ServerBootstrap, channelRegistrar: ChannelRegistrar, channelHandler: (() -> ChannelHandler)?) {
+      val portUnificationServerHandler = if (channelHandler == null) PortUnificationServerHandler() else null
+      bootstrap.childHandler(object : ChannelInitializer<Channel>(), ChannelHandler {
+        override fun initChannel(channel: Channel) {
+          channel.pipeline().addLast(channelRegistrar, channelHandler?.invoke() ?: portUnificationServerHandler)
+        }
+      })
+    }
+
+    @Throws(Exception::class)
+    private fun bind(firstPort: Int,
+                     portsCount: Int,
+                     tryAnyPort: Boolean,
+                     bootstrap: ServerBootstrap,
+                     channelRegistrar: ChannelRegistrar,
+                     isEventLoopGroupOwner: Boolean): Int {
+      val address = InetAddress.getLoopbackAddress()
+
+      for (i in 0 until portsCount) {
+        val port = firstPort + i
+
+        if (ArrayUtil.indexOf(FORBIDDEN_PORTS, i) >= 0) {
+          continue
+        }
+
+        val future = bootstrap.bind(address, port).awaitUninterruptibly()
+        if (future.isSuccess) {
+          channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner)
+          return port
+        }
+        else if (!tryAnyPort && i == portsCount - 1) {
+          ExceptionUtil.rethrowAll(future.cause())
+        }
+      }
+
+      logger<BuiltInServer>().info("We cannot bind to our default range, so, try to bind to any free port")
+      val future = bootstrap.bind(address, 0).awaitUninterruptibly()
+      if (future.isSuccess) {
+        channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner)
+        return (future.channel().localAddress() as InetSocketAddress).port
+      }
+      ExceptionUtil.rethrowAll(future.cause())
+      // unreachable
+      return -1
+    }
+
+    @JvmStatic
+    fun replaceDefaultHandler(context: ChannelHandlerContext, channelHandler: ChannelHandler) {
+      context.pipeline().replace(DelegatingHttpRequestHandler::class.java, "replacedDefaultHandler", channelHandler)
+    }
   }
 
-  public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull ChannelHandler channelHandler) {
-    context.pipeline().replace(DelegatingHttpRequestHandler.class, "replacedDefaultHandler", channelHandler);
+  override fun dispose() {
+    channelRegistrar.close()
+    logger<BuiltInServer>().info("web server stopped")
   }
+}
 
-  private static class BuiltInServerThreadFactory implements ThreadFactory {
-    private final AtomicInteger counter = new AtomicInteger();
+private class BuiltInServerThreadFactory : ThreadFactory {
+  private val counter = AtomicInteger()
 
-    @Override
-    public Thread newThread(Runnable r) {
-      return new Thread(r, "Netty Builtin Server " + counter.incrementAndGet());
-    }
+  override fun newThread(r: Runnable): Thread {
+    return Thread(r, "Netty Builtin Server " + counter.incrementAndGet())
   }
 }
