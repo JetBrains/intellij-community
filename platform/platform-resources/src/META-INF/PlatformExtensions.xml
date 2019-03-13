@@ -640,7 +640,7 @@
         <component>FUSProjectUsageTrigger</component>
       </components>
     </stalledStorage>
-    <stalledStorage file="workspace.xml" isProjectLevel="true">
+    <stalledStorage file="$WORKSPACE_FILE$" isProjectLevel="true">
       <components>
         <component>FUSProjectUsageTrigger</component>
       </components>
