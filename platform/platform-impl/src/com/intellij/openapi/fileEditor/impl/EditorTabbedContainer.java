@@ -357,13 +357,18 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     return info != null ? info.getComponent() : null;
   }
 
-  public void insertTab(@NotNull VirtualFile file, final Icon icon, final JComponent comp, final String tooltip, final int indexToInsert) {
+  public void insertTab(@NotNull VirtualFile file,
+                        final Icon icon,
+                        @NotNull JComponent component,
+                        @Nullable String tooltip,
+                        final int indexToInsert,
+                        @NotNull Disposable parentDisposable) {
     TabInfo tab = myTabs.findInfo(file);
     if (tab != null) {
       return;
     }
 
-    tab = new TabInfo(comp)
+    tab = new TabInfo(component)
       .setText(EditorTabPresentationUtil.getEditorTabTitle(myProject, file, myWindow))
       .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file, myWindow))
       .setIcon(icon)
@@ -373,7 +378,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     tab.setTestableUi(new MyQueryable(tab));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
-    tabActions.add(new CloseTab(comp, file));
+    tabActions.add(new CloseTab(component, file, parentDisposable));
 
     tab.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
     myTabs.addTabSilently(tab, indexToInsert);
@@ -441,12 +446,12 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
   }
 
-  private final class CloseTab extends AnAction implements DumbAware {
+  public final class CloseTab extends AnAction implements DumbAware {
     private final VirtualFile myFile;
 
-    CloseTab(@NotNull JComponent c, @NotNull VirtualFile file) {
+    CloseTab(@NotNull JComponent c, @NotNull VirtualFile file, @NotNull Disposable parentDisposable) {
       myFile = file;
-      new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c, myTabs);
+      new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c, parentDisposable);
     }
 
     @Override
