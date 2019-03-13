@@ -17,7 +17,7 @@ public class YamlJsonSchemaCompletionContributor extends CompletionContributor {
     final JsonSchemaService jsonSchemaService = JsonSchemaService.Impl.get(position.getProject());
     JsonSchemaObject object = jsonSchemaService.getSchemaObject(parameters.getOriginalFile().getVirtualFile());
     if (object != null) {
-      JsonSchemaCompletionContributor.doCompletion(parameters, result, object);
+      JsonSchemaCompletionContributor.doCompletion(parameters, result, object, false);
     }
   }
 }
