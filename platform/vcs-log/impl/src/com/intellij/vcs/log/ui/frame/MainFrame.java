@@ -382,28 +382,30 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      MyDiffVirtualFile file = new MyDiffVirtualFile(MainFrame.this);
+      MyDiffVirtualFile file = new MyDiffVirtualFile(myLogData.getProject(), MainFrame.this.myChangesBrowser);
       FileEditorManager.getInstance(myLogData.getProject()).openFile(file, true);
     }
   }
 
   private static class MyDiffVirtualFile extends DiffVirtualFile {
-    @NotNull private final MainFrame myFrame;
+    @NotNull private final Project myProject;
+    @NotNull private final VcsLogChangesBrowser myChangesBrowser;
 
-    private MyDiffVirtualFile(@NotNull MainFrame frame) {
-      myFrame = frame;
+    private MyDiffVirtualFile(@NotNull Project project, @NotNull VcsLogChangesBrowser changesBrowser) {
+      myProject = project;
+      myChangesBrowser = changesBrowser;
     }
 
     @Override
     public boolean isValid() {
-      return !Disposer.isDisposed(myFrame);
+      return !Disposer.isDisposed(myChangesBrowser);
     }
 
     @NotNull
     @Override
     public Builder createProcessorAsync(@NotNull Project project) {
       return () -> {
-        VcsLogChangeProcessor processor = new VcsLogChangeProcessor(myFrame.myLogData.getProject(), myFrame.myChangesBrowser, myFrame);
+        VcsLogChangeProcessor processor = new VcsLogChangeProcessor(myProject, myChangesBrowser, myChangesBrowser);
         processor.updatePreview(true);
         return processor;
       };
@@ -414,12 +416,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       MyDiffVirtualFile file = (MyDiffVirtualFile)o;
-      return myFrame.equals(file.myFrame);
+      return myChangesBrowser.equals(file.myChangesBrowser);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myFrame);
+      return Objects.hash(myChangesBrowser);
     }
   }
 }
