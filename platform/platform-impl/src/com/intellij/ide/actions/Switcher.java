@@ -756,7 +756,7 @@ public class Switcher extends AnAction implements DumbAware {
       List<VirtualFile> recentFiles = EditorHistoryManager.getInstance(project).getFileList();
       VirtualFile[] openFiles = FileEditorManager.getInstance(project).getOpenFiles();
 
-      Set<VirtualFile> recentFilesSet = ContainerUtil.newHashSet(recentFiles);
+      Set<VirtualFile> recentFilesSet = new HashSet<>(recentFiles);
       Set<VirtualFile> openFilesSet = ContainerUtil.newHashSet(openFiles);
 
       // Add missing FileEditor tabs right after the last one, that is available via "Recent Files"

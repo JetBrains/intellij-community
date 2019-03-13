@@ -38,6 +38,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.EventListener;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -303,7 +304,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   public static boolean isExcludedOrUnderExcludedDirectory(@Nullable Project project,
                                                            @NotNull ContentEntry entry,
                                                            @NotNull VirtualFile file) {
-    Set<String> excludedUrls = ContainerUtil.newHashSet(entry.getExcludeFolderUrls());
+    Set<String> excludedUrls = new HashSet<>(entry.getExcludeFolderUrls());
     if (project != null) {
       for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.getExtensions(project)) {
         ContainerUtil.addAll(excludedUrls, policy.getExcludeUrlsForProject());

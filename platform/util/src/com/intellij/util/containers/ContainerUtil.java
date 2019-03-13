@@ -306,6 +306,16 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newHashSet(iterable);
   }
 
+  /**
+   * @deprecated simply use {@code new HashSet<>(collection)}.
+   */
+  @NotNull
+  @Contract(pure=true)
+  @Deprecated
+  public static <T> HashSet<T> newHashSet(@NotNull Collection<? extends T> collection) {
+    return new HashSet<>(collection);
+  }
+  
   @NotNull
   public static <T> HashSet<T> newHashSet(@NotNull Iterator<? extends T> iterator) {
     return ContainerUtilRt.newHashSet(iterator);

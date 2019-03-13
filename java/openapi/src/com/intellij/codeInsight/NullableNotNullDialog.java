@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,6 +16,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
+import java.util.HashSet;
 
 public class NullableNotNullDialog extends DialogWrapper {
   private final Project myProject;
@@ -43,7 +43,7 @@ public class NullableNotNullDialog extends DialogWrapper {
                                           "NotNull",
                                           manager.getDefaultNotNull(),
                                           manager.getNotNulls(), NullableNotNullManager.DEFAULT_NOT_NULLS,
-                                          ContainerUtil.newHashSet(manager.getInstrumentedNotNulls()), showInstrumentationOptions, true);
+                                          new HashSet<>(manager.getInstrumentedNotNulls()), showInstrumentationOptions, true);
 
     init();
     setTitle("Nullable/NotNull Configuration");

@@ -359,7 +359,7 @@ public abstract class NullableNotNullManager {
 
   @NotNull
   protected Set<String> getAllNullabilityAnnotationsWithNickNames() {
-    Set<String> qNames = ContainerUtil.newHashSet(getNullablesWithNickNames());
+    Set<String> qNames = new HashSet<>(getNullablesWithNickNames());
     qNames.addAll(getNotNullsWithNickNames());
     return Collections.unmodifiableSet(qNames);
   }

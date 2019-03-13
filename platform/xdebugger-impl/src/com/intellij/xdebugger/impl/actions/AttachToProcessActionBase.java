@@ -166,7 +166,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
     for (XAttachHostProvider hostProvider : XAttachHostProvider.EP.getExtensionList()) {
       indicator.checkCanceled();
       //noinspection unchecked
-      Set<XAttachHost> hosts = ContainerUtil.newHashSet(hostProvider.getAvailableHosts(project));
+      Set<XAttachHost> hosts = new HashSet<>(hostProvider.getAvailableHosts(project));
 
       for (XAttachHost host : hosts) {
         //noinspection unchecked
