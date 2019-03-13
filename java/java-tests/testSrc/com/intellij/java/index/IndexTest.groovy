@@ -151,31 +151,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   private static StringIndex createIndex(String testName, EnumeratorStringDescriptor keyDescriptor, boolean readOnly) {
     final File storageFile = FileUtil.createTempFile("index_test", "storage")
     final File metaIndexFile = FileUtil.createTempFile("index_test_inputs", "storage")
-    PersistentHashMap<Integer, Collection<String>>  index = createMetaIndex(metaIndexFile)
     final VfsAwareMapIndexStorage indexStorage = new VfsAwareMapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024, readOnly)
-    return new StringIndex(testName, indexStorage, index, !readOnly)
-  }
-
-  private static PersistentHashMap<Integer, Collection<String>> createMetaIndex(File metaIndexFile) throws IOException {
-    return new PersistentHashMap<Integer, Collection<String>>(metaIndexFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<Collection<String>>() {
-      @Override
-      void save(@NotNull DataOutput out, Collection<String> value) throws IOException {
-        DataInputOutputUtil.writeINT(out, value.size())
-        for (String key : value) {
-          out.writeUTF(key)
-        }
-      }
-
-      @Override
-      Collection<String> read(@NotNull DataInput _in) throws IOException {
-        final int size = DataInputOutputUtil.readINT(_in)
-        final List<String> list = new ArrayList<String>()
-        for (int idx = 0; idx < size; idx++) {
-          list.add(_in.readUTF())
-        }
-        return list
-      }
-    })
+    return new StringIndex(testName, indexStorage, metaIndexFile, !readOnly)
   }
 
   private static <T> void assertDataEquals(List<T> actual, T... expected) {
