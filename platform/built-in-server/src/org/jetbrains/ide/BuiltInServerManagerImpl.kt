@@ -8,34 +8,28 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.net.NetUtils
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.builtInWebServer.*
 import org.jetbrains.io.BuiltInServer
 import org.jetbrains.io.SubServer
-
 import java.io.IOException
 import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.URLConnection
-import java.util.Collections
-import java.util.Objects
-import java.util.concurrent.ExecutionException
+import java.util.*
 import java.util.concurrent.Future
 
 private const val PORTS_COUNT = 20
 private const val PROPERTY_RPC_PORT = "rpc.port"
-private val LOG = logger<BuiltInServerManager>()
 
 class BuiltInServerManagerImpl : BuiltInServerManager() {
   private var serverStartFuture: Future<*>? = null
@@ -50,6 +44,8 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   }
 
   companion object {
+    private val LOG = logger<BuiltInServerManager>()
+
     @JvmField
     val NOTIFICATION_GROUP: NotNullLazyValue<NotificationGroup> = object : NotNullLazyValue<NotificationGroup>() {
       override fun compute(): NotificationGroup {
@@ -89,7 +85,6 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
       catch (e: IOException) {
         return false
       }
-
     }
   }
 
@@ -109,13 +104,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
       }
     }
 
-    try {
-      future!!.get()
-    }
-    catch (ignored: InterruptedException) {
-    }
-    catch (ignored: ExecutionException) {
-    }
+    future!!.get()
     return this
   }
 
@@ -124,11 +113,9 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
       try {
         val mainServer = StartupUtil.getServer()
         @Suppress("DEPRECATION")
-        if (mainServer == null || mainServer.eventLoopGroup is io.netty.channel.oio.OioEventLoopGroup) {
-          server = BuiltInServer.start(2, defaultPort, PORTS_COUNT, false, null)
-        }
-        else {
-          server = BuiltInServer.start(mainServer.eventLoopGroup, false, defaultPort, PORTS_COUNT, true, null)
+        server = when {
+          mainServer == null || mainServer.eventLoopGroup is io.netty.channel.oio.OioEventLoopGroup -> BuiltInServer.start(2, defaultPort, PORTS_COUNT)
+          else -> BuiltInServer.start(mainServer.eventLoopGroup, false, defaultPort, PORTS_COUNT, true, null)
         }
         bindCustomPorts(server!!)
       }
@@ -141,26 +128,23 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
         return@submit
       }
 
-      LOG.info("built-in server started, port " + server!!.port)
+      LOG.info("built-in server started, port ${server!!.port}")
       Disposer.register(ApplicationManager.getApplication(), server!!)
     }
   }
 
-  override fun getServerDisposable(): Disposable? {
-    return server
-  }
+  override fun getServerDisposable(): Disposable? = server
 
   override fun isOnBuiltInWebServer(url: Url?): Boolean {
-    return url != null && !StringUtil.isEmpty(url.authority) && isOnBuiltInWebServerByAuthority(url.authority!!)
+    return url != null && !url.authority.isNullOrEmpty() && isOnBuiltInWebServerByAuthority(url.authority!!)
   }
 
   override fun addAuthToken(url: Url): Url {
-    return if (url.parameters != null) {
+    return when {
       // built-in server url contains query only if token specified
-      url
+      url.parameters != null -> url
+      else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, Collections.singletonMap(TOKEN_PARAM_NAME, acquireToken()))
     }
-    else Urls.newUrl(Objects.requireNonNull<String>(url.scheme), Objects.requireNonNull<String>(url.authority), url.path,
-      Collections.singletonMap(TOKEN_PARAM_NAME, acquireToken()))
   }
 
   override fun configureRequestToWebServer(connection: URLConnection) {
@@ -170,19 +154,14 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
 
 // Default port will be occupied by main idea instance - define the custom default to avoid searching of free port
 private val defaultPort: Int
-  get() = if (System.getProperty(PROPERTY_RPC_PORT) == null) {
-    if (ApplicationManager.getApplication().isUnitTestMode) 64463 else BuiltInServerOptions.DEFAULT_PORT
-  }
-  else {
-    System.getProperty(PROPERTY_RPC_PORT).toInt()
-  }
+  get() = SystemProperties.getIntProperty(PROPERTY_RPC_PORT, if (ApplicationManager.getApplication().isUnitTestMode) 64463 else BuiltInServerOptions.DEFAULT_PORT)
 
 private fun bindCustomPorts(server: BuiltInServer) {
   if (ApplicationManager.getApplication().isUnitTestMode) {
     return
   }
 
-  for (customPortServerManager in CustomPortServerManager.EP_NAME.extensions) {
+  for (customPortServerManager in CustomPortServerManager.EP_NAME.extensionList) {
     LOG.runAndLogException {
       SubServer(customPortServerManager, server).bind(customPortServerManager.port)
     }

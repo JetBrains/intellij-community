@@ -1,24 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.NotNullProducer
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.MultiThreadEventLoopGroup
+import com.intellij.util.io.serverBootstrap
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.*
-
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.util.Random
+import java.util.*
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
-
-import com.intellij.util.io.serverBootstrap
 
 // Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
 private val FORBIDDEN_PORTS = intArrayOf(6953, 6969, 6970)
@@ -38,7 +34,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
     }
 
     @Throws(Exception::class)
-    fun start(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: (() -> ChannelHandler)?): BuiltInServer {
+    fun start(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean = false, handler: (() -> ChannelHandler)? = null): BuiltInServer {
       return start(MultiThreadEventLoopGroup(workerCount, BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler)
     }
 
