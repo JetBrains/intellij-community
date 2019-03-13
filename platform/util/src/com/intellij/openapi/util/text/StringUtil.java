@@ -4,6 +4,7 @@ package com.intellij.openapi.util.text;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
@@ -1136,6 +1137,13 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String nullize(@Nullable String s) {
     return nullize(s, false);
+  }
+
+  @Nullable
+  @Contract(pure = true)
+  public static String nullize(@Nullable String s, @Nullable String defaultValue) {
+    boolean empty = isEmpty(s) || Comparing.equal(s, defaultValue);
+    return empty ? null : s;
   }
 
   @Nullable
