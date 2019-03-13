@@ -68,7 +68,7 @@ def createDownloadJbreTask(String artifactName, String build, boolean doRepackag
   def suffix = doRepackage ? '_origin' : ''
   def outputFile = "$outputDir/${artifactName}${suffix}.tar.gz"
   task("download${artifactName.capitalize()}") {
-    def jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jdk'
+    def jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jbr'
     inputs.property('build', build)
     outputs.file(outputFile)
     doLast {

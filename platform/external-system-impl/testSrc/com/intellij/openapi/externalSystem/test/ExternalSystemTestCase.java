@@ -31,21 +31,26 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
+import com.intellij.task.ProjectTaskManager;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.io.TestFileSystemItem;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.SystemIndependent;
 import org.junit.After;
 import org.junit.Before;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -72,6 +77,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected VirtualFile myProjectRoot;
   protected VirtualFile myProjectConfig;
   protected List<VirtualFile> myAllConfigs = new ArrayList<>();
+  protected boolean useProjectTaskManager;
 
   @Before
   @Override
@@ -260,12 +266,13 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     return myProjectRoot.getParent().getPath();
   }
 
-  protected String pathFromBasedir(String relPath) {
-    return pathFromBasedir(myProjectRoot, relPath);
+  @SystemIndependent
+  protected String path(@NotNull String relativePath) {
+    return file(relativePath).getPath();
   }
 
-  protected static String pathFromBasedir(VirtualFile root, String relPath) {
-    return FileUtil.toSystemIndependentName(root.getPath() + "/" + relPath);
+  protected File file(@NotNull String relativePath) {
+    return new File(getProjectPath(), relativePath);
   }
 
   protected Module createModule(String name) {
@@ -382,11 +389,43 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
 
   protected void compileModules(final String... moduleNames) {
-    compile(createModulesCompileScope(moduleNames));
+    if (useProjectTaskManager) {
+      Module[] modules = Arrays.stream(moduleNames).map(moduleName -> getModule(moduleName)).toArray(Module[]::new);
+      build(modules);
+    }
+    else {
+      compile(createModulesCompileScope(moduleNames));
+    }
   }
 
   protected void buildArtifacts(String... artifactNames) {
-    compile(createArtifactsScope(artifactNames));
+    if (useProjectTaskManager) {
+      Artifact[] artifacts = Arrays.stream(artifactNames)
+        .map(artifactName -> ArtifactsTestUtil.findArtifact(myProject, artifactName)).toArray(Artifact[]::new);
+      build(artifacts);
+    }
+    else {
+      compile(createArtifactsScope(artifactNames));
+    }
+  }
+
+  private void build(@NotNull Object[] buildableElements) {
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    if (buildableElements instanceof Module[]) {
+      ProjectTaskManager.getInstance(myProject).build((Module[])buildableElements, executionResult -> semaphore.up());
+    }
+    else if (buildableElements instanceof Artifact[]) {
+      ProjectTaskManager.getInstance(myProject).build((Artifact[])buildableElements, executionResult -> semaphore.up());
+    }
+    else {
+      assert false : "Unsupported buildableElements: " + Arrays.toString(buildableElements);
+    }
+    while (!semaphore.waitFor(100)) {
+      if (SwingUtilities.isEventDispatchThread()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+    }
   }
 
   private void compile(@NotNull CompileScope scope) {

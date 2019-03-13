@@ -65,7 +65,7 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
                                             String indentSize, String continuationIndentSize, String tabWidth,
                                             String indentStyle, String filePath) {
     boolean changed = false;
-    final String calculatedIndentSize = calculateIndentSize(tabWidth, indentSize);
+    final String calculatedIndentSize = calculateIndentSize(tabWidth, indentSize, indentOptions);
     final String calculatedContinuationSize = calculateContinuationIndentSize(calculatedIndentSize, continuationIndentSize);
     final String calculatedTabWidth = calculateTabWidth(tabWidth, indentSize);
     if (!calculatedIndentSize.isEmpty()) {
@@ -102,8 +102,8 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     return changed;
   }
 
-  private static String calculateIndentSize(final String tabWidth, final String indentSize) {
-    return indentSize.equals("tab") ? tabWidth : indentSize;
+  private static String calculateIndentSize(final String tabWidth, final String indentSize, @NotNull final IndentOptions options) {
+    return indentSize.equals("tab") ? (tabWidth.isEmpty() ? String.valueOf(options.TAB_SIZE) : tabWidth) : indentSize;
   }
 
   private static String calculateContinuationIndentSize(final String indentSize, final String continuationIndentSize) {

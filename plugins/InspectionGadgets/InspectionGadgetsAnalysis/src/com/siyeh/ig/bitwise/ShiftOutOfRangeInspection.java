@@ -46,11 +46,11 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     LongRangeSet range = (LongRangeSet)infos[0];
-    if (range.min() != range.max()) {
+    Long val = range.getConstantValue();
+    if (val == null) {
       return InspectionGadgetsBundle.message(
         "shift.operation.by.inappropriate.constant.problem.descriptor.out.of.bounds", range.toString());
     }
-    long val = range.min();
     if (val > 0) {
       return InspectionGadgetsBundle.message(
         "shift.operation.by.inappropriate.constant.problem.descriptor.too.large", val);
@@ -66,11 +66,9 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    LongRangeSet value = (LongRangeSet)infos[0];
-    if (value.min() == value.max()) {
-      return new ShiftOutOfRangeFix(value.min(), ((Boolean)infos[1]).booleanValue());
-    }
-    return null;
+    Long val = ((LongRangeSet)infos[0]).getConstantValue();
+    if (val == null) return null;
+    return new ShiftOutOfRangeFix(val, ((Boolean)infos[1]).booleanValue());
   }
 
   private static class ShiftOutOfRangeFix extends InspectionGadgetsFix {

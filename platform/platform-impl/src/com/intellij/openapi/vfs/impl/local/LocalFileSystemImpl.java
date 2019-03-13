@@ -48,9 +48,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
       myWatchRecursively = watchRecursively;
     }
 
-    @NotNull
     @Override
-    public @SystemIndependent String getRootPath() {
+    public @NotNull @SystemIndependent String getRootPath() {
       return FileUtil.toSystemIndependentName(myFSRootPath);
     }
 
@@ -266,7 +265,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
 
   @NotNull
   @Override
-  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests,
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
                                                @Nullable Collection<String> recursiveRoots,
                                                @Nullable Collection<String> flatRoots) {
     recursiveRoots = ObjectUtils.notNull(recursiveRoots, Collections.emptyList());
@@ -278,7 +277,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
       (watch.isToWatchRecursively() ? recursiveWatches : flatWatches).add(watch.getRootPath());
     }
     if (recursiveWatches.equals(recursiveRoots) && flatWatches.equals(flatRoots)) {
-      if (LOG.isDebugEnabled()) LOG.debug("same requests: " + recursiveRoots + " / " + flatRoots);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("same requests: " + recursiveRoots.size() + '/' + flatRoots.size());
+        if (LOG.isTraceEnabled()) { LOG.trace("recursive " + recursiveRoots); LOG.trace("flat " + flatRoots); }
+      }
       return watchRequests instanceof Set ? (Set<WatchRequest>)watchRequests : new HashSet<>(watchRequests);
     }
 
@@ -294,14 +296,14 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     return result;
   }
 
-  private boolean doAddRootsToWatch(@NotNull Collection<String> recursiveRoots, @NotNull Collection<String> flatRoots, @NotNull Set<? super WatchRequest> result) {
+  private boolean doAddRootsToWatch(@NotNull Collection<String> recursiveRoots, @NotNull Collection<String> flatRoots, @NotNull Set<WatchRequest> result) {
     boolean update = false;
     for (String root : recursiveRoots) update |= watch(root, true, result);
     for (String root : flatRoots) update |= watch(root, false, result);
     return update;
   }
 
-  private boolean watch(@NotNull String rootPath, boolean recursively, @NotNull Set<? super WatchRequest> result) {
+  private boolean watch(@NotNull String rootPath, boolean recursively, @NotNull Set<WatchRequest> result) {
     int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (index >= 0) rootPath = rootPath.substring(0, index);
 
@@ -318,7 +320,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     return !request.myDominated;
   }
 
-  private boolean doRemoveWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests) {
+  private boolean doRemoveWatchedRoots(@NotNull Collection<WatchRequest> watchRequests) {
     boolean update = false;
 
     for (WatchRequest watchRequest : watchRequests) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.editor.Editor;
@@ -16,6 +16,8 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicEleme
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicPropertyDialog;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isInStaticCompilationContext;
+
 public class DynamicPropertyFromRefFix extends DynamicPropertyFix {
 
   private final SmartPsiElementPointer<GrReferenceExpression> myReferenceExpressionPointer;
@@ -26,7 +28,8 @@ public class DynamicPropertyFromRefFix extends DynamicPropertyFix {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
-    return myReferenceExpressionPointer.getElement() != null;
+    GrReferenceExpression expression = myReferenceExpressionPointer.getElement();
+    return expression != null && !isInStaticCompilationContext(expression);
   }
 
   @Nullable

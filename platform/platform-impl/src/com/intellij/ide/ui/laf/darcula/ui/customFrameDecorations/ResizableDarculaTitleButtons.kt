@@ -9,12 +9,11 @@ import javax.swing.JButton
 class ResizableDarculaTitleButtons(private val myCloseAction: Action,
                                           private val myRestoreAction: Action,
                                           private val myIconifyAction: Action,
-                                          private val myMaximizeAction: Action,
-                                          private val myHelpAction: HelpAction
-) : DarculaTitleButtons(myCloseAction, myHelpAction) {
+                                          private val myMaximizeAction: Action
+) : DarculaTitleButtons(myCloseAction) {
   companion object{
-    fun create(myCloseAction: Action, myRestoreAction: Action, myIconifyAction: Action, myMaximizeAction: Action, myHelpAction: HelpAction) : ResizableDarculaTitleButtons {
-      val darculaTitleButtons = ResizableDarculaTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction, myHelpAction)
+    fun create(myCloseAction: Action, myRestoreAction: Action, myIconifyAction: Action, myMaximizeAction: Action) : ResizableDarculaTitleButtons {
+      val darculaTitleButtons = ResizableDarculaTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)
       darculaTitleButtons.createChildren()
       return darculaTitleButtons
     }

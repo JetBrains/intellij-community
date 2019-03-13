@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentUtilKt;
+import org.jetbrains.plugins.groovy.highlighting.HighlightSink;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -71,9 +72,16 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
   private static final Logger LOG = Logger.getInstance(GroovyAssignabilityCheckInspection.class);
 
-  private final HighlightSink myHighlightSink = (highlightElement, highlightType, message, fixes) ->
-    registerError(highlightElement, message, fixes, highlightType);
-  
+  private final HighlightSink myHighlightSink = new HighlightSink() {
+    @Override
+    public void registerProblem(@NotNull PsiElement highlightElement,
+                                @NotNull ProblemHighlightType highlightType,
+                                @NotNull String message,
+                                @NotNull LocalQuickFix... fixes) {
+      GroovyTypeCheckVisitor.this.registerError(highlightElement, message, fixes, highlightType);
+    }
+  };
+
   private boolean checkCallApplicability(@Nullable PsiType type,
                                          boolean checkUnknownArgs,
                                          @NotNull CallInfo<? extends GroovyPsiElement> info) {

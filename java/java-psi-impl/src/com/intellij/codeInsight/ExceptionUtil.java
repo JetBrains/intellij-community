@@ -472,12 +472,18 @@ public class ExceptionUtil {
       MethodResolverProcessor processor = new MethodResolverProcessor((PsiMethodCallExpression)methodCall, containingFile);
       try {
         PsiScopesUtil.setupAndRunProcessor(processor, methodCall, false);
+        // Resolve other signatures in case of multiple interface inheritance
+        // e.g. consider 
+        // interface X {void a() throws A;} interface Y{void a() throws B;} class Z extends X, Y {}
+        // here normal resolve returns X.a(), but we should check throws clauses for both a() methods.
+        // (see JLS 15.12.2.5)
         final List<Pair<PsiMethod, PsiSubstitutor>> candidates = ContainerUtil.mapNotNull(
           processor.getResults(), info -> {
             PsiElement element1 = info.getElement();
             if (info instanceof MethodCandidateInfo &&
                 element1 != method && //don't check self
                 MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element1) &&
+                !((PsiMethod)element1).hasModifierProperty(PsiModifier.PRIVATE) &&
                 !MethodSignatureUtil.isSuperMethod((PsiMethod)element1, method) &&
                 !(((MethodCandidateInfo)info).isToInferApplicability() && !((MethodCandidateInfo)info).isApplicable())) {
               return Pair.create((PsiMethod)element1, ((MethodCandidateInfo)info).getSubstitutor(false));

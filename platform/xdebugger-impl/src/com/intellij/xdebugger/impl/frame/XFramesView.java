@@ -295,7 +295,7 @@ public class XFramesView extends XDebugView {
       addExecutionStacks(Collections.singletonList(activeExecutionStack), false);
 
       myThreadComboBox.setSelectedItem(activeExecutionStack);
-      boolean invisible = StringUtil.isEmpty(activeExecutionStack.getDisplayName());
+      boolean invisible = activeExecutionStack == null || StringUtil.isEmpty(activeExecutionStack.getDisplayName());
       if (invisible != (myThreadComboBox.getParent() == null)) {
         if (invisible) {
           myThreadsPanel.remove(myThreadComboBox);

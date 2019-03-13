@@ -617,8 +617,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (constValue != null) return constValue;
       DfaVariableState state = getExistingVariableState((DfaVariableValue)value);
       LongRangeSet range = state != null ? state.getFact(DfaFactType.RANGE) : null;
-      if (range != null && !range.isEmpty() && range.min() == range.max()) {
-        return myFactory.getConstFactory().createFromValue(range.min(), PsiType.LONG);
+      Long constantValue = range == null ? null : range.getConstantValue();
+      if (constantValue != null) {
+        return myFactory.getConstFactory().createFromValue(constantValue, PsiType.LONG);
       }
     }
     return null;
@@ -764,8 +765,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         rightConstraint = leftRange.minus(appliedRange, isLong);
         break;
       case REM:
-        if (rightRange.min() == rightRange.max()) {
-          leftConstraint = LongRangeSet.fromRemainder(rightRange.min(), appliedRange.intersect(result));
+        Long value = rightRange.getConstantValue();
+        if (value != null) {
+          leftConstraint = LongRangeSet.fromRemainder(value, appliedRange.intersect(result));
         }
         break;
     }
@@ -1092,7 +1094,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           } else if(pair.getSecond() == eqClass) {
             if (!applyRelationRangeToClass(pair.getFirst(), appliedRange, RelationType.LT)) return false;
           }
-        } else if(appliedRange.min() == appliedRange.max()) {
+        } else if(appliedRange.getConstantValue() != null) {
           EqClass other = pair.getFirst() == eqClass ? pair.getSecond() : pair.getSecond() == eqClass ? pair.getFirst() : null;
           if (other != null) {
             if (!applyRelationRangeToClass(other, appliedRange, RelationType.NE)) return false;
@@ -1137,7 +1139,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaConstValue leftConst = getConstantValue(unboxedLeft);
     DfaConstValue rightConst = getConstantValue(unboxedRight);
     if (leftConst != null && rightConst != null) {
-      return leftConst.getValue().equals(rightConst.getValue()) != negated;
+      return Objects.equals(leftConst.getValue(), rightConst.getValue()) != negated;
     }
     if (negated && (PsiType.FLOAT.equals(unboxedLeft.getType()) || PsiType.DOUBLE.equals(unboxedLeft.getType()))) {
       // If floating point wrappers are not equal, unboxed versions could still be equal if they are 0.0 and -0.0

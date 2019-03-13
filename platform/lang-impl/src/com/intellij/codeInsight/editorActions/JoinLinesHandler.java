@@ -148,7 +148,7 @@ public class JoinLinesHandler extends EditorActionHandler {
       if (delegate instanceof JoinRawLinesHandlerDelegate) {
         rc = ((JoinRawLinesHandlerDelegate)delegate).tryJoinRawLines(doc, psiFile, start, end);
         if (rc != CANNOT_JOIN) {
-          caretRestoreOffset.set(rc);
+          caretRestoreOffset.set(checkOffset(rc, delegate, doc));
           break;
         }
       }
@@ -183,7 +183,7 @@ public class JoinLinesHandler extends EditorActionHandler {
       docManager.commitDocument(doc);
 
       for(JoinLinesHandlerDelegate delegate: JoinLinesHandlerDelegate.EP_NAME.getExtensionList()) {
-        rc = delegate.tryJoinLines(doc, psiFile, start, end);
+        rc = checkOffset(delegate.tryJoinLines(doc, psiFile, start, end), delegate, doc);
         if (rc != CANNOT_JOIN) break;
       }
     }
@@ -239,6 +239,19 @@ public class JoinLinesHandler extends EditorActionHandler {
     }
 
     docManager.commitDocument(doc);
+  }
+
+  private static int checkOffset(int offset, JoinLinesHandlerDelegate delegate, DocumentEx doc) {
+    if (offset == CANNOT_JOIN) return offset;
+    if (offset < 0) {
+      LOG.error("Handler returned negative offset: handler class="+delegate.getClass()+"; offset="+offset);
+      return 0;
+    } else if (offset > doc.getTextLength()) {
+      LOG.error("Handler returned an offset which exceeds the document length: handler class=" + delegate.getClass() + 
+                "; offset=" + offset + "; length=" + doc.getTextLength());
+      return doc.getTextLength();
+    }
+    return offset;
   }
 
   private static class JoinLinesOffsets {

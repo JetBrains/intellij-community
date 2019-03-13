@@ -1,10 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -14,9 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicDialog;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicMethodDialog;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isInStaticCompilationContext;
 
 /**
  * @author Maxim.Medvedev
@@ -66,18 +66,17 @@ public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
-    return myReferenceExpression.isValid();
+    return myReferenceExpression.isValid() && !isInStaticCompilationContext(myReferenceExpression);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      DynamicManager.getInstance(project).addMethod(QuickfixUtil.createSettings(myReferenceExpression));
+      return;
+    }
     DynamicDialog dialog = new DynamicMethodDialog(myReferenceExpression);
     dialog.show();
-  }
-
-  public void invoke(Project project) throws IncorrectOperationException {
-    final DynamicElementSettings settings = QuickfixUtil.createSettings(myReferenceExpression);
-    DynamicManager.getInstance(project).addMethod(settings);
   }
 
   @Override

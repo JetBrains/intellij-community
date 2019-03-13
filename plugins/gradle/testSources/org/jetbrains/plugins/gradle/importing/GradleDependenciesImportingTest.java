@@ -559,7 +559,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     );
 
     assertModules("project", "project.main", "project.test");
-    final String path = pathFromBasedir("build/generated-resources/main");
+    final String path = path("build/generated-resources/main");
     final String depName = PathUtil.toPresentableUrl(path);
     assertModuleLibDep("project.main", depName, "file://" + path);
     assertModuleLibDepScope("project.main", depName, DependencyScope.RUNTIME);
@@ -596,7 +596,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project.projectC.main", "project.projectA.main", DependencyScope.RUNTIME);
     assertModuleModuleDepScope("project.projectC.main", "project.projectB.main", DependencyScope.RUNTIME);
 
-    final String path = pathFromBasedir("projectA/build/generated-resources/main");
+    final String path = path("projectA/build/generated-resources/main");
     final String classesPath = "file://" + path;
     final String depName = PathUtil.toPresentableUrl(path);
     assertModuleLibDep("project.projectA.main", depName, classesPath);

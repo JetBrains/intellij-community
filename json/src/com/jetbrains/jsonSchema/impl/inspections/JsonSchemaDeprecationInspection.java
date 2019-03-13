@@ -7,6 +7,7 @@ import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonElementVisitor;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -25,6 +26,7 @@ public class JsonSchemaDeprecationInspection extends JsonSchemaBasedInspectionBa
                                              @NotNull LocalInspectionToolSession session) {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(root, schema);
     if (walker == null || schema == null) return PsiElementVisitor.EMPTY_VISITOR;
+    Project project = root.getProject();
     return new JsonElementVisitor() {
       @Override
       public void visitProperty(@NotNull JsonProperty o) {
@@ -35,7 +37,7 @@ public class JsonSchemaDeprecationInspection extends JsonSchemaBasedInspectionBa
         JsonPointerPosition position = walker.findPosition(o, true);
         if (position == null) return;
 
-        final MatchResult result = new JsonSchemaResolver(schema, false, position).detailedResolve();
+        final MatchResult result = new JsonSchemaResolver(project, schema, false, position).detailedResolve();
         for (JsonSchemaObject object : result.mySchemas) {
           String message = object.getDeprecationMessage();
           if (message != null) {

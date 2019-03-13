@@ -20,7 +20,8 @@
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ListUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -35,7 +36,6 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
   private final ListModel<T> myOriginalModel;
   private final List<T> myData = new ArrayList<>();
   private Condition<? super T> myCondition = null;
-
 
   private final ListDataListener myListDataListener = new ListDataListener() {
     @Override
@@ -57,11 +57,6 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
   public FilteringListModel(ListModel<T> originalModel) {
     myOriginalModel = originalModel;
     myOriginalModel.addListDataListener(myListDataListener);
-  }
-
-  protected FilteringListModel(JList<T> list) {
-    this(list.getModel());
-    list.setModel(this);
   }
 
   public void dispose() {
@@ -123,22 +118,22 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
     return myData.contains(value);
   }
 
-  public ListModel getOriginalModel() {
+  @NotNull
+  public ListModel<T> getOriginalModel() {
     return myOriginalModel;
   }
 
   public void addAll(List<T> elements) {
-    myData.addAll(elements);
-    ((CollectionListModel<T>)myOriginalModel).add(elements);
+    ListUtil.addAllItems(myOriginalModel, elements);
   }
 
   public void replaceAll(List<T> elements) {
     myData.clear();
-    myData.addAll(elements);
-    ((CollectionListModel<T>)myOriginalModel).replaceAll(elements);
+    ListUtil.removeAllItems(myOriginalModel);
+    ListUtil.addAllItems(myOriginalModel, elements);
   }
 
   public void remove(int index) {
-    ((DefaultListModel<T>)myOriginalModel).removeElement(myData.get(index));
+    ListUtil.removeItem(myOriginalModel, index);
   }
 }

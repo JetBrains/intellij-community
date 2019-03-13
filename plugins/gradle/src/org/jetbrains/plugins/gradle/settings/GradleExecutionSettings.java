@@ -49,6 +49,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   private String myIdeProjectPath;
   private boolean resolveModulePerSourceSet = true;
   private boolean useQualifiedModuleNames = false;
+  private boolean delegatedBuild = true;
 
   public GradleExecutionSettings(@Nullable String gradleHome,
                                  @Nullable String serviceDirectory,
@@ -122,6 +123,14 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public void setUseQualifiedModuleNames(boolean useQualifiedModuleNames) {
     this.useQualifiedModuleNames = useQualifiedModuleNames;
+  }
+
+  public boolean isDelegatedBuild() {
+    return delegatedBuild;
+  }
+
+  public void setDelegatedBuild(boolean delegatedBuild) {
+    this.delegatedBuild = delegatedBuild;
   }
 
   @NotNull

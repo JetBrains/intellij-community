@@ -61,7 +61,7 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
     }
 
     private fun analyzeArguments(call: PyCallExpression, type: PyDataclassParameters.Type): Triple<Boolean, Boolean, Boolean>? {
-      val initValue = PyEvaluator.evaluateAsBoolean(call.getKeywordArgument("init")) ?: true
+      val initValue = PyEvaluator.evaluateAsBooleanNoResolve(call.getKeywordArgument("init"), true)
 
       if (type == PyDataclassParameters.Type.STD) {
         val default = call.getKeywordArgument("default")

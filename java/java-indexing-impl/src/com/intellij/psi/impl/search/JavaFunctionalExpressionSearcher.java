@@ -225,7 +225,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static boolean hasType(List<? extends SamDescriptor> descriptors, PsiFunctionalExpression expression) {
     if (!canHaveType(expression, ContainerUtil.map(descriptors, d -> d.samClass))) return false;
 
-    PsiClass actualClass = PsiUtil.resolveClassInType(expression.getFunctionalInterfaceType());
+    PsiClass actualClass = LambdaUtil.resolveFunctionalInterfaceClass(expression);
     return ContainerUtil.exists(descriptors, d -> InheritanceUtil.isInheritorOrSelf(actualClass, d.samClass, true));
   }
 

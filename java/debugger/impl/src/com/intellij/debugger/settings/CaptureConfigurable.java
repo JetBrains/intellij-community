@@ -18,6 +18,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.options.Configurable.NoScroll;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -64,7 +65,7 @@ import java.util.function.BiConsumer;
 /**
  * @author egor
  */
-public class CaptureConfigurable implements SearchableConfigurable {
+public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
   private static final Logger LOG = Logger.getInstance(CaptureConfigurable.class);
   private final Project myProject;
 

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
+import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiMethod
@@ -129,5 +130,58 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       projectData["project"]["AutomationTestCase"].element,
       testTasksFilter = { it in setOf("test", "autoTest") }
     )
+  }
+
+  @Test
+  fun `test configuration tests for directory`() {
+    val projectData = generateAndImportTemplateProject()
+    assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
+      """:cleanAutoTest :autoTest --tests * :cleanAutomationTest :automationTest --tests * :cleanTest :test --tests * --continue""",
+      projectData["project"].root
+    )
+    assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
+      """:cleanTest :test --tests *""",
+      projectData["project"].root.subDirectory("src")
+    )
+    assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
+      """:cleanTest :test --tests *""",
+      projectData["project"].root.subDirectory("src", "test")
+    )
+    assertConfigurationFromContext<AllInPackageGradleConfigurationProducer>(
+      """:cleanTest :test --tests *""",
+      projectData["project"].root.subDirectory("src", "test", "java")
+    )
+    assertConfigurationFromContext<AllInPackageGradleConfigurationProducer>(
+      """:cleanAutoTest :autoTest --tests * :cleanAutomationTest :automationTest --tests * --continue""",
+      projectData["project"].root.subDirectory("automation")
+    )
+    assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
+      """:module:cleanTest :module:test --tests *""",
+      projectData["module"].root
+    )
+  }
+
+  @Test
+  fun `test multiple selected abstract tests`() {
+    val projectData = generateAndImportTemplateProject()
+    runReadActionAndWait {
+      val producer = getConfigurationProducer<PatternGradleConfigurationProducer>()
+      val testClass = projectData["project"]["TestCase"].element
+      val abstractTestClass = projectData["project"]["AbstractTestCase"].element
+      val abstractTestMethod = projectData["project"]["AbstractTestCase"]["test"].element
+      val templateConfiguration = producer.createTemplateConfiguration()
+      getContextByLocation(testClass, abstractTestClass).let {
+        assertTrue(producer.setupConfigurationFromContext(templateConfiguration, it, Ref(it.psiLocation)))
+      }
+      getContextByLocation(abstractTestClass, abstractTestMethod).let {
+        assertFalse(producer.setupConfigurationFromContext(templateConfiguration, it, Ref(it.psiLocation)))
+      }
+      getContextByLocation(abstractTestClass, abstractTestClass).let {
+        assertFalse(producer.setupConfigurationFromContext(templateConfiguration, it, Ref(it.psiLocation)))
+      }
+      getContextByLocation(abstractTestMethod, abstractTestMethod).let {
+        assertFalse(producer.setupConfigurationFromContext(templateConfiguration, it, Ref(it.psiLocation)))
+      }
+    }
   }
 }

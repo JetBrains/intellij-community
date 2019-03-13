@@ -81,7 +81,7 @@ public abstract class PropertyTable extends JBTable {
 
     setShowVerticalLines(false);
     setIntercellSpacing(new Dimension(0, 1));
-    setGridColor(UIUtil.getSlightlyDarkerColor(getBackground()));
+    setGridColor(ColorUtil.darker(getBackground(), 1));
 
     setColumnSelectionAllowed(false);
     setCellSelectionEnabled(false);

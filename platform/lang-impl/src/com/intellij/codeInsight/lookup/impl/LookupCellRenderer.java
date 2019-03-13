@@ -58,7 +58,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   private static final Color GRAYED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.infoForeground",  new JBColor(new Color(0x8c8e91), Gray.x91));
   private static final Color SELECTED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionBackground", new Color(0, 82, 164));
   public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveBackground", new JBColor(0x6e8ea2, 0x55585a));
-  private static final Color SELECTED_NON_FOCUSED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveForeground", new JBColor(new Color(0x1c2b38), Gray.x91));
+  private static final Color SELECTED_NON_FOCUSED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveInfoForeground", new JBColor(new Color(0x1c2b38), Gray.x91));
   public static final Color SELECTED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
   private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInfoForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
 
@@ -167,7 +167,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
     myTailComponent.setFont(font);
     myTypeLabel.setFont(font);
-    myNameComponent.setIcon(augmentIcon(myLookup.getEditor(), presentation.getIcon(), myEmptyIcon));
+    myNameComponent.setIcon(augmentIcon(myLookup.getTopLevelEditor(), presentation.getIcon(), myEmptyIcon));
 
     final Color grayedForeground = nonFocusedSelection ? SELECTED_NON_FOCUSED_FOREGROUND_COLOR : getGrayedForeground(isSelected);
     myTypeLabel.clear();

@@ -14,11 +14,10 @@ import javax.security.auth.Destroyable
 import javax.swing.*
 import javax.swing.plaf.basic.BasicButtonUI
 
-open class DarculaTitleButtons constructor(myCloseAction: Action,
-                                           private val myHelpAction: HelpAction) : Destroyable {
+open class DarculaTitleButtons constructor(myCloseAction: Action) : Destroyable {
   companion object {
-    fun create(myCloseAction: Action, myHelpAction: HelpAction): DarculaTitleButtons {
-      val darculaTitleButtons = DarculaTitleButtons(myCloseAction, myHelpAction)
+    fun create(myCloseAction: Action): DarculaTitleButtons {
+      val darculaTitleButtons = DarculaTitleButtons(myCloseAction)
       darculaTitleButtons.createChildren()
       return darculaTitleButtons
     }
@@ -64,7 +63,6 @@ open class DarculaTitleButtons constructor(myCloseAction: Action,
   protected val panel = JPanel(MigLayout("filly, ins 0, gap 0, hidemode 3, novisualpadding"))
 
   private val myCloseButton: JButton = createButton("Close", myCloseAction)
-  private val myHelpButton: JButton = createButton("Help", myHelpAction)
 
   var isSelected = false
     set(value) {
@@ -75,7 +73,6 @@ open class DarculaTitleButtons constructor(myCloseAction: Action,
     }
 
   protected open fun updateStyles() {
-    StyleManager.applyStyle(myHelpButton, getStyle(if(isSelected) AllIcons.Windows.HelpButton else AllIcons.Windows.HelpButtonInactive, AllIcons.Windows.HelpButton))
     StyleManager.applyStyle(myCloseButton, if(isSelected) activeCloseStyle else inactiveCloseStyle)
   }
 
@@ -89,11 +86,9 @@ open class DarculaTitleButtons constructor(myCloseAction: Action,
   fun getView(): JComponent = panel
 
   protected open fun fillButtonPane() {
-    addComponent(myHelpButton)
   }
 
   open fun updateVisibility() {
-    myHelpButton.isVisible = myHelpAction.isAvailable()
   }
 
   private fun addCloseButton() {
@@ -101,7 +96,7 @@ open class DarculaTitleButtons constructor(myCloseAction: Action,
   }
 
   protected fun addComponent(component: JComponent) {
-    panel.add(component, "growy, wmin ${JBUI.scale(38)}, hmin ${JBUI.scale(28)}")
+    panel.add(component, "growy, wmin ${JBUI.scale(39)}, hmin ${JBUI.scale(23)}")
   }
 
   protected fun getStyle(icon: Icon, hoverIcon : Icon): ComponentStyle<JComponent> {

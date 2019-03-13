@@ -57,7 +57,7 @@ open class TestTasksChooser {
     chooseTestTasks(project, context, elements.asIterable(), consumer)
   }
 
-  private fun chooseTestTasks(
+  fun chooseTestTasks(
     project: Project,
     context: DataContext,
     sources: List<VirtualFile>,

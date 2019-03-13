@@ -713,42 +713,6 @@ def test() {
 """, GrUnresolvedAccessInspection)
   }
 
-  void testReassignedVarInLambda() {
-    addCompileStatic()
-    testHighlighting("""
-$IMPORT_COMPILE_STATIC
-
-@CompileStatic
-def test() {
-    def var = "abc"
-    def cl = () -> {
-        var = new Date()
-    }
-    cl()
-    var.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>()
-}
-""", GrUnresolvedAccessInspection)
-  }
-
-  void testReassignedVarInLambda2() {
-    addCompileStatic()
-    testHighlighting("""
-$IMPORT_COMPILE_STATIC
-
-@CompileStatic
-def test() {
-    def cl = () -> {
-        def var
-        var = new Date()
-    }
-    def var = "abc"
-
-    cl()
-    var.toUpperCase()  //no errors
-}
-""", GrUnresolvedAccessInspection)
-  }
-
   void testReassignedVarInClosure3() {
     addCompileStatic()
     testHighlighting("""
@@ -1879,7 +1843,9 @@ class A {
   }
 
   void testUnresolvedPropertyWhenGetPropertyDeclared() {
-    myFixture.enableInspections(GrUnresolvedAccessInspection)
+    def inspection = new GrUnresolvedAccessInspection()
+    inspection.myHighlightIfGroovyObjectOverridden = false
+    myFixture.enableInspections(inspection)
     myFixture.configureByText('_.groovy', '''\
 class DelegatesToTest {
     void ideSupport() {
@@ -1907,8 +1873,6 @@ class DslDelegate {
 print new DslDelegate().foo   //resolved
 print new DslDelegate().<warning descr="Cannot resolve symbol 'foo'">foo</warning>() //unresolved
 ''')
-
-    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightIfGroovyObjectOverridden = false
     myFixture.testHighlighting(true, false, true)
   }
 

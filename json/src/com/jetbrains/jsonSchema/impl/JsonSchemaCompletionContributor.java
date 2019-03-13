@@ -78,8 +78,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       }
     }
 
-    final VirtualFile schemaFile = rootSchema.getSchemaFile();
-    updateStat(service.getSchemaProvider(schemaFile), schemaFile);
+    updateStat(service.getSchemaProvider(rootSchema), service.resolveSchemaFile(rootSchema));
     doCompletion(parameters, result, rootSchema);
   }
 
@@ -146,12 +145,14 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     // we need this set to filter same-named suggestions (they can be suggested by several matching schemes)
     private final Set<LookupElement> myVariants;
     private final JsonLikePsiWalker myWalker;
+    private final Project myProject;
 
     Worker(@NotNull JsonSchemaObject rootSchema, @NotNull PsiElement position,
            @NotNull PsiElement originalPosition, @NotNull final Consumer<LookupElement> resultConsumer) {
       myRootSchema = rootSchema;
       myPosition = position;
       myOriginalPosition = originalPosition;
+      myProject = originalPosition.getProject();
       myResultConsumer = resultConsumer;
       myVariants = new HashSet<>();
       myWalker = JsonLikePsiWalker.getWalker(myPosition, myRootSchema);
@@ -167,7 +168,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       final JsonPointerPosition position = myWalker.findPosition(checkable, isName == ThreeState.NO);
       if (position == null || position.isEmpty() && isName == ThreeState.NO) return;
 
-      final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myRootSchema, false, position).resolve();
+      final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myProject, myRootSchema, false, position).resolve();
       final Set<String> knownNames = ContainerUtil.newHashSet();
       // too long here, refactor further
       schemas.forEach(schema -> {
@@ -210,7 +211,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (object == null) return;
 
       for (IfThenElse ifThenElse : ifThenElseList) {
-        JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
+        JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(myProject, JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
         checker.checkByScheme(object, ifThenElse.getIf());
         if (checker.isCorrect()) {
           JsonSchemaObject then = ifThenElse.getThen();
@@ -376,7 +377,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                     @NotNull JsonSchemaObject jsonSchemaObject,
                                     boolean hasValue,
                                     boolean insertComma) {
-      final Collection<JsonSchemaObject> variants = new JsonSchemaResolver(jsonSchemaObject).resolve();
+      final Collection<JsonSchemaObject> variants = new JsonSchemaResolver(myProject, jsonSchemaObject).resolve();
       jsonSchemaObject = ObjectUtils.coalesce(ContainerUtil.getFirstItem(variants), jsonSchemaObject);
       key = !myWrapInQuotes ? key : StringUtil.wrapWithDoubleQuote(key);
       LookupElementBuilder builder = LookupElementBuilder.create(key);

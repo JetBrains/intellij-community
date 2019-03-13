@@ -456,7 +456,6 @@ public abstract class DialogWrapper {
 
   private static boolean isRemoveHelpButton() {
     return !ApplicationInfo.contextHelpAvailable() ||
-           SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration") ||
            Registry.is("ide.remove.help.button.from.dialogs");
   }
 

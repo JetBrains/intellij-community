@@ -128,7 +128,7 @@ public class ExceptionWorker {
       virtualFiles = virtualFilesInContent;
     }
     ToIntFunction<PsiFile> columnFinder =
-      elementMatcher == null || myInfo.lineNumber < 0 ? null : new ExceptionColumnFinder(elementMatcher, myInfo.lineNumber - 1);
+      elementMatcher == null || myInfo.lineNumber <= 0 ? null : new ExceptionColumnFinder(elementMatcher, myInfo.lineNumber - 1);
     HyperlinkInfo linkInfo =
       HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, myInfo.lineNumber - 1, myProject, columnFinder);
     Filter.Result result = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);

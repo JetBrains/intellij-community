@@ -314,6 +314,14 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  public void testSuperMethodWithAnnotation() {
+    doTest();
+  }
+
+  public void testSuperMethodWithCommentAnnotation() {
+    doTest();
+  }
+
   public void testLocalVarInDictKey() {  // PY-2558
     doTest();
   }

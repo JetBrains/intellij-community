@@ -30,7 +30,7 @@ public class JsonSchemaRefReferenceInspection extends JsonSchemaBasedInspectionB
                                              @NotNull JsonSchemaService service,
                                              @NotNull ProblemsHolder holder,
                                              @NotNull LocalInspectionToolSession session) {
-    boolean checkRefs = schema != null && service.isSchemaFile(schema.getSchemaFile());
+    boolean checkRefs = schema != null && service.isSchemaFile(schema);
     return new JsonElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {

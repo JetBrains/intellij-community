@@ -1248,7 +1248,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     protected abstract Rectangle getPointlessContentRec(Rectangle bounds, int pointerLength);
 
     public Set<AbstractPosition> getOtherPositions() {
-      HashSet<AbstractPosition> all = new HashSet<>();
+      LinkedHashSet<AbstractPosition> all = new LinkedHashSet<>();
       all.add(BELOW);
       all.add(ABOVE);
       all.add(AT_RIGHT);

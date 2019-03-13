@@ -38,8 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class RainbowHighlighter {
   private static final JBColor[] RAINBOW_JB_COLORS_DEFAULT = {
@@ -111,10 +111,15 @@ public class RainbowHighlighter {
   @Contract("_, null -> !null")
   public static Boolean isRainbowEnabled(@Nullable TextAttributesScheme colorsScheme, @Nullable Language language) {
     if (colorsScheme instanceof SchemeMetaInfo) {
-      String value = ((SchemeMetaInfo)colorsScheme).getMetaProperties().getProperty(getKey(language), INHERITED);
-      if (String.valueOf(true).equals(value)) return Boolean.TRUE;
-      if (String.valueOf(false).equals(value)) return Boolean.FALSE;
-      return language == null ? DEFAULT_RAINBOW_ON : null;
+      do {
+        String value = ((SchemeMetaInfo)colorsScheme).getMetaProperties().getProperty(getKey(language), INHERITED);
+        if (String.valueOf(true).equals(value)) return Boolean.TRUE;
+        if (String.valueOf(false).equals(value)) return Boolean.FALSE;
+        if (language == null) return DEFAULT_RAINBOW_ON;
+        language = language.getBaseLanguage();
+      }
+      while (language != null);
+      return null;
     }
     return false;
   }

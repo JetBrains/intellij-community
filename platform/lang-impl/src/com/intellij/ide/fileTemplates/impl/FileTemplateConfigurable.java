@@ -2,7 +2,6 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -16,7 +15,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -37,7 +35,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -390,33 +387,9 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     }
 
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    LayeredLexerEditorHighlighter highlighter = new LayeredLexerEditorHighlighter(new TemplateHighlighter(), scheme);
+    LayeredLexerEditorHighlighter highlighter = new LayeredLexerEditorHighlighter(new FileTemplateHighlighter(), scheme);
     highlighter.registerLayer(FileTemplateTokenType.TEXT, new LayerDescriptor(originalHighlighter, ""));
     return highlighter;
-  }
-
-  private static class TemplateHighlighter extends SyntaxHighlighterBase {
-    private final Lexer myLexer;
-
-    TemplateHighlighter() {
-      myLexer = createDefaultLexer();
-    }
-
-    @NotNull
-    @Override
-    public Lexer getHighlightingLexer() {
-      return myLexer;
-    }
-
-    @Override
-    @NotNull
-    public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-      if (tokenType == FileTemplateTokenType.MACRO || tokenType == FileTemplateTokenType.DIRECTIVE) {
-        return pack(TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES);
-      }
-
-      return EMPTY;
-    }
   }
 
   @NotNull

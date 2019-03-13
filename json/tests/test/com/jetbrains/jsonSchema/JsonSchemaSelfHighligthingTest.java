@@ -56,21 +56,15 @@ public class JsonSchemaSelfHighligthingTest extends JsonSchemaHeavyAbstractTest 
         checkHighlighting(new ExpectedHighlightingData(new DocumentImpl("{\n" +
                                                                         "  \"properties\": {\n" +
                                                                         "    \"withPattern\": {\n" +
-                                                                        "      \"pattern\": <warning descr=\"Unclosed character class near index 3\n" +
-                                                                        "^[]$\n" +
-                                                                        "   ^\">\"^[]$\"</warning>\n" +
+                                                                        "      \"pattern\": \"^[]$\"\n" +
                                                                         "    },\n" +
                                                                         "    \"everythingFine\": {\n" +
                                                                         "      \"pattern\": \"^[a]$\"\n" +
                                                                         "    }\n" +
                                                                         "  },\n" +
                                                                         "  \"patternProperties\": {\n" +
-                                                                        "    <warning descr=\"Unclosed character class near index 8\n" +
-                                                                        ".*p[0-9.*\n" +
-                                                                        "        ^\">\"p[0-9<error>\"</error></warning>: {},\n" +
-                                                                        "    <warning descr=\"Unclosed character class near index 8\n" +
-                                                                        ".*b[0-7.*\n" +
-                                                                        "        ^\">\"b[0-7<error>\"</error></warning>: {}\n" +
+                                                                        "    \"p[0-9<error>\"</error>: {},\n" +
+                                                                        "    \"b[0-7<error>\"</error>: {}\n" +
                                                                         "  }\n" +
                                                                         "}"), true, true, false, myFile));
       }

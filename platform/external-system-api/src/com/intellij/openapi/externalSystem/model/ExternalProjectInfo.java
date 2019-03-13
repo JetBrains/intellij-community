@@ -36,5 +36,7 @@ public interface ExternalProjectInfo {
 
   long getLastImportTimestamp();
 
+  String getBuildNumber();
+
   ExternalProjectInfo copy();
 }

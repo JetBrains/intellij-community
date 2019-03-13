@@ -125,7 +125,7 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
     private final CountDownLatch latch = new CountDownLatch(1);
 
     @Override
-    public void elementsAdded(@NotNull List<SESearcher.ElementInfo> list) {
+    public void elementsAdded(@NotNull List<SearchEverywhereFoundElementInfo> list) {
       list.forEach(info -> {
         List<Object> section = resultsMap.computeIfAbsent(info.getContributor().getSearchProviderId(), s -> new ArrayList<>());
         section.add(info.getElement());
@@ -133,7 +133,7 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
     }
 
     @Override
-    public void elementsRemoved(@NotNull List<SESearcher.ElementInfo> list) {
+    public void elementsRemoved(@NotNull List<SearchEverywhereFoundElementInfo> list) {
       list.forEach(info -> {
         List<Object> section = resultsMap.computeIfAbsent(info.getContributor().getSearchProviderId(), s -> new ArrayList<>());
         section.remove(info.getElement());

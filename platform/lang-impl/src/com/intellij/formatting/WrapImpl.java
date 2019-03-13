@@ -16,11 +16,14 @@
 
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class WrapImpl extends Wrap {
+  public static final int MAX_WRAP_NESTING_LEVELS = 50;
+
   /**
    * The block where the wrap needs to happen if the CHOP wrap mode is used and the chain of blocks exceeds the right margin.
    */
@@ -41,7 +44,12 @@ public class WrapImpl extends Wrap {
 
 
   public boolean isChildOf(@Nullable final WrapImpl wrap, LeafBlockWrapper leaf) {
+    return isChildOf(wrap, leaf, new FormatterIterationMonitor<>(MAX_WRAP_NESTING_LEVELS, false));
+  }
+
+  public boolean isChildOf(@Nullable final WrapImpl wrap, LeafBlockWrapper leaf, @NotNull FormatterIterationMonitor<Boolean> iterationMonitor) {
     if (getIgnoreParentWraps()) return false;
+    if (!iterationMonitor.iterate()) return iterationMonitor.getFallbackValue();
     if (leaf != null && myIgnoredWraps != null) {
       Collection<LeafBlockWrapper> leaves = myIgnoredWraps.get(wrap);
       if (leaves != null && leaves.contains(leaf)) {
@@ -50,7 +58,7 @@ public class WrapImpl extends Wrap {
     }
     for (WrapImpl parent : myParents) {
       if (parent == wrap) return true;
-      if (parent.isChildOf(wrap, leaf)) return true;
+      if (parent.isChildOf(wrap, leaf, iterationMonitor)) return true;
     }
     return false;
   }
@@ -66,7 +74,7 @@ public class WrapImpl extends Wrap {
   void registerParent(@Nullable WrapImpl parent) {
     if (parent == this) return;
     if (parent == null) return;
-    if (parent.isChildOf(this, null)) return;
+    if (parent.isChildOf(this, null, new FormatterIterationMonitor<>(MAX_WRAP_NESTING_LEVELS, true))) return;
     if (myParents == emptyParentsSet) myParents = new HashSet<>(5);
     myParents.add(parent);
   }

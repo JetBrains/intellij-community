@@ -16,4 +16,9 @@ class Testcase {
     }
   }
 
+  void test() {
+    <error descr="Incompatible types. Found: 'null', required: 'int'">int x = null;</error>
+    Integer boxed = x;
+    if (<warning descr="Condition 'boxed == 5' is always 'false'">boxed == 5</warning>) {}
+  }
 }

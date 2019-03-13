@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
 import com.intellij.psi.*;
@@ -71,8 +71,8 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
         return;
       }
       final int index;
-      if (!parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        if (parameters.length < 2) {
+      if (!TypeUtils.isJavaLangString(parameters[0].getType())) {
+        if (parameters.length < 2 || !TypeUtils.isJavaLangString(parameters[1].getType())) {
           return;
         }
         index = 2;

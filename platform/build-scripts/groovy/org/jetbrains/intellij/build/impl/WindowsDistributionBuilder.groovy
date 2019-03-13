@@ -78,6 +78,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   void buildArtifacts(String winDistPath) {
     /* Android Studio: no need to download JREs
     def arch = customizer.bundledJreArchitecture
+    //do not include win32 launcher into winzip with 9+ jbr bundled
+    def List<String> excludeList = ["bin/${buildContext.productProperties.baseFileName}.exe", "bin/${buildContext.productProperties.baseFileName}.exe.vmoptions"]
     def jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     List<String> jreDirectoryPaths = [jreDirectoryPath64]
 
@@ -101,14 +103,15 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     def secondJreDirectoryPath = (secondJreBuild != null) ? buildContext.bundledJreManager.extractSecondJre("windows", secondJreBuild) : null
     // Android Studio: we build separate artifacts for win32 and win64.
     if (customizer.buildZipArchive) {
+      // Android Studio: added by Change Idc07b110 / commit f20681e
       buildWinZip(buildContext.bundledJreManager.findWinJdk(JvmArchitecture.x64),
-                  buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)
+                  buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath, [])
       buildWinZip(buildContext.bundledJreManager.findWinJdk(JvmArchitecture.x32),
-                  buildContext.productProperties.buildCrossPlatformDistribution ? ".win32" : "", winDistPath)
+                  buildContext.productProperties.buildCrossPlatformDistribution ? ".win32" : "", winDistPath, [])
 /* Android Studio: removed by Change Idc07b110 / commit f20681e
-      buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath)
+      buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath, !buildContext.bundledJreManager.is32bitArchSupported() ? excludeList : [])
       if (secondJreDirectoryPath != null) {
-        buildWinZip([secondJreDirectoryPath], "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}.win", winDistPath)
+        buildWinZip([secondJreDirectoryPath], "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}.win", winDistPath, excludeList)
       }
     }
 
@@ -269,7 +272,7 @@ IDS_VM_OPTIONS=$vmOptions
   }
 
   // Android Studio: modified by Change Idc07b110 / commit f20681e
-  private void buildWinZip(String jdkDirectoryPath, String zipNameSuffix, String winDistPath) {
+  private void buildWinZip(String jdkDirectoryPath, String zipNameSuffix, String winDistPath, List<String> excludeList = [] ) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
       def targetPath = "${buildContext.paths.artifacts}/${baseName}${zipNameSuffix}.zip"
@@ -283,7 +286,11 @@ IDS_VM_OPTIONS=$vmOptions
 TODO(b/118034991): generate product-info.json files (or not) */
       buildContext.ant.zip(zipfile: targetPath, filesonly: true) { // Android Studio: filter out empty directories, due to b/68162671
         dirs.each {
-          zipfileset(dir: it, prefix: zipPrefix)
+          zipfileset(dir: it, prefix: zipPrefix) {
+            excludeList.each {
+              exclude(name: it)
+            }
+          }
         }
         zipfileset(dir: jdkDirectoryPath, prefix: "$zipPrefix/jre") {
           exclude(name: "src.zip")

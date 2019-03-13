@@ -17,12 +17,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.TasksToRun;
+
+import java.util.List;
 
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.getSourceFile;
@@ -105,12 +108,12 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
 
   @Nullable
   private ConfigurationData extractConfigurationData(ConfigurationContext context) {
-    PsiElement contextLocation = context.getPsiLocation();
-    if (contextLocation == null) return null;
-    PsiPackage psiPackage = JavaRuntimeConfigurationProducerBase.checkPackage(contextLocation);
-    if (psiPackage == null) return null;
     Module module = context.getModule();
     if (module == null) return null;
+    PsiElement contextLocation = context.getPsiLocation();
+    if (contextLocation == null) return null;
+    PsiPackage psiPackage = extractPackage(module, contextLocation);
+    if (psiPackage == null) return null;
     String projectPath = resolveProjectPath(module);
     if (projectPath == null) return null;
     PsiElement sourceElement = getSourceElement(module, contextLocation);
@@ -140,6 +143,25 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
     PsiDirectory[] sourceDirs = element.getDirectories(GlobalSearchScope.moduleScope(module));
     if (sourceDirs.length == 0) return null;
     return sourceDirs[0];
+  }
+
+  @Nullable
+  private static PsiPackage extractPackage(@NotNull Module module, @NotNull PsiElement location) {
+    PsiPackage psiPackage = JavaRuntimeConfigurationProducerBase.checkPackage(location);
+    if (psiPackage == null) return null;
+    if (!isTruePackage(module, location, psiPackage)) return null;
+    return psiPackage;
+  }
+
+  private static boolean isTruePackage(@NotNull Module module, @NotNull PsiElement location, @NotNull PsiPackage psiPackage) {
+    VirtualFile locationFile = getSourceFile(location);
+    if (locationFile == null) return true;
+    String locationPath = locationFile.getPath();
+    GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(module);
+    PsiDirectory[] packageDirs = psiPackage.getDirectories(moduleScope);
+    List<VirtualFile> packageFiles = ContainerUtil.mapNotNull(packageDirs, it -> getSourceFile(it));
+    List<String> packagePaths = ContainerUtil.map(packageFiles, it -> it.getPath());
+    return packagePaths.stream().anyMatch(locationPath::equals);
   }
 
   private static String extractLocationName(@NotNull PsiPackage aPackage, @NotNull Module module) {

@@ -40,6 +40,7 @@ import java.util.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getExternalProjectInfo;
 import static com.intellij.openapi.util.text.StringUtil.endsWithChar;
+import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.escapeIfNeeded;
 import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
 
 /**
@@ -124,8 +125,13 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
 
   public static boolean hasTasksInConfiguration(VirtualFile source, Project project, ExternalSystemTaskExecutionSettings settings) {
     List<TasksToRun> tasksToRun = findAllTestsTaskToRun(source, project);
-    List<String> taskNames = ContainerUtil.map(settings.getTaskNames(), StringUtil::stripQuotesAroundValue);
-    return tasksToRun.stream().anyMatch(taskNames::containsAll);
+    List<List<String>> escapedTasks = ContainerUtil.map(tasksToRun, tasks -> ContainerUtil.map(tasks, it -> escapeIfNeeded(it)));
+    List<String> taskNames = settings.getTaskNames();
+    if (escapedTasks.stream().anyMatch(taskNames::containsAll)) return true;
+    String scriptParameters = settings.getScriptParameters();
+    if (StringUtil.isEmpty(scriptParameters)) return false;
+    List<String> escapedJoinedTasks = ContainerUtil.map(escapedTasks, it -> StringUtil.join(it, " "));
+    return escapedJoinedTasks.stream().anyMatch(scriptParameters::contains);
   }
 
   /**

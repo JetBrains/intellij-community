@@ -207,7 +207,9 @@ public class ExceptionWorkerTest extends LightCodeInsightFixtureTestCase {
       "}";
     List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
       Trinity.create("Exception in thread \"main\" java.lang.ArrayStoreException: java.lang.Integer\n", null, null),
-      Trinity.create("\tat SomeClass.main(SomeClass.java:5)\n", 5, 12));
+      Trinity.create("\tat SomeClass.main(SomeClass.java:5)\n", 5, 12),
+      Trinity.create("\tat SomeClass.unknown(SomeClass.java:0)\n", 5, 12), // do not navigate: keep previous position
+      Trinity.create("\tat SomeClass.unknown(SomeClass.java:1)\n", 1, 1));
     checkColumnFinder(classText, traceAndPositions);
   }
   

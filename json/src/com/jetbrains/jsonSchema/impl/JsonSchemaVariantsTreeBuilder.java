@@ -16,15 +16,9 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.pointer.JsonPointerPosition;
-import com.intellij.json.psi.JsonContainer;
-import com.intellij.json.psi.JsonObject;
-import com.intellij.json.psi.JsonProperty;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,12 +36,13 @@ import static com.jetbrains.jsonSchema.JsonPointerUtil.isSelfReference;
  */
 public class JsonSchemaVariantsTreeBuilder {
 
-  public static JsonSchemaTreeNode buildTree(@NotNull final JsonSchemaObject schema,
+  public static JsonSchemaTreeNode buildTree(@NotNull Project project,
+                                             @NotNull final JsonSchemaObject schema,
                                              @NotNull final JsonPointerPosition position,
                                              final boolean skipLastExpand,
                                              final boolean acceptAdditional) {
     final JsonSchemaTreeNode root = new JsonSchemaTreeNode(null, schema);
-    JsonSchemaService service = JsonSchemaService.Impl.get(schema.getJsonObject().getProject());
+    JsonSchemaService service = JsonSchemaService.Impl.get(project);
     expandChildSchema(root, schema, service);
     // set root's position since this children are just variants of root
     for (JsonSchemaTreeNode treeNode : root.getChildren()) {
@@ -64,7 +59,7 @@ public class JsonSchemaVariantsTreeBuilder {
         node.nothingChild();
         continue;
       }
-      final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, node.getSchema(), acceptAdditional);
+      final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, node.getSchema(), acceptAdditional, true);
       if (ThreeState.NO.equals(pair.getFirst())) node.nothingChild();
       else if (ThreeState.YES.equals(pair.getFirst())) node.anyChild();
       else {
@@ -94,19 +89,11 @@ public class JsonSchemaVariantsTreeBuilder {
     return true;
   }
 
-  private static void expandChildSchema(@NotNull JsonSchemaTreeNode node, @NotNull JsonSchemaObject childSchema, @NotNull JsonSchemaService service) {
-    final JsonContainer element = childSchema.getJsonObject();
+  private static void expandChildSchema(@NotNull JsonSchemaTreeNode node,
+                                        @NotNull JsonSchemaObject childSchema,
+                                        @NotNull JsonSchemaService service) {
     if (interestingSchema(childSchema)) {
-      final Operation operation =
-        CachedValuesManager.getManager(element.getProject())
-          .createParameterizedCachedValue((JsonSchemaObject param) -> {
-            final Operation expand = new ProcessDefinitionsOperation(param, service);
-            expand.doMap(new HashSet<>());
-            expand.doReduce();
-            return CachedValueProvider.Result.create(expand, element.getContainingFile(),
-                                                     service.getAnySchemaChangeTracker());
-          }, false).getValue(childSchema);
-      node.createChildrenFromOperation(operation);
+      node.createChildrenFromOperation(getOperation(service, childSchema));
     }
     else {
       node.setChild(childSchema);
@@ -114,10 +101,22 @@ public class JsonSchemaVariantsTreeBuilder {
   }
 
   @NotNull
-  public static Pair<ThreeState, JsonSchemaObject> doSingleStep(JsonPointerPosition step, @NotNull JsonSchemaObject parent, boolean acceptAdditionalPropertiesSchemas) {
+  private static Operation getOperation(@NotNull JsonSchemaService service,
+                                        JsonSchemaObject param) {
+    final Operation expand = new ProcessDefinitionsOperation(param, service);
+    expand.doMap(new HashSet<>());
+    expand.doReduce();
+    return expand;
+  }
+
+  @NotNull
+  public static Pair<ThreeState, JsonSchemaObject> doSingleStep(@NotNull JsonPointerPosition step,
+                                                                @NotNull JsonSchemaObject parent,
+                                                                boolean acceptAdditionalPropertiesSchemas,
+                                                                boolean processAllBranches) {
     final String name = step.getFirstName();
     if (name != null) {
-      return propertyStep(name, parent, acceptAdditionalPropertiesSchemas);
+      return propertyStep(name, parent, acceptAdditionalPropertiesSchemas, processAllBranches);
     } else {
       final int index = step.getFirstIndex();
       assert index >= 0;
@@ -137,10 +136,10 @@ public class JsonSchemaVariantsTreeBuilder {
       myChildOperations = new ArrayList<>();
     }
 
-    protected abstract void map(@NotNull Set<JsonContainer> visited);
+    protected abstract void map(@NotNull Set<JsonSchemaObject> visited);
     protected abstract void reduce();
 
-    public void doMap(@NotNull final Set<JsonContainer> visited) {
+    public void doMap(@NotNull final Set<JsonSchemaObject> visited) {
       map(visited);
       for (Operation operation : myChildOperations) {
         operation.doMap(visited);
@@ -202,7 +201,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<JsonContainer> visited) {
+    public void map(@NotNull final Set<JsonSchemaObject> visited) {
       JsonSchemaObject current = mySourceNode;
       while (!StringUtil.isEmptyOrSpaces(current.getRef())) {
         final JsonSchemaObject definition = current.resolveRefSchema(myService);
@@ -211,8 +210,8 @@ public class JsonSchemaVariantsTreeBuilder {
           return;
         }
         // this definition was already expanded; do not cycle
-        if (!visited.add(definition.getJsonObject())) break;
-        current = merge(current, definition, current);
+        if (!visited.add(definition)) break;
+        current = JsonSchemaObject.merge(current, definition, current);
       }
       final Operation expandOperation = createExpandOperation(current, myService);
       if (expandOperation != null) myChildOperations.add(expandOperation);
@@ -239,7 +238,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<JsonContainer> visited) {
+    public void map(@NotNull final Set<JsonSchemaObject> visited) {
       List<JsonSchemaObject> allOf = mySourceNode.getAllOf();
       assert allOf != null;
       myChildOperations.addAll(ContainerUtil.map(allOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
@@ -304,7 +303,7 @@ public class JsonSchemaVariantsTreeBuilder {
   private static List<JsonSchemaObject> andGroup(@NotNull JsonSchemaObject object, @NotNull List<JsonSchemaObject> group) {
     List<JsonSchemaObject> list = ContainerUtil.newArrayListWithCapacity(group.size());
     for (JsonSchemaObject s: group) {
-      JsonSchemaObject schemaObject = merge(object, s, s);
+      JsonSchemaObject schemaObject = JsonSchemaObject.merge(object, s, s);
       if (schemaObject.isValidByExclusion()) {
         list.add(schemaObject);
       }
@@ -321,7 +320,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<JsonContainer> visited) {
+    public void map(@NotNull final Set<JsonSchemaObject> visited) {
       List<JsonSchemaObject> oneOf = mySourceNode.getOneOf();
       assert oneOf != null;
       myChildOperations.addAll(ContainerUtil.map(oneOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
@@ -349,7 +348,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<JsonContainer> visited) {
+    public void map(@NotNull final Set<JsonSchemaObject> visited) {
       List<JsonSchemaObject> anyOf = mySourceNode.getAnyOf();
       assert anyOf != null;
       myChildOperations.addAll(ContainerUtil.map(anyOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
@@ -368,17 +367,6 @@ public class JsonSchemaVariantsTreeBuilder {
     }
   }
 
-  @NotNull
-  public static JsonSchemaObject merge(@NotNull JsonSchemaObject base,
-                                       @NotNull JsonSchemaObject other,
-                                       @NotNull JsonSchemaObject pointTo) {
-    final JsonSchemaObject object = new JsonSchemaObject(pointTo.getJsonObject());
-    object.mergeValues(other);
-    object.mergeValues(base);
-    object.setRef(other.getRef());
-    return object;
-  }
-
   private static boolean conflictingSchema(JsonSchemaObject schema) {
     int cnt = 0;
     if (schema.getAllOf() != null) ++cnt;
@@ -394,24 +382,10 @@ public class JsonSchemaVariantsTreeBuilder {
 
 
   @NotNull
-  private static Pair<ThreeState, JsonSchemaObject> propertyStep(@NotNull String name, @NotNull JsonSchemaObject parent,
-                                                                 boolean acceptAdditionalPropertiesSchemas) {
-    if (JsonSchemaObject.DEFINITIONS.equals(name) &&
-        parent.getDefinitionsMap() != null && !isInMainSchema(parent)) {
-      // definitions pointer here is fictive so lets find any
-      final Map<String, JsonSchemaObject> definitionsMap = parent.getDefinitionsMap();
-      final JsonObject anyDefinitions = definitionsMap.values().stream()
-        .filter(def -> {
-          final JsonProperty parentObj = ObjectUtils.tryCast(def.getJsonObject().getParent(), JsonProperty.class);
-          return parentObj != null && parentObj.isValid() && parentObj.getValue() instanceof JsonObject;
-        })
-        .map(def -> (JsonObject)((JsonProperty) def.getJsonObject().getParent()).getValue())
-        .findFirst().orElse(null);
-      if (anyDefinitions == null) return Pair.create(ThreeState.NO, null);
-      final JsonSchemaObject object = new JsonSchemaObject(anyDefinitions);
-      object.setProperties(definitionsMap);
-      return Pair.create(ThreeState.UNSURE, object);
-    }
+  private static Pair<ThreeState, JsonSchemaObject> propertyStep(@NotNull String name,
+                                                                 @NotNull JsonSchemaObject parent,
+                                                                 boolean acceptAdditionalPropertiesSchemas,
+                                                                 boolean processAllBranches) {
     final JsonSchemaObject child = parent.getProperties().get(name);
     if (child != null) {
       return Pair.create(ThreeState.UNSURE, child);
@@ -426,7 +400,7 @@ public class JsonSchemaVariantsTreeBuilder {
       }
 
       List<IfThenElse> ifThenElseList = parent.getIfThenElse();
-      if (ifThenElseList != null) {
+      if (ifThenElseList != null && processAllBranches) {
         for (IfThenElse ifThenElse : ifThenElseList) {
           // resolve inside V7 if-then-else conditionals
           JsonSchemaObject childObject;
@@ -458,17 +432,6 @@ public class JsonSchemaVariantsTreeBuilder {
     }
     // by default, additional properties are allowed
     return Pair.create(ThreeState.YES, null);
-  }
-
-  private static boolean isInMainSchema(@NotNull JsonSchemaObject parent) {
-    final VirtualFile schemaFile = parent.getSchemaFile();
-    final JsonSchemaService service = JsonSchemaService.Impl.get(parent.getJsonObject().getProject());
-    if (!service.isApplicableToFile(schemaFile) || !service.isSchemaFile(schemaFile)) return false;
-
-    final JsonSchemaObject rootSchema = service.getSchemaObjectForSchemaFile(schemaFile);
-    if (rootSchema == null) return false;
-
-    return JsonSchemaVersion.isSchemaSchemaId(rootSchema.getId());
   }
 
   @NotNull

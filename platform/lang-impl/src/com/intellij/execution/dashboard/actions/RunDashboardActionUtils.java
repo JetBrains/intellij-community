@@ -9,6 +9,10 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 class RunDashboardActionUtils {
   private RunDashboardActionUtils() {
@@ -19,18 +23,38 @@ class RunDashboardActionUtils {
     return getTargets(e, RunDashboardRunConfigurationNode.class);
   }
 
+  @Nullable
+  static RunDashboardRunConfigurationNode getTarget(@NotNull AnActionEvent e) {
+    Object[] items = e.getData(PlatformDataKeys.SELECTED_ITEMS);
+    if (items == null || items.length != 1 || !(items[0] instanceof RunDashboardRunConfigurationNode)) return null;
+
+    return (RunDashboardRunConfigurationNode)items[0];
+  }
+
   @NotNull
   static <T> JBIterable<T> getTargets(@NotNull AnActionEvent e, @NotNull Class<T> clazz) {
-    return JBIterable.of(e.getData(PlatformDataKeys.SELECTED_ITEMS)).filter(clazz);
+    Object[] items = e.getData(PlatformDataKeys.SELECTED_ITEMS);
+    if (items == null) return JBIterable.empty();
+
+    List<T> result = new ArrayList<>();
+    for (Object item : items) {
+      if (!clazz.isInstance(item)) {
+        return JBIterable.empty();
+      }
+      result.add(clazz.cast(item));
+    }
+    return JBIterable.from(result);
   }
 
   @NotNull
   static JBIterable<RunDashboardRunConfigurationNode> getLeafTargets(@NotNull AnActionEvent e) {
     JBIterable<Object> roots = JBIterable.of(e.getData(PlatformDataKeys.SELECTED_ITEMS));
-    return JBTreeTraverser.from(o -> o instanceof GroupingNode ? ((GroupingNode)o).getChildren() : null)
+    JBIterable<Object> leaves = JBTreeTraverser.from(o -> o instanceof GroupingNode ? ((GroupingNode)o).getChildren() : null)
       .withRoots(roots)
       .traverse(TreeTraversal.LEAVES_DFS)
-      .filter(RunDashboardRunConfigurationNode.class)
       .unique();
+    if (leaves.filter(leaf -> !(leaf instanceof RunDashboardRunConfigurationNode)).isNotEmpty()) return JBIterable.empty();
+
+    return leaves.filter(RunDashboardRunConfigurationNode.class);
   }
 }

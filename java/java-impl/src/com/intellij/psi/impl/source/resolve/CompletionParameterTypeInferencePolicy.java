@@ -31,11 +31,8 @@ public class CompletionParameterTypeInferencePolicy extends ProcessCandidatePara
 
   @Override
   public PsiType getDefaultExpectedType(PsiCallExpression methodCall) {
-    ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(methodCall, true);
-    if (expectedTypes.length > 0) {
-      return expectedTypes[0].getType();
-    }
-    return PsiType.NULL;
+    ExpectedTypeInfo expectedType = ExpectedTypesProvider.getSingleExpectedTypeForCompletion(methodCall);
+    return expectedType == null ? PsiType.NULL : expectedType.getType();
   }
 
   @Override

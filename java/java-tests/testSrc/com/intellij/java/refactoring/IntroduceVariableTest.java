@@ -580,6 +580,17 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("l", false, false, false, "D<java.lang.Integer>", false));
   }
 
+  public void testForIterationParameterVar() {
+    try {
+      doTest(new MockIntroduceVariableHandler("input", false, false, false, "Object", false));
+    }
+    catch (Exception e) {
+      assertEquals("Error message:Cannot perform refactoring.\nUnknown expression type.", e.getMessage());
+      return;
+    }
+    fail("Should not be able to perform refactoring");
+  }
+
   public void testOneLineLambdaVoidCompatible() {
     doTest(new MockIntroduceVariableHandler("c", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }

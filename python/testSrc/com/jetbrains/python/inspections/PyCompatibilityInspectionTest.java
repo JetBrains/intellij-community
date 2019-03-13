@@ -215,6 +215,10 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest(LanguageLevel.PYTHON34);
   }
 
+  public void testInputFromSixLib() {
+    doTest(LanguageLevel.PYTHON27);
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }

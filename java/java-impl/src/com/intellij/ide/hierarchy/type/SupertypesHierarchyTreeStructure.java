@@ -6,7 +6,6 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +36,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
       }
       return descriptors.toArray(new HierarchyNodeDescriptor[0]);
     } else if (element instanceof PsiFunctionalExpression) {
-      final PsiClass functionalInterfaceClass = PsiUtil.resolveClassInType(((PsiFunctionalExpression)element).getFunctionalInterfaceType());
+      final PsiClass functionalInterfaceClass = LambdaUtil.resolveFunctionalInterfaceClass((PsiFunctionalExpression)element);
       if (functionalInterfaceClass != null) {
         return new HierarchyNodeDescriptor[] {new TypeHierarchyNodeDescriptor(myProject, descriptor, functionalInterfaceClass, false)};
       }

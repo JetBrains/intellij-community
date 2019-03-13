@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Expression;
@@ -17,24 +17,21 @@ public class RegExMacro extends MacroBase {
   @Nullable
   @Override
   protected Result calculateResult(@NotNull Expression[] params, ExpressionContext context, boolean quick) {
-    String value = getTextResult(params[0], context);
+    if (params.length != 3) {
+      return null;
+    }
+    Result value = params[0].calculateResult(context);
     if (value == null) {
       return null;
     }
-    String pattern = getTextResult(params[1], context);
+    Result pattern = params[1].calculateResult(context);
     if (pattern == null) {
       return null;
     }
-    String matcher = getTextResult(params[2], context);
-    if (matcher == null) {
+    Result replacement = params[2].calculateResult(context);
+    if (replacement == null) {
       return null;
     }
-    return new TextResult(value.replaceAll(pattern, matcher));
-  }
-
-  @Nullable
-  private static String getTextResult(@NotNull Expression param, ExpressionContext context) {
-    Result result = param.calculateResult(context);
-    return result != null ? result.toString() : null;
+    return new TextResult(value.toString().replaceAll(pattern.toString(), replacement.toString()));
   }
 }

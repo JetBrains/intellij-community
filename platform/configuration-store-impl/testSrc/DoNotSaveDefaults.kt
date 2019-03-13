@@ -13,7 +13,7 @@ import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createOrLoadProject
@@ -32,7 +32,7 @@ internal class DoNotSaveDefaultsTest {
   companion object {
     @JvmField
     @ClassRule
-    val projectRule = ProjectRule()
+    val appRule = ApplicationRule()
   }
 
   @JvmField
@@ -41,18 +41,8 @@ internal class DoNotSaveDefaultsTest {
 
   @Test
   fun testApp() = runBlocking {
-    val configDir = Paths.get(PathManager.getConfigPath())!!
-    val newConfigDir = if (configDir.exists()) Paths.get(PathManager.getConfigPath() + "__old") else null
-    if (newConfigDir != null) {
-      newConfigDir.delete()
-      configDir.move(newConfigDir)
-    }
-    try {
+    useAppConfigDir {
       doTest(ApplicationManager.getApplication() as ApplicationImpl)
-    }
-    finally {
-      configDir.delete()
-      newConfigDir?.move(configDir)
     }
   }
 
@@ -118,3 +108,19 @@ internal class DoNotSaveDefaultsTest {
   }
 }
 
+internal inline fun useAppConfigDir(task: () -> Unit) {
+  val configDir = Paths.get(PathManager.getConfigPath())!!
+  val newConfigDir = if (configDir.exists()) Paths.get(PathManager.getConfigPath() + "__old") else null
+  if (newConfigDir != null) {
+    newConfigDir.delete()
+    configDir.move(newConfigDir)
+  }
+
+  try {
+    task()
+  }
+  finally {
+    configDir.delete()
+    newConfigDir?.move(configDir)
+  }
+}

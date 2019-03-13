@@ -22,7 +22,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -81,7 +80,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
     @Override
     public void visitLambdaExpression(PsiLambdaExpression lambda) {
       super.visitLambdaExpression(lambda);
-      final PsiClass functionalInterface = PsiUtil.resolveClassInType(lambda.getFunctionalInterfaceType());
+      final PsiClass functionalInterface = LambdaUtil.resolveFunctionalInterfaceClass(lambda);
       if (functionalInterface == null || !CommonClassNames.JAVA_UTIL_COMPARATOR.equals(functionalInterface.getQualifiedName()) ||
           ControlFlowUtils.lambdaExpressionAlwaysThrowsException(lambda)) {
         return;

@@ -26,18 +26,19 @@ public abstract class JsonSchemaHighlightingTestBase extends DaemonAnalyzerTestC
   protected abstract Predicate<VirtualFile> getAvailabilityPredicate();
 
   protected void doTest(@Language("JSON") @NotNull final String schema, @NotNull final String text) throws Exception {
-    final PsiFile file = configureInitially(schema, text);
+    final PsiFile file = configureInitially(schema, text, "json");
     doTest(file.getVirtualFile(), true, false);
   }
 
   @NotNull
-  protected PsiFile configureInitially(@NotNull @Language("JSON") String schema,
-                                       @NotNull String text) throws Exception {
+  protected PsiFile configureInitially(@NotNull String schema,
+                                       @NotNull String text,
+                                       @NotNull String schemaExt) throws Exception {
     enableInspectionTool(getInspectionProfile());
 
     final PsiFile file = doCreateFile(text);
 
-    registerProvider(getProject(), schema);
+    registerProvider(getProject(), schema, schemaExt);
     Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
@@ -53,9 +54,9 @@ public abstract class JsonSchemaHighlightingTestBase extends DaemonAnalyzerTestC
     return createFile(myModule, getTestFileName(), text);
   }
 
-  private void registerProvider(Project project, @NotNull String schema) throws IOException {
+  private void registerProvider(Project project, @NotNull String schema, @NotNull String schemaExt) throws IOException {
     File dir = createTempDir("json_schema_test", true);
-    File child = new File(dir, "schema.json");
+    File child = new File(dir, "schema." + schemaExt);
     //noinspection ResultOfMethodCallIgnored
     child.createNewFile();
     FileUtil.writeToFile(child, schema);

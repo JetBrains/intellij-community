@@ -26,15 +26,15 @@ public class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler 
     if (literal == null) return null;
     final PsiElement parent = literal.getParent();
     if (literal.getReferences().length == 0 && parent instanceof JsonProperty && ((JsonProperty)parent).getNameElement() == literal) {
-      final JsonSchemaService service = JsonSchemaService.Impl.get(literal.getProject());
       final PsiFile containingFile = literal.getContainingFile();
+      final JsonSchemaService service = JsonSchemaService.Impl.get(literal.getProject());
       final VirtualFile file = containingFile.getVirtualFile();
       if (file == null || !service.isApplicableToFile(file)) return null;
       final JsonPointerPosition steps = JsonOriginalPsiWalker.INSTANCE.findPosition(literal, true);
       if (steps == null) return null;
       final JsonSchemaObject schemaObject = service.getSchemaObject(file);
       if (schemaObject != null) {
-        final PsiElement target = new JsonSchemaResolver(schemaObject, false, steps)
+        final PsiElement target = new JsonSchemaResolver(sourceElement.getProject(), schemaObject, false, steps)
           .findNavigationTarget(((JsonProperty)parent).getValue(),
                                 JsonSchemaService.isSchemaFile(containingFile));
         if (target != null) {

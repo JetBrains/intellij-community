@@ -45,18 +45,19 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
     this(list, namer, filter, () -> speedSearch.getFilter());
   }
 
-  public NameFilteringListModel(JList list, final Function<? super T, String> namer, final Condition<? super String> filter, final SpeedSearchSupply speedSearch) {
+  public NameFilteringListModel(JList<T> list, final Function<? super T, String> namer, final Condition<? super String> filter, final SpeedSearchSupply speedSearch) {
     this(list, namer, filter, () -> {
       final String prefix = speedSearch.getEnteredPrefix();
       return prefix == null ? "" : prefix;
     });
   }
 
-  public NameFilteringListModel(JList list, final Function<? super T, String> namer, final Condition<? super String> filter, Computable<String> pattern) {
-    super(list);
+  public NameFilteringListModel(JList<T> list, final Function<? super T, String> namer, final Condition<? super String> filter, Computable<String> pattern) {
+    super(list.getModel());
     myPattern = pattern;
     myNamer = namer;
     setFilter(namer != null ? (Condition<T>)t -> filter.value(namer.fun(t)) : null);
+    list.setModel(this);
   }
 
   @Override

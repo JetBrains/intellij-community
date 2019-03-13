@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.OccurenceNavigator;
@@ -12,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.text.Position;
 
 /**
  * @author nik
@@ -95,4 +94,9 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
   protected abstract ListCellRenderer createListRenderer();
 
   protected abstract void onFrameChanged(final Object selectedValue);
+
+  @Override
+  public int getNextMatch(String prefix, int startIndex, Position.Bias bias) {
+    return -1; // disable built-in search completely to avoid calling toString for every item
+  }
 }

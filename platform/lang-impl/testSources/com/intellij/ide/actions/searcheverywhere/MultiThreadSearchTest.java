@@ -440,7 +440,7 @@ public class MultiThreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     }
 
     @Override
-    public void elementsAdded(@NotNull List<SESearcher.ElementInfo> added) {
+    public void elementsAdded(@NotNull List<SearchEverywhereFoundElementInfo> added) {
       added.forEach(info -> {
         List<String> list = myMap.computeIfAbsent(info.getContributor().getSearchProviderId(), s -> new ArrayList<>());
         list.add((String) info.getElement());
@@ -448,7 +448,7 @@ public class MultiThreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     }
 
     @Override
-    public void elementsRemoved(@NotNull List<SESearcher.ElementInfo> removed) {
+    public void elementsRemoved(@NotNull List<SearchEverywhereFoundElementInfo> removed) {
       removed.forEach(info -> {
         List<String> list = myMap.get(info.getContributor().getSearchProviderId());
         Assert.assertNotNull("Trying to remove object, that wasn't added", list);

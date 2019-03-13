@@ -40,7 +40,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
   private ActionLink myActionLink;
   private JBTextField myAttachProcessFilter;
   private JBLabel myAttachFilterLabel;
-  private final List<String> myPyQtBackendsList = Lists.newArrayList("Auto", "PyQt4", "PyQt5", "PySide");
+  private final List<String> myPyQtBackendsList = Lists.newArrayList("Auto", "PyQt4", "PyQt5", "PySide", "PySide2");
 
   private final Project myProject;
 

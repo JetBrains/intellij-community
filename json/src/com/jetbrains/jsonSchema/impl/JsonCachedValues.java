@@ -40,13 +40,7 @@ public class JsonCachedValues {
 
   @Nullable
   private static JsonSchemaObject computeSchemaObject(@NotNull PsiFile f) {
-    final JsonObject topLevelValue = AstLoadingFilter.forceAllowTreeLoading(
-      f,
-      () -> ObjectUtils.tryCast(((JsonFile)f).getTopLevelValue(), JsonObject.class));
-    if (topLevelValue != null) {
-      return new JsonSchemaReader().read(topLevelValue);
-    }
-    return null;
+    return new JsonSchemaReader(f.getVirtualFile()).read(f);
   }
 
   static final String URL_CACHE_KEY = "JsonSchemaUrlCache";
@@ -98,24 +92,30 @@ public class JsonCachedValues {
                                       @NotNull Function<? super PsiFile, ? extends T> eval,
                                       @NotNull Key<CachedValue<T>> cacheKey) {
     final PsiFile psiFile = resolveFile(schemaFile, project);
-    if (!(psiFile instanceof JsonFile)) return null;
+    if (psiFile == null) return null;
     return getOrCompute(psiFile, eval, cacheKey);
   }
 
   static final String ID_PATHS_CACHE_KEY = "JsonSchemaIdToPointerCache";
   private static final Key<CachedValue<Map<String, String>>> SCHEMA_ID_PATHS_CACHE_KEY = Key.create(ID_PATHS_CACHE_KEY);
   public static Collection<String> getAllIdsInFile(PsiFile psiFile) {
-    Map<String, String> map = getOrCompute(psiFile, JsonCachedValues::computeIdsMap, SCHEMA_ID_PATHS_CACHE_KEY);
+    Map<String, String> map = getOrComputeIdsMap(psiFile);
     return map == null ? ContainerUtil.emptyList() : map.keySet();
   }
   @Nullable
   public static String resolveId(PsiFile psiFile, String id) {
-    Map<String, String> map = getOrCompute(psiFile, JsonCachedValues::computeIdsMap, SCHEMA_ID_PATHS_CACHE_KEY);
+    Map<String, String> map = getOrComputeIdsMap(psiFile);
     return map == null ? null : map.get(id);
   }
 
+  @Nullable
+  public static Map<String, String> getOrComputeIdsMap(PsiFile psiFile) {
+    return getOrCompute(psiFile, JsonCachedValues::computeIdsMap, SCHEMA_ID_PATHS_CACHE_KEY);
+  }
+
+  @NotNull
   private static Map<String, String> computeIdsMap(PsiFile file) {
-    return SyntaxTraverser.psiTraverser(file).filter(JsonProperty.class).filter(p -> "$id".equals(p.getName()))
+    return SyntaxTraverser.psiTraverser(file).filter(JsonProperty.class).filter(p -> "$id".equals(StringUtil.unquoteString(p.getNameElement().getText())))
       .filter(p -> p.getValue() instanceof JsonStringLiteral)
       .toMap(p -> ((JsonStringLiteral)Objects.requireNonNull(p.getValue())).getValue(),
              p -> JsonQualifiedNameProvider.generateQualifiedName(p.getParent(), JsonQualifiedNameKind.JsonPointer));

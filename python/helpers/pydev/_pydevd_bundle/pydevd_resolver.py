@@ -3,6 +3,8 @@ try:
 except:
     import io as StringIO
 import traceback
+import warnings
+from contextlib import contextmanager
 from os.path import basename
 
 from _pydevd_bundle import pydevd_constants
@@ -55,6 +57,13 @@ except:
     MethodWrapperType = None
 
 
+@contextmanager
+def suppress_warnings():
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        yield
+
+
 #=======================================================================================================================
 # See: pydevd_extension_api module for resolver interface
 #=======================================================================================================================
@@ -69,7 +78,8 @@ class DefaultResolver:
     '''
 
     def resolve(self, var, attribute):
-        return getattr(var, attribute)
+        with suppress_warnings():
+            return getattr(var, attribute)
 
     def get_dictionary(self, var, names=None):
         if MethodWrapperType:
@@ -164,7 +174,8 @@ class DefaultResolver:
                         continue
 
                 try:
-                    attr = getattr(var, n)
+                    with suppress_warnings():
+                        attr = getattr(var, n)
 
                     #filter builtins?
                     if filterBuiltIn:

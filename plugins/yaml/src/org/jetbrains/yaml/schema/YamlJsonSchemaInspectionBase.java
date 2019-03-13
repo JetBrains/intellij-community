@@ -11,11 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLFile;
-import org.jetbrains.yaml.psi.YAMLValue;
-
-import java.util.List;
 
 public abstract class YamlJsonSchemaInspectionBase extends LocalInspectionTool {
   @NotNull
@@ -27,14 +23,11 @@ public abstract class YamlJsonSchemaInspectionBase extends LocalInspectionTool {
     if (!(file instanceof YAMLFile)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    List<YAMLDocument> documents = ((YAMLFile)file).getDocuments();
-    if (documents.size() != 1) {
+
+    PsiElement root = YamlJsonPsiWalker.INSTANCE.getRoot(file);
+    if (root == null) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-
-    YAMLDocument document = documents.get(0);
-    YAMLValue topLevelValue = document.getTopLevelValue();
-    PsiElement root = topLevelValue == null ? document : topLevelValue;
     JsonSchemaService service = JsonSchemaService.Impl.get(file.getProject());
     VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
     if (!service.isApplicableToFile(virtualFile)) {

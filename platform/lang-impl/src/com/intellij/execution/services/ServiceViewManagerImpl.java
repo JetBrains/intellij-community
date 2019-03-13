@@ -1,9 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
-import com.intellij.execution.dashboard.RunDashboardGroupingRule;
-import com.intellij.execution.dashboard.tree.RunDashboardGrouper;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -17,39 +16,33 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.Property;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.List;
 
 @State(
   name = "ServiceViewManager",
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public class ServiceViewManagerImpl implements ServiceViewManager, PersistentStateComponent<ServiceViewManagerImpl.State> {
-  private static final float DEFAULT_CONTENT_PROPORTION = 0.3f;
-
   // TODO [konstantin.aleev] provide help id
   @NonNls private static final String HELP_ID = "run-dashboard.reference";
 
   @NotNull private final Project myProject;
 
   @NotNull private State myState = new State();
-  @NotNull private final List<RunDashboardGrouper> myGroupers;
-
   private ServiceView myServiceView;
 
   public ServiceViewManagerImpl(@NotNull Project project) {
     myProject = project;
-
-    myGroupers = ContainerUtil.map(RunDashboardGroupingRule.EP_NAME.getExtensions(), RunDashboardGrouper::new);
+    myProject.getMessageBus().connect(myProject).subscribe(ServiceViewContributor.TOPIC, this::updateToolWindow);
   }
 
   public void createToolWindowContent(@NotNull ToolWindow toolWindow) {
-    myServiceView = new ServiceView(myProject, myGroupers);
-    myServiceView.setContentProportion(myState.contentProportion);
+    myServiceView = new ServiceView(myProject, myState.viewState);
 
     Content toolWindowContent = ContentFactory.SERVICE.getInstance().createContent(myServiceView, null, false);
     toolWindowContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
@@ -72,9 +65,8 @@ public class ServiceViewManagerImpl implements ServiceViewManager, PersistentSta
     });
   }
 
-  @Override
-  public void contentChanged(boolean withStructure) {
-    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+  private void updateToolWindow(ServiceViewContributor.ServiceEvent event) {
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     if (toolWindowManager == null) return;
 
     toolWindowManager.invokeLater(() -> {
@@ -82,26 +74,20 @@ public class ServiceViewManagerImpl implements ServiceViewManager, PersistentSta
         return;
       }
 
-      if (withStructure) {
-        boolean available = true; //hasContent();
-        ToolWindow toolWindow = toolWindowManager.getToolWindow(ToolWindowId.SERVICES);
-        if (toolWindow == null) {
-          toolWindow = createToolWindow(toolWindowManager, available);
-          if (available) {
-            toolWindow.show(null);
-          }
-          return;
-        }
-
-        boolean doShow = !toolWindow.isAvailable() && available;
-        toolWindow.setAvailable(available, null);
-        if (doShow) {
+      boolean available = true; //TODO [konstantin.aleev] hasContent();
+      ToolWindow toolWindow = toolWindowManager.getToolWindow(ToolWindowId.SERVICES);
+      if (toolWindow == null) {
+        toolWindow = createToolWindow(toolWindowManager, available);
+        if (available) {
           toolWindow.show(null);
         }
+        return;
       }
 
-      if (myServiceView != null) {
-        myServiceView.updateContent(withStructure);
+      boolean doShow = !toolWindow.isAvailable() && available;
+      toolWindow.setAvailable(available, null);
+      if (doShow) {
+        toolWindow.show(null);
       }
     });
   }
@@ -118,9 +104,11 @@ public class ServiceViewManagerImpl implements ServiceViewManager, PersistentSta
   @NotNull
   @Override
   public State getState() {
-    ServiceView serviceViewContent = myServiceView;
-    if (serviceViewContent != null) {
-      myState.contentProportion = serviceViewContent.getContentProportion();
+    ServiceView serviceView = myServiceView;
+    if (serviceView != null) {
+      myState.viewState = serviceView.getState();
+      myState.viewState.treeStateElement = new Element("root");
+      myState.viewState.treeState.writeExternal(myState.viewState.treeStateElement);
     }
     return myState;
   }
@@ -128,6 +116,7 @@ public class ServiceViewManagerImpl implements ServiceViewManager, PersistentSta
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
+    myState.viewState.treeState = TreeState.createFrom(myState.viewState.treeStateElement);
   }
 
   static ServiceView getServiceView(@NotNull Project project) {
@@ -135,7 +124,8 @@ public class ServiceViewManagerImpl implements ServiceViewManager, PersistentSta
   }
 
   static class State {
-    public float contentProportion = DEFAULT_CONTENT_PROPORTION;
+    @Property(surroundWithTag = false)
+    public ServiceViewState viewState = new ServiceViewState();
   }
 
   private static String getToolWindowId() {

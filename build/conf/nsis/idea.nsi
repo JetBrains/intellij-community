@@ -430,7 +430,7 @@ Function ConfirmDesktopShortcut
     ${EndIf}
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $downloadJreX86
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Text" "Download and install JRE x86 by JetBrains"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Text" "$(download_jre_32bit_version)"
   ${EndIf}
 custom_pre_actions:
   Call customPreInstallActions
@@ -1532,10 +1532,8 @@ Function un.onInit
   Call un.UninstallFeedback
 
 ; Uninstallation was run from installation dir?
-  IfFileExists "$INSTDIR\IdeaWin32.dll" 0 end_of_uninstall
   IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
   IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE_64}" 0 end_of_uninstall
-  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" 0 end_of_uninstall
 
 get_reg_key:
   SetRegView 32

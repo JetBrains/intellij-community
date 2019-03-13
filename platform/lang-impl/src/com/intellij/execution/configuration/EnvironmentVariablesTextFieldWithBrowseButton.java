@@ -88,6 +88,18 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   }
 
   @NotNull
+  @Override
+  protected Icon getDefaultIcon() {
+    return AllIcons.General.InlineVariables;
+  }
+
+  @NotNull
+  @Override
+  protected Icon getHoveredIcon() {
+    return AllIcons.General.InlineVariablesHover;
+  }
+
+  @NotNull
   private static String stringifyEnvs(@NotNull Map<String, String> envs) {
     if (envs.isEmpty()) {
       return "";

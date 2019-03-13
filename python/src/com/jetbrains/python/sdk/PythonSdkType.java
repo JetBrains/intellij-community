@@ -173,7 +173,7 @@ public final class PythonSdkType extends SdkType {
 
   public static boolean isInvalid(@NotNull Sdk sdk) {
     if (isRemote(sdk)) {
-      return false;
+      return PyRemoteSdkValidator.Companion.isInvalid(sdk);
     }
     final VirtualFile interpreter = sdk.getHomeDirectory();
     return interpreter == null || !interpreter.exists();

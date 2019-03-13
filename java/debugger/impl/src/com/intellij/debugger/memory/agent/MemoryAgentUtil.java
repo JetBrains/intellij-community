@@ -13,6 +13,7 @@ import com.intellij.debugger.memory.ui.JavaReferenceInfo;
 import com.intellij.debugger.memory.ui.SizedReferenceInfo;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
+import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionListener;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.JavaExecutionUtil;
@@ -29,10 +30,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,6 +45,7 @@ import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -55,9 +61,9 @@ import java.util.jar.Attributes;
 
 public class MemoryAgentUtil {
   private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
+  private static final String MEMORY_AGENT_EXTRACT_DIRECTORY = "memory.agent.extract.dir";
   private static final Key<Boolean> LISTEN_MEMORY_AGENT_STARTUP_FAILED = Key.create("LISTEN_MEMORY_AGENT_STARTUP_FAILED");
   private static final int ESTIMATE_OBJECTS_SIZE_LIMIT = 2000;
-  private static final AtomicBoolean LISTENER_ADDED = new AtomicBoolean(false);
 
   public static void addMemoryAgent(@NotNull JavaParameters parameters) {
     if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) {
@@ -76,7 +82,7 @@ public class MemoryAgentUtil {
     String errorMessage = null;
     long start = System.currentTimeMillis();
     try {
-      agentFile = getAgentFile(isInDebugMode);
+      agentFile = getAgentFile(isInDebugMode, parameters.getJdkPath());
     }
     catch (InterruptedException e) {
       errorMessage = "Interrupted";
@@ -88,15 +94,19 @@ public class MemoryAgentUtil {
     catch (TimeoutException e) {
       errorMessage = "Timeout";
     }
+    catch (CantRunException e) {
+      errorMessage = e.getMessage();
+    }
     if (errorMessage != null || agentFile == null) {
       LOG.warn("Could not extract agent: " + errorMessage);
       return;
     }
 
     LOG.info("Memory agent extracting took " + (System.currentTimeMillis() - start) + " ms");
-    String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "debugger-memory-agent", null);
+    String agentFileName = agentFile.getName();
+    String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "debugger-memory-agent",
+                                                            MEMORY_AGENT_EXTRACT_DIRECTORY, f -> agentFileName.equals(f.getName()));
     if (path == null) {
-      LOG.error("Could not use memory agent file. Spaces are found.");
       return;
     }
 
@@ -181,7 +191,8 @@ public class MemoryAgentUtil {
     return vendor != null && StringUtil.containsIgnoreCase(vendor, "ibm");
   }
 
-  private static File getAgentFile(boolean isInDebugMode) throws InterruptedException, ExecutionException, TimeoutException {
+  private static File getAgentFile(boolean isInDebugMode, String jdkPath)
+    throws InterruptedException, ExecutionException, TimeoutException {
     if (isInDebugMode) {
       String debugAgentPath = Registry.get("debugger.memory.agent.debug.path").asString();
       if (!debugAgentPath.isEmpty()) {
@@ -191,12 +202,41 @@ public class MemoryAgentUtil {
     }
 
     return ApplicationManager.getApplication()
-      .executeOnPooledThread(() -> new AgentExtractor().extract()).get(1, TimeUnit.SECONDS);
+      .executeOnPooledThread(() -> new AgentExtractor().extract(detectAgentKind(jdkPath), getAgentDirectory()))
+      .get(1, TimeUnit.SECONDS);
+  }
+
+  private static AgentExtractor.AgentLibraryType detectAgentKind(String jdkPath) {
+    if (SystemInfo.isLinux) return AgentExtractor.AgentLibraryType.LINUX;
+    if (SystemInfo.isMac) return AgentExtractor.AgentLibraryType.MACOS;
+    JdkVersionDetector.JdkVersionInfo versionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkPath);
+    if (versionInfo == null) {
+      LOG.warn("Could not detect jdk bitness. x64 will be used.");
+      return AgentExtractor.AgentLibraryType.WINDOWS64;
+    }
+
+    return Bitness.x32.equals(versionInfo.bitness) ? AgentExtractor.AgentLibraryType.WINDOWS32 : AgentExtractor.AgentLibraryType.WINDOWS64;
+  }
+
+  @NotNull
+  private static File getAgentDirectory() {
+    String agentDirectory = System.getProperty(MEMORY_AGENT_EXTRACT_DIRECTORY);
+    if (agentDirectory != null) {
+      File file = new File(agentDirectory);
+      if (file.exists() || file.mkdirs()) {
+        return file;
+      }
+
+      LOG.info("Directory specified in property \"" + MEMORY_AGENT_EXTRACT_DIRECTORY +
+               "\" not found. Default tmp directory will be used");
+    }
+
+    return new File(FileUtil.getTempDirectory());
   }
 
   private static void listenIfStartupFailed() {
     Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
-    if (project == null || Boolean.TRUE.equals(project.getUserData(LISTEN_MEMORY_AGENT_STARTUP_FAILED))) return;
+    if (Boolean.TRUE.equals(project.getUserData(LISTEN_MEMORY_AGENT_STARTUP_FAILED))) return;
 
     project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
@@ -216,7 +256,9 @@ public class MemoryAgentUtil {
           if (consoleView.hasDeferredOutput()) {
             consoleView.flushDeferredText();
           }
-          String[] outputLines = StringUtil.splitByLines(consoleView.getText());
+          Editor editor = consoleView.getEditor();
+          if (editor == null) return;
+          String[] outputLines = StringUtil.splitByLines(editor.getDocument().getText());
           List<String> mentions = StreamEx.of(outputLines).skip(1).filter(x -> x.contains("memory_agent")).limit(10).toList();
           if (outputLines.length >= 1 && outputLines[0].contains("memory_agent") && !mentions.isEmpty()) {
             Project project = env.getProject();
@@ -224,28 +266,29 @@ public class MemoryAgentUtil {
             String windowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(env);
 
             Attachment[] mentionsInOutput = StreamEx.of(mentions).map(x -> new Attachment("agent_mention.txt", x))
-              .toArray(new Attachment[0]);
+              .toArray(Attachment.EMPTY_ARRAY);
             RuntimeExceptionWithAttachments exception =
               new RuntimeExceptionWithAttachments("Could not start debug process with memory agent", mentionsInOutput);
             String checkboxName = DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent");
             String description =
               "Memory agent could not be loaded. <a href=\"Disable\">Disable</a> the agent. To enable it back use \"" +
-              DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent") +
-              "\" option in File | Settings | Build, Execution, Deployment | Debugger";
-            ExecutionUtil.handleExecutionError(project, windowId, name, exception, description, new HyperlinkListener() {
-              @Override
-              public void hyperlinkUpdate(HyperlinkEvent e) {
-                if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
-                  DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT = false;
-                }
-              }
-            });
+              checkboxName + "\" option in File | Settings | Build, Execution, Deployment | Debugger";
+            ExecutionUtil.handleExecutionError(project, windowId, name, exception, description, new DisablingMemoryAgentListener());
             LOG.error(exception);
           }
-        });
+        }, project.getDisposed());
       }
     });
 
     project.putUserData(LISTEN_MEMORY_AGENT_STARTUP_FAILED, true);
+  }
+
+  private static class DisablingMemoryAgentListener implements HyperlinkListener {
+    @Override
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
+        DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT = false;
+      }
+    }
   }
 }

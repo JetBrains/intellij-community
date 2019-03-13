@@ -25,11 +25,9 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.jvm.functions.Function1;
-import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
@@ -41,8 +39,7 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.filterIsInstance;
 import static org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun;
-import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
-import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.escapeIfNeeded;
+import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.*;
 import static org.jetbrains.plugins.gradle.util.GradleRerunFailedTasksActionUtilsKt.containsSubSequenceInSequence;
 import static org.jetbrains.plugins.gradle.util.GradleRerunFailedTasksActionUtilsKt.containsTasksInScriptParameters;
 
@@ -69,12 +66,12 @@ public class GradleRerunFailedTestsAction extends JavaRerunFailedTestsAction {
         final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
         ExternalSystemTaskExecutionSettings settings = runProfile.getSettings().clone();
         List<GradleSMTestProxy> tests = filterIsInstance(failedTests, GradleSMTestProxy.class);
-        Function1<GradleSMTestProxy, PsiClass> findPsiClass = test -> {
+        Function1<GradleSMTestProxy, VirtualFile> findTestSource = test -> {
           String className = test.getClassName();
           if (className == null) return null;
-          return javaPsiFacade.findClass(className, projectScope);
+          return getSourceFile(javaPsiFacade.findClass(className, projectScope));
         };
-        Function2<PsiClass, GradleSMTestProxy, String> createFilter = (psiClass, test) -> {
+        Function1<GradleSMTestProxy, String> createFilter = (test) -> {
           String testName = test.getName();
           String className = test.getClassName();
           return TestMethodGradleConfigurationProducer.createTestFilter(className, testName)  ;
@@ -97,7 +94,7 @@ public class GradleRerunFailedTestsAction extends JavaRerunFailedTestsAction {
           return tasksToRun;
         };
         String projectPath = settings.getExternalProjectPath();
-        if (applyTestConfiguration(settings, projectPath, tests, findPsiClass, createFilter, getTestsTaskToRun)) {
+        if (applyTestConfiguration(settings, projectPath, tests, findTestSource, createFilter, getTestsTaskToRun)) {
           runProfile.getSettings().setFrom(settings);
         }
         return runProfile.getState(executor, environment);

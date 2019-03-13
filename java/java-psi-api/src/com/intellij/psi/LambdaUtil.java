@@ -1100,4 +1100,22 @@ public class LambdaUtil {
     body.accept(visitor);
     return visitor.capturing;
   }
+
+  /**
+   * Resolves a functional interface class for given functional expression
+   * 
+   * @param expression functional expression
+   * @return resolved class or null if cannot be resolved
+   */
+  @Nullable
+  public static PsiClass resolveFunctionalInterfaceClass(@NotNull PsiFunctionalExpression expression) {
+    // First try to avoid substitution
+    PsiType type = expression.getGroundTargetType(getFunctionalInterfaceType(expression, false));
+    PsiClass actualClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (actualClass instanceof PsiTypeParameter) {
+      // Rare case when function is resolved to a type parameter: perform substitution then
+      return PsiUtil.resolveClassInClassTypeOnly(expression.getFunctionalInterfaceType());
+    }
+    return actualClass;
+  }
 }

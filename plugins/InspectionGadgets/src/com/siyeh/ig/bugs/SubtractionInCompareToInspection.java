@@ -113,7 +113,7 @@ public class SubtractionInCompareToInspection extends BaseInspection {
       final PsiLambdaExpression lambdaExpression =
         PsiTreeUtil.getParentOfType(expression, PsiLambdaExpression.class, true, PsiMember.class);
       if (lambdaExpression != null) {
-        final PsiClass functionalInterface = PsiUtil.resolveClassInType(lambdaExpression.getFunctionalInterfaceType());
+        final PsiClass functionalInterface = LambdaUtil.resolveFunctionalInterfaceClass(lambdaExpression);
         if (functionalInterface != null && CommonClassNames.JAVA_UTIL_COMPARATOR.equals(functionalInterface.getQualifiedName())) {
           registerError(expression);
           return;

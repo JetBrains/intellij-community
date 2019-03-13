@@ -26,7 +26,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
@@ -49,6 +48,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.*;
@@ -427,11 +427,9 @@ public class Switcher extends AnAction implements DumbAware {
       }
 
       final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(this) {
-        final JPanel myPanel = new JPanel(new BorderLayout());
-        final JLabel myLabel = createPaleLabel("* ");
+        final JPanel myPanel = new NonOpaquePanel(new BorderLayout());
 
         {
-          myPanel.setOpaque(false);
           myPanel.setBackground(UIUtil.getListBackground());
         }
 
@@ -446,11 +444,7 @@ public class Switcher extends AnAction implements DumbAware {
           final Component c = super.getListCellRendererComponent(list, value, index, selected, selected);
           final Color bg = UIUtil.getListBackground();
           final Color fg = UIUtil.getListForeground();
-          myLabel.setFont(list.getFont());
-          myLabel.setForeground(open ? fg : bg);
-
           myPanel.removeAll();
-          myPanel.add(myLabel, BorderLayout.WEST);
           myPanel.add(c, BorderLayout.CENTER);
 
           // Note: Name=name rendered in cell, Description=path to file, as displayed in bottom panel
@@ -625,6 +619,21 @@ public class Switcher extends AnAction implements DumbAware {
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "LEFT");
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, "control RIGHT");
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "control LEFT");
+
+      fromListToList(toolWindows, files);
+      fromListToList(files, toolWindows);
+    }
+
+    private static void fromListToList(JBList from, JBList to) {
+      AbstractAction action = new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent event) {
+          to.requestFocus();
+        }
+      };
+      ActionMap map = from.getActionMap();
+      map.put(ListActions.Left.ID, action);
+      map.put(ListActions.Right.ID, action);
     }
 
     private Container getPopupFocusAncestor() {
@@ -635,7 +644,7 @@ public class Switcher extends AnAction implements DumbAware {
     @NotNull
     private static List<VirtualFile> collectFiles(@NotNull Project project, boolean onlyEdited) {
       return onlyEdited ? Arrays.asList(IdeDocumentHistory.getInstance(project).getChangedFiles())
-                        : EditorHistoryManager.getInstance(project).getFileList();
+                        : getRecentFiles(project);
     }
 
     @NotNull
@@ -741,6 +750,28 @@ public class Switcher extends AnAction implements DumbAware {
     @NotNull
     protected List<VirtualFile> getFiles(@NotNull Project project) {
       throw new UnsupportedOperationException("deprecated");
+    }
+
+    @NotNull
+    private static List<VirtualFile> getRecentFiles(@NotNull Project project) {
+      List<VirtualFile> recentFiles = EditorHistoryManager.getInstance(project).getFileList();
+      VirtualFile[] openFiles = FileEditorManager.getInstance(project).getOpenFiles();
+
+      Set<VirtualFile> recentFilesSet = ContainerUtil.newHashSet(recentFiles);
+      Set<VirtualFile> openFilesSet = ContainerUtil.newHashSet(openFiles);
+
+      // Add missing FileEditor tabs right after the last one, that is available via "Recent Files"
+      int index = 0;
+      for (int i = 0; i < recentFiles.size(); i++) {
+        if (openFilesSet.contains(recentFiles.get(i))) {
+          index = i;
+          break;
+        }
+      }
+
+      List<VirtualFile> result = new ArrayList<>(recentFiles);
+      result.addAll(index, ContainerUtil.filter(openFiles, it -> !recentFilesSet.contains(it)));
+      return result;
     }
 
     @NotNull
@@ -900,17 +931,8 @@ public class Switcher extends AnAction implements DumbAware {
       }
     }
 
-    private static void removeElementAt(@NotNull JList jList, int index) {
-      final ListModel model = jList.getModel();
-      if (model instanceof CollectionListModel) {
-        ((CollectionListModel)model).remove(index);
-      }
-      else if (model instanceof NameFilteringListModel) {
-        ((NameFilteringListModel)model).remove(index);
-      }
-      else {
-        throw new IllegalArgumentException("Wrong list model " + model.getClass());
-      }
+    private static void removeElementAt(@NotNull JList<?> jList, int index) {
+      ListUtil.removeItem(jList.getModel(), index);
     }
 
     private void pack() {
@@ -995,13 +1017,9 @@ public class Switcher extends AnAction implements DumbAware {
         project, collectFiles(project, onlyEdited), toolWindows.getModel().getSize(), isPinnedMode());
       final int selectionIndex = filesAndSelection.getSecond();
 
-      final ListModel model = files.getModel();
-      if (model instanceof CollectionListModel) {
-        ((CollectionListModel)model).replaceAll(filesAndSelection.getFirst());
-      }
-      else if (model instanceof NameFilteringListModel) {
-        ((NameFilteringListModel)model).replaceAll(filesAndSelection.getFirst());
-      }
+      ListModel model = files.getModel();
+      ListUtil.removeAllItems(model);
+      ListUtil.addAllItems(model, filesAndSelection.getFirst());
 
       if (selectionIndex > -1 && listWasSelected) {
         files.setSelectedIndex(selectionIndex);
@@ -1368,18 +1386,5 @@ public class Switcher extends AnAction implements DumbAware {
       }
       return myNameForRendering;
     }
-  }
-
-  @NotNull
-  public static JLabel createPaleLabel(@NotNull String text) {
-    return new JLabel(text) {
-      @Override
-      protected void paintComponent(@NotNull Graphics g) {
-        GraphicsConfig config = new GraphicsConfig(g);
-        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-        super.paintComponent(g);
-        config.restore();
-      }
-    };
   }
 }

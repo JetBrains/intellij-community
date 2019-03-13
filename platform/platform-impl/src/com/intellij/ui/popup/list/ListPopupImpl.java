@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
@@ -242,9 +243,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     myList.setCellRenderer(getListElementRenderer());
 
-    myList.getActionMap().get("selectNextColumn").setEnabled(false);
-    myList.getActionMap().get("selectPreviousColumn").setEnabled(false);
-
     registerAction("handleSelection1", KeyEvent.VK_ENTER, 0, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -252,14 +250,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
     });
 
-    registerAction("handleSelection2", KeyEvent.VK_RIGHT, 0, new AbstractAction() {
+    myList.getActionMap().put(ListActions.Right.ID, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         handleSelect(false);
       }
     });
 
-    registerAction("goBack2", KeyEvent.VK_LEFT, 0, new AbstractAction() {
+    myList.getActionMap().put(ListActions.Left.ID, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (isClosableByLeftArrow()) {
