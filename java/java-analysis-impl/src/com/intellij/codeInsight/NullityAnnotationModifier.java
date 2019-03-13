@@ -30,9 +30,7 @@ public class NullityAnnotationModifier extends TypeAnnotationModifier {
 
   private static boolean isMatchingNullityAnnotation(@NotNull PsiType boundType, PsiAnnotation annotation) {
     String qName = annotation.getQualifiedName();
-    return qName != null &&
-           (NullableNotNullManager.isNullableAnnotation(annotation) || NullableNotNullManager.isNotNullAnnotation(annotation)) &&
-           boundType.hasAnnotation(qName);
+    return qName != null && NullableNotNullManager.isNullabilityAnnotation(annotation) && boundType.hasAnnotation(qName);
   }
 
   @Nullable
@@ -47,7 +45,9 @@ public class NullityAnnotationModifier extends TypeAnnotationModifier {
   }
 
   private static PsiAnnotation findNullable(PsiAnnotation[] annotations) {
-    return ContainerUtil.find(annotations, NullableNotNullManager::isNullableAnnotation);
+    if (annotations.length == 0) return null;
+    List<String> nullables = NullableNotNullManager.getInstance(annotations[0].getProject()).getNullablesWithNickNames();
+    return ContainerUtil.find(annotations, annotation -> nullables.contains(annotation.getQualifiedName()));
   }
 
   @NotNull
