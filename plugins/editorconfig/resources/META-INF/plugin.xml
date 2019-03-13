@@ -23,6 +23,7 @@
     <codeStyleSettingsProvider implementation="org.editorconfig.settings.EditorConfigConfigurable"/>
     <codeStyleSettingsModifier implementation="org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier" order="first"/>
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" order="first"/>
+    <trailingSpacesOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesOptionsProvider" order="first"/>
     <applicationService
         serviceInterface="org.editorconfig.plugincomponents.SettingsProviderComponent"
         serviceImplementation="org.editorconfig.plugincomponents.SettingsProviderComponent"/>

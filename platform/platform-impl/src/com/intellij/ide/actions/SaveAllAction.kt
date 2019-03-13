@@ -23,10 +23,11 @@ open class SaveAllAction : AnAction(), DumbAware {
 }
 
 private fun stripSpacesFromCaretLines(editor: Editor) {
-  val editorSettings = EditorSettingsExternalizable.getInstance()
-  if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE != editorSettings.stripTrailingSpaces && !editorSettings.isKeepTrailingSpacesOnCaretLine) {
-    val document = editor.document
-    val inChangedLinesOnly = EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED == editorSettings.stripTrailingSpaces
-    TrailingSpacesStripper.strip(document, inChangedLinesOnly, false)
+  val document = editor.document
+  val options = TrailingSpacesStripper.getOptions(editor.document)
+  if (options != null) {
+    if (options.isStripTrailingSpaces && !options.isKeepTrailingSpacesOnCaretLine) {
+      TrailingSpacesStripper.strip(document, options.isChangedLinesOnly, false)
+    }
   }
 }
