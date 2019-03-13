@@ -3,8 +3,10 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -39,11 +41,14 @@ public class ExtractRandomMethodInspection extends LocalInspectionTool {
                       Arrays.stream(methods).map(PsiMethod::getBody))
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
-      if (!codeBlocks.isEmpty()) {
-        for (int attempt = 0; attempt < 10; attempt++) {
-          PsiCodeBlock codeBlock = codeBlocks.get(random.nextInt(codeBlocks.size()));
+      for (int attempt = 0; attempt < 15; attempt++) {
+        if (codeBlocks.isEmpty()) {
+          return null;
+        }
+        PsiCodeBlock codeBlock = fetchCodeBlock(codeBlocks);
+        if (codeBlock != null) {
           PsiElement[] elements = getRandomElements(codeBlock.getStatements());
-          if (elements.length != 0) {
+          if (elements.length != 0 && !isTooSimple(elements)) {
             JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(elements, "Extract random method");
             if (processor.prepare(false)) {
               PsiElement parent = elements[0].getParent();
@@ -61,6 +66,84 @@ public class ExtractRandomMethodInspection extends LocalInspectionTool {
 
     return null;
   }
+
+  private static boolean isTooSimple(PsiElement[] elements) {
+    assert elements.length != 0;
+
+    if (elements[0].getParent() instanceof PsiCodeBlock) {
+      PsiCodeBlock codeBlock = (PsiCodeBlock)elements[0].getParent();
+      if (codeBlock.getParent() instanceof PsiParameterListOwner) {
+        PsiStatement[] statements = codeBlock.getStatements();
+        if (statements[0] == elements[0] && statements[statements.length - 1] == elements[elements.length - 1]) {
+          return true; // the whole method's body
+        }
+      }
+    }
+
+    if (elements.length == 1) {
+      PsiElement element = elements[0];
+      if (element instanceof PsiReturnStatement || element instanceof PsiThrowStatement) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static PsiCodeBlock fetchCodeBlock(List<PsiCodeBlock> codeBlocks) {
+    if (codeBlocks.isEmpty()) {
+      return null;
+    }
+    ThreadLocalRandom random = ThreadLocalRandom.current();
+    int index = random.nextInt(codeBlocks.size());
+    PsiCodeBlock codeBlock = codeBlocks.get(index);
+    if (hasKnownIssue(codeBlock)) {
+      codeBlocks.remove(index);
+      return null;
+    }
+    return codeBlock;
+  }
+
+  private static boolean hasKnownIssue(@NotNull PsiCodeBlock codeBlock) {
+    PsiElement parent = codeBlock.getParent();
+    if (parent instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)parent;
+      if (method.isConstructor()) {
+        Ref<Boolean> refFound = new Ref<>(Boolean.FALSE);
+
+        codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitReferenceExpression(PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            if (PsiUtil.isOnAssignmentLeftHand(expression)) {
+              PsiElement resolved = expression.resolve();
+              if (resolved instanceof PsiField) {
+                PsiField field = (PsiField)resolved;
+                if (field.getContainingClass() == method.getContainingClass() &&
+                    field.hasModifierProperty(PsiModifier.FINAL) && !field.hasModifierProperty(PsiModifier.STATIC)) {
+                  refFound.set(Boolean.TRUE);
+                  stopWalking();
+                }
+              }
+            }
+          }
+
+          @Override
+          public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            String name = expression.getMethodExpression().getReferenceName();
+            if (PsiKeyword.THIS.equals(name) || PsiKeyword.SUPER.equals(name)) {
+              refFound.set(Boolean.TRUE);
+              stopWalking();
+            }
+          }
+        });
+        return refFound.get();
+      }
+    }
+    return false;
+  }
+
 
   @NotNull
   PsiElement[] getRandomElements(PsiStatement[] statements) {
@@ -96,8 +179,7 @@ public class ExtractRandomMethodInspection extends LocalInspectionTool {
       ContainerUtil.addIfNotNull(codeBlocks, tryStatement.getTryBlock());
       ContainerUtil.addIfNotNull(codeBlocks, tryStatement.getFinallyBlock());
       ContainerUtil.addAllNotNull(codeBlocks, tryStatement.getCatchBlocks());
-      PsiCodeBlock codeBlock = codeBlocks.get(random.nextInt(codeBlocks.size()));
-      PsiElement[] elements = getRandomElements(codeBlock.getStatements());
+      PsiElement[] elements = getRandomElements(codeBlocks);
       if (elements.length != 0) {
         return elements;
       }
@@ -108,16 +190,23 @@ public class ExtractRandomMethodInspection extends LocalInspectionTool {
       PsiStatement elseBranch = ((PsiIfStatement)statement).getElseBranch();
       List<PsiCodeBlock> codeBlocks = ContainerUtil.mapNotNull(
         Arrays.asList(thenBranch, elseBranch), s -> s instanceof PsiBlockStatement ? ((PsiBlockStatement)s).getCodeBlock() : null);
-      if (!codeBlocks.isEmpty()) {
-        PsiCodeBlock codeBlock = codeBlocks.get(random.nextInt(codeBlocks.size()));
-        PsiElement[] elements = getRandomElements(codeBlock.getStatements());
-        if (elements.length != 0) {
-          return elements;
-        }
+      PsiElement[] elements = getRandomElements(codeBlocks);
+      if (elements.length != 0) {
+        return elements;
       }
     }
 
     return new PsiElement[]{statement};
+  }
+
+  @NotNull
+  private PsiElement[] getRandomElements(@NotNull List<PsiCodeBlock> codeBlocks) {
+    if (codeBlocks.isEmpty()) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+    ThreadLocalRandom random = ThreadLocalRandom.current();
+    PsiCodeBlock codeBlock = codeBlocks.get(random.nextInt(codeBlocks.size()));
+    return getRandomElements(codeBlock.getStatements());
   }
 
   private static class ExtractRandomMethodFix implements LocalQuickFix {
