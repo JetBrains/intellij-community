@@ -18,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.completion.CompletionUtil
 import com.intellij.stats.completion.prefixLength
+import com.intellij.stats.experiment.EmulatedExperiment
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.personalization.UserFactorsManager
 import com.jetbrains.completion.feature.impl.FeatureUtils
@@ -88,7 +89,12 @@ class MLSorter : CompletionFinalSorter() {
   private fun shouldSortByMlRank(parameters: CompletionParameters): Boolean {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode || !parameters.language().isJava()) return false
-    return CompletionStatsCollectorSettings.getInstance().isRankingEnabled
+    val settings = CompletionStatsCollectorSettings.getInstance()
+    if (application.isEAP && webServiceStatus.isExperimentOnCurrentIDE() && settings.isDataSendAllowed) {
+      return EmulatedExperiment.shouldRank(webServiceStatus.experimentVersion())
+    }
+
+    return settings.isRankingEnabled
   }
 
   private fun Language?.isJava() = this != null && "Java".equals(displayName, ignoreCase = true)

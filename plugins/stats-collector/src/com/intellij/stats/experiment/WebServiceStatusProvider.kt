@@ -6,7 +6,6 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.internal.LinkedTreeMap
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.stats.network.assertNotEDT
 import com.intellij.stats.network.service.RequestService
 import java.util.concurrent.TimeUnit
@@ -44,7 +43,8 @@ class WebServiceStatusProvider(
     override fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
 
     override fun isExperimentOnCurrentIDE(): Boolean {
-        return experimentVersion() == 6 && !Registry.`is`("java.completion.ml.exit.experiment")
+        val version = experimentVersion()
+        return (version == EmulatedExperiment.GROUP_A_EXPERIMENT_VERSION || version == EmulatedExperiment.GROUP_B_EXPERIMENT_VERSION)
     }
 
     override fun updateStatus() {
@@ -64,9 +64,9 @@ class WebServiceStatusProvider(
                 //should be Int always
                 val intVersion = experimentVersion.toFloat().toInt()
                 val perform = performExperiment.toBoolean()
-                val emulatedValues = EMULATED_EXPERIMENT.emulate(intVersion, perform, salt)
-                info = if (emulatedValues != null) {
-                    ExperimentInfo(emulatedValues.first, salt, emulatedValues.second)
+                val emulatedVersion = EMULATED_EXPERIMENT.emulate(intVersion, perform, salt)
+                info = if (emulatedVersion != null) {
+                    ExperimentInfo(emulatedVersion, salt, true)
                 }
                 else {
                     ExperimentInfo(intVersion, salt, perform)
