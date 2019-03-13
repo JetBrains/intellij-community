@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.storage.FileKeyDescriptor;
+import org.jetbrains.jps.incremental.storage.MaybeRelativeFileKeyDescriptor;
+import org.jetbrains.jps.incremental.storage.MaybeRelativizer;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -77,6 +79,8 @@ public class Mappings {
   @Nullable
   private Collection<String> myRemovedFiles;
 
+  private final MaybeRelativizer myRelativizer;
+
   private Mappings(final Mappings base) throws IOException {
     myLock = base.myLock;
     myIsDelta = true;
@@ -91,10 +95,11 @@ public class Mappings {
     myEmptyName = myContext.get("");
     myObjectClassName = myContext.get("java/lang/Object");
     myDebugS = base.myDebugS;
+    myRelativizer = base.myRelativizer;
     createImplementation();
   }
 
-  public Mappings(final File rootDir, final boolean transientDelta) throws IOException {
+  public Mappings(final File rootDir, MaybeRelativizer relativizer, final boolean transientDelta) throws IOException {
     myLock = new Object();
     myIsDelta = false;
     myChangedClasses = null;
@@ -107,6 +112,7 @@ public class Mappings {
     myInitName = myContext.get("<init>");
     myEmptyName = myContext.get("");
     myObjectClassName = myContext.get("java/lang/Object");
+    myRelativizer = relativizer;
   }
 
   private void createImplementation() throws IOException {
@@ -141,12 +147,13 @@ public class Mappings {
                                                                  EnumeratorIntegerDescriptor.INSTANCE);
       myShortClassNameIndex = myIsDelta? null : new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, SHORT_NAMES),
                                                                                 EnumeratorIntegerDescriptor.INSTANCE);
+      FileKeyDescriptor descriptor = new MaybeRelativeFileKeyDescriptor(myRelativizer);
       mySourceFileToClasses = new ObjectObjectPersistentMultiMaplet<>(
-        DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), new FileKeyDescriptor(), new ClassFileReprExternalizer(myContext),
+        DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), descriptor, new ClassFileReprExternalizer(myContext),
         () -> new THashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
       );
       myClassToSourceFile = new IntObjectPersistentMultiMaplet<>(
-        DependencyContext.getTableFile(myRootDir, CLASS_TO_SOURCE), EnumeratorIntegerDescriptor.INSTANCE, new FileKeyDescriptor(), fileCollectionFactory
+        DependencyContext.getTableFile(myRootDir, CLASS_TO_SOURCE), EnumeratorIntegerDescriptor.INSTANCE, descriptor, fileCollectionFactory
       );
     }
   }

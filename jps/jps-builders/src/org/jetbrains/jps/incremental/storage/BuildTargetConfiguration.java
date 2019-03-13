@@ -20,11 +20,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.GlobalContextKey;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.*;
@@ -135,11 +137,13 @@ public class BuildTargetConfiguration {
   }
 
   public void storeNonexistentOutputRoots(CompileContext context) throws IOException {
+    JpsModel model = context.getProjectDescriptor().getModel();
+    MaybeRelativizer relativizer = new MaybeRelativizer(model.getProject());
     Collection<File> outputRoots = myTarget.getOutputRoots(context);
     List<String> nonexistentOutputRoots = new SmartList<>();
     for (File root : outputRoots) {
       if (!root.exists()) {
-        nonexistentOutputRoots.add(root.getAbsolutePath());
+        nonexistentOutputRoots.add(relativizer.toRelative(root.getAbsolutePath()));
       }
     }
     File file = getNonexistentOutputsFile();
@@ -185,7 +189,10 @@ public class BuildTargetConfiguration {
       storedNonExistentOutputs = Collections.emptySet();
     }
     else {
-      List<String> lines = StringUtil.split(FileUtil.loadFile(file), "\n");
+      JpsModel model = context.getProjectDescriptor().getModel();
+      MaybeRelativizer relativizer = new MaybeRelativizer(model.getProject());
+      List<String> lines = ContainerUtil.map(StringUtil.split(FileUtil.loadFile(file), "\n"),
+                                             s -> relativizer.toFull(s));
       storedNonExistentOutputs = new THashSet<>(lines, FileUtil.PATH_HASHING_STRATEGY);
     }
     return !storedNonExistentOutputs.containsAll(nonexistentOutputRoots);

@@ -77,6 +77,7 @@ public class BuildDataManager implements StorageOwner {
     }
   };
 
+  private final MaybeRelativizer myRelativizer;
 
   private interface LazyValueFactory<K, V> {
     AtomicNotNullLazyValue<V> create(K key);
@@ -90,7 +91,7 @@ public class BuildDataManager implements StorageOwner {
         @Override
         protected SourceToOutputMappingImpl compute() {
           try {
-            return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(key), SRC_TO_OUTPUT_FILE_NAME));
+            return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(key), SRC_TO_OUTPUT_FILE_NAME), myRelativizer);
           }
           catch (IOException e) {
             throw new BuildDataCorruptedException(e);
@@ -113,13 +114,17 @@ public class BuildDataManager implements StorageOwner {
     }
   };
 
-  public BuildDataManager(final BuildDataPaths dataPaths, BuildTargetsState targetsState, final boolean useMemoryTempCaches) throws IOException {
+  public BuildDataManager(BuildDataPaths dataPaths,
+                          BuildTargetsState targetsState,
+                          MaybeRelativizer relativizer,
+                          boolean useMemoryTempCaches) throws IOException {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
     mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"));
     myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"));
-    myMappings = new Mappings(getMappingsRoot(myDataPaths.getDataStorageRoot()), useMemoryTempCaches);
+    myMappings = new Mappings(getMappingsRoot(myDataPaths.getDataStorageRoot()), relativizer, useMemoryTempCaches);
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
+    myRelativizer = relativizer;
   }
 
   public BuildTargetsState getTargetsState() {
@@ -137,7 +142,7 @@ public class BuildDataManager implements StorageOwner {
   }
 
   public SourceToOutputMappingImpl createSourceToOutputMapForStaleTarget(BuildTargetType<?> targetType, String targetId) throws IOException {
-    return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(targetType, targetId), SRC_TO_OUTPUT_FILE_NAME));
+    return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(targetType, targetId), SRC_TO_OUTPUT_FILE_NAME), myRelativizer);
   }
 
   @NotNull

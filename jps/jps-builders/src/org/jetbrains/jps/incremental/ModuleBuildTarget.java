@@ -32,6 +32,7 @@ import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.incremental.storage.MaybeRelativizer;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -64,9 +65,11 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     System.getProperty(GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION, "true")
   );
   private final JavaModuleBuildTargetType myTargetType;
+  private final MaybeRelativizer myRelativizer;
 
   public ModuleBuildTarget(@NotNull JpsModule module, JavaModuleBuildTargetType targetType) {
     super(targetType, module);
+    myRelativizer = new MaybeRelativizer(module.getProject());
     myTargetType = targetType;
   }
 
@@ -247,11 +250,14 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
       enumerator = enumerator.productionOnly();
     }
 
-    for (String url : enumerator.classes().getUrls()) {
+    for (File file : enumerator.classes().getRoots()) { // todo: what is JpsPathUtil.isJrtUrl(url)
+      String path = myRelativizer.toRelative(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
+      // todo [jeka] what to do with tools.jar which is different on mac/linux/windows?
+      // Should we care about JDK for different machines?
       if (logBuilder != null) {
-        logBuilder.append(url).append("\n");
+        logBuilder.append(path).append("\n");
       }
-      fingerprint = 31 * fingerprint + url.hashCode();
+      fingerprint = 31 * fingerprint + path.hashCode();
     }
     return fingerprint;
   }
