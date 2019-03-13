@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,20 @@
  */
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ui.JBColor;
+
 import java.awt.*;
 
 public enum Flag {
-  orange(new Color(255, 128, 0)),
-  blue(new Color(0, 102, 204)),
-  green(new Color(0, 130, 130)),
-  red(new Color(255, 45, 45)),
-  brown(new Color(128, 64, 0)),
-  magenta(new Color(255, 0, 255)),
-  violet(new Color(128, 0, 255)),
-  yellow(new Color(255, 255, 0)),
-  grey(new Color(140, 140, 140));
+  orange(JBColor.orange),
+  blue(JBColor.blue),
+  green(JBColor.green),
+  red(JBColor.red),
+  brown(new JBColor(new Color(0x804000), new Color(0x9C5700))),
+  magenta(JBColor.magenta),
+  violet(new JBColor(new Color(0x8000FF), new Color(0x9C57FF))),
+  yellow(JBColor.yellow),
+  grey(JBColor.lightGray);
 
   private final Color myColor;
 
