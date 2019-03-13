@@ -17,7 +17,6 @@ import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
  */
 @State(name = "DefaultGradleProjectSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class DefaultGradleProjectSettings implements PersistentStateComponent<DefaultGradleProjectSettings.MyState> {
-  private boolean myMigrated;
   private boolean myDelegatedBuild = true;
   @NotNull private TestRunner myTestRunner = TestRunner.GRADLE;
 
@@ -38,52 +37,19 @@ public class DefaultGradleProjectSettings implements PersistentStateComponent<De
     myDelegatedBuild = delegatedBuild;
   }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
-  boolean isMigrated() {
-    return myMigrated;
-  }
-
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
-  void setMigrated(boolean migrated) {
-    myMigrated = migrated;
-  }
-
   @Nullable
   @Override
   public DefaultGradleProjectSettings.MyState getState() {
     MyState state = new MyState();
     state.delegatedBuild = myDelegatedBuild;
     state.testRunner = myTestRunner;
-    state.isMigrated = myMigrated;
     return state;
   }
 
   @Override
   public void loadState(@NotNull MyState state) {
-    if (!state.isMigrated) {
-      migrateOldSettings();
-    }
-    else {
-      myDelegatedBuild = state.delegatedBuild;
-      myTestRunner = state.testRunner;
-    }
-    myMigrated = true;
-  }
-
-  @SuppressWarnings("deprecation")
-  private void migrateOldSettings() {
-    GradleSystemRunningSettings oldAppSettings = GradleSystemRunningSettings.getInstance();
-    myDelegatedBuild = oldAppSettings.isUseGradleAwareMake();
-    GradleSystemRunningSettings.PreferredTestRunner oldTestRunner = oldAppSettings.getDefaultTestRunner();
-    if (oldTestRunner == GradleSystemRunningSettings.PreferredTestRunner.PLATFORM_TEST_RUNNER) {
-      myTestRunner = TestRunner.PLATFORM;
-    }
-    else if (oldTestRunner == GradleSystemRunningSettings.PreferredTestRunner.GRADLE_TEST_RUNNER) {
-      myTestRunner = TestRunner.GRADLE;
-    }
-    else if (oldTestRunner == GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST) {
-      myTestRunner = TestRunner.CHOOSE_PER_TEST;
-    }
+    myDelegatedBuild = state.delegatedBuild;
+    myTestRunner = state.testRunner;
   }
 
   @NotNull
@@ -98,11 +64,5 @@ public class DefaultGradleProjectSettings implements PersistentStateComponent<De
   public static class MyState {
     public TestRunner testRunner = TestRunner.PLATFORM;
     public boolean delegatedBuild;
-    /**
-     * @deprecated Do not use. Only for settings migration purposes.
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
-    public boolean isMigrated;
   }
 }
