@@ -39,6 +39,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,7 +174,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
     String jdkName = getSelectedValue();
     Sdk jdk = null;
     try {
-      jdk = ExternalSystemJdkUtil.getJdk(myProject, myProjectJdk, jdkName);
+      jdk = ExternalSystemJdkUtil.resolveJdkName(myProjectJdk, jdkName);
     }
     catch (ExternalSystemJdkException ignore) {
     }
@@ -208,7 +209,8 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
     select(comboBoxModel, selectedValue);
   }
 
-  private static void select(ComboBoxModel<JdkComboBoxItem> model, Object value) {
+  @ApiStatus.Experimental
+  public static void select(@NotNull ComboBoxModel<? extends JdkComboBoxItem> model, @Nullable String value) {
     for (int i = 0; i < model.getSize(); i++) {
       JdkComboBoxItem item = model.getElementAt(i);
       if (item.jdkName.equals(value)) {
