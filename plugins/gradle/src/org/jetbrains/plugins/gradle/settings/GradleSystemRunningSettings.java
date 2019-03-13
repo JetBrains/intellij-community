@@ -20,7 +20,7 @@ import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
-@State(name = "GradleSystemRunningSettings", storages = @Storage(value = "gradle.run.settings.xml", deprecated = true))
+@State(name = "GradleSystemRunningSettings", storages = @Storage(value = "gradle.run.settings.xml"))
 public class GradleSystemRunningSettings implements PersistentStateComponent<GradleSystemRunningSettings.MyState> {
   private boolean myDelegatedBuildEnabledByDefault;
   @NotNull private PreferredTestRunner myPreferredTestRunner = PreferredTestRunner.PLATFORM_TEST_RUNNER;
