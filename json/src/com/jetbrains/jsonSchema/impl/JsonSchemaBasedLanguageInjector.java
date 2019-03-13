@@ -9,8 +9,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ThreeState;
+import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -18,22 +20,29 @@ public class JsonSchemaBasedLanguageInjector extends JsonSchemaInjectorBase {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     if (!(context instanceof JsonStringLiteral)) return;
-    Project project = context.getProject();
-    VirtualFile file = context.getContainingFile().getVirtualFile();
-    if (file == null) return;
-    JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(project).getSchemaObject(file);
-    if (schemaObject == null) return;
-    JsonOriginalPsiWalker walker = JsonOriginalPsiWalker.INSTANCE;
-    if (walker.isName(context) != ThreeState.NO) return;
-    final JsonPointerPosition position = walker.findPosition(context, true);
-    if (position == null || position.isEmpty()) return;
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, schemaObject, false, position).resolve();
-    if (schemas.size() != 1) return;
-    JsonSchemaObject object = schemas.iterator().next();
-    String injection = object.getLanguageInjection();
-    if (injection == null) return;
-    Language language = Language.findLanguageByID(injection);
+    Language language = getLanguageToInject(context);
     if (language == null) return;
     injectForHost(registrar, (JsonStringLiteral)context, language);
+  }
+
+  @Nullable
+  public static Language getLanguageToInject(@NotNull PsiElement context) {
+    Project project = context.getProject();
+    VirtualFile file = context.getContainingFile().getVirtualFile();
+    if (file == null) return null;
+    JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(project).getSchemaObject(file);
+    if (schemaObject == null) return null;
+    JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(context, schemaObject);
+    if (walker == null || walker.isName(context) != ThreeState.NO) return null;
+    final JsonPointerPosition position = walker.findPosition(context, true);
+    if (position == null || position.isEmpty()) return null;
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, schemaObject, false, position).resolve();
+    if (schemas.size() != 1) return null;
+    JsonSchemaObject object = schemas.iterator().next();
+    String injection = object.getLanguageInjection();
+    if (injection == null) return null;
+    Language language = Language.findLanguageByID(injection);
+    if (language == null) return null;
+    return language;
   }
 }
