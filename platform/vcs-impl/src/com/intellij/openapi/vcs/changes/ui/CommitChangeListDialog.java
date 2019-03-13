@@ -219,7 +219,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     }
 
-    boolean isDefaultChangeListFullyIncluded = newHashSet(changes).containsAll(defaultList.getChanges());
+    boolean isDefaultChangeListFullyIncluded = new HashSet<>(changes).containsAll(defaultList.getChanges());
     DialogCommitWorkflow workflow =
       new DialogCommitWorkflow(project, included, initialSelection, executors, showVcsCommit, forceCommitInVcs, affectedVcses,
                                isDefaultChangeListFullyIncluded, comment, customResultHandler);

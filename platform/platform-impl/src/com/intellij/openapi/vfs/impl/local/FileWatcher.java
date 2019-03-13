@@ -21,11 +21,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.*;
+import java.util.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -149,7 +149,7 @@ public class FileWatcher {
     Set<String> result = null;
     for (Collection<String> roots : manualWatchRoots) {
       if (result == null) {
-        result = ContainerUtil.newHashSet(roots);
+        result = new HashSet<>(roots);
       }
       else {
         result.retainAll(roots);
@@ -218,7 +218,7 @@ public class FileWatcher {
 
     @Override
     public void notifyManualWatchRoots(@NotNull Collection<String> roots) {
-      myManualWatchRoots.add(roots.isEmpty() ? Collections.emptySet() : ContainerUtil.newHashSet(roots));
+      myManualWatchRoots.add(roots.isEmpty() ? Collections.emptySet() : new HashSet<>(roots));
       notifyOnEvent(OTHER);
     }
 

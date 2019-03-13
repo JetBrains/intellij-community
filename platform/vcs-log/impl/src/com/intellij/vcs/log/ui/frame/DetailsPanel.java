@@ -49,10 +49,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.buildPresentation;
 
@@ -194,8 +192,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
       myResolveIndicator = BackgroundTaskUtil.executeOnPooledThread(this, () -> {
         MultiMap<String, CommitId> resolvedHashes = MultiMap.createSmart();
 
-        Set<String> fullHashes =
-          ContainerUtil.newHashSet(ContainerUtil.filter(unResolvedHashes, h -> h.length() == VcsLogUtil.FULL_HASH_LENGTH));
+        Set<String> fullHashes = new HashSet<>(ContainerUtil.filter(unResolvedHashes, h -> h.length() == VcsLogUtil.FULL_HASH_LENGTH));
         for (String fullHash : fullHashes) {
           Hash hash = HashImpl.build(fullHash);
           for (VirtualFile root : myLogData.getRoots()) {

@@ -842,7 +842,7 @@ public class ChangesCacheFile {
 
       if (!revisionDependentFiles.isEmpty()) {
         // lots of same files could be collected - make set of unique files
-        HashSet<VirtualFile> uniqueFiles = ContainerUtil.newHashSet(revisionDependentFiles.values());
+        HashSet<VirtualFile> uniqueFiles = new HashSet<>(revisionDependentFiles.values());
         // bulk-get all needed revisions at once
         Map<VirtualFile, VcsRevisionNumber> revisions = myDiffProvider instanceof DiffProviderEx
                                                         ? ((DiffProviderEx)myDiffProvider).getCurrentRevisions(uniqueFiles)

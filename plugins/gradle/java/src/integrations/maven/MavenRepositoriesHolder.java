@@ -25,6 +25,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -53,7 +54,7 @@ public class MavenRepositoriesHolder {
         UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP, NotificationSource.PROJECT_SYNC, GradleConstants.SYSTEM_ID);
     }
     else {
-      myNotIndexedUrls = ContainerUtil.newHashSet(repositories);
+      myNotIndexedUrls = new HashSet<>(repositories);
     }
   }
 
@@ -125,7 +126,7 @@ public class MavenRepositoriesHolder {
   }
 
   public void update(Set<MavenRemoteRepository> remoteRepositories) {
-    myRemoteRepositories = ContainerUtil.newHashSet(remoteRepositories);
+    myRemoteRepositories = new HashSet<>(remoteRepositories);
   }
 
   public Set<MavenRemoteRepository> getRemoteRepositories() {

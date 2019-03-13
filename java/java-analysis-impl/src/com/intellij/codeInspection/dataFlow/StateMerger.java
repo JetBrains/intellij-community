@@ -195,7 +195,7 @@ class StateMerger {
                                                          @NotNull Set<Fact> memberFacts,
                                                          @NotNull DfaMemoryStateImpl state) {
     Set<DfaConstValue> otherInequalities = ContainerUtil.newLinkedHashSet();
-    Set<DfaValue> eqValues = ContainerUtil.newHashSet(state.getEquivalentValues(removedFact.myArg));
+    Set<DfaValue> eqValues = new HashSet<>(state.getEquivalentValues(removedFact.myArg));
     for (Fact candidate : memberFacts) {
       if (!(candidate instanceof EqualityFact)) continue;
       EqualityFact equality = (EqualityFact)candidate;

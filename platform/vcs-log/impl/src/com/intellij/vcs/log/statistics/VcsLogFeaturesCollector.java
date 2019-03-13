@@ -67,8 +67,8 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
           }
         }
 
-        Set<Integer> currentColumns = ContainerUtil.newHashSet(properties.get(CommonUiProperties.COLUMN_ORDER));
-        Set<Integer> defaultColumns = ContainerUtil.newHashSet(defaultProperties.get(CommonUiProperties.COLUMN_ORDER));
+        Set<Integer> currentColumns = new HashSet<>(properties.get(CommonUiProperties.COLUMN_ORDER));
+        Set<Integer> defaultColumns = new HashSet<>(defaultProperties.get(CommonUiProperties.COLUMN_ORDER));
         for (int column : GraphTableModel.DYNAMIC_COLUMNS) {
           if (currentColumns.contains(column) != defaultColumns.contains(column)) {
             usages.add(StatisticsUtilKt.getBooleanUsage(StringUtil.toLowerCase(GraphTableModel.COLUMN_NAMES[column]) + "Column",

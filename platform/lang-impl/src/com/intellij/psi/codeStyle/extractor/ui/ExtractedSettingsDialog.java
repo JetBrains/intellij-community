@@ -34,10 +34,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Roman.Shein
@@ -294,7 +292,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
 
   protected JComponent buildExtractedSettingsTree() {
 
-    Collection<Value> unusedValues = ContainerUtil.newHashSet(myValues);
+    Collection<Value> unusedValues = new HashSet<>(myValues);
     myRoot = new DefaultMutableTreeNode();
     for (Map.Entry<LanguageCodeStyleSettingsProvider.SettingsType,
       Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>>> typeEntry : myNameProvider.mySettings.entrySet()) {

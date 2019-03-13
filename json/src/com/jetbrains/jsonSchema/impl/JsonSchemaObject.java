@@ -511,7 +511,7 @@ public class JsonSchemaObject {
   private void addAdditionalPropsNotAllowedFor(String url, String pointer) {
     Set<String> newSet = myAdditionalPropertiesNotAllowedFor == null
                              ? ContainerUtil.newHashSet()
-                             : ContainerUtil.newHashSet(myAdditionalPropertiesNotAllowedFor);
+                             : new HashSet<>(myAdditionalPropertiesNotAllowedFor);
     newSet.add(url + pointer);
     myAdditionalPropertiesNotAllowedFor = newSet;
   }

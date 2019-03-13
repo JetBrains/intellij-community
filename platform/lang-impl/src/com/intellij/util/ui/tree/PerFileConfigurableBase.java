@@ -236,7 +236,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   private void doAddFiles(@NotNull List<? extends VirtualFile> files) {
-    Set<VirtualFile> chosen = ContainerUtil.newHashSet(files);
+    Set<VirtualFile> chosen = new HashSet<>(files);
     if (chosen.isEmpty()) return;
     Set<Object> set = myModel.data.stream().map(o -> o.first).collect(Collectors.toSet());
     for (VirtualFile file : chosen) {

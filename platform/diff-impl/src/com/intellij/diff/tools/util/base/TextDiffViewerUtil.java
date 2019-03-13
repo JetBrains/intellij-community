@@ -45,9 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.isUserDataFlagSet;
 import static com.intellij.util.containers.ContainerUtil.list;
@@ -110,7 +108,7 @@ public class TextDiffViewerUtil {
   public static void installDocumentListeners(@NotNull DocumentListener listener,
                                               @NotNull List<? extends Document> documents,
                                               @NotNull Disposable disposable) {
-    for (Document document : ContainerUtil.newHashSet(documents)) {
+    for (Document document : new HashSet<>((Collection<? extends Document>)documents)) {
       document.addDocumentListener(listener, disposable);
     }
   }
@@ -160,7 +158,7 @@ public class TextDiffViewerUtil {
     });
 
     if (properties.size() < 2) return true;
-    return ContainerUtil.newHashSet(properties).size() == 1;
+    return new HashSet<>(properties).size() == 1;
   }
 
   //
