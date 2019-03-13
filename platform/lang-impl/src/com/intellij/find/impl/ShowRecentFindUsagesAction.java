@@ -19,7 +19,6 @@ package com.intellij.find.impl;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesManager;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -74,8 +73,7 @@ public class ShowRecentFindUsagesAction extends AnAction {
       new BaseListPopupStep<ConfigurableUsageTarget>(FindBundle.message("recent.find.usages.action.title"), history) {
         @Override
         public Icon getIconFor(final ConfigurableUsageTarget data) {
-          ItemPresentation presentation = data == null ? null : data.getPresentation();
-          return presentation == null ? null : presentation.getIcon(false);
+          return null;
         }
 
         @Override
