@@ -29,8 +29,8 @@ import static com.intellij.openapi.util.io.FileUtilRt.MEGABYTE;
 public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget, UISettingsListener, Activatable {
   public static final String WIDGET_ID = "Memory";
 
-  private static final Color USED_COLOR = new JBColor(Gray._185, Gray._110);
-  private static final Color UNUSED_COLOR = new JBColor(Gray._215, Gray._90);
+  private static final Color USED_COLOR = JBColor.namedColor("MemoryIndicator.usedBackground", new JBColor(Gray._185, Gray._110));
+  private static final Color UNUSED_COLOR = JBColor.namedColor("MemoryIndicator.allocatedBackground", new JBColor(Gray._215, Gray._90));
 
   private final String mySample;
   private long myLastAllocated = -1;
