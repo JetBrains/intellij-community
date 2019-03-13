@@ -3,9 +3,9 @@ package circlet.settings
 import circlet.auth.*
 import circlet.client.*
 import circlet.client.api.*
-import circlet.common.oauth.*
 import circlet.components.*
 import circlet.messages.*
+import circlet.platform.api.oauth.*
 import circlet.platform.client.*
 import circlet.workspaces.*
 import com.intellij.openapi.options.*
@@ -183,7 +183,7 @@ class CircletConfigurable : SearchableConfigurable {
         }
     }
 
-    suspend private fun appAuth(wsConfig: WorkspaceConfiguration): OAuthTokenResponse {
+    private suspend fun appAuth(wsConfig: WorkspaceConfiguration): OAuthTokenResponse {
         // todo: handle nulls.
         val workspaces = circletWorkspace.workspaces.value ?: error("workspaces is null")
         val state = workspaces.workspaceStateFromPersistence() ?: error("state from persistence is null")

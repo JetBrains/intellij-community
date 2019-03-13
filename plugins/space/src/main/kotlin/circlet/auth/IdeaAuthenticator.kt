@@ -1,8 +1,7 @@
 package circlet.auth
 
-import circlet.common.oauth.*
+import circlet.platform.api.oauth.*
 import circlet.workspaces.*
-import com.intellij.openapi.diagnostic.*
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
