@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.StartUpMeasurer;
+import com.intellij.util.StartUpMeasurer.Phases;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +56,7 @@ public class PluginManager extends PluginManagerCore {
    */
   @SuppressWarnings({"UnusedDeclaration", "HardCodedStringLiteral"})
   protected static void start(final String mainClass, final String methodName, final String[] args) {
-    startupStart = StartUpMeasurer.start(StartUpMeasurer.Phases.PREPARE_TO_INIT_APP);
+    startupStart = StartUpMeasurer.start(Phases.PREPARE_TO_INIT_APP);
 
     Main.setFlags(args);
 
@@ -68,12 +69,14 @@ public class PluginManager extends PluginManagerCore {
 
     Runnable runnable = () -> {
       try {
+        StartUpMeasurer.Item measureToken = startupStart.startChild(Phases.LOAD_MAIN_CLASS);
         ClassUtilCore.clearJarURLCache();
 
         Class<?> aClass = Class.forName(mainClass);
         Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
         method.setAccessible(true);
         Object[] argsArray = {args};
+        measureToken.end();
         method.invoke(null, argsArray);
       }
       catch (Throwable t) {

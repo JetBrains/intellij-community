@@ -9,23 +9,39 @@ export type ComponentProviderSourceNames = "appComponents" | "projectComponents"
 export type ServiceProviderSourceNames = "appServices" | "projectServices" | "moduleServices"
 export type ExtensionProviderSourceNames = "appExtensions" | "projectExtensions" | "moduleExtensions"
 export type TopHitProviderSourceNames = "appOptionsTopHitProviders" | "projectOptionsTopHitProviders"
+export type PrepareAppInitSourceNames = "prepareAppInitActivities"
 
 export class ItemChartManager extends XYChartManager {
+  private legendHitHandler: ((item: LegendItem, isActive: boolean) => void) | null = null
+
   // isUseYForName - if true, names are more readable, but not possible to see all components because layout from top to bottom (so, opposite from left to right some data can be out of current screen)
   constructor(container: HTMLElement,
               private readonly sourceNames: Array<ComponentProviderSourceNames>
                 | Array<TopHitProviderSourceNames>
                 | Array<ServiceProviderSourceNames>
-                | Array<ExtensionProviderSourceNames>) {
+                | Array<ExtensionProviderSourceNames>
+                | Array<PrepareAppInitSourceNames>) {
     super(container, module.hot)
 
     this.configureNameAxis()
     this.configureDurationAxis()
     this.configureSeries()
 
-    this.chart.legend = new am4charts.Legend()
-    // make colors more contrast because we have more than one series
-    this.chart.colors.step = 2
+    if (sourceNames.length > 1) {
+      this.chart.legend = new am4charts.Legend()
+
+      // make colors more contrast because we have more than one series
+      this.chart.colors.step = 2
+
+      this.chart.legend.itemContainers.template.events.on("hit", event => {
+        const target = event!!.target!!
+        const legendItem = target!!.dataItem!!.dataContext as LegendItem
+        const legendHitHandler = this.legendHitHandler
+        if (legendHitHandler != null) {
+          legendHitHandler(legendItem, target.isActive)
+        }
+      })
+    }
   }
 
   private get nameAxis(): am4charts.CategoryAxis {
@@ -122,19 +138,19 @@ export class ItemChartManager extends XYChartManager {
       }
     }
 
-    this.chart.legend.data = legendData
-    this.chart.legend.itemContainers.template.events.on("hit", event => {
-      const target = event!!.target!!
-      const legendItem = target!!.dataItem!!.dataContext as LegendItem
-      if (target.isActive) {
-        applicableSources.delete(legendItem.sourceName)
+    if (this.chart.legend != null) {
+      this.chart.legend.data = legendData
+      this.legendHitHandler = (legendItem, isActive) => {
+        if (isActive) {
+          applicableSources.delete(legendItem.sourceName)
+        }
+        else {
+          applicableSources.add(legendItem.sourceName)
+        }
+        // maybe there is a more effective way to hide data, but this one is reliable and simple
+        this.chart.data = concatenatedData.filter(it => applicableSources.has(it.sourceName))
       }
-      else {
-        applicableSources.add(legendItem.sourceName)
-      }
-      // maybe there is a more effective way to hide data, but this one is reliable and simple
-      this.chart.data = concatenatedData.filter(it => applicableSources.has(it.sourceName))
-    })
+    }
 
     concatenatedData.sort((a, b) => a.start - b.start)
     this.computeRangeMarkers(data, concatenatedData)

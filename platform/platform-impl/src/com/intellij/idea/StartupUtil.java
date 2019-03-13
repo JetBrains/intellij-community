@@ -25,7 +25,11 @@ import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.*;
+import com.intellij.util.StartUpMeasurer.Activities;
+import com.intellij.util.StartUpMeasurer.ActivitySubNames;
+import com.intellij.util.StartUpMeasurer.MeasureToken;
 import com.intellij.util.StartUpMeasurer.Phases;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -51,6 +55,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * @author yole
@@ -89,7 +96,8 @@ public class StartupUtil {
         Class<?> clazz = Class.forName(classBeforeAppProperty);
         Method invokeMethod = clazz.getDeclaredMethod("invoke");
         invokeMethod.invoke(null);
-      } catch (Exception ex) {
+      }
+      catch (Exception ex) {
         log.error("Failed pre-app class init for class " + classBeforeAppProperty, ex);
       }
     }
@@ -97,19 +105,113 @@ public class StartupUtil {
 
   static void prepareAndStart(String[] args, AppStarter appStarter) {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
-    boolean newConfigFolder = false;
-
     checkHiDPISettings();
+    configureLogging();
 
-    if (!Main.isHeadless()) {
-      AppUIUtil.updateFrameClass();
-      newConfigFolder = !new File(PathManager.getConfigPath()).exists();
-    }
-
+    // uses showMessage, so, cannot be in a pooled thread
     if (!checkJdkVersion()) {
       System.exit(Main.JDK_CHECK_FAILED);
     }
 
+    Callable<Logger> task = () -> {
+      MeasureToken activity = StartUpMeasurer.start(Activities.PREPARE_APP_INIT);
+      // note: uses config folder!
+      if (!checkSystemFolders()) {
+        System.exit(Main.DIR_CHECK_FAILED);
+      }
+      activity.end(ActivitySubNames.CHECK_SYSTEM_DIR);
+
+      activity = StartUpMeasurer.start(Activities.PREPARE_APP_INIT);
+      ActivationResult result = lockSystemFolders(args);
+      if (result == ActivationResult.ACTIVATED) {
+        System.exit(0);
+      }
+      if (result != ActivationResult.STARTED) {
+        System.exit(Main.INSTANCE_CHECK_FAILED);
+      }
+      activity.end(ActivitySubNames.LOCK_SYSTEM_DIRS);
+
+      // the log initialization should happen only after locking the system directory
+      Logger.setFactory(LoggerFactory.class);
+      Logger log = Logger.getInstance(Main.class);
+      startLogging(log);
+
+      activity = StartUpMeasurer.start(Activities.PREPARE_APP_INIT);
+      loadSystemLibraries(log);
+      activity.end(ActivitySubNames.LOAD_SYSTEM_LIBS);
+
+      activity = StartUpMeasurer.start(Activities.PREPARE_APP_INIT);
+      fixProcessEnvironment(log);
+      activity.end(ActivitySubNames.FIX_PROCESS_ENV);
+      return log;
+    };
+
+    Future<Logger> pooledActivitiesFuture;
+    Logger log = null;
+    if ("true".equals(System.getProperty("idea.prepare.app.start.parallel"))) {
+      pooledActivitiesFuture = AppExecutorUtil.getAppExecutorService().submit(task);
+    }
+    else {
+      MeasureToken activity = StartUpMeasurer.start(Phases.RUN_PREPARE_APP_INIT_ACTIVITIES);
+      pooledActivitiesFuture = null;
+      try {
+        log = task.call();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+      activity.end();
+    }
+
+    boolean newConfigFolder = false;
+    if (!Main.isHeadless()) {
+      MeasureToken activity = StartUpMeasurer.start(Phases.UPDATE_FRAME_CLASS);
+      AppUIUtil.updateFrameClass();
+      activity.end();
+      newConfigFolder = !new File(PathManager.getConfigPath()).exists();
+
+      activity = StartUpMeasurer.start(Phases.INIT_DEFAULT_LAF);
+      UIUtil.initDefaultLAF();
+      activity.end();
+
+      activity = StartUpMeasurer.start(Phases.UPDATE_WINDOW_ICON);
+      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
+      activity.end();
+    }
+
+    if (pooledActivitiesFuture != null) {
+      MeasureToken activity = StartUpMeasurer.start(Phases.WAIT_PARALLEL_PREPARE_APP);
+      try {
+        log = pooledActivitiesFuture.get();
+        activity.end();
+      }
+      catch (ExecutionException | InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    runPreAppClass(log);
+
+    if (newConfigFolder) {
+      appStarter.beforeImportConfigs();
+      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath(), log);
+    }
+    else {
+      installPluginUpdates();
+    }
+
+    if (!Main.isHeadless()) {
+      MeasureToken activity = StartUpMeasurer.start(Phases.REGISTER_BUNDLED_FONTS);
+      AppUIUtil.registerBundledFonts();
+      activity.end();
+      AppUIUtil.showUserAgreementAndConsentsIfNeeded();
+    }
+
+    appStarter.start(newConfigFolder);
+  }
+
+  private static void configureLogging() {
+    MeasureToken activity = StartUpMeasurer.start(Phases.CONFIGURE_LOGGING);
     // avoiding "log4j:WARN No appenders could be found"
     System.setProperty("log4j.defaultInitOverride", "true");
     System.setProperty("com.jetbrains.suppressWindowRaise", "true");
@@ -124,58 +226,7 @@ public class StartupUtil {
       //noinspection CallToPrintStackTrace
       e.printStackTrace();
     }
-
-    // note: uses config folder!
-    if (!checkSystemFolders()) {
-      System.exit(Main.DIR_CHECK_FAILED);
-    }
-
-    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(Phases.LOCK_SYSTEM_DIRS);
-    ActivationResult result = lockSystemFolders(args);
-    if (result == ActivationResult.ACTIVATED) {
-      System.exit(0);
-    }
-    if (result != ActivationResult.STARTED) {
-      System.exit(Main.INSTANCE_CHECK_FAILED);
-    }
-    measureToken.end();
-
-    // the log initialization should happen only after locking the system directory
-    Logger.setFactory(LoggerFactory.class);
-    Logger log = Logger.getInstance(Main.class);
-    startLogging(log);
-    measureToken = StartUpMeasurer.start(Phases.LOAD_SYSTEM_LIBS);
-    loadSystemLibraries(log);
-    measureToken = measureToken.endAndStart(Phases.FIX_PROCESS_ENV);
-    fixProcessEnvironment(log);
-    measureToken.end();
-
-    runPreAppClass(log);
-
-    if (!Main.isHeadless()) {
-      measureToken = StartUpMeasurer.start(Phases.INIT_DEFAULT_LAF);
-      UIUtil.initDefaultLAF();
-      measureToken.end();
-    }
-
-    if (newConfigFolder) {
-      appStarter.beforeImportConfigs();
-      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath(), log);
-    }
-    else {
-      installPluginUpdates();
-    }
-
-    if (!Main.isHeadless()) {
-      measureToken = StartUpMeasurer.start(Phases.UPDATE_WINDOW_ICON);
-      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
-      measureToken = measureToken.endAndStart(Phases.REGISTER_BUNDLED_FONTS);
-      AppUIUtil.registerBundledFonts();
-      measureToken.end();
-      AppUIUtil.showUserAgreementAndConsentsIfNeeded();
-    }
-
-    appStarter.start(newConfigFolder);
+    activity.end();
   }
 
   /**

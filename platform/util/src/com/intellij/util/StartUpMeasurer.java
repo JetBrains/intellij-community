@@ -20,10 +20,14 @@ public final class StartUpMeasurer {
   public static final class Phases {
     // this phase name is not fully clear - it is time from `PluginManager.start` to `IdeaApplication.initApplication`
     public static final String PREPARE_TO_INIT_APP = "app initialization preparation";
-    public static final String LOCK_SYSTEM_DIRS = "lock system dirs";
-    public static final String FIX_PROCESS_ENV = "fix process env";
-    public static final String LOAD_SYSTEM_LIBS = "load system libs";
+
+    public static final String RUN_PREPARE_APP_INIT_ACTIVITIES = "prepare app init activities";
+    public static final String WAIT_PARALLEL_PREPARE_APP = "wait parallel prepare";
+
+    public static final String LOAD_MAIN_CLASS = "load main class";
+    public static final String CONFIGURE_LOGGING = "configure logging";
     public static final String INIT_DEFAULT_LAF = "init default LaF";
+    public static final String UPDATE_FRAME_CLASS = "update frame class";
     public static final String UPDATE_WINDOW_ICON = "update window icon";
     public static final String REGISTER_BUNDLED_FONTS = "register bundled fonts";
 
@@ -67,6 +71,8 @@ public final class StartUpMeasurer {
 
   // non-sequential and repeated items
   public static final class Activities {
+    public static final String PREPARE_APP_INIT = "_prepareAppInitActivity";
+
     public static final String COMPONENT = "component";
     public static final String SERVICE = "service";
     public static final String EXTENSION = "extension";
@@ -75,6 +81,13 @@ public final class StartUpMeasurer {
 
     public static final String APP_OPTIONS_TOP_HIT_PROVIDER = "_appOptionsTopHitProvider";
     public static final String PROJECT_OPTIONS_TOP_HIT_PROVIDER = "_projectOptionsTopHitProvider";
+  }
+
+  public static final class ActivitySubNames {
+    public static final String CHECK_SYSTEM_DIR = "check system dirs";
+    public static final String LOCK_SYSTEM_DIRS = "lock system dirs";
+    public static final String LOAD_SYSTEM_LIBS = "load system libs";
+    public static final String FIX_PROCESS_ENV = "fix process env";
   }
 
   private static final long startTime = System.nanoTime();

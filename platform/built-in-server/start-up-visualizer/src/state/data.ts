@@ -16,6 +16,8 @@ export interface InputData {
 
   readonly items: Array<Item>
 
+  readonly prepareAppInitActivities: Array<Item>
+
   readonly appComponents?: Array<Item>
   readonly projectComponents?: Array<Item>
   readonly moduleComponents?: Array<Item>

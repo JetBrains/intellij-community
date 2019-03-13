@@ -42,6 +42,9 @@
       else if (type === "topHitProviders") {
         return new ItemChartManager(chartContainer, ["appOptionsTopHitProviders", "projectOptionsTopHitProviders"])
       }
+      else if (type === "prepareAppInitActivity") {
+        return new ItemChartManager(chartContainer, ["prepareAppInitActivities"])
+      }
       else {
         throw new Error(`Unknown chart type: ${type}`)
       }

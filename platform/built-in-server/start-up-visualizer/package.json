@@ -19,8 +19,8 @@
   },
   "devDependencies": {
     "@types/semver": "^5.5.0",
-    "@vue/cli-plugin-typescript": "^3.5.0",
-    "@vue/cli-service": "^3.5.0",
+    "@vue/cli-plugin-typescript": "^3.5.1",
+    "@vue/cli-service": "^3.5.1",
     "typescript": "^3.3.3333",
     "vue-template-compiler": "^2.6.8",
     "vuex-module-decorators": "^0.9.8"
