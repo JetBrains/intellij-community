@@ -4,6 +4,7 @@ package com.intellij.util.indexing.impl.forward;
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
@@ -38,7 +39,7 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType, Input> 
   @Nullable
   @Override
   public ByteArraySequence serializeIndexedData(@Nullable Map<Key, Value> map, @Nullable Input content) throws IOException {
-    if (map == null) return null;
+    if (ContainerUtil.isEmpty(map)) return null;
     return serializeToByteSeq(convertToDataType(map, content), myDataTypeExternalizer, map.size());
   }
 
