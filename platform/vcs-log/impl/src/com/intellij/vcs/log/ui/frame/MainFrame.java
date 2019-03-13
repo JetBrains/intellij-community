@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
 import com.intellij.diff.editor.DiffVirtualFile;
+import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -54,6 +55,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -259,6 +261,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       if (roots.size() != 1) return null;
       return myUi.getLogData().getLogProvider(notNull(getFirstItem(roots))).getDiffHandler();
     }
+    else if (ShowPreviewEditorAction.DATA_KEY.is(dataId)) {
+      return (Supplier<DiffRequestProcessor>)() -> {
+        VcsLogChangeProcessor preview = new VcsLogChangeProcessor(myLogData.getProject(), myChangesBrowser, myChangesBrowser);
+        preview.updatePreview(true);
+        return preview;
+      };
+    }
     return null;
   }
 
@@ -375,40 +384,50 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
   }
 
-  private class ShowPreviewEditorAction extends DumbAwareAction {
+  private static class ShowPreviewEditorAction extends DumbAwareAction {
+    public static final DataKey<Supplier<DiffRequestProcessor>> DATA_KEY = DataKey.create("com.intellij.diff.impl.DiffRequestProcessor");
+
     private ShowPreviewEditorAction() {
       super("Show Diff Preview in Editor", null, AllIcons.Actions.ChangeView);
     }
 
     @Override
+    public void update(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      VcsLogUi owner = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+      Supplier<DiffRequestProcessor> diffPreviewSupplier = e.getData(DATA_KEY);
+      e.getPresentation().setEnabledAndVisible(project != null && diffPreviewSupplier != null && owner != null);
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      MyDiffVirtualFile file = new MyDiffVirtualFile(myLogData.getProject(), MainFrame.this.myChangesBrowser);
-      FileEditorManager.getInstance(myLogData.getProject()).openFile(file, true);
+      Project project = notNull(e.getProject());
+      VcsLogUi owner = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
+      Supplier<DiffRequestProcessor> diffPreviewSupplier = e.getRequiredData(DATA_KEY);
+      FileEditorManager.getInstance(project).openFile(new MyDiffVirtualFile(owner, diffPreviewSupplier), true);
     }
   }
 
   private static class MyDiffVirtualFile extends DiffVirtualFile {
-    @NotNull private final Project myProject;
-    @NotNull private final VcsLogChangesBrowser myChangesBrowser;
+    @NotNull private final Object myOwner;
+    @NotNull private final Supplier<DiffRequestProcessor> myDiffPreviewSupplier;
 
-    private MyDiffVirtualFile(@NotNull Project project, @NotNull VcsLogChangesBrowser changesBrowser) {
-      myProject = project;
-      myChangesBrowser = changesBrowser;
+    private MyDiffVirtualFile(@NotNull Object owner,
+                              @NotNull Supplier<DiffRequestProcessor> diffPreviewSupplier) {
+      myOwner = owner;
+      myDiffPreviewSupplier = diffPreviewSupplier;
     }
 
     @Override
     public boolean isValid() {
-      return !Disposer.isDisposed(myChangesBrowser);
+      if (!(myOwner instanceof Disposable)) return true;
+      return !Disposer.isDisposed((Disposable)myOwner);
     }
 
     @NotNull
     @Override
     public Builder createProcessorAsync(@NotNull Project project) {
-      return () -> {
-        VcsLogChangeProcessor processor = new VcsLogChangeProcessor(myProject, myChangesBrowser, myChangesBrowser);
-        processor.updatePreview(true);
-        return processor;
-      };
+      return () -> myDiffPreviewSupplier.get();
     }
 
     @Override
@@ -416,12 +435,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       MyDiffVirtualFile file = (MyDiffVirtualFile)o;
-      return myChangesBrowser.equals(file.myChangesBrowser);
+      return myOwner.equals(file.myOwner);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myChangesBrowser);
+      return Objects.hash(myOwner);
     }
   }
 }
