@@ -63,7 +63,8 @@ public class IdempotenceChecker {
    */
   public static <T> void checkEquivalence(@Nullable T existing, @Nullable T fresh, @NotNull Class providerClass) {
     String s = checkValueEquivalence(existing, fresh);
-    if (s != null && ourReportedValueClasses.add(providerClass)) {
+    if (s != null &&
+        ourReportedValueClasses.add(providerClass)) {
       LOG.error(s);
     }
   }
