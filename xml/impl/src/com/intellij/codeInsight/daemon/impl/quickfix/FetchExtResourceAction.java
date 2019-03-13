@@ -233,11 +233,8 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
           refName = Integer.toHexString(s.hashCode()) + "_" + refName.substring(refName.lastIndexOf('/') + 1);
         }
         String resourcePath;
-
-        String refname = s.substring(s.lastIndexOf('/') + 1);
-        if (absoluteUrl) refname = Integer.toHexString(s.hashCode()) + "_" + refname;
         try {
-          resourcePath = fetchOneFile(indicator, resourceUrl, project, extResourcesPath, refname);
+          resourcePath = fetchOneFile(indicator, resourceUrl, project, extResourcesPath, refName);
         }
         catch (IOException e) {
           nestedException[0] = new FetchingResourceIOException(e, resourceUrl);
