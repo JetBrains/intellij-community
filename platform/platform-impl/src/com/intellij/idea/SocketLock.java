@@ -133,7 +133,7 @@ public final class SocketLock {
       myToken = UUID.randomUUID().toString();
       // should be not inlined because handler created for each connected channel
       String[] lockedPaths = {myConfigPath, mySystemPath};
-      myServer = BuiltInServer.startNioOrOio(2, 6942, 50, false, () -> {
+      myServer = BuiltInServer.startNioOrOio(BuiltInServer.getRecommendedWorkerCount(), 6942, 50, false, () -> {
         //noinspection CodeBlock2Expr
         return new MyChannelInboundHandler(lockedPaths, myActivateListener, myToken);
       });

@@ -20,6 +20,8 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.net.NetUtils
 import org.jetbrains.builtInWebServer.*
 import org.jetbrains.io.BuiltInServer
+import org.jetbrains.io.BuiltInServer.Companion.recommendedWorkerCount
+import org.jetbrains.io.NettyUtil
 import org.jetbrains.io.SubServer
 import java.io.IOException
 import java.net.InetAddress
@@ -48,6 +50,8 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
       else -> startServerInPooledThread()
     }
   }
+
+  override fun createClientBootstrap() = NettyUtil.nioClientBootstrap(server!!.eventLoopGroup)
 
   companion object {
     private val LOG = logger<BuiltInServerManager>()
@@ -116,7 +120,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
         val mainServer = StartupUtil.getServer()
         @Suppress("DEPRECATION")
         server = when {
-          mainServer == null || mainServer.eventLoopGroup is io.netty.channel.oio.OioEventLoopGroup -> BuiltInServer.start(2, defaultPort, PORTS_COUNT)
+          mainServer == null || mainServer.eventLoopGroup is io.netty.channel.oio.OioEventLoopGroup -> BuiltInServer.start(recommendedWorkerCount, defaultPort, PORTS_COUNT)
           else -> BuiltInServer.start(mainServer.eventLoopGroup, false, defaultPort, PORTS_COUNT, true, null)
         }
         bindCustomPorts(server!!)

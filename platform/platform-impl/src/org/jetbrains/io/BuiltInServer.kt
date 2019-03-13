@@ -39,6 +39,10 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
       }
     }
 
+    @JvmStatic
+    val recommendedWorkerCount: Int
+      get() = if (PlatformUtils.isIdeaCommunity()) 2 else 3
+
     @Throws(Exception::class)
     fun start(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean = false, handler: (() -> ChannelHandler)? = null): BuiltInServer {
       return start(MultiThreadEventLoopGroup(workerCount, BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler)

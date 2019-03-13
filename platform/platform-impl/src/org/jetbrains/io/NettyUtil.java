@@ -77,7 +77,11 @@ public final class NettyUtil {
     return (throwable instanceof ChannelException && message.startsWith("Failed to bind to: "));
   }
 
+  /**
+   * @deprecated Use BuiltInServerManager.getInstance().createClientBootstrap()
+   */
   @NotNull
+  @Deprecated
   public static Bootstrap nioClientBootstrap() {
     return nioClientBootstrap(NettyKt.MultiThreadEventLoopGroup(2));
   }
