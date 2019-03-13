@@ -4,7 +4,10 @@ package org.jetbrains.builtInWebServer
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
-import com.intellij.util.io.*
+import com.intellij.util.io.ConnectToChannelResult
+import com.intellij.util.io.addChannelListener
+import com.intellij.util.io.closeAndShutdownEventLoop
+import com.intellij.util.io.connectRetrying
 import com.intellij.util.net.loopbackSocketAddress
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
@@ -75,9 +78,7 @@ abstract class SingleConnectionNetService(project: Project) : NetService(project
 
   private fun addCloseListener(it: Channel) {
     it.closeFuture().addChannelListener {
-      val channel = it.channel()
-      processChannel.compareAndSet(channel, null)
-      channel.eventLoop().shutdownIfOio()
+      processChannel.compareAndSet(it.channel(), null)
     }
   }
 
