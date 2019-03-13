@@ -11,10 +11,7 @@ import com.intellij.stats.network.service.RequestService
 import java.util.concurrent.TimeUnit
 
 
-class WebServiceStatusProvider(
-        private val requestSender: RequestService,
-        private val experimentDecision: ExperimentDecision
-): WebServiceStatus {
+class WebServiceStatusProvider(private val requestSender: RequestService) : WebServiceStatus {
 
     companion object {
         const val STATUS_URL: String = "https://www.jetbrains.com/config/features-service-status.json"

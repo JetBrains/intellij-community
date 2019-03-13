@@ -53,11 +53,6 @@
                         serviceImplementation="com.intellij.completion.sorting.MLSorterFactory">
     </applicationService>
 
-    <applicationService serviceInterface="com.intellij.stats.experiment.ExperimentDecision"
-                        serviceImplementation="com.intellij.stats.experiment.PermanentInstallationIDBasedDecision"
-                        testServiceImplementation="com.intellij.mocks.TestExperimentDecision">
-    </applicationService>
-
     <applicationService serviceInterface="com.intellij.stats.completion.InstallationIdProvider"
                         serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider">
     </applicationService>
