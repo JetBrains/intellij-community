@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow.rangeSet;
 
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Helper methods for LongRangeSet implementation
@@ -124,6 +125,18 @@ class LongRangeUtil {
     }
 
     /**
+     * Intersects this BitString with other
+     * 
+     * @param other a BitString to intersect with
+     * @return resulting BitString, null if intersection is empty
+     */
+    @Nullable BitString intersect(BitString other) {
+      long intersectMask = myMask & other.myMask;
+      if ((myBits & intersectMask) != (other.myBits & intersectMask)) return null;
+      return new BitString(myBits | other.myBits, myMask | other.myMask);
+    }
+
+    /**
      * Returns given bit
      * @param bit a bit number (0 = LSB)
      * @return YES for set bit, NO for clear bit, UNSURE for unknown bit  
@@ -154,6 +167,18 @@ class LongRangeUtil {
       // 1 | ? = ? | 1 = 1; 0 | 0 = 0; ? | 0 = 0 | ? = ? | ? = ?
       long orMask = ((myMask ^ myBits) & (other.myMask ^ other.myBits)) | orBits;
       return new BitString(orBits, orMask);
+    }
+
+    /**
+     * Performs bitwise-xor over this and other BitString
+     * @param other other operand
+     * @return result of bitwise-xor
+     */
+    @NotNull BitString xor(BitString other) {
+      long xorBits = myBits ^ other.myBits;
+      // if bit is unknown in either operand, it's unknown in the result; otherwise we may xor normally
+      long xorMask = myMask & other.myMask;
+      return new BitString(xorBits, xorMask);
     }
 
     @Override
