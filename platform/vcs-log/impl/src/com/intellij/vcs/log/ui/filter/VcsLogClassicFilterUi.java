@@ -411,9 +411,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     TextFilterModel(@NotNull NotNullComputable<? extends VcsLogDataPack> dataPackProvider, @NotNull MainVcsLogUiProperties properties,
                     @Nullable VcsLogFilterCollection filters, @NotNull Disposable parentDisposable) {
-      super(VcsLogFilterCollection.TEXT_FILTER, VcsLogFilterCollection.HASH_FILTER, dataPackProvider, properties, filters);
+      super(TEXT_FILTER, HASH_FILTER, dataPackProvider, properties, filters);
       if (filters != null) {
-        VcsLogTextFilter textFilter = filters.get(VcsLogFilterCollection.TEXT_FILTER);
+        VcsLogTextFilter textFilter = filters.get(TEXT_FILTER);
         if (textFilter != null) {
           myUiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE, textFilter.matchesCase());
           myUiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_REGEX, textFilter.isRegex());
@@ -547,7 +547,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
                     @NotNull Set<VirtualFile> roots,
                     @NotNull MainVcsLogUiProperties uiProperties,
                     @Nullable VcsLogFilterCollection filters) {
-      super(VcsLogFilterCollection.STRUCTURE_FILTER, VcsLogFilterCollection.ROOT_FILTER, dataPackGetter, uiProperties, filters);
+      super(STRUCTURE_FILTER, ROOT_FILTER, dataPackGetter, uiProperties, filters);
       myRoots = roots;
     }
 
@@ -627,7 +627,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   private static class DateFilterModel extends FilterModel.SingleFilterModel<VcsLogDateFilter> {
     DateFilterModel(@NotNull NotNullComputable<? extends VcsLogDataPack> dataPackGetter, @NotNull MainVcsLogUiProperties uiProperties,
                     @Nullable VcsLogFilterCollection filters) {
-      super(VcsLogFilterCollection.DATE_FILTER, dataPackGetter, uiProperties, filters);
+      super(DATE_FILTER, dataPackGetter, uiProperties, filters);
     }
 
     @Nullable
@@ -662,7 +662,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   private class UserFilterModel extends FilterModel.SingleFilterModel<VcsLogUserFilter> {
     UserFilterModel(@NotNull NotNullComputable<? extends VcsLogDataPack> dataPackGetter, @NotNull MainVcsLogUiProperties uiProperties,
                     @Nullable VcsLogFilterCollection filters) {
-      super(VcsLogFilterCollection.USER_FILTER, dataPackGetter, uiProperties, filters);
+      super(USER_FILTER, dataPackGetter, uiProperties, filters);
     }
 
     @NotNull
