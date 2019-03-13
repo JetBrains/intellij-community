@@ -14,6 +14,9 @@ class SingleChangeListCommitWorkflowHandler(
   private val ui: CommitChangeListDialog
 ) : CommitWorkflowHandler, CommitExecutorListener, Disposable {
 
+  private fun getChangeList() = ui.getChangeList()
+  private fun getIncludedUnversionedFiles() = ui.getIncludedUnversionedFiles()
+
   init {
     ui.addExecutorListener(this, this)
     ui.addDataProvider(DataProvider { dataId ->
@@ -41,12 +44,17 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   private fun executeDefault(executor: CommitExecutor?) {
+    if (!addUnversionedFiles()) return
+
     ui.executeDefaultCommitSession(executor)
   }
 
   private fun executeCustom(executor: CommitExecutor, session: CommitSession) {
     ui.execute(executor, session)
   }
+
+  private fun addUnversionedFiles(): Boolean =
+    workflow.addUnversionedFiles(getChangeList(), getIncludedUnversionedFiles()) { changes -> ui.includeIntoCommit(changes) }
 
   override fun dispose() = Unit
 }
