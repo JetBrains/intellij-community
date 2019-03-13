@@ -51,7 +51,7 @@ internal class InferMethodArgumentsIntention : IntentionAction {
       return null
     }
     val parameters = method?.parameters
-    if (parameters != null && (parameters.any { it == null } || method.hasTypeParameters())) {
+    if (parameters != null && (parameters.any { it.typeElement == null } || method.hasTypeParameters())) {
       return method
     }
     else {
