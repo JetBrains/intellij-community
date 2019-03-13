@@ -109,13 +109,17 @@ public class SuspiciousIntegerDivAssignmentInspection extends BaseInspection {
       if (rhs == null) {
         return;
       }
-      final LongRangeSet dividendRange = CommonDataflow.getExpressionRange(PsiUtil.skipParenthesizedExprDown(rhs.getLOperand()));
+      final LongRangeSet dividendRange = CommonDataflow.getExpressionRange(rhs.getLOperand());
       if (dividendRange != null) {
-        final LongRangeSet divisorRange = CommonDataflow.getExpressionRange(PsiUtil.skipParenthesizedExprDown(rhs.getROperand()));
+        final LongRangeSet divisorRange = CommonDataflow.getExpressionRange(rhs.getROperand());
         if (divisorRange != null) {
           final LongRangeSet modRange = dividendRange.mod(divisorRange);
           if (modRange.isEmpty() || LongRangeSet.point(0).equals(modRange)) {
             return; // modRange.isEmpty() could be if divisor is always zero; for this case we have another inspection, so no need to report
+          }
+          if (!modRange.contains(0)) {
+            registerError(assignment);
+            return;
           }
         }
       }
