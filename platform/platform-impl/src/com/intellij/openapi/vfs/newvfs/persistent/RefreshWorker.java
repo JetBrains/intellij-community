@@ -291,6 +291,7 @@ public class RefreshWorker {
     }
   }
 
+  @Nullable
   private static ChildInfo childRecord(@NotNull NewVirtualFileSystem fs, @NotNull VirtualFile dir, @NotNull String name) {
     FakeVirtualFile file = new FakeVirtualFile(dir, name);
     FileAttributes attributes = fs.getAttributes(file);
@@ -302,7 +303,7 @@ public class RefreshWorker {
 
   private static class RefreshCancelledException extends RuntimeException { }
 
-  private void checkCancelled(@NotNull NewVirtualFile stopAt) {
+  private void checkCancelled(@NotNull NewVirtualFile stopAt) throws RefreshCancelledException {
     if (myCancelled || ourCancellingCondition != null && ourCancellingCondition.fun(stopAt)) {
       if (LOG.isTraceEnabled()) LOG.trace("cancelled at: " + stopAt);
       forceMarkDirty(stopAt);
@@ -319,7 +320,7 @@ public class RefreshWorker {
     file.markDirty();
   }
 
-  private void checkAndScheduleChildRefresh(NewVirtualFileSystem fs,
+  private void checkAndScheduleChildRefresh(@NotNull NewVirtualFileSystem fs,
                                             @NotNull VirtualFile parent,
                                             @NotNull VirtualFile child,
                                             @NotNull FileAttributes childAttributes) {
@@ -331,7 +332,7 @@ public class RefreshWorker {
     }
   }
 
-  private boolean checkAndScheduleFileTypeChange(NewVirtualFileSystem fs,
+  private boolean checkAndScheduleFileTypeChange(@NotNull NewVirtualFileSystem fs,
                                                  @NotNull VirtualFile parent,
                                                  @NotNull VirtualFile child,
                                                  @NotNull FileAttributes childAttributes) {
