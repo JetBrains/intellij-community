@@ -12,12 +12,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -32,12 +29,6 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
 
   public GrCreateFromUsageBaseFix(@NotNull GrReferenceExpression refExpression) {
     myRefExpression = SmartPointerManager.getInstance(refExpression.getProject()).createSmartPsiElementPointer(refExpression);
-  }
-
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return GroovyBundle.message("create.from.usage.family.name");
   }
 
   protected GrReferenceExpression getRefExpr() {
