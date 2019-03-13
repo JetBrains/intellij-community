@@ -544,13 +544,8 @@ public class UsageViewImpl implements UsageViewEx {
     disposeUsageContextPanels();
     if (isPreviewUsages()) {
       myPreviewSplitter.setProportion(getUsageViewSettings().getPreviewUsagesSplitterProportion());
-      final JBTabbedPane tabbedPane = new JBTabbedPane(SwingConstants.BOTTOM){
-        @NotNull
-        @Override
-        protected Insets getInsetsForTabComponent() {
-          return new Insets(0,0,0,0);
-        }
-      };
+      JBTabbedPane tabbedPane = new JBTabbedPane(SwingConstants.BOTTOM);
+      tabbedPane.setTabComponentInsets(null);
 
       UsageContextPanel.Provider[] extensions = UsageContextPanel.Provider.EP_NAME.getExtensions(myProject);
       myUsageContextPanelProviders = ContainerUtil.filter(extensions, provider -> provider.isAvailableFor(this));
