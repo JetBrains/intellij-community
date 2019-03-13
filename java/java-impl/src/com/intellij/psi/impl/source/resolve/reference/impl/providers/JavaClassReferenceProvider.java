@@ -25,7 +25,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,18 +60,16 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   private boolean myAllowEmpty;
 
-  private final ParameterizedCachedValueProvider<List<PsiPackage>, Project> myPackagesProvider = project -> {
+  private static final ParameterizedCachedValueProvider<List<PsiPackage>, Project> ourPackagesProvider = project -> {
     PsiNameHelper nameHelper = PsiNameHelper.getInstance(project);
-    List<PsiPackage> psiPackages = JBIterable.of("").append(IMPORTS.getValue(myOptions))
-                                             .filterMap(o -> o == null ? null : JavaPsiFacade.getInstance(project).findPackage(o))
-                                             .flatten(o -> JBIterable.of(o.getSubPackages()))
-                                             .filter(o -> nameHelper.isIdentifier(o.getName(), PsiUtil.getLanguageLevel(o)))
-                                             .toList();
+    PsiPackage root = JavaPsiFacade.getInstance(project).findPackage("");
+    List<PsiPackage> psiPackages = root == null ? Collections.emptyList() :
+                                   ContainerUtil.filter(root.getSubPackages(),
+                                                        p -> nameHelper.isIdentifier(p.getName(), PsiUtil.getLanguageLevel(p)));
     return CachedValueProvider.Result.createSingleDependency(psiPackages, PsiModificationTracker.MODIFICATION_COUNT);
   };
 
-  // non-static: different for each provider with its unique settings
-  private final Key<ParameterizedCachedValue<List<PsiPackage>, Project>> myPackagesKey = Key.create("default packages");
+  private static final Key<ParameterizedCachedValue<List<PsiPackage>, Project>> ourPackagesKey = Key.create("default packages");
 
   public <T> void setOption(CustomizationKey<T> option, T value) {
     if (myOptions == null) {
@@ -146,8 +143,8 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   @NotNull
-  protected List<PsiPackage> getDefaultPackages(@NotNull Project project) {
-    return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, myPackagesKey, myPackagesProvider, false, project);
+  static List<PsiPackage> getDefaultPackages(@NotNull Project project) {
+    return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, ourPackagesKey, ourPackagesProvider, false, project);
   }
 
   @Override
