@@ -43,6 +43,7 @@ public class JsonSchemaObject {
   @NonNls public static final String ITEMS = "items";
   @NonNls public static final String ADDITIONAL_ITEMS = "additionalItems";
   @NonNls public static final String X_INTELLIJ_HTML_DESCRIPTION = "x-intellij-html-description";
+  @NonNls public static final String X_INTELLIJ_LANGUAGE_INJECTION = "x-intellij-language-injection";
   @Nullable private final String myFileUrl;
   @NotNull private final String myPointer;
   @Nullable private final VirtualFile myRawFile;
@@ -61,6 +62,7 @@ public class JsonSchemaObject {
   @Nullable private String myTitle;
   @Nullable private String myDescription;
   @Nullable private String myHtmlDescription;
+  @Nullable private String myLanguageInjection;
 
   @Nullable private JsonSchemaType myType;
   @Nullable private Object myDefault;
@@ -170,6 +172,15 @@ public class JsonSchemaObject {
   @Nullable
   public VirtualFile getRawFile() {
     return myRawFile;
+  }
+
+  public void setLanguageInjection(@Nullable String injection) {
+    myLanguageInjection = injection;
+  }
+
+  @Nullable
+  public String getLanguageInjection() {
+    return myLanguageInjection;
   }
 
   @Nullable
