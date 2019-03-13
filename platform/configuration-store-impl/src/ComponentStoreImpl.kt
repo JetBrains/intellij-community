@@ -26,6 +26,7 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
+import com.intellij.util.ThreeState
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.messages.MessageBus
@@ -113,7 +114,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun initPersistenceStateComponent(component: PersistentStateComponent<*>, stateSpec: State, isService: Boolean): String {
     val componentName = stateSpec.name
     val info = doAddComponent(componentName, component, stateSpec)
-    if (initComponent(info, null, false) && isService) {
+    if (initComponent(info, null, ThreeState.NO) && isService) {
       // if not service, so, component manager will check it later for all components
       project?.let {
         val app = ApplicationManager.getApplication()
@@ -316,7 +317,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return newInfo
   }
 
-  private fun initComponent(info: ComponentInfo, changedStorages: Set<StateStorage>?, reloadData: Boolean): Boolean {
+  private fun initComponent(info: ComponentInfo, changedStorages: Set<StateStorage>?, reloadData: ThreeState): Boolean {
     if (loadPolicy == StateLoadPolicy.NOT_LOAD) {
       return false
     }
@@ -333,7 +334,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun doInitComponent(stateSpec: State,
                               component: PersistentStateComponent<Any>,
                               changedStorages: Set<StateStorage>?,
-                              reloadData: Boolean): Boolean {
+                              reloadData: ThreeState): Boolean {
     val name = stateSpec.name
     @Suppress("UNCHECKED_CAST")
     val stateClass: Class<Any> = when (component) {
@@ -353,8 +354,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
 
         val storage = storageManager.getStateStorage(storageSpec)
-        val stateGetter = createStateGetter(stateSpec.useLoadedStateAsExisting && isUseLoadedStateAsExistingForComponent(storage, name), storage, component, name, stateClass,
-                                            reloadData = reloadData)
+        val stateGetter = doCreateStateGetter(reloadData, changedStorages, storage, stateSpec, name, component, stateClass)
         var state = stateGetter.getState(defaultState)
         if (state == null) {
           if (changedStorages != null && changedStorages.contains(storage)) {
@@ -387,13 +387,21 @@ abstract class ComponentStoreImpl : IComponentStore {
     return true
   }
 
-  // todo fix FacetManager
-  // use.loaded.state.as.existing used in upsource
-  private fun isUseLoadedStateAsExistingForComponent(storage: StateStorage, name: String): Boolean {
-    return isUseLoadedStateAsExisting(storage) &&
-           name != "ProjectModuleManager" /* why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest */ &&
-           name != "FacetManager" &&
-           SystemProperties.getBooleanProperty("use.loaded.state.as.existing", true)
+  private fun doCreateStateGetter(reloadData: ThreeState,
+                                  changedStorages: Set<StateStorage>?,
+                                  storage: StateStorage,
+                                  stateSpec: State,
+                                  name: String,
+                                  component: PersistentStateComponent<Any>,
+                                  stateClass: Class<Any>): StateGetter<Any> {
+    // if storage marked as changed, it means that analyzeExternalChangesAndUpdateIfNeed was called for it and storage is already reloaded
+    val isReloadDataForStorage = if (reloadData == ThreeState.UNSURE) changedStorages!!.contains(storage) else reloadData.toBoolean()
+
+    // use.loaded.state.as.existing used in upsource
+    val isUseLoadedStateAsExisting = stateSpec.useLoadedStateAsExisting
+                                     && isUseLoadedStateAsExisting(storage)
+                                     && SystemProperties.getBooleanProperty("use.loaded.state.as.existing", true)
+    return createStateGetter(isUseLoadedStateAsExisting, storage, component, name, stateClass, reloadData = isReloadDataForStorage)
   }
 
   protected open fun isUseLoadedStateAsExisting(storage: StateStorage) = (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED
@@ -460,7 +468,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = getStateSpecOrError(componentClass)
     val info = components.get(stateSpec.name) ?: return
     (info.component as? PersistentStateComponent<*>)?.let {
-      initComponent(info, emptySet(), true)
+      initComponent(info, emptySet(), ThreeState.YES)
     }
   }
 
@@ -471,7 +479,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     val isChangedStoragesEmpty = changedStorages.isEmpty()
-    initComponent(info, if (isChangedStoragesEmpty) null else changedStorages, isChangedStoragesEmpty)
+    initComponent(info, if (isChangedStoragesEmpty) null else changedStorages, ThreeState.UNSURE)
     return true
   }
 

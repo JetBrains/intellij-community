@@ -28,7 +28,11 @@ import java.util.Set;
 /**
  * @author yole
  */
-@State(name = ModuleManagerImpl.COMPONENT_NAME, storages = @Storage("modules.xml"))
+@State(
+  name = ModuleManagerImpl.COMPONENT_NAME,
+  storages = @Storage("modules.xml"),
+  useLoadedStateAsExisting = false /* why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest */
+)
 public class ModuleManagerComponent extends ModuleManagerImpl {
   private final MessageBusConnection myMessageBusConnection;
 
