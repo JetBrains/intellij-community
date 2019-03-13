@@ -30,10 +30,12 @@ public class ProjectStamps {
 
   private final StampsStorage<? extends StampsStorage.Stamp> myStampsStorage;
 
-  public ProjectStamps(File dataStorageRoot, BuildTargetsState targetsState) throws IOException {
+  public ProjectStamps(File dataStorageRoot,
+                       BuildTargetsState targetsState,
+                       MaybeRelativizer relativizer) throws IOException {
     myStampsStorage = USE_TIMESTAMPS
                       ? new TimestampStorage(dataStorageRoot, targetsState)
-                      : new HashStorage(dataStorageRoot, targetsState);
+                      : new HashStorage(dataStorageRoot, relativizer, targetsState);
   }
 
   public StampsStorage<? extends StampsStorage.Stamp> getStorage() {

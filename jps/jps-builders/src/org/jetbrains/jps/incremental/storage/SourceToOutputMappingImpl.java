@@ -29,18 +29,23 @@ import java.util.Iterator;
  */
 public class SourceToOutputMappingImpl implements SourceToOutputMapping {
   private final OneToManyPathsMapping myMapping;
+  private final MaybeRelativizer myRelativizer;
 
-  public SourceToOutputMappingImpl(File storePath) throws IOException {
+  public SourceToOutputMappingImpl(File storePath, MaybeRelativizer relativizer) throws IOException {
     myMapping = new OneToManyPathsMapping(storePath);
+    myRelativizer = relativizer;
   }
 
   @Override
   public void setOutputs(@NotNull String srcPath, @NotNull Collection<String> outputs) throws IOException {
+    System.out.println(myRelativizer.toRelative(srcPath));
     myMapping.update(srcPath, outputs);
   }
 
   @Override
   public void setOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
+    System.out.println(myRelativizer.toRelative(srcPath));
+
     myMapping.update(srcPath, outputPath);
   }
 

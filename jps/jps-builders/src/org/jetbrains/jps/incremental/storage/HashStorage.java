@@ -24,8 +24,10 @@ public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> imp
   private final File myHashesRoot;
   private final MessageDigest md;
 
-  public HashStorage(File dataStorageRoot, BuildTargetsState targetsState) throws IOException {
-    super(new File(calcStorageRoot(dataStorageRoot), "data"), new FileKeyDescriptor(), new StateExternalizer());
+  public HashStorage(File dataStorageRoot,
+                     MaybeRelativizer relativizer,
+                     BuildTargetsState targetsState) throws IOException {
+    super(new File(calcStorageRoot(dataStorageRoot), "data"), new MaybeRelativeFileKeyDescriptor(relativizer), new StateExternalizer());
     myHashesRoot = calcStorageRoot(dataStorageRoot);
     myTargetsState = targetsState;
     try {

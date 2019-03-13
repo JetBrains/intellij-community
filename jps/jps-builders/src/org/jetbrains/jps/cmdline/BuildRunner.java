@@ -36,10 +36,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.BuildTargetsState;
-import org.jetbrains.jps.incremental.storage.ProjectStamps;
-import org.jetbrains.jps.incremental.storage.StampsStorage;
+import org.jetbrains.jps.incremental.storage.*;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
@@ -86,11 +83,13 @@ public class BuildRunner {
     BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(targetRegistry, buildRootIndex);
     BuildTargetsState targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
 
+    MaybeRelativizer relativizer = new MaybeRelativizer(jpsModel.getProject());
+
     ProjectStamps projectStamps = null;
     BuildDataManager dataManager = null;
     try {
-      projectStamps = new ProjectStamps(dataStorageRoot, targetsState);
-      dataManager = new BuildDataManager(dataPaths, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
+      projectStamps = new ProjectStamps(dataStorageRoot, targetsState, relativizer);
+      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, STORE_TEMP_CACHES_IN_MEMORY);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
         msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"));
@@ -108,8 +107,8 @@ public class BuildRunner {
       myForceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
       targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
-      projectStamps = new ProjectStamps(dataStorageRoot, targetsState);
-      dataManager = new BuildDataManager(dataPaths, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
+      projectStamps = new ProjectStamps(dataStorageRoot, targetsState, relativizer);
+      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, STORE_TEMP_CACHES_IN_MEMORY);
       // second attempt succeeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
     }
