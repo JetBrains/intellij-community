@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.MultiThreadEventLoopGroup
 import com.intellij.util.io.serverBootstrap
@@ -30,6 +31,11 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
         System.setProperty("io.netty.machineId", "28:f0:76:ff:fe:16:65:0e")
         System.setProperty("io.netty.processId", Integer.toString(Random().nextInt(65535)))
         System.setProperty("io.netty.serviceThreadPrefix", "Netty ")
+
+        // https://youtrack.jetbrains.com/issue/IDEA-208908
+        val numArenas = if (PlatformUtils.isIdeaCommunity()) "1" else "2"
+        System.setProperty("io.netty.allocator.numDirectArenas", numArenas)
+        System.setProperty("io.netty.allocator.numHeapArenas", numArenas)
       }
     }
 
