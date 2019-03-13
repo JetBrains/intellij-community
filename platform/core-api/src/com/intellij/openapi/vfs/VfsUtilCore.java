@@ -411,6 +411,11 @@ public class VfsUtilCore {
     return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, path);
   }
 
+  @NotNull
+  public static String fileToUrl(@NotNull File file) {
+    return pathToUrl(FileUtil.toSystemIndependentName(file.getPath()));
+  }
+
   public static List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {
     return ContainerUtil.map2List(files, file -> virtualToIoFile(file));
   }
