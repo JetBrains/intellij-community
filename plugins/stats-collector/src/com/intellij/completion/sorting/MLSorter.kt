@@ -10,7 +10,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.FeatureManagerImpl
-import com.intellij.ide.plugins.PluginManager
+import com.intellij.completion.settings.CompletionStatsCollectorSettings
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Pair
@@ -86,26 +86,12 @@ class MLSorter : CompletionFinalSorter() {
   }
 
   private fun shouldSortByMlRank(parameters: CompletionParameters): Boolean {
-    return parameters.language().isJava() && isSuitableBuild(PluginManager.BUILD_NUMBER)
+    val application = ApplicationManager.getApplication()
+    if (application.isUnitTestMode || !parameters.language().isJava()) return false
+    return CompletionStatsCollectorSettings.getInstance().isRankingEnabled
   }
 
   private fun Language?.isJava() = this != null && "Java".equals(displayName, ignoreCase = true)
-
-  private fun isSuitableBuild(buildNumber: String): Boolean {
-    val application = ApplicationManager.getApplication()
-
-    if (application.isUnitTestMode) return false
-
-    if (buildNumber.contains("-183.") && application.isEAP) {
-      return webServiceStatus.isExperimentOnCurrentIDE()
-    }
-
-    if (buildNumber.contains("-191.") || buildNumber.contains("__BUILD__") && application.isEAP) {
-      return Registry.`is`("java.completion.enable.ml.ranking")
-    }
-
-    return false
-  }
 
   /**
    * Null means we encountered unknown features and are unable to sort them
