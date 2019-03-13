@@ -84,7 +84,12 @@ abstract class Cell {
     button(*constraints)
   }
 
-  inline fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, propertyUiManager: BooleanPropertyUiManager? = null, vararg constraints: CCFlags, crossinline actionListener: (event: ActionEvent, component: JCheckBox) -> Unit): JCheckBox {
+  inline fun checkBox(text: String,
+                      isSelected: Boolean = false,
+                      comment: String? = null,
+                      propertyUiManager: BooleanPropertyUiManager? = null,
+                      vararg constraints: CCFlags,
+                      crossinline actionListener: (event: ActionEvent, component: JCheckBox) -> Unit): JCheckBox {
     val component = checkBox(text, isSelected, comment, propertyUiManager, *constraints)
     component.addActionListener(ActionListener {
       actionListener(it, component)
@@ -93,7 +98,7 @@ abstract class Cell {
   }
 
   @JvmOverloads
-  fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, propertyUiManager: BooleanPropertyUiManager? = null, vararg constraints: CCFlags): JCheckBox {
+  fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, propertyUiManager: BooleanPropertyUiManager? = null, vararg constraints: CCFlags = emptyArray()): JCheckBox {
     val component = JCheckBox(text)
     component.isSelected = isSelected
     propertyUiManager?.registerCheckBox(component)
