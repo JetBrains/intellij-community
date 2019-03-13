@@ -6,6 +6,9 @@ import org.jetbrains.annotations.Nullable;
 
 
 public interface PyPositionConverter {
+  @Deprecated
+  @NotNull
+  PySourcePosition create(@NotNull final String file, final int line);
 
   /**
    * @param file filepath in position on Python side
@@ -14,14 +17,18 @@ public interface PyPositionConverter {
    * Python side, but also navigatable in the IDE editor.
    */
   @NotNull
-  PySourcePosition convertPythonToFrame(@NotNull final String file, final int line);
+  default PySourcePosition convertPythonToFrame(@NotNull final String file, final int line) {
+    return create(file, line);
+  }
 
   /**
    * @param position shown in Frames window
    * @return position on Python side
    */
   @NotNull
-  PySourcePosition convertFrameToPython(@NotNull PySourcePosition position);
+  default PySourcePosition convertFrameToPython(@NotNull PySourcePosition position) {
+    return position;
+  }
 
   /**
    * @param position source position in the IDE editor
