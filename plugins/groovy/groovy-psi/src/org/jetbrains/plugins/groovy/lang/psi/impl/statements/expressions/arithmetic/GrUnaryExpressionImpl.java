@@ -9,15 +9,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrUnaryOperatorReference;
-import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
-import java.util.Objects;
+import static org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalculatorKt.getTypeFromResult;
 
 public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryExpression {
 
@@ -40,19 +40,24 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
 
   @Nullable
   @Override
-  public PsiType getType() {
-    if (isPostfix()) {
-      return Objects.requireNonNull(getOperand()).getType();
-    }
-    else {
-      return getOperationType();
-    }
-  }
-
-  @Nullable
-  @Override
   public PsiType getOperationType() {
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, GrTypeCalculator::getTypeFromCalculators);
+    final GroovyCallReference reference = getReference();
+    final GroovyResolveResult result = reference.advancedResolve();
+    final PsiType operatorType = getTypeFromResult(result, reference.getArguments(), this);
+    if (operatorType != null) {
+      return operatorType;
+    }
+
+    final GrExpression operand = getOperand();
+    if (operand == null) {
+      return null;
+    }
+    final PsiType operandType = operand.getType();
+    if (TypesUtil.isNumericType(operandType)) {
+      return operandType;
+    }
+
+    return null;
   }
 
   @Override

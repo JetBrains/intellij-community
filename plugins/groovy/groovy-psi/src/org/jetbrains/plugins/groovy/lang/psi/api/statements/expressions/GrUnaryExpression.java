@@ -19,7 +19,9 @@ public interface GrUnaryExpression extends GrExpression {
    */
   @Nullable
   @Override
-  PsiType getType();
+  default PsiType getType() {
+    return GrExpression.super.getType();
+  }
 
   /**
    * @return type of operator call performed by this expression independently of whether this expression is prefix or postfix
