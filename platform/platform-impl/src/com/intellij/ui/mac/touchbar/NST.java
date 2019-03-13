@@ -156,8 +156,8 @@ public class NST {
     return scrubberNativePeer;
   }
 
-  public static ID createGroupItem(String uid, ID[] items, int count) {
-    return ourNSTLibrary.createGroupItem(uid, items, count); // called from AppKit, uses per-event autorelease-pool
+  public static ID createGroupItem(String uid, ID[] items) {
+    return ourNSTLibrary.createGroupItem(uid, items == null || items.length == 0 ? null : items, items.length); // called from AppKit, uses per-event autorelease-pool
   }
 
   public static void updateButton(ID buttonObj,
