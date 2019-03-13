@@ -15,10 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static com.intellij.codeInsight.AnnotationUtil.*;
 
@@ -256,8 +253,12 @@ public abstract class NullableNotNullManager {
   private NullabilityAnnotationInfo doFindEffectiveNullabilityAnnotation(@NotNull PsiModifierListOwner owner) {
     List<String> nullables = getNullablesWithNickNames();
     Set<String> annotationNames = getAllNullabilityAnnotationsWithNickNames();
-    Set<String> extraAnnotations = DEFAULT_ALL.stream().filter(anno -> !annotationNames.contains(anno)).collect(Collectors.toSet());
-    annotationNames.addAll(extraAnnotations);
+    Set<String> extraAnnotations = new HashSet<>(DEFAULT_ALL);
+    extraAnnotations.removeAll(annotationNames);
+    if (!extraAnnotations.isEmpty()) {
+      annotationNames = new HashSet<>(annotationNames);
+      annotationNames.addAll(extraAnnotations);
+    }
 
     PsiAnnotation annotation = findPlainAnnotation(owner, true, annotationNames);
     if (annotation != null) {
@@ -360,7 +361,7 @@ public abstract class NullableNotNullManager {
   protected Set<String> getAllNullabilityAnnotationsWithNickNames() {
     Set<String> qNames = ContainerUtil.newHashSet(getNullablesWithNickNames());
     qNames.addAll(getNotNullsWithNickNames());
-    return qNames;
+    return Collections.unmodifiableSet(qNames);
   }
 
   protected boolean hasHardcodedContracts(@NotNull PsiElement element) {

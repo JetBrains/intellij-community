@@ -302,7 +302,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       result.addAll(getNotNulls());
       result.addAll(getNullables());
       result.addAll(ContainerUtil.mapNotNull(getAllNullabilityNickNames(), PsiClass::getQualifiedName));
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(Collections.unmodifiableSet(result), PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
