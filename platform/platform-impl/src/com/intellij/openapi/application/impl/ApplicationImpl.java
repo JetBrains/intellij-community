@@ -52,6 +52,8 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.Splash;
 import com.intellij.util.*;
+import com.intellij.util.StartUpMeasurer.Activity;
+import com.intellij.util.StartUpMeasurer.Phases;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.Semaphore;
@@ -437,7 +439,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       }, true);
 
-      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.APP_INITIALIZED_CALLBACK);
+      Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
       ExtensionPoint<ApplicationInitializedListener> initializedExtensionPoint = ApplicationInitializedListener.EP_NAME.getPoint(null);
       for (ApplicationInitializedListener listener : initializedExtensionPoint.getExtensionList()) {
         try {
@@ -454,7 +456,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       catch (Throwable e) {
         LOG.error(e);
       }
-      measureToken.end();
+      activity.end();
     }
     finally {
       token.finish();
@@ -1485,7 +1487,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Nullable
   @Override
-  protected String measureTokenNamePrefix() {
+  protected String activityNamePrefix() {
     return "app ";
   }
 

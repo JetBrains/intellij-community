@@ -49,7 +49,7 @@ public class PluginManager extends PluginManagerCore {
   public static final String INSTALLED_TXT = "installed.txt";
 
   @SuppressWarnings("StaticNonFinalField")
-  public static StartUpMeasurer.MeasureToken startupStart;
+  public static StartUpMeasurer.Activity startupStart;
 
   /**
    * Called via reflection
@@ -69,14 +69,14 @@ public class PluginManager extends PluginManagerCore {
 
     Runnable runnable = () -> {
       try {
-        StartUpMeasurer.Item measureToken = startupStart.startChild(Phases.LOAD_MAIN_CLASS);
+        StartUpMeasurer.Activity activity = startupStart.startChild(Phases.LOAD_MAIN_CLASS);
         ClassUtilCore.clearJarURLCache();
 
         Class<?> aClass = Class.forName(mainClass);
         Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
         method.setAccessible(true);
         Object[] argsArray = {args};
-        measureToken.end();
+        activity.end();
         method.invoke(null, argsArray);
       }
       catch (Throwable t) {

@@ -26,8 +26,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.*;
 import com.intellij.util.StartUpMeasurer.Activities;
+import com.intellij.util.StartUpMeasurer.Activity;
 import com.intellij.util.StartUpMeasurer.ActivitySubNames;
-import com.intellij.util.StartUpMeasurer.MeasureToken;
 import com.intellij.util.StartUpMeasurer.Phases;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
@@ -114,7 +114,7 @@ public class StartupUtil {
     }
 
     Callable<Logger> task = () -> {
-      MeasureToken activity = StartUpMeasurer.start(Activities.PREPARE_APP_INIT);
+      Activity activity = StartUpMeasurer.start(Activities.PREPARE_APP_INIT);
       // note: uses config folder!
       if (!checkSystemFolders()) {
         System.exit(Main.DIR_CHECK_FAILED);
@@ -152,7 +152,7 @@ public class StartupUtil {
       pooledActivitiesFuture = AppExecutorUtil.getAppExecutorService().submit(task);
     }
     else {
-      MeasureToken activity = StartUpMeasurer.start(Phases.RUN_PREPARE_APP_INIT_ACTIVITIES);
+      Activity activity = StartUpMeasurer.start(Phases.RUN_PREPARE_APP_INIT_ACTIVITIES);
       pooledActivitiesFuture = null;
       try {
         log = task.call();
@@ -165,7 +165,7 @@ public class StartupUtil {
 
     boolean newConfigFolder = false;
     if (!Main.isHeadless()) {
-      MeasureToken activity = StartUpMeasurer.start(Phases.UPDATE_FRAME_CLASS);
+      Activity activity = StartUpMeasurer.start(Phases.UPDATE_FRAME_CLASS);
       AppUIUtil.updateFrameClass();
       activity.end();
       newConfigFolder = !new File(PathManager.getConfigPath()).exists();
@@ -180,7 +180,7 @@ public class StartupUtil {
     }
 
     if (pooledActivitiesFuture != null) {
-      MeasureToken activity = StartUpMeasurer.start(Phases.WAIT_PARALLEL_PREPARE_APP);
+      Activity activity = StartUpMeasurer.start(Phases.WAIT_PARALLEL_PREPARE_APP);
       try {
         log = pooledActivitiesFuture.get();
         activity.end();
@@ -201,7 +201,7 @@ public class StartupUtil {
     }
 
     if (!Main.isHeadless()) {
-      MeasureToken activity = StartUpMeasurer.start(Phases.REGISTER_BUNDLED_FONTS);
+      Activity activity = StartUpMeasurer.start(Phases.REGISTER_BUNDLED_FONTS);
       AppUIUtil.registerBundledFonts();
       activity.end();
       AppUIUtil.showUserAgreementAndConsentsIfNeeded();
@@ -211,7 +211,7 @@ public class StartupUtil {
   }
 
   private static void configureLogging() {
-    MeasureToken activity = StartUpMeasurer.start(Phases.CONFIGURE_LOGGING);
+    Activity activity = StartUpMeasurer.start(Phases.CONFIGURE_LOGGING);
     // avoiding "log4j:WARN No appenders could be found"
     System.setProperty("log4j.defaultInitOverride", "true");
     System.setProperty("com.jetbrains.suppressWindowRaise", "true");

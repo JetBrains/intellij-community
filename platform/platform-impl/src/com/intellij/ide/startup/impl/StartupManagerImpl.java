@@ -352,11 +352,11 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   private static void runActivities(@NotNull List<? extends Runnable> activities, @NotNull String phaseName) {
-    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(phaseName);
+    StartUpMeasurer.Activity activity = StartUpMeasurer.start(phaseName);
     while (!activities.isEmpty()) {
       runActivity(activities.remove(0));
     }
-    measureToken.end();
+    activity.end();
   }
 
   public static void runActivity(Runnable runnable) {

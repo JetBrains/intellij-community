@@ -53,9 +53,9 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
       public void projectComponentsInitialized(@NotNull final Project project) {
         if (project != myProject) return;
 
-        StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.LOAD_MODULES);
+        StartUpMeasurer.Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.LOAD_MODULES);
         loadModules(myModuleModel);
-        measureToken.end("module count: " + myModuleModel.getModules().length);
+        activity.end("module count: " + myModuleModel.getModules().length);
       }
     });
 

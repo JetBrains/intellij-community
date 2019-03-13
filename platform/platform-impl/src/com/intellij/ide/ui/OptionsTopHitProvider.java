@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.StartUpMeasurer;
+import com.intellij.util.StartUpMeasurer.Activities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,9 +62,9 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
     Class<?> clazz = provider.getClass();
     return cache.map.computeIfAbsent(clazz, type -> {
-      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(project == null
-                                                                        ? StartUpMeasurer.Activities.APP_OPTIONS_TOP_HIT_PROVIDER
-                                                                        : StartUpMeasurer.Activities.PROJECT_OPTIONS_TOP_HIT_PROVIDER);
+      StartUpMeasurer.Activity activity = StartUpMeasurer.start(project == null
+                                                                ? Activities.APP_OPTIONS_TOP_HIT_PROVIDER
+                                                                : Activities.PROJECT_OPTIONS_TOP_HIT_PROVIDER);
       Collection<OptionDescription> result;
       if (provider instanceof ProjectLevelProvider) {
         //noinspection ConstantConditions
@@ -73,10 +74,9 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
         result = ((ApplicationLevelProvider)provider).getOptions();
       }
       else {
-        //noinspection deprecation
         result = ((OptionsTopHitProvider)provider).getOptions(project);
       }
-      measureToken.endWithThreshold(clazz);
+      activity.endWithThreshold(clazz);
       return result;
     });
   }

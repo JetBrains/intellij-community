@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.StartUpMeasurer.Activities;
+import com.intellij.util.StartUpMeasurer.Activity;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
@@ -41,7 +42,7 @@ import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
-import static com.intellij.util.pico.DefaultPicoContainer.getMeasureTokenLevel;
+import static com.intellij.util.pico.DefaultPicoContainer.getActivityLevel;
 
 public final class ServiceManagerImpl implements Disposable {
   private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
@@ -233,14 +234,14 @@ public final class ServiceManagerImpl implements Disposable {
 
     @NotNull
     private Object createAndInitialize(@NotNull PicoContainer container) {
-      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(Activities.SERVICE, getMeasureTokenLevel(container));
+      Activity activity = StartUpMeasurer.start(Activities.SERVICE, getActivityLevel(container));
       Object instance = getDelegate().getComponentInstance(container);
       if (instance instanceof Disposable) {
         Disposer.register(myComponentManager, (Disposable)instance);
       }
 
       myComponentManager.initializeComponent(instance, true);
-      measureToken.endWithThreshold(instance.getClass());
+      activity.endWithThreshold(instance.getClass());
       return instance;
     }
 

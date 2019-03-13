@@ -33,6 +33,7 @@ import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StartUpMeasurer;
+import com.intellij.util.StartUpMeasurer.Activity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,12 +68,12 @@ public class IdeaApplication {
 
   @SuppressWarnings("SSBasedInspection")
   public static void initApplication(@NotNull String[] args) {
-    StartUpMeasurer.MeasureToken measureToken = PluginManager.startupStart.endAndStart(StartUpMeasurer.Phases.INIT_APP);
+    Activity activity = PluginManager.startupStart.endAndStart(StartUpMeasurer.Phases.INIT_APP);
     IdeaApplication app = new IdeaApplication(args);
     // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
     SwingUtilities.invokeLater(() -> {
       PluginManager.installExceptionHandler();
-      measureToken.end();
+      activity.end();
       // this run is blocking, while app is running
       app.run();
     });

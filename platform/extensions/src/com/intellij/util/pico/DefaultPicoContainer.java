@@ -406,7 +406,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @NotNull
-  public static StartUpMeasurer.Level getMeasureTokenLevel(@NotNull PicoContainer picoContainer) {
+  public static StartUpMeasurer.Level getActivityLevel(@NotNull PicoContainer picoContainer) {
     PicoContainer parent = picoContainer.getParent();
     if (parent == null) {
       return StartUpMeasurer.Level.APPLICATION;

@@ -99,17 +99,17 @@ public final class StartUpMeasurer {
   }
 
   @NotNull
-  public static MeasureToken start(@NotNull String name, @Nullable String description) {
+  public static Activity start(@NotNull String name, @Nullable String description) {
     return new Item(name, description, null);
   }
 
   @NotNull
-  public static MeasureToken start(@NotNull String name) {
+  public static Activity start(@NotNull String name) {
     return new Item(name, null, null);
   }
 
   @NotNull
-  public static MeasureToken start(@NotNull String name, @NotNull Level level) {
+  public static Activity start(@NotNull String name, @NotNull Level level) {
     return new Item(name, null, level);
   }
 
@@ -124,7 +124,7 @@ public final class StartUpMeasurer {
     }
   }
 
-  public final static class Item implements MeasureToken {
+  public final static class Item implements Activity {
     private final String name;
     private String description;
 
@@ -206,7 +206,7 @@ public final class StartUpMeasurer {
 
     @Override
     @NotNull
-    public MeasureToken endAndStart(@NotNull String name) {
+    public Activity endAndStart(@NotNull String name) {
       end();
       return new Item(name, /* description = */null, /* start = */end, /* parent = */null, /* level = */null);
     }
@@ -217,7 +217,7 @@ public final class StartUpMeasurer {
     }
   }
 
-  public interface MeasureToken {
+  public interface Activity {
     void end(@Nullable String description);
 
     /**
@@ -225,12 +225,12 @@ public final class StartUpMeasurer {
      * So, start of new is always equals to this item end and yet another System.nanoTime() call is avoided.
      */
     @NotNull
-    MeasureToken endAndStart(@NotNull String name);
+    Activity endAndStart(@NotNull String name);
 
     void endWithThreshold(@NotNull Class<?> clazz);
 
     @NotNull
-    Item startChild(@NotNull String name);
+    Activity startChild(@NotNull String name);
 
     default void end() {
       end(null);

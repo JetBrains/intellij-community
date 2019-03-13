@@ -25,6 +25,8 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.*;
+import com.intellij.util.StartUpMeasurer.Activity;
+import com.intellij.util.StartUpMeasurer.Phases;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -1187,7 +1189,7 @@ public class PluginManagerCore {
 
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
 
-    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.LOAD_PLUGIN_DESCRIPTORS);
+    Activity activity = StartUpMeasurer.start(Phases.LOAD_PLUGIN_DESCRIPTORS);
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(PluginManagerCore.class.getClassLoader(), urlsFromClassPath);
 
@@ -1212,7 +1214,7 @@ public class PluginManagerCore {
       ExceptionUtilRt.rethrow(e);
     }
 
-    measureToken.end();
+    activity.end();
 
     return topoSortPlugins(result, errors);
   }
@@ -1586,7 +1588,7 @@ public class PluginManagerCore {
   }
 
   private static void initPlugins(@Nullable StartupProgress progress) {
-    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.INIT_PLUGINS);
+    Activity activity = StartUpMeasurer.start(Phases.INIT_PLUGINS);
     try {
       initializePlugins(progress);
     }
@@ -1597,7 +1599,7 @@ public class PluginManagerCore {
       getLogger().error(e);
       throw e;
     }
-    measureToken.end("plugin count: " + ourPlugins.length);
+    activity.end("plugin count: " + ourPlugins.length);
     logPlugins();
     ClassUtilCore.clearJarURLCache();
   }

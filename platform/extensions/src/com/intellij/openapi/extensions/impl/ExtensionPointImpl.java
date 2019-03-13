@@ -12,6 +12,7 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.StartUpMeasurer.Activities;
+import com.intellij.util.StartUpMeasurer.Activity;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import org.jdom.Element;
@@ -27,7 +28,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static com.intellij.util.pico.DefaultPicoContainer.getMeasureTokenLevel;
+import static com.intellij.util.pico.DefaultPicoContainer.getActivityLevel;
 
 /**
  * @author AKireyev
@@ -276,7 +277,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
     assertNotReadOnlyMode();
 
-    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(Activities.EXTENSION, getMeasureTokenLevel(myPicoContainer));
+    Activity activity = StartUpMeasurer.start(Activities.EXTENSION, getActivityLevel(myPicoContainer));
 
     int totalSize = myAdapters.size();
     Class<T> extensionClass = getExtensionClass();
@@ -339,7 +340,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       }
 
       // don't count ProcessCanceledException as valid action to measure (later special category can be introduced if needed)
-      measureToken.endWithThreshold(extensionClass);
+      activity.endWithThreshold(extensionClass);
       return result;
     }
     finally {

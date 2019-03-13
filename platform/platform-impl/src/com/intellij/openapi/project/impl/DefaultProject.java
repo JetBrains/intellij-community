@@ -26,7 +26,7 @@ final class DefaultProject extends ProjectImpl {
 
   @NotNull
   @Override
-  protected String measureTokenNamePrefix() {
+  protected String activityNamePrefix() {
     return "default project ";
   }
 
