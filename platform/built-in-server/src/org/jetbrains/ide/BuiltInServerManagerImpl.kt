@@ -36,6 +36,12 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
 
   private var server: BuiltInServer? = null
 
+  override val port: Int
+    get() = if (server == null) defaultPort else server!!.port
+
+  override val serverDisposable: Disposable?
+    get() = server
+
   init {
     serverStartFuture = when {
       ApplicationManager.getApplication().isUnitTestMode -> null
@@ -88,10 +94,6 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
     }
   }
 
-  override fun getPort(): Int {
-    return if (server == null) defaultPort else server!!.port
-  }
-
   override fun waitForStart(): BuiltInServerManager {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode || !ApplicationManager.getApplication().isDispatchThread)
 
@@ -132,8 +134,6 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
       Disposer.register(ApplicationManager.getApplication(), server!!)
     }
   }
-
-  override fun getServerDisposable(): Disposable? = server
 
   override fun isOnBuiltInWebServer(url: Url?): Boolean {
     return url != null && !url.authority.isNullOrEmpty() && isOnBuiltInWebServerByAuthority(url.authority!!)
