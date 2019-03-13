@@ -342,7 +342,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       resPath += Integer.toHexString(resourceUrl.hashCode()) + "_" + resourceUrl.substring(slashIndex + 1);
     }
 
-    final int lastDoPosInResourceUrl = resourceUrl.lastIndexOf('.', slashIndex);
+    int lastDoPosInResourceUrl = resourceUrl.lastIndexOf('.');
     if (lastDoPosInResourceUrl == -1 ||
         FileTypeManager.getInstance().getFileTypeByExtension(resourceUrl.substring(lastDoPosInResourceUrl + 1)) == FileTypes.UNKNOWN) {
       // remote url does not contain file with extension
