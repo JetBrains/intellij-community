@@ -28,6 +28,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -120,8 +121,7 @@ public class HelpTooltip {
   private boolean neverHide;
   private Alignment alignment = Alignment.BOTTOM;
 
-  private static final BooleanSupplier ALWAYS_OPEN = () -> true;
-  private BooleanSupplier masterPopupOpenCondition = ALWAYS_OPEN;
+  private BooleanSupplier masterPopupOpenCondition;
 
   private ComponentPopupBuilder myPopupBuilder;
   private Dimension myPopupSize;
@@ -342,7 +342,7 @@ public class HelpTooltip {
         instance.uninstallMouseListeners(component);
 
         component.putClientProperty(TOOLTIP_PROPERTY, null);
-        instance.masterPopupOpenCondition = ALWAYS_OPEN;
+        instance.masterPopupOpenCondition = null;
       }
     }
   }
@@ -388,7 +388,7 @@ public class HelpTooltip {
    * @param condition a {@code BooleanSupplier} for open condition
    */
   @ApiStatus.Experimental
-  public static void setMasterPopupOpenCondition(@NotNull Component owner, BooleanSupplier condition) {
+  public static void setMasterPopupOpenCondition(@NotNull Component owner, @Nullable BooleanSupplier condition) {
     if (owner instanceof JComponent) {
       HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
       if (instance != null) {
@@ -400,7 +400,7 @@ public class HelpTooltip {
   private void scheduleShow(JComponent owner, int delay) {
     popupAlarm.cancelAllRequests();
     popupAlarm.addRequest(() -> {
-      if (masterPopupOpenCondition.getAsBoolean()) {
+      if (masterPopupOpenCondition != null && masterPopupOpenCondition.getAsBoolean()) {
         myPopup = myPopupBuilder.createPopup();
         myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, myPopupSize)));
         if (!neverHide) {
