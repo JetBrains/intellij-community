@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.IdeTooltip;
@@ -691,26 +691,26 @@ public class HintManagerImpl extends HintManager {
   }
 
   @Override
-  public void showInformationHint(@NotNull Editor editor, @NotNull String text) {
+  public void showInformationHint(@NotNull Editor editor, @NotNull String text, @PositionFlags short position) {
     JComponent label = HintUtil.createInformationLabel(text);
-    showInformationHint(editor, label);
+    showInformationHint(editor, label, position);
   }
 
   @Override
   public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component) {
     // Set the accessible name so that screen readers announce the panel type (e.g. "Hint panel")
     // when the tooltip gets the focus.
-    AccessibleContextUtil.setName(component, "Hint");
-    showInformationHint(editor, component, true);
+    showInformationHint(editor, component, ABOVE);
   }
 
-  public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component, boolean showByBalloon) {
+  public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component, @PositionFlags short position) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
+    AccessibleContextUtil.setName(component, "Hint");
     LightweightHint hint = new LightweightHint(component);
-    Point p = getHintPosition(hint, editor, ABOVE);
-    showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false);
+    Point p = getHintPosition(hint, editor, position);
+    showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false, position);
   }
 
   @Override
