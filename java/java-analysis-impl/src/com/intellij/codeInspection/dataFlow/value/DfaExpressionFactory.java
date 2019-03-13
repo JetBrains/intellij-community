@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -232,14 +233,23 @@ public class DfaExpressionFactory {
         }
       }
       if (method.getParameterList().isEmpty()) {
-        if ((JavaMethodContractUtil.isPure(method) ||
-            AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) &&
+        if ((JavaMethodContractUtil.isPure(method) || isClassAnnotatedImmutable(method)) &&
             isContractAllowedForGetter(method)) {
           return new GetterDescriptor(method);
         }
       }
     }
     return null;
+  }
+
+  private static boolean isClassAnnotatedImmutable(PsiMethod method) {
+    List<String> annotations = ConcurrencyAnnotationsManager.getInstance(method.getProject()).getImmutableAnnotations();
+    for (String annotation : annotations) {
+      if (AnnotationUtil.findAnnotation(method.getContainingClass(), annotation) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isContractAllowedForGetter(PsiMethod method) {

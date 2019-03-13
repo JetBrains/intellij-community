@@ -42,6 +42,8 @@ public class ConcurrencyAnnotationsManager {
     fillDefaults(myGuardedByList, GUARDED_BY);
     fillDefaults(myThreadSafeList, THREAD_SAFE);
     fillDefaults(myNotThreadSafeList, NOT_THREAD_SAFE);
+
+    myImmutableList.add("com.google.auto.value.AutoValue");
   }
 
   private static void fillDefaults(List<? super String> list, final String annoName) {
