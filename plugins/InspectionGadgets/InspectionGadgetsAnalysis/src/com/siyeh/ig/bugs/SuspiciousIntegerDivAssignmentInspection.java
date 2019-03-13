@@ -2,6 +2,9 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -14,13 +17,18 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.JavaPsiMathUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public class SuspiciousIntegerDivAssignmentInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean myReportPossiblyExactDivision = true;
+
   @Nls
   @NotNull
   @Override
@@ -32,6 +40,14 @@ public class SuspiciousIntegerDivAssignmentInspection extends BaseInspection {
   @Override
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("suspicious.integer.div.assignment.problem.descriptor");
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox("Report suspicious but possibly exact divisions", "myReportPossiblyExactDivision");
+    return panel;
   }
 
   @Nullable
@@ -81,7 +97,7 @@ public class SuspiciousIntegerDivAssignmentInspection extends BaseInspection {
     }
   }
 
-  private static class SuspiciousIntegerDivAssignmentVisitor extends BaseInspectionVisitor {
+  private class SuspiciousIntegerDivAssignmentVisitor extends BaseInspectionVisitor {
     @Override
     public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
       super.visitAssignmentExpression(assignment);
@@ -93,11 +109,17 @@ public class SuspiciousIntegerDivAssignmentInspection extends BaseInspection {
       if (rhs == null) {
         return;
       }
-      final Number dividend = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(rhs.getLOperand()), Number.class);
-      final Number divisor = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(rhs.getROperand()), Number.class);
-      if (dividend != null && divisor != null && dividend.longValue() % divisor.longValue() == 0) {
-        return;
+      final LongRangeSet dividendRange = CommonDataflow.getExpressionRange(PsiUtil.skipParenthesizedExprDown(rhs.getLOperand()));
+      if (dividendRange != null) {
+        final LongRangeSet divisorRange = CommonDataflow.getExpressionRange(PsiUtil.skipParenthesizedExprDown(rhs.getROperand()));
+        if (divisorRange != null) {
+          final LongRangeSet modRange = dividendRange.mod(divisorRange);
+          if (modRange.isEmpty() || LongRangeSet.point(0).equals(modRange)) {
+            return; // modRange.isEmpty() could be if divisor is always zero; for this case we have another inspection, so no need to report
+          }
+        }
       }
+      if (!myReportPossiblyExactDivision) return;
       registerError(assignment);
     }
   }
