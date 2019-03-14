@@ -674,18 +674,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return VcsBundle.getString("commit.dialog.default.commit.operation.name");
   }
 
-  private boolean checkComment() {
-    if (myVcsConfiguration.FORCE_NON_EMPTY_COMMENT && getCommitMessage().isEmpty()) {
-      int requestForCheckin = Messages.showYesNoDialog(message("confirmation.text.check.in.with.empty.comment"),
-                                                       message("confirmation.title.check.in.with.empty.comment"),
-                                                       Messages.getWarningIcon());
-      return requestForCheckin == Messages.YES;
-    }
-    else {
-      return true;
-    }
-  }
-
   private void stopUpdate() {
     myUpdateDisabled = true;
   }
@@ -749,10 +737,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private boolean saveDialogState() {
-    if (!checkComment()) {
-      return false;
-    }
-
     saveCommentIntoChangeList();
     myVcsConfiguration.saveCommitMessage(getCommitMessage());
     try {
@@ -869,12 +853,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myLastKnownComment = commitMessage;
     myCommitMessageArea.setText(commitMessage);
     myCommitMessageArea.requestFocusInMessage();
-  }
-
-  @NotNull
-  @Override
-  public String getCommitMessage() {
-    return myCommitMessageArea.getComment();
   }
 
   @Override
@@ -999,6 +977,21 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   public void includeIntoCommit(@NotNull Collection<?> items) {
     myBrowser.getViewer().includeChanges(items);
+  }
+
+  @NotNull
+  @Override
+  public String getCommitMessage() {
+    return myCommitMessageArea.getComment();
+  }
+
+  @Override
+  public boolean confirmCommitWithEmptyMessage() {
+    return Messages.YES == Messages.showYesNoDialog(
+      message("confirmation.text.check.in.with.empty.comment"),
+      message("confirmation.title.check.in.with.empty.comment"),
+      Messages.getWarningIcon()
+    );
   }
 
   @NotNull
