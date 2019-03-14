@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public final class JsonSchemaTestServiceImpl extends JsonSchemaServiceImpl {
   private static JsonSchemaFileProvider provider;
@@ -35,5 +36,16 @@ public final class JsonSchemaTestServiceImpl extends JsonSchemaServiceImpl {
         return ContainerUtil.createMaybeSingletonList(provider);
       }
     });
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(JsonSchemaTestServiceImpl.class, "test");
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof JsonSchemaTestServiceImpl) return true;
+    return super.equals(obj);
   }
 }
