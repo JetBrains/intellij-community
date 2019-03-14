@@ -98,18 +98,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
   @Nullable
   @Override
   public HashContributor<FileContent> getHashContributor() {
-    return new FileContentHashContributor() {
-      @Override
-      protected byte[] getBytes(@NotNull FileContent content) {
-        return new byte[0];
-      }
-
-      @NotNull
-      @Override
-      public String getId() {
-        return null;
-      }
-    };
+    return FileContentHashContributor.create(this);
   }
 
   private static final ThreadLocalCachedIntArray spareBufferLocal = new ThreadLocalCachedIntArray();
