@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 public class JsonSchemaServiceImpl implements JsonSchemaService {
   private static final Logger LOG = Logger.getInstance(JsonSchemaServiceImpl.class);
@@ -52,7 +51,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
       @NotNull
       @Override
       protected Set<String> compute() {
-        return myState.getFiles().stream().map(f -> JsonCachedValues.getSchemaId(f, myProject)).collect(Collectors.toSet());
+      return ContainerUtil.map2Set(myState.getFiles(), f -> JsonCachedValues.getSchemaId(f, myProject));
       }
     };
     myCatalogManager = new JsonSchemaCatalogManager(myProject);
@@ -122,19 +121,22 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Override
   @Nullable
   public VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent) {
-    final Optional<VirtualFile> optional = findBuiltInSchemaByReference(reference);
-    return optional.orElseGet(() -> {
-      if (reference.startsWith("#")) return referent;
-      return JsonFileResolver.resolveSchemaByReference(referent, JsonPointerUtil.normalizeId(reference));
-    });
+    final VirtualFile file = findBuiltInSchemaByReference(reference);
+    if (file != null) return file;
+    if (reference.startsWith("#")) return referent;
+    return JsonFileResolver.resolveSchemaByReference(referent, JsonPointerUtil.normalizeId(reference));
   }
 
-  private Optional<VirtualFile> findBuiltInSchemaByReference(@NotNull String reference) {
+  @Nullable
+  private VirtualFile findBuiltInSchemaByReference(@NotNull String reference) {
     String id = JsonPointerUtil.normalizeId(reference);
-    if (!myBuiltInSchemaIds.getValue().contains(id)) return Optional.empty();
-    return myState.getFiles().stream()
-        .filter(file -> id.equals(JsonCachedValues.getSchemaId(file, myProject)))
-        .findFirst();
+    if (!myBuiltInSchemaIds.getValue().contains(id)) return null;
+    for (VirtualFile file : myState.getFiles()) {
+      if (id.equals(JsonCachedValues.getSchemaId(file, myProject))) {
+        return file;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -493,7 +495,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     @Nullable
     public JsonSchemaFileProvider getProvider(@NotNull final VirtualFile file) {
       final Collection<JsonSchemaFileProvider> providers = myData.getValue().get(file);
-      return providers.stream().filter(p -> p.getSchemaType() == SchemaType.userSchema).findFirst().orElse(providers.stream().findFirst().orElse(null));
+      for (JsonSchemaFileProvider p : providers) {
+        if (p.getSchemaType() == SchemaType.userSchema) {
+          return p;
+        }
+      }
+      return ContainerUtil.getFirstItem(providers);
     }
 
     public boolean isComputed() {
