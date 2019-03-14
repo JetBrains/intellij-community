@@ -571,7 +571,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
     if (Registry.is("new.search.everywhere") && e.getProject() != null) {
       String searchProviderID = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
 
       SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(e.getProject());
       if (seManager.isShown()) {
@@ -580,14 +580,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         else {
           seManager.setShownContributor(searchProviderID);
-          String shortcut = KeymapUtil.getEventCallerKeystrokeText(e);
-          FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(searchProviderID, shortcut);
+          FeatureUsageData data = SearchEverywhereUsageTriggerCollector
+            .createData(searchProviderID)
+            .addInputEvent(e);
           SearchEverywhereUsageTriggerCollector.trigger(e.getProject(), SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
         }
         return;
       }
 
-      FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(searchProviderID, null);
+      FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(searchProviderID);
       SearchEverywhereUsageTriggerCollector.trigger(e.getProject(), SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, data);
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       String text = GotoActionBase.getInitialTextForNavigation(e.getData(CommonDataKeys.EDITOR));
