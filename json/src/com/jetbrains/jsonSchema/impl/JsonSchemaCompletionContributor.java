@@ -31,7 +31,6 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.injection.Injectable;
-import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -302,7 +301,6 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       JBIterable.from(Language.getRegisteredLanguages())
         .filter(LanguageUtil::isInjectableLanguage)
         .map(Injectable::fromLanguage)
-        .append(ReferenceInjector.EXTENSION_POINT_NAME.getExtensions())
         .forEach(it -> myVariants.add(LookupElementBuilder
                                         .create(it.getId())
                                         .withIcon(it.getIcon())
