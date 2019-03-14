@@ -465,4 +465,55 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     assertModuleModuleDeps("project-b.main", "project-a.util", "project-a.main");
   }
+
+  @Test
+  @TargetVersions("4.4+")
+  public void testProjectWithCompositePluginDependencyImported() throws Exception {
+    createSettingsFile("includeBuild('plugin'); includeBuild('consumer')");
+    createProjectSubFile("plugin/settings.gradle", "rootProject.name = 'test-plugin'");
+    createProjectSubFile("plugin/build.gradle", new GradleBuildScriptBuilderEx()
+      .withJavaPlugin()
+      .addPrefix("group = 'myGroup'",
+                 "version = '1.0'")
+      .generate());
+
+    // consumer need to be complicated to display the issue
+    createProjectSubFile("consumer/settings.gradle",
+                         "pluginManagement {\n" +
+                         "  resolutionStrategy {\n" +
+                         "    eachPlugin {\n" +
+                         "      println \"resolving ${requested.id.id} dependency\"\n" +
+                         "      if(requested.id.id == \"test-plugin\") {\n" +
+                         "        useModule(\"myGroup:test-plugin:1.0\")\n" +
+                         "      }\n" +
+                         "    }\n" +
+                         "  }\n" +
+                         "}\n"
+                         + "include 'library'");
+    createProjectSubFile("consumer/build.gradle", new GradleBuildScriptBuilderEx()
+      .addPostfix(
+        "plugins {",
+        " id 'test-plugin' apply false",
+        "}",
+        "subprojects {",
+        "  apply plugin: 'java'",
+        "}"
+      )
+      .generate());
+    // sourceSets here will fail to evaluate if parent project was not evaluated successfully
+    // because of missing test-plugin, caused by bad included build evaluation order.
+    createProjectSubFile("consumer/library/build.gradle", new GradleBuildScriptBuilderEx()
+      .addPostfix(
+        "sourceSets {",
+        "  integrationTest ",
+        "}"
+      )
+      .generate());
+
+    importProject("");
+
+    assertModules("project",
+                  "test-plugin", "test-plugin.main", "test-plugin.test",
+                  "consumer", "consumer.library", "consumer.library.main", "consumer.library.test", "consumer.library.integrationTest");
+  }
 }
