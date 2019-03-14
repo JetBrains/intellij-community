@@ -5,8 +5,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.TimeoutUtil;
 import junit.framework.TestCase;
 import one.util.streamex.IntStreamEx;
@@ -21,7 +22,7 @@ import java.util.function.Supplier;
 /**
  * @author peter
  */
-public class CachedValuesTest extends LightPlatformTestCase {
+public class CachedValuesTest extends LightPlatformCodeInsightFixtureTestCase {
   private final UserDataHolderBase holder = new UserDataHolderBase();
 
   public void testCachedValueCapturingInvalidStuff() {
@@ -102,7 +103,24 @@ public class CachedValuesTest extends LightPlatformTestCase {
     }
   }
 
-  private static Long getPsiModCount() {
+  private Long getPsiModCount() {
     return getPsiManager().getModificationTracker().getModificationCount();
+  }
+
+  public void testExternalChangesDoNotLeadToRecomputationOfPsiFileDependentCache() {
+    PsiFile file = myFixture.addFileToProject("a.txt", "");
+
+    AtomicInteger recomputations = new AtomicInteger();
+    CachedValue<String> cv = CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
+      recomputations.incrementAndGet();
+      return CachedValueProvider.Result.create("x", file);
+    });
+    assertEquals("x", cv.getValue());
+    assertEquals(1, recomputations.get());
+
+    myFixture.addFileToProject("b.txt", "");
+
+    assertEquals("x", cv.getValue());
+    assertEquals(1, recomputations.get());
   }
 }
