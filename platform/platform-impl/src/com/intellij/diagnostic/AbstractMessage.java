@@ -21,7 +21,7 @@ public abstract class AbstractMessage {
   private String myAdditionalInfo;
   private Integer myAssigneeId;
   private boolean myAssigneeVisible;
-  private Long myDevelopersUpdateTimestamp;
+  private Long myDevelopersTimestamp;
 
   public abstract @NotNull Throwable getThrowable();
   public abstract @NotNull String getThrowableText();
@@ -106,12 +106,12 @@ public abstract class AbstractMessage {
     myAssigneeVisible = assigneeVisible;
   }
 
-  public @Nullable Long getDevelopersUpdateTimestamp() {
-    return myDevelopersUpdateTimestamp;
+  public @Nullable Long getDevelopersTimestamp() {
+    return myDevelopersTimestamp;
   }
 
-  public void setDevelopersUpdateTimestamp(@Nullable Long developersUpdateTimestamp) {
-    myDevelopersUpdateTimestamp = developersUpdateTimestamp;
+  public void setDevelopersTimestamp(@Nullable Long developersTimestamp) {
+    myDevelopersTimestamp = developersTimestamp;
   }
 
   /** @deprecated use {@link #getIncludedAttachments()} instead (to be removed in IDEA 2020) */

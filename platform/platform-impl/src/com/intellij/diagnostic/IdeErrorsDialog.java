@@ -79,7 +79,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private final Set<String> myAcceptedNotices;
   private final List<MessageCluster> myMessageClusters = new ArrayList<>();  // exceptions with the same stacktrace
   private int myIndex, myLastIndex = -1;
-  private Long myDevelopersUpdateTimestamp;
+  private Long myDevelopersTimestamp;
 
   private JLabel myCountLabel;
   private HyperlinkLabel.Croppable myInfoLabel;
@@ -122,21 +122,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private void loadDevelopersList() {
     ErrorReportConfigurable configurable = ErrorReportConfigurable.getInstance();
-    CachedDevelopers cachedDevelopers = configurable.getCachedDeveloper();
-    if (cachedDevelopers != null && cachedDevelopers.isUpToDateAt(System.currentTimeMillis())) {
-      loadCachedDevelopers(cachedDevelopers);
+    Developers developers = configurable.getDeveloper();
+    if (developers != null && developers.isUpToDateAt(System.currentTimeMillis())) {
+      setDevelopers(developers);
     }
     else {
       new Task.Backgroundable(null, "Loading Developers List", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            List<Developer> developers = ITNProxy.fetchDevelopers(indicator);
+            Developers updatedDevelopers = new Developers(ITNProxy.fetchDevelopers(indicator), System.currentTimeMillis());
             UIUtil.invokeLaterIfNeeded(() -> {
-              CachedDevelopers cachedDevelopers = new CachedDevelopers(developers, System.currentTimeMillis());
-              configurable.setCachedDeveloper(cachedDevelopers);
+              configurable.setDeveloper(updatedDevelopers);
               if (isShowing()) {
-                loadCachedDevelopers(cachedDevelopers);
+                setDevelopers(updatedDevelopers);
               }
             });
           }
@@ -144,7 +143,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
             LOG.debug(e);
             UIUtil.invokeLaterIfNeeded(() -> {
               if (isShowing()) {
-                loadCachedDevelopers(cachedDevelopers);
+                setDevelopers(developers);
               }
             });
           }
@@ -154,10 +153,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private void loadCachedDevelopers(@Nullable CachedDevelopers cachedDevelopers) {
-    if (cachedDevelopers != null) {
-      myAssigneeCombo.setModel(new CollectionComboBoxModel<>(cachedDevelopers.getDevelopers()));
-      myDevelopersUpdateTimestamp = cachedDevelopers.getTimestamp();
+  private void setDevelopers(@Nullable Developers developers) {
+    if (developers != null) {
+      myAssigneeCombo.setModel(new CollectionComboBoxModel<>(developers.getDevelopers()));
+      myDevelopersTimestamp = developers.getTimestamp();
     }
   }
 
@@ -613,7 +612,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     AbstractMessage message = cluster.first;
 
     message.setAssigneeVisible(myAssigneeVisible);
-    message.setDevelopersUpdateTimestamp(myDevelopersUpdateTimestamp);
+    message.setDevelopersTimestamp(myDevelopersTimestamp);
     message.setSubmitting(true);
 
     String notice = submitter.getPrivacyNoticeText();

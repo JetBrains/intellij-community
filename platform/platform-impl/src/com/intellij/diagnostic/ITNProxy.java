@@ -255,8 +255,8 @@ class ITNProxy {
         append(builder, "assignee.id", Integer.toString(messageObj.getAssigneeId()));
       }
       append(builder, "assignee.list.visible", Boolean.toString(messageObj.isAssigneeVisible()));
-      if (messageObj.getDevelopersUpdateTimestamp() != null) {
-        append(builder, "assignee.list.timestamp", Long.toString(messageObj.getDevelopersUpdateTimestamp()));
+      if (messageObj.getDevelopersTimestamp() != null) {
+        append(builder, "assignee.list.timestamp", Long.toString(messageObj.getDevelopersTimestamp()));
       }
     }
 

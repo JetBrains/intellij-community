@@ -9,7 +9,6 @@ import javax.swing.event.AncestorEvent
 
 internal class BlinkingLabel internal constructor(text: String) : JBLabel(text) {
 
-  private var myPlainFont: Boolean = true
   private val myTimer: Timer = Timer(750) { onTimer() }
 
   init {
@@ -17,20 +16,19 @@ internal class BlinkingLabel internal constructor(text: String) : JBLabel(text) 
 
     addAncestorListener(object: AncestorListenerAdapter() {
       override fun ancestorAdded(event: AncestorEvent?) {
-        this@BlinkingLabel.removeAncestorListener(this)
-
         myTimer.start()
+      }
+
+      override fun ancestorRemoved(event: AncestorEvent?) {
+        myTimer.stop()
       }
     })
 
-    val sampleLabel = JBLabel(text)
-    sampleLabel.font = font.deriveFont(font.style or Font.BOLD)
-    minimumSize = sampleLabel.minimumSize
-    preferredSize = sampleLabel.preferredSize
+    prepareSizeForBoldChange()
   }
 
   private fun onTimer() {
-    if (myPlainFont) {
+    if (isPlainFont()) {
       setBoldFont()
       myTimer.restart()
     } else {
@@ -38,13 +36,20 @@ internal class BlinkingLabel internal constructor(text: String) : JBLabel(text) 
     }
   }
 
+  private fun isPlainFont() = font.style and Font.BOLD == 0
+
   private fun setPlainFont() {
-    myPlainFont = true
     font = font.deriveFont(font.style and Font.BOLD.inv())
   }
 
   private fun setBoldFont() {
-    myPlainFont = false
     font = font.deriveFont(font.style or Font.BOLD)
+  }
+
+  private fun prepareSizeForBoldChange() {
+    val sampleLabel = JBLabel(text)
+    sampleLabel.font = font.deriveFont(font.style or Font.BOLD)
+    minimumSize = sampleLabel.minimumSize
+    preferredSize = sampleLabel.preferredSize
   }
 }

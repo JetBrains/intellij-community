@@ -30,8 +30,8 @@ internal class ErrorReportConfigurable : PersistentStateComponent<Element> {
 
   private var myState: State? = null
 
-  var cachedDeveloper: CachedDevelopers?
-    get() = myState?.let { CachedDevelopers(it.developers.toList(), it.timestamp) }
+  var developer: Developers?
+    get() = myState?.let { Developers(it.developers.toList(), it.timestamp) }
     set(value) {
       myState = value?.let { State(it.developers.toList(), it.timestamp) }
     }
@@ -64,7 +64,7 @@ internal class ErrorReportConfigurable : PersistentStateComponent<Element> {
   }
 }
 
-internal data class CachedDevelopers(val developers: List<Developer>, val timestamp: Long) {
+internal data class Developers(val developers: List<Developer>, val timestamp: Long) {
   companion object {
     private const val UPDATE_INTERVAL = 24L * 60 * 60 * 1000 // 24 hours
   }
