@@ -45,7 +45,7 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
 
   @NotNull
   @Override
-  protected String getMemberPresentableText(PsiMethod method) {
+  protected String getMemberPresentableText(@NotNull PsiMethod method) {
     return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
                                                                     PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
                                                                     PsiFormatUtilBase.SHOW_FQ_NAME, 0);
@@ -72,7 +72,7 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
 
   @Override
   @NotNull
-  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(List<? extends PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
+  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
     return new StaticImportMethodQuestionAction<>(project, editor, methodsToImport, myMethodCall);
   }
 

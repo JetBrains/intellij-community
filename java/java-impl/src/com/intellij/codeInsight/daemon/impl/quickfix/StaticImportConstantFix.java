@@ -32,7 +32,7 @@ import java.util.List;
 public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
   protected final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRef;
 
-  public StaticImportConstantFix(@NotNull PsiJavaCodeReferenceElement referenceElement) {
+  StaticImportConstantFix(@NotNull PsiJavaCodeReferenceElement referenceElement) {
     myRef = SmartPointerManager.getInstance(referenceElement.getProject()).createSmartPsiElementPointer(referenceElement);
   }
 
@@ -44,7 +44,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
 
   @NotNull
   @Override
-  protected String getMemberPresentableText(PsiField field) {
+  protected String getMemberPresentableText(@NotNull PsiField field) {
     return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_NAME |
                                                PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
                                                PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
@@ -76,7 +76,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
 
   @Override
   @NotNull
-  protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(List<? extends PsiField> methodsToImport, @NotNull Project project, Editor editor) {
+  protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(@NotNull List<? extends PsiField> methodsToImport, @NotNull Project project, Editor editor) {
     return new StaticImportMethodQuestionAction<PsiField>(project, editor, methodsToImport, myRef) {
       @NotNull
       @Override

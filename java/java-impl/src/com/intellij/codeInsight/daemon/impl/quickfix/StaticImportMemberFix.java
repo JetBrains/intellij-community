@@ -43,20 +43,18 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
   // we keep max 2 candidates
   private List<T> candidates;
 
-  @NotNull protected abstract String getBaseText();
-  @NotNull protected abstract String getMemberPresentableText(T t);
+  @NotNull
+  protected abstract String getBaseText();
+
+  @NotNull
+  protected abstract String getMemberPresentableText(@NotNull T t);
 
   @Override
   @NotNull
   public String getText() {
-    String text = getBaseText();
-    if (candidates != null && candidates.size() == 1) {
-      text += " '" + getMemberPresentableText(candidates.get(0)) + "'";
-    }
-    else {
-      text += "...";
-    }
-    return text;
+    return getBaseText() +
+           (candidates == null || candidates.size() != 1 ? "..." :
+            " '" + getMemberPresentableText(candidates.get(0)) + "'");
   }
 
   @Override
@@ -78,20 +76,27 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
       ;
   }
 
-  @NotNull protected abstract List<T> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode mode);
+  @NotNull
+  protected abstract List<T> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode mode);
 
   protected abstract boolean toAddStaticImports();
 
-  public static boolean isExcluded(PsiMember method) {
+  public static boolean isExcluded(@NotNull PsiMember method) {
     String name = PsiUtil.getMemberQualifiedName(method);
     return name != null && JavaProjectCodeInsightSettings.getSettings(method.getProject()).isExcluded(name);
   }
 
-  @NotNull protected abstract QuestionAction createQuestionAction(List<? extends T> methodsToImport, @NotNull Project project, Editor editor);
+  @NotNull
+  protected abstract QuestionAction createQuestionAction(@NotNull List<? extends T> methodsToImport, @NotNull Project project, Editor editor);
 
-  @Nullable protected abstract PsiElement getElement();
-  @Nullable protected abstract PsiElement getQualifierExpression();
-  @Nullable protected abstract PsiElement resolveRef();
+  @Nullable
+  protected abstract PsiElement getElement();
+
+  @Nullable
+  protected abstract PsiElement getQualifierExpression();
+
+  @Nullable
+  protected abstract PsiElement resolveRef();
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
@@ -103,7 +108,8 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
     });
   }
 
-  private ImportClassFixBase.Result doFix(Editor editor) {
+  @NotNull
+  private ImportClassFixBase.Result doFix(@NotNull Editor editor) {
     if (!CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY) {
       return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
     }

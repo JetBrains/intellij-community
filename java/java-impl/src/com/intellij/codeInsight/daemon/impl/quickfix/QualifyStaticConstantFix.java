@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class QualifyStaticConstantFix extends StaticImportConstantFix {
-  public QualifyStaticConstantFix(@NotNull PsiJavaCodeReferenceElement referenceElement) {
+  QualifyStaticConstantFix(@NotNull PsiJavaCodeReferenceElement referenceElement) {
     super(referenceElement);
   }
 
@@ -38,7 +38,7 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
 
   @NotNull
   @Override
-  protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(List<? extends PsiField> fieldsToImport,
+  protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(@NotNull List<? extends PsiField> fieldsToImport,
                                                                             @NotNull Project project,
                                                                             Editor editor) {
     return new StaticImportMethodQuestionAction<PsiField>(project, editor, fieldsToImport, myRef) {

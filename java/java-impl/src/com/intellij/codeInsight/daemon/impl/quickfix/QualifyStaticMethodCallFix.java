@@ -37,7 +37,7 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
 
   @NotNull
   @Override
-  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(List<? extends PsiMethod> methodsToImport,
+  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport,
                                                                              @NotNull Project project,
                                                                              Editor editor) {
     return new StaticImportMethodQuestionAction<PsiMethod>(project, editor, methodsToImport, myMethodCall) {
@@ -55,9 +55,9 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
     return false;
   }
 
-  public static void qualifyStatically(PsiMember toImport,
-                                       Project project,
-                                       PsiReferenceExpression qualifiedExpression) {
+  static void qualifyStatically(@NotNull PsiMember toImport,
+                                @NotNull Project project,
+                                @NotNull PsiReferenceExpression qualifiedExpression) {
     PsiClass containingClass = toImport.getContainingClass();
     if (containingClass == null) return;
     PsiReferenceExpression qualifier = JavaPsiFacade.getElementFactory(project).createReferenceExpression(containingClass);
