@@ -16,3 +16,5 @@ package com.intellij.util
 fun <T> recursionSafeLazy(recursionKey: Any? = null, initializer: () -> T): Lazy<T?> {
   return RecursionPreventingSafePublicationLazy(recursionKey, initializer)
 }
+
+fun <T> lazyPub(initializer: () -> T): Lazy<T> = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
