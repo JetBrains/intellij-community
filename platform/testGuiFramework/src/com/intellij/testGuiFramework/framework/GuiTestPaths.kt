@@ -28,10 +28,6 @@ object GuiTestPaths {
     return@lazy dirPath
   }
 
-  val ideaOutputFile: File by lazy {
-    File(guiTestRootDirPath, "idea-output.log")
-  }
-
   private val guiTestRootDirPath: File by lazy {
     if (!GuiTestOptions.guiTestRootDirPath.isNullOrEmpty()) {
       val rootDirPath = File(GuiTestOptions.guiTestRootDirPath)
