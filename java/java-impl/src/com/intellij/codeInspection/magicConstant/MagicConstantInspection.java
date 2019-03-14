@@ -477,9 +477,13 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static AllowedValues parseBeanInfo(@NotNull PsiModifierListOwner owner, @NotNull PsiManager manager) {
+    PsiUtilCore.ensureValid(owner);
     PsiFile containingFile = owner.getContainingFile();
-    if (containingFile != null && !containsBeanInfoText((PsiFile)containingFile.getNavigationElement())) {
-      return null;
+    if (containingFile != null) {
+      PsiUtilCore.ensureValid(containingFile);
+      if (!containsBeanInfoText((PsiFile)containingFile.getNavigationElement())) {
+        return null;
+      }
     }
     PsiMethod method = null;
     if (owner instanceof PsiParameter) {
