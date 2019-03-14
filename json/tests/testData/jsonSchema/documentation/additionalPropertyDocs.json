@@ -1,0 +1,8 @@
+    {
+      "additionalProp": {
+        "en<caret>abled": true
+      },
+      "knownProp": {
+        "enabled": false
+      }
+    }

@@ -76,7 +76,7 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     final JsonPointerPosition position = walker.findPosition(checkable, isName == ThreeState.NO);
     if (position == null || position.isEmpty() && isName == ThreeState.NO) return false;
 
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, rootSchema, false, position).resolve();
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, rootSchema, position).resolve();
     if (schemas.isEmpty()) return false;
 
     return schemas.stream().anyMatch(s -> s.getProperties().keySet().contains(value)

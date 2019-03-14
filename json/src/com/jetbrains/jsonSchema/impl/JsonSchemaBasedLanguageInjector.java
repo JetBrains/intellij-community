@@ -35,7 +35,7 @@ public class JsonSchemaBasedLanguageInjector extends JsonSchemaInjectorBase {
     if (walker == null || walker.isName(context) != ThreeState.NO) return null;
     final JsonPointerPosition position = walker.findPosition(context, true);
     if (position == null || position.isEmpty()) return null;
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, schemaObject, false, position).resolve();
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, schemaObject, position).resolve();
     if (schemas.size() != 1) return null;
     JsonSchemaObject object = schemas.iterator().next();
     String injection = object.getLanguageInjection();

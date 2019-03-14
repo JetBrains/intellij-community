@@ -93,7 +93,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
         position.replaceStep(position.size() - 1, forcedPropName);
       }
     }
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(element.getProject(), rootSchema, true, position).resolve();
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(element.getProject(), rootSchema, position).resolve();
 
     String htmlDescription = null;
     boolean deprecated = false;
