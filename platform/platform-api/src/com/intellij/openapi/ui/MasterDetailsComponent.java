@@ -350,7 +350,12 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     if (!selected) {
       TreeUtil.selectFirstNode(myTree);
     }
-    updateSelectionFromTree();
+
+    //'updateSelectionFromTree' initializes 'details' components and it may take some time, so if the component isn't showing now
+    //  it's better to postpone calling it until 'addNotify' is called; in complex dialog like Project Structure the component may not be shown at all.
+    if (myWholePanel != null && myWholePanel.isShowing()) {
+      updateSelectionFromTree();
+    }
   }
 
   protected void loadComponentState() {

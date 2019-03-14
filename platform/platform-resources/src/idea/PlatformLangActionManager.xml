@@ -41,17 +41,20 @@
     </group>
 
     <group id="InspectCodeGroup">
-      <separator/>
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
       <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
       <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />
       <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction" />
       <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
       <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
+    </group>
 
+    <group id="InspectCodeInCodeMenuGroup">
       <separator/>
-      <reference id="SliceBackward"/>
-      <reference id="SliceForward"/>
+      <reference ref="InspectCodeGroup"/>
+      <separator/>
+      <reference ref="SliceBackward"/>
+      <reference ref="SliceForward"/>
       <separator/>
 
       <add-to-group group-id="CodeMenu" anchor="last"/>

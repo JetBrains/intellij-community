@@ -38,26 +38,24 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
   private int myStartsWithIndex = -1;
   private final Computable<String> myPattern;
 
+  /** @deprecated explicitly sets model for a list. Use other constructors instead. */
+  @Deprecated
   public NameFilteringListModel(JList<T> list,
-                                final Function<? super T, String> namer,
-                                final Condition<? super String> filter,
-                                final SpeedSearch speedSearch) {
-    this(list, namer, filter, () -> speedSearch.getFilter());
+                                Function<? super T, String> namer,
+                                Condition<? super String> filter,
+                                SpeedSearchSupply speedSearch) {
+    this(list.getModel(), namer, filter, () -> StringUtil.notNullize(speedSearch.getEnteredPrefix()));
+    list.setModel(this);
   }
 
-  public NameFilteringListModel(JList<T> list, final Function<? super T, String> namer, final Condition<? super String> filter, final SpeedSearchSupply speedSearch) {
-    this(list, namer, filter, () -> {
-      final String prefix = speedSearch.getEnteredPrefix();
-      return prefix == null ? "" : prefix;
-    });
-  }
-
-  public NameFilteringListModel(JList<T> list, final Function<? super T, String> namer, final Condition<? super String> filter, Computable<String> pattern) {
-    super(list.getModel());
+  public NameFilteringListModel(ListModel<T> model,
+                                Function<? super T, String> namer,
+                                Condition<? super String> filter,
+                                Computable<String> pattern) {
+    super(model);
     myPattern = pattern;
     myNamer = namer;
     setFilter(namer != null ? (Condition<T>)t -> filter.value(namer.fun(t)) : null);
-    list.setModel(this);
   }
 
   @Override

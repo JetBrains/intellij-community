@@ -78,6 +78,7 @@ public class JsonSchemaObject {
   @Nullable private Integer myMinLength;
 
   @Nullable private Boolean myAdditionalPropertiesAllowed;
+  @Nullable private Set<String> myAdditionalPropertiesNotAllowedFor;
   @Nullable private JsonSchemaObject myAdditionalPropertiesSchema;
   @Nullable private JsonSchemaObject myPropertyNamesSchema;
 
@@ -288,7 +289,12 @@ public class JsonSchemaObject {
     if (other.myMaxLength != null) myMaxLength = other.myMaxLength;
     if (other.myMinLength != null) myMinLength = other.myMinLength;
     if (other.myPattern != null) myPattern = other.myPattern;
-    if (other.myAdditionalPropertiesAllowed != null) myAdditionalPropertiesAllowed = other.myAdditionalPropertiesAllowed;
+    if (other.myAdditionalPropertiesAllowed != null) {
+      myAdditionalPropertiesAllowed = other.myAdditionalPropertiesAllowed;
+      if (other.myAdditionalPropertiesAllowed == Boolean.FALSE) {
+        addAdditionalPropsNotAllowedFor(other.myFileUrl, other.myPointer);
+      }
+    }
     if (other.myAdditionalPropertiesSchema != null) myAdditionalPropertiesSchema = other.myAdditionalPropertiesSchema;
     if (other.myPropertyNamesSchema != null) myPropertyNamesSchema = other.myPropertyNamesSchema;
     if (other.myAdditionalItemsAllowed != null) myAdditionalItemsAllowed = other.myAdditionalItemsAllowed;
@@ -489,6 +495,25 @@ public class JsonSchemaObject {
 
   public void setAdditionalPropertiesAllowed(@Nullable Boolean additionalPropertiesAllowed) {
     myAdditionalPropertiesAllowed = additionalPropertiesAllowed;
+    if (additionalPropertiesAllowed == Boolean.FALSE) {
+      addAdditionalPropsNotAllowedFor(myFileUrl, myPointer);
+    }
+  }
+
+  // for the sake of merging validation results, we need to know if this schema prohibits additional properties itself,
+  // or if it inherits this prohibition flag from the merge result, as the behavior differs in these cases
+  public boolean hasOwnExtraPropertyProhibition() {
+    return getAdditionalPropertiesAllowed() == Boolean.FALSE &&
+           (myAdditionalPropertiesNotAllowedFor == null ||
+            myAdditionalPropertiesNotAllowedFor.contains(myFileUrl + myPointer));
+  }
+
+  private void addAdditionalPropsNotAllowedFor(String url, String pointer) {
+    Set<String> newSet = myAdditionalPropertiesNotAllowedFor == null
+                             ? ContainerUtil.newHashSet()
+                             : ContainerUtil.newHashSet(myAdditionalPropertiesNotAllowedFor);
+    newSet.add(url + pointer);
+    myAdditionalPropertiesNotAllowedFor = newSet;
   }
 
   @Nullable

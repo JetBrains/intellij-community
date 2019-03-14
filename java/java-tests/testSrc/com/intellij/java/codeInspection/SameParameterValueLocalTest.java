@@ -94,4 +94,8 @@ public class SameParameterValueLocalTest extends InspectionTestCase {
   public void testOverrideGroovy() {
     doTest(getGlobalTestDir(), myTool);
   }
+
+  public void testMethodReferences() {
+    doTest(getGlobalTestDir(), myTool);
+  }
 }

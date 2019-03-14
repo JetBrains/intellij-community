@@ -24,11 +24,14 @@ import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Optional;
 
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
 public abstract class ApplicationActionBase<T extends CloudApplicationRuntime> extends ServersTreeAction<DeploymentNode> {
 
   protected ApplicationActionBase(String text, String description, Icon icon) {

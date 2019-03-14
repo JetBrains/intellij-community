@@ -22,7 +22,6 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -60,6 +59,10 @@ public class VfsDependentEnum<T> {
   }
 
   public int getId(@NotNull T s) throws IOException {
+    return getIdRaw(s, true);
+  }
+
+  int getIdRaw(@NotNull T s, boolean vfsRebuildOnException) throws IOException {
     Integer integer = myInstanceToId.get(s);
     if (integer != null) return integer;
 
@@ -80,7 +83,7 @@ public class VfsDependentEnum<T> {
         return enumerated;
       }
       catch (IOException e) {
-        invalidate(e);
+        invalidate(e, vfsRebuildOnException);
         throw e;
       }
     }
@@ -147,17 +150,15 @@ public class VfsDependentEnum<T> {
   }
 
   // GuardedBy("myLock")
-  private void invalidate(@NotNull Throwable e) {
+  private void invalidate(@NotNull Throwable e, boolean vfsRebuildOnException) {
     if (!myMarkedForInvalidation) {
       myMarkedForInvalidation = true;
-      doInvalidation(e); // exception will be rethrown in this call
+      // exception will be rethrown in this call
+      FileUtil.deleteWithRenaming(myFile); // better alternatives ?
+      if (vfsRebuildOnException) {
+        FSRecords.requestVfsRebuild(e);
+      }
     }
-  }
-
-  @Contract("_->fail")
-  private void doInvalidation(@NotNull Throwable e) {
-    FileUtil.deleteWithRenaming(myFile); // better alternatives ?
-    FSRecords.requestVfsRebuild(e);
   }
 
   private void register(@NotNull T instance, int id) {
@@ -192,7 +193,7 @@ public class VfsDependentEnum<T> {
         assert false : "Reading nonexistent value:" + id + "," + myFile + ", loaded:" + loaded;
       }
       catch (IOException | AssertionError e) {
-        invalidate(e);
+        invalidate(e, true);
         throw e;
       }
     }

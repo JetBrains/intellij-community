@@ -105,6 +105,20 @@
                     interface="com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider"/>
 
     <extensionPoint qualifiedName="com.intellij.vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
+    <extensionPoint qualifiedName="com.intellij.languageCompilerRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter"/>
+    <extensionPoint qualifiedName="com.intellij.framework.type" interface="com.intellij.framework.FrameworkTypeEx"/>
+    <extensionPoint qualifiedName="com.intellij.runConfigurationExtension" interface="com.intellij.execution.RunConfigurationExtension"/>
+
+    <extensionPoint qualifiedName="com.intellij.moduleConfigurable"
+                    beanClass="com.intellij.openapi.options.ModuleConfigurableEP"
+                    area="IDEA_MODULE">
+      <with attribute="instance" implements="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleConfigurable"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.variableTypeCalculator" interface="com.intellij.codeInsight.template.macro.VariableTypeCalculator"/>
+    <extensionPoint qualifiedName="com.intellij.jreProvider"
+                    interface="com.intellij.execution.ui.JreProvider"/>
+    <extensionPoint qualifiedName="com.intellij.sdkEditorAdditionalOptionsProvider" interface="com.intellij.openapi.SdkEditorAdditionalOptionsProvider"/>
+    <extensionPoint qualifiedName="com.intellij.exceptionFilter" interface="com.intellij.execution.filters.ExceptionFilterFactory"/>
     <!-- Android Studio: Added extension point for variable manipulation used by Instant Run and Profiler. Should be upstreamed. -->
     <extensionPoint qualifiedName="com.intellij.debuggerExtension" interface="com.intellij.debugger.engine.DebuggerExtension"/>
   </extensionPoints>

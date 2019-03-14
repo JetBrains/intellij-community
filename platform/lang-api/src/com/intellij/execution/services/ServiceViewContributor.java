@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
 @ApiStatus.Experimental
@@ -74,7 +75,7 @@ public interface ServiceViewContributor<T, Group, State> {
     default void onNodeUnselected() {
     }
 
-    default boolean handleDoubleClick() {
+    default boolean handleDoubleClick(@NotNull MouseEvent event) {
       return false;
     }
   }

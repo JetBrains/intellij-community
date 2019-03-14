@@ -441,7 +441,7 @@ class Foo {
     myFixture.configureByText("a.java", "class A { main<caret> }")
 
     new ListTemplatesHandler().invoke(project, editor, myFixture.file)
-    assert myFixture.lookupElementStrings == ['psvm']
+    assert myFixture.lookupElementStrings == ['main', 'psvm']
   }
 
   void testListTemplatesAction() {

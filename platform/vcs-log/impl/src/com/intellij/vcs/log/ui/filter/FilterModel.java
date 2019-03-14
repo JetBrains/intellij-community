@@ -2,17 +2,21 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.visible.filters.FilterPair;
+import org.apache.commons.lang.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 abstract class FilterModel<Filter> {
   @NotNull protected final MainVcsLogUiProperties myUiProperties;
@@ -61,6 +65,10 @@ abstract class FilterModel<Filter> {
     mySetFilterListeners.add(runnable);
   }
 
+  protected static void triggerFilterSet(@NotNull String name) {
+    VcsLogUsageTriggerCollector.triggerUsage(StringUtil.capitalize(name) + "FilterSet", false);
+  }
+
   public static abstract class SingleFilterModel<Filter extends VcsLogFilter> extends FilterModel<Filter> {
     @NotNull private final VcsLogFilterCollection.FilterKey<? extends Filter> myFilterKey;
 
@@ -74,6 +82,13 @@ abstract class FilterModel<Filter> {
       if (filters != null) {
         saveFilterToProperties(filters.get(myFilterKey));
       }
+    }
+
+    @Override
+    void setFilter(@Nullable Filter filter) {
+      if (!ObjectUtils.equals(myFilter, filter) && filter != null) triggerFilterSet(myFilterKey.getName());
+
+      super.setFilter(filter);
     }
 
     @Nullable
@@ -117,6 +132,23 @@ abstract class FilterModel<Filter> {
         Filter2 filter2 = filters.get(myFilterKey2);
         FilterPair<Filter1, Filter2> filter = (filter1 == null && filter2 == null) ? null : new FilterPair<>(filter1, filter2);
         saveFilterToProperties(filter);
+      }
+    }
+
+    @Override
+    void setFilter(@Nullable FilterPair<Filter1, Filter2> filter) {
+      triggerFilterSet(filter, FilterPair::getFilter1, myFilterKey1.getName());
+      triggerFilterSet(filter, FilterPair::getFilter2, myFilterKey2.getName());
+
+      super.setFilter(filter);
+    }
+
+    private <F> void triggerFilterSet(@Nullable FilterPair<Filter1, Filter2> filter,
+                                      @NotNull Function<FilterPair<Filter1, Filter2>, F> getter, @NotNull String name) {
+      F oldFilter = myFilter == null ? null : getter.apply(myFilter);
+      F newFilter = filter == null ? null : getter.apply(filter);
+      if (!ObjectUtils.equals(oldFilter, newFilter) && newFilter != null) {
+        triggerFilterSet(name);
       }
     }
 

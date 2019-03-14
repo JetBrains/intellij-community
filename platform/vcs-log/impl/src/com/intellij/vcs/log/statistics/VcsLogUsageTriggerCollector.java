@@ -20,11 +20,14 @@ public class VcsLogUsageTriggerCollector {
   }
 
   public static void triggerUsage(@NotNull String text) {
-    triggerUsage(text, false);
+    triggerUsage(text, "");
   }
 
   public static void triggerUsage(@NotNull String text, boolean isFromHistory) {
-    String prefix = isFromHistory ? "history." : "log.";
+    triggerUsage(text, isFromHistory ? "history." : "log.");
+  }
+
+  private static void triggerUsage(@NotNull String text, @NotNull String prefix) {
     String feature = prefix + UsageDescriptorKeyValidator.ensureProperKey(text);
     FUCounterUsageLogger.getInstance().logEvent("vcs.log.trigger", feature);
   }

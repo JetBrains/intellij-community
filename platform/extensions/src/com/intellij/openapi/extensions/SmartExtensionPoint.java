@@ -14,11 +14,47 @@ import java.util.List;
  */
 public abstract class SmartExtensionPoint<Extension, V> {
   private final Collection<V> myExplicitExtensions;
-  private ExtensionPoint<Extension> myExtensionPoint;
-  private List<V> myCache;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private volatile ExtensionPoint<Extension> myExtensionPoint;
+  private volatile List<V> myCache;
+  private final ExtensionPointAndAreaListener<Extension> myExtensionPointAndAreaListener;
 
   protected SmartExtensionPoint(@NotNull final Collection<V> explicitExtensions) {
     myExplicitExtensions = explicitExtensions;
+
+    myExtensionPointAndAreaListener = new ExtensionPointAndAreaListener<Extension>() {
+      @Override
+      public void areaReplaced(@NotNull ExtensionsArea oldArea) {
+        dropCache();
+      }
+
+      @Override
+      public final void extensionRemoved(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
+        dropCache();
+      }
+
+      @Override
+      public final void extensionAdded(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
+        dropCache();
+      }
+
+      private void dropCache() {
+        if (myCache == null) {
+          return;
+        }
+
+        synchronized (myExplicitExtensions) {
+          if (myCache != null) {
+            myCache = null;
+            ExtensionPoint<Extension> extensionPoint = myExtensionPoint;
+            if (extensionPoint != null) {
+              extensionPoint.removeExtensionPointListener(this);
+              myExtensionPoint = null;
+            }
+          }
+        }
+      }
+    };
   }
 
   @NotNull
@@ -43,44 +79,31 @@ public abstract class SmartExtensionPoint<Extension, V> {
 
   @NotNull
   public final List<V> getExtensions() {
+    List<V> result = myCache;
+    if (result != null) {
+      return result;
+    }
+
+    // it is ok to call getExtensionPoint several times - call is cheap and implementation is thread-safe
+    ExtensionPoint<Extension> extensionPoint = myExtensionPoint;
+    if (extensionPoint == null) {
+      extensionPoint = getExtensionPoint();
+      myExtensionPoint = extensionPoint;
+    }
+
+    List<V> registeredExtensions = ContainerUtilRt.mapNotNull(extensionPoint.getExtensionList(), this::getExtension);
     synchronized (myExplicitExtensions) {
-      List<V> result = myCache;
-      if (result == null) {
-        myExtensionPoint = getExtensionPoint();
-        // EP will not add duplicated listener, so, it is safe to not care about is already added
-        myExtensionPoint.addExtensionPointListener(new ExtensionPointAndAreaListener<Extension>() {
-          @Override
-          public void areaReplaced(@NotNull ExtensionsArea oldArea) {
-            dropCache();
-          }
-
-          @Override
-          public final void extensionRemoved(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
-            dropCache();
-          }
-
-          @Override
-          public final void extensionAdded(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
-            dropCache();
-          }
-
-          private void dropCache() {
-            synchronized (myExplicitExtensions) {
-              if (myCache != null) {
-                myCache = null;
-                myExtensionPoint.removeExtensionPointListener(this);
-                myExtensionPoint = null;
-              }
-            }
-          }
-        }, false, null);
-
-        List<V> registeredExtensions = ContainerUtilRt.mapNotNull(myExtensionPoint.getExtensionList(), this::getExtension);
-        result = new ArrayList<>(myExplicitExtensions.size() + registeredExtensions.size());
-        result.addAll(myExplicitExtensions);
-        result.addAll(registeredExtensions);
-        myCache = result;
+      result = myCache;
+      if (result != null) {
+        return result;
       }
+
+      // EP will not add duplicated listener, so, it is safe to not care about is already added
+      extensionPoint.addExtensionPointListener(myExtensionPointAndAreaListener, false, null);
+      result = new ArrayList<>(myExplicitExtensions.size() + registeredExtensions.size());
+      result.addAll(myExplicitExtensions);
+      result.addAll(registeredExtensions);
+      myCache = result;
       return result;
     }
   }

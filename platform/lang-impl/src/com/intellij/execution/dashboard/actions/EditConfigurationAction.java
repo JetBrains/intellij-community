@@ -30,12 +30,12 @@ public class EditConfigurationAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTarget(e);
-    boolean enabled = node != null && RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
+    boolean enabled = node != null && RunManager.getInstance(project).hasSettings(node.getConfigurationSettings());
     e.getPresentation().setEnabled(enabled);
     boolean popupPlace = ActionPlaces.isPopupPlace(e.getPlace());
     e.getPresentation().setVisible(enabled || !popupPlace);
     if (popupPlace) {
-      e.getPresentation().setText(ExecutionBundle.message("run.dashboard.edit.configuration.action.name") + "...");
+      e.getPresentation().setText(getTemplatePresentation().getText() + "...");
     }
   }
 

@@ -18,6 +18,9 @@
 
         <<error descr="Deprecated EP 'com.intellij.myPlugin.deprecatedEP'">myPlugin.deprecatedEP</error> implementation="foo.MyDeprecatedEPImpl"/>
 
+        <myService serviceImplementation="foo.<error descr="Cannot resolve class 'MyInvalid'">MyInvalid</error>"/>
+
+        <myService serviceImplementation="foo.MyRunnable"/>
         <myPlugin.foo.bar implementation="java.util.ArrayList"/>
         <completion.contributor/>
         <custom.custom/>

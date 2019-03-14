@@ -20,10 +20,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -34,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.ComponentTreeEventDispatcher;
@@ -49,7 +47,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
+import java.io.File;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -226,19 +226,29 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   private void resolveLinksToBundledSchemes() {
+    List<EditorColorsScheme> brokenSchemesList = new ArrayList<>();
     for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
-      if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
-        try {
-          ((AbstractColorsScheme)scheme).resolveParent(name -> mySchemeManager.findSchemeByName(name));
-        }
-        catch (InvalidDataException e) {
-          String message = "Color scheme '" + scheme.getName() + "'" +
-                           " points to incorrect or non-existent default (base) scheme " +
-                           e.getMessage();
-          Notifications.Bus.notify(
-            new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Incompatible color scheme", message, NotificationType.ERROR));
-        }
+      try {
+        resolveSchemeParent(scheme);
       }
+      catch (InvalidDataException e) {
+        brokenSchemesList.add(scheme);
+        String message = "Color scheme '" + scheme.getName() + "'" +
+                         " points to incorrect or non-existent default (base) scheme " +
+                         e.getMessage();
+        Notifications.Bus.notify(
+          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Incompatible color scheme", message, NotificationType.ERROR));
+      }
+    }
+    for (EditorColorsScheme brokenScheme : brokenSchemesList) {
+      mySchemeManager.removeScheme(brokenScheme);
+    }
+  }
+
+  @Override
+  public void resolveSchemeParent(@NotNull EditorColorsScheme scheme) {
+    if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
+      ((AbstractColorsScheme)scheme).resolveParent(name -> mySchemeManager.findSchemeByName(name));
     }
   }
 
@@ -391,6 +401,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   @Nullable
   private EditorColorsScheme getEditableCopy(EditorColorsScheme scheme) {
+    if (isTempScheme(scheme)) return scheme;
     String editableCopyName = getEditableCopyName(scheme);
     if (editableCopyName != null) {
       EditorColorsScheme editableCopy = getScheme(editableCopyName);
@@ -478,14 +489,29 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   private static final String TEMP_SCHEME_KEY = "TEMP_SCHEME_KEY";
+  private static final String TEMP_SCHEME_FILE_KEY = "TEMP_SCHEME_FILE_KEY";
   public static boolean isTempScheme(EditorColorsScheme scheme) {
     if (scheme == null) return false;
 
     return StringUtil.equals(scheme.getMetaProperties().getProperty(TEMP_SCHEME_KEY), Boolean.TRUE.toString());
   }
 
-  public static void setTempScheme(EditorColorsScheme scheme) {
+  @Nullable
+  public static Path getTempSchemeOriginalFilePath(EditorColorsScheme scheme) {
+    if (isTempScheme(scheme)) {
+      String path = scheme.getMetaProperties().getProperty(TEMP_SCHEME_FILE_KEY);
+      if (path != null) {
+        return new File(path).toPath();
+      }
+    }
+    return null;
+  }
+
+  public static void setTempScheme(EditorColorsScheme scheme, @Nullable VirtualFile originalSchemeFile) {
     if (scheme == null) return;
     scheme.getMetaProperties().setProperty(TEMP_SCHEME_KEY, Boolean.TRUE.toString());
+    if (originalSchemeFile != null) {
+      scheme.getMetaProperties().setProperty(TEMP_SCHEME_FILE_KEY, originalSchemeFile.getPath());
+    }
   }
 }

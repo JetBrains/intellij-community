@@ -36,7 +36,7 @@ public class GroupConfigurationsAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(getTargets(e).isNotEmpty());
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
-      e.getPresentation().setText(ExecutionBundle.message("run.dashboard.group.configurations.action.name") + "...");
+      e.getPresentation().setText(getTemplatePresentation().getText() + "...");
     }
   }
 

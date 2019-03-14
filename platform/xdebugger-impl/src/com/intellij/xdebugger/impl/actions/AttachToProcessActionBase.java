@@ -47,16 +47,23 @@ public abstract class AttachToProcessActionBase extends AnAction {
     Key.create("AttachToProcessAction.RECENT_ITEMS_KEY");
   private static final Logger LOG = Logger.getInstance(AttachToProcessActionBase.class);
 
-  private final Supplier<? extends List<XAttachDebuggerProvider>> attachProvidersSupplier;
-  private final String attachActionsListTitle;
+  @NotNull
+  private final Supplier<? extends List<XAttachDebuggerProvider>> myAttachProvidersSupplier;
+  @NotNull
+  private final String myAttachActionsListTitle;
+  @NotNull
+  private final Supplier<? extends List<XAttachHostProvider>> myAttachHostProviderSupplier;
 
   public AttachToProcessActionBase(@Nullable String text,
                                    @Nullable String description,
-                                   @Nullable Icon icon, @NotNull Supplier<? extends List<XAttachDebuggerProvider>> attachProvidersSupplier,
+                                   @Nullable Icon icon,
+                                   @NotNull Supplier<? extends List<XAttachDebuggerProvider>> attachProvidersSupplier,
+                                   @NotNull Supplier<? extends List<XAttachHostProvider>> attachHostProviderSupplier,
                                    @NotNull String attachActionsListTitle) {
     super(text, description, icon);
-    this.attachProvidersSupplier = attachProvidersSupplier;
-    this.attachActionsListTitle = attachActionsListTitle;
+    myAttachProvidersSupplier = attachProvidersSupplier;
+    myAttachActionsListTitle = attachActionsListTitle;
+    myAttachHostProviderSupplier = attachHostProviderSupplier;
   }
 
   @Override
@@ -64,7 +71,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
     super.update(e);
 
     Project project = getEventProject(e);
-    int attachDebuggerProvidersNumber = attachProvidersSupplier.get().size();
+    int attachDebuggerProvidersNumber = myAttachProvidersSupplier.get().size();
     boolean enabled = project != null && attachDebuggerProvidersNumber > 0;
     e.getPresentation().setEnabledAndVisible(enabled);
   }
@@ -163,7 +170,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
 
     UserDataHolderBase dataHolder = new UserDataHolderBase();
 
-    for (XAttachHostProvider hostProvider : XAttachHostProvider.EP.getExtensionList()) {
+    for (XAttachHostProvider hostProvider : myAttachHostProviderSupplier.get()) {
       indicator.checkCanceled();
       //noinspection unchecked
       Set<XAttachHost> hosts = ContainerUtil.newHashSet(hostProvider.getAvailableHosts(project));
@@ -234,7 +241,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
 
   @NotNull
   private List<XAttachDebuggerProvider> getProvidersApplicableForHost(@NotNull XAttachHost host) {
-    return ContainerUtil.filter(attachProvidersSupplier.get(), provider -> provider.isAttachHostApplicable(host));
+    return ContainerUtil.filter(myAttachProvidersSupplier.get(), provider -> provider.isAttachHostApplicable(host));
   }
 
   @NotNull
@@ -695,7 +702,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
 
     private class ActionListStep extends MyBasePopupStep<AttachToProcessItem> {
       ActionListStep(List<AttachToProcessItem> items, int selectedItem) {
-        super(AttachListStep.this.myProject, AttachToProcessActionBase.this.attachActionsListTitle, items);
+        super(AttachListStep.this.myProject, AttachToProcessActionBase.this.myAttachActionsListTitle, items);
         setDefaultOptionIndex(selectedItem);
       }
 

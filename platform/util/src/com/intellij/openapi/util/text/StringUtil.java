@@ -37,11 +37,15 @@ public class StringUtil extends StringUtilRt {
   private static final Pattern EOL_SPLIT_PATTERN_WITH_EMPTY = Pattern.compile(" *(\r|\n|\r\n) *");
   private static final Pattern EOL_SPLIT_DONT_TRIM_PATTERN = Pattern.compile("(\r|\n|\r\n)+");
 
+  /**
+   * @return a lightweight CharSequence which results from replacing {@code [start, end)} range in the {@code charSeq} with {@code replacement}.
+   * Works in O(1), but retains references to the passed char sequences, so please use something else if you want them to be garbage-collected.
+   */
   @NotNull
   public static MergingCharSequence replaceSubSequence(@NotNull CharSequence charSeq, int start, int end, @NotNull CharSequence replacement) {
     return new MergingCharSequence(
-          new MergingCharSequence(charSeq.subSequence(0, start), replacement),
-          charSeq.subSequence(end, charSeq.length()));
+          new MergingCharSequence(new CharSequenceSubSequence(charSeq, 0, start), replacement),
+          new CharSequenceSubSequence(charSeq, end, charSeq.length()));
   }
 
   private static class MyHtml2Text extends HTMLEditorKit.ParserCallback {

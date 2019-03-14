@@ -23,11 +23,14 @@ public class RollbackThemeAction extends DumbAwareAction {
     EditorColorsManagerImpl colorsManager = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
     if (EditorColorsManagerImpl.isTempScheme(scheme)) {
+      colorsManager.getSchemeManager().removeScheme(scheme);
       colorsManager.loadState(colorsManager.getState());
     }
     UIManager.LookAndFeelInfo feel = LafManager.getInstance().getCurrentLookAndFeel();
     if (feel instanceof TempUIThemeBasedLookAndFeelInfo) {
       LafManager.getInstance().setCurrentLookAndFeel(((TempUIThemeBasedLookAndFeelInfo)feel).getPreviousLaf());
+    } else {
+      LafManager.getInstance().setCurrentLookAndFeel(feel);
     }
     EditorColorsManagerImpl.schemeChangedOrSwitched();
     LafManagerImpl.updateForDarcula(UIUtil.isUnderDarcula());

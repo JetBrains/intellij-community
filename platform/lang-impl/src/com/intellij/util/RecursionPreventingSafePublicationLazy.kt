@@ -2,46 +2,50 @@
 package com.intellij.util
 
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.util.ObjectUtils.notNullize
-import com.intellij.util.ObjectUtils.nullize
 import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Same as [SafePublicationLazyImpl], but returns `null` in case of computation recursion occurred.
  */
-class RecursionPreventingSafePublicationLazy<T>(initializer: () -> T) : Lazy<T?> {
+class RecursionPreventingSafePublicationLazy<T>(recursionKey: Any?, initializer: () -> T) : Lazy<T?> {
 
   @Volatile
-  private var initializer: (() -> T)? = { notNullize(initializer()) }
+  private var initializer: (() -> T)? = { ourNotNullizer.notNullize(initializer()) }
   private val valueRef: AtomicReference<T> = AtomicReference()
+  private val recursionKey: Any = recursionKey ?: this
 
   override val value: T?
     get() {
       val computedValue = valueRef.get()
       if (computedValue !== null) {
-        return nullize(computedValue)
+        return ourNotNullizer.nullize(computedValue)
       }
 
       val initializerValue = initializer
       if (initializerValue === null) {
         // Some thread managed to clear the initializer => it managed to set the value.
-        return nullize(valueRef.get())
+        return ourNotNullizer.nullize(valueRef.get())
       }
 
       val stamp = ourRecursionGuard.markStack()
-      val newValue = ourRecursionGuard.doPreventingRecursion(this, false, initializerValue)
-      if (newValue === null || !stamp.mayCacheNow()) {
-        // In case of recursion don't update [valueRef] and don't clear [initializer].
+      val newValue = ourRecursionGuard.doPreventingRecursion(recursionKey, false, initializerValue)
+      // In case of recursion don't update [valueRef] and don't clear [initializer].
+      if (newValue === null) {
+        // Recursion occurred for this lazy.
         return null
+      }
+      if (!stamp.mayCacheNow()) {
+        // Recursion occurred somewhere deep.
+        return ourNotNullizer.nullize(newValue)
       }
 
       if (!valueRef.compareAndSet(null, newValue)) {
         // Some thread managed to set the value.
-        return nullize(valueRef.get())
+        return ourNotNullizer.nullize(valueRef.get())
       }
 
       initializer = null
-      return nullize(newValue)
+      return ourNotNullizer.nullize(newValue)
     }
 
   override fun isInitialized(): Boolean = valueRef.get() !== null
@@ -50,5 +54,6 @@ class RecursionPreventingSafePublicationLazy<T>(initializer: () -> T) : Lazy<T?>
 
   companion object {
     private val ourRecursionGuard = RecursionManager.createGuard("RecursionPreventingSafePublicationLazy")
+    private val ourNotNullizer = NotNullizer("RecursionPreventingSafePublicationLazy")
   }
 }

@@ -295,7 +295,9 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   }
 
   public static boolean isAcceptable(@NotNull ProcessHandler processHandler) {
-    return processHandler instanceof OSProcessHandler && ((OSProcessHandler)processHandler).getProcess() instanceof PtyProcess;
+    return processHandler instanceof OSProcessHandler &&
+           ((OSProcessHandler)processHandler).getProcess() instanceof PtyProcess &&
+           !(processHandler instanceof ColoredProcessHandler);
   }
 
   private class ConsoleTerminalWidget extends JBTerminalWidget implements DataProvider {

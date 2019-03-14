@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.google.common.util.concurrent.MoreExecutors;
@@ -21,7 +7,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -29,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,16 +21,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -63,40 +44,43 @@ public class FileWatcher {
     }
   };
 
-  public static class DirtyPaths {
-    public final Set<String> dirtyPaths = ContainerUtil.newTroveSet();
-    public final Set<String> dirtyPathsRecursive = ContainerUtil.newTroveSet();
-    public final Set<String> dirtyDirectories = ContainerUtil.newTroveSet();
+  static class DirtyPaths {
+    final Set<String> dirtyPaths = ContainerUtil.newTroveSet();
+    final Set<String> dirtyPathsRecursive = ContainerUtil.newTroveSet();
+    final Set<String> dirtyDirectories = ContainerUtil.newTroveSet();
 
-    public static final DirtyPaths EMPTY = new DirtyPaths();
+    static final DirtyPaths EMPTY = new DirtyPaths();
 
-    public boolean isEmpty() {
+    boolean isEmpty() {
       return dirtyPaths.isEmpty() && dirtyPathsRecursive.isEmpty() && dirtyDirectories.isEmpty();
     }
 
-    private void addDirtyPath(String path) {
+    private void addDirtyPath(@NotNull String path) {
       if (!dirtyPathsRecursive.contains(path)) {
         dirtyPaths.add(path);
       }
     }
 
-    private void addDirtyPathRecursive(String path) {
+    private void addDirtyPathRecursive(@NotNull String path) {
       dirtyPaths.remove(path);
       dirtyPathsRecursive.add(path);
     }
+  }
+
+  private static ExecutorService executor() {
+    boolean async = Registry.is("vfs.filewatcher.works.in.async.way");
+    return async ? AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) : MoreExecutors.newDirectExecutorService();
   }
 
   private final ManagingFS myManagingFS;
   private final MyFileWatcherNotificationSink myNotificationSink;
   private final PluggableFileWatcher[] myWatchers;
   private final AtomicBoolean myFailureShown = new AtomicBoolean(false);
+  private final ExecutorService myFileWatcherExecutor = executor();
+  private final AtomicReference<Future<?>> myLastTask = new AtomicReference<>(null);
 
   private volatile CanonicalPathMap myPathMap = new CanonicalPathMap();
   private volatile List<Collection<String>> myManualWatchRoots = Collections.emptyList();
-  
-  private final ExecutorService myFileWatcherExecutor = Registry.is("vfs.filewatcher.works.in.async.way") ?
-                                                        AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) :
-                                                        MoreExecutors.newDirectExecutorService();
 
   FileWatcher(@NotNull ManagingFS managingFS) {
     myManagingFS = managingFS;
@@ -104,18 +88,35 @@ public class FileWatcher {
     myWatchers = PluggableFileWatcher.EP_NAME.getExtensions();
 
     myFileWatcherExecutor.submit(() -> {
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.initialize(myManagingFS, myNotificationSink);
+      try {
+        for (PluggableFileWatcher watcher : myWatchers) {
+          watcher.initialize(myManagingFS, myNotificationSink);
+        }
+      }
+      catch (RuntimeException | Error e) {
+        LOG.error(e);
       }
     });
   }
 
   public void dispose() {
-    waitForFuture(myFileWatcherExecutor.submit(() -> {
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.dispose();
+    myFileWatcherExecutor.shutdown();
+
+    Future<?> lastTask = myLastTask.get();
+    if (lastTask != null) {
+      lastTask.cancel(false);
+      try {
+        lastTask.get();
       }
-    }));
+      catch (CancellationException ignored) { }
+      catch (InterruptedException | ExecutionException e) {
+        LOG.error(e);
+      }
+    }
+
+    for (PluggableFileWatcher watcher : myWatchers) {
+      watcher.dispose();
+    }
   }
 
   public boolean isOperational() {
@@ -126,28 +127,18 @@ public class FileWatcher {
   }
 
   public boolean isSettingRoots() {
-    flushCommandQueue();
-    
+    Future<?> lastTask = myLastTask.get();  // a new task may come after the read, but this seem to be an acceptable race
+    if (lastTask != null && !lastTask.isDone()) {
+      return true;
+    }
     for (PluggableFileWatcher watcher : myWatchers) {
       if (watcher.isSettingRoots()) return true;
     }
     return false;
   }
 
-  private void flushCommandQueue() {
-    waitForFuture(myFileWatcherExecutor.submit(EmptyRunnable.getInstance()));
-  }
-
-  private void waitForFuture(Future<?> future) {
-    try {
-      future.get();
-    }
-    catch (InterruptedException | ExecutionException ignore) {
-    }
-  }
-
   @NotNull
-  public DirtyPaths getDirtyPaths() {
+  DirtyPaths getDirtyPaths() {
     return myNotificationSink.getDirtyPaths();
   }
 
@@ -171,25 +162,35 @@ public class FileWatcher {
   /**
    * Clients should take care of not calling this method in parallel.
    */
-  public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
-    CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
+  void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
+    Future<?> prevTask = myLastTask.getAndSet(myFileWatcherExecutor.submit(() -> {
+      try {
+        CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
 
-    myPathMap = pathMap;
-    myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
+        myPathMap = pathMap;
+        myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
 
-    myFileWatcherExecutor.submit(() -> {
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
+        for (PluggableFileWatcher watcher : myWatchers) {
+          watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
+        }
       }
-    });
+      catch (RuntimeException | Error e) {
+        LOG.error(e);
+      }
+    }));
+    if (prevTask != null) {
+      prevTask.cancel(false);
+    }
   }
 
   public void notifyOnFailure(@NotNull String cause, @Nullable NotificationListener listener) {
     LOG.warn(cause);
 
     if (myFailureShown.compareAndSet(false, true)) {
+      NotificationGroup group = NOTIFICATION_GROUP.getValue();
       String title = ApplicationBundle.message("watcher.slow.sync");
-      ApplicationManager.getApplication().invokeLater(() -> Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, cause, NotificationType.WARNING, listener)), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(
+        () -> Notifications.Bus.notify(group.createNotification(title, cause, NotificationType.WARNING, listener)), ModalityState.NON_MODAL);
     }
   }
 
@@ -197,6 +198,7 @@ public class FileWatcher {
     private final Object myLock = new Object();
     private DirtyPaths myDirtyPaths = new DirtyPaths();
 
+    @NotNull
     DirtyPaths getDirtyPaths() {
       DirtyPaths dirtyPaths = DirtyPaths.EMPTY;
 
@@ -310,7 +312,7 @@ public class FileWatcher {
   public static final String RESET = "(reset)";
   public static final String OTHER = "(other)";
 
-  private volatile Consumer<String> myTestNotifier = null;
+  private volatile Consumer<String> myTestNotifier;
 
   private void notifyOnEvent(String path) {
     Consumer<String> notifier = myTestNotifier;
@@ -318,43 +320,25 @@ public class FileWatcher {
   }
 
   @TestOnly
-  public void startup(@Nullable Consumer<String> notifier) throws IOException {
+  public void startup(@Nullable Consumer<String> notifier) throws Exception {
     myTestNotifier = notifier;
-
-    try {
-      myFileWatcherExecutor.submit(wrapInCallable(() -> {
-        for (PluggableFileWatcher watcher : myWatchers) {
-          watcher.startup();
-        }
-      })).get();
-    }
-    catch (InterruptedException | ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof IOException) throw (IOException)cause;
-    }
-  }
-
-  @NotNull
-  private <T extends Exception> Callable<Object> wrapInCallable(ThrowableRunnable<T> action) {
-    return ()-> {action.run(); return null;};
+    myFileWatcherExecutor.submit(() -> {
+      for (PluggableFileWatcher watcher : myWatchers) {
+        watcher.startup();
+      }
+      return null;
+    }).get();
   }
 
   @TestOnly
-  public void shutdown() throws InterruptedException {
-
-    try {
-      myFileWatcherExecutor.submit(wrapInCallable(() -> {
-        for (PluggableFileWatcher watcher : myWatchers) {
-          watcher.shutdown();
-        }
-      })).get();
-    }
-    catch (ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof InterruptedException) throw (InterruptedException)cause;
-    }
-
-    myTestNotifier = null;
+  public void shutdown() throws Exception {
+    myFileWatcherExecutor.submit(() -> {
+      for (PluggableFileWatcher watcher : myWatchers) {
+        watcher.shutdown();
+      }
+      myTestNotifier = null;
+      return null;
+    }).get();
   }
   //</editor-fold>
 }

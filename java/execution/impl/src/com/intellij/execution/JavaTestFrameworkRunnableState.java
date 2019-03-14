@@ -265,7 +265,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     if (Comparing.strEqual(forkMode, "none")) {
       if (forkPerModule()) {
         if (isExecutorDisabledInForkedMode()) {
-          final String actionName = UIUtil.removeMnemonic(executor.getStartActionText());
+          final String actionName = executor.getActionName();
           throw new CantRunException("'" + actionName + "' is disabled when per-module working directory is configured.<br/>" +
                                      "Please specify single working directory, or change test scope to single module.");
         }

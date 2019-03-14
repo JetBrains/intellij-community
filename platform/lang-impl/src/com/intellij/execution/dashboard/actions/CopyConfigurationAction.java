@@ -27,12 +27,12 @@ public class CopyConfigurationAction extends AnAction {
     Project project = e.getProject();
     RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTarget(e);
     boolean enabled = node != null && RunDashboardManager.getInstance(project).isShowConfigurations() &&
-                      RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
+                      RunManager.getInstance(project).hasSettings(node.getConfigurationSettings());
     e.getPresentation().setEnabled(enabled);
     boolean popupPlace = ActionPlaces.isPopupPlace(e.getPlace());
     e.getPresentation().setVisible(enabled || !popupPlace);
     if (popupPlace) {
-      e.getPresentation().setText(ExecutionBundle.message("copy.configuration.action.name") + "...");
+      e.getPresentation().setText(getTemplatePresentation().getText() + "...");
     }
   }
 

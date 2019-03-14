@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.documentation.DockablePopupManager;
@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -176,7 +177,14 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
   private static byte[] loadClassFileBytes(PsiClass aClass) throws IOException {
     String jvmClassName = getJVMClassName(aClass);
     if (jvmClassName != null) {
-      VirtualFile file = aClass.getOriginalElement().getContainingFile().getVirtualFile();
+      PsiClass fileClass = aClass;
+      while (PsiUtil.isLocalOrAnonymousClass(fileClass)) {
+        PsiClass containingClass = PsiTreeUtil.getParentOfType(fileClass, PsiClass.class);
+        if (containingClass != null) {
+          fileClass = containingClass;
+        }
+      }
+      VirtualFile file = fileClass.getOriginalElement().getContainingFile().getVirtualFile();
       if (file != null) {
         ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(aClass.getProject());
         if (file.getFileType() == StdFileTypes.CLASS) {

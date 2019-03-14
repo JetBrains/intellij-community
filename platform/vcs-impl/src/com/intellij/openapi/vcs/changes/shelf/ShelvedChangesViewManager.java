@@ -337,7 +337,7 @@ public class ShelvedChangesViewManager implements Disposable {
   private class ShelfTree extends ChangesTree {
 
     private ShelfTree(@NotNull Project project) {
-      super(project, false, false);
+      super(project, false, false, true);
       setKeepTreeState(true);
     }
 

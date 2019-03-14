@@ -1110,4 +1110,34 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                        "  \"postal_code\": <warning descr=\"String is violating the pattern: '[0-9]{5}(-[0-9]{4})?'\">\"1-1111-1111\"</warning>\n" +
                        "}");
   }
+
+  public void testProhibitAdditionalPropsAlternateBranches() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/prohibitedAlternateBranchesSchema.json"));
+    doTest(schemaText, "{\n" +
+                       "  \"subject\": {\n" +
+                       "    \"discriminator\": \"first\",\n" +
+                       "    \"first\": false,\n" +
+                       "    <warning descr=\"Property 'second' is not allowed\">\"second\": false</warning>\n" +
+                       "  }\n" +
+                       "}");
+    doTest(schemaText, "{\n" +
+                       "  \"subject\": {\n" +
+                       "    \"discriminator\": \"second\",\n" +
+                       "    <warning descr=\"Property 'first' is not allowed\">\"first\": false</warning>,\n" +
+                       "    \"second\": false\n" +
+                       "  }\n" +
+                       "}");
+    doTest(schemaText, "{\n" +
+                       "  \"subject\": {\n" +
+                       "    \"discriminator\": \"second\",\n" +
+                       "    \"second\": false\n" +
+                       "  }\n" +
+                       "}");
+    doTest(schemaText, "{\n" +
+                       "  \"subject\": {\n" +
+                       "    \"discriminator\": \"first\",\n" +
+                       "    \"first\": false\n" +
+                       "  }\n" +
+                       "}");
+  }
 }

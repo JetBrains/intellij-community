@@ -397,7 +397,10 @@ public class RecentLocationsAction extends DumbAwareAction {
                                          @NotNull JBList<RecentLocationItem> list,
                                          @NotNull JBPopup popup,
                                          @NotNull Ref<Boolean> navigationRef) {
-    IdeDocumentHistory.getInstance(project).gotoPlaceInfo(list.getSelectedValue().getInfo());
+    RecentLocationItem selectedValue = list.getSelectedValue();
+    if (selectedValue != null) {
+      IdeDocumentHistory.getInstance(project).gotoPlaceInfo(selectedValue.getInfo());
+    }
 
     navigationRef.set(true);
     popup.closeOk(null);

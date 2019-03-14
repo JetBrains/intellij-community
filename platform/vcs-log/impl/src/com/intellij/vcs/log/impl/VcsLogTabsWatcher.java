@@ -16,6 +16,7 @@ import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -158,6 +159,7 @@ public class VcsLogTabsWatcher implements Disposable {
                                                   window -> window instanceof VcsLogTab && ((VcsLogTab)window).myTabId.equals(tabId));
       if (logWindow != null) {
         LOG.debug("Selected log window \'" + logWindow + "\'");
+        VcsLogUsageTriggerCollector.triggerUsage("TabNavigation");
         myRefresher.refresherActivated(logWindow.getRefresher(), false);
       }
     }

@@ -26,6 +26,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,6 +45,7 @@ import java.text.AttributedString;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 
 /**
  * Standard implementation of help context tooltip.
@@ -118,7 +120,7 @@ public class HelpTooltip {
   private boolean neverHide;
   private Alignment alignment = Alignment.BOTTOM;
 
-  private JBPopup masterPopup;
+  private BooleanSupplier masterPopupOpenCondition = () -> true;
   private ComponentPopupBuilder myPopupBuilder;
   private Dimension myPopupSize;
   private JBPopup myPopup;
@@ -338,7 +340,7 @@ public class HelpTooltip {
         instance.uninstallMouseListeners(component);
 
         component.putClientProperty(TOOLTIP_PROPERTY, null);
-        instance.masterPopup = null;
+        instance.masterPopupOpenCondition = null;
       }
     }
   }
@@ -370,7 +372,25 @@ public class HelpTooltip {
     if (owner instanceof JComponent) {
       HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
       if (instance != null && instance.myPopup != master) {
-        instance.masterPopup = master;
+        instance.masterPopupOpenCondition = () -> master == null || !master.isVisible();
+      }
+    }
+  }
+
+  /**
+   * Sets master popup open condition supplier for the current {@code HelpTooltip}.
+   * This method is more general than {@link HelpTooltip#setMasterPopup(Component, JBPopup)} so that
+   * it's possible to create master popup condition for any types of popups such as {@code JPopupMenu}
+   *
+   * @param owner possible owner
+   * @param condition a {@code BooleanSupplier} for open condition
+   */
+  @ApiStatus.Experimental
+  public static void setMasterPopupOpenCondition(@NotNull Component owner, BooleanSupplier condition) {
+    if (owner instanceof JComponent) {
+      HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
+      if (instance != null) {
+        instance.masterPopupOpenCondition = condition;
       }
     }
   }
@@ -378,7 +398,7 @@ public class HelpTooltip {
   private void scheduleShow(JComponent owner, int delay) {
     popupAlarm.cancelAllRequests();
     popupAlarm.addRequest(() -> {
-      if (canShow()) {
+      if (masterPopupOpenCondition.getAsBoolean()) {
         myPopup = myPopupBuilder.createPopup();
         myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, myPopupSize)));
         if (!neverHide) {
@@ -386,10 +406,6 @@ public class HelpTooltip {
         }
       }
     }, delay);
-  }
-
-  private boolean canShow() {
-    return masterPopup == null || !masterPopup.isVisible();
   }
 
   private void scheduleHide(boolean force, int delay) {

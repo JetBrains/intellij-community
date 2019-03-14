@@ -403,6 +403,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
         refMethod.setReturnValueUsed(true);
         addTypeReference(uFrom, returnType, refFrom.getRefManager());
       }
+      refMethod.setParametersAreUnknown();
       return;
     }
     if (refExpression instanceof ULiteralExpression) { //references in literal expressions

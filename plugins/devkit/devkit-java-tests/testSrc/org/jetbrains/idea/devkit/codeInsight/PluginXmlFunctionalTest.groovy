@@ -40,13 +40,15 @@ import org.jetbrains.idea.devkit.util.PsiUtil
 class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   private TempDirTestFixture myTempDirFixture
+  private PluginXmlDomInspection myInspection
 
   @Override
   protected void setUp() throws Exception {
     super.setUp()
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
     myTempDirFixture.setUp()
-    myFixture.enableInspections(new PluginXmlDomInspection())
+    myInspection = new PluginXmlDomInspection()
+    myFixture.enableInspections(myInspection)
   }
 
   @Override
@@ -82,6 +84,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
         <id>com.intellij</id>
         <extensionPoints>
             <extensionPoint name="completion.contributor"/>
+            <extensionPoint name="myService" beanClass="foo.MyServiceDescriptor"/>
         </extensionPoints>
     """)
     addPluginXml("indirect", """
@@ -100,6 +103,9 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}")
     myFixture.addClass("package foo; @Deprecated public abstract class MyDeprecatedEP {}")
     myFixture.addClass("package foo; public class MyDeprecatedEPImpl extends foo.MyDeprecatedEP {}")
+    myFixture.addClass("package foo;\n" +
+                       "import com.intellij.util.xmlb.annotations.Attribute;\n" +
+                       "public class MyServiceDescriptor { @Attribute public String serviceImplementation; }")
 
     configureByFile()
     myFixture.checkHighlighting(true, false, false)
@@ -164,6 +170,24 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testInnerClassCompletion() {
+    myFixture.addClass("package foo; public class Foo { public static class Fubar {} }")
+    myFixture.configureByFile(getTestName(false) + ".xml")
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResultByFile(getTestName(false) + "_after.xml")
+  }
+
+  void testInnerClassCompletionInService() {
+    addPluginXml("idea_core", """
+        <id>com.intellij</id>
+        <extensionPoints>
+            <extensionPoint name="completion.contributor"/>
+            <extensionPoint name="myService" beanClass="foo.MyServiceDescriptor"/>
+        </extensionPoints>
+    """)
+    myFixture.addClass("package foo;\n" +
+                       "import com.intellij.util.xmlb.annotations.Attribute;\n" +
+                       "public class MyServiceDescriptor { @Attribute public String serviceImplementation; }")
     myFixture.addClass("package foo; public class Foo { public static class Fubar {} }")
     myFixture.configureByFile(getTestName(false) + ".xml")
     myFixture.completeBasic()
@@ -258,6 +282,10 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   void testExtensionWithInnerTags() {
     doHighlightingTest("extensionWithInnerTags.xml", "ExtBeanWithInnerTags.java")
+  }
+
+  void testExtensionBeanWithDefaultValuesInAnnotations() {
+    doHighlightingTest("extensionWithDefaultValuesInAnnotations.xml", "ExtBeanWithDefaultValuesInAnnotations.java")
   }
 
   void testLanguageAttributeHighlighting() {
@@ -497,7 +525,14 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   void testRegistrationCheck() {
     Module anotherModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "anotherModule",
                                                  myTempDirFixture.findOrCreateDir("../anotherModuleDir"))
+    Module additionalModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "additionalModule",
+                                                 myTempDirFixture.findOrCreateDir("../additionalModuleDir"))
     ModuleRootModificationUtil.addDependency(myModule, anotherModule)
+    ModuleRootModificationUtil.addDependency(myModule, additionalModule)
+    def moduleSet = new PluginXmlDomInspection.PluginModuleSet()
+    moduleSet.modules.add(myModule.name)
+    moduleSet.modules.add(additionalModule.name)
+    myInspection.PLUGINS_MODULES.add(moduleSet)
 
     def dependencyModuleClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClass.java",
                                                             "../anotherModuleDir/DependencyModuleClass.java")
@@ -505,6 +540,8 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                                                   "../anotherModuleDir/DependencyModuleClassWithEpName.java")
     def dependencyModulePlugin = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModulePlugin.xml",
                                                              "../anotherModuleDir/META-INF/DependencyModulePlugin.xml")
+    def additionalModuleClass = myFixture.copyFileToProject("registrationCheck/additionalModule/AdditionalModuleClass.java",
+                                                                "../additionalModuleDir/AdditionalModuleClass.java")
     def mainModuleClass = myFixture.copyFileToProject("registrationCheck/module/MainModuleClass.java",
                                                       "MainModuleClass.java")
     def mainModulePlugin = myFixture.copyFileToProject("registrationCheck/module/MainModulePlugin.xml",
@@ -513,6 +550,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.configureFromExistingVirtualFile(dependencyModuleClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleClassWithEp)
     myFixture.configureFromExistingVirtualFile(dependencyModulePlugin)
+    myFixture.configureFromExistingVirtualFile(additionalModuleClass)
     myFixture.configureFromExistingVirtualFile(mainModuleClass)
     myFixture.configureFromExistingVirtualFile(mainModulePlugin)
 

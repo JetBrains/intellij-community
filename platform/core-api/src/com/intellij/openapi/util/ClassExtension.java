@@ -5,6 +5,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,13 +35,14 @@ public class ClassExtension<T> extends KeyedExtensionCollector<T, Class> {
   }
 
   private List<T> buildExtensionsWithInheritance(Set<String> supers) {
+    List<KeyedLazyInstance<T>> extensions = getExtensions();
     synchronized (lock) {
       List<T> result = null;
       for (String aSuper : supers) {
         result = buildExtensionsFromExplicitRegistration(result, key -> aSuper.equals(key));
       }
       for (String aSuper : supers) {
-        result = buildExtensionsFromExtensionPoint(result, bean -> aSuper.equals(bean.getKey()));
+        result = buildExtensionsFromExtensionPoint(result, bean -> aSuper.equals(bean.getKey()), extensions);
       }
       return ContainerUtil.notNullize(result);
     }

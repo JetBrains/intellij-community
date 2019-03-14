@@ -1,8 +1,5 @@
 <idea-plugin>
   <actions>
-    <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
-            icon="AllIcons.RunConfigurations.RerunFailedTests"/>
-
     <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
             icon="AllIcons.Actions.ModuleDirectory">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
@@ -17,14 +14,8 @@
     </group>
 
     <!-- File -->
-    <group id="OpenProjectGroup">
-      <group id="NewElementInMenuGroup" class="com.intellij.ide.actions.NewActionGroup" text="New" popup="true"/>
-      <add-to-group group-id="FileOpenGroup" anchor="first"/>
-    </group>
 
-    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
-
-    <group id="NewProjectOrModuleGroup">
+    <group id="JavaNewProjectOrModuleGroup">
       <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction" text="Project..."/>
       <action id="ImportProject" class="com.intellij.ide.actions.ImportProjectAction" text="Project from Existing Sources..."/>
       <group id="NewProjectFromVCS" class="com.intellij.openapi.vcs.checkout.NewProjectFromVCSGroup" text="Project from Version Control"
@@ -32,7 +23,8 @@
       <separator/>
       <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction" text="Module..."/>
       <action id="ImportModule" class="com.intellij.ide.actions.ImportModuleAction" text="Module from Existing Sources..."/>
-      <separator/>
+
+      <add-to-group group-id="NewProjectOrModuleGroup"/>
     </group>
 
     <action id="SaveAsNewFormat" class="com.intellij.ide.actions.SaveAsDirectoryBasedFormatAction" text="Save as Directory-Based Format...">
@@ -54,19 +46,10 @@
     </group>
 
     <group id="AnalyzeMenu" popup="true">
+      <reference ref="InspectCodeGroup"/>
       <separator/>
       <reference ref="AnalyzeActions"/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
-    </group>
-
-    <group id="InspectCodeGroup" text="Inspect Code Actions">
-      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
-      <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
-      <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction"/>
-      <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction"/>
-      <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
-      <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
-      <add-to-group group-id="AnalyzeMenu" anchor="first"/>
     </group>
 
     <group id="BuildMenu" popup="true">
@@ -275,15 +258,6 @@
 
     <!-- ****************************************************************** -->
 
-    <group id="WelcomeScreen.QuickStart.IDEA">
-      <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"
-              icon="AllIcons.Welcome.CreateNewProject"/>
-      <action id="WelcomeScreen.ImportProject" class="com.intellij.ide.actions.ImportProjectAction"
-              icon="AllIcons.ToolbarDecorator.Import"/>
-      <action id="WelcomeScreen.OpenProject" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.Menu_open"/>
-      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
-    </group>
-
     <group id="WelcomeScreen.Documentation.IDEA">
       <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"/>
       <add-to-group group-id="WelcomeScreen.Documentation" anchor="last"/>
@@ -299,26 +273,10 @@
     </action>
 
     <group>
-      <group id="MarkSourceRootGroup" class="com.intellij.ide.projectView.actions.MarkSourceRootActionGroup"/>
-      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
-      <action id="MarkAsContentRoot" class="com.intellij.ide.projectView.actions.MarkAsContentRootAction"/>
-      <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
-      <add-to-group group-id="MarkRootGroup"/>
-    </group>
-
-    <group>
       <action id="CreateLibraryFromFile" class="com.intellij.ide.projectView.actions.MarkLibraryRootAction"/>
       <action id="ImportModuleFromImlFile" class="com.intellij.ide.projectView.actions.ImportModuleFromImlFileAction"/>
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" relative-to-action="MarkRootGroup" anchor="after"/>
     </group>
-
-    <!-- Android Studio: This does not apply to Gradle projects. issuetracker.google.com/37013723
-    <group>
-      <action class="com.intellij.platform.templates.SaveProjectAsTemplateAction" text="Save Project as Template..."/>
-      <action id="ManageProjectTemplates" class="com.intellij.platform.templates.ManageProjectTemplatesAction" text="Manage Project Templates..."/>
-      <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
-    </group>
-    -->
 
     <action id="ChangesView.GroupBy.Module" text="Module" class="com.intellij.openapi.vcs.changes.actions.SetModuleChangesGroupingAction">
       <add-to-group group-id="ChangesView.GroupBy"/>
@@ -376,7 +334,7 @@
       <reference id="SliceBackward"/>
       <reference id="SliceForward"/>
       <separator/>
-      <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction"/>
+      <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction" overrides="true"/>
       <add-to-group group-id="AnalyzeMenu" anchor="last"/>
     </group>
 
@@ -775,12 +733,6 @@
       <reference ref="Debugger.ViewText"/>
       <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
-    </group>
-
-    <group id="MarkGeneratedSourceRootGroup">
-      <action id="MarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.MarkGeneratedSourceRootAction"/>
-      <action id="UnmarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.UnmarkGeneratedSourceRootAction"/>
-      <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRootGroup"/>
     </group>
 
     <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction">

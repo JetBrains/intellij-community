@@ -7,7 +7,6 @@ import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
@@ -1022,10 +1021,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   private static class TemporaryParent extends EditorColorsSchemeImpl {
 
-    private static final Logger LOG = Logger.getInstance(TemporaryParent.class);
-
     private final String myParentName;
-    private boolean isErrorReported;
 
     TemporaryParent(@NotNull String parentName) {
       super(EmptyColorScheme.INSTANCE);
@@ -1038,22 +1034,13 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
     @Override
     public TextAttributes getAttributes(@Nullable TextAttributesKey key) {
-      reportError();
       return super.getAttributes(key);
     }
 
     @Nullable
     @Override
     public Color getColor(ColorKey key) {
-      reportError();
       return super.getColor(key);
-    }
-
-    private void reportError() {
-      if (!isErrorReported) {
-        LOG.error("Unresolved link to " + myParentName);
-        isErrorReported = true;
-      }
     }
   }
 

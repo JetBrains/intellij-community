@@ -685,13 +685,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       setBackground(UIUtil.getPanelBackground());
-
-      final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      if (app != null && !app.isLoaded() && Splash.BOUNDS != null) {
-        final Point loc = getLocation();
-        loc.y = Splash.BOUNDS.y + Splash.BOUNDS.height;
-        setLocation(loc);
-      }
       super.show();
     }
 

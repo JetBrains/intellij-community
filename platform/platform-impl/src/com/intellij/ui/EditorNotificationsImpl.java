@@ -5,7 +5,6 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -45,7 +44,6 @@ import java.util.concurrent.ExecutorService;
 public class EditorNotificationsImpl extends EditorNotifications {
   // do not use project level - use app level instead
   private static final ProjectExtensionPointName<Provider> EP_PROJECT = new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
-  private static final ExtensionPointName<Provider> EP_APP = new ExtensionPointName<>("com.intellij.editorNotificationProviderApp");
 
   private final Key<CancellablePromise<?>> CURRENT_UPDATE = Key.create("EditorNotifications update"); // non-static, per-project
   private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
@@ -112,8 +110,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
   private List<Runnable> calcNotificationUpdates(@NotNull VirtualFile file) {
     List<FileEditor> editors = ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file),
                                                     editor -> !(editor instanceof TextEditor) || AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor()));
-    List<Provider> providers = ContainerUtil.concat(DumbService.getInstance(myProject).filterByDumbAwareness(EP_APP.getExtensionList()),
-                                                    DumbService.getDumbAwareExtensions(myProject, EP_PROJECT));
+    List<Provider> providers = DumbService.getDumbAwareExtensions(myProject, EP_PROJECT);
     List<Runnable> updates = new SmartList<>();
     for (FileEditor editor : editors) {
       for (Provider<?> provider : providers) {

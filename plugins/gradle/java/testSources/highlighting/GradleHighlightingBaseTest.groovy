@@ -32,11 +32,13 @@ abstract class GradleHighlightingBaseTest extends GradleImportingTestCase {
   }
 
   void testHighlighting(@NotNull String text) {
-    VirtualFile file = createProjectSubFile "build.gradle", text
+    testHighlighting "build.gradle", text
+  }
 
-    importProject()
+  void testHighlighting(@NotNull String relativePath, @NotNull String text) {
+    VirtualFile file = createProjectSubFile relativePath, text
     EdtTestUtil.runInEdtAndWait {
-      fixture.testHighlightingAllFiles(true, false, true, file)
+      fixture.testHighlighting(true, false, true, file)
     }
   }
 

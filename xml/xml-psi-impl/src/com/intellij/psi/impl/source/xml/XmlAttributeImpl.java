@@ -102,8 +102,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   public void setValue(@NotNull String valueText) throws IncorrectOperationException {
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
     final PomModel model = PomManager.getModel(getProject());
-    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute(
-      StringUtil.defaultIfEmpty(getName(), "a"), valueText, this);
+    final XmlAttribute attribute = createAttribute(valueText, StringUtil.defaultIfEmpty(getName(), "a"));
     final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
@@ -127,6 +126,11 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
         return XmlAttributeSetImpl.createXmlAttributeSet(model, getParent(), getName(), newValue != null ? newValue.getText() : null);
       }
     });
+  }
+
+  @NotNull
+  protected XmlAttribute createAttribute(@NotNull String valueText, String name) {
+    return XmlElementFactory.getInstance(getProject()).createAttribute(name, valueText, this);
   }
 
   @Override
@@ -278,7 +282,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     final String oldName = name == null ? "" : name.getText();
     final String oldValue = ObjectUtils.notNull(getValue(), "");
     final PomModel model = PomManager.getModel(getProject());
-    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute(nameText, oldValue, this);
+    final XmlAttribute attribute = createAttribute(oldValue, nameText);
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     final Ref<XmlAttribute> replaced = Ref.create(this);

@@ -4,10 +4,13 @@ package org.jetbrains.plugins.gradle.compiler;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.junit.Test;
 
 import java.util.Collections;
+
+import static com.intellij.util.PathUtil.toSystemDependentName;
 
 public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
   @Test
@@ -51,9 +54,9 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
     PathsList pathsAfterMake = new PathsList();
     OrderEnumerator.orderEntries(getModule("project.main")).withoutSdk().recursively().runtimeOnly().classes().collectPaths(pathsAfterMake);
     assertSameElements(pathsAfterMake.getPathList(),
-                       path("build/resources/main"),
-                       path("api/build/resources/main"),
-                       path("impl/build/resources/main"));
+                       toSystemDependentName(path("build/resources/main")),
+                       toSystemDependentName(path("api/build/resources/main")),
+                       toSystemDependentName(path("impl/build/resources/main")));
 
     assertCopied("build/resources/main/dir/file.properties");
     assertNotCopied("build/resources/test/dir/file-test.properties");

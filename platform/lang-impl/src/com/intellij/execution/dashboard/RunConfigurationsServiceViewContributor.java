@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -111,7 +112,7 @@ public class RunConfigurationsServiceViewContributor
       }
 
       @Override
-      public boolean handleDoubleClick() {
+      public boolean handleDoubleClick(@NotNull MouseEvent event) {
         RunDashboardContributor contributor = node.getContributor();
         return contributor != null && contributor.handleDoubleClick(node.getConfigurationSettings().getConfiguration());
       };

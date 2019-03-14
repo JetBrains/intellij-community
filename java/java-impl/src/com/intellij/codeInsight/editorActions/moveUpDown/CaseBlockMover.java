@@ -25,7 +25,7 @@ public class CaseBlockMover extends LineMover {
 
     final Document document = editor.getDocument();
     int startOffset = document.getLineStartOffset(info.toMove.startLine);
-    int endOffset = document.getLineStartOffset(info.toMove.endLine);
+    int endOffset = getLineStartSafeOffset(document, info.toMove.endLine);
     List<PsiSwitchLabelStatement> statements = new SmartList<>();
     PsiElement firstElement = null;
     for (PsiElement element : CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset)) {

@@ -3,5 +3,5 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://test/b schema-b.xsd">
 
-    <b:instance id=""
+    <b:instance id=""/>
 </root>

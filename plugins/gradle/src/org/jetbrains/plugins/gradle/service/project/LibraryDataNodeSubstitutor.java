@@ -69,7 +69,7 @@ public class LibraryDataNodeSubstitutor {
       return;
     }
 
-    boolean projectDependencyCandidate = libraryPaths.size() == 1 && !libraryDependencyDataNode.getChildren().isEmpty();
+    boolean shouldKeepTransitiveDependencies = libraryPaths.size() > 0 && !libraryDependencyDataNode.getChildren().isEmpty();
 
     final LinkedList<String> unprocessedPaths = ContainerUtil.newLinkedList(libraryPaths);
     while (!unprocessedPaths.isEmpty()) {
@@ -151,7 +151,7 @@ public class LibraryDataNodeSubstitutor {
         if (found == null) {
           DataNode<ModuleDependencyData> moduleDependencyNode =
             libraryNodeParent.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
-          if (projectDependencyCandidate) {
+          if (shouldKeepTransitiveDependencies) {
             for (DataNode<?> node : libraryDependencyDataNode.getChildren()) {
               moduleDependencyNode.addChild(node);
             }

@@ -43,19 +43,23 @@ class PluginsCollector {
 
   private boolean isPluginCompatible(@NotNull PluginDescriptor plugin,
                                      @NotNull Set<String> availableModulesAndPlugins,
-                                     @NotNull Map<String, PluginDescriptor> nonCheckedPlugins) {
-    nonCheckedPlugins.remove(plugin.id)
+                                     @NotNull Map<String, PluginDescriptor> nonCheckedModules) {
+    nonCheckedModules.remove(plugin.id)
+    for (declaredModule in plugin.declaredModules) {
+      nonCheckedModules.remove(declaredModule)
+    }
     for (requiredDependency in plugin.requiredDependencies) {
       if (availableModulesAndPlugins.contains(requiredDependency)) {
         continue
       }
-      def requiredPlugin = nonCheckedPlugins.get(requiredDependency)
-      if (requiredPlugin != null && isPluginCompatible(requiredPlugin, availableModulesAndPlugins, nonCheckedPlugins)) {
+      def requiredPlugin = nonCheckedModules.get(requiredDependency)
+      if (requiredPlugin != null && isPluginCompatible(requiredPlugin, availableModulesAndPlugins, nonCheckedModules)) {
         continue
       }
       return false
     }
     availableModulesAndPlugins.add(plugin.id)
+    availableModulesAndPlugins.addAll(plugin.declaredModules)
     return true
   }
 
@@ -86,6 +90,12 @@ class PluginsCollector {
       if (!id) {
         return
       }
+      def declaredModules = new HashSet()
+      for (module in xml.module) {
+        if (module.@value) {
+          declaredModules += module.@value
+        }
+      }
       def requiredDependencies = new HashSet()
       for (dependency in xml.depends) {
         if (dependency.@optional != 'true') {
@@ -93,18 +103,24 @@ class PluginsCollector {
         }
       }
 
-      pluginDescriptors[id] = new PluginDescriptor(id, requiredDependencies, pluginLayout)
+      def pluginDescriptor = new PluginDescriptor(id, declaredModules, requiredDependencies, pluginLayout)
+      pluginDescriptors[id] = pluginDescriptor
+      for (module in declaredModules) {
+        pluginDescriptors[module] = pluginDescriptor
+      }
     }
     return pluginDescriptors
   }
 
   private class PluginDescriptor {
     private final String id
+    private final Set<String> declaredModules
     private final Set<String> requiredDependencies
     private final PluginLayout pluginLayout
 
-    PluginDescriptor(String id, Set<String> requiredDependencies, PluginLayout pluginLayout) {
+    PluginDescriptor(String id, Set<String> declaredModules, Set<String> requiredDependencies, PluginLayout pluginLayout) {
       this.id = id
+      this.declaredModules = declaredModules
       this.requiredDependencies = requiredDependencies
       this.pluginLayout = pluginLayout
     }

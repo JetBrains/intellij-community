@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import com.intellij.util.PairFunction;
@@ -26,6 +27,7 @@ import com.intellij.util.Processor;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -225,6 +227,16 @@ public class TreeTraverserTest extends TestCase {
   }
 
   // JBIterable ----------------------------------------------
+
+  public void testIterableOfNulls() {
+    Object nil = null;
+    assertEquals("[]", JBIterable.of(nil).toList().toString());
+    assertEquals("[null, null, null]", JBIterable.of(nil, nil, nil).toList().toString());
+    assertEquals("[null, null, null]", JBIterable.of(ContainerUtil.ar(nil, nil, nil)).toList().toString());
+    assertEquals("[null, null, null]", JBIterable.from(Arrays.asList(nil, nil, nil)).toList().toString());
+    assertEquals("[]", JBIterable.generate(null, x -> null).toList().toString());
+    assertEquals("[42]", JBIterable.generate(42, x -> null).toList().toString());
+  }
 
   public void testSingleElement() {
     JBIterable<String> it = JBIterable.of("42");
@@ -491,9 +503,52 @@ public class TreeTraverserTest extends TestCase {
   private static Function<Integer, JBIterable<Integer>> numTraverser(TreeTraversal t) {
     return t.traversal(Functions.fromMap(numbers()));
   }
+
   @NotNull
   private static Function<Integer, JBIterable<Integer>> numTraverser2(TreeTraversal t) {
     return t.traversal(Functions.fromMap(numbers2()));
+  }
+
+  @NotNull
+  private static JBIterable<TreeTraversal> allTraversals() {
+    JBIterable<TreeTraversal> result = JBIterable.of(TreeTraversal.class.getDeclaredFields())
+      .filter(o -> Modifier.isStatic(o.getModifiers()) && Modifier.isPublic(o.getModifiers()))
+      .map(o -> { try { return o.get(null); } catch (IllegalAccessException e) { throw new AssertionError(e); } })
+      .filter(TreeTraversal.class)
+      .sort(Comparator.comparing(Object::toString))
+      .collect();
+    assertEquals("[BI_ORDER_DFS, INTERLEAVED_DFS, LEAVES_BFS, LEAVES_DFS," +
+                 " PLAIN_BFS, POST_ORDER_DFS, PRE_ORDER_DFS, TRACING_BFS]",
+                 result.toList().toString());
+    return result;
+  }
+
+
+  public void testTraverserOfNulls() {
+    JBIterable<TreeTraversal> traversals = allTraversals();
+
+    Object nil = null;
+    JBTreeTraverser<Object> t1 = JBTreeTraverser.from(o -> JBIterable.of(nil, nil)).withRoots(Arrays.asList(nil));
+    assertEquals("BI_ORDER_DFS [null, null]\n" +
+                 "INTERLEAVED_DFS [null]\n" +
+                 "LEAVES_BFS [null]\n" +
+                 "LEAVES_DFS [null]\n" +
+                 "PLAIN_BFS [null]\n" +
+                 "POST_ORDER_DFS [null]\n" +
+                 "PRE_ORDER_DFS [null]\n" +
+                 "TRACING_BFS [null]",
+                 StringUtil.join(traversals.map(o -> o + " " + t1.traverse(o).toList().toString()), "\n"));
+
+    JBTreeTraverser<Object> t2 = JBTreeTraverser.from(o -> JBIterable.of(nil, nil)).withRoots(Arrays.asList(42));
+    assertEquals("BI_ORDER_DFS [42, null, null, null, null, 42]\n" +
+                 "INTERLEAVED_DFS [42, null, null]\n" +
+                 "LEAVES_BFS [null, null]\n" +
+                 "LEAVES_DFS [null, null]\n" +
+                 "PLAIN_BFS [42, null, null]\n" +
+                 "POST_ORDER_DFS [null, null, 42]\n" +
+                 "PRE_ORDER_DFS [42, null, null]\n" +
+                 "TRACING_BFS [42, null]",
+                 StringUtil.join(traversals.map(o -> o + " " + t2.traverse(o).toList().toString()), "\n"));
   }
 
   public void testSimplePreOrderDfs() {

@@ -96,6 +96,10 @@ public class PtyCommandLine extends GeneralCommandLine {
     return this;
   }
 
+  public boolean isConsoleMode() {
+    return myConsoleMode;
+  }
+
   public PtyCommandLine withInitialColumns(int initialColumns) {
     myInitialColumns = initialColumns;
     return this;

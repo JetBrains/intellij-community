@@ -508,7 +508,8 @@ public class FSRecords {
     private static final int FIRST_ATTR_ID_OFFSET = bulkAttrReadSupport ? RESERVED_ATTR_ID : 0;
 
     private static int getAttributeId(@NotNull String attId) throws IOException {
-      return myAttributesList.getId(attId) + FIRST_ATTR_ID_OFFSET;
+      // do not invoke FSRecords.requestVfsRebuild under read lock to avoid deadlock
+      return myAttributesList.getIdRaw(attId, false) + FIRST_ATTR_ID_OFFSET;
     }
 
     @Contract("_->fail")
@@ -1306,7 +1307,7 @@ public class FSRecords {
   }
 
   @Nullable
-  public static DataInputStream readAttributeWithLock(int fileId, FileAttribute att) {
+  public static DataInputStream readAttributeWithLock(int fileId, @NotNull FileAttribute att) {
     return readAndHandleErrors(() -> {
       try (DataInputStream stream = readAttribute(fileId, att)) {
         if (stream != null && att.isVersioned()) {
@@ -1327,7 +1328,7 @@ public class FSRecords {
 
   // must be called under r or w lock
   @Nullable
-  private static DataInputStream readAttribute(int fileId, FileAttribute attribute) throws IOException {
+  private static DataInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
     checkFileIsValid(fileId);
 
     int recordId = getAttributeRecordId(fileId);
@@ -1375,7 +1376,7 @@ public class FSRecords {
   // other attr record: (AttrId, fileId) ? attrData
   private static final int MAX_SMALL_ATTR_SIZE = 64;
 
-  private static int findAttributePage(int fileId, FileAttribute attr, boolean toWrite) throws IOException {
+  private static int findAttributePage(int fileId, @NotNull FileAttribute attr, boolean toWrite) throws IOException {
     checkFileIsValid(fileId);
 
     int recordId = getAttributeRecordId(fileId);
@@ -1628,6 +1629,7 @@ public class FSRecords {
   }
 
   private static class AttributeOutputStream extends DataOutputStream {
+    @NotNull
     private final FileAttribute myAttribute;
     private final int myFileId;
 
@@ -1669,7 +1671,7 @@ public class FSRecords {
       });
     }
 
-    void rewriteDirectoryRecordWithAttrContent(BufferExposingByteArrayOutputStream _out) throws IOException {
+    void rewriteDirectoryRecordWithAttrContent(@NotNull BufferExposingByteArrayOutputStream _out) throws IOException {
       int recordId = getAttributeRecordId(myFileId);
       assert inlineAttributes;
       int encodedAttrId = DbConnection.getAttributeId(myAttribute.getId());

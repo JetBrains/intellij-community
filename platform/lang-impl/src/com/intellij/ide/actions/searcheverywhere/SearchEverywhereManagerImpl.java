@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SearchTextField;
@@ -91,6 +92,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
     //history could be suppressed by user for some reasons (creating promo video, conference demo etc.)
     boolean suppressHistory = "true".equals(System.getProperty("idea.searchEverywhere.noHistory", "false"));
+    //or could be suppressed just for All tab in registry
+    suppressHistory = suppressHistory
+                      || (ALL_CONTRIBUTORS_GROUP_ID.equals(selectedContributorID) && Registry.is("search.everywhere.disable.history.for.all"));
+
     if (searchText == null && !suppressHistory) {
       searchText = myHistoryIterator.prev();
     }

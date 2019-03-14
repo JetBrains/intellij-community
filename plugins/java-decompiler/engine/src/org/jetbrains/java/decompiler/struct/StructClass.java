@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -157,28 +157,16 @@ public class StructClass extends StructMember {
   }
 
   public boolean isVersionGE_1_5() {
-    return (majorVersion > 48 || (majorVersion == 48 && minorVersion > 0)); // FIXME: check second condition
+    return (majorVersion > CodeConstants.BYTECODE_JAVA_LE_4 ||
+            (majorVersion == CodeConstants.BYTECODE_JAVA_LE_4 && minorVersion > 0)); // FIXME: check second condition
   }
 
   public boolean isVersionGE_1_7() {
-    return (majorVersion >= 51);
+    return (majorVersion >= CodeConstants.BYTECODE_JAVA_7);
   }
 
   public int getBytecodeVersion() {
-    switch (majorVersion) {
-      case 53:
-        return CodeConstants.BYTECODE_JAVA_9;
-      case 52:
-        return CodeConstants.BYTECODE_JAVA_8;
-      case 51:
-        return CodeConstants.BYTECODE_JAVA_7;
-      case 50:
-        return CodeConstants.BYTECODE_JAVA_6;
-      case 49:
-        return CodeConstants.BYTECODE_JAVA_5;
-    }
-
-    return CodeConstants.BYTECODE_JAVA_LE_4;
+    return majorVersion < CodeConstants.BYTECODE_JAVA_LE_4 ? CodeConstants.BYTECODE_JAVA_LE_4 : majorVersion;
   }
 
   @Override

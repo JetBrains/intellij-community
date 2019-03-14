@@ -1,27 +1,24 @@
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.remoteServer.util.ApplicationActionUtils.getDeploymentTarget;
 
 /**
  * @author michael.golubev
  */
-public class DeployAction extends ServersTreeAction<DeploymentNode> {
-
-  public DeployAction() {
-    super("Deploy", "Deploy the selected item", AllIcons.Nodes.Deploy);
-  }
-
+public class DeployAction extends DumbAwareAction {
   @Override
-  protected Class<DeploymentNode> getTargetNodeClass() {
-    return DeploymentNode.class;
-  }
-
-  @Override
-  protected void updatePresentation(@NotNull Presentation presentation, @Nullable DeploymentNode node) {
+  public void update(@NotNull AnActionEvent e) {
+    DeploymentNode node = getDeploymentTarget(e);
+    Presentation presentation = e.getPresentation();
+    boolean visible = node != null && node.isDeployActionVisible();
+    presentation.setVisible(visible);
+    presentation.setEnabled(visible && node.isDeployActionEnabled());
     if (node != null && node.isDeployed()) {
       presentation.setText("Redeploy");
       presentation.setDescription("Redeploy the selected item");
@@ -33,18 +30,11 @@ public class DeployAction extends ServersTreeAction<DeploymentNode> {
   }
 
   @Override
-  protected boolean isVisible4(DeploymentNode node) {
-    return node.isDeployActionVisible();
-  }
-
-  @Override
-  protected boolean isEnabled4(DeploymentNode node) {
-    return node.isDeployActionEnabled();
-  }
-
-  @Override
-  protected void doActionPerformed(DeploymentNode node) {
-    node.deploy();
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    DeploymentNode node = getDeploymentTarget(e);
+    if (node != null) {
+      node.deploy();
+    }
   }
 }
 

@@ -56,6 +56,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_SCRIPT_HANDLER = "org.gradle.api.initialization.dsl.ScriptHandler";
   @NonNls public static final String GRADLE_API_TASK = "org.gradle.api.Task";
   @NonNls public static final String GRADLE_API_DEFAULT_TASK = "org.gradle.api.DefaultTask";
+  @NonNls public static final String GRADLE_API_TASKS_ACTION = "org.gradle.api.tasks.TaskAction";
   @NonNls public static final String GRADLE_API_TASKS_DELETE = "org.gradle.api.tasks.Delete";
   @NonNls public static final String GRADLE_JVM_TASKS_JAR = "org.gradle.jvm.tasks.Jar";
   @NonNls public static final String GRADLE_API_TASKS_BUNDLING_JAR = "org.gradle.api.tasks.bundling.Jar";

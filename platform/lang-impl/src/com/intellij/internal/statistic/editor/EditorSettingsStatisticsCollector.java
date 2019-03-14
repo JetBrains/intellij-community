@@ -71,11 +71,6 @@ class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
     addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsAbove(), "noBreadcrumbsBelow");
     addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsShown(), "breadcrumbs");
     addBoolIfDiffers(set, es, esDefault, s -> s.isShowIntentionBulb(), "intentionBulb");
-    if (Registry.is("editor.breadcrumbs.language.statistics.enabled")) {
-      for (String language : es.getOptions().getLanguageBreadcrumbsMap().keySet()) {
-        addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsShownFor(language), "breadcrumbsFor" + language);
-      }
-    }
 
     RichCopySettings rcs = RichCopySettings.getInstance();
     RichCopySettings rcsDefault = new RichCopySettings();

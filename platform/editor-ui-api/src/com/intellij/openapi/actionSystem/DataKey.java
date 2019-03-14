@@ -2,12 +2,12 @@
 
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Type-safe named key.
@@ -18,7 +18,7 @@ import java.util.Map;
  * @see LangDataKeys
  */
 public class DataKey<T> {
-  private static final Map<String, DataKey> ourDataKeyIndex = new HashMap<>();
+  private static final ConcurrentMap<String, DataKey> ourDataKeyIndex = ContainerUtil.newConcurrentMap();
 
   private final String myName;
 

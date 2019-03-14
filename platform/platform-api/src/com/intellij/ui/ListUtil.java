@@ -370,7 +370,7 @@ public class ListUtil {
 
   private static final ListModelExtension FILTERED_MODEL = new ListModelExtension<Object, FilteringListModel<Object>>() {
     @Override public Object get(FilteringListModel<Object> model, int index) { return model.getElementAt(index);}
-    @Override public void set(FilteringListModel<Object> model, int index, Object item) { getExtension(model.getOriginalModel()).set(model, index, item);}
+    @Override public void set(FilteringListModel<Object> model, int index, Object item) { getExtension(model.getOriginalModel()).set(model.getOriginalModel(), index, item);}
     @Override public void remove(FilteringListModel<Object> model, int index) { model.remove(index);}
     @Override public void removeAll(FilteringListModel<Object> model) { model.replaceAll(Collections.emptyList());}
     @Override public void addAll(FilteringListModel<Object> model, List<Object> items) { model.addAll(items);}

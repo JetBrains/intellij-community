@@ -64,7 +64,7 @@ public abstract class CodeInsightAction extends AnAction implements UpdateInBack
       else {
         action.run();
       }
-    }, getCommandName(), DocCommandGroupId.noneGroupId(editor.getDocument()));
+    }, getCommandName(), DocCommandGroupId.noneGroupId(editor.getDocument()), editor.getDocument());
   }
 
   @Override

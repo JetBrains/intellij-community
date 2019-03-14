@@ -620,9 +620,10 @@ class NetCommandFactory:
         cmdText = '<process/>'
         return NetCommand(CMD_PROCESS_CREATED, 0, cmdText)
 
-    def make_show_cython_warning_message(self):
+    def make_show_warning_message(self, message_id):
         try:
-            return NetCommand(CMD_SHOW_CYTHON_WARNING, 0, '')
+            cmdText = '<xml><warning id="%s" /></xml>' % message_id
+            return NetCommand(CMD_SHOW_CYTHON_WARNING, 0, cmdText)
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
