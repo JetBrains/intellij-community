@@ -158,7 +158,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     myNameComponent.clear();
     myNameComponent.setBackground(background);
 
-    Color itemColor = isSelected ? SELECTED_FOREGROUND_COLOR : JBColor.namedColor("CompletionPopup.foreground", presentation.getItemTextForeground());
+    Color itemColor = isSelected ? SELECTED_FOREGROUND_COLOR : presentation.getItemTextForeground();
     allowedWidth -= setItemTextLabel(item, itemColor, isSelected, presentation, allowedWidth);
 
     Font font = myLookup.getCustomFont(item, false);
