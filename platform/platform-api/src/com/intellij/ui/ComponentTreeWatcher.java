@@ -45,7 +45,7 @@ public abstract class ComponentTreeWatcher {
     }
   };
 
-  private boolean shouldBeIgnored(Object object) {
+  protected boolean shouldBeIgnored(Object object) {
     if (object instanceof CellRendererPane) return true;
     if (object == null) {
       return true;
