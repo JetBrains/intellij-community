@@ -48,10 +48,6 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   protected Object[] normalizeDependencies(@NotNull CachedValueProvider.Result<T> result) {
     Object[] dependencies = super.normalizeDependencies(result);
     if (dependencies.length > 0 && ContainerUtil.and(dependencies, this::anyChangeImpliesPsiCounterChange)) {
-      if (dependencies[0] == PsiModificationTracker.MODIFICATION_COUNT) {
-        dependencies[0] = PSI_MOD_COUNT_OPTIMIZATION;
-        return dependencies;
-      }
       return ArrayUtil.prepend(PSI_MOD_COUNT_OPTIMIZATION, dependencies);
     }
     return dependencies;
@@ -93,6 +89,12 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
     }
 
     return super.isUpToDate(data);
+  }
+
+  @Override
+  protected boolean isDependencyOutOfDate(@NotNull Object dependency, long oldTimeStamp) {
+    if (dependency == PSI_MOD_COUNT_OPTIMIZATION) return false;
+    return super.isDependencyOutOfDate(dependency, oldTimeStamp);
   }
 
   @Override
