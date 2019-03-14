@@ -1,7 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.Trinity;
@@ -10,6 +15,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.RunAll;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildLayoutParameters;
@@ -50,6 +57,19 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
     roots.add(generatedGradleJarsDir.getPath());
     File gradleDistLibDir = new File(distribution.getDistributionDir(), "gradle-" + gradleVersion + "/lib");
     roots.add(gradleDistLibDir.getPath());
+  }
+
+  @Override
+  protected void tearDownFixtures() {
+    new RunAll()
+      .append(() -> EdtTestUtil.runInEdtAndWait(() -> {
+        Project project = myProject;
+        if (project != null) {
+          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
+          ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
+        }
+      }))
+      .append(() -> super.tearDownFixtures()).run();
   }
 
   @Test
@@ -261,6 +281,7 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
           buf.append(": ").append(usage.getNavigationRange().getStartOffset())
             .append(",").append(usage.getNavigationRange().getEndOffset());
         }
+        buf.append(" \n");
       }
 
       return buf.toString();
