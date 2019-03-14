@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.fields.ExpandableSupport;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
@@ -17,10 +18,24 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
+
+import static java.util.Arrays.asList;
 
 public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> {
   public ExpandableEditorSupport(@NotNull EditorTextField field) {
     super(field, null, null);
+    field.addSettingsProvider(editor -> {
+      initFieldEditor(editor, field.getBackground());
+      updateFieldFolding(editor);
+    });
+  }
+
+  public ExpandableEditorSupport(@NotNull EditorTextField field,
+                                 @NotNull Function<? super String, ? extends java.util.List<String>> parser,
+                                 @NotNull Function<? super List<String>, String> joiner) {
+    super(field, text -> StringUtil.join(parser.fun(text), "\n"),
+          text -> joiner.fun(asList(StringUtil.splitByLines(text))));
     field.addSettingsProvider(editor -> {
       initFieldEditor(editor, field.getBackground());
       updateFieldFolding(editor);
