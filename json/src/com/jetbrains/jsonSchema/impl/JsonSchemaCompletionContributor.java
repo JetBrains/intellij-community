@@ -68,7 +68,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
     final JsonSchemaService service = JsonSchemaService.Impl.get(position.getProject());
     if (!service.isApplicableToFile(file)) return;
-    final JsonSchemaObject rootSchema = service.getSchemaObject(file);
+    final JsonSchemaObject rootSchema = service.getSchemaObject(position.getContainingFile());
     if (rootSchema == null) return;
     PsiElement positionParent = position.getParent();
     if (positionParent != null) {

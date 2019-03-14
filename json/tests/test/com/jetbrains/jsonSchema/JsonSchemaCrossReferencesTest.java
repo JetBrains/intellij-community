@@ -819,11 +819,11 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       @Override
       public void configureFiles() {
         configureByFiles(null, "completionWithRootRef.json", "cycledWithRootRefSchema.json");
-        complete();
       }
 
       @Override
       public void doCheck() {
+        complete();
         checkCompletion("\"id\"", "\"testProp\"");
       }
     });

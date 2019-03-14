@@ -31,7 +31,7 @@ public class YamlJsonSchemaGotoDeclarationHandler implements GotoDeclarationHand
     if (file == null || !service.isApplicableToFile(file)) return null;
     final JsonPointerPosition steps = YamlJsonPsiWalker.INSTANCE.findPosition(literal, true);
     if (steps == null) return null;
-    final JsonSchemaObject schemaObject = service.getSchemaObject(file);
+    final JsonSchemaObject schemaObject = service.getSchemaObject(containingFile);
     if (schemaObject != null) {
       final PsiElement target = new JsonSchemaResolver(sourceElement.getProject(), schemaObject, steps).findNavigationTarget(literal.getValue());
       if (target != null) {

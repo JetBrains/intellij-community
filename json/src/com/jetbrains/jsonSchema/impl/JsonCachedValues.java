@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.json.navigation.JsonQualifiedNameKind;
 import com.intellij.json.navigation.JsonQualifiedNameProvider;
 import com.intellij.json.psi.*;
@@ -20,6 +21,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonPointerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -206,5 +208,22 @@ public class JsonCachedValues {
                                     @NotNull Function<? super PsiFile, ? extends T> eval,
                                     @NotNull Key<CachedValue<T>> key) {
     return CachedValuesManager.getCachedValue(psiFile, key, () -> CachedValueProvider.Result.create(eval.fun(psiFile), psiFile));
+  }
+
+  public static final Key<CachedValue<JsonSchemaObject>> OBJECT_FOR_FILE_KEY = new Key<>("JsonCachedValues.OBJ_KEY");
+  @Nullable
+  static JsonSchemaObject computeSchemaForFile(@NotNull PsiFile file, @NotNull JsonSchemaService service) {
+    final PsiFile originalFile = CompletionUtil.getOriginalOrSelf(file);
+    JsonSchemaObject value = CachedValuesManager.getCachedValue(originalFile, OBJECT_FOR_FILE_KEY, () -> {
+      VirtualFile virtualFile = originalFile.getVirtualFile();
+      JsonSchemaObject schemaObject = virtualFile == null ? null : service.getSchemaObject(virtualFile);
+      VirtualFile schemaFile = schemaObject == null ? null : service.resolveSchemaFile(schemaObject);
+      PsiFile psiFile = schemaFile == null ? null : originalFile.getManager().findFile(schemaFile);
+      JsonSchemaObject object = schemaObject == null ? JsonSchemaObject.NULL_OBJ : schemaObject;
+      return psiFile == null
+             ? CachedValueProvider.Result.create(object, originalFile)
+             : CachedValueProvider.Result.create(object, originalFile, psiFile);
+    });
+    return value == JsonSchemaObject.NULL_OBJ ? null : value;
   }
 }

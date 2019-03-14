@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -285,6 +286,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return JsonCachedValues.getSchemaObject(replaceHttpFileWithBuiltinIfNeeded(schemaFile), myProject);
   }
 
+
+  @Nullable
+  @Override
+  public JsonSchemaObject getSchemaObject(@NotNull PsiFile file) {
+    return JsonCachedValues.computeSchemaForFile(file, this);
+  }
+
   public VirtualFile replaceHttpFileWithBuiltinIfNeeded(VirtualFile schemaFile) {
     // this hack is needed to handle user-defined mappings via urls
     // we cannot perform that inside corresponding provider, because it leads to recursive component dependency
@@ -460,8 +468,9 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
         @NotNull
         @Override
         public MultiMap<VirtualFile, JsonSchemaFileProvider> compute() {
+          MultiMap<VirtualFile, JsonSchemaFileProvider> map = createFileProviderMap(myFactory.create(), myProject);
           myIsComputed.set(true);
-          return createFileProviderMap(myFactory.create(), myProject);
+          return map;
         }
 
         @NotNull

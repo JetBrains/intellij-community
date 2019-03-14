@@ -15,7 +15,7 @@ public class YamlJsonSchemaCompletionContributor extends CompletionContributor {
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     final PsiElement position = parameters.getPosition();
     final JsonSchemaService jsonSchemaService = JsonSchemaService.Impl.get(position.getProject());
-    JsonSchemaObject object = jsonSchemaService.getSchemaObject(parameters.getOriginalFile().getVirtualFile());
+    JsonSchemaObject object = jsonSchemaService.getSchemaObject(parameters.getOriginalFile());
     if (object != null) {
       JsonSchemaCompletionContributor.doCompletion(parameters, result, object, false);
     }

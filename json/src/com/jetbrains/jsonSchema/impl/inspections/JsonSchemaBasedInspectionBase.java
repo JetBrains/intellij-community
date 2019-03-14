@@ -34,7 +34,7 @@ public abstract class JsonSchemaBasedInspectionBase extends LocalInspectionTool 
     VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
     if (!service.isApplicableToFile(virtualFile)) return PsiElementVisitor.EMPTY_VISITOR;
 
-    return doBuildVisitor(root, service.getSchemaObject(virtualFile), service, holder, session);
+    return doBuildVisitor(root, service.getSchemaObject(file), service, holder, session);
   }
 
   protected abstract PsiElementVisitor doBuildVisitor(@NotNull JsonValue root,
