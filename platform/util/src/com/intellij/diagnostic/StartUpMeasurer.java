@@ -22,7 +22,6 @@ public final class StartUpMeasurer {
 
     public static final String LOAD_MAIN_CLASS = "load main class";
     public static final String CONFIGURE_LOGGING = "configure logging";
-    public static final String REGISTER_BUNDLED_FONTS = "register bundled fonts";
 
     // this phase name is not fully clear - it is time from `IdeaApplication.initApplication` to `IdeaApplication.run`
     public static final String INIT_APP = "app initialization";

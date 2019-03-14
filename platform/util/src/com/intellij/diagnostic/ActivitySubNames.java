@@ -6,6 +6,8 @@ public final class ActivitySubNames {
   public static final String UPDATE_WINDOW_ICON = "update window icon";
   public static final String INIT_DEFAULT_LAF = "init default LaF";
 
+  public static final String REGISTER_BUNDLED_FONTS = "register bundled fonts";
+
   public static final String CHECK_SYSTEM_DIR = "check system dirs";
   public static final String LOCK_SYSTEM_DIRS = "lock system dirs";
   public static final String START_LOGGING = "start logging";
