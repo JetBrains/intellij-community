@@ -64,7 +64,11 @@ class Files {
 
   @Test
   void 'diamond in variable initializer'() {
-    typingTest('I<PG> l = <caret>new C<>()', GrNewExpression, 'C<PG>')
+    def expression = elementUnderCaret('I<PG> l = <caret>new C<>()', GrNewExpression)
+    assertType('C<PG>', expression.type)
+    def resolved = (MethodResolveResult)expression.advancedResolve()
+    def typeParameter = resolved.element.containingClass.typeParameters.first()
+    assertType('PG', resolved.substitutor.substitute(typeParameter))
   }
 
   @Test
