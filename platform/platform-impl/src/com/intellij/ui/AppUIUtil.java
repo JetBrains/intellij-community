@@ -36,7 +36,6 @@ import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.SwingHelper;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
@@ -191,33 +190,47 @@ public class AppUIUtil {
   }
 
   public static void registerBundledFonts() {
-    if (SystemProperties.getBooleanProperty("ide.register.bundled.fonts", true)) {
-      registerFont("/fonts/Inconsolata.ttf");
-      registerFont("/fonts/SourceCodePro-Regular.ttf");
-      registerFont("/fonts/SourceCodePro-Bold.ttf");
-      registerFont("/fonts/SourceCodePro-It.ttf");
-      registerFont("/fonts/SourceCodePro-BoldIt.ttf");
-      registerFont("/fonts/FiraCode-Regular.ttf");
-      registerFont("/fonts/FiraCode-Bold.ttf");
-      registerFont("/fonts/FiraCode-Light.ttf");
-      registerFont("/fonts/FiraCode-Medium.ttf");
-      registerFont("/fonts/FiraCode-Retina.ttf");
-    }
-  }
-
-  private static void registerFont(@NonNls String name) {
-    URL url = AppUIUtil.class.getResource(name);
-    if (url == null) {
-      Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
+    if (!SystemProperties.getBooleanProperty("ide.register.bundled.fonts", true)) {
       return;
     }
 
-    try (InputStream is = url.openStream()) {
-      Font font = Font.createFont(Font.TRUETYPE_FONT, is);
+    File fontDir = PluginManagerCore.isRunningFromSources()
+                   ? new File(PathManager.getCommunityHomePath(), "platform/platform-resources/src/fonts")
+                   : null;
+
+    registerFont("Inconsolata.ttf", fontDir);
+    registerFont("SourceCodePro-Regular.ttf", fontDir);
+    registerFont("SourceCodePro-Bold.ttf", fontDir);
+    registerFont("SourceCodePro-It.ttf", fontDir);
+    registerFont("SourceCodePro-BoldIt.ttf", fontDir);
+    registerFont("FiraCode-Regular.ttf", fontDir);
+    registerFont("FiraCode-Bold.ttf", fontDir);
+    registerFont("FiraCode-Light.ttf", fontDir);
+    registerFont("FiraCode-Medium.ttf", fontDir);
+    registerFont("FiraCode-Retina.ttf", fontDir);
+  }
+
+  private static void registerFont(@NotNull String name, @Nullable File fontDir) {
+    try {
+      Font font;
+      if (fontDir == null) {
+        URL url = AppUIUtil.class.getResource("/fonts/" + name);
+        if (url == null) {
+          Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
+          return;
+        }
+
+        try (InputStream is = url.openStream()) {
+          font = Font.createFont(Font.TRUETYPE_FONT, is);
+        }
+      }
+      else {
+        font = Font.createFont(Font.TRUETYPE_FONT, new File(fontDir, name));
+      }
       GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
     }
     catch (Throwable t) {
-      Logger.getInstance(AppUIUtil.class).warn("Cannot register font: " + url, t);
+      Logger.getInstance(AppUIUtil.class).warn("Cannot register font: " + name, t);
     }
   }
 
