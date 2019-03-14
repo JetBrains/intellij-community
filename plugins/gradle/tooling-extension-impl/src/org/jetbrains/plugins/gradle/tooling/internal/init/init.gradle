@@ -48,7 +48,6 @@ class RegistryProcessor implements ProjectEvaluationListener {
 
   @Override
   void beforeEvaluate(Project project) {
-    println "Before evaluate for project $project.name"
     def registry = (ToolingModelBuilderRegistry)((ProjectInternal)project).services.get(ToolingModelBuilderRegistry.class)
     process(registry)
   }
