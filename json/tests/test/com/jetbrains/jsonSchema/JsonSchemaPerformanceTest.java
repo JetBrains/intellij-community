@@ -2,11 +2,21 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.idea.HardwareAgentRequired;
+import com.intellij.json.JsonFileType;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonValue;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
+import org.junit.Assert;
 
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 @HardwareAgentRequired
 public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
@@ -47,5 +57,33 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
       }
     });
     PlatformTestUtil.startPerformanceTest(getTestName(false), expectedMs, test).attempts(1).usesAllCPUCores().assertTiming();
+  }
+
+
+  public void testEslintHighlightingPerformance() throws Exception {
+    configureByFile(getTestName(true) + "/.eslintrc.json");
+    PsiFile psiFile = getFile();
+    PlatformTestUtil.startPerformanceTest(getTestName(true), (int)TimeUnit.SECONDS.toMillis(15),
+                                          () -> {
+                                            for (int i = 0; i < 10; i++) {
+                                              doHighlighting();
+
+                                              Assert.assertTrue(psiFile instanceof JsonFile);
+                                              final JsonValue value = ((JsonFile)psiFile).getTopLevelValue();
+                                              Assert.assertTrue(value instanceof JsonObject);
+                                              final JsonProperty rules = ((JsonObject)value).findProperty("rules");
+                                              Assert.assertNotNull(rules);
+                                              Assert.assertTrue(rules.getValue() instanceof JsonObject);
+
+                                              final JsonProperty camelcase = ((JsonObject)rules.getValue()).findProperty("camelcase");
+                                              Assert.assertNotNull(camelcase);
+                                              final PsiFile dummyFile = PsiFileFactory.getInstance(getProject())
+                                                .createFileFromText("1.json", JsonFileType.INSTANCE, "{\"a\": " + (i % 2 == 0 ? 1 : 2) + "}");
+                                              final JsonProperty a = ((JsonObject)((JsonFile)dummyFile).getTopLevelValue()).findProperty("a");
+                                              Assert.assertNotNull(a);
+                                              WriteCommandAction.runWriteCommandAction(getProject(), (Runnable) () -> camelcase.getValue().replace(a.getValue()));
+                                              doHighlighting();
+                                            }
+                                          }).attempts(10).assertTiming();
   }
 }
