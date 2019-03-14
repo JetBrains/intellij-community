@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.getExecutorPresentableText
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
@@ -78,6 +79,18 @@ open class DialogCommitWorkflow(val project: Project,
 
     FileDocumentManager.getInstance().saveAllDocuments()
     return addUnversionedFilesToVcs(project, changeList, unversionedFiles, callback, null)
+  }
+
+  fun wrapWithCommitMetaHandlers(block: Runnable): Runnable {
+    var result = block
+    commitHandlers.filterIsInstance<CheckinMetaHandler>().forEach { metaHandler ->
+      val previousResult = result
+      result = Runnable {
+        LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
+        metaHandler.runCheckinHandlers(previousResult)
+      }
+    }
+    return result
   }
 
   protected open fun doRunBeforeCommitChecks(changeList: LocalChangeList, checks: Runnable) =

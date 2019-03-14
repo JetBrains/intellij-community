@@ -25,7 +25,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
-import com.intellij.openapi.vcs.checkin.*;
+import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
+import com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.Refreshable;
@@ -692,7 +695,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       compoundResultRef.set(runBeforeCheckinHandlers(executor));
     };
 
-    Runnable runnable = wrapIntoCheckinMetaHandlers(proceedRunnable);
+    Runnable runnable = myWorkflow.wrapWithCommitMetaHandlers(proceedRunnable);
     myWorkflow.doRunBeforeCommitChecks(getChangeList(), runnable);
     return notNull(compoundResultRef.get(), CheckinHandler.ReturnResult.CANCEL);
   }
@@ -719,20 +722,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     return CheckinHandler.ReturnResult.COMMIT;
-  }
-
-  private Runnable wrapIntoCheckinMetaHandlers(Runnable runnable) {
-    for (CheckinHandler handler : getHandlers()) {
-      if (handler instanceof CheckinMetaHandler) {
-        CheckinMetaHandler metaHandler = (CheckinMetaHandler)handler;
-        Runnable previousRunnable = runnable;
-        runnable = () -> {
-          LOG.debug("CheckinMetaHandler.runCheckinHandlers: " + handler);
-          metaHandler.runCheckinHandlers(previousRunnable);
-        };
-      }
-    }
-    return runnable;
   }
 
   private boolean saveCommitOptions() {
