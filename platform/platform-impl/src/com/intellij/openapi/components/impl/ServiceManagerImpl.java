@@ -1,10 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
-import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.StartUpMeasurer.Activities;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
@@ -234,14 +233,14 @@ public final class ServiceManagerImpl implements Disposable {
 
     @NotNull
     private Object createAndInitialize(@NotNull PicoContainer container) {
-      Activity activity = StartUpMeasurer.start(Activities.SERVICE, getActivityLevel(container));
+      long startTime = StartUpMeasurer.getCurrentTime();
       Object instance = getDelegate().getComponentInstance(container);
       if (instance instanceof Disposable) {
         Disposer.register(myComponentManager, (Disposable)instance);
       }
 
       myComponentManager.initializeComponent(instance, true);
-      activity.endWithThreshold(instance.getClass());
+      ParallelActivity.SERVICE.record(startTime, instance.getClass(), getActivityLevel(container));
       return instance;
     }
 

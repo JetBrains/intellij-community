@@ -101,15 +101,6 @@ public final class ActivityImpl implements Activity {
   }
 
   @Override
-  public void endWithThreshold(@NotNull Class<?> clazz) {
-    this.description = clazz.getName();
-    end = System.nanoTime();
-    if ((end - start) > StartUpMeasurer.MEASURE_THRESHOLD) {
-      StartUpMeasurer.add(this);
-    }
-  }
-
-  @Override
   @NotNull
   public Activity endAndStart(@NotNull String name) {
     end();

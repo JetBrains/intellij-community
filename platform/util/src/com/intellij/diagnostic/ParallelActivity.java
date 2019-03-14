@@ -2,10 +2,18 @@
 package com.intellij.diagnostic;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.TimeUnit;
+
+// non-sequential and repeated items
 public enum ParallelActivity {
   PREPARE_APP_INIT("prepareAppInitActivity"), PRELOAD_ACTIVITY("preloadActivity"),
-  APP_OPTIONS_TOP_HIT_PROVIDER("appOptionsTopHitProvider"), PROJECT_OPTIONS_TOP_HIT_PROVIDER("projectOptionsTopHitProvider");
+  APP_OPTIONS_TOP_HIT_PROVIDER("appOptionsTopHitProvider"), PROJECT_OPTIONS_TOP_HIT_PROVIDER("projectOptionsTopHitProvider"),
+  COMPONENT("component"), SERVICE("service"), EXTENSION("extension")
+  ;
+
+  private static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
 
   private final String jsonName;
 
@@ -24,12 +32,19 @@ public enum ParallelActivity {
   }
 
   public void record(long start, @NotNull Class<?> clazz) {
+    record(start, clazz, null);
+  }
+
+  /**
+   * Default threshold is applied.
+   */
+  public void record(long start, @NotNull Class<?> clazz, @Nullable StartUpMeasurer.Level level) {
     long end = System.nanoTime();
-    if ((end - start) <= StartUpMeasurer.MEASURE_THRESHOLD) {
+    if ((end - start) <= MEASURE_THRESHOLD) {
       return;
     }
 
-    ActivityImpl item = new ActivityImpl(clazz.getName(), /* description = */ null, start, /* parent = */ null, /* level = */ null, this);
+    ActivityImpl item = new ActivityImpl(clazz.getName(), /* description = */ null, start, /* parent = */ null, level, this);
     item.setEnd(end);
     StartUpMeasurer.add(item);
   }

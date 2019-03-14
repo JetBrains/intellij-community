@@ -2,9 +2,9 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.StartUpMeasurer.Activities;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
@@ -482,7 +482,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
             return instance;
           }
 
-          Activity activity = StartUpMeasurer.start(Activities.COMPONENT, getActivityLevel(picoContainer));
+          long startTime = StartUpMeasurer.getCurrentTime();
           instance = super.getComponentInstance(picoContainer);
 
           if (myInitializing) {
@@ -510,7 +510,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               ((BaseComponent)instance).initComponent();
             }
 
-            activity.endWithThreshold(instance.getClass());
+            ParallelActivity.COMPONENT.record(startTime, instance.getClass(), getActivityLevel(picoContainer));
           }
           finally {
             myInitializing = false;

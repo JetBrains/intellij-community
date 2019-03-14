@@ -5,12 +5,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public final class StartUpMeasurer {
-  public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
-
   // Use constants for better overview of existing phases (and preserve consistent naming).
   // `what + noun` is used as scheme for name to make analyzing easier (to visually group - `components loading/initialization/etc`,
   // not to put common part of name to end of).
@@ -66,13 +63,6 @@ public final class StartUpMeasurer {
     public String getJsonFieldNamePrefix() {
       return jsonFieldNamePrefix;
     }
-  }
-
-  // non-sequential and repeated items
-  public static final class Activities {
-    public static final String COMPONENT = "component";
-    public static final String SERVICE = "service";
-    public static final String EXTENSION = "extension";
   }
 
   public static final class ActivitySubNames {

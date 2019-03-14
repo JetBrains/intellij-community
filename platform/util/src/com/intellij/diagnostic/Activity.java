@@ -14,8 +14,6 @@ public interface Activity {
   @NotNull
   Activity endAndStart(@NotNull String name);
 
-  void endWithThreshold(@NotNull Class<?> clazz);
-
   @NotNull
   Activity startChild(@NotNull String name);
 
