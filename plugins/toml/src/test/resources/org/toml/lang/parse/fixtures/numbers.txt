@@ -64,6 +64,60 @@ TOML File
   PsiWhiteSpace('\n\n')
   TomlKeyValue
     TomlKey
+      PsiElement(BARE_KEY)('hex1')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('0xDEADBEEF')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('hex2')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('0xdeadbeef')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('hex3')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('0xdead_beef')
+  PsiWhiteSpace('\n\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('oct1')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('0o01234567')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('oct2')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('0o755')
+  PsiWhiteSpace('\n\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('bin1')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('0b11010110')
+  PsiWhiteSpace('\n\n')
+  TomlKeyValue
+    TomlKey
       PsiElement(BARE_KEY)('flt1')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
@@ -133,3 +187,57 @@ TOML File
     PsiWhiteSpace(' ')
     TomlLiteral
       PsiElement(NUMBER)('9_224_617.445_991_228_313')
+  PsiWhiteSpace('\n\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('sf1')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('inf')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('sf2')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('+inf')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('sf3')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('-inf')
+  PsiWhiteSpace('\n\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('sf4')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('nan')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('sf5')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('+nan')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('sf6')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('-nan')
