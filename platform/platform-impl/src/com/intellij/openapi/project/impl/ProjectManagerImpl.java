@@ -9,7 +9,6 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.notification.Notification;
@@ -63,9 +62,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private ProjectEx myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
-
   private Project[] myOpenProjects = {}; // guarded by lock
   private final Map<String, Project> myOpenProjectByHash = ContainerUtil.newConcurrentMap();
   private final Object lock = new Object();
@@ -73,7 +69,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   // we cannot use the same approach to migrate to message bus as CompilerManagerImpl because of method canCloseProject
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private volatile boolean myDefaultProjectWasDisposed;
+  private final DefaultProjectTimed myDefaultProjectTimed = new DefaultProjectTimed(this);
   private final ProjectManagerListener myBusPublisher;
   private final ExcludeRootsCache myExcludeRootsCache;
 
@@ -153,12 +149,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   public void dispose() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    if (myDefaultProject != null) {
-      Disposer.dispose(myDefaultProject);
-
-      myDefaultProject = null;
-      myDefaultProjectWasDisposed = true;
-    }
+    // dispose manually, because TimedReference.dispose() can already be called (in Timed.disposeTimed()) and then default project resurrected
+    Disposer.dispose(myDefaultProjectTimed);
   }
 
   @SuppressWarnings("StaticNonFinalField") public static int TEST_PROJECTS_CREATED;
@@ -270,7 +262,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).count();
   }
 
-  private static void initProject(@NotNull ProjectEx project, @Nullable Project template) {
+  static void initProject(@NotNull ProjectEx project, @Nullable Project template) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null && !project.isDefault()) {
       indicator.setIndeterminate(false);
@@ -295,7 +287,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @NotNull
-  private static ProjectEx createProject(@Nullable String projectName, @NotNull String filePath, boolean isDefault) {
+  static ProjectEx createProject(@Nullable String projectName, @NotNull String filePath, boolean isDefault) {
     if (isDefault) {
       return new DefaultProject("");
     }
@@ -337,26 +329,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   @TestOnly
   public synchronized boolean isDefaultProjectInitialized() {
-    return myDefaultProject != null;
+    return myDefaultProjectTimed.isCached();
   }
 
   @Override
   @NotNull
   public synchronized Project getDefaultProject() {
-    LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project has been already disposed!");
-    if (myDefaultProject == null) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDisposeInProgress(), "Application being disposed!");
-      ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        try {
-          myDefaultProject = createProject(null, "", true);
-          initProject(myDefaultProject, null);
-        }
-        catch (Throwable t) {
-          PluginManager.processException(t);
-        }
-      });
-    }
-    return myDefaultProject;
+    LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Default project has been already disposed!");
+    return myDefaultProjectTimed.get();
   }
 
   @Override

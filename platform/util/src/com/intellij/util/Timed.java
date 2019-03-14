@@ -75,6 +75,10 @@ abstract class Timed<T> implements Disposable {
     }, SERVICE_DELAY, SERVICE_DELAY, TimeUnit.SECONDS);
   }
 
+  public synchronized boolean isCached() {
+    return myT != null;
+  }
+
   static void disposeTimed() {
     final Timed[] references = ourReferences.keySet().toArray(new Timed[0]);
     for (Timed timed : references) {
