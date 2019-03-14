@@ -1,5 +1,6 @@
 package circlet.components
 
+import circlet.auth.*
 import circlet.common.oauth.*
 import circlet.platform.api.oauth.*
 import circlet.platform.client.*
@@ -21,9 +22,9 @@ private val log = logger<CircletWorkspaceComponent>()
 class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), LifetimedComponent by SimpleLifetimedComponent() {
 
     private val workspacesLifetimes = SequentialLifetimes(lifetime)
-    val workspaces = mutableProperty<WorkspaceManager?>(null)
+    val manager = mutableProperty<WorkspaceManager?>(null)
 
-    val workspace = flatMap(workspaces, null) {
+    val workspace = flatMap(manager, null) {
         (it?.workspace ?: mutableProperty<Workspace?>(null)) as MutableProperty<Workspace?>
     }
 
@@ -34,8 +35,10 @@ class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), 
             if (settingsOnStartup.server.isNotBlank() && settingsOnStartup.enabled) {
                 val wsConfig = ideaConfig(settingsOnStartup.server)
                 val wss = WorkspaceManager(lt, this@CircletWorkspaceComponent, IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
-                workspaces.value = wss
-                wss.signInNonInteractive()
+                if (wss.signInNonInteractive())
+                    manager.value = wss
+                else
+                    notifyDisconnected(lt)
             }
             else {
                 notifyDisconnected(lt)
@@ -57,19 +60,27 @@ class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), 
         authCheckFailedNotification(lifetime)
     }
 
-    suspend fun applyState(state: WorkspaceState?) {
+    suspend fun signIn(lifetime: Lifetime, server: String) : OAuthTokenResponse {
         val lt = workspacesLifetimes.next()
-        val settings = circletSettings.settings.value
-        val wsConfig = ideaConfig(settings.server)
-        if (state != null && settings.server.isNotBlank() && settings.enabled) {
-            val wss = WorkspaceManager(lt, this, IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
-            workspaces.value = wss
-            wss.signInWithWorkspaceState(state)
+        val wsConfig = ideaConfig(server)
+        val wss = WorkspaceManager(lt, this, IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
+        val response = accessTokenInteractive(lifetime, wsConfig)
+        if (response is OAuthTokenResponse.Success) {
+            log.info { "response = ${response.accessToken} ${response.expiresIn} ${response.refreshToken} ${response.scope}" }
+            wss.signInWithToken(response.toTokenInfo())
+            circletSettings.applySettings(CircletServerSettings(true, server))
+            manager.value = wss
         }
-        else {
-            workspaces.value = null
-        }
+        return response
     }
+
+    fun signOut() {
+        val oldManager = manager.value
+        oldManager?.signOut()
+        manager.value = null
+        circletSettings.applySettings(circletSettings.state.copy(enabled = false))
+    }
+
 
 }
 

@@ -18,7 +18,7 @@ import kotlin.coroutines.*
 
 val log = KLoggers.logger("authTokenInteractive")
 
-suspend fun authTokenInteractive(lifetime: Lifetime, config: WorkspaceConfiguration): OAuthTokenResponse {
+suspend fun accessTokenInteractive(lifetime: Lifetime, config: WorkspaceConfiguration): OAuthTokenResponse {
 
     val port = selectFreePort(10000)
 
