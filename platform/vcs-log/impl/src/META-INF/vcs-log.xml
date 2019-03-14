@@ -196,6 +196,7 @@
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
+      <reference id="Vcs.Log.ShowDiffPreviewInEditor"/>
       <separator/>
       <reference id="Vcs.Log.ShowOtherBranches"/>
       <reference id="Vcs.Log.ToggleColumns"/>
