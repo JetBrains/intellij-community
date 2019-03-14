@@ -429,4 +429,19 @@ class FinallyTest
       System.out.println(a.getAsInt());
     }
   }
+
+  class X {
+    private String value;
+    public Optional<String> getValue() {
+      return Optional.ofNullable(value);
+    }
+  }
+
+  void testStream() {
+    // IDEA-208770
+    Stream.of(new X(), new X()).filter(x -> x.getValue().isPresent()).map(x -> x.getValue().get());
+    Stream.of(new X()).filter(x -> x.getValue().isPresent()).map(x -> x.getValue().get());
+    X xx = new X();
+    Stream.of(xx).filter(x -> x.getValue().isPresent()).map(x -> x.getValue().get());
+  }
 }
