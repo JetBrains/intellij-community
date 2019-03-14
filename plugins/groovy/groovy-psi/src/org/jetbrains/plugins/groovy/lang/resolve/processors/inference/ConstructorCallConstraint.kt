@@ -17,14 +17,7 @@ class ConstructorCallConstraint(private val leftType: PsiType?, private val expr
     val contextSubstitutor = result.contextSubstitutor
 
     session.startNestedSession(clazz.typeParameters, contextSubstitutor, expression, result) { nested ->
-      val constructorResult = expression.advancedResolve() as? GroovyMethodResult
-      if (constructorResult != null) {
-        val mapping = constructorResult.candidate?.argumentMapping
-        if (mapping != null) {
-          nested.initArgumentConstraints(mapping)
-          nested.repeatInferencePhases()
-        }
-      }
+      runConstructorSession(nested)
       if (leftType != null) {
         val left = nested.substituteWithInferenceVariables(leftType)
         if (left != null) {
@@ -37,6 +30,15 @@ class ConstructorCallConstraint(private val leftType: PsiType?, private val expr
       nested.repeatInferencePhases()
     }
     return true
+  }
+
+  private fun runConstructorSession(classSession: GroovyInferenceSession) {
+    val result = expression.advancedResolve() as? GroovyMethodResult ?: return
+    val mapping = result.candidate?.argumentMapping ?: return
+    classSession.startNestedSession(result.element.typeParameters, result.contextSubstitutor, expression, result) {
+      it.initArgumentConstraints(mapping, classSession.inferenceSubstitution)
+      it.repeatInferencePhases()
+    }
   }
 
   override fun toString(): String = "${expression.text} -> ${leftType?.presentableText}"
