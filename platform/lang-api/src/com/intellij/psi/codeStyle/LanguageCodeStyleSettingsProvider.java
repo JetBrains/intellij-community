@@ -129,13 +129,21 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return primaryIdeLanguages.contains(getLanguage()) ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
+  /**
+   * @return A list of languages from which code style settings can be copied to this provider's language settings. By default all languages
+   *         with code style settings are returned.
+   */
+  public List<Language> getApplicableLanguages() {
+    return getLanguagesWithCodeStyleSettings();
+  }
+
   @NotNull
-  public static Language[] getLanguagesWithCodeStyleSettings() {
+  public static List<Language> getLanguagesWithCodeStyleSettings() {
     final ArrayList<Language> languages = new ArrayList<>();
     for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
       languages.add(provider.getLanguage());
     }
-    return languages.toArray(new Language[0]);
+    return languages;
   }
 
   @Nullable

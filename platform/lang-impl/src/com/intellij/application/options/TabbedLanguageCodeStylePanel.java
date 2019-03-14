@@ -60,10 +60,12 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private final PredefinedCodeStyle[] myPredefinedCodeStyles;
   private JPopupMenu myCopyFromMenu;
   @Nullable private TabChangeListener myListener;
+  @Nullable private final LanguageCodeStyleSettingsProvider myProvider;
 
   protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(language, currentSettings, settings);
     myPredefinedCodeStyles = getPredefinedStyles();
+    myProvider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
   }
 
   /**
@@ -79,9 +81,8 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
    * @see #addWrappingAndBracesTab(CodeStyleSettings)
    */
   protected void initTabs(CodeStyleSettings settings) {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
     addIndentOptionsTab(settings);
-    if (provider != null) {
+    if (myProvider != null) {
       addSpacesTab(settings);
       addWrappingAndBracesTab(settings);
       addBlankLinesTab(settings);
@@ -300,7 +301,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
 
   private void fillLanguages(JComponent parentMenu) {
-      Language[] languages = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
+    List<Language> languages = myProvider != null ? myProvider.getApplicableLanguages() : Collections.emptyList();
       java.util.List<JMenuItem> langItems = new ArrayList<>();
       for (final Language lang : languages) {
         if (!lang.equals(getDefaultLanguage())) {
