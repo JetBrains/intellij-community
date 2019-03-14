@@ -132,7 +132,8 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
     final BuildRootIndex rootIndex = pd.getBuildRootIndex();
     final List<ResourceRootDescriptor> roots = rootIndex.getTargetRoots(this, null);
     for (ResourceRootDescriptor root : roots) {
-      fingerprint += FileUtil.fileHashCode(root.getRootFile());
+      String path = getRelativizer().toRelative(root.getRootFile().getAbsolutePath());
+      fingerprint += FileUtil.pathHashCode(path);
       fingerprint += root.getPackagePrefix().hashCode();
     }
     out.write(Integer.toHexString(fingerprint));
