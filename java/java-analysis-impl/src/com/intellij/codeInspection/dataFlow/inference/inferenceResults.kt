@@ -37,19 +37,19 @@ data class ExpressionRange internal constructor (internal val startOffset: Int, 
 
 data class PurityInferenceResult(internal val mutatedRefs: List<ExpressionRange>, internal val singleCall: ExpressionRange?) {
 
-  fun isPure(method: PsiMethod, body: () -> PsiCodeBlock): Boolean = !mutatesNonLocals(method, body) && callsOnlyPureMethods(body)
+  fun isPure(method: PsiMethod, body: () -> PsiCodeBlock): Boolean = !mutatesNonLocals(method, body) && callsOnlyPureMethods(method, body)
 
   private fun mutatesNonLocals(method: PsiMethod, body: () -> PsiCodeBlock): Boolean {
     return mutatedRefs.any { range -> !isLocalVarReference(range.restoreExpression(body()), method) }
   }
 
-  private fun callsOnlyPureMethods(body: () -> PsiCodeBlock): Boolean {
+  private fun callsOnlyPureMethods(currentMethod: PsiMethod, body: () -> PsiCodeBlock): Boolean {
     if (singleCall == null) return true
 
     val psiCall = singleCall.restoreExpression(body()) as PsiCall
     val method = psiCall.resolveMethod()
     if (method != null) {
-      return JavaMethodContractUtil.isPure(method)
+      return method == currentMethod || JavaMethodContractUtil.isPure(method)
     } else if (psiCall is PsiNewExpression && psiCall.argumentList?.expressionCount == 0) {
       val psiClass = psiCall.classOrAnonymousClassReference?.resolve() as? PsiClass
       if (psiClass != null) {

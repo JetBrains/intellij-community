@@ -131,7 +131,7 @@ internal data class MethodCallContract(internal val call: ExpressionRange, inter
 
   override fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<StandardMethodContract> {
     val target = (call.restoreExpression(body()) as PsiMethodCallExpression?)?.resolveMethod()
-    if (target != null && NullableNotNullManager.isNotNull(target)) {
+    if (target != null && target != method && NullableNotNullManager.isNotNull(target)) {
       return ContractInferenceInterpreter.toContracts(states.map { it.toTypedArray() }, ContractReturnValue.returnNotNull())
     }
     return emptyList()

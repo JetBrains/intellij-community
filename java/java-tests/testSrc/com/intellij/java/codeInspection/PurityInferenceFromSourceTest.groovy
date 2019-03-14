@@ -394,6 +394,10 @@ int get() {
 }
 """
   }
+  
+  void "test recursive factorial"() {
+    assertPure true, """int factorial(int n) { return n == 1 ? 1 : factorial(n - 1) * n;}"""
+  }
 
   private void assertPure(boolean expected, String classBody) {
     def clazz = myFixture.addClass("final class Foo { $classBody }")
