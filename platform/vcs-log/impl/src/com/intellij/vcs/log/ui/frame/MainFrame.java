@@ -2,20 +2,14 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
-import com.intellij.diff.editor.DiffVirtualFile;
 import com.intellij.diff.impl.DiffRequestProcessor;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,6 +33,7 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
+import com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -204,9 +199,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
     mainGroup.add(toolbarGroup);
-    if (Registry.is("show.diff.preview.as.editor.tab")) {
-      mainGroup.add(new ShowPreviewEditorAction());
-    }
     ActionToolbar toolbar = createActionsToolbar(mainGroup);
 
     Wrapper textFilter = new Wrapper(myTextFilter);
@@ -381,66 +373,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       else {
         statusText.setText(CHANGES_LOG_TEXT);
       }
-    }
-  }
-
-  private static class ShowPreviewEditorAction extends DumbAwareAction {
-    public static final DataKey<Supplier<DiffRequestProcessor>> DATA_KEY = DataKey.create("com.intellij.diff.impl.DiffRequestProcessor");
-
-    private ShowPreviewEditorAction() {
-      super("Show Diff Preview in Editor", null, AllIcons.Actions.ChangeView);
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      VcsLogUi owner = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-      Supplier<DiffRequestProcessor> diffPreviewSupplier = e.getData(DATA_KEY);
-      e.getPresentation().setEnabledAndVisible(project != null && diffPreviewSupplier != null && owner != null);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = notNull(e.getProject());
-      VcsLogUi owner = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-      Supplier<DiffRequestProcessor> diffPreviewSupplier = e.getRequiredData(DATA_KEY);
-      FileEditorManager.getInstance(project).openFile(new MyDiffVirtualFile(owner, diffPreviewSupplier), true);
-    }
-  }
-
-  private static class MyDiffVirtualFile extends DiffVirtualFile {
-    @NotNull private final Object myOwner;
-    @NotNull private final Supplier<DiffRequestProcessor> myDiffPreviewSupplier;
-
-    private MyDiffVirtualFile(@NotNull Object owner,
-                              @NotNull Supplier<DiffRequestProcessor> diffPreviewSupplier) {
-      myOwner = owner;
-      myDiffPreviewSupplier = diffPreviewSupplier;
-    }
-
-    @Override
-    public boolean isValid() {
-      if (!(myOwner instanceof Disposable)) return true;
-      return !Disposer.isDisposed((Disposable)myOwner);
-    }
-
-    @NotNull
-    @Override
-    public Builder createProcessorAsync(@NotNull Project project) {
-      return () -> myDiffPreviewSupplier.get();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      MyDiffVirtualFile file = (MyDiffVirtualFile)o;
-      return myOwner.equals(file.myOwner);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myOwner);
     }
   }
 }

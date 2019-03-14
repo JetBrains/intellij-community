@@ -92,6 +92,7 @@
     <action class="com.intellij.vcs.log.ui.actions.ShowDiffPreviewAction" id="Vcs.Log.ShowDiffPreview"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowChangesFromParentsAction" id="Vcs.Log.ShowChangesFromParents"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowOnlyAffectedChangesAction" id="Vcs.Log.ShowOnlyAffectedChanges"/>
+    <action class="com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction" id="Vcs.Log.ShowDiffPreviewInEditor"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
     <action class="com.intellij.vcs.log.ui.actions.FocusTextFilterAction" id="Vcs.Log.FocusTextFilter">
       <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
@@ -169,6 +170,7 @@
     <group id="Vcs.Log.ChangesBrowser.Toolbar">
       <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
       <reference id="Vcs.Log.ShowOnlyAffectedChanges"/>
+      <reference id="Vcs.Log.ShowDiffPreviewInEditor"/>
       <separator/>
       <reference id="ChangesView.GroupBy"/>
       <separator/>
@@ -221,6 +223,7 @@
       <reference ref="Vcs.Log.ShowDetailsAction"/>
       <reference ref="Vcs.Log.ShowChangesFromParents"/>
       <reference ref="Vcs.Log.ShowDiffPreview"/>
+      <reference ref="Vcs.Log.ShowDiffPreviewInEditor"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
