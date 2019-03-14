@@ -362,7 +362,14 @@ class SnapshotInputMappings<Key, Value, Input> {
     IOException[] exception = new IOException[1];
     Integer hashId = hashes.computeIfAbsent(myHashContributor.getId(), __ -> {
       try {
-        return ContentHashesSupport.enumerateHash(ContentHashesSupport.calcContentHash(content, (HashContributor<FileContent>)myHashContributor));
+        byte[] hash = null;
+        if (content instanceof FileContentImpl && myHashContributor instanceof FileContentHashContributor.ContentHashContributorImpl) {
+          hash = ((FileContentImpl)content).getHash();
+        }
+        if (hash == null) {
+          hash = ContentHashesSupport.calcContentHash(content, (HashContributor<FileContent>)myHashContributor);
+        }
+        return ContentHashesSupport.enumerateHash(hash);
       }
       catch (IOException e) {
         exception[0] = e;
