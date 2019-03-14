@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -958,6 +960,11 @@ class CollectMigration extends BaseStreamApiMigration {
         } else {
           return null;
         }
+      }
+      if (terminal instanceof AddingTerminal) {
+        Nullability nullability = NullabilityUtil.getExpressionNullability(((AddingTerminal)terminal).getMapping(), true);
+        // Null is not allowed in unmodifiable list/set
+        if (nullability == Nullability.NULLABLE) return null;
       }
       return new UnmodifiableTerminal(terminal, candidate.myVar, wrapCall, collector);
     }
