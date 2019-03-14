@@ -90,19 +90,17 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     val activities = THashMap<String, MutableList<ActivityImpl>>()
 
     StartUpMeasurer.processAndClear(Consumer { item ->
-      fun addActivity(name: String) {
-        activities.getOrPut(name) { mutableListOf() }.add(item)
+      val parallelActivity = item.parallelActivity
+      if (parallelActivity == null) {
+        items.add(item)
       }
-
-      when {
-        item.name.first() == '_' -> addActivity(item.name)
-        item.level != null -> addActivity("${item.level!!.jsonFieldNamePrefix}${item.name.capitalize()}")
-        else -> {
-          when (val parallelActivity = item.parallelActivity) {
-            null -> items.add(item)
-            else -> addActivity(parallelActivity.jsonName)
-          }
+      else {
+        val level = item.level
+        var name = parallelActivity.jsonName
+        if (level != null) {
+          name = "${level.jsonFieldNamePrefix}${name.capitalize()}"
         }
+        activities.getOrPut(name) { mutableListOf() }.add(item)
       }
     })
 
@@ -145,7 +143,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     totalDuration += writeUnknown(writer, items.last().end, end, startTime)
     writer.endArray()
 
-    writeActivities(activities, startTime, writer)
+    writeParallelActivities(activities, startTime, writer)
 
     writer.name("totalDurationComputed").value(TimeUnit.NANOSECONDS.toMillis(totalDuration))
     writer.name("totalDurationActual").value(TimeUnit.NANOSECONDS.toMillis(end - startTime))
@@ -162,10 +160,10 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     LOG.info(string)
   }
 
-  private fun writeActivities(activities: THashMap<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonWriter) {
+  private fun writeParallelActivities(activities: Map<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonWriter) {
     // sorted to get predictable JSON
     for (name in activities.keys.sorted()) {
-      val list = activities.get(name)!!
+      val list = activities.getValue(name)
       sortItems(list)
       writeActivities(list, startTime, writer, activityNameToJsonFieldName(name))
     }
@@ -212,10 +210,9 @@ private fun writeServiceStats(writer: JsonWriter) {
 }
 
 private fun activityNameToJsonFieldName(name: String): String {
-  val firstIndex = if (name.startsWith('_')) 1 else 0
   return when {
-    name.last() == 'y' -> name.substring(firstIndex, name.length - 1) + "ies"
-    else -> name.substring(firstIndex) + 's'
+    name.last() == 'y' -> name.substring(0, name.length - 1) + "ies"
+    else -> name.substring(0) + 's'
   }
 }
 
@@ -230,7 +227,7 @@ private fun writeActivities(slowComponents: List<ActivityImpl>, offset: Long, wr
 
   for (item in slowComponents) {
     writer.beginObject()
-    writer.name("name").value(item.description ?: item.name)
+    writer.name("name").value(item.name)
     writeItemTimeInfo(item, item.end - item.start, offset, writer)
     writer.endObject()
   }
