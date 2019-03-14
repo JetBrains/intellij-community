@@ -21,5 +21,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <checkinHandlerFactory implementation="com.jetbrains.changeReminder.commit.handle.ChangeReminderCheckinHandlerFactory"/>
     <applicationService serviceImplementation="com.jetbrains.changeReminder.plugin.UserSettings"/>
+    <statistics.counterUsagesCollector groupId="vcs.change.reminder" version="1"/>
   </extensions>
 </idea-plugin>
