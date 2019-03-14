@@ -69,23 +69,49 @@ public final class StartUpMeasurer {
     }
   }
 
+  public enum ParallelActivity {
+    PREPARE_APP_INIT("prepareAppInitActivity"), PRELOAD_ACTIVITY("preloadActivity"),
+    APP_OPTIONS_TOP_HIT_PROVIDER("appOptionsTopHitProvider"), PROJECT_OPTIONS_TOP_HIT_PROVIDER("projectOptionsTopHitProvider");
+
+    private final String jsonName;
+
+    ParallelActivity(@NotNull String jsonName) {
+      this.jsonName = jsonName;
+    }
+
+    @NotNull
+    public String getJsonName() {
+      return jsonName;
+    }
+
+    @NotNull
+    public Activity start(@NotNull String name) {
+      return Item.createParallelActivity(this, name);
+    }
+
+    public void record(long start, @NotNull Class<?> clazz) {
+      long end = System.nanoTime();
+      if ((end - start) <= MEASURE_THRESHOLD) {
+        return;
+      }
+
+      Item item = new Item(clazz.getName(), /* description = */ null, start, /* parent = */ null, /* level = */ null, this);
+      item.setEnd(end);
+      items.add(item);
+    }
+  }
+
   // non-sequential and repeated items
   public static final class Activities {
-    public static final String PREPARE_APP_INIT = "_prepareAppInitActivity";
-
     public static final String COMPONENT = "component";
     public static final String SERVICE = "service";
     public static final String EXTENSION = "extension";
-
-    public static final String PRELOAD_ACTIVITY = "_preloadActivity";
-
-    public static final String APP_OPTIONS_TOP_HIT_PROVIDER = "_appOptionsTopHitProvider";
-    public static final String PROJECT_OPTIONS_TOP_HIT_PROVIDER = "_projectOptionsTopHitProvider";
   }
 
   public static final class ActivitySubNames {
     public static final String CHECK_SYSTEM_DIR = "check system dirs";
     public static final String LOCK_SYSTEM_DIRS = "lock system dirs";
+    public static final String START_LOGGING = "start logging";
     public static final String LOAD_SYSTEM_LIBS = "load system libs";
     public static final String FIX_PROCESS_ENV = "fix process env";
   }
@@ -96,6 +122,10 @@ public final class StartUpMeasurer {
 
   public static long getStartTime() {
     return startTime;
+  }
+
+  public static long createStartTime() {
+    return System.nanoTime();
   }
 
   @NotNull
@@ -135,18 +165,32 @@ public final class StartUpMeasurer {
     private final Item parent;
 
     @Nullable
-    private final Level myLevel;
+    private final Level level;
+
+    @Nullable
+    private final ParallelActivity parallelActivity;
 
     private Item(@Nullable String name, @Nullable String description, @Nullable Level level) {
-      this(name, description, System.nanoTime(), null, level);
+      this(name, description, System.nanoTime(), null, level, null);
     }
 
-    private Item(@Nullable String name, @Nullable String description, long start, @Nullable Item parent, @Nullable Level level) {
+    @NotNull
+    private static Item createParallelActivity(@NotNull ParallelActivity parallelActivity, @NotNull String name) {
+      return new Item(name, /* description = */ null, System.nanoTime(), /* parent = */ null, /* level = */ null, parallelActivity);
+    }
+
+    private Item(@Nullable String name,
+                 @Nullable String description,
+                 long start,
+                 @Nullable Item parent,
+                 @Nullable Level level,
+                 @Nullable ParallelActivity parallelActivity) {
       this.name = name;
       this.description = StringUtil.nullize(description);
       this.start = start;
       this.parent = parent;
-      myLevel = level;
+      this.level = level;
+      this.parallelActivity = parallelActivity;
     }
 
     @Nullable
@@ -156,7 +200,12 @@ public final class StartUpMeasurer {
 
     @Nullable
     public Level getLevel() {
-      return myLevel;
+      return level;
+    }
+
+    @Nullable
+    public ParallelActivity getParallelActivity() {
+      return parallelActivity;
     }
 
     // and how do we can sort correctly, when parent item equals to child (start and end) and also there is another child with start equals to end?
@@ -164,7 +213,7 @@ public final class StartUpMeasurer {
     @Override
     @NotNull
     public Item startChild(@NotNull String name) {
-      return new Item(name, null, System.nanoTime(), this, null);
+      return new Item(name, null, System.nanoTime(), this, null, null);
     }
 
     @NotNull
@@ -183,6 +232,11 @@ public final class StartUpMeasurer {
 
     public long getEnd() {
       return end;
+    }
+
+    void setEnd(long end) {
+      assert this.end == 0;
+      this.end = end;
     }
 
     @Override
@@ -208,7 +262,7 @@ public final class StartUpMeasurer {
     @NotNull
     public Activity endAndStart(@NotNull String name) {
       end();
-      return new Item(name, /* description = */null, /* start = */end, /* parent = */null, /* level = */null);
+      return new Item(name, /* description = */null, /* start = */end, parent, /* level = */null, parallelActivity);
     }
 
     @Override

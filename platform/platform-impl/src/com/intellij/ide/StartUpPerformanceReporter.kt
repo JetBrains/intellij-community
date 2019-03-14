@@ -97,7 +97,12 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
       when {
         item.name.first() == '_' -> addActivity(item.name)
         item.level != null -> addActivity("${item.level!!.jsonFieldNamePrefix}${item.name.capitalize()}")
-        else -> items.add(item)
+        else -> {
+          when (val parallelActivity = item.parallelActivity) {
+            null -> items.add(item)
+            else -> addActivity(parallelActivity.jsonName)
+          }
+        }
       }
     })
 
@@ -225,7 +230,7 @@ private fun writeActivities(slowComponents: List<Item>, offset: Long, writer: Js
 
   for (item in slowComponents) {
     writer.beginObject()
-    writer.name("name").value(item.description)
+    writer.name("name").value(item.description ?: item.name)
     writeItemTimeInfo(item, item.end - item.start, offset, writer)
     writer.endObject()
   }

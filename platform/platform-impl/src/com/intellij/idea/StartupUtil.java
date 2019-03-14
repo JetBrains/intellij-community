@@ -25,9 +25,9 @@ import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.*;
-import com.intellij.util.StartUpMeasurer.Activities;
 import com.intellij.util.StartUpMeasurer.Activity;
 import com.intellij.util.StartUpMeasurer.ActivitySubNames;
+import com.intellij.util.StartUpMeasurer.ParallelActivity;
 import com.intellij.util.StartUpMeasurer.Phases;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
@@ -114,14 +114,14 @@ public class StartupUtil {
     }
 
     Callable<Logger> task = () -> {
-      Activity activity = StartUpMeasurer.start(Activities.PREPARE_APP_INIT);
+      Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.CHECK_SYSTEM_DIR);
       // note: uses config folder!
       if (!checkSystemFolders()) {
         System.exit(Main.DIR_CHECK_FAILED);
       }
-      activity.end(ActivitySubNames.CHECK_SYSTEM_DIR);
 
-      activity = StartUpMeasurer.start(Activities.PREPARE_APP_INIT);
+      activity = activity.endAndStart(ActivitySubNames.LOCK_SYSTEM_DIRS);
+
       ActivationResult result = lockSystemFolders(args);
       if (result == ActivationResult.ACTIVATED) {
         System.exit(0);
@@ -129,20 +129,22 @@ public class StartupUtil {
       if (result != ActivationResult.STARTED) {
         System.exit(Main.INSTANCE_CHECK_FAILED);
       }
-      activity.end(ActivitySubNames.LOCK_SYSTEM_DIRS);
+
+      activity = activity.endAndStart(ActivitySubNames.START_LOGGING);
 
       // the log initialization should happen only after locking the system directory
       Logger.setFactory(LoggerFactory.class);
       Logger log = Logger.getInstance(Main.class);
       startLogging(log);
 
-      activity = StartUpMeasurer.start(Activities.PREPARE_APP_INIT);
-      loadSystemLibraries(log);
-      activity.end(ActivitySubNames.LOAD_SYSTEM_LIBS);
+      activity = activity.endAndStart(ActivitySubNames.LOAD_SYSTEM_LIBS);
 
-      activity = StartUpMeasurer.start(Activities.PREPARE_APP_INIT);
+      loadSystemLibraries(log);
+
+      activity = activity.endAndStart(ActivitySubNames.FIX_PROCESS_ENV);
+
       fixProcessEnvironment(log);
-      activity.end(ActivitySubNames.FIX_PROCESS_ENV);
+      activity.end();
       return log;
     };
 

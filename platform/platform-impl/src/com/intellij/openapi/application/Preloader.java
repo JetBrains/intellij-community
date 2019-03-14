@@ -11,8 +11,8 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.StartUpMeasurer.Activity;
+import com.intellij.util.StartUpMeasurer.ParallelActivity;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -68,7 +68,7 @@ final class Preloader implements ApplicationInitializedListener {
         if (myIndicator.isCanceled()) return;
 
         progressManager.runProcess(() -> {
-          Activity measureActivity = StartUpMeasurer.start(StartUpMeasurer.Activities.PRELOAD_ACTIVITY, activity.getClass().getName());
+          Activity measureActivity = ParallelActivity.PRELOAD_ACTIVITY.start(activity.getClass().getName());
           try {
             activity.preload(myWrappingIndicator);
           }
