@@ -400,7 +400,7 @@ public class HelpTooltip {
   private void scheduleShow(JComponent owner, int delay) {
     popupAlarm.cancelAllRequests();
     popupAlarm.addRequest(() -> {
-      if (masterPopupOpenCondition != null && masterPopupOpenCondition.getAsBoolean()) {
+      if (masterPopupOpenCondition == null || masterPopupOpenCondition.getAsBoolean()) {
         myPopup = myPopupBuilder.createPopup();
         myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, myPopupSize)));
         if (!neverHide) {
