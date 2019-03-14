@@ -179,12 +179,6 @@ public class StartupUtil {
       activity.end();
     }
 
-    if (!Main.isHeadless()) {
-      Activity activity = StartUpMeasurer.start(Phases.REGISTER_BUNDLED_FONTS);
-      AppUIUtil.registerBundledFonts();
-      activity.end();
-    }
-
     boolean newConfigFolder = false;
     try {
       Activity activity = StartUpMeasurer.start(Phases.WAIT_TASKS);
@@ -238,12 +232,21 @@ public class StartupUtil {
       UIUtil.initDefaultLAF();
       activity.end();
     }));
-    futures.add(executorService.submit(() -> {
+
+    // no need to wait - doesn't affect other functionality
+    executorService.execute(() -> {
       Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
       // most of the time consumed to load SVG - so, can be done in parallel
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
       activity.end();
-    }));
+    });
+
+    // no need to wait - fonts required for editor, not for license window or splash
+    executorService.execute(() -> {
+      Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.REGISTER_BUNDLED_FONTS);
+      AppUIUtil.registerBundledFonts();
+      activity.end();
+    });
   }
 
   private static void configureLogging() {
