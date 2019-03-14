@@ -59,7 +59,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
     VirtualFile virtualFile = containingFile.getViewProvider().getVirtualFile();
     if (!service.isApplicableToFile(virtualFile)) return null;
-    final JsonSchemaObject rootSchema = service.getSchemaObject(virtualFile);
+    final JsonSchemaObject rootSchema = service.getSchemaObject(containingFile);
     if (rootSchema == null) return null;
 
     return generateDoc(element, rootSchema, preferShort, forcedPropName);

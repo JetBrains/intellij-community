@@ -32,7 +32,7 @@ public class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler 
       if (file == null || !service.isApplicableToFile(file)) return null;
       final JsonPointerPosition steps = JsonOriginalPsiWalker.INSTANCE.findPosition(literal, true);
       if (steps == null) return null;
-      final JsonSchemaObject schemaObject = service.getSchemaObject(file);
+      final JsonSchemaObject schemaObject = service.getSchemaObject(containingFile);
       if (schemaObject != null) {
         final PsiElement target = new JsonSchemaResolver(sourceElement.getProject(), schemaObject, steps).findNavigationTarget(((JsonProperty)parent).getValue());
         if (target != null) {

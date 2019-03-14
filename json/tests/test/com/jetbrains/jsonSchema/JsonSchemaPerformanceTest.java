@@ -28,11 +28,11 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
   }
 
   public void testSwaggerHighlighting() {
-    doPerformanceTest(10000, "swagger");
+    doPerformanceTest(8000, "swagger");
   }
 
   public void testTsLintSchema() {
-    doPerformanceTest(9000, "tslint-schema");
+    doPerformanceTest(7500, "tslint-schema");
   }
 
   private void doPerformanceTest(int expectedMs, String jsonFileNameWithoutExtension) {
