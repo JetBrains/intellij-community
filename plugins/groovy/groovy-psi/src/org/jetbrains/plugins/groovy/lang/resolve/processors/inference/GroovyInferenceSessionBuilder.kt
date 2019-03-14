@@ -105,7 +105,7 @@ fun getMostTopLevelExpression(start: GrExpression): GrExpression {
   }
 }
 
-private fun getExpectedType(expression: GrExpression): PsiType? {
+fun getExpectedType(expression: GrExpression): PsiType? {
   val parent = expression.parent
   val parentMethod = PsiTreeUtil.getParentOfType(parent, GrMethod::class.java, true, GrFunctionalExpression::class.java)
 

@@ -924,12 +924,12 @@ def foo() {
   }
 
   void testClassReference() {
-    doExprTest '[].class', "java.lang.Class<java.util.List<java.lang.Object>>"
+    doExprTest '[].class', "java.lang.Class<java.util.List>"
     doExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
     doExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
     doExprTest '1.getClass()', 'java.lang.Class<? extends java.lang.Integer>'
 
-    doCSExprTest '[].class', "java.lang.Class<java.util.List<java.lang.Object>>"
+    doCSExprTest '[].class', "java.lang.Class<java.util.List>"
     doCSExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
     doCSExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
     doCSExprTest '1.getClass()', 'java.lang.Class<? extends java.lang.Integer>'
@@ -944,7 +944,6 @@ def foo() {
   }
 
   void 'test list literal type'() {
-    doExprTest '[]', 'java.util.List<java.lang.Object>'
     doExprTest '[null]', 'java.util.List'
     doExprTest '["foo", "bar"]', 'java.util.List<java.lang.String>'
     doExprTest '["${foo}", "${bar}"]', 'java.util.List<groovy.lang.GString>'
