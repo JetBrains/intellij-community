@@ -1,5 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.vcs.changes.ignore;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationAction;
@@ -15,6 +15,9 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
+import com.intellij.openapi.vcs.changes.IgnoredFileGenerator;
+import com.intellij.openapi.vcs.changes.IgnoredFileProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -30,8 +33,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
 
-import static com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImplKt.ASKED_MANAGE_IGNORE_FILES_PROPERTY;
-import static com.intellij.vcsUtil.VcsImplUtil.MANAGE_IGNORE_FILES_PROPERTY;
+import static com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY;
+import static com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY;
 
 public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 

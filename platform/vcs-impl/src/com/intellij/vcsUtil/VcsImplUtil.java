@@ -35,8 +35,6 @@ public class VcsImplUtil {
 
   private static final Logger LOG = Logger.getInstance(VcsImplUtil.class);
 
-  public static final String MANAGE_IGNORE_FILES_PROPERTY = "MANAGE_IGNORE_FILES_PROPERTY";
-
   /**
    * Shows error message with specified message text and title.
    * The parent component is the root frame.

@@ -38,9 +38,9 @@
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.ignore.cache.PatternCache"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.ignore.cache.IgnorePatternsMatchedFilesCache"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGenerator"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"/>
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl$IgnoredFileRootStore"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl$IgnoredFileRootStore"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.ProjectConfigurationFilesStoreState"
                     serviceImplementation="com.intellij.openapi.vcs.ProjectConfigurationFilesStoreState"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsIgnoreManager"

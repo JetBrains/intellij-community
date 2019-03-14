@@ -12,6 +12,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilesProcessorWithNotificationImpl
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider
+import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
+import com.intellij.openapi.vcs.changes.IgnoredFileProvider
+import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY
+import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElementsToIgnoreBlock
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -20,12 +26,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.project.getProjectStoreDirectory
 import com.intellij.vcsUtil.VcsImplUtil
-import com.intellij.vcsUtil.VcsImplUtil.MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
-
-const val ASKED_MANAGE_IGNORE_FILES_PROPERTY = "ASKED_MANAGE_IGNORE_FILES"
 
 private val LOG = logger<IgnoreFilesProcessorImpl>()
 
