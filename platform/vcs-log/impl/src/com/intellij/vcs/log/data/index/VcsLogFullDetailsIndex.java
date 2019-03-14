@@ -22,6 +22,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -34,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.ObjIntConsumer;
 
@@ -67,12 +68,18 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
   @NotNull
   private MyMapReduceIndex createMapReduceIndex(@NotNull DataExternalizer<T> dataExternalizer) throws IOException {
     MyIndexExtension<T, D> extension = new MyIndexExtension<>(myName, myIndexer, dataExternalizer, myStorageId.getVersion());
-    ForwardIndex<Integer, T> forwardIndex = createForwardIndex(extension);
-    return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myStorageId, dataExternalizer), forwardIndex);
+    ForwardIndex forwardIndex = createForwardIndex(extension);
+    ForwardIndexAccessor<Integer, T, D> forwardIndexAccessor = createForwardIndexAccessor(extension);
+    return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myStorageId, dataExternalizer), forwardIndex, forwardIndexAccessor);
   }
 
   @Nullable
-  protected ForwardIndex<Integer, T> createForwardIndex(@NotNull IndexExtension<Integer, T, D> extension) throws IOException {
+  protected ForwardIndex createForwardIndex(@NotNull IndexExtension<Integer, T, D> extension) throws IOException {
+    return null;
+  }
+
+  @Nullable
+  protected ForwardIndexAccessor<Integer, T, D> createForwardIndexAccessor(@NotNull IndexExtension<Integer, T, D> extension) {
     return null;
   }
 
@@ -143,8 +150,9 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
   private class MyMapReduceIndex extends MapReduceIndex<Integer, T, D> {
     MyMapReduceIndex(@NotNull MyIndexExtension<T, D> extension,
                      @NotNull MyMapIndexStorage<T> mapIndexStorage,
-                     @Nullable ForwardIndex<Integer, T> forwardIndex) {
-      super(extension, mapIndexStorage, forwardIndex);
+                     @Nullable ForwardIndex forwardIndex,
+                     @Nullable ForwardIndexAccessor<Integer, T, D> forwardIndexAccessor) {
+      super(extension, mapIndexStorage, forwardIndex, forwardIndexAccessor);
     }
 
     @Nullable

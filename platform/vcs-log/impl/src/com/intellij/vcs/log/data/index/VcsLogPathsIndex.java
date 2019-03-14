@@ -16,8 +16,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.impl.ForwardIndex;
-import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
+import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.ForwardIndex;
+import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsLogIndexService;
 import com.intellij.vcs.log.data.VcsLogStorage;
@@ -58,26 +60,24 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @Nullable
   @Override
-  protected ForwardIndex<Integer, List<VcsLogPathsIndex.ChangeKind>> createForwardIndex(@NotNull IndexExtension<Integer, List<ChangeKind>, VcsIndexableDetails> extension)
-    throws IOException {
+  protected ForwardIndex createForwardIndex(@NotNull IndexExtension<Integer, List<ChangeKind>, VcsIndexableDetails> extension) throws IOException {
     if (!VcsLogIndexService.isPathsForwardIndexRequired()) return super.createForwardIndex(extension);
-    return new KeyCollectionBasedForwardIndex<Integer, List<ChangeKind>>(extension) {
-      @NotNull
-      @Override
-      public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
-        File storageFile = myStorageId.getStorageFile(myName + ".idx");
-        return new PersistentHashMap<>(storageFile, EnumeratorIntegerDescriptor.INSTANCE, new IntCollectionDataExternalizer(),
-                                       Page.PAGE_SIZE);
-      }
+    File storageFile = myStorageId.getStorageFile(myName + ".idx");
+    return new PersistentMapBasedForwardIndex(storageFile, Page.PAGE_SIZE, true);
+  }
 
-      @NotNull
+  @Nullable
+  @Override
+  protected ForwardIndexAccessor<Integer, List<ChangeKind>, VcsIndexableDetails> createForwardIndexAccessor(@NotNull IndexExtension<Integer, List<ChangeKind>, VcsIndexableDetails> extension) {
+    if (!VcsLogIndexService.isPathsForwardIndexRequired()) return super.createForwardIndexAccessor(extension);
+    return new KeyCollectionForwardIndexAccessor<Integer, List<ChangeKind>, VcsIndexableDetails>(extension) {
       @Override
-      protected Collection<Integer> convertToMapValueType(int inputId, @NotNull Map<Integer, List<ChangeKind>> map) {
-        if (!map.isEmpty()) {
+      protected Collection<Integer> convertToDataType(@Nullable Map<Integer, List<ChangeKind>> map, @Nullable VcsIndexableDetails content) {
+        if (!ContainerUtil.isEmpty(map)) {
           List<ChangeKind> changesToParents = ContainerUtil.getFirstItem(map.values());
           if (changesToParents.size() > 1) return Collections.emptySet();
         }
-        return super.convertToMapValueType(inputId, map);
+        return super.convertToDataType(map, content);
       }
     };
   }

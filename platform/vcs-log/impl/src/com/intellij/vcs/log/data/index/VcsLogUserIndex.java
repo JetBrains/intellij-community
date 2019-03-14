@@ -22,8 +22,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.impl.ForwardIndex;
-import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
+import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.ForwardIndex;
+import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
@@ -61,18 +63,16 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
     ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> consumer.consume(this, e));
   }
 
-  @NotNull
+  @Nullable
   @Override
-  protected ForwardIndex<Integer, Void> createForwardIndex(@NotNull IndexExtension<Integer, Void, VcsFullCommitDetails> extension)
-    throws IOException {
-    return new KeyCollectionBasedForwardIndex<Integer, Void>(extension) {
-      @NotNull
-      @Override
-      public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
-        File storageFile = myStorageId.getStorageFile(myName + ".idx");
-        return new PersistentHashMap<>(storageFile, EnumeratorIntegerDescriptor.INSTANCE, new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
-      }
-    };
+  protected ForwardIndex createForwardIndex(@NotNull IndexExtension<Integer, Void, VcsFullCommitDetails> extension) throws IOException {
+    return new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx"), Page.PAGE_SIZE, true);
+  }
+
+  @Nullable
+  @Override
+  protected ForwardIndexAccessor<Integer, Void, VcsFullCommitDetails> createForwardIndexAccessor(@NotNull IndexExtension<Integer, Void, VcsFullCommitDetails> extension) {
+    return new KeyCollectionForwardIndexAccessor<>(extension);
   }
 
   @NotNull
