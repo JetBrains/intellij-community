@@ -14,6 +14,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +28,9 @@ import java.util.List;
 
 class LineMarkerInfoHelper {
   private static final NotNullFunction<PointableCandidate, Collection<? extends PsiElement>> CONVERTER =
-    candidate -> Collections.singleton(candidate.pointer.getElement());
+    candidate -> ContainerUtil.createMaybeSingletonList(candidate.pointer.getElement());
   private static final NotNullFunction<PointableCandidate, Collection<? extends GotoRelatedItem>> RELATED_ITEM_PROVIDER =
-    candidate -> GotoRelatedItem.createItems(Collections.singleton(candidate.pointer.getElement()), "DevKit");
+    candidate -> GotoRelatedItem.createItems(ContainerUtil.createMaybeSingletonList(candidate.pointer.getElement()), "DevKit");
 
   private static final NullableFunction<PointableCandidate, String> EXTENSION_NAMER =
     createNamer("line.marker.tooltip.extension.declaration", XmlTag::getName);
