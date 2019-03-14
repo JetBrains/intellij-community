@@ -17,7 +17,7 @@ class NotificationManager : StartupActivity {
     private const val MESSAGE_SHOWN_KEY = "completion.stats.allow.question.shown"
   }
 
-  private fun isMessageShown() = false
+  private fun isMessageShown() = PropertiesComponent.getInstance().getBoolean(MESSAGE_SHOWN_KEY, false)
 
   private fun fireMessageShown() = PropertiesComponent.getInstance().setValue(MESSAGE_SHOWN_KEY, true)
 
