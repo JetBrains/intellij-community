@@ -48,7 +48,7 @@ import java.util.Map;
 /**
  * @author Maxim.Mossienko on 12/11/13.
  */
-public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayList> implements PsiDependentIndex, SnapshotIndexExtension<FileContent> {
+public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayList> implements PsiDependentIndex, FileBasedSnapshotIndexExtension {
   static boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.duplicates.online.calculation",
                                                                   true);
   static final boolean ourEnabledLightProfiles = true;
@@ -252,11 +252,5 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     boolean old = ourEnabledOldProfiles;
     ourEnabledOldProfiles = value;
     return old;
-  }
-
-  @Nullable
-  @Override
-  public HashContributor<FileContent> getHashContributor() {
-    return FileContentHashContributor.create(this);
   }
 }

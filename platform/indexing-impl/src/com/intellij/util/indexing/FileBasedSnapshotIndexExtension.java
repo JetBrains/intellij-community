@@ -5,7 +5,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
-public interface SnapshotIndexExtension<Input> {
+public interface FileBasedSnapshotIndexExtension extends SnapshotIndexExtension<FileContent> {
+  @SuppressWarnings("unchecked")
   @Nullable
-  HashContributor<Input> getHashContributor();
+  @Override
+  default HashContributor<FileContent> getHashContributor() {
+    return FileContentHashContributor.create((FileBasedIndexExtension)this);
+  }
 }

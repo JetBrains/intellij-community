@@ -43,7 +43,7 @@ import java.util.Map;
 /**
  * @author Eugene Zhuravlev
  */
-public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> implements SnapshotIndexExtension<FileContent> {
+public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> implements FileBasedSnapshotIndexExtension {
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
   
   private final FileBasedIndex.InputFilter myInputFilter = file -> isIndexable(file.getFileType());
@@ -132,12 +132,6 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
            fileType instanceof CustomSyntaxTableFileType ||
            IdTableBuilding.isIdIndexerRegistered(fileType) ||
            CacheBuilderRegistry.getInstance().getCacheBuilder(fileType) != null;
-  }
-
-  @Nullable
-  @Override
-  public HashContributor<FileContent> getHashContributor() {
-    return FileContentHashContributor.create(this);
   }
 
   public static boolean hasIdentifierInFile(@NotNull PsiFile file, @NotNull String name) {

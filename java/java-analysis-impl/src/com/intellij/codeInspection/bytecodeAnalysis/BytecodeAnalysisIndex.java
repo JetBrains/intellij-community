@@ -26,7 +26,7 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
 /**
  * @author lambdamix
  */
-public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> implements SnapshotIndexExtension<FileContent>{
+public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> implements FileBasedSnapshotIndexExtension{
   static final ID<HMember, Void> NAME = ID.create("bytecodeAnalysis");
 
   @NotNull
@@ -82,12 +82,6 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> impleme
   @Override
   public KeyDescriptor<HMember> getKeyDescriptor() {
     return HKeyDescriptor.INSTANCE;
-  }
-
-  @Nullable
-  @Override
-  public HashContributor<FileContent> getHashContributor() {
-    return FileContentHashContributor.create(this);
   }
 
   @NotNull

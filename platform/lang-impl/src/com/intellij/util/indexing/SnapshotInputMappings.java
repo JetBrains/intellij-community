@@ -60,7 +60,9 @@ class SnapshotInputMappings<Key, Value, Input> {
 
   SnapshotInputMappings(IndexExtension<Key, Value, Input> indexExtension) throws IOException {
     myIndexId = (ID<Key, Value>)indexExtension.getName();
-    myHashContributor = indexExtension instanceof SnapshotIndexExtension? ((SnapshotIndexExtension<Input>)indexExtension).getHashContributor() : null;
+    myHashContributor = indexExtension instanceof SnapshotIndexExtension
+                        ? ((SnapshotIndexExtension<Input>)indexExtension).getHashContributor()
+                        : (HashContributor<Input>)FileContentHashContributor.create((IndexExtension<?, ?, FileContent>)indexExtension);
     myMapExternalizer = new VfsAwareMapReduceIndex.MapDataExternalizer<>(indexExtension);
     myIndexer = indexExtension.getIndexer();
     myContents = createContentsIndex();

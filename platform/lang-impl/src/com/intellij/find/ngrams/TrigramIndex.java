@@ -41,7 +41,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
-public class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer>, SnapshotIndexExtension<FileContent> {
+public class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer>, FileBasedSnapshotIndexExtension {
   public static final boolean ENABLED = SystemProperties.getBooleanProperty("idea.internal.trigramindex.enabled", true);
 
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
@@ -93,12 +93,6 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
   @Override
   public int getVersion() {
     return ENABLED ? 3 + (IdIndex.ourSnapshotMappingsEnabled ? 0xFF:0) : 1;
-  }
-
-  @Nullable
-  @Override
-  public HashContributor<FileContent> getHashContributor() {
-    return FileContentHashContributor.create(this);
   }
 
   private static final ThreadLocalCachedIntArray spareBufferLocal = new ThreadLocalCachedIntArray();

@@ -46,7 +46,7 @@ import java.util.Map;
 /**
  * @author Eugene Zhuravlev
  */
-public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> implements SnapshotIndexExtension<FileContent> {
+public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> implements FileBasedSnapshotIndexExtension {
   @NonNls public static final ID<TodoIndexEntry, Integer> NAME = ID.create("TodoIndex");
 
   private final FileTypeRegistry myFileTypeManager;
@@ -169,11 +169,5 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
-  }
-
-  @Nullable
-  @Override
-  public HashContributor<FileContent> getHashContributor() {
-    return FileContentHashContributor.create(this);
   }
 }
