@@ -57,23 +57,6 @@ class SimpleRequestService: RequestService() {
         return GzipBase64Compressor.compress(fileText)
     }
 
-    override fun post(url: String, file: File): ResponseData? {
-        return try {
-            val content = file.readText()
-            return HttpRequests.post(url, "text/html").connect { request ->
-                request.write(content)
-                return@connect request.connection.asResponseData()
-            }
-        }
-        catch (e: HttpRequests.HttpStatusException) {
-            ResponseData(e.statusCode, StringUtil.notNullize(e.message))
-        }
-        catch (e: IOException) {
-            LOG.debug(e)
-            null
-        }
-    }
-
     override fun get(url: String): ResponseData? {
         return try {
             val requestBuilder = HttpRequests.request(url)
@@ -109,7 +92,7 @@ class SimpleRequestService: RequestService() {
 }
 
 
-data class ResponseData(val code: Int, val text: String = "") {
+data class ResponseData(val code: Int, val text: String = "", val sentDataSize: Int? = null) {
     fun isOK(): Boolean = code in 200..299
 }
 
