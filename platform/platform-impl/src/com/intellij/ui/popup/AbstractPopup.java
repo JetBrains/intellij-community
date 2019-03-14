@@ -29,7 +29,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -377,7 +376,6 @@ public class AbstractPopup implements JBPopup {
       myAdComponent = HintUtil.createAdComponent(s, JBUI.CurrentTheme.Advertiser.border(), alignment);
       JPanel wrapper = new JPanel(new BorderLayout());
       wrapper.setOpaque(false);
-      wrapper.setBorder(new CustomLineBorder(JBUI.CurrentTheme.Advertiser.borderColor(), JBUI.insetsTop(1)));
       wrapper.add(myAdComponent, BorderLayout.CENTER);
       myContent.add(wrapper, BorderLayout.SOUTH);
       pack(false, true);
