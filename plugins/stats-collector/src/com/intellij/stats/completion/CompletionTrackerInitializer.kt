@@ -56,7 +56,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
 
   private fun shouldTrackSession() = isSendAllowed() || isUnitTestMode()
 
-  private fun shouldUseUserFactors() = ApplicationManager.getApplication().isEAP
+  private fun shouldUseUserFactors() = UserFactorsManager.ENABLE_USER_FACTORS
 
   private fun processUserFactors(lookup: LookupImpl) {
     if (!shouldUseUserFactors()) return
