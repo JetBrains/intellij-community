@@ -18,10 +18,7 @@ import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
+import com.intellij.openapi.actionSystem.impl.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -127,7 +124,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private final Stack<Context> myBackStack = new Stack<>();
   private final Stack<Context> myForwardStack = new Stack<>();
-  private final ActionToolbar myToolBar;
+  private final ActionToolbarImpl myToolBar;
   private volatile boolean myIsEmpty;
   private boolean mySizeTrackerRegistered;
   private JSlider myFontSizeSlider;
@@ -473,7 +470,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
         super.processMouseMotionEvent(e);
       }
+
+      @NotNull
+      @Override
+      protected ActionButton createSecondaryButton(DefaultActionGroup secondaryActions,
+                                                   Presentation presentation,
+                                                   String place, final Dimension minimumSize) {
+        return new ActionButton.Transparent(secondaryActions, presentation, place, minimumSize);
+      }
     };
+    myToolBar.setSecondaryActionsIcon(AllIcons.Actions.More);
 
     JLayeredPane layeredPane = new JBLayeredPane() {
       @Override
@@ -513,13 +519,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     gearActions.addSeparator();
     gearActions.addAll(actions);
     Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.General.GearPlain);
-    myCorner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20)) {
-      @Override
-      public void paintComponent(Graphics g) {
-        paintButtonLook(g);
-      }
-    };
+    presentation.setIcon(AllIcons.Actions.More);
+    myCorner = new ActionButton.Transparent(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20));
     myCorner.setNoIconsInPopup(true);
     layeredPane.add(myCorner);
     layeredPane.setLayer(myCorner, JLayeredPane.POPUP_LAYER);

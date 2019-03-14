@@ -595,4 +595,15 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       return false;
     }
   }
+
+  public static class Transparent extends ActionButton {
+    public Transparent(@NotNull AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
+      super(action, presentation, place, minimumSize);
+    }
+
+    @Override
+    public void paintComponent(Graphics g) {
+      paintButtonLook(g);
+    }
+  }
 }

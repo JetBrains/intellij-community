@@ -268,11 +268,8 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     actions.add(docAction)
     val actionGroup = SettingsActionGroup(actions)
 
-    val settingsButton = object : ActionButton(actionGroup, presentation, ActionPlaces.UNKNOWN, Dimension(18, 18)) {
-      override fun paintComponent(g: Graphics?) {
-        paintButtonLook(g)
-      }
-    }
+    val settingsButton = ActionButton.Transparent(actionGroup, presentation, ActionPlaces.UNKNOWN,
+                                                                                         Dimension(18, 18))
     settingsButton.setNoIconsInPopup(true)
     settingsButton.border = JBUI.Borders.empty()
     settingsButton.isOpaque = false
