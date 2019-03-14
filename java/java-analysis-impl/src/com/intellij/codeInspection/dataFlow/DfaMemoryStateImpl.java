@@ -1651,7 +1651,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (DfaVariableValue var : vars) {
       DfaVariableState state = getVariableState(var);
       DfaVariableState otherState = other.getVariableState(var);
-      setVariableState(var, state.withFacts(state.myFactMap.unite(otherState.myFactMap)));
+      DfaFactMap result = state.myFactMap.unite(otherState.myFactMap);
+      Nullability nullability = state.getNullability();
+      Nullability otherNullability = otherState.getNullability();
+      if (nullability != otherNullability && (nullability == Nullability.NULLABLE || otherNullability == Nullability.NULLABLE)) {
+        // When merging nullable with something we cannot warn about nullability violation anymore
+        // because we lose the information about coherent state, thus noise warnings could be produced
+        result = result.with(DfaFactType.NULLABILITY, DfaNullability.FLUSHED);
+      }
+      setVariableState(var, state.withFacts(result));
     }
   }
 
