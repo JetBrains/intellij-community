@@ -18,7 +18,7 @@ abstract class ExternalSystemJdkComboBoxTestCase : ExternalSystemTestCase() {
   override fun getExternalSystemConfigFileName() = null
 
   protected val JDK6 by lazy { createFakeJdk("6", "1.6") }
-  protected val JDK7 by lazy { createFakeJdk("8", "1.7") }
+  protected val JDK7 by lazy { createFakeJdk("7", "1.7") }
   protected val JDK8 by lazy { createFakeJdk("8", "1.8") }
   protected val JDK9 by lazy { createFakeJdk("9", "9") }
   protected val JDK10 by lazy { createFakeJdk("10", "10") }
