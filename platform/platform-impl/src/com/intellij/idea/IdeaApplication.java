@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
-import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
@@ -17,7 +16,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -193,11 +191,12 @@ public class IdeaApplication {
     if (myArgs.length > 0) {
       PluginManagerCore.getPlugins();
 
-      ExtensionPoint<ApplicationStarter> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.APPLICATION_STARTER);
-      ApplicationStarter[] starters = point.getExtensions();
+      ExtensionPoint<ApplicationStarter> point = ApplicationStarter.EP_NAME.getPoint(null);
       String key = myArgs[0];
-      for (ApplicationStarter o : starters) {
-        if (Comparing.equal(o.getCommandName(), key)) return o;
+      for (ApplicationStarter o : point.getExtensionList()) {
+        if (Comparing.equal(o.getCommandName(), key)) {
+          return o;
+        }
       }
     }
 
