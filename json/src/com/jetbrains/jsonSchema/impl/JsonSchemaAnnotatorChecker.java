@@ -281,7 +281,7 @@ class JsonSchemaAnnotatorChecker {
       }
 
       final JsonPointerPosition step = JsonPointerPosition.createSingleProperty(name);
-      final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, schema, true, false);
+      final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, schema, false);
       if (ThreeState.NO.equals(pair.getFirst()) && !set.contains(name)) {
         error(JsonBundle.message("json.schema.annotation.not.allowed.property", name), property.getDelegate(),
               JsonValidationError.FixableIssueKind.ProhibitedProperty,

@@ -37,7 +37,7 @@ public class JsonSchemaDeprecationInspection extends JsonSchemaBasedInspectionBa
         JsonPointerPosition position = walker.findPosition(o, true);
         if (position == null) return;
 
-        final MatchResult result = new JsonSchemaResolver(project, schema, false, position).detailedResolve();
+        final MatchResult result = new JsonSchemaResolver(project, schema, position).detailedResolve();
         for (JsonSchemaObject object : result.mySchemas) {
           String message = object.getDeprecationMessage();
           if (message != null) {
