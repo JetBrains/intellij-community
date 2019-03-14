@@ -16,6 +16,7 @@
 
 package com.intellij.stats.personalization
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 
