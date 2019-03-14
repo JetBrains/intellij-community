@@ -40,7 +40,7 @@ class SimpleRequestService: RequestService() {
                 it.setRequestProperty(HttpHeaders.CONTENT_ENCODING, "gzip")
             }.connect { request ->
                 request.write(zippedArray)
-                return@connect request.connection.asResponseData()
+                return@connect request.connection.asResponseData(zippedArray.size)
             }
         }
         catch (e: HttpRequests.HttpStatusException) {
@@ -71,9 +71,9 @@ class SimpleRequestService: RequestService() {
         }
     }
 
-    private fun URLConnection.asResponseData(): ResponseData? {
+    private fun URLConnection.asResponseData(sentDataSize: Int?): ResponseData? {
         if (this is HttpURLConnection) {
-            return ResponseData(this.responseCode, StringUtil.notNullize(this.responseMessage, ""))
+            return ResponseData(this.responseCode, StringUtil.notNullize(this.responseMessage, ""), sentDataSize)
         }
 
         LOG.error("Could not get code and message from http response")
