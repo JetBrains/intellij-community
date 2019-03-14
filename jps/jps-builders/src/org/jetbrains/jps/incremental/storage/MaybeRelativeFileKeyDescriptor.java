@@ -12,7 +12,7 @@ import java.io.IOException;
 public class MaybeRelativeFileKeyDescriptor extends FileKeyDescriptor {
   private final MaybeRelativizer myRelativizer;
 
-  public MaybeRelativeFileKeyDescriptor(MaybeRelativizer relativizer) {
+  public MaybeRelativeFileKeyDescriptor(@NotNull MaybeRelativizer relativizer) {
     myRelativizer = relativizer;
   }
 

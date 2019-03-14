@@ -108,11 +108,11 @@ public class Mappings {
     myAddedClasses = null;
     myDeltaIsTransient = transientDelta;
     myRootDir = rootDir;
+    myRelativizer = relativizer;
     createImplementation();
     myInitName = myContext.get("<init>");
     myEmptyName = myContext.get("");
     myObjectClassName = myContext.get("java/lang/Object");
-    myRelativizer = relativizer;
   }
 
   private void createImplementation() throws IOException {
