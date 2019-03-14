@@ -6,7 +6,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.ProcessorWithHints
-import com.intellij.util.enumMapOf
+import com.intellij.util.containers.enumMapOf
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
 import org.jetbrains.plugins.groovy.lang.resolve.*

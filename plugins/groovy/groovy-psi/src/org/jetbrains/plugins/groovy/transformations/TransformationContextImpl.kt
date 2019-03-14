@@ -8,7 +8,7 @@ import com.intellij.psi.impl.light.LightPsiClassBuilder
 import com.intellij.psi.util.MethodSignature
 import com.intellij.psi.util.MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY
 import com.intellij.util.containers.FactoryMap
-import com.intellij.util.toArray
+import com.intellij.util.containers.toArray
 import gnu.trove.THashSet
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition

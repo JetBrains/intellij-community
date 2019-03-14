@@ -3,8 +3,8 @@
 
 package com.intellij.util
 
-import java.util.*
 import com.intellij.openapi.util.Pair as JBPair
+import com.intellij.util.containers.toArray as toArrayFromContainers
 
 operator fun <A> JBPair<A, *>.component1(): A = first
 operator fun <A> JBPair<*, A>.component2(): A = second
@@ -14,13 +14,8 @@ fun <A : Any, B : Any> JBPair<A?, B?>.toNotNull(): Pair<A, B> {
   return requireNotNull(first) to requireNotNull(second)
 }
 
-inline fun <reified E : Enum<E>, V> enumMapOf(): MutableMap<E, V> = EnumMap<E, V>(E::class.java)
-
-fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> {
-  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
-  return (this as java.util.Collection<E>).toArray(empty)
-}
-
-fun <T> lazyPub(initializer: () -> T): Lazy<T> = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
+@Deprecated(message = "moved to com.intellij.util.containers",
+            replaceWith = ReplaceWith("toArray", "com.intellij.util.containers.toArray"))
+fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> = toArrayFromContainers(empty)
 
 inline fun <reified T> Any?.castSafelyTo(): T? = this as? T
