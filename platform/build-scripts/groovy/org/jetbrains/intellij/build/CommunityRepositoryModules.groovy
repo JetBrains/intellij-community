@@ -244,6 +244,12 @@ class CommunityRepositoryModules {
     plugin("intellij.android.smali") {
       withModule("intellij.android.smali")
     },
+    plugin("intellij.statsCollector") {
+      withModule("intellij.statsCollector.features", "features.jar")
+      withModule("intellij.statsCollector.logEvents")
+      withModule("intellij.statsCollector.completionRanker")
+      withResource("features/resources", "lib")
+    },
     plugin("intellij.griffon") {
       withModule("intellij.griffon.jps", "griffon-jps-plugin.jar")
       withModule("intellij.griffon.rt", "griffon-rt.jar")
