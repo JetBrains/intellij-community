@@ -154,7 +154,7 @@ public class StartupUtil {
 
     Future<Logger> pooledActivitiesFuture;
     Logger log = null;
-    if ("true".equals(System.getProperty("idea.prepare.app.start.parallel"))) {
+    if (SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", true)) {
       pooledActivitiesFuture = AppExecutorUtil.getAppExecutorService().submit(task);
     }
     else {
