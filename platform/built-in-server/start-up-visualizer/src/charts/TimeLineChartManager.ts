@@ -73,6 +73,8 @@ export class TimelineChartManager extends XYChartManager {
     series.dataFields.valueX = "end"
     series.dataFields.categoryY = "rowIndex"
 
+    // series.cursorHoverEnabled = false
+
     series.columns.template.propertyFields.fill = "color"
     series.columns.template.propertyFields.stroke = "color"
     // series.columns.template.strokeOpacity = 1

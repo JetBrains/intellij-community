@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivitySubNames;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.gdpr.Consent;
 import com.intellij.ide.gdpr.ConsentOptions;
@@ -24,11 +27,11 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
@@ -73,8 +76,9 @@ public class AppUIUtil {
     {
       return; // JDK will load icon from the exe resource
     }
+
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    List<Image> images = ContainerUtil.newArrayListWithCapacity(3);
+    List<Image> images = new ArrayList<>(3);
 
     if (SystemInfo.isUnix) {
       Image svgIcon = loadApplicationIcon(window, 128, appInfo.getBigIconUrl());
@@ -158,6 +162,11 @@ public class AppUIUtil {
   }
 
   public static void updateFrameClass() {
+    if (SystemInfoRt.isWindows || SystemInfoRt.isMac) {
+      return;
+    }
+
+    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_FRAME_CLASS);
     try {
       Toolkit toolkit = Toolkit.getDefaultToolkit();
       Class<? extends Toolkit> aClass = toolkit.getClass();
@@ -166,6 +175,7 @@ public class AppUIUtil {
       }
     }
     catch (Exception ignore) { }
+    activity.end();
   }
 
   // keep in sync with LinuxDistributionBuilder#getFrameClass

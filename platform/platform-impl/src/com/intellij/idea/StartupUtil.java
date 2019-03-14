@@ -2,10 +2,11 @@
 package com.intellij.idea;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.concurrency.SameThreadExecutorService;
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivitySubNames;
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.StartUpMeasurer.ActivitySubNames;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.BuiltInServer;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -55,12 +57,11 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 /**
@@ -110,6 +111,15 @@ public class StartupUtil {
   static void prepareAndStart(String[] args, AppStarter appStarter) {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     checkHiDPISettings();
+
+    boolean isParallelExecution = SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", true);
+    ExecutorService executorService = isParallelExecution ? AppExecutorUtil.getAppExecutorService() : new SameThreadExecutorService();
+
+    List<Future<?>> futures = new ArrayList<>();
+    if (!Main.isHeadless()) {
+      addPrepareUiTasks(futures, executorService);
+    }
+
     configureLogging();
 
     // uses showMessage, so, cannot be in a pooled thread
@@ -154,8 +164,8 @@ public class StartupUtil {
 
     Future<Logger> pooledActivitiesFuture;
     Logger log = null;
-    if (SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", true)) {
-      pooledActivitiesFuture = AppExecutorUtil.getAppExecutorService().submit(task);
+    if (isParallelExecution) {
+      pooledActivitiesFuture = executorService.submit(task);
     }
     else {
       Activity activity = StartUpMeasurer.start(Phases.RUN_PREPARE_APP_INIT_ACTIVITIES);
@@ -170,30 +180,25 @@ public class StartupUtil {
     }
 
     boolean newConfigFolder = false;
-    if (!Main.isHeadless()) {
-      Activity activity = StartUpMeasurer.start(Phases.UPDATE_FRAME_CLASS);
-      AppUIUtil.updateFrameClass();
-      activity.end();
-      newConfigFolder = !new File(PathManager.getConfigPath()).exists();
+    try {
+      Activity activity = StartUpMeasurer.start(Phases.WAIT_TASKS);
+      if (!futures.isEmpty()) {
+        for (Future<?> future : futures) {
+          future.get();
+        }
+      }
 
-      activity = StartUpMeasurer.start(Phases.INIT_DEFAULT_LAF);
-      UIUtil.initDefaultLAF();
-      activity.end();
+      if (!Main.isHeadless()) {
+        newConfigFolder = !new File(PathManager.getConfigPath()).exists();
+      }
 
-      activity = StartUpMeasurer.start(Phases.UPDATE_WINDOW_ICON);
-      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
+      if (pooledActivitiesFuture != null) {
+        log = pooledActivitiesFuture.get();
+      }
       activity.end();
     }
-
-    if (pooledActivitiesFuture != null) {
-      Activity activity = StartUpMeasurer.start(Phases.WAIT_PARALLEL_PREPARE_APP);
-      try {
-        log = pooledActivitiesFuture.get();
-        activity.end();
-      }
-      catch (ExecutionException | InterruptedException e) {
-        throw new RuntimeException(e);
-      }
+    catch (ExecutionException | InterruptedException e) {
+      throw new RuntimeException(e);
     }
 
     runPreAppClass(log);
@@ -214,6 +219,28 @@ public class StartupUtil {
     }
 
     appStarter.start(newConfigFolder);
+  }
+
+  private static void addPrepareUiTasks(@NotNull List<Future<?>> futures, @NotNull ExecutorService executorService) {
+    futures.add(executorService.submit(() -> {
+      Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init AWT Toolkit");
+      Toolkit.getDefaultToolkit();
+      activity.end();
+
+      AppUIUtil.updateFrameClass();
+
+      // static UIUtil initializer wants toolkit, so, call it here since in any case it will be blocked on synchronized access
+
+      activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INIT_DEFAULT_LAF);
+      UIUtil.initDefaultLAF();
+      activity.end();
+    }));
+    futures.add(executorService.submit(() -> {
+      Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
+      // most of the time consumed to load SVG - so, can be done in parallel
+      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
+      activity.end();
+    }));
   }
 
   private static void configureLogging() {

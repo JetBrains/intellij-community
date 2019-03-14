@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 public enum ParallelActivity {
   PREPARE_APP_INIT("prepareAppInitActivity"), PRELOAD_ACTIVITY("preloadActivity"),
   APP_OPTIONS_TOP_HIT_PROVIDER("appOptionsTopHitProvider"), PROJECT_OPTIONS_TOP_HIT_PROVIDER("projectOptionsTopHitProvider"),
-  COMPONENT("component"), SERVICE("service"), EXTENSION("extension")
+  COMPONENT("component"), SERVICE("service"), EXTENSION("extension"),
   ;
 
   private static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
