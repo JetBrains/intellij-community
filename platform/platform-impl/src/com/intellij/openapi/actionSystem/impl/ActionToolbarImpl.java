@@ -330,15 +330,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
 
     if (mySecondaryActions.getChildrenCount() > 0) {
-      mySecondaryActionsButton = new ActionButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, getMinimumButtonSize()) {
-        @Override
-        @ButtonState
-        public int getPopState() {
-          return mySecondaryButtonPopupStateModifier != null && mySecondaryButtonPopupStateModifier.willModify()
-                 ? mySecondaryButtonPopupStateModifier.getModifiedPopupState()
-                 : super.getPopState();
-        }
-      };
+      mySecondaryActionsButton = createSecondaryButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions),
+                                                       myPlace, getMinimumButtonSize());
       mySecondaryActionsButton.setNoIconsInPopup(true);
       add(mySecondaryActionsButton);
     }
@@ -350,6 +343,22 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
       add(button);
     }
+  }
+
+  @NotNull
+  protected ActionButton createSecondaryButton(final DefaultActionGroup secondaryActions,
+                                               final Presentation presentation,
+                                               final String place,
+                                               final Dimension minimumSize) {
+    return new ActionButton(secondaryActions, presentation, place, minimumSize) {
+      @Override
+      @ButtonState
+      public int getPopState() {
+        return mySecondaryButtonPopupStateModifier != null && mySecondaryButtonPopupStateModifier.willModify()
+               ? mySecondaryButtonPopupStateModifier.getModifiedPopupState()
+               : super.getPopState();
+      }
+    };
   }
 
   @NotNull
