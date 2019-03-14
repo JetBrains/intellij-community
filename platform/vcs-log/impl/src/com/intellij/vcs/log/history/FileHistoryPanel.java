@@ -17,6 +17,7 @@ package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -24,6 +25,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsCommitMetadata;
@@ -44,8 +46,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -55,6 +59,9 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final JBSplitter myDetailsSplitter;
+  @Nullable private final FileHistoryDiffPreview myDiffPreview;
+  @NotNull private final OnePixelSplitter myDiffPreviewSplitter;
+
   @NotNull private final FilePath myFilePath;
   @NotNull private final FileHistoryUi myUi;
   @NotNull private final VirtualFile myRoot;
@@ -101,9 +108,31 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
     VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, logData, this);
 
+    JBPanel tablePanel = new JBPanel(new BorderLayout());
+    tablePanel.add(myDetailsSplitter, BorderLayout.CENTER);
+    tablePanel.add(createActionsToolbar(), BorderLayout.WEST);
+
+    if (!myFilePath.isDirectory()) {
+      myDiffPreview = new FileHistoryDiffPreview(myUi.getLogData().getProject(), () -> myUi.getSelectedChange(), this);
+      ListSelectionListener selectionListener = e -> {
+        int[] selection = myGraphTable.getSelectedRows();
+        ApplicationManager.getApplication()
+          .invokeLater(() -> myDiffPreview.updatePreview(myUi.getProperties().get(CommonUiProperties.SHOW_DIFF_PREVIEW)),
+                       o -> !Arrays.equals(selection, myGraphTable.getSelectedRows()));
+      };
+      myGraphTable.getSelectionModel().addListSelectionListener(selectionListener);
+    }
+    else {
+      myDiffPreview = null;
+    }
+
+    myDiffPreviewSplitter = new OnePixelSplitter(false, "vcs.history.diff.splitter.proportion", 0.7f);
+    myDiffPreviewSplitter.setHonorComponentsMinimumSize(false);
+    myDiffPreviewSplitter.setFirstComponent(tablePanel);
+    ApplicationManager.getApplication().invokeLater(() -> showDiffPreview(myUi.getProperties().get(CommonUiProperties.SHOW_DIFF_PREVIEW)));
+
     setLayout(new BorderLayout());
-    add(myDetailsSplitter, BorderLayout.CENTER);
-    add(createActionsToolbar(), BorderLayout.WEST);
+    add(myDiffPreviewSplitter, BorderLayout.CENTER);
 
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.HISTORY_POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_HISTORY_PLACE);
     invokeOnDoubleClick(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DIFF_ACTION), tableWithProgress);
@@ -142,10 +171,24 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permanentGraphChanged) {
     myGraphTable.updateDataPack(visiblePack, permanentGraphChanged);
+    if (myDiffPreview != null) {
+      myDiffPreview.updatePreview(myUi.getProperties().get(CommonUiProperties.SHOW_DIFF_PREVIEW));
+    }
   }
 
   public void showDetails(boolean show) {
     myDetailsSplitter.setSecondComponent(show ? myDetailsPanel : null);
+  }
+
+  public boolean hasDiffPreview() {
+    return myDiffPreview != null;
+  }
+
+  void showDiffPreview(boolean state) {
+    if (myDiffPreview != null) {
+      myDiffPreview.updatePreview(state);
+      myDiffPreviewSplitter.setSecondComponent(state ? myDiffPreview.getComponent() : null);
+    }
   }
 
   @Nullable
