@@ -29,7 +29,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class SnapshotInputMappings<Key, Value, Input> {
+class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIndex<Key, Value, Input> {
   private static final Logger LOG = Logger.getInstance(SnapshotInputMappings.class);
   private static final boolean doReadSavedPersistentData = SystemProperties.getBooleanProperty("idea.read.saved.persistent.index", true);
 
@@ -55,35 +55,24 @@ class SnapshotInputMappings<Key, Value, Input> {
   Map<Key, Value> readInputKeys(int inputId) throws IOException {
     Integer currentHashId = readInputHashId(inputId);
     if (currentHashId != null) {
-      ByteArraySequence byteSequence = readContents(currentHashId);
-      if (byteSequence != null) {
-        return AbstractForwardIndexAccessor.deserializeFromByteSeq(byteSequence, myMapExternalizer);
-      }
+      return readData(currentHashId);
     }
     return Collections.emptyMap();
   }
 
-  static class Snapshot<Key, Value> {
-    private final Map<Key, Value> myData;
-    private final int hashId;
-
-    private Snapshot(@NotNull Map<Key, Value> data, int id) {
-      myData = data;
-      hashId = id;
+  @NotNull
+  @Override
+  public Map<Key, Value> readData(int hashId) throws IOException {
+    ByteArraySequence byteSequence = readContents(hashId);
+    if (byteSequence != null) {
+      return AbstractForwardIndexAccessor.deserializeFromByteSeq(byteSequence, myMapExternalizer);
     }
-
-    @NotNull
-    Map<Key, Value> getData() {
-      return myData;
-    }
-
-    int getHashId() {
-      return hashId;
-    }
+    return Collections.emptyMap();
   }
 
   @NotNull
-  Snapshot<Key, Value> readPersistentDataOrMap(@NotNull Input content) {
+  @Override
+  public Map<Key, Value> readDataOrMap(@NotNull Input content) {
     Map<Key, Value> data = null;
     boolean havePersistentData = false;
     int hashId;
@@ -158,7 +147,41 @@ class SnapshotInputMappings<Key, Value, Input> {
       }
     }
 
-    return new Snapshot<>(data, hashId);
+    return data;
+  }
+
+  @Override
+  public int getHashId(@NotNull Input content) throws IOException {
+    return getHashOfContent((FileContent) content);
+  }
+
+  static class Snapshot<Key, Value> {
+    private final Map<Key, Value> myData;
+    private final int hashId;
+
+    private Snapshot(@NotNull Map<Key, Value> data, int id) {
+      myData = data;
+      hashId = id;
+    }
+
+    @NotNull
+    Map<Key, Value> getData() {
+      return myData;
+    }
+
+    int getHashId() {
+      return hashId;
+    }
+  }
+
+  @NotNull
+  Snapshot<Key, Value> readPersistentDataOrMap(@NotNull Input content) {
+    try {
+      return new Snapshot<>(readDataOrMap(content), getHashId(content));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   void putInputHash(int inputId, int hashId) {
@@ -173,12 +196,14 @@ class SnapshotInputMappings<Key, Value, Input> {
     }
   }
 
+  @Override
   public void flush() {
     if (myContents != null) myContents.force();
     if (myInputsSnapshotMapping != null) myInputsSnapshotMapping.force();
     if (myIndexingTrace != null) myIndexingTrace.force();
   }
 
+  @Override
   public void clear() throws IOException {
     try {
       List<File> baseDirs = Stream.of(myIndexingTrace, myInputsSnapshotMapping)
@@ -200,6 +225,7 @@ class SnapshotInputMappings<Key, Value, Input> {
     }
   }
 
+  @Override
   public void close() throws IOException {
     closeInternalMaps();
     if (myContents != null) {
