@@ -16,6 +16,7 @@
 
 package com.intellij.stats.sender
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.stats.network.service.RequestService
 import com.intellij.stats.network.assertNotEDT
 import com.intellij.stats.storage.FilePathProvider
@@ -25,12 +26,18 @@ class StatisticSenderImpl(
         private val requestService: RequestService,
         private val filePathProvider: FilePathProvider
 ): StatisticSender {
+    companion object {
+        const val DAILY_LIMIT = 15 * 1024 * 1024 // 15 mb
+    }
+
+    private val limitWatcher = DailyLimitSendingWatcher(DAILY_LIMIT, PersistentSentDataInfo(PropertiesComponent.getInstance()))
 
     override fun sendStatsData(url: String) {
         assertNotEDT()
+        if (limitWatcher.isLimitReached()) return
         val filesToSend = filePathProvider.getDataFiles()
         filesToSend.forEach {
-            if (it.length() > 0) {
+            if (it.length() > 0 && !limitWatcher.isLimitReached()) {
                 val isSentSuccessfully = sendContent(url, it)
                 if (isSentSuccessfully) {
                     it.delete()
@@ -45,6 +52,9 @@ class StatisticSenderImpl(
     private fun sendContent(url: String, file: File): Boolean {
         val data = requestService.postZipped(url, file)
         if (data != null && data.code >= 200 && data.code < 300) {
+            if (data.sentDataSize != null) {
+                limitWatcher.dataSent(data.sentDataSize)
+            }
             return true
         }
         return false
