@@ -615,14 +615,10 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
     Document document = offsetMap.getFile().getViewProvider().getDocument();
     assert document != null;
-    if (replacement.isEmpty() && startOffset == endOffset) {
-      PsiDocumentManager pdm = PsiDocumentManager.getInstance(offsetMap.getFile().getProject());
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        pdm.commitDocument(document);
-      }
-      if (pdm.isCommitted(document)) {
-        return offsetMap;
-      }
+    if (replacement.isEmpty() &&
+        startOffset == endOffset &&
+        PsiDocumentManager.getInstance(offsetMap.getFile().getProject()).isCommitted(document)) {
+      return offsetMap;
     }
 
     OffsetsInFile hostOffsets = offsetMap.toTopLevelFile();
