@@ -32,6 +32,7 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -45,7 +46,7 @@ import java.util.Map;
 /**
  * @author Eugene Zhuravlev
  */
-public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> {
+public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> implements SnapshotIndexExtension<FileContent> {
   @NonNls public static final ID<TodoIndexEntry, Integer> NAME = ID.create("TodoIndex");
 
   private final FileTypeRegistry myFileTypeManager;
@@ -170,8 +171,9 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
     return myInputFilter;
   }
 
+  @Nullable
   @Override
-  public boolean hasSnapshotMapping() {
-    return true;
+  public HashContributor<FileContent> getHashContributor() {
+    return FileContentHashContributor.create(this);
   }
 }

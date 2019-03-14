@@ -12,6 +12,7 @@ import com.intellij.util.io.DifferentSerializableBytesImplyNonEqualityPolicy;
 import com.intellij.util.io.KeyDescriptor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 
 import java.io.DataInput;
@@ -25,7 +26,7 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
 /**
  * @author lambdamix
  */
-public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
+public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> implements SnapshotIndexExtension<FileContent>{
   static final ID<HMember, Void> NAME = ID.create("bytecodeAnalysis");
 
   @NotNull
@@ -83,9 +84,10 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     return HKeyDescriptor.INSTANCE;
   }
 
+  @Nullable
   @Override
-  public boolean hasSnapshotMapping() {
-    return true;
+  public HashContributor<FileContent> getHashContributor() {
+    return FileContentHashContributor.create(this);
   }
 
   @NotNull

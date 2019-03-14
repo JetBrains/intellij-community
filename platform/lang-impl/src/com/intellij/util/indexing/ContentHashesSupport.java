@@ -15,17 +15,14 @@
  */
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.ContentHashesUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.security.MessageDigest;
 
 /**
@@ -56,42 +53,13 @@ class ContentHashesSupport {
     if (ourHashesWithFileType != null && ourHashesWithFileType.isDirty()) ourHashesWithFileType.force();
   }
 
-  static byte[] calcContentHash(@NotNull byte[] bytes, @NotNull FileType fileType) {
-    MessageDigest messageDigest = ContentHashesUtil.HASHER_CACHE.getValue();
-
-    Charset defaultCharset = Charset.defaultCharset();
-    messageDigest.update(fileType.getName().getBytes(defaultCharset));
-    messageDigest.update((byte)0);
-    messageDigest.update(String.valueOf(bytes.length).getBytes(defaultCharset));
-    messageDigest.update((byte)0);
-    messageDigest.update(bytes, 0, bytes.length);
-    return messageDigest.digest();
-  }
-
-  static int calcContentHashIdWithFileType(@NotNull byte[] bytes, @Nullable Charset charset, @NotNull FileType fileType) throws IOException {
-    return enumerateHash(calcContentHashWithFileType(bytes, charset, fileType));
-  }
-
-  static int calcContentHashId(@NotNull byte[] bytes, @NotNull FileType fileType) throws IOException {
-    return enumerateHash(calcContentHash(bytes, fileType));
-  }
-
   static int enumerateHash(@NotNull byte[] digest) throws IOException {
     return ourHashesWithFileType.enumerate(digest);
   }
 
-  static byte[] calcContentHashWithFileType(@NotNull byte[] bytes, @Nullable Charset charset, @NotNull FileType fileType) {
+  static byte[] calcContentHash(@NotNull FileContent content, @NotNull HashContributor<? super FileContent> hashContributor) {
     MessageDigest messageDigest = ContentHashesUtil.HASHER_CACHE.getValue();
-
-    Charset defaultCharset = Charset.defaultCharset();
-    messageDigest.update(fileType.getName().getBytes(defaultCharset));
-    messageDigest.update((byte)0);
-    messageDigest.update(String.valueOf(bytes.length).getBytes(defaultCharset));
-    messageDigest.update((byte)0);
-    messageDigest.update((charset != null ? charset.name():"null_charset").getBytes(defaultCharset));
-    messageDigest.update((byte)0);
-
-    messageDigest.update(bytes, 0, bytes.length);
+    hashContributor.updateHash(content, bytes -> messageDigest.update(bytes));
     return messageDigest.digest();
   }
 }

@@ -31,6 +31,7 @@ import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -40,7 +41,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
-public class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
+public class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer>, SnapshotIndexExtension<FileContent> {
   public static final boolean ENABLED = SystemProperties.getBooleanProperty("idea.internal.trigramindex.enabled", true);
 
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
@@ -94,10 +95,23 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
     return ENABLED ? 3 + (IdIndex.ourSnapshotMappingsEnabled ? 0xFF:0) : 1;
   }
 
+  @Nullable
   @Override
-  public boolean hasSnapshotMapping() {
-    return true;
+  public HashContributor<FileContent> getHashContributor() {
+    return new FileContentHashContributor() {
+      @Override
+      protected byte[] getBytes(@NotNull FileContent content) {
+        return new byte[0];
+      }
+
+      @NotNull
+      @Override
+      public String getId() {
+        return null;
+      }
+    };
   }
+
   private static final ThreadLocalCachedIntArray spareBufferLocal = new ThreadLocalCachedIntArray();
 
   @NotNull

@@ -74,6 +74,6 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
   }
 
   public boolean hasSnapshotMapping() {
-    return false;
+    return this instanceof SnapshotIndexExtension;
   }
 }

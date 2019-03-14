@@ -40,6 +40,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,15 +52,15 @@ class SnapshotInputMappings<Key, Value, Input> {
   private final ID<Key, Value> myIndexId;
   private final VfsAwareMapReduceIndex.MapDataExternalizer<Key, Value> myMapExternalizer;
   private final DataIndexer<Key, Value, Input> myIndexer;
+  private final HashContributor<Input> myHashContributor;
   private final PersistentMapBasedForwardIndex myContents;
+
   private volatile PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
   private volatile PersistentHashMap<Integer, String> myIndexingTrace;
 
-  private final boolean myIsPsiBackedIndex;
-
   SnapshotInputMappings(IndexExtension<Key, Value, Input> indexExtension) throws IOException {
     myIndexId = (ID<Key, Value>)indexExtension.getName();
-    myIsPsiBackedIndex = indexExtension instanceof PsiDependentIndex;
+    myHashContributor = indexExtension instanceof SnapshotIndexExtension? ((SnapshotIndexExtension<Input>)indexExtension).getHashContributor() : null;
     myMapExternalizer = new VfsAwareMapReduceIndex.MapDataExternalizer<>(indexExtension);
     myIndexer = indexExtension.getIndexer();
     myContents = createContentsIndex();
@@ -347,56 +349,31 @@ class SnapshotInputMappings<Key, Value, Input> {
     return myContents.get(hashId);
   }
 
+  private static final com.intellij.openapi.util.Key<ConcurrentMap<String, Integer>> ourSnapshotHashesKey = com.intellij.openapi.util.Key.create("snapshot.hash.ids");
   private Integer getHashOfContent(FileContent content) throws IOException {
-    FileType fileType = content.getFileType();
-    if (myIsPsiBackedIndex && content instanceof FileContentImpl) {
-      // psi backed index should use existing psi to build index value (FileContentImpl.getPsiFileForPsiDependentIndex())
-      // so we should use different bytes to calculate hash(Id)
-      Integer previouslyCalculatedUncommittedHashId = content.getUserData(ourSavedUncommittedHashIdKey);
-
-      if (previouslyCalculatedUncommittedHashId == null) {
-        Document document = FileDocumentManager.getInstance().getCachedDocument(content.getFile());
-
-        if (document != null) {  // if document is not committed
-          PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(content.getProject());
-
-          if (psiDocumentManager.isUncommited(document)) {
-            PsiFile file = psiDocumentManager.getCachedPsiFile(document);
-            Charset charset = ((FileContentImpl)content).getCharset();
-
-            if (file != null) {
-              previouslyCalculatedUncommittedHashId = ContentHashesSupport
-                .calcContentHashIdWithFileType(file.getText().getBytes(charset), charset,
-                                               fileType);
-              content.putUserData(ourSavedUncommittedHashIdKey, previouslyCalculatedUncommittedHashId);
-            }
-          }
-        }
+    ConcurrentMap<String, Integer> hashes;
+    synchronized (ourSnapshotHashesKey) {
+      hashes = content.getUserData(ourSnapshotHashesKey);
+      if (hashes == null) {
+        content.putUserData(ourSnapshotHashesKey, hashes = new ConcurrentHashMap<>());
       }
-      if (previouslyCalculatedUncommittedHashId != null) return previouslyCalculatedUncommittedHashId;
     }
 
-    Integer previouslyCalculatedContentHashId = content.getUserData(ourSavedContentHashIdKey);
-    if (previouslyCalculatedContentHashId == null) {
-      byte[] hash = content instanceof FileContentImpl ? ((FileContentImpl)content).getHash():null;
-      if (hash == null) {
-        if (fileType.isBinary()) {
-          previouslyCalculatedContentHashId = ContentHashesSupport.calcContentHashId(content.getContent(), fileType);
-        } else {
-          Charset charset = content instanceof FileContentImpl ? ((FileContentImpl)content).getCharset() : null;
-          previouslyCalculatedContentHashId = ContentHashesSupport
-            .calcContentHashIdWithFileType(content.getContent(), charset, fileType);
-        }
-      } else {
-        previouslyCalculatedContentHashId =  ContentHashesSupport.enumerateHash(hash);
+    IOException[] exception = new IOException[1];
+    Integer hashId = hashes.computeIfAbsent(myHashContributor.getId(), __ -> {
+      try {
+        return ContentHashesSupport.enumerateHash(ContentHashesSupport.calcContentHash(content, (HashContributor<FileContent>)myHashContributor));
       }
-      content.putUserData(ourSavedContentHashIdKey, previouslyCalculatedContentHashId);
+      catch (IOException e) {
+        exception[0] = e;
+        return null;
+      }
+    });
+    if (exception[0] != null) {
+      throw exception[0];
     }
-    return previouslyCalculatedContentHashId;
+    return hashId;
   }
-  private static final com.intellij.openapi.util.Key<Integer> ourSavedContentHashIdKey = com.intellij.openapi.util.Key.create("saved.content.hash.id");
-  private static final com.intellij.openapi.util.Key<Integer> ourSavedUncommittedHashIdKey = com.intellij.openapi.util.Key.create("saved.uncommitted.hash.id");
-
 
   private StringBuilder buildDiff(Map<Key, Value> data, Map<Key, Value> contentData) {
     StringBuilder moreInfo = new StringBuilder();

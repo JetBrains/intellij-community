@@ -32,6 +32,7 @@ import com.intellij.util.io.InlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -42,7 +43,7 @@ import java.util.Map;
 /**
  * @author Eugene Zhuravlev
  */
-public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
+public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> implements SnapshotIndexExtension<FileContent> {
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
   
   private final FileBasedIndex.InputFilter myInputFilter = file -> isIndexable(file.getFileType());
@@ -133,9 +134,10 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
            CacheBuilderRegistry.getInstance().getCacheBuilder(fileType) != null;
   }
 
+  @Nullable
   @Override
-  public boolean hasSnapshotMapping() {
-    return true;
+  public HashContributor<FileContent> getHashContributor() {
+    return FileContentHashContributor.create(this);
   }
 
   public static boolean hasIdentifierInFile(@NotNull PsiFile file, @NotNull String name) {
