@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.util.containers.ContainerUtil
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.util.*
 
 /**
@@ -101,6 +102,14 @@ class FeatureUsageData {
 
   fun addInputEvent(event: KeyEvent): FeatureUsageData {
     val inputEvent = ShortcutDataProvider.getKeyEventText(event)
+    if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
+      data["input_event"] = inputEvent
+    }
+    return this
+  }
+
+  fun addInputEvent(event: MouseEvent): FeatureUsageData {
+    val inputEvent = ShortcutDataProvider.getMouseEventText(event)
     if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
       data["input_event"] = inputEvent
     }
