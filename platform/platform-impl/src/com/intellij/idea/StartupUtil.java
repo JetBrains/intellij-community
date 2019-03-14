@@ -127,6 +127,9 @@ public class StartupUtil {
       System.exit(Main.JDK_CHECK_FAILED);
     }
 
+    // this check must be performed before system directories are locked
+    boolean newConfigFolder = !Main.isHeadless() && !new File(PathManager.getConfigPath()).exists();
+
     Callable<Logger> task = () -> {
       Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.CHECK_SYSTEM_DIR);
       // note: uses config folder!
@@ -179,17 +182,12 @@ public class StartupUtil {
       activity.end();
     }
 
-    boolean newConfigFolder = false;
     try {
       Activity activity = StartUpMeasurer.start(Phases.WAIT_TASKS);
       if (!futures.isEmpty()) {
         for (Future<?> future : futures) {
           future.get();
         }
-      }
-
-      if (!Main.isHeadless()) {
-        newConfigFolder = !new File(PathManager.getConfigPath()).exists();
       }
 
       if (pooledActivitiesFuture != null) {
