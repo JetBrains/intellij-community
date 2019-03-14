@@ -20,7 +20,12 @@ public class MapForwardIndexAccessor<Key, Value, Input> extends AbstractForwardI
   }
 
   @Override
-  protected Map<Key, Value> convertToDataType(@Nullable Map<Key, Value> map, @Nullable Input content) {
+  protected int getBufferInitialSize(@NotNull Map<Key, Value> map) {
+    return 4 * map.size();
+  }
+
+  @Override
+  public Map<Key, Value> convertToDataType(@Nullable Map<Key, Value> map, @Nullable Input content) {
     return map;
   }
 }

@@ -36,7 +36,12 @@ public class KeyCollectionForwardIndexAccessor<Key, Value, Input> extends Abstra
   }
 
   @Override
-  protected Collection<Key> convertToDataType(@Nullable Map<Key, Value> map, @Nullable Input content) {
+  public Collection<Key> convertToDataType(@Nullable Map<Key, Value> map, @Nullable Input content) {
     return ContainerUtil.isEmpty(map) ? null : map.keySet();
+  }
+
+  @Override
+  protected int getBufferInitialSize(@NotNull Collection<Key> keys) {
+    return 4 * keys.size();
   }
 }
