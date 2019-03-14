@@ -1,9 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
@@ -815,12 +812,7 @@ public class JsonSchemaObject {
   }
 
   private static String unescapeJsonString(@NotNull final String text) {
-    try {
-      final String object = String.format("{\"prop\": \"%s\"}", text);
-      return new Gson().fromJson(object, JsonObject.class).get("prop").getAsString();
-    } catch (JsonParseException e) {
-      return text;
-    }
+    return StringUtil.unescapeStringCharacters(text);
   }
 
   @Nullable
