@@ -11,7 +11,7 @@ export type ExtensionProviderSourceNames = "appExtensions" | "projectExtensions"
 export type TopHitProviderSourceNames = "appOptionsTopHitProviders" | "projectOptionsTopHitProviders"
 export type PrepareAppInitSourceNames = "prepareAppInitActivities"
 
-export class ItemChartManager extends XYChartManager {
+export class ActivityChartManager extends XYChartManager {
   private legendHitHandler: ((item: LegendItem, isActive: boolean) => void) | null = null
 
   // isUseYForName - if true, names are more readable, but not possible to see all components because layout from top to bottom (so, opposite from left to right some data can be out of current screen)
@@ -206,7 +206,7 @@ function getShortName(item: Item): string {
   return lastDotIndex < 0 ? item.name : item.name.substring(lastDotIndex + 1)
 }
 
-export class ComponentChartManager extends ItemChartManager {
+export class ComponentChartManager extends ActivityChartManager {
   constructor(container: HTMLElement) {
     super(container, ["appComponents", "projectComponents", "moduleComponents"])
   }

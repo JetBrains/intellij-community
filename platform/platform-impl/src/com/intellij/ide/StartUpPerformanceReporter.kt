@@ -2,8 +2,8 @@
 package com.intellij.ide
 
 import com.google.gson.stream.JsonWriter
+import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.StartUpMeasurer.Item
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
@@ -33,7 +33,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
   companion object {
     // need to be exposed for tests, but I don't want to expose as top-level function, so, as companion object
-    fun sortItems(items: MutableList<Item>) {
+    fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
         if (o1 == o2.parent) {
           return@Comparator -1
@@ -86,8 +86,8 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
   @Synchronized
   private fun logStats(end: Long, activationNumber: Int) {
-    val items = mutableListOf<Item>()
-    val activities = THashMap<String, MutableList<Item>>()
+    val items = mutableListOf<ActivityImpl>()
+    val activities = THashMap<String, MutableList<ActivityImpl>>()
 
     StartUpMeasurer.processAndClear(Consumer { item ->
       fun addActivity(name: String) {
@@ -122,7 +122,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.name("version").value("4")
     writeServiceStats(writer)
 
-    val startTime = if (activationNumber == 0) StartUpMeasurer.getStartTime() else items.first().start
+    val startTime = if (activationNumber == 0) StartUpMeasurer.getClassInitStartTime() else items.first().start
 
     writer.name("items")
     writer.beginArray()
@@ -162,7 +162,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     LOG.info(string)
   }
 
-  private fun writeActivities(activities: THashMap<String, MutableList<Item>>, startTime: Long, writer: JsonWriter) {
+  private fun writeActivities(activities: THashMap<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonWriter) {
     // sorted to get predictable JSON
     for (name in activities.keys.sorted()) {
       val list = activities.get(name)!!
@@ -219,7 +219,7 @@ private fun activityNameToJsonFieldName(name: String): String {
   }
 }
 
-private fun writeActivities(slowComponents: List<Item>, offset: Long, writer: JsonWriter, fieldName: String) {
+private fun writeActivities(slowComponents: List<ActivityImpl>, offset: Long, writer: JsonWriter, fieldName: String) {
   if (slowComponents.isEmpty()) {
     return
   }
@@ -238,13 +238,13 @@ private fun writeActivities(slowComponents: List<Item>, offset: Long, writer: Js
   writer.endArray()
 }
 
-private fun writeItemTimeInfo(item: Item, duration: Long, offset: Long, writer: JsonWriter) {
+private fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, writer: JsonWriter) {
   writer.name("duration").value(TimeUnit.NANOSECONDS.toMillis(duration))
   writer.name("start").value(TimeUnit.NANOSECONDS.toMillis(item.start - offset))
   writer.name("end").value(TimeUnit.NANOSECONDS.toMillis(item.end - offset))
 }
 
-private fun isSubItem(item: Item, itemIndex: Int, list: List<Item>): Boolean {
+private fun isSubItem(item: ActivityImpl, itemIndex: Int, list: List<ActivityImpl>): Boolean {
   if (item.parent != null) {
     return true
   }

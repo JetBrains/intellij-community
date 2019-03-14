@@ -5,14 +5,14 @@
 
 <script lang="ts">
   import {Component, Prop, Watch} from "vue-property-decorator"
-  import {ComponentChartManager, ItemChartManager} from "./ItemChartManager"
-  import {ItemChartType} from "@/charts/ItemChartDescriptor"
+  import {ActivityChartManager, ComponentChartManager} from "./ActivityChartManager"
+  import {ActivityChartType} from "@/charts/ActivityChartDescriptor"
   import {BaseChartComponent} from "@/charts/BaseChartComponent"
 
   @Component
-  export default class ItemChart extends BaseChartComponent<ItemChartManager> {
+  export default class ActivityChart extends BaseChartComponent<ActivityChartManager> {
     @Prop(String)
-    type!: ItemChartType
+    type!: ActivityChartType
 
     @Watch("type")
     typeChanged(_type: any, _oldType: any): void {
@@ -27,23 +27,23 @@
     }
 
     /** @override */
-    protected createChartManager(): ItemChartManager {
+    protected createChartManager(): ActivityChartManager {
       const chartContainer = this.$refs.chartContainer as HTMLElement
       const type = this.type
       if (type === "components" || type == null) {
         return new ComponentChartManager(chartContainer)
       }
       else if (type === "services") {
-        return new ItemChartManager(chartContainer, ["appServices", "projectServices", "moduleServices"])
+        return new ActivityChartManager(chartContainer, ["appServices", "projectServices", "moduleServices"])
       }
       else if (type === "extensions") {
-        return new ItemChartManager(chartContainer, ["appExtensions", "projectExtensions", "moduleExtensions"])
+        return new ActivityChartManager(chartContainer, ["appExtensions", "projectExtensions", "moduleExtensions"])
       }
       else if (type === "topHitProviders") {
-        return new ItemChartManager(chartContainer, ["appOptionsTopHitProviders", "projectOptionsTopHitProviders"])
+        return new ActivityChartManager(chartContainer, ["appOptionsTopHitProviders", "projectOptionsTopHitProviders"])
       }
       else if (type === "prepareAppInitActivity") {
-        return new ItemChartManager(chartContainer, ["prepareAppInitActivities"])
+        return new ActivityChartManager(chartContainer, ["prepareAppInitActivities"])
       }
       else {
         throw new Error(`Unknown chart type: ${type}`)

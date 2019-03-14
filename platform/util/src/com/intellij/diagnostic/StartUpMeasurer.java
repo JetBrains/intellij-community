@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,38 +68,6 @@ public final class StartUpMeasurer {
     }
   }
 
-  public enum ParallelActivity {
-    PREPARE_APP_INIT("prepareAppInitActivity"), PRELOAD_ACTIVITY("preloadActivity"),
-    APP_OPTIONS_TOP_HIT_PROVIDER("appOptionsTopHitProvider"), PROJECT_OPTIONS_TOP_HIT_PROVIDER("projectOptionsTopHitProvider");
-
-    private final String jsonName;
-
-    ParallelActivity(@NotNull String jsonName) {
-      this.jsonName = jsonName;
-    }
-
-    @NotNull
-    public String getJsonName() {
-      return jsonName;
-    }
-
-    @NotNull
-    public Activity start(@NotNull String name) {
-      return Item.createParallelActivity(this, name);
-    }
-
-    public void record(long start, @NotNull Class<?> clazz) {
-      long end = System.nanoTime();
-      if ((end - start) <= MEASURE_THRESHOLD) {
-        return;
-      }
-
-      Item item = new Item(clazz.getName(), /* description = */ null, start, /* parent = */ null, /* level = */ null, this);
-      item.setEnd(end);
-      items.add(item);
-    }
-  }
-
   // non-sequential and repeated items
   public static final class Activities {
     public static final String COMPONENT = "component";
@@ -116,36 +83,32 @@ public final class StartUpMeasurer {
     public static final String FIX_PROCESS_ENV = "fix process env";
   }
 
-  private static final long startTime = System.nanoTime();
+  private static final long classInitStartTime = System.nanoTime();
 
-  private static final ConcurrentLinkedQueue<Item> items = new ConcurrentLinkedQueue<>();
+  private static final ConcurrentLinkedQueue<ActivityImpl> items = new ConcurrentLinkedQueue<>();
 
-  public static long getStartTime() {
-    return startTime;
-  }
-
-  public static long createStartTime() {
+  public static long getCurrentTime() {
     return System.nanoTime();
   }
 
   @NotNull
   public static Activity start(@NotNull String name, @Nullable String description) {
-    return new Item(name, description, null);
+    return new ActivityImpl(name, description, null);
   }
 
   @NotNull
   public static Activity start(@NotNull String name) {
-    return new Item(name, null, null);
+    return new ActivityImpl(name, null, null);
   }
 
   @NotNull
   public static Activity start(@NotNull String name, @NotNull Level level) {
-    return new Item(name, null, level);
+    return new ActivityImpl(name, null, level);
   }
 
-  public static void processAndClear(@NotNull Consumer<Item> consumer) {
+  public static void processAndClear(@NotNull Consumer<ActivityImpl> consumer) {
     while (true) {
-      Item item = items.poll();
+      ActivityImpl item = items.poll();
       if (item == null) {
         break;
       }
@@ -154,140 +117,14 @@ public final class StartUpMeasurer {
     }
   }
 
-  public final static class Item implements Activity {
-    private final String name;
-    private String description;
-
-    private final long start;
-    private long end;
-
-    // null doesn't mean root - not obligated to set parent, only as hint
-    private final Item parent;
-
-    @Nullable
-    private final Level level;
-
-    @Nullable
-    private final ParallelActivity parallelActivity;
-
-    private Item(@Nullable String name, @Nullable String description, @Nullable Level level) {
-      this(name, description, System.nanoTime(), null, level, null);
-    }
-
-    @NotNull
-    private static Item createParallelActivity(@NotNull ParallelActivity parallelActivity, @NotNull String name) {
-      return new Item(name, /* description = */ null, System.nanoTime(), /* parent = */ null, /* level = */ null, parallelActivity);
-    }
-
-    private Item(@Nullable String name,
-                 @Nullable String description,
-                 long start,
-                 @Nullable Item parent,
-                 @Nullable Level level,
-                 @Nullable ParallelActivity parallelActivity) {
-      this.name = name;
-      this.description = StringUtil.nullize(description);
-      this.start = start;
-      this.parent = parent;
-      this.level = level;
-      this.parallelActivity = parallelActivity;
-    }
-
-    @Nullable
-    public Item getParent() {
-      return parent;
-    }
-
-    @Nullable
-    public Level getLevel() {
-      return level;
-    }
-
-    @Nullable
-    public ParallelActivity getParallelActivity() {
-      return parallelActivity;
-    }
-
-    // and how do we can sort correctly, when parent item equals to child (start and end) and also there is another child with start equals to end?
-    // so, parent added to API but as it was not enough, decided to measure time in nanoseconds instead of ms to mitigate such situations
-    @Override
-    @NotNull
-    public Item startChild(@NotNull String name) {
-      return new Item(name, null, System.nanoTime(), this, null, null);
-    }
-
-    @NotNull
-    public String getName() {
-      return name;
-    }
-
-    @Nullable
-    public String getDescription() {
-      return description;
-    }
-
-    public long getStart() {
-      return start;
-    }
-
-    public long getEnd() {
-      return end;
-    }
-
-    void setEnd(long end) {
-      assert this.end == 0;
-      this.end = end;
-    }
-
-    @Override
-    public void end(@Nullable String description) {
-      if (description != null) {
-        this.description = description;
-      }
-      assert end == 0;
-      end = System.nanoTime();
-      items.add(this);
-    }
-
-    @Override
-    public void endWithThreshold(@NotNull Class<?> clazz) {
-      this.description = clazz.getName();
-      end = System.nanoTime();
-      if ((end - start) > MEASURE_THRESHOLD) {
-        items.add(this);
-      }
-    }
-
-    @Override
-    @NotNull
-    public Activity endAndStart(@NotNull String name) {
-      end();
-      return new Item(name, /* description = */null, /* start = */end, parent, /* level = */null, parallelActivity);
-    }
-
-    @Override
-    public String toString() {
-      return name;
-    }
+  /**
+   * Internal use only.
+   */
+  public static long getClassInitStartTime() {
+    return classInitStartTime;
   }
 
-  public interface Activity {
-    void end(@Nullable String description);
-
-    /**
-     * Convenient method to end token and start a new sibling one.
-     * So, start of new is always equals to this item end and yet another System.nanoTime() call is avoided.
-     */
-    @NotNull
-    Activity endAndStart(@NotNull String name);
-
-    void endWithThreshold(@NotNull Class<?> clazz);
-
-    @NotNull
-    Activity startChild(@NotNull String name);
-
-    default void end() {
-      end(null);
-    }
+  static void add(@NotNull ActivityImpl activity) {
+    items.add(activity);
   }
 }

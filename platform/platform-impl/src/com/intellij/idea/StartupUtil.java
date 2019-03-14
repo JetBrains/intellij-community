@@ -2,10 +2,10 @@
 package com.intellij.idea;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.StartUpMeasurer.Activity;
 import com.intellij.diagnostic.StartUpMeasurer.ActivitySubNames;
-import com.intellij.diagnostic.StartUpMeasurer.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;

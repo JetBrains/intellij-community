@@ -2,6 +2,7 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -53,7 +54,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
       public void projectComponentsInitialized(@NotNull final Project project) {
         if (project != myProject) return;
 
-        StartUpMeasurer.Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.LOAD_MODULES);
+        Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.LOAD_MODULES);
         loadModules(myModuleModel);
         activity.end("module count: " + myModuleModel.getModules().length);
       }

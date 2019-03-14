@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
+import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Activities;
-import com.intellij.diagnostic.StartUpMeasurer.Activity;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;

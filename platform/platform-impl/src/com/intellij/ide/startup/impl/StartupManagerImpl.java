@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startup.impl;
 
+import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.startup.ServiceNotReadyException;
@@ -352,7 +353,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   private static void runActivities(@NotNull List<? extends Runnable> activities, @NotNull String phaseName) {
-    StartUpMeasurer.Activity activity = StartUpMeasurer.start(phaseName);
+    Activity activity = StartUpMeasurer.start(phaseName);
     while (!activities.isEmpty()) {
       runActivity(activities.remove(0));
     }
