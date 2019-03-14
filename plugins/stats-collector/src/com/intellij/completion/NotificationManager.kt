@@ -14,15 +14,10 @@ import com.intellij.openapi.startup.StartupActivity
 
 class NotificationManager : StartupActivity {
   companion object {
-    private const val PLUGIN_NAME = "Completion Stats Collector"
-    private const val MESSAGE_TEXT =
-      "Data about your code completion usage will be anonymously reported. " +
-      "No personal data or code will be sent."
-
     private const val MESSAGE_SHOWN_KEY = "completion.stats.allow.question.shown"
   }
 
-  private fun isMessageShown() = PropertiesComponent.getInstance().getBoolean(MESSAGE_SHOWN_KEY, false)
+  private fun isMessageShown() = false
 
   private fun fireMessageShown() = PropertiesComponent.getInstance().setValue(MESSAGE_SHOWN_KEY, true)
 
@@ -40,7 +35,9 @@ class NotificationManager : StartupActivity {
   }
 
   private fun notify(project: Project) {
-    val notification = Notification(PLUGIN_NAME, PLUGIN_NAME, MESSAGE_TEXT, NotificationType.INFORMATION)
+    val pluginName = StatsCollectorBundle.message("completion.stats.plugin.name.in.notification")
+    val messageText = StatsCollectorBundle.message("completion.stats.notification.text")
+    val notification = Notification(pluginName, pluginName, messageText, NotificationType.INFORMATION)
       .addAction(object : NotificationAction("Allow") {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           CompletionStatsCollectorSettings.getInstance().setCompletionLogsSendAllowed(true)
