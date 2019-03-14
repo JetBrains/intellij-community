@@ -69,3 +69,11 @@ fun Collection<FilePath>.toPredictedFiles(changeListManager: ChangeListManager) 
     else -> null
   }
 }
+
+fun <T> measureSupplierTimeMillis(supplier: () -> T): Pair<Long, T> {
+  val startTime = System.currentTimeMillis()
+  val result = supplier()
+  val executionTime = System.currentTimeMillis() - startTime
+
+  return Pair(executionTime, result)
+}
