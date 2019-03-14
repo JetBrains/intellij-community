@@ -13,7 +13,6 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -132,8 +131,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
                                                    @NotNull Runnable performRunnable,
                                                    @NotNull PsiMethod psiMethod,
                                                    @NotNull PsiClass... classes) {
-    String locationName = (classes.length == 1 ? classes[0].getName() + "." : "") + psiMethod.getName();
-    DataContext dataContext = TestTasksChooser.contextWithLocationName(context.getDataContext(), locationName);
+    DataContext dataContext = TestTasksChooser.contextWithLocationName(context.getDataContext(), psiMethod.getName());
     getTestTasksChooser().chooseTestTasks(context.getProject(), dataContext, classes, tasks -> {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
@@ -143,7 +141,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
           performRunnable.run();
           return;
         }
-        configuration.setName(locationName);
+        configuration.setName((classes.length == 1 ? classes[0].getName() + "." : "") + psiMethod.getName());
         performRunnable.run();
     });
   }
@@ -152,7 +150,6 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
                                                       @NotNull ConfigurationContext context,
                                                       @NotNull PsiMethod psiMethod,
                                                       @NotNull PsiClass... containingClasses) {
-    final Project project = context.getProject();
     final ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
     final Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilter(context.getLocation(), psiClass, psiMethod);
     if (!applyTestConfiguration(settings, context.getModule(), containingClasses, createFilter)) return false;
