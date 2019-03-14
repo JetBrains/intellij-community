@@ -12,6 +12,7 @@ import com.intellij.openapi.options.*
 import klogging.*
 import runtime.*
 import runtime.async.*
+import runtime.klogger.*
 import runtime.reactive.*
 
 val circletWorkspace get() = application.getComponent<CircletWorkspaceComponent>()
@@ -30,18 +31,19 @@ class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), 
 
     override fun initComponent() {
         val settingsOnStartup = circletSettings.settings.value
-        launch(lifetime, Ui) {
-            val lt = workspacesLifetimes.next()
+        val wsLifetime = workspacesLifetimes.next()
+
+        launch(wsLifetime, Ui) {
             if (settingsOnStartup.server.isNotBlank() && settingsOnStartup.enabled) {
                 val wsConfig = ideaConfig(settingsOnStartup.server)
-                val wss = WorkspaceManager(lt, this@CircletWorkspaceComponent, IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
+                val wss = WorkspaceManager(wsLifetime, this@CircletWorkspaceComponent, IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
                 if (wss.signInNonInteractive())
                     manager.value = wss
                 else
-                    notifyDisconnected(lt)
+                    notifyDisconnected(wsLifetime)
             }
             else {
-                notifyDisconnected(lt)
+                notifyDisconnected(wsLifetime)
             }
         }
 
@@ -58,9 +60,12 @@ class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), 
 
     override suspend fun authFailed() {
         authCheckFailedNotification(lifetime)
+        manager.value?.signOut(false)
     }
 
     suspend fun signIn(lifetime: Lifetime, server: String) : OAuthTokenResponse {
+        log.assert(manager.value == null, "manager.value == null")
+
         val lt = workspacesLifetimes.next()
         val wsConfig = ideaConfig(server)
         val wss = WorkspaceManager(lt, this, IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
@@ -76,7 +81,8 @@ class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), 
 
     fun signOut() {
         val oldManager = manager.value
-        oldManager?.signOut()
+        oldManager?.signOut(true)
+        workspacesLifetimes.clear()
         manager.value = null
         circletSettings.applySettings(circletSettings.state.copy(enabled = false))
     }
@@ -98,7 +104,6 @@ private fun notifyAuthFailed(lifetime: Lifetime) {
 
 private fun authCheckFailedNotification(lifetime: Lifetime) {
     notify(lifetime, "Not authenticated.<br> <a href=\"sign-in\">Sign in</a>", {
-
     })
 }
 
