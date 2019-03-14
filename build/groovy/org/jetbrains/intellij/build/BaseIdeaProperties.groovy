@@ -91,8 +91,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.xml.langInjection",
     "intellij.java.langInjection.jps",
     "intellij.java.debugger.streams",
-    "intellij.android.smali",
-    "intellij.statsCollector"
+    "intellij.android.smali"
   ]
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
     "": "1.8",
@@ -164,6 +163,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
         removeVersionFromProjectLibraryJarNames("JUnit3") //for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
       }
     } as Consumer<PlatformLayout>
+
+    productLayout.setPluginPublishingSpec("intellij.statsCollector", new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: false))
 
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
