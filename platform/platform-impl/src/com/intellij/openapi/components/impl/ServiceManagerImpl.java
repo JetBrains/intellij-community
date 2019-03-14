@@ -2,6 +2,9 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpMeasurer.Activities;
+import com.intellij.diagnostic.StartUpMeasurer.Activity;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
@@ -24,9 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.StartUpMeasurer;
-import com.intellij.util.StartUpMeasurer.Activities;
-import com.intellij.util.StartUpMeasurer.Activity;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;

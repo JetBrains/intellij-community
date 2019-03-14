@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.diagnostic.StartUpMeasurer.Activity;
+import com.intellij.diagnostic.StartUpMeasurer.ParallelActivity;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
@@ -11,8 +13,6 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.StartUpMeasurer.Activity;
-import com.intellij.util.StartUpMeasurer.ParallelActivity;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.storage.HeavyProcessLatch;

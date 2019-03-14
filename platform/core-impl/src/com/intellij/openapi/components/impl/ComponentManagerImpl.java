@@ -2,6 +2,10 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpMeasurer.Activities;
+import com.intellij.diagnostic.StartUpMeasurer.Activity;
+import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,10 +29,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.StartUpMeasurer;
-import com.intellij.util.StartUpMeasurer.Activities;
-import com.intellij.util.StartUpMeasurer.Activity;
-import com.intellij.util.StartUpMeasurer.Phases;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;

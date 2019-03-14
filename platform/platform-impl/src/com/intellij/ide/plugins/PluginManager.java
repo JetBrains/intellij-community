@@ -1,10 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.diagnostic.IdeErrorsDialog;
-import com.intellij.diagnostic.ImplementationConflictException;
-import com.intellij.diagnostic.PluginConflictReporter;
-import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.*;
+import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.IdeaApplication;
@@ -27,8 +25,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.StartUpMeasurer;
-import com.intellij.util.StartUpMeasurer.Phases;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

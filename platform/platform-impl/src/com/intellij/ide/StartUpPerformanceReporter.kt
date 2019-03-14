@@ -2,6 +2,8 @@
 package com.intellij.ide
 
 import com.google.gson.stream.JsonWriter
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.StartUpMeasurer.Item
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
@@ -9,8 +11,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.util.StartUpMeasurer
-import com.intellij.util.StartUpMeasurer.Item
 import gnu.trove.THashMap
 import java.io.StringWriter
 import java.util.concurrent.TimeUnit

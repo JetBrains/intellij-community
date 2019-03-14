@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.impl;
 
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.internal.statistic.collectors.fus.project.ProjectFsStatsCollector;
@@ -34,7 +35,6 @@ import com.intellij.project.ProjectKt;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;

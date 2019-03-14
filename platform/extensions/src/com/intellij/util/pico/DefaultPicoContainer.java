@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.pico;
 
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import gnu.trove.THashSet;

@@ -2,6 +2,7 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -16,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 

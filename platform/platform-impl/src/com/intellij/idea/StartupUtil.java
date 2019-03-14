@@ -2,6 +2,11 @@
 package com.intellij.idea;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpMeasurer.Activity;
+import com.intellij.diagnostic.StartUpMeasurer.ActivitySubNames;
+import com.intellij.diagnostic.StartUpMeasurer.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
@@ -24,11 +29,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.*;
-import com.intellij.util.StartUpMeasurer.Activity;
-import com.intellij.util.StartUpMeasurer.ActivitySubNames;
-import com.intellij.util.StartUpMeasurer.ParallelActivity;
-import com.intellij.util.StartUpMeasurer.Phases;
+import com.intellij.util.Consumer;
+import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.apache.log4j.ConsoleAppender;

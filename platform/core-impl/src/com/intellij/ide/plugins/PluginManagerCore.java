@@ -2,6 +2,9 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpMeasurer.Activity;
+import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.StartupProgress;
@@ -25,8 +28,6 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.*;
-import com.intellij.util.StartUpMeasurer.Activity;
-import com.intellij.util.StartUpMeasurer.Phases;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
