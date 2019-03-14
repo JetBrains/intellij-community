@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitExecutorBase
@@ -14,9 +15,14 @@ class SingleChangeListCommitWorkflowHandler(
   private val ui: CommitChangeListDialog
 ) : CommitWorkflowHandler, CommitExecutorListener, Disposable {
 
+  private val project get() = workflow.project
+  private val vcsConfiguration = VcsConfiguration.getInstance(project)
+
   private fun getChangeList() = ui.getChangeList()
   private fun getIncludedChanges() = ui.getIncludedChanges()
   private fun getIncludedUnversionedFiles() = ui.getIncludedUnversionedFiles()
+
+  private fun getCommitMessage() = ui.commitMessage
 
   init {
     ui.addExecutorListener(this, this)
@@ -46,18 +52,23 @@ class SingleChangeListCommitWorkflowHandler(
 
   private fun executeDefault(executor: CommitExecutor?) {
     if (!addUnversionedFiles()) return
+    if (!checkEmptyCommitMessage()) return
 
     ui.executeDefaultCommitSession(executor)
   }
 
   private fun executeCustom(executor: CommitExecutor, session: CommitSession) {
     if (!workflow.canExecute(executor, getIncludedChanges())) return
+    if (!checkEmptyCommitMessage()) return
 
     ui.execute(executor, session)
   }
 
   private fun addUnversionedFiles(): Boolean =
     workflow.addUnversionedFiles(getChangeList(), getIncludedUnversionedFiles()) { changes -> ui.includeIntoCommit(changes) }
+
+  private fun checkEmptyCommitMessage(): Boolean =
+    getCommitMessage().isNotEmpty() || !vcsConfiguration.FORCE_NON_EMPTY_COMMENT || ui.confirmCommitWithEmptyMessage()
 
   override fun dispose() = Unit
 }

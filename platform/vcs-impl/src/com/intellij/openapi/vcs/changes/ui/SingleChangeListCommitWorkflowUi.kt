@@ -19,6 +19,10 @@ interface SingleChangeListCommitWorkflowUi : DataProvider {
   fun getIncludedUnversionedFiles(): List<VirtualFile>
 
   fun includeIntoCommit(items: Collection<*>)
+
+  fun getCommitMessage(): String
+
+  fun confirmCommitWithEmptyMessage(): Boolean
 }
 
 interface CommitExecutorListener : EventListener {
