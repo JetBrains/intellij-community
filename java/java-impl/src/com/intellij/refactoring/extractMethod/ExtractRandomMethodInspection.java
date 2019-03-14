@@ -8,7 +8,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,9 +144,14 @@ public class ExtractRandomMethodInspection extends LocalInspectionTool {
     return false;
   }
 
+  @NotNull
+  private static PsiElement[] getRandomElements(PsiStatement[] statements) {
+    PsiElement[] elements = getRandomElementsImpl(statements);
+    return filterOutBlankVariables(elements);
+  }
 
   @NotNull
-  PsiElement[] getRandomElements(PsiStatement[] statements) {
+  private static PsiElement[] getRandomElementsImpl(PsiStatement[] statements) {
     if (statements.length == 0) {
       return PsiElement.EMPTY_ARRAY;
     }
@@ -198,13 +205,34 @@ public class ExtractRandomMethodInspection extends LocalInspectionTool {
   }
 
   @NotNull
-  private PsiElement[] getRandomElements(@NotNull List<PsiCodeBlock> codeBlocks) {
+  private static PsiElement[] getRandomElements(@NotNull List<PsiCodeBlock> codeBlocks) {
     if (codeBlocks.isEmpty()) {
       return PsiElement.EMPTY_ARRAY;
     }
     ThreadLocalRandom random = ThreadLocalRandom.current();
     PsiCodeBlock codeBlock = codeBlocks.get(random.nextInt(codeBlocks.size()));
+
     return getRandomElements(codeBlock.getStatements());
+  }
+
+  @NotNull
+  private static PsiElement[] filterOutBlankVariables(@NotNull PsiElement[] elements) {
+    int newLength = elements.length;
+    for (; newLength > 0; newLength--) {
+      PsiDeclarationStatement declaration = ObjectUtils.tryCast(elements[newLength - 1], PsiDeclarationStatement.class);
+      if (declaration == null) {
+        break;
+      }
+      PsiElement[] declaredElements = declaration.getDeclaredElements();
+      long blankVariableCount = StreamEx.of(declaredElements)
+        .select(PsiLocalVariable.class)
+        .filter(variable -> variable.getInitializer() == null)
+        .count();
+      if (blankVariableCount != declaredElements.length) {
+        break;
+      }
+    }
+    return newLength == elements.length ? elements : Arrays.copyOf(elements, newLength);
   }
 
   private static class ExtractRandomMethodFix implements LocalQuickFix {
