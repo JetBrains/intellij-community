@@ -79,6 +79,8 @@ private data class CompletionParameters(
 private val RANK_EXCESS_LETTERS: Int = -2
 private val RANK_NOT_FOUND: Int = -1
 
+private val interestingRanks : IntArray = intArrayOf(0, 1, 3)
+
 class CompletionQualityStatsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val application = ApplicationManager.getApplication()
@@ -201,57 +203,52 @@ class CompletionQualityStatsAction : AnAction() {
 
   private fun evalCompletionAt(params: CompletionParameters) {
     with(params) {
-      val (rank0, total0) = findCorrectElementRank(0, params)
-      if (indicator.isCanceled) {
-        return
-      }
-      val (rank1, total1) = findCorrectElementRank(1, params)
-      if (indicator.isCanceled) {
-        return
-      }
-      val (rank3, total3) = findCorrectElementRank(3, params)
-      if (indicator.isCanceled) {
-        return
+      // (typed letters, rank, total)
+      var ranks : ArrayList<Triple<Int, Int, Int>> = arrayListOf()
+      for (charsTyped in interestingRanks) {
+        val (rank, total) = findCorrectElementRank(charsTyped, params)
+        ranks.add(Triple(charsTyped, rank, total))
+        if (indicator.isCanceled) {
+          return
+        }
       }
 
       val maxChars = 10
 
       val cache = arrayOfNulls<Pair<Int, Int>>(maxChars)
 
-      val charsToFirst = calcCharsToFirstN(rank0, rank1, rank3, 1, maxChars, cache, params)
+      val charsToFirst = calcCharsToFirstN(ranks, 1, maxChars, cache, params)
 
-      val charsToFirst3 = calcCharsToFirstN(rank0, rank1, rank3, 3, maxChars, cache, params)
+      val charsToFirst3 = calcCharsToFirstN(ranks, 3, maxChars, cache, params)
 
       stats.completions.add(
-        Completion(path, startIndex, word, rank0, total0, rank1, total1, rank3, total3, charsToFirst, charsToFirst3,
-                   completionTime.cnt, completionTime.time))
+        Completion(path, startIndex, word,
+                   ranks[0].second, ranks[0].third, ranks[1].second, ranks[1].third, ranks[2].second, ranks[2].third,
+                   charsToFirst, charsToFirst3, completionTime.cnt, completionTime.time))
     }
   }
 
   // Calculate number of letters needed to type to have necessary word in top N
-  private fun calcCharsToFirstN(rank0: Int,
-                                rank1: Int,
-                                rank3: Int,
+  private fun calcCharsToFirstN(ranks: ArrayList<Triple<Int, Int, Int>>,
                                 N: Int,
                                 max: Int,
                                 cache: Array<Pair<Int, Int>?>,
                                 params: CompletionParameters): Int {
-    return when {
-      rank0 in 0 until N -> 0
-      rank1 in 0 until N -> 1
-      rank3 in 0 until N -> {
-        val (rank2, _) = findCorrectElementRank(2, params)
-        if (rank2 in 0 until N) {
-          2
-        }
-        else {
-          3
+    var lastCharsTyped = -1
+    for ((charsTyped, rank, _) in ranks) {
+      assert(lastCharsTyped < charsTyped)
+      for (chars in lastCharsTyped + 1 until charsTyped) {
+        val (rank, _) = findCorrectElementRank(chars, params)
+        if (rank in 0 until N) {
+          return chars
         }
       }
-      else -> {
-        calcCharsToFirstN(4, max, N, cache, params)
+      if (rank in 0 until N) {
+        return rank
       }
+      lastCharsTyped = charsTyped
     }
+    return calcCharsToFirstN(ranks.last().first, max, N, cache, params)
   }
 
   // Iterate and check from 'from' to 'to'
