@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.settings.CompletionStatsCollectorSettings
 import com.intellij.completion.tracker.PositionTrackingListener
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
@@ -23,14 +24,13 @@ import java.beans.PropertyChangeListener
 
 class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposable, BaseComponent {
   companion object {
-    // Log only 10% of all completion sessions
     var isEnabledInTests: Boolean = false
   }
 
   private val actionListener = LookupActionsListener()
   private val lookupTrackerInitializer = PropertyChangeListener {
     val lookup = it.newValue
-    if (lookup == null) {
+    if (lookup == null || !shouldTrackSession()) {
       actionListener.listener = CompletionPopupListener.Adapter()
     }
     else if (lookup is LookupImpl) {
@@ -70,7 +70,9 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     return CompletionActionsTracker(lookup, logger, experimentHelper)
   }
 
-  private fun shouldInitialize() = isSendAllowed() || isUnitTestMode()
+  private fun shouldInitialize() = StatisticsUploadAssistant.isSendAllowed() || isUnitTestMode()
+
+  private fun shouldTrackSession() = isSendAllowed() || isUnitTestMode()
 
   override fun initComponent() {
     if (!shouldInitialize()) return
