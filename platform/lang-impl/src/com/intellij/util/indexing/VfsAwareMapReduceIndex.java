@@ -12,10 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.*;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -271,7 +269,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
       try {
         final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)myIndexExtension.getName());
-        return new PersistentHashMap<>(indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, new MapDataExternalizer<>(myIndexExtension));
+        return new PersistentHashMap<>(indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, new InputMapExternalizer<>(myIndexExtension));
       } finally {
         PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
       }
@@ -342,59 +340,5 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     return extension instanceof CustomInputsIndexFileBasedIndexExtension
            ? ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer()
            : new InputIndexDataExternalizer<>(extension.getKeyDescriptor(), extension.getName());
-  }
-
-  static class MapDataExternalizer<Key, Value> implements DataExternalizer<Map<Key, Value>> {
-    final DataExternalizer<Value> myValueExternalizer;
-    private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
-
-    MapDataExternalizer(IndexExtension<Key, Value, ?> extension) {
-      myValueExternalizer = extension.getValueExternalizer();
-      mySnapshotIndexExternalizer = createInputsIndexExternalizer(extension);
-    }
-
-    @Override
-    public void save(@NotNull DataOutput stream, Map<Key, Value> data) throws IOException {
-      int size = data.size();
-      DataInputOutputUtil.writeINT(stream, size);
-
-      if (size > 0) {
-        THashMap<Value, List<Key>> values = new THashMap<>();
-        List<Key> keysForNullValue = null;
-        for (Map.Entry<Key, Value> e : data.entrySet()) {
-          Value value = e.getValue();
-
-          List<Key> keys = value != null ? values.get(value):keysForNullValue;
-          if (keys == null) {
-            if (value != null) values.put(value, keys = new SmartList<>());
-            else keys = keysForNullValue = new SmartList<>();
-          }
-          keys.add(e.getKey());
-        }
-
-        if (keysForNullValue != null) {
-          myValueExternalizer.save(stream, null);
-          mySnapshotIndexExternalizer.save(stream, keysForNullValue);
-        }
-
-        for(Value value:values.keySet()) {
-          myValueExternalizer.save(stream, value);
-          mySnapshotIndexExternalizer.save(stream, values.get(value));
-        }
-      }
-    }
-
-    @Override
-    public Map<Key, Value> read(@NotNull DataInput in) throws IOException {
-      int pairs = DataInputOutputUtil.readINT(in);
-      if (pairs == 0) return Collections.emptyMap();
-      Map<Key, Value> result = new THashMap<>(pairs);
-      while (((InputStream)in).available() > 0) {
-        Value value = myValueExternalizer.read(in);
-        Collection<Key> keys = mySnapshotIndexExternalizer.read(in);
-        for(Key k:keys) result.put(k, value);
-      }
-      return result;
-    }
   }
 }

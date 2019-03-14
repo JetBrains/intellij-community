@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +34,7 @@ class SnapshotInputMappings<Key, Value, Input> {
   private static final boolean doReadSavedPersistentData = SystemProperties.getBooleanProperty("idea.read.saved.persistent.index", true);
 
   private final ID<Key, Value> myIndexId;
-  private final VfsAwareMapReduceIndex.MapDataExternalizer<Key, Value> myMapExternalizer;
+  private final InputMapExternalizer<Key, Value> myMapExternalizer;
   private final DataIndexer<Key, Value, Input> myIndexer;
   private final PersistentMapBasedForwardIndex myContents;
   private volatile PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
@@ -59,7 +45,7 @@ class SnapshotInputMappings<Key, Value, Input> {
   SnapshotInputMappings(IndexExtension<Key, Value, Input> indexExtension) throws IOException {
     myIndexId = (ID<Key, Value>)indexExtension.getName();
     myIsPsiBackedIndex = indexExtension instanceof PsiDependentIndex;
-    myMapExternalizer = new VfsAwareMapReduceIndex.MapDataExternalizer<>(indexExtension);
+    myMapExternalizer = new InputMapExternalizer<>(indexExtension);
     myIndexer = indexExtension.getIndexer();
     myContents = createContentsIndex();
     createMaps();
@@ -146,7 +132,7 @@ class SnapshotInputMappings<Key, Value, Input> {
     if (data == null) {
       data = myIndexer.map(content);
       if (DebugAssertions.DEBUG) {
-        MapReduceIndex.checkValuesHaveProperEqualsAndHashCode(data, myIndexId, myMapExternalizer.myValueExternalizer);
+        MapReduceIndex.checkValuesHaveProperEqualsAndHashCode(data, myIndexId, myMapExternalizer.getValueExternalizer());
       }
     }
 
