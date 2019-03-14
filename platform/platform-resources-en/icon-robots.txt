@@ -1,2 +1,2 @@
 skip: *
-skipSync: tips
+skipSync: src/tips
