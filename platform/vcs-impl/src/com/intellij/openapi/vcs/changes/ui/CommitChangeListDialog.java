@@ -511,7 +511,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   void executeDefaultCommitSession(@Nullable CommitExecutor executor) {
-    if (!saveDialogState()) return;
+    if (!saveCommitOptions()) return;
     saveComments(true);
 
     ensureDataIsActual(() -> {
@@ -532,7 +532,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   void execute(@NotNull CommitExecutor commitExecutor, @NotNull CommitSession session) {
-    if (!saveDialogState()) return;
+    if (!saveCommitOptions()) return;
     saveComments(true);
 
     if (session instanceof CommitSessionContextAware) {
@@ -735,9 +735,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return runnable;
   }
 
-  private boolean saveDialogState() {
-    saveCommentIntoChangeList();
-    myVcsConfiguration.saveCommitMessage(getCommitMessage());
+  private boolean saveCommitOptions() {
     try {
       saveState();
       return true;
@@ -766,7 +764,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void saveComments(boolean isOk) {
+    saveCommentIntoChangeList();
     if (isOk) {
+      myVcsConfiguration.saveCommitMessage(getCommitMessage());
+
       int selectedSize = getIncludedChanges().size();
       int totalSize = getChangeList().getChanges().size();
       if (totalSize > selectedSize) {
@@ -780,7 +781,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   public void doCancelAction() {
     myCommitOptions.saveChangeListComponentsState();
-    saveCommentIntoChangeList();
     saveComments(false);
     LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
     super.doCancelAction();
