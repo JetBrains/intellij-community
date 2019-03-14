@@ -105,15 +105,16 @@ public class FunExprOccurrence {
     Set<PsiClass> qualifiers = null;
     for (int i = 0; i < referenceContext.size(); i++) {
       ReferenceChainLink link = referenceContext.get(i);
-      List<? extends PsiMember> candidates = i == 0 ? link.getGlobalMembers(placeFile, samClasses.get(0).getProject())
-                                                    : link.getSymbolMembers(qualifiers);
-      if (candidates == null) return true;
+      List<? extends PsiMember> candidates = qualifiers == null ? link.getGlobalMembers(placeFile, samClasses.get(0).getProject())
+                                                                : link.getSymbolMembers(qualifiers);
+      if (candidates == null) {
+        continue;
+      }
 
       if (i == referenceContext.size() - 1) {
         return ContainerUtil.exists(candidates, m -> isCompatible(link, m, samClasses));
       }
       qualifiers = ApproximateResolver.getDefiniteSymbolTypes(candidates, qualifiers != null ? qualifiers : Collections.emptySet());
-      if (qualifiers == null) return true;
     }
 
     return true;
