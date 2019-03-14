@@ -1570,6 +1570,17 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
             }
             fc = new FileContentImpl(file, currentBytes);
 
+            if (IdIndex.ourSnapshotMappingsEnabled) {
+              byte[] hash = ContentHashesSupport.calcContentHash(fc, new FileContentHashContributor.ContentHashContributorImpl() {
+                @NotNull
+                @Override
+                protected FileType getFileType(@NotNull FileContent content) {
+                  return SubstitutedFileType.substituteFileType(file, fileType, finalProject);
+                }
+              });
+              fc.setHash(hash);
+            }
+
             psiFile = content.getUserData(IndexingDataKeys.PSI_FILE);
             initFileContent(fc, finalProject, psiFile);
           }

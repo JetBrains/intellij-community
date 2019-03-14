@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -16,11 +17,16 @@ public abstract class FileContentHashContributor implements HashContributor<File
 
   @Override
   public void updateHash(@NotNull FileContent content, @NotNull Hasher hasher) {
-    hasher.append(content.getFileType().getName());
+    hasher.append(getFileType(content).getName());
     hasher.append(content instanceof FileContentImpl ? ((FileContentImpl)content).getCharset().name() : "null_charset");
     byte[] bytes = getBytes(content);
     hasher.append(bytes.length);
     hasher.append(bytes);
+  }
+
+  @NotNull
+  protected FileType getFileType(@NotNull FileContent content) {
+    return content.getFileType();
   }
 
   protected abstract byte[] getBytes(@NotNull FileContent content);
@@ -53,7 +59,7 @@ public abstract class FileContentHashContributor implements HashContributor<File
     }
   }
 
-  private static class ContentHashContributorImpl extends FileContentHashContributor {
+  public static class ContentHashContributorImpl extends FileContentHashContributor {
     @Override
     protected byte[] getBytes(@NotNull FileContent content) {
       return content.getContent();
