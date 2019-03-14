@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -96,6 +97,8 @@ public class PsiUtil {
   private static boolean isSimpleClassNameExpression(PsiMethodCallExpression expr) {
     String text = expr.getText();
     if (text == null) return false;
+    if (!StringUtil.contains(text, "getSimpleName")) return false;
+    
     text = text.replaceAll(" ", "")
       .replaceAll("\n", "")
       .replaceAll("\t", "")
@@ -122,7 +125,8 @@ public class PsiUtil {
             }
           }
         }
-        else if (value instanceof PsiMethodCallExpression) {
+        else if (value instanceof PsiMethodCallExpression && 
+                 !isSimpleClassNameExpression((PsiMethodCallExpression)value)) {
           final PsiMethod calledMethod = ((PsiMethodCallExpression)value).resolveMethod();
           return calledMethod != null ? getReturnedExpression(calledMethod) : null;
         }
