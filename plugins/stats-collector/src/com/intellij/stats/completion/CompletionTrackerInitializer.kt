@@ -3,6 +3,7 @@ package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.settings.CompletionStatsCollectorSettings
 import com.intellij.completion.tracker.PositionTrackingListener
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
@@ -23,11 +24,9 @@ import java.beans.PropertyChangeListener
 class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposable, BaseComponent {
   companion object {
     // Log only 10% of all completion sessions
-    private const val SKIP_SESSIONS_BEFORE_LOG_IN_EAP = 10
     var isEnabledInTests: Boolean = false
   }
 
-  private var loggingStrategy: LoggingStrategy = createDefaultLoggingStrategy(experimentHelper)
   private val actionListener = LookupActionsListener()
   private val lookupTrackerInitializer = PropertyChangeListener {
     val lookup = it.newValue
@@ -54,12 +53,10 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
         it.fireCompletionUsed()
       }
 
-      if (loggingStrategy.shouldBeLogged(lookup, experimentHelper)) {
-        val tracker = actionsTracker(lookup, experimentHelper)
-        actionListener.listener = tracker
-        lookup.addLookupListener(tracker)
-        lookup.setPrefixChangeListener(tracker)
-      }
+      val tracker = actionsTracker(lookup, experimentHelper)
+      actionListener.listener = tracker
+      lookup.addLookupListener(tracker)
+      lookup.setPrefixChangeListener(tracker)
 
       // setPrefixChangeListener has addPrefixChangeListener semantics
       lookup.setPrefixChangeListener(TimeBetweenTypingTracker(lookup.project))
@@ -68,30 +65,12 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     }
   }
 
-  @Suppress("unused")
-  fun setLoggingStrategy(strategy: LoggingStrategy) {
-    loggingStrategy = strategy
-  }
-
   private fun actionsTracker(lookup: LookupImpl, experimentHelper: WebServiceStatus): CompletionActionsTracker {
     val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
     return CompletionActionsTracker(lookup, logger, experimentHelper)
   }
 
   private fun shouldInitialize() = isSendAllowed() || isUnitTestMode()
-
-  private fun createDefaultLoggingStrategy(experimentHelper: WebServiceStatus): LoggingStrategy {
-    val application = ApplicationManager.getApplication()
-
-    if (application.isUnitTestMode) return LogAllSessions
-
-    if (!application.isEAP) return LogNothing
-
-    val experimentVersion = experimentHelper.experimentVersion()
-    if (PluginManager.BUILD_NUMBER.contains("-183") && experimentVersion == 5 || experimentVersion == 6) return LogAllSessions
-
-    return LogEachN(SKIP_SESSIONS_BEFORE_LOG_IN_EAP)
-  }
 
   override fun initComponent() {
     if (!shouldInitialize()) return
