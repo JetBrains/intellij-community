@@ -179,6 +179,12 @@ public class StartupUtil {
       activity.end();
     }
 
+    if (!Main.isHeadless()) {
+      Activity activity = StartUpMeasurer.start(Phases.REGISTER_BUNDLED_FONTS);
+      AppUIUtil.registerBundledFonts();
+      activity.end();
+    }
+
     boolean newConfigFolder = false;
     try {
       Activity activity = StartUpMeasurer.start(Phases.WAIT_TASKS);
@@ -212,9 +218,6 @@ public class StartupUtil {
     }
 
     if (!Main.isHeadless()) {
-      Activity activity = StartUpMeasurer.start(Phases.REGISTER_BUNDLED_FONTS);
-      AppUIUtil.registerBundledFonts();
-      activity.end();
       AppUIUtil.showUserAgreementAndConsentsIfNeeded();
     }
 
