@@ -184,7 +184,7 @@ public abstract class LongRangeSet {
       return bitwiseOr(right, isLong);
     }
     if (token.equals(JavaTokenType.XOR)) {
-      return bitwiseOr(right, isLong);
+      return bitwiseXor(right, isLong);
     }
     if (token.equals(JavaTokenType.PERC)) {
       return mod(right);
