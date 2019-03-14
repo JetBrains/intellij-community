@@ -3,9 +3,7 @@ package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.settings.CompletionStatsCollectorSettings
 import com.intellij.completion.tracker.PositionTrackingListener
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ex.AnActionListener
@@ -37,31 +35,15 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
       if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
       lookup.putUserData(CompletionUtil.COMPLETION_STARTING_TIME_KEY, System.currentTimeMillis())
 
-      val globalStorage = UserFactorStorage.getInstance()
-      val projectStorage = UserFactorStorage.getInstance(lookup.project)
+      processUserFactors(lookup)
 
-      val userFactors = UserFactorsManager.getInstance(lookup.project).getAllFactors()
-      val userFactorValues = mutableMapOf<String, String?>()
-      userFactors.asSequence().map { "${it.id}:App" to it.compute(globalStorage) }.toMap(userFactorValues)
-      userFactors.asSequence().map { "${it.id}:Project" to it.compute(projectStorage) }.toMap(userFactorValues)
-
-      lookup.putUserData(UserFactorsManager.USER_FACTORS_KEY, userFactorValues)
       val shownTimesTracker = PositionTrackingListener(lookup)
       lookup.setPrefixChangeListener(shownTimesTracker)
-
-      UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.COMPLETION_USAGE) {
-        it.fireCompletionUsed()
-      }
 
       val tracker = actionsTracker(lookup, experimentHelper)
       actionListener.listener = tracker
       lookup.addLookupListener(tracker)
       lookup.setPrefixChangeListener(tracker)
-
-      // setPrefixChangeListener has addPrefixChangeListener semantics
-      lookup.setPrefixChangeListener(TimeBetweenTypingTracker(lookup.project))
-      lookup.addLookupListener(LookupCompletedTracker())
-      lookup.addLookupListener(LookupStartedTracker())
     }
   }
 
@@ -73,6 +55,31 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
   private fun shouldInitialize() = StatisticsUploadAssistant.isSendAllowed() || isUnitTestMode()
 
   private fun shouldTrackSession() = isSendAllowed() || isUnitTestMode()
+
+  private fun shouldUseUserFactors() = ApplicationManager.getApplication().isEAP
+
+  private fun processUserFactors(lookup: LookupImpl) {
+    if (!shouldUseUserFactors()) return
+
+    val globalStorage = UserFactorStorage.getInstance()
+    val projectStorage = UserFactorStorage.getInstance(lookup.project)
+
+    val userFactors = UserFactorsManager.getInstance(lookup.project).getAllFactors()
+    val userFactorValues = mutableMapOf<String, String?>()
+    userFactors.asSequence().map { "${it.id}:App" to it.compute(globalStorage) }.toMap(userFactorValues)
+    userFactors.asSequence().map { "${it.id}:Project" to it.compute(projectStorage) }.toMap(userFactorValues)
+
+    lookup.putUserData(UserFactorsManager.USER_FACTORS_KEY, userFactorValues)
+
+    UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.COMPLETION_USAGE) {
+      it.fireCompletionUsed()
+    }
+
+    // setPrefixChangeListener has addPrefixChangeListener semantics
+    lookup.setPrefixChangeListener(TimeBetweenTypingTracker(lookup.project))
+    lookup.addLookupListener(LookupCompletedTracker())
+    lookup.addLookupListener(LookupStartedTracker())
+  }
 
   override fun initComponent() {
     if (!shouldInitialize()) return
