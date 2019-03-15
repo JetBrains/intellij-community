@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 class MemoryAgentOperations {
   private static final Logger LOG = Logger.getInstance(MemoryAgentOperations.class);
@@ -209,6 +208,6 @@ class MemoryAgentOperations {
   }
 
   private static MemoryAgentCapabilities capabilities(@NotNull EvaluationContextImpl evaluationContext) {
-    return MemoryAgentCapabilities.get(evaluationContext.getDebugProcess());
+    return MemoryAgent.capabilities(evaluationContext.getDebugProcess());
   }
 }

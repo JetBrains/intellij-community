@@ -3,7 +3,6 @@ package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,8 +11,8 @@ import java.util.EnumSet;
 import java.util.Set;
 
 public class MemoryAgentCapabilities {
-  private static Key<MemoryAgentCapabilities> MEMORY_AGENT_CAPABILITIES_KEY = Key.create("MEMORY_AGENT_CAPABILITIES_KEY");
-  public static MemoryAgentCapabilities DISABLED = new MemoryAgentCapabilities(false, Collections.emptySet());
+  private static final Key<MemoryAgentCapabilities> MEMORY_AGENT_CAPABILITIES_KEY = Key.create("MEMORY_AGENT_CAPABILITIES_KEY");
+  public static final MemoryAgentCapabilities DISABLED = new MemoryAgentCapabilities(false, Collections.emptySet());
 
   private final boolean myIsLoaded;
   private final Set<Capability> myCapabilities;
@@ -25,7 +24,7 @@ public class MemoryAgentCapabilities {
   }
 
   @NotNull
-  public static MemoryAgentCapabilities get(@NotNull DebugProcessImpl debugProcess) {
+  static MemoryAgentCapabilities get(@NotNull DebugProcessImpl debugProcess) {
     if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) return DISABLED;
     MemoryAgentCapabilities capabilities = debugProcess.getUserData(MEMORY_AGENT_CAPABILITIES_KEY);
     return capabilities != null ? capabilities : DISABLED;

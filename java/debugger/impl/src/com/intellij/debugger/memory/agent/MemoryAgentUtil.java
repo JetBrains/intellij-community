@@ -2,7 +2,9 @@
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcessAdapterImpl;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.memory.agent.extractor.AgentExtractor;
@@ -116,7 +118,7 @@ public class MemoryAgentUtil {
   }
 
   public static List<JavaReferenceInfo> tryCalculateSizes(@NotNull List<JavaReferenceInfo> objects, @Nullable MemoryAgent agent) {
-    if (agent == null || !agent.canEstimateObjectsSizes()) return objects;
+    if (agent == null || !agent.capabilities().canEstimateObjectsSizes()) return objects;
     if (objects.size() > ESTIMATE_OBJECTS_SIZE_LIMIT) {
       LOG.info("Too many objects to estimate their sizes");
       return objects;

@@ -17,10 +17,9 @@ public interface MemoryAgent {
    */
   int DEFAULT_GC_ROOTS_OBJECTS_LIMIT = 1000;
 
-  boolean isLoaded();
-
-  static boolean isLoaded(@NotNull DebugProcessImpl debugProcess) {
-    return MemoryAgentCapabilities.get(debugProcess).isLoaded();
+  @NotNull
+  static MemoryAgentCapabilities capabilities(@NotNull DebugProcessImpl debugProcess) {
+    return MemoryAgentCapabilities.get(debugProcess);
   }
 
   @NotNull
@@ -35,15 +34,12 @@ public interface MemoryAgent {
     return context != null ? using(context) : null;
   }
 
-  boolean canEstimateObjectSize();
+  @NotNull
+  MemoryAgentCapabilities capabilities();
 
   long estimateObjectSize(@NotNull ObjectReference reference) throws EvaluateException;
 
-  boolean canEstimateObjectsSizes();
-
   long[] estimateObjectsSizes(@NotNull List<ObjectReference> references) throws EvaluateException;
-
-  boolean canGetReferringObjects();
 
   @NotNull
   ReferringObjectsInfo findReferringObjects(@NotNull ObjectReference reference, int limit) throws EvaluateException;
