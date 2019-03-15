@@ -513,7 +513,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
 
     DefaultActionGroup tabResultsContextGroup = new DefaultActionGroup();
-    tabResultsContextGroup.add(new ToggleAction(FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox")) {
+    tabResultsContextGroup.add(new ToggleAction(FindBundle.message("find.options.skip.results.tab.with.one.usage.action")) {
       @Override
       public boolean isDumbAware() {
         return true;
@@ -535,7 +535,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         e.getPresentation().setVisible(!myHelper.isReplaceState());
       }
     });
-    tabResultsContextGroup.add(new ToggleAction(FindBundle.message("find.open.in.new.tab.checkbox")) {
+    tabResultsContextGroup.add(new ToggleAction(FindBundle.message("find.open.in.new.tab.action")) {
       @Override
       public boolean isDumbAware() {
         return true;

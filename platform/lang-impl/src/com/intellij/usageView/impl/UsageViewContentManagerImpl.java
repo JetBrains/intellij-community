@@ -44,7 +44,7 @@ public class UsageViewContentManagerImpl extends UsageViewContentManager {
     toolWindow.setToHideOnEmptyContent(true);
     toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowFind);
 
-    DumbAwareToggleAction toggleNewTabAction = new DumbAwareToggleAction(FindBundle.message("find.open.in.new.tab.title.action")) {
+    DumbAwareToggleAction toggleNewTabAction = new DumbAwareToggleAction(FindBundle.message("find.open.in.new.tab.action")) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return FindSettings.getInstance().isShowResultsInSeparateView();
