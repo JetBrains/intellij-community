@@ -37,7 +37,7 @@ internal class CreateAnnotationAction(target: PsiModifierListOwner, override val
 internal fun addAnnotationToModifierList(modifierList: PsiModifierList, annotationRequest: AnnotationRequest) {
   val project = modifierList.project
   val annotation = modifierList.addAnnotation(annotationRequest.qualifiedName)
-  val psiElementFactory = PsiElementFactory.SERVICE.getInstance(project)
+  val psiElementFactory = PsiElementFactory.getInstance(project)
 
   attributes@ for ((name, value) in annotationRequest.attributes) {
     val memberValue = when (value) {

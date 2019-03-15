@@ -71,14 +71,14 @@ public class PropertyUtilTest extends LightCodeInsightTestCase {
   }
 
   private static PsiType getType(@NonNls String type) throws IncorrectOperationException {
-    return PsiElementFactory.SERVICE.getInstance(ourProject).createTypeFromText(type, null);
+    return PsiElementFactory.getInstance(ourProject).createTypeFromText(type, null);
   }
 
   private static PsiField createField(@NonNls String name, @NonNls String type) throws IncorrectOperationException {
-    return PsiElementFactory.SERVICE.getInstance(ourProject).createField(name, getType(type));
+    return PsiElementFactory.getInstance(ourProject).createField(name, getType(type));
   }
 
   private static PsiMethod createMethod(@NonNls String name, String type) throws IncorrectOperationException {
-    return PsiElementFactory.SERVICE.getInstance(ourProject).createMethod(name, getType(type));
+    return PsiElementFactory.getInstance(ourProject).createMethod(name, getType(type));
   }
 }

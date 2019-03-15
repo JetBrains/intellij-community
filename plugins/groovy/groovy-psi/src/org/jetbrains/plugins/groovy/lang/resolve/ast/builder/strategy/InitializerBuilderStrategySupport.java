@@ -54,7 +54,7 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
     private InitializerBuilderStrategyHandler(@NotNull TransformationContext context) {
       myContext = context;
       myContainingClass = context.getCodeClass();
-      myElementFactory = PsiElementFactory.SERVICE.getInstance(myContainingClass.getProject());
+      myElementFactory = PsiElementFactory.getInstance(myContainingClass.getProject());
     }
 
     public void doProcess() {

@@ -304,7 +304,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     }
 
     try {
-      PsiTryStatement tryStmt = (PsiTryStatement)PsiElementFactory.SERVICE.getInstance(myProject)
+      PsiTryStatement tryStmt = (PsiTryStatement)PsiElementFactory.getInstance(myProject)
         .createStatementFromText("try {} catch (" + declarationTemplate.getText(props) + ") {\n}", null);
       PsiParameter parameter = tryStmt.getCatchSections()[0].getParameter();
 
@@ -323,7 +323,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       }
 
       PsiCodeBlock block =
-        PsiElementFactory.SERVICE.getInstance(myProject).createCodeBlockFromText("{\n" + template.getText(props) + "\n}", null);
+        PsiElementFactory.getInstance(myProject).createCodeBlockFromText("{\n" + template.getText(props) + "\n}", null);
       Objects.requireNonNull(catchSection.getCatchBlock()).replace(block);
     }
     catch (ProcessCanceledException ce) {

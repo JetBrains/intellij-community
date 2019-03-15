@@ -1029,7 +1029,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiExpression initializer = variable.getInitializer();
     if (firstRef == null) {
       if (initializer != null && SideEffectChecker.mayHaveSideEffects(initializer)) {
-        RemoveUnusedVariableUtil.replaceElementWithExpression(initializer, PsiElementFactory.SERVICE.getInstance(myProject), variable);
+        RemoveUnusedVariableUtil.replaceElementWithExpression(initializer, PsiElementFactory.getInstance(myProject), variable);
       }
       else {
         variable.getParent().delete();

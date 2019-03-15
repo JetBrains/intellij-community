@@ -822,7 +822,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       List<PsiAnnotationMemberValue> values = ContainerUtil.map(myMemberValuePointers, SmartPsiElementPointer::getElement);
       String text = StringUtil.join(Collections.nCopies(values.size(), "0"), " | ");
-      PsiExpression concatExp = PsiElementFactory.SERVICE.getInstance(project).createExpressionFromText(text, startElement);
+      PsiExpression concatExp = PsiElementFactory.getInstance(project).createExpressionFromText(text, startElement);
 
       List<PsiLiteralExpression> expressionsToReplace = new ArrayList<>(values.size());
       concatExp.accept(new JavaRecursiveElementWalkingVisitor() {
