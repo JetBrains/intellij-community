@@ -33,17 +33,6 @@ import java.util.Set;
 
 public final class TrailingSpacesStripper implements FileDocumentManagerListener {
 
-  /**
-   * @deprecated Use {@link TrailingSpacesOptionsProvider}
-   */
-  @Deprecated
-  public static final Key<String> OVERRIDE_STRIP_TRAILING_SPACES_KEY = Key.create("OVERRIDE_TRIM_TRAILING_SPACES_KEY");
-  /**
-   * @deprecated Use {@link TrailingSpacesOptionsProvider}
-   */
-  @Deprecated
-  public static final Key<Boolean> OVERRIDE_ENSURE_NEWLINE_KEY = Key.create("OVERRIDE_ENSURE_NEWLINE_KEY");
-
   private static final Key<Boolean> DISABLE_FOR_FILE_KEY = Key.create("DISABLE_TRAILING_SPACE_STRIPPER_FOR_FILE_KEY");
 
   private final Set<Document> myDocumentsToStripLater = new THashSet<>();
@@ -222,13 +211,15 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
         if (editorSettings != null) {
           final Editor activeEditor = getActiveEditor(document);
           final Project project = getProject(document, activeEditor);
-          TrailingSpacesOptions currOptions = new EditorTrailingSpacesOptions(editorSettings);
+          MyTrailingSpacesOptions currOptions = new MyTrailingSpacesOptions();
           if (project != null) {
             for (TrailingSpacesOptionsProvider provider : TrailingSpacesOptionsProvider.EP_NAME.getExtensionList()) {
-              TrailingSpacesOptions fileOptions = provider.getOptions(project, file);
-              if (fileOptions != null) {
-                fileOptions.setDelegate(currOptions);
-                currOptions = fileOptions;
+              TrailingSpacesOptionsProvider.Options providerOptions = provider.getOptions(project, file);
+              if (providerOptions != null) {
+                currOptions.setStripTrailingSpaces(providerOptions.getStripTrailingSpaces());
+                currOptions.setEnsureNewLineAtEOF(providerOptions.getEnsureNewLineAtEOF());
+                currOptions.setChangedLinesOnly(providerOptions.getChangedLinesOnly());
+                currOptions.setKeepTrailingSpacesOnCaretLine(providerOptions.getKeepTrailingSpacesOnCaretLine());
               }
             }
           }
@@ -239,31 +230,68 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     return null;
   }
 
-  private static class EditorTrailingSpacesOptions extends TrailingSpacesOptions {
+  private static class MyTrailingSpacesOptions implements TrailingSpacesOptions {
+    private @Nullable Boolean myStripTrailingSpaces;
+    private @Nullable Boolean myEnsureNewLineAtEOF;
+    private @Nullable Boolean myChangedLinesOnly;
+    private @Nullable Boolean myKeepTrailingSpacesOnCaretLine;
+
     private final EditorSettingsExternalizable myEditorSettings;
 
-    private EditorTrailingSpacesOptions(EditorSettingsExternalizable settings) {
-      myEditorSettings = settings;
+    private MyTrailingSpacesOptions() {
+      myEditorSettings = EditorSettingsExternalizable.getInstance();
+    }
+
+    private void setStripTrailingSpaces(@Nullable Boolean stripTrailingSpaces) {
+      if (stripTrailingSpaces != null && myStripTrailingSpaces == null) {
+        myStripTrailingSpaces = stripTrailingSpaces;
+      }
+    }
+
+    private void setEnsureNewLineAtEOF(@Nullable Boolean ensureNewLineAtEOF) {
+      if (ensureNewLineAtEOF != null && myEnsureNewLineAtEOF == null) {
+        myEnsureNewLineAtEOF = ensureNewLineAtEOF;
+      }
+    }
+
+    private void setChangedLinesOnly(@Nullable Boolean changedLinesOnly) {
+      if (changedLinesOnly != null && myChangedLinesOnly == null) {
+        myChangedLinesOnly = changedLinesOnly;
+      }
+    }
+
+    private void setKeepTrailingSpacesOnCaretLine(@Nullable Boolean keepTrailingSpacesOnCaretLine) {
+      if (keepTrailingSpacesOnCaretLine != null && myKeepTrailingSpacesOnCaretLine == null) {
+        myKeepTrailingSpacesOnCaretLine = keepTrailingSpacesOnCaretLine;
+      }
     }
 
     @Override
-    public Boolean getStripTrailingSpaces() {
-      return !EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(myEditorSettings.getStripTrailingSpaces());
+    public boolean isStripTrailingSpaces() {
+      return myStripTrailingSpaces != null
+             ? myStripTrailingSpaces.booleanValue()
+             : !EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(myEditorSettings.getStripTrailingSpaces());
     }
 
     @Override
-    public Boolean getEnsureNewLineAtEOF() {
-      return myEditorSettings.isEnsureNewLineAtEOF();
+    public boolean isEnsureNewLineAtEOF() {
+      return myEnsureNewLineAtEOF != null
+             ? myEnsureNewLineAtEOF.booleanValue()
+             : myEditorSettings.isEnsureNewLineAtEOF();
     }
 
     @Override
-    public Boolean getChangedLinesOnly() {
-      return !EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(myEditorSettings.getStripTrailingSpaces());
+    public boolean isChangedLinesOnly() {
+      return myChangedLinesOnly != null
+             ? myChangedLinesOnly.booleanValue()
+             : !EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(myEditorSettings.getStripTrailingSpaces());
     }
 
     @Override
-    public Boolean getKeepTrailingSpacesOnCaretLine() {
-      return myEditorSettings.isKeepTrailingSpacesOnCaretLine();
+    public boolean isKeepTrailingSpacesOnCaretLine() {
+      return myKeepTrailingSpacesOnCaretLine != null
+             ? myKeepTrailingSpacesOnCaretLine.booleanValue()
+             : myEditorSettings.isKeepTrailingSpacesOnCaretLine();
     }
   }
 }

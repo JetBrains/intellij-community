@@ -2,7 +2,6 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.openapi.fileEditor.TrailingSpacesOptions;
 import com.intellij.openapi.fileEditor.TrailingSpacesOptionsProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,7 +18,7 @@ public class EditorConfigTrailingSpacesOptionsProvider implements TrailingSpaces
 
   @Nullable
   @Override
-  public TrailingSpacesOptions getOptions(@NotNull Project project, @NotNull VirtualFile file) {
+  public TrailingSpacesOptionsProvider.Options getOptions(@NotNull Project project, @NotNull VirtualFile file) {
     if (Utils.isEnabled(CodeStyle.getSettings(project))) {
       final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(project, file);
       final Boolean trimTrailingWhitespace = getBooleanValue(outPairs, TRIM_TRAILING_WHITESPACE);
@@ -44,7 +43,7 @@ public class EditorConfigTrailingSpacesOptionsProvider implements TrailingSpaces
     return null;
   }
 
-  private static class FileOptions extends TrailingSpacesOptions {
+  private static class FileOptions implements TrailingSpacesOptionsProvider.Options {
     private final @Nullable Boolean myTrimTrailingSpaces;
     private final @Nullable Boolean myInsertFinalNewLine;
 
@@ -55,25 +54,25 @@ public class EditorConfigTrailingSpacesOptionsProvider implements TrailingSpaces
 
     @Nullable
     @Override
-    protected Boolean getStripTrailingSpaces() {
+    public Boolean getStripTrailingSpaces() {
       return myTrimTrailingSpaces;
     }
 
     @Nullable
     @Override
-    protected Boolean getEnsureNewLineAtEOF() {
+    public Boolean getEnsureNewLineAtEOF() {
       return myInsertFinalNewLine;
     }
 
     @Nullable
     @Override
-    protected Boolean getChangedLinesOnly() {
+    public Boolean getChangedLinesOnly() {
       return myTrimTrailingSpaces != null ? !myTrimTrailingSpaces : null;
     }
 
     @Nullable
     @Override
-    protected Boolean getKeepTrailingSpacesOnCaretLine() {
+    public Boolean getKeepTrailingSpacesOnCaretLine() {
       return myTrimTrailingSpaces != null ? !myTrimTrailingSpaces : null;
     }
   }
