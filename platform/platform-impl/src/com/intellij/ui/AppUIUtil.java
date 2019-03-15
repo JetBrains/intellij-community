@@ -79,15 +79,16 @@ public class AppUIUtil {
 
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     List<Image> images = new ArrayList<>(3);
+    ScaleContext ctx = ScaleContext.create(window);
 
     if (SystemInfo.isUnix) {
-      Image svgIcon = loadApplicationIcon(window, 128, appInfo.getBigIconUrl());
+      Image svgIcon = loadApplicationIcon(ctx, 128, appInfo.getBigIconUrl());
       if (svgIcon != null) {
         images.add(svgIcon);
       }
     }
 
-    images.add(loadApplicationIcon(window, 32, appInfo.getIconUrl()));
+    images.add(loadApplicationIcon(ctx, 32, appInfo.getIconUrl()));
     images.add(ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
 
     for (int i = 0; i < images.size(); i++) {
@@ -108,22 +109,22 @@ public class AppUIUtil {
     }
   }
 
-  public static Icon loadApplicationIcon(@NotNull Window window) {
-    Image image = loadApplicationIcon(window, 16, null);
-    image = ImageUtil.ensureHiDPI(image, JBUI.ScaleContext.create(window));
+  public static Icon loadHiDPIApplicationIcon(@NotNull ScaleContext ctx, int size) {
+    Image image = loadApplicationIcon(ctx, size, null);
+    image = ImageUtil.ensureHiDPI(image, ctx);
     if (image == null) return null;
 
     return new JBImageIcon(image);
   }
 
   @Nullable
-  private static Image loadApplicationIcon(@NotNull Window window, int size, @Nullable String fallbackImageResourcePath) {
+  private static Image loadApplicationIcon(@NotNull ScaleContext ctx, int size, @Nullable String fallbackImageResourcePath) {
     String svgIconUrl = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
     if (svgIconUrl != null) {
       URL url = AppUIUtil.class.getResource(svgIconUrl);
       try {
         return
-          SVGLoader.load(url, AppUIUtil.class.getResourceAsStream(svgIconUrl), ScaleContext.create(window), size, size);
+          SVGLoader.load(url, AppUIUtil.class.getResourceAsStream(svgIconUrl), ctx, size, size);
       }
       catch (IOException e) {
         LOG.info("Cannot load svg application icon from " + svgIconUrl, e);

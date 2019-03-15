@@ -14,7 +14,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -23,6 +25,8 @@ import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
 
 /**
  * @author Konstantin Bulenkov
@@ -237,20 +241,16 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
 
   protected JMenuBar createMenuBar() {
-    myMenuBar = new JMenuBar(){
-      private Icon mySystemIcon;
-      private Window currentWindow;
+    myMenuBar = new JMenuBar() {
+      private final ScaleContext.Cache<Icon> myIconProvider =
+        new ScaleContext.Cache<>(ctx -> ObjectUtils.notNull(AppUIUtil.loadHiDPIApplicationIcon(ctx, 16), AllIcons.Icon_small));
 
       private Icon getIcon() {
-        if(mySystemIcon != null && myWindow != currentWindow) return mySystemIcon;
-        if(myWindow == null) return mySystemIcon != null ? mySystemIcon : AllIcons.Icon_small;
+        if(myWindow == null) return AllIcons.Icon_small;
 
-        Icon image = AppUIUtil.loadApplicationIcon(myWindow);
-        if (image == null) return mySystemIcon != null ? mySystemIcon : AllIcons.Icon_small;
-
-        mySystemIcon = image;
-        currentWindow = myWindow;
-        return image;
+        ScaleContext ctx = ScaleContext.create(myWindow);
+        ctx.overrideScale(USR_SCALE.of(1));
+        return myIconProvider.getOrProvide(ctx);
       }
 
       @Override
