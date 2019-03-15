@@ -1774,38 +1774,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertTrue(String.valueOf(mean), mean < 10);
   }
 
-  private static void startCPUProfiling() {
-    try {
-      Class<?> aClass = Class.forName("com.intellij.util.ProfilingUtil");
-      Method method = ObjectUtils.assertNotNull(ReflectionUtil.getDeclaredMethod(aClass, "startCPUProfiling"));
-      method.invoke(null);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-  private static void stopCPUProfiling() {
-    try {
-      Class<?> aClass = Class.forName("com.intellij.util.ProfilingUtil");
-      Method method = ObjectUtils.assertNotNull(ReflectionUtil.getDeclaredMethod(aClass, "stopCPUProfiling"));
-      method.invoke(null);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private static String captureCPUSnapshot() {
-    try {
-      Class<?> aClass = Class.forName("com.intellij.util.ProfilingUtil");
-      Method method = ObjectUtils.assertNotNull(ReflectionUtil.getDeclaredMethod(aClass, "captureCPUSnapshot"));
-      return (String)method.invoke(null);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   public void testPostHighlightingPassRunsOnEveryPsiModification() throws Exception {
     PsiFile x = createFile("X.java", "public class X { public static void ffffffffffffff(){} }");
     PsiFile use = createFile("Use.java", "public class Use { { <caret>X.ffffffffffffff(); } }");
