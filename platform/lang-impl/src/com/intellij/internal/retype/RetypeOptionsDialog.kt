@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.retype
 
 import com.intellij.ide.util.propComponentProperty
@@ -48,7 +48,7 @@ class RetypeOptionsDialog(project: Project, private val retypeOptions: RetypeOpt
         spinner(retypeOptions::threadDumpDelay, 50, 5000, 50)
       }
       row {
-        val c = checkBox("Create", retypeOptions::enableLargeIndexing)
+        val c = checkBox("Create", retypeOptions::enableLargeIndexing).actsAsLabel()
         spinner(retypeOptions::largeIndexFilesCount, 100, 1_000_000, 1_000)
           .enableIfSelected(c)
         label("files to start background indexing")
