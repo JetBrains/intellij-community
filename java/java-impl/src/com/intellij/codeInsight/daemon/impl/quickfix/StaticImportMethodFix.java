@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -30,11 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
-  protected final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
-
-  public StaticImportMethodFix(@NotNull PsiMethodCallExpression methodCallExpression) {
-    myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
+public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiMethodCallExpression> {
+  public StaticImportMethodFix(@NotNull PsiFile file, @NotNull PsiMethodCallExpression methodCallExpression) {
+    super(file, methodCallExpression);
   }
 
   @NotNull
@@ -54,9 +53,9 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
   @NotNull
   @Override
   protected List<PsiMethod> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode searchMode) {
-    final Project project = myMethodCall.getProject();
+    final Project project = myRef.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    final PsiMethodCallExpression element = myMethodCall.getElement();
+    final PsiMethodCallExpression element = myRef.getElement();
     PsiReferenceExpression reference = element == null ? null : element.getMethodExpression();
     String name = reference == null ? null : reference.getReferenceName();
     if (name == null) return Collections.emptyList();
@@ -73,19 +72,19 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
   @Override
   @NotNull
   protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
-    return new StaticImportMethodQuestionAction<>(project, editor, methodsToImport, myMethodCall);
+    return new StaticImportMethodQuestionAction<>(project, editor, methodsToImport, myRef);
   }
 
   @Nullable
   @Override
   protected PsiElement getElement() {
-    return myMethodCall.getElement();
+    return myRef.getElement();
   }
 
   @Nullable
   @Override
   protected PsiElement getQualifierExpression() {
-    final PsiMethodCallExpression element = myMethodCall.getElement();
+    final PsiMethodCallExpression element = myRef.getElement();
     return element != null ? element.getMethodExpression().getQualifierExpression() : null;
   }
 
@@ -104,6 +103,7 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
 
     @Override
     protected boolean isApplicable(PsiMethod method, PsiElement place) {
+      ProgressManager.checkCanceled();
       final PsiExpressionList argumentList = ((PsiMethodCallExpression)place).getArgumentList();
       final MethodCandidateInfo candidateInfo =
         new MethodCandidateInfo(method, PsiSubstitutor.EMPTY, false, false, argumentList, null, argumentList.getExpressionTypes(), null);

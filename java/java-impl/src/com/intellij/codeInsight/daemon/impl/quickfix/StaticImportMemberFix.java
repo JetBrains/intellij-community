@@ -28,20 +28,26 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiMember;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class StaticImportMemberFix<T extends PsiMember> implements IntentionAction, HintAction {
+// will import elements of type T which are referenced by elements of type R (e.g. will import PsiMethods referenced by PsiMethodCallExpression)
+public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> implements IntentionAction, HintAction {
   // we keep max 2 candidates
-  private List<T> candidates;
+  private final List<T> candidates;
+  protected final SmartPsiElementPointer<R> myRef;
+
+  StaticImportMemberFix(@NotNull PsiFile file, @NotNull R reference) {
+    myRef = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(reference);
+    // search for suitable candidates here, in the background thread
+    candidates = getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_2_MEMBERS);
+  }
 
   @NotNull
   protected abstract String getBaseText();
@@ -72,7 +78,8 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
            && getQualifierExpression() == null
            && resolveRef() == null
            && BaseIntentionAction.canModify(file)
-           && !(candidates == null ? candidates = getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_2_MEMBERS) : candidates).isEmpty()
+           && !candidates.isEmpty()
+           && ContainerUtil.all(candidates, PsiElement::isValid)
       ;
   }
 
@@ -130,17 +137,9 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
     }
 
     final QuestionAction action = createQuestionAction(candidates, element.getProject(), editor);
-    /* PsiFile psiFile = element.getContainingFile();
-   if (candidates.size() == 1 &&
-        ImportClassFixBase.isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
-        (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile)) &&
-        !LaterInvocator.isInModalContext()) {
-      CommandProcessor.getInstance().runUndoTransparentAction(() -> action.execute());
-      return ImportClassFixBase.Result.CLASS_AUTO_IMPORTED;
-    }
-*/
     String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberPresentableText(candidates.get(0)));
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()
+        && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
       final TextRange textRange = element.getTextRange();
       HintManager.getInstance().showQuestionHint(editor, hintText,
                                                  textRange.getStartOffset(),

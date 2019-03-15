@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
-  public QualifyStaticMethodCallFix(@NotNull PsiMethodCallExpression methodCallExpression) {
-    super(methodCallExpression);
+  public QualifyStaticMethodCallFix(@NotNull PsiFile file, @NotNull PsiMethodCallExpression methodCallExpression) {
+    super(file, methodCallExpression);
   }
 
   @NotNull
@@ -40,10 +40,10 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
   protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport,
                                                                              @NotNull Project project,
                                                                              Editor editor) {
-    return new StaticImportMethodQuestionAction<PsiMethod>(project, editor, methodsToImport, myMethodCall) {
+    return new StaticImportMethodQuestionAction<PsiMethod>(project, editor, methodsToImport, myRef) {
       @Override
       protected void doImport(PsiMethod toImport) {
-        PsiMethodCallExpression element = myMethodCall.getElement();
+        PsiMethodCallExpression element = myRef.getElement();
         if (element == null) return;
         qualifyStatically(toImport, project, element.getMethodExpression());
       }
