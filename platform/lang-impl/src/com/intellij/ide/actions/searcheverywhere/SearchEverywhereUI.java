@@ -854,7 +854,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     if (closePopup) {
       closePopup();
     } else {
-      myResultsList.repaint();
+      ApplicationManager.getApplication().invokeLater(() -> myResultsList.repaint());
     }
   }
 
