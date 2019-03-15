@@ -444,7 +444,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private void registerPluginActions() {
     final List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins(null);
     for (IdeaPluginDescriptor plugin : plugins) {
-      final List<Element> elementList = plugin.getActionsDescriptionElements();
+      final List<Element> elementList = plugin.getActionDescriptionElements();
       if (elementList != null) {
         for (Element e : elementList) {
           processActionsChildElement(plugin.getPluginClassLoader(), plugin.getPluginId(), e);
@@ -543,12 +543,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
    * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of {@code AnAction}.
    */
   @Nullable
-  private AnAction processActionElement(Element element, final ClassLoader loader, PluginId pluginId) {
+  private AnAction processActionElement(@NotNull Element element, final ClassLoader loader, PluginId pluginId) {
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null || className.isEmpty()) {
       reportActionError(pluginId, "action element should have specified \"class\" attribute");
       return null;
     }
+
     // read ID and register loaded action
     String id = obtainActionId(element, className);
     if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
@@ -624,7 +625,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private AnAction processGroupElement(Element element, final ClassLoader loader, PluginId pluginId) {
+  private AnAction processGroupElement(@NotNull Element element, final ClassLoader loader, PluginId pluginId) {
     final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
 
@@ -948,7 +949,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return action;
   }
 
-  private void processActionsChildElement(final ClassLoader loader, final PluginId pluginId, final Element child) {
+  private void processActionsChildElement(final ClassLoader loader, final PluginId pluginId, @NotNull Element child) {
     String name = child.getName();
     if (ACTION_ELEMENT_NAME.equals(name)) {
       AnAction action = processActionElement(child, loader, pluginId);

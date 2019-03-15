@@ -615,7 +615,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   @Nullable
-  public List<Element> getActionsDescriptionElements() {
+  public List<Element> getActionDescriptionElements() {
     return myActionElements;
   }
 
