@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.ide.StartupProgress;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 
@@ -57,7 +60,8 @@ public class Splash extends JDialog implements StartupProgress {
     }
     setFocusableWindowState(false);
 
-    Icon originalImage = IconLoader.getIcon(info.getSplashImageUrl());
+    String splashImageUrl = info.getSplashImageUrl();
+    Icon originalImage = IconLoader.getIcon(splashImageUrl);
     myImage = new SplashImage(IconLoader.getIconSnapshot(originalImage), info.getSplashTextColor());
     myLabel = new JLabel(myImage) {
       @Override
@@ -78,7 +82,27 @@ public class Splash extends JDialog implements StartupProgress {
     setSize(size);
     pack();
     setLocationInTheCenterOfScreen();
+
+    initImages();
   }
+
+  private void initImages() {
+    List<ProgressSlide> progressSlides = myInfo.getProgressSlides();
+    if (progressSlides.isEmpty()) {
+      return;
+    }
+
+    for (ProgressSlide progressSlide : progressSlides) {
+      String url = progressSlide.getUrl();
+      Icon icon = IconLoader.getIcon(url);
+      progressSlide.setImageIcon(icon);
+      myProgressSlideImages.add(progressSlide);
+    }
+
+    myProgressSlideImages.sort(Comparator.comparing(ProgressSlide::getProgressRation));
+  }
+
+  private ArrayList<ProgressSlide> myProgressSlideImages = new ArrayList<>();
 
   private void setLocationInTheCenterOfScreen() {
     Rectangle bounds = getGraphicsConfiguration().getBounds();
@@ -119,6 +143,10 @@ public class Splash extends JDialog implements StartupProgress {
   }
 
   private void paintProgress(Graphics g) {
+    boolean hasSlides = myProgressSlideImages.size() > 0;
+    if (hasSlides)
+      paintSlides(g);
+
     final Color color = getProgressColor();
     if (color == null) return;
 
@@ -131,12 +159,21 @@ public class Splash extends JDialog implements StartupProgress {
     final int progressWidth = (int)(totalWidth * myProgress);
     final int width = progressWidth - myProgressLastPosition;
     g.setColor(color);
-    g.fillRect(0, getProgressY(), width, getProgressHeight());
+    int y = hasSlides ? myLabel.getHeight() - getProgressHeight() : getProgressY();
+    g.fillRect(0, y, width, getProgressHeight());
     if (myProgressTail != null) {
       myProgressTail.paintIcon(this, g, (int)(width - (myProgressTail.getIconWidth() / uiScale(1f) / 2f * uiScale(1f))),
                                (int)(getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight()) / uiScale(1f) / 2f * uiScale(1f))); //I'll buy you a beer if you understand this line without playing with it
     }
     myProgressLastPosition = progressWidth;
+  }
+
+  private void paintSlides(Graphics g) {
+    for (ProgressSlide progressSlide : myProgressSlideImages) {
+      if (progressSlide.getProgressRation() <= myProgress) {
+        progressSlide.getLoadedImage().paintIcon(this, g, 0, 0);
+      }
+    }
   }
 
   private Color getProgressColor() {
