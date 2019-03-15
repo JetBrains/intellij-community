@@ -859,7 +859,7 @@
     <toolWindow id="Run Dashboard" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowRun" canCloseContents="true"
                 factoryClass="com.intellij.execution.dashboard.RunDashboardToolWindowFactory"
                 conditionClass="com.intellij.execution.dashboard.RunDashboardToolWindowFactory" />
-    <toolWindow id="Services" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowRun" canCloseContents="true"
+    <toolWindow id="Services" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowServices" canCloseContents="true"
                 factoryClass="com.intellij.execution.services.ServiceViewToolWindowFactory"
                 conditionClass="com.intellij.execution.services.ServiceViewToolWindowFactory" />
 
