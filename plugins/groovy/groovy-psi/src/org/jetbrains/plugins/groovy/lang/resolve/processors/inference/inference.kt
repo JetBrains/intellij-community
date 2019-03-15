@@ -77,6 +77,11 @@ fun PsiClass.type(): PsiClassType {
   return PsiElementFactory.SERVICE.getInstance(project).createType(this, PsiSubstitutor.EMPTY)
 }
 
+fun PsiClass.rawType(): PsiClassType {
+  val factory = PsiElementFactory.SERVICE.getInstance(project)
+  return factory.createType(this, factory.createRawSubstitutor(this))
+}
+
 fun inferDerivedSubstitutor(leftType: PsiType, derived: PsiClass, context: PsiElement): PsiSubstitutor {
   val session = InferenceSession(derived.typeParameters, PsiSubstitutor.EMPTY, context.manager, null)
   session.addConstraint(TypeCompatibilityConstraint(leftType, session.substituteWithInferenceVariables(derived.type())))
