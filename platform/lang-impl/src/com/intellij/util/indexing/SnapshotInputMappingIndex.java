@@ -12,7 +12,7 @@ public interface SnapshotInputMappingIndex<Key, Value, Input> {
   Map<Key, Value> readData(int hashId) throws IOException;
 
   @NotNull
-  Map<Key, Value> readDataOrMap(@NotNull Input content);
+  Map<Key, Value> readDataOrMap(@Nullable Input content);
 
   int getHashId(@Nullable Input content) throws IOException;
 

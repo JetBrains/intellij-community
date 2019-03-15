@@ -38,11 +38,14 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
   private final AtomicBoolean myInMemoryMode = new AtomicBoolean();
   private final TIntObjectHashMap<Map<Key, Value>> myInMemoryKeysAndValues = new TIntObjectHashMap<>();
-  private final SnapshotInputMappings<Key, Value, Input> mySnapshotInputMappings;
+  private final SnapshotInputMappingIndex<Key, Value, Input> mySnapshotInputMappings;
 
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                                 @NotNull IndexStorage<Key, Value> storage) throws IOException {
-    this(extension, storage, getForwardIndex(extension));
+    this(extension,
+         storage,
+         getForwardIndex(extension),
+         hasSnapshotMapping(extension) ? new SnapshotInputMappings<>(extension) : null);
     if (!(myIndexId instanceof ID<?, ?>)) {
       throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
     }
@@ -50,12 +53,15 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                                 @NotNull IndexStorage<Key, Value> storage,
-                                @Nullable ForwardIndex<Key, Value> forwardIndex) throws IOException {
-    super(extension, storage, forwardIndex);
+                                @Nullable ForwardIndex<Key, Value> forwardIndex,
+                                @Nullable SnapshotInputMappings<Key, Value, Input> snapshotInputMappings) throws IOException {
+    super(extension,
+          storage,
+          snapshotInputMappings != null ? new SharedMapForwardIndex(extension, snapshotInputMappings.getForwardIndexAccessor()): null,
+          snapshotInputMappings != null ? snapshotInputMappings.getForwardIndexAccessor(): null,
+          forwardIndex);
     SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
-    mySnapshotInputMappings = myForwardIndex == null && hasSnapshotMapping(extension)?
-                              new SnapshotInputMappings<>(extension) :
-                              null;
+    mySnapshotInputMappings = snapshotInputMappings;
     installMemoryModeListener();
   }
 
@@ -67,48 +73,39 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
   @NotNull
   @Override
-  protected UpdateData<Key, Value> calculateUpdateData(int inputId, @Nullable Input content) {
-    Map<Key, Value> data;
-    int hashId;
+  protected Map<Key, Value> mapInput(@Nullable Input content) {
     if (mySnapshotInputMappings != null && !myInMemoryMode.get()) {
-      final SnapshotInputMappings.Snapshot<Key, Value> snapshot = mySnapshotInputMappings.readPersistentDataOrMap(content);
-      data = snapshot.getData();
-      hashId = snapshot.getHashId();
+      return mySnapshotInputMappings.readDataOrMap(content);
     }
-    else {
-      data = mapInput(content);
-      hashId = 0;
-    }
-    return createUpdateData(data, () -> {
-      if (mySnapshotInputMappings != null && !myInMemoryMode.get()) {
-        return new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
-      }
-      if (myInMemoryMode.get()) {
-        synchronized (myInMemoryKeysAndValues) {
-          Map<Key, Value> keysAndValues = myInMemoryKeysAndValues.get(inputId);
-          if (keysAndValues != null) {
-            return new MapInputDataDiffBuilder<>(inputId, keysAndValues);
-          }
-        }
+    return super.mapInput(content);
+  }
 
-        if (mySnapshotInputMappings != null) {
-          return new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
+  @NotNull
+  @Override
+  protected InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
+    if (mySnapshotInputMappings != null && !myInMemoryMode.get()) {
+      return super.getKeysDiffBuilder(inputId);
+    }
+    if (myInMemoryMode.get()) {
+      synchronized (myInMemoryKeysAndValues) {
+        Map<Key, Value> keysAndValues = myInMemoryKeysAndValues.get(inputId);
+        if (keysAndValues != null) {
+          return new MapInputDataDiffBuilder<>(inputId, keysAndValues);
         }
       }
-      return getKeysDiffBuilder(inputId);
-    }, () -> {
-      if (myInMemoryMode.get()) {
-        synchronized (myInMemoryKeysAndValues) {
-          myInMemoryKeysAndValues.put(inputId, data);
-        }
-      } else {
-        if (mySnapshotInputMappings != null ) {
-          mySnapshotInputMappings.putInputHash(inputId, hashId);
-        } else {
-          myForwardIndex.putInputData(inputId, data);
-        }
+    }
+    return super.getKeysDiffBuilder(inputId);
+  }
+
+  @Override
+  protected void updateForwardIndex(int inputId, @NotNull Map<Key, Value> data, @Nullable Object forwardIndexData) throws IOException {
+    if (myInMemoryMode.get()) {
+      synchronized (myInMemoryKeysAndValues) {
+        myInMemoryKeysAndValues.put(inputId, data);
       }
-    });
+    } else {
+      super.updateForwardIndex(inputId, data, forwardIndexData);
+    }
   }
 
   @Override
@@ -142,13 +139,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       try {
         removeTransientDataForKeys(inputId, keyCollection);
 
-        InputDataDiffBuilder<Key, Value> builder;
-        if (mySnapshotInputMappings != null) {
-          builder =  new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
-        } else {
-          builder = getKeysDiffBuilder(inputId);
-        }
-
+        InputDataDiffBuilder<Key, Value> builder = getKeysDiffBuilder(inputId);
         if (builder instanceof CollectionInputDataDiffBuilder<?, ?>) {
           Collection<Key> keyCollectionFromDisk = ((CollectionInputDataDiffBuilder<Key, Value>)builder).getSeq();
           if (keyCollectionFromDisk != null) {
