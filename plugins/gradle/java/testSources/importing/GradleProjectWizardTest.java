@@ -69,13 +69,8 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
       @Override
       public void projectOpened(@NotNull Project project) {
         assertNotEmpty(ProjectDataManager.getInstance().getExternalProjectsData(project, GradleConstants.SYSTEM_ID));
-        try {
-          // project save is not called in unit mode, see com.intellij.ide.impl.NewProjectUtil.doCreate
-          ExternalProjectsDataStorage.getInstance(project).saveAndWait();
-        }
-        catch (Exception e) {
-          fail(e.getMessage());
-        }
+        // project save is not called in unit mode, see com.intellij.ide.impl.NewProjectUtil.doCreate
+        ExternalProjectsDataStorage.getInstance(project).doSave();
       }
     });
 
