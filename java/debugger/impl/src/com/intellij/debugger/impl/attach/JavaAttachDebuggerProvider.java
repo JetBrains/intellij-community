@@ -132,7 +132,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       Set<String> attachedPids = JavaDebuggerAttachUtil.getAttachedPids(project);
       VirtualMachine.list().forEach(desc -> {
         String pid = desc.id();
-        LocalAttachInfo address = getProcessAttachInfo(pid, attachedPids);
+        LocalAttachInfo address = getProcessAttachInfo(pid, attachedPids, false);
         if (address != null) {
           map.put(pid, address);
         }
@@ -160,7 +160,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       res = addressMap.get(pidString);
     }
     else {
-      res = getProcessAttachInfo(pidString, project);
+      res = getProcessAttachInfo(pidString, JavaDebuggerAttachUtil.getAttachedPids(project), true);
     }
     if (res == null) {
       res = getProcessAttachInfo(ParametersListUtil.parse(processInfo.getCommandLine()), pidString);
@@ -197,9 +197,10 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     return null;
   }
 
-  private static LocalAttachInfo getProcessAttachInfo(String pid, @NotNull Set<String> attachedPids) {
+  private static LocalAttachInfo getProcessAttachInfo(String pid, @NotNull Set<String> attachedPids, boolean validate) {
     if (!attachedPids.contains(pid)) {
-      Future<LocalAttachInfo> future = ApplicationManager.getApplication().executeOnPooledThread(() -> getProcessAttachInfoInt(pid));
+      Future<LocalAttachInfo> future =
+        ApplicationManager.getApplication().executeOnPooledThread(() -> getProcessAttachInfoInt(pid, validate));
       try {
         // attaching ang getting info may hang in some cases
         return future.get(5, TimeUnit.SECONDS);
@@ -215,20 +216,15 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   }
 
   @Nullable
-  private static LocalAttachInfo getProcessAttachInfo(@NotNull String pid, @NotNull Project project) {
-    return getProcessAttachInfo(pid, JavaDebuggerAttachUtil.getAttachedPids(project));
-  }
-
-  @Nullable
   static LocalAttachInfo getProcessAttachInfo(@NotNull String pid) {
-    return getProcessAttachInfo(pid, Collections.emptySet());
+    return getProcessAttachInfo(pid, Collections.emptySet(), true);
   }
 
   @Nullable
-  private static LocalAttachInfo getProcessAttachInfoInt(String pid) {
+  private static LocalAttachInfo getProcessAttachInfoInt(String pid, boolean validate) {
     VirtualMachine vm = null;
     try {
-      vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
+      vm = validate ? JavaDebuggerAttachUtil.attachVirtualMachine(pid) : VirtualMachine.attach(pid);
       Properties agentProperties = vm.getAgentProperties();
       String command = agentProperties.getProperty("sun.java.command");
       if (!StringUtil.isEmpty(command)) {
