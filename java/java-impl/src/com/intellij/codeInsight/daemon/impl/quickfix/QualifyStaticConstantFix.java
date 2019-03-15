@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class QualifyStaticConstantFix extends StaticImportConstantFix {
-  QualifyStaticConstantFix(@NotNull PsiJavaCodeReferenceElement referenceElement) {
-    super(referenceElement);
+  QualifyStaticConstantFix(@NotNull PsiFile file, @NotNull PsiJavaCodeReferenceElement referenceElement) {
+    super(file, referenceElement);
   }
 
   @NotNull
