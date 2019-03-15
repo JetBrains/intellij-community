@@ -22,7 +22,6 @@ import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.datatransfer.DataFlavor;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -30,44 +29,20 @@ import java.io.StringReader;
 /**
  * @author Denis Zhdanov
  */
-public abstract class AbstractSyntaxAwareReaderTransferableData extends Reader implements RawTextWithMarkup
-{
+public abstract class AbstractSyntaxAwareReader extends Reader {
 
-  private static final Logger LOG = Logger.getInstance(AbstractSyntaxAwareReaderTransferableData.class);
+  private static final Logger LOG = Logger.getInstance(AbstractSyntaxAwareReader.class);
 
   protected String myRawText;
   @NotNull
   protected final SyntaxInfo mySyntaxInfo;
-  @NotNull
-  private final DataFlavor myDataFlavor;
 
   @Nullable private transient Reader myDelegate;
 
-  public AbstractSyntaxAwareReaderTransferableData(@NotNull SyntaxInfo syntaxInfo, @NotNull DataFlavor dataFlavor) {
+  public AbstractSyntaxAwareReader(@NotNull SyntaxInfo syntaxInfo) {
     mySyntaxInfo = syntaxInfo;
-    myDataFlavor = dataFlavor;
   }
-
-  @Override
-  public DataFlavor getFlavor() {
-    return myDataFlavor;
-  }
-
-  @Override
-  public int getOffsetCount() {
-    return 0;
-  }
-
-  @Override
-  public int getOffsets(int[] offsets, int index) {
-    return index;
-  }
-
-  @Override
-  public int setOffsets(int[] offsets, int index) {
-    return index;
-  }
-
+  
   @Override
   public int read() throws IOException {
     return getDelegate().read();
@@ -83,11 +58,10 @@ public abstract class AbstractSyntaxAwareReaderTransferableData extends Reader i
     myDelegate = null;
   }
 
-  @Override
   public void setRawText(String rawText) {
     myRawText = rawText;
   }
-
+  
   @NotNull
   private Reader getDelegate() {
     if (myDelegate != null) {
