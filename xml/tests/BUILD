@@ -10,6 +10,7 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/plugins/IntelliLang:intellij.xml.langInjection",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
@@ -19,6 +20,7 @@ iml_module(
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/java/execution/impl:intellij.java.execution.impl",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
     ],
     # do not sort: must match IML order
     deps = [
@@ -35,5 +37,7 @@ iml_module(
         "//tools/idea/platform/platform-tests:intellij.platform.tests[module, test]",
         "//tools/idea/.idea/libraries:xml-resolver[test]",
         "//tools/idea/.idea/libraries:NanoXML",
+        "//tools/idea/plugins/IntelliLang:intellij.platform.langInjection[module, test]",
+        "//tools/idea/plugins/IntelliLang:intellij.java.langInjection[module]",
     ],
 )
