@@ -55,7 +55,7 @@ import java.awt.event.KeyListener;
 import java.util.List;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable {
-  private final Project myProject;
+  private Project myProject;
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private JBTerminalWidgetListener myListener;
 
@@ -165,7 +165,9 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
       actions
         .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, input -> {
           if (!myTerminalPanel.getTerminalTextBuffer().isUsingAlternateBuffer()) {
-            ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            if (myProject != null) {
+              ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            }
             return true;
           }
           else {
@@ -182,6 +184,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
 
   @Override
   public void dispose() {
+    myProject = null;
     close();
   }
 
