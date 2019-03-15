@@ -371,6 +371,26 @@ public final class NavigationUtil {
       }
     };
     final ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<Object>(title, elements) {
+      final Map<Object, ListSeparator> separators = new HashMap<>();
+      {
+        String current = null;
+        boolean hasTitle = false;
+        for (Object element : elements) {
+          final GotoRelatedItem item = itemsMap.get(element);
+          if (item != null && !StringUtil.equals(current, item.getGroup())) {
+            current = item.getGroup();
+            separators.put(element, new ListSeparator(hasTitle && StringUtil.isEmpty(current) ? "Other" : current));
+            if (!hasTitle && !StringUtil.isEmpty(current)) {
+              hasTitle = true;
+            }
+          }
+        }
+
+        if (!hasTitle) {
+          separators.remove(elements.get(0));
+        }
+      }
+
       @Override
       public boolean isSpeedSearchEnabled() {
         return true;
@@ -391,36 +411,20 @@ public final class NavigationUtil {
         processor.process(selectedValue);
         return super.onChosen(selectedValue, finalChoice);
       }
+
+      @Nullable
+      @Override
+      public ListSeparator getSeparatorAbove(Object value) {
+        return separators.get(value);
+      }
     }) {
     };
-    popup.getList().setCellRenderer(new PopupListElementRenderer(popup) {
-      final Map<Object, String> separators = new HashMap<>();
-      {
-        final ListModel model = popup.getList().getModel();
-        String current = null;
-        boolean hasTitle = false;
-        for (int i = 0; i < model.getSize(); i++) {
-          final Object element = model.getElementAt(i);
-          final GotoRelatedItem item = itemsMap.get(element);
-          if (item != null && !StringUtil.equals(current, item.getGroup())) {
-            current = item.getGroup();
-            separators.put(element, hasTitle && StringUtil.isEmpty(current) ? "Other" : current);
-            if (!hasTitle && !StringUtil.isEmpty(current)) {
-              hasTitle = true;
-            }
-          }
-        }
-
-        if (!hasTitle) {
-          separators.remove(model.getElementAt(0));
-        }
-      }
+    popup.getList().setCellRenderer(new PopupListElementRenderer<Object>(popup) {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component component = renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        final String separator = separators.get(value);
 
-        if (separator != null) {
+        if (myDescriptor.hasSeparatorAboveOf(value)) {
           JPanel panel = new JPanel(new BorderLayout());
           panel.add(component, BorderLayout.CENTER);
           final SeparatorWithText sep = new SeparatorWithText() {
@@ -431,7 +435,7 @@ public final class NavigationUtil {
               super.paintComponent(g);
             }
           };
-          sep.setCaption(separator);
+          sep.setCaption(myDescriptor.getCaptionAboveOf(value));
           panel.add(sep, BorderLayout.NORTH);
           return panel;
         }
