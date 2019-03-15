@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -71,8 +70,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   protected UpdateData<Key, Value> calculateUpdateData(int inputId, @Nullable Input content) {
     Map<Key, Value> data;
     int hashId;
-    final boolean isContentPhysical = isContentPhysical(content);
-    if (mySnapshotInputMappings != null && isContentPhysical) {
+    if (mySnapshotInputMappings != null && !myInMemoryMode.get()) {
       final SnapshotInputMappings.Snapshot<Key, Value> snapshot = mySnapshotInputMappings.readPersistentDataOrMap(content);
       data = snapshot.getData();
       hashId = snapshot.getHashId();
@@ -82,7 +80,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       hashId = 0;
     }
     return createUpdateData(data, () -> {
-      if (mySnapshotInputMappings != null && isContentPhysical) {
+      if (mySnapshotInputMappings != null && !myInMemoryMode.get()) {
         return new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
       }
       if (myInMemoryMode.get()) {
@@ -309,12 +307,6 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)extension.getName());
       return new PersistentHashMap<>(indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, createInputsIndexExternalizer(extension));
     }
-  }
-
-  private boolean isContentPhysical(Input content) {
-    return content == null ||
-           (content instanceof UserDataHolder &&
-            FileBasedIndexImpl.ourPhysicalContentKey.get((UserDataHolder)content, Boolean.FALSE));
   }
 
   private void installMemoryModeListener() {
