@@ -35,7 +35,12 @@ public class MemoryAgentReferringObjectsProvider implements ReferringObjectsProv
       }
     }
 
-    ReferringObjectsInfo roots = MemoryAgent.using(evaluationContext).findReferringObjects(value, myObjectsToRequestLimit);
+    MemoryAgent memoryAgent = MemoryAgent.using(evaluationContext);
+    if (memoryAgent.capabilities().canGetReferringObjects()) {
+      throw new UnsupportedOperationException();
+    }
+
+    ReferringObjectsInfo roots = memoryAgent.findReferringObjects(value, myObjectsToRequestLimit);
     myCachedRequests.put(value, roots);
     return roots.getReferringObjects(value, limit);
   }

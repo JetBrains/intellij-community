@@ -16,26 +16,6 @@ class MemoryAgentImpl implements MemoryAgent {
   }
 
   @Override
-  public boolean isLoaded() {
-    return capabilities().isLoaded();
-  }
-
-  @Override
-  public boolean canEstimateObjectSize() {
-    return myEvaluationContext.isEvaluationPossible() && capabilities().canEstimateObjectSize();
-  }
-
-  @Override
-  public boolean canEstimateObjectsSizes() {
-    return myEvaluationContext.isEvaluationPossible() && capabilities().canEstimateObjectsSizes();
-  }
-
-  @Override
-  public boolean canGetReferringObjects() {
-    return myEvaluationContext.isEvaluationPossible() && capabilities().canGetReferringObjects();
-  }
-
-  @Override
   public long estimateObjectSize(@NotNull ObjectReference reference) throws EvaluateException {
     return MemoryAgentOperations.estimateObjectSize(myEvaluationContext, reference);
   }
@@ -52,7 +32,8 @@ class MemoryAgentImpl implements MemoryAgent {
   }
 
   @NotNull
-  private MemoryAgentCapabilities capabilities() {
-    return MemoryAgentCapabilities.get(myEvaluationContext.getDebugProcess());
+  @Override
+  public MemoryAgentCapabilities capabilities() {
+    return MemoryAgent.capabilities(myEvaluationContext.getDebugProcess());
   }
 }
