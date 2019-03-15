@@ -538,7 +538,7 @@ public class CompileDriver {
       else {
         message = CompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
       }
-      message = message + " in " + StringUtil.formatDuration(duration);
+      message = message + " in " + StringUtil.formatDurationApproximate(duration);
     }
     return message;
   }

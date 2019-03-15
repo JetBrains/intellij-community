@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
@@ -537,6 +537,14 @@ public class StringUtilTest {
     assertEquals("14 d 6 h 56 m 7 s 890 ms", StringUtil.formatDuration(1234567890));
 
     assertEquals("1 yr 1 mo 1 d 1 h 1 m 1 s 1 ms", StringUtil.formatDuration(33786061001L));
+  }
+
+  @Test
+  public void testFormatDurationApproximate() {
+    assertEquals("2 m", StringUtil.formatDurationApproximate(120000));
+    assertEquals("2 m 3 s", StringUtil.formatDurationApproximate(123000));
+    assertEquals("2 m 3 s", StringUtil.formatDurationApproximate(123456));
+    assertEquals("1 yr 1 mo", StringUtil.formatDurationApproximate(33786061001L));
   }
 
   @Test
