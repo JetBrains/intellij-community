@@ -1,12 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.Trinity;
@@ -15,8 +10,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildLayoutParameters;
@@ -40,6 +38,8 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
  */
 public class GradleFindUsagesTest extends GradleImportingTestCase {
 
+  private JavaCodeInsightTestFixture myCodeInsightTestFixture;
+
   /**
    * It's sufficient to run the test against one gradle version
    */
@@ -60,16 +60,22 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   }
 
   @Override
+  protected void setUpFixtures() throws Exception {
+    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).getFixture();
+    myCodeInsightTestFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture);
+    ((JavaCodeInsightTestFixtureImpl)myCodeInsightTestFixture).setVirtualFileFilter(null);
+    myCodeInsightTestFixture.setUp();
+  }
+
+  @Override
   protected void tearDownFixtures() {
     new RunAll()
-      .append(() -> EdtTestUtil.runInEdtAndWait(() -> {
-        Project project = myProject;
-        if (project != null) {
-          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
-          ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
-        }
-      }))
-      .append(() -> super.tearDownFixtures()).run();
+      .append(() -> myCodeInsightTestFixture.tearDown())
+      .append(() -> {
+        myTestFixture = null;
+        myCodeInsightTestFixture = null;
+      })
+      .run();
   }
 
   @Test
