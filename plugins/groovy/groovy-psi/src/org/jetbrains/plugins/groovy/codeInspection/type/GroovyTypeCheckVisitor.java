@@ -782,7 +782,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   void checkPossibleLooseOfPrecision(@NotNull PsiType targetType, @NotNull GrExpression expression, @NotNull PsiElement toHighlight) {
     PsiType actualType = expression.getType();
     if (actualType == null) return;
-    if (!PrecisionUtil.INSTANCE.isPossibleLooseOfPrecision(targetType, actualType, expression)) return;
+    if (!PrecisionUtil.isPossibleLooseOfPrecision(targetType, actualType, expression)) return;
     registerError(
       toHighlight,
       GroovyBundle.message("loss.of.precision", actualType.getPresentableText(), targetType.getPresentableText()),
