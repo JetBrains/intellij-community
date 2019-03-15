@@ -61,7 +61,7 @@ fun WindowManagerImpl.getFrameInfoInDeviceSpace(project: Project, prev: FrameInf
   val frame = getFrame(project) ?: return null
 
   // save bounds even if maximized because on unmaximize we must restore previous frame bounds
-  val deviceSpaceBounds = convertToDeviceSpace(frame.graphicsConfiguration, myDefaultFrameInfo.bounds!!)
+  val deviceSpaceBounds = convertToDeviceSpace(frame.graphicsConfiguration, myDefaultFrameInfo.bounds ?: return null)
 
   // don't report if was already reported
   if (prev?.bounds != deviceSpaceBounds && !ScreenUtil.intersectsVisibleScreen(frame)) {
