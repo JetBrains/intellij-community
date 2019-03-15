@@ -14,9 +14,6 @@ class ListConstraint(private val leftType: PsiType?, private val literal: GrList
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     val type = literal.type
-    if (type is EmptyListLiteralType) {
-      return true
-    }
     if (type is EmptyMapLiteralType) {
       val result = type.resolveResult ?: return true
       val clazz = result.element
@@ -29,7 +26,8 @@ class ListConstraint(private val leftType: PsiType?, private val literal: GrList
       return true
     }
     if (leftType != null) {
-      constraints.add(TypeConstraint(leftType, type, literal))
+      val rightType = if (type is EmptyListLiteralType) type.resolve()?.rawType() else type
+      constraints.add(TypeConstraint(leftType, rightType, literal))
     }
     return true
   }
