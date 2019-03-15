@@ -7,7 +7,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.CompressionUtil;
@@ -19,14 +18,13 @@ import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIndex<Key, Value, Input> {
@@ -155,8 +153,8 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
   }
 
   @Override
-  public int getHashId(@NotNull Input content) throws IOException {
-    return getHashOfContent((FileContent) content);
+  public int getHashId(@Nullable Input content) throws IOException {
+    return content == null ? 0 : getHashOfContent((FileContent) content);
   }
 
   static class Snapshot<Key, Value> {
@@ -179,8 +177,9 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
   }
 
   @NotNull
-  Snapshot<Key, Value> readPersistentDataOrMap(@NotNull Input content) {
+  Snapshot<Key, Value> readPersistentDataOrMap(@Nullable Input content) {
     try {
+      if (content == null) return new Snapshot<>(Collections.emptyMap(), 0);
       return new Snapshot<>(readDataOrMap(content), getHashId(content));
     }
     catch (IOException e) {
