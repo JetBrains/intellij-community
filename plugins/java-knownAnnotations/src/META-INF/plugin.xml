@@ -1,0 +1,16 @@
+<idea-plugin>
+
+  <id>org.jetbrains.java.knownAnnotations</id>
+  <name>Known annotations provider</name>
+  <description>
+    Attaches external annotations artifacts from pre-defined list to libraries imported from Gradle/Maven projects.
+  </description>
+  <vendor email="support@jetbrains.com" url="https://www.jetbrains.com">JetBrains</vendor>
+
+  <depends>com.intellij.modules.java</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <java.externalAnnotation.locationProvider
+        implementation="org.jetbrains.java.knownAnnotations.JBBundledAnnotationsProvider"/>
+  </extensions>
+</idea-plugin>

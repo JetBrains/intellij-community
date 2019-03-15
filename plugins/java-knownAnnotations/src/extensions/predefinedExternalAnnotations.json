@@ -1,0 +1,12 @@
+[
+  {
+    "repositoryUrl": "https://jetbrains.bintray.com/intellij-redist",
+    "artifacts": [
+      {
+        "groupId": "junit",
+        "artifactId": "junit",
+        "version": "4.12-an1"
+      }
+    ]
+  }
+]
