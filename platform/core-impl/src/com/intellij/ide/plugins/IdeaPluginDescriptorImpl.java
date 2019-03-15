@@ -615,8 +615,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   @Nullable
-  public List<Element> getActionDescriptionElements() {
-    return myActionElements;
+  public List<Element> getAndClearActionDescriptionElements() {
+    List<Element> result = myActionElements;
+    myActionElements = null;
+    return result;
   }
 
   @Override
@@ -798,7 +800,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myOptionalDescriptors;
   }
 
-  void setOptionalDescriptors(@NotNull Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors) {
+  void setOptionalDescriptors(@Nullable Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors) {
     myOptionalDescriptors = optionalDescriptors;
   }
 

@@ -324,7 +324,7 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   @Override
   @Nullable
-  public List<Element> getActionDescriptionElements() {
+  public List<Element> getAndClearActionDescriptionElements() {
     return null;
   }
 
