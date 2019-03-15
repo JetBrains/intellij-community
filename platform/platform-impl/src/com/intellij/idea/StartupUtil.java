@@ -240,11 +240,7 @@ public class StartupUtil {
     });
 
     // no need to wait - fonts required for editor, not for license window or splash
-    executorService.execute(() -> {
-      Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.REGISTER_BUNDLED_FONTS);
-      AppUIUtil.registerBundledFonts();
-      activity.end();
-    });
+    executorService.execute(() -> AppUIUtil.registerBundledFonts());
   }
 
   private static void configureLogging() {

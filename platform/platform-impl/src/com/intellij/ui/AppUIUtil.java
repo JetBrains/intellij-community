@@ -194,6 +194,8 @@ public class AppUIUtil {
       return;
     }
 
+    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.REGISTER_BUNDLED_FONTS);
+
     File fontDir = PluginManagerCore.isRunningFromSources()
                    ? new File(PathManager.getCommunityHomePath(), "platform/platform-resources/src/fonts")
                    : null;
@@ -208,6 +210,7 @@ public class AppUIUtil {
     registerFont("FiraCode-Light.ttf", fontDir);
     registerFont("FiraCode-Medium.ttf", fontDir);
     registerFont("FiraCode-Retina.ttf", fontDir);
+    activity.end();
   }
 
   private static void registerFont(@NotNull String name, @Nullable File fontDir) {
