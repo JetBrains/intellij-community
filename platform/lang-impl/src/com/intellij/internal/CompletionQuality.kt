@@ -1,4 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.internal
 
 import com.google.common.collect.Lists
@@ -74,10 +76,10 @@ private data class CompletionParameters(
   val word: String,
   val stats: CompletionStats,
   val indicator: ProgressIndicator,
-  val completionTime : CompletionTime = CompletionTime(0, 0)) {}
+  val completionTime : CompletionTime = CompletionTime(0, 0))
 
-private val RANK_EXCESS_LETTERS: Int = -2
-private val RANK_NOT_FOUND: Int = -1
+private const val RANK_EXCESS_LETTERS: Int = -2
+private const val RANK_NOT_FOUND: Int = -1
 
 private val interestingRanks : IntArray = intArrayOf(0, 1, 3)
 
@@ -117,7 +119,7 @@ class CompletionQualityStatsAction : AnAction() {
 
           filesProcessed += 1
           val procentage = filesProcessed.toDouble() / files.size.toDouble()
-          indicator.setFraction(procentage)
+          indicator.fraction = procentage
 
           indicator.text = file.path
 
@@ -204,7 +206,7 @@ class CompletionQualityStatsAction : AnAction() {
   private fun evalCompletionAt(params: CompletionParameters) {
     with(params) {
       // (typed letters, rank, total)
-      var ranks : ArrayList<Triple<Int, Int, Int>> = arrayListOf()
+      val ranks : ArrayList<Triple<Int, Int, Int>> = arrayListOf()
       for (charsTyped in interestingRanks) {
         val (rank, total) = findCorrectElementRank(charsTyped, params)
         ranks.add(Triple(charsTyped, rank, total))
@@ -238,8 +240,8 @@ class CompletionQualityStatsAction : AnAction() {
     for ((charsTyped, rank, _) in ranks) {
       assert(lastCharsTyped < charsTyped)
       for (chars in lastCharsTyped + 1 until charsTyped) {
-        val (rank, _) = findCorrectElementRank(chars, params)
-        if (rank in 0 until N) {
+        val (tryRank, _) = findCorrectElementRank(chars, params)
+        if (tryRank in 0 until N) {
           return chars
         }
       }
@@ -258,26 +260,26 @@ class CompletionQualityStatsAction : AnAction() {
                                 cache: Array<Pair<Int, Int>?>,
                                 params: CompletionParameters): Int {
     with (params) {
-     for (mid in from until to) {
-       if (indicator.isCanceled) {
-         return -1
-       }
+      for (mid in from until to) {
+        if (indicator.isCanceled) {
+          return -1
+        }
 
-       val (rank, total) = cache[mid] ?: findCorrectElementRank(mid, params)
+        val (rank, total) = cache[mid] ?: findCorrectElementRank(mid, params)
 
-       if (cache[mid] == null) {
-         cache[mid] = kotlin.Pair(rank, total)
-       }
+        if (cache[mid] == null) {
+          cache[mid] = kotlin.Pair(rank, total)
+        }
 
-       if (rank == RANK_EXCESS_LETTERS) {
-         return -1
-       }
+        if (rank == RANK_EXCESS_LETTERS) {
+          return -1
+        }
 
-       if (rank < N) {
-         return mid
-       }
-     }
-     return -1
+        if (rank < N) {
+          return mid
+        }
+      }
+      return -1
     }
 
   }
@@ -311,6 +313,7 @@ class CompletionQualityStatsAction : AnAction() {
               }
 
               val handler = object : CodeCompletionHandlerBase(CompletionType.BASIC, false, false, true) {
+                @Suppress("DEPRECATION")
                 override fun completionFinished(indicator: CompletionProgressIndicator, hasModifiers: Boolean) {
                   super.completionFinished(indicator, hasModifiers)
                   lookupItems = indicator.lookup!!.items
@@ -359,7 +362,7 @@ class CompletionQualityStatsAction : AnAction() {
   }
 }
 
-class CompletionQualityDialog(project: Project, private val editor: Editor?) : DialogWrapper(project) {
+class CompletionQualityDialog(project: Project, editor: Editor?) : DialogWrapper(project) {
   private var fileTypeCombo: JComboBox<FileType>
 
   private var scopeChooserCombo: ScopeChooserCombo
@@ -392,9 +395,11 @@ class CompletionQualityDialog(project: Project, private val editor: Editor?) : D
   private fun createFileTypesCombo(): ComboBox<FileType> {
     val fileTypes = FileTypeManager.getInstance().registeredFileTypes
     Arrays.sort(fileTypes) { ft1, ft2 ->
-      if (ft1 == null) 1
-      else if (ft2 == null) -1
-      else ft1.description.compareTo(ft2.description, ignoreCase = true)
+      when {
+        (ft1 == null) -> 1
+        (ft2 == null) -> -1
+        else -> ft1.description.compareTo(ft2.description, ignoreCase = true)
+      }
     }
 
     val model = DefaultComboBoxModel<FileType>()
@@ -436,12 +441,12 @@ private data class Completion(val path: String,
                               val charsToFirst3: Int,
                               val callsCount: Int,
                               val totalTime: Long) {
-  val id = (path + ":" + offset.toString()).hashCode()
+  val id = "${path}:${offset}".hashCode()
 }
 
 private data class CompletionStats(val timestamp: Long) {
   var finished: Boolean = false
-  val completions = Lists.newArrayList<Completion>()
+  val completions = arrayListOf<Completion>()
   var totalFiles = 0
 }
 
