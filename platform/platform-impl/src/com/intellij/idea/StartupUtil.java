@@ -112,7 +112,7 @@ public class StartupUtil {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     checkHiDPISettings();
 
-    boolean isParallelExecution = SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", SystemInfoRt.isMac);
+    boolean isParallelExecution = SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", false);
     ExecutorService executorService = isParallelExecution ? AppExecutorUtil.getAppExecutorService() : new SameThreadExecutorService();
 
     List<Future<?>> futures = new ArrayList<>();
