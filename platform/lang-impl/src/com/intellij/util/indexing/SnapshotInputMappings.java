@@ -37,8 +37,10 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
   private final InputMapExternalizer<Key, Value> myMapExternalizer;
   private final DataIndexer<Key, Value, Input> myIndexer;
   private final PersistentMapBasedForwardIndex myContents;
-  private volatile PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
   private volatile PersistentHashMap<Integer, String> myIndexingTrace;
+
+  private final SharedMapForwardIndex myForwardIndex;
+  private final HashIdForwardIndexAccessor<Key, Value, Input> myHashIdForwardIndexAccessor;
 
   private final boolean myIsPsiBackedIndex;
 
@@ -48,7 +50,9 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
     myMapExternalizer = new InputMapExternalizer<>(indexExtension);
     myIndexer = indexExtension.getIndexer();
     myContents = createContentsIndex();
-    createMaps();
+    myHashIdForwardIndexAccessor = new HashIdForwardIndexAccessor<>(this);
+    myForwardIndex = new SharedMapForwardIndex(indexExtension, myHashIdForwardIndexAccessor);
+    myIndexingTrace = createIndexingTrace();
   }
 
   @NotNull
@@ -186,10 +190,7 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
 
   void putInputHash(int inputId, int hashId) {
     try {
-      if (SharedIndicesData.ourFileSharedIndicesEnabled) {
-        SharedIndicesData.associateFileData(inputId, myIndexId, hashId, EnumeratorIntegerDescriptor.INSTANCE);
-      }
-      if (myInputsSnapshotMapping != null) myInputsSnapshotMapping.put(inputId, hashId);
+      myForwardIndex.put(inputId, myHashIdForwardIndexAccessor.serializeIndexedData(hashId));
     }
     catch (IOException ex) {
       throw new RuntimeException(ex);
@@ -199,57 +200,46 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
   @Override
   public void flush() {
     if (myContents != null) myContents.force();
-    if (myInputsSnapshotMapping != null) myInputsSnapshotMapping.force();
+    if (myForwardIndex != null) myForwardIndex.force();
     if (myIndexingTrace != null) myIndexingTrace.force();
   }
 
   @Override
   public void clear() throws IOException {
     try {
-      List<File> baseDirs = Stream.of(myIndexingTrace, myInputsSnapshotMapping)
-        .filter(Objects::nonNull)
-        .map(PersistentHashMap::getBaseFile)
-        .collect(Collectors.toList());
-      try {
-        closeInternalMaps();
+      if (myIndexingTrace != null) {
+        File baseFile = myIndexingTrace.getBaseFile();
+        try {
+          myIndexingTrace.close();
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+        PersistentHashMap.deleteFilesStartingWith(baseFile);
+        myIndexingTrace = createIndexingTrace();
       }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      baseDirs.forEach(PersistentHashMap::deleteFilesStartingWith);
-      createMaps();
     } finally {
-      if (myContents != null) {
-        myContents.clear();
-      }
+      Stream.of(myContents, myForwardIndex).filter(Objects::nonNull).forEach(index -> {
+        try {
+          index.clear();
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      });
     }
   }
 
   @Override
   public void close() throws IOException {
-    closeInternalMaps();
-    if (myContents != null) {
-      myContents.close();
-    }
-  }
-
-  private void closeInternalMaps() {
-    Stream.of(myContents, myIndexingTrace)
-      .filter(Objects::nonNull)
-      .forEach(store -> {
-        try {
-          store.close();
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      });
-  }
-
-  private void createMaps() throws IOException {
-    myIndexingTrace = DebugAssertions.EXTRA_SANITY_CHECKS ? createIndexingTrace() : null;
-    myInputsSnapshotMapping =
-      !SharedIndicesData.ourFileSharedIndicesEnabled || SharedIndicesData.DO_CHECKS ? createInputSnapshotMapping() : null;
+    Stream.of(myContents, myForwardIndex, myIndexingTrace).filter(Objects::nonNull).forEach(index -> {
+      try {
+        index.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    });
   }
 
   private PersistentMapBasedForwardIndex createContentsIndex() throws IOException {
@@ -260,23 +250,6 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
     }
     catch (IOException ex) {
       IOUtil.deleteAllFilesStartingWith(saved);
-      throw ex;
-    }
-  }
-
-  private PersistentHashMap<Integer, Integer> createInputSnapshotMapping() throws IOException {
-    final File fileIdToHashIdFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "fileIdToHashId");
-    try {
-      return new PersistentHashMap<Integer, Integer>(fileIdToHashIdFile, EnumeratorIntegerDescriptor.INSTANCE,
-                                                     EnumeratorIntegerDescriptor.INSTANCE, 4096) {
-        @Override
-        protected boolean wantNonNegativeIntegralValues() {
-          return true;
-        }
-      };
-    }
-    catch (IOException ex) {
-      IOUtil.deleteAllFilesStartingWith(fileIdToHashIdFile);
       throw ex;
     }
   }
@@ -306,32 +279,7 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
   }
 
   private Integer readInputHashId(int inputId) throws IOException {
-    if (SharedIndicesData.ourFileSharedIndicesEnabled) {
-      Integer hashId = SharedIndicesData.recallFileData(inputId, myIndexId, EnumeratorIntegerDescriptor.INSTANCE);
-      if (hashId == null) hashId = 0;
-      if (myInputsSnapshotMapping == null) return hashId;
-
-      Integer hashIdFromInputSnapshotMapping = myInputsSnapshotMapping.get(inputId);
-      if (hashId == 0 && hashIdFromInputSnapshotMapping != 0 ||
-          !Comparing.equal(hashIdFromInputSnapshotMapping, hashId)) {
-        SharedIndicesData.associateFileData(inputId, myIndexId, hashIdFromInputSnapshotMapping,
-                                            EnumeratorIntegerDescriptor.INSTANCE);
-        if (hashId != 0) {
-          LOG.error("Unexpected indexing diff with hash id " +
-                    myIndexId +
-                    ", file:" +
-                    IndexInfrastructure.findFileById(PersistentFS.getInstance(), inputId)
-                    +
-                    "," +
-                    hashIdFromInputSnapshotMapping +
-                    "," +
-                    hashId);
-        }
-        hashId = hashIdFromInputSnapshotMapping;
-      }
-      return hashId;
-    }
-    return myInputsSnapshotMapping.get(inputId);
+    return myHashIdForwardIndexAccessor.deserializeData(myForwardIndex.get(inputId));
   }
 
   private ByteArraySequence readContents(Integer hashId) throws IOException {
