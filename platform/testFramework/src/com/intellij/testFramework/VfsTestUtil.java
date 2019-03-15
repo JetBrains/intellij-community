@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -102,7 +102,7 @@ public class VfsTestUtil {
       WriteAction.runAndWait(() -> file.delete(null));
     }
     catch (Throwable throwable) {
-      ExceptionUtilRt.rethrow(throwable);
+      ExceptionUtil.rethrow(throwable);
     }
   }
 
