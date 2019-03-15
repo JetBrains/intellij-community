@@ -72,7 +72,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     Map<Key, Value> data;
     int hashId;
     final boolean isContentPhysical = isContentPhysical(content);
-    if (mySnapshotInputMappings != null && content != null && isContentPhysical) {
+    if (mySnapshotInputMappings != null && isContentPhysical) {
       final SnapshotInputMappings.Snapshot<Key, Value> snapshot = mySnapshotInputMappings.readPersistentDataOrMap(content);
       data = snapshot.getData();
       hashId = snapshot.getHashId();

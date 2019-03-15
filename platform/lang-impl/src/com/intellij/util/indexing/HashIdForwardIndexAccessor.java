@@ -24,10 +24,11 @@ class HashIdForwardIndexAccessor<Key, Value, Input> extends AbstractForwardIndex
     return new MapInputDataDiffBuilder<>(inputId, hashId == null ? null : mySnapshotInputMappingIndex.readData(hashId));
   }
 
+  @NotNull
   @Override
   public Integer convertToDataType(@Nullable Map<Key, Value> map, @Nullable Input content) {
     try {
-      return content == null ? null : mySnapshotInputMappingIndex.getHashId(content);
+      return mySnapshotInputMappingIndex.getHashId(content);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

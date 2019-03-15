@@ -2,6 +2,7 @@
 package com.intellij.util.indexing;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
@@ -13,7 +14,7 @@ public interface SnapshotInputMappingIndex<Key, Value, Input> {
   @NotNull
   Map<Key, Value> readDataOrMap(@NotNull Input content);
 
-  int getHashId(@NotNull Input content) throws IOException;
+  int getHashId(@Nullable Input content) throws IOException;
 
   void flush() throws IOException;
 
