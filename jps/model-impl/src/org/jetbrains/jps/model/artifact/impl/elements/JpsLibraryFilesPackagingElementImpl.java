@@ -38,19 +38,28 @@ import java.util.List;
 public class JpsLibraryFilesPackagingElementImpl extends JpsComplexPackagingElementBase<JpsLibraryFilesPackagingElementImpl> implements JpsLibraryFilesPackagingElement {
   private static final JpsElementChildRole<JpsLibraryReference>
     LIBRARY_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("library reference");
+  private final boolean myCopyWithFullName;
 
   public JpsLibraryFilesPackagingElementImpl(@NotNull JpsLibraryReference reference) {
     myContainer.setChild(LIBRARY_REFERENCE_CHILD_ROLE, reference);
+    myCopyWithFullName = false;
+
   }
 
-  private JpsLibraryFilesPackagingElementImpl(JpsLibraryFilesPackagingElementImpl original) {
+  private JpsLibraryFilesPackagingElementImpl(JpsLibraryFilesPackagingElementImpl original, boolean copyWithFullName) {
     super(original);
+    myCopyWithFullName = copyWithFullName;
+  }
+
+  @NotNull
+  public JpsLibraryFilesPackagingElementImpl copyWithFullName() {
+    return new JpsLibraryFilesPackagingElementImpl(this, true);
   }
 
   @NotNull
   @Override
   public JpsLibraryFilesPackagingElementImpl createCopy() {
-    return new JpsLibraryFilesPackagingElementImpl(this);
+    return new JpsLibraryFilesPackagingElementImpl(this, false);
   }
 
   @Override
@@ -70,9 +79,17 @@ public class JpsLibraryFilesPackagingElementImpl extends JpsComplexPackagingElem
         result.add(JpsPackagingElementFactory.getInstance().createDirectoryCopy(path));
       }
       else {
-        result.add(JpsPackagingElementFactory.getInstance().createFileCopy(path, null));
+        result.add(JpsPackagingElementFactory.getInstance().createFileCopy(path, getOutputFileName()));
       }
     }
     return result;
+  }
+
+  private String getOutputFileName() {
+    String name = getLibraryReference().getLibraryName();
+    if (myCopyWithFullName && name.startsWith("Maven: ")) {
+      return name.replace("Maven: ", "").replace(":", "-") + ".jar";
+    }
+    return null;
   }
 }
