@@ -113,12 +113,15 @@ public class ExceptionUtil extends ExceptionUtilRt {
 
   @Contract("_->fail")
   public static void rethrow(@Nullable Throwable throwable) {
-    ExceptionUtilRt.rethrow(throwable);
+    rethrowUnchecked(throwable);
+    throw new RuntimeException(throwable);
   }
 
   @Contract("!null->fail")
   public static void rethrowAllAsUnchecked(@Nullable Throwable t) {
-    ExceptionUtilRt.rethrowAllAsUnchecked(t);
+    if (t != null) {
+      rethrow(t);
+    }
   }
 
   @NotNull

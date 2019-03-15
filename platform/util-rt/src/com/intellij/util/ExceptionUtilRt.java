@@ -25,20 +25,6 @@ public class ExceptionUtilRt {
     }
   }
 
-  @Contract("_->fail")
-  public static void rethrow(@Nullable Throwable throwable) {
-    rethrowUnchecked(throwable);
-    throw new RuntimeException(throwable);
-  }
-
-  @Contract("!null->fail")
-  public static void rethrowAllAsUnchecked(@Nullable Throwable t) {
-    if (t != null) {
-      rethrow(t);
-    }
-  }
-
-
   public static <T> T findCause(Throwable e, Class<T> klass) {
     while (e != null && !klass.isInstance(e)) {
       e = e.getCause();
