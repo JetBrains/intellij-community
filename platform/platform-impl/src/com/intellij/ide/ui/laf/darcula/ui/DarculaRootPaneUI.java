@@ -5,12 +5,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicRootPaneUI;
 import java.awt.*;
@@ -38,7 +36,11 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent comp) {
-    return IdeFrameDecorator.isCustomDecoration() ? new DarculaRootPaneUI() : createDefaultWindowsRootPaneUI();
+    return customDecorationNeeded(comp) ? new DarculaRootPaneUI() : createDefaultWindowsRootPaneUI();
+  }
+
+  private static boolean customDecorationNeeded(JComponent comp) {
+    return comp instanceof IdeRootPane && IdeFrameDecorator.isCustomDecoration();
   }
 
   private static ComponentUI createDefaultWindowsRootPaneUI() {
@@ -178,6 +180,15 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
   private void setTitlePane(JRootPane root, JComponent titlePane) {
     JLayeredPane layeredPane = root.getLayeredPane();
+    disposeTitle(layeredPane);
+    if (titlePane != null) {
+      layeredPane.add(titlePane, JLayeredPane.FRAME_CONTENT_LAYER);
+      titlePane.setVisible(true);
+    }
+    myTitlePane = titlePane;
+  }
+
+  private void disposeTitle(JLayeredPane layeredPane) {
     JComponent oldTitlePane = getTitlePane();
 
     if (oldTitlePane != null) {
@@ -186,11 +197,6 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         Disposer.dispose((Disposable)oldTitlePane);
       }
     }
-    if (titlePane != null) {
-      layeredPane.add(titlePane, JLayeredPane.FRAME_CONTENT_LAYER);
-      titlePane.setVisible(true);
-    }
-    myTitlePane = titlePane;
   }
 
   public JComponent getTitlePane() {

@@ -26,6 +26,9 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.awt.Frame.MAXIMIZED_BOTH;
+import static java.awt.Frame.MAXIMIZED_VERT;
+
 import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
 
 /**
@@ -55,7 +58,8 @@ public class DarculaTitlePane extends JPanel implements Disposable {
   private Color myActiveForeground = null;
 
   private static final int menuBarGap = 7;
-  private static final int resizeGap = JBUI.scale(2);
+  private static final int resizeGap = 3;
+  private static final int dragGap = 7;
 
 
   public DarculaTitlePane(JRootPane root, DarculaRootPaneUI ui) {
@@ -137,21 +141,25 @@ public class DarculaTitlePane extends JPanel implements Disposable {
     List<Rectangle> hitTestSpots = new ArrayList<>();
 
     Rectangle iconRect = new RelativeRectangle(myMenuBar).getRectangleOn(this);
-    iconRect.y += resizeGap;
-    iconRect.x += resizeGap;
-    hitTestSpots.add(iconRect);
-
     Rectangle menuRect = new RelativeRectangle(myIdeMenu).getRectangleOn(this);
-    menuRect.y += resizeGap;
-    hitTestSpots.add(menuRect);
-
-    hitTestSpots.addAll(projectLabel.getListenerBoundses());
-
     Rectangle buttonsRect = new RelativeRectangle(buttonPanes.getView()).getRectangleOn(this);
-    buttonsRect.y+= resizeGap;
-    buttonsRect.x+= resizeGap;
-    buttonsRect.width -= resizeGap;
 
+    Frame frame = getFrame();
+    if (frame != null) {
+      int state = frame.getExtendedState();
+      if (state != MAXIMIZED_VERT && state != MAXIMIZED_BOTH) {
+        menuRect.y += resizeGap + dragGap;
+        iconRect.y += resizeGap;
+        iconRect.x += resizeGap;
+        buttonsRect.y += resizeGap;
+        buttonsRect.x += resizeGap;
+        buttonsRect.width -= resizeGap;
+      }
+    }
+
+    hitTestSpots.add(menuRect);
+    hitTestSpots.addAll(projectLabel.getListenerBoundses());
+    hitTestSpots.add(iconRect);
     hitTestSpots.add(buttonsRect);
 
     JdkEx.setCustomDecorationHitTestSpots(myWindow, hitTestSpots);
@@ -173,7 +181,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
   private void installSubcomponents() {
     int decorationStyle = getWindowDecorationStyle();
     if (decorationStyle == JRootPane.FRAME) {
-      setLayout(new MigLayout("novisualpadding, fillx, ins 0, gap 0, top", menuBarGap+"[pref!]"+menuBarGap+"[][pref!]"));
+      setLayout(new MigLayout("novisualpadding, fillx, ins 0, gap 0, top", menuBarGap + "[pref!]" + menuBarGap + "[][pref!]"));
 
       createActions();
       buttonPanes = ResizableCustomFrameTitleButtons.Companion.create(myCloseAction,
@@ -186,8 +194,8 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
         JPanel pane = new JPanel(new MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"));
         pane.setOpaque(false);
-        pane.add(myIdeMenu, "wmin 0, wmax pref, top");
-        pane.add(projectLabel.getView(), "center, gapbottom 2, growx, wmin 0, gapbefore "+menuBarGap+", gapafter "+menuBarGap);
+        pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin 22");
+        pane.add(projectLabel.getView(), "center, gapbottom 2, growx, wmin 0, gapbefore " + menuBarGap + ", gapafter " + menuBarGap);
 
         add(pane, "wmin 0, growx");
 
@@ -203,7 +211,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
              decorationStyle == JRootPane.FILE_CHOOSER_DIALOG ||
              decorationStyle == JRootPane.QUESTION_DIALOG ||
              decorationStyle == JRootPane.WARNING_DIALOG) {
-      setLayout(new MigLayout("fill, novisualpadding, ins 0, gap 0", menuBarGap+"[pref!]push[pref!]"));
+      setLayout(new MigLayout("fill, novisualpadding, ins 0, gap 0", menuBarGap + "[pref!]push[pref!]"));
 
       createActions();
       // titleLabel.setIcon(mySystemIcon);
@@ -246,7 +254,8 @@ public class DarculaTitlePane extends JPanel implements Disposable {
         new ScaleContext.Cache<>(ctx -> ObjectUtils.notNull(AppUIUtil.loadHiDPIApplicationIcon(ctx, 16), AllIcons.Icon_small));
 
       private Icon getIcon() {
-        if(myWindow == null) return AllIcons.Icon_small;
+
+        if (myWindow == null) return AllIcons.Icon_small;
 
         ScaleContext ctx = ScaleContext.create(myWindow);
         ctx.overrideScale(USR_SCALE.of(1));
@@ -292,6 +301,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
     Window window = getWindow();
 
     if (window != null) {
+      Disposer.dispose(this);
       window.dispatchEvent(new WindowEvent(
         window, WindowEvent.WINDOW_CLOSING));
     }
