@@ -50,6 +50,6 @@ public class PyiParsingTest extends ParsingTestCase {
     doTest();
     assertInstanceOf(myFile, PyiFile.class);
     final PyiFile pyiFile = (PyiFile)myFile;
-    assertEquals(LanguageLevel.PYTHON37, pyiFile.getLanguageLevel());
+    assertEquals(LanguageLevel.PYTHON38, pyiFile.getLanguageLevel());
   }
 }

@@ -4,6 +4,7 @@
 		<module>CDROM</module>
 		<module>DLFCN</module>
 		<module>TYPES</module>
+		<module>_abc</module>
 		<module>_asyncio</module>
 		<module>_blake2</module>
 		<module>_bootlocale</module>
@@ -11,6 +12,7 @@
 		<module>_collections_abc</module>
 		<module>_compat_pickle</module>
 		<module>_compression</module>
+		<module>_contextvars</module>
 		<module>_crypt</module>
 		<module>_curses</module>
 		<module>_curses_panel</module>
@@ -28,9 +30,12 @@
 		<module>_operator</module>
 		<module>_osx_support</module>
 		<module>_pickle</module>
+		<module>_posixshmem</module>
 		<module>_posixsubprocess</module>
+		<module>_py_abc</module>
 		<module>_pydecimal</module>
 		<module>_pyio</module>
+		<module>_queue</module>
 		<module>_sha1</module>
 		<module>_sha256</module>
 		<module>_sha3</module>
@@ -52,6 +57,7 @@
 		<module>_tracemalloc</module>
 		<module>_uuid</module>
 		<module>_weakrefset</module>
+		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
 		<module>antigravity</module>
 		<module>argparse</module>
@@ -64,12 +70,15 @@
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
 		<module>asyncio.events</module>
+		<module>asyncio.exceptions</module>
+		<module>asyncio.format_helpers</module>
 		<module>asyncio.futures</module>
 		<module>asyncio.locks</module>
 		<module>asyncio.log</module>
 		<module>asyncio.proactor_events</module>
 		<module>asyncio.protocols</module>
 		<module>asyncio.queues</module>
+		<module>asyncio.runners</module>
 		<module>asyncio.selector_events</module>
 		<module>asyncio.sslproto</module>
 		<module>asyncio.streams</module>
@@ -92,8 +101,10 @@
 		<module>concurrent.futures.process</module>
 		<module>concurrent.futures.thread</module>
 		<module>configparser</module>
+		<module>contextvars</module>
 		<module>copyreg</module>
 		<module>crypt</module>
+		<module>ctypes._aix</module>
 		<module>ctypes.test.__main__</module>
 		<module>ctypes.test.test_bytes</module>
 		<module>ctypes.test.test_wintypes</module>
@@ -162,6 +173,7 @@
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
+		<module>idlelib.calltip</module>
 		<module>idlelib.calltip_w</module>
 		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
@@ -186,19 +198,28 @@
 		<module>idlelib.idle_test.htest</module>
 		<module>idlelib.idle_test.mock_idle</module>
 		<module>idlelib.idle_test.mock_tk</module>
+		<module>idlelib.idle_test.template</module>
 		<module>idlelib.idle_test.test_autocomplete</module>
+		<module>idlelib.idle_test.test_autocomplete_w</module>
 		<module>idlelib.idle_test.test_autoexpand</module>
 		<module>idlelib.idle_test.test_browser</module>
+		<module>idlelib.idle_test.test_calltip</module>
+		<module>idlelib.idle_test.test_calltip_w</module>
 		<module>idlelib.idle_test.test_calltips</module>
+		<module>idlelib.idle_test.test_codecontext</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
 		<module>idlelib.idle_test.test_config_key</module>
 		<module>idlelib.idle_test.test_config_name</module>
 		<module>idlelib.idle_test.test_configdialog</module>
 		<module>idlelib.idle_test.test_debugger</module>
+		<module>idlelib.idle_test.test_debugger_r</module>
+		<module>idlelib.idle_test.test_debugobj</module>
+		<module>idlelib.idle_test.test_debugobj_r</module>
 		<module>idlelib.idle_test.test_delegator</module>
 		<module>idlelib.idle_test.test_editmenu</module>
 		<module>idlelib.idle_test.test_editor</module>
+		<module>idlelib.idle_test.test_filelist</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
 		<module>idlelib.idle_test.test_grep</module>
 		<module>idlelib.idle_test.test_help</module>
@@ -209,27 +230,39 @@
 		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
+		<module>idlelib.idle_test.test_mainmenu</module>
+		<module>idlelib.idle_test.test_multicall</module>
 		<module>idlelib.idle_test.test_outwin</module>
 		<module>idlelib.idle_test.test_paragraph</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_pathbrowser</module>
 		<module>idlelib.idle_test.test_percolator</module>
+		<module>idlelib.idle_test.test_pyparse</module>
+		<module>idlelib.idle_test.test_pyshell</module>
 		<module>idlelib.idle_test.test_query</module>
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
+		<module>idlelib.idle_test.test_rpc</module>
 		<module>idlelib.idle_test.test_rstrip</module>
 		<module>idlelib.idle_test.test_run</module>
+		<module>idlelib.idle_test.test_runscript</module>
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
 		<module>idlelib.idle_test.test_searchdialogbase</module>
 		<module>idlelib.idle_test.test_searchengine</module>
+		<module>idlelib.idle_test.test_squeezer</module>
+		<module>idlelib.idle_test.test_stackviewer</module>
+		<module>idlelib.idle_test.test_statusbar</module>
 		<module>idlelib.idle_test.test_text</module>
 		<module>idlelib.idle_test.test_textview</module>
+		<module>idlelib.idle_test.test_tooltip</module>
 		<module>idlelib.idle_test.test_tree</module>
 		<module>idlelib.idle_test.test_undo</module>
 		<module>idlelib.idle_test.test_warning</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
+		<module>idlelib.idle_test.test_window</module>
+		<module>idlelib.idle_test.test_zoomheight</module>
 		<module>idlelib.iomenu</module>
 		<module>idlelib.macosx</module>
 		<module>idlelib.mainmenu</module>
@@ -250,12 +283,14 @@
 		<module>idlelib.search</module>
 		<module>idlelib.searchbase</module>
 		<module>idlelib.searchengine</module>
+		<module>idlelib.squeezer</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
 		<module>idlelib.textview</module>
 		<module>idlelib.tooltip</module>
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
+		<module>idlelib.window</module>
 		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
 		<module>idlelib.zzdummy</module>
@@ -264,6 +299,7 @@
 		<module>importlib._bootstrap_external</module>
 		<module>importlib.abc</module>
 		<module>importlib.machinery</module>
+		<module>importlib.resources</module>
 		<module>importlib.util</module>
 		<module>ipaddress</module>
 		<module>json.tests.test_check_circular</module>
@@ -284,6 +320,7 @@
 		<module>multiprocessing.popen_spawn_win32</module>
 		<module>multiprocessing.resource_sharer</module>
 		<module>multiprocessing.semaphore_tracker</module>
+		<module>multiprocessing.shared_memory</module>
 		<module>multiprocessing.spawn</module>
 		<module>nis</module>
 		<module>ossaudiodev</module>
@@ -295,9 +332,11 @@
 		<module>readline</module>
 		<module>repack_pypi_cache</module>
 		<module>reprlib</module>
+		<module>scipy_doc_mapping</module>
 		<module>secrets</module>
 		<module>selectors</module>
 		<module>socketserver</module>
+		<module>sqlite3.test.backup</module>
 		<module>statistics</module>
 		<module>sysconfig</module>
 		<module>tkinter</module>
@@ -350,6 +389,7 @@
 		<module>turtledemo.peace</module>
 		<module>turtledemo.penrose</module>
 		<module>turtledemo.planet_and_moon</module>
+		<module>turtledemo.rosette</module>
 		<module>turtledemo.round_dance</module>
 		<module>turtledemo.sorting_animate</module>
 		<module>turtledemo.tree</module>
@@ -427,6 +467,7 @@
 		<func>RecursionError</func>
 		<func>ResourceWarning</func>
 		<func>StopAsyncIteration</func>
+		<func>TargetScopeError</func>
 		<func>TimeoutError</func>
 		<func>__build_class__</func>
 		<func>__loader__</func>
@@ -437,6 +478,7 @@
 		<func>memoryview</func>
 	</python>
 	<python version="2.7">
+		<module>_abc</module>
 		<module>_asyncio</module>
 		<module>_blake2</module>
 		<module>_bootlocale</module>
@@ -445,6 +487,7 @@
 		<module>_collections_abc</module>
 		<module>_compat_pickle</module>
 		<module>_compression</module>
+		<module>_contextvars</module>
 		<module>_crypt</module>
 		<module>_datetime</module>
 		<module>_dbm</module>
@@ -459,8 +502,11 @@
 		<module>_opcode</module>
 		<module>_operator</module>
 		<module>_pickle</module>
+		<module>_posixshmem</module>
 		<module>_posixsubprocess</module>
+		<module>_py_abc</module>
 		<module>_pydecimal</module>
+		<module>_queue</module>
 		<module>_sha</module>
 		<module>_sha1</module>
 		<module>_sha256</module>
@@ -480,6 +526,7 @@
 		<module>_tkinter</module>
 		<module>_tracemalloc</module>
 		<module>_uuid</module>
+		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
@@ -490,12 +537,15 @@
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
 		<module>asyncio.events</module>
+		<module>asyncio.exceptions</module>
+		<module>asyncio.format_helpers</module>
 		<module>asyncio.futures</module>
 		<module>asyncio.locks</module>
 		<module>asyncio.log</module>
 		<module>asyncio.proactor_events</module>
 		<module>asyncio.protocols</module>
 		<module>asyncio.queues</module>
+		<module>asyncio.runners</module>
 		<module>asyncio.selector_events</module>
 		<module>asyncio.sslproto</module>
 		<module>asyncio.streams</module>
@@ -515,8 +565,10 @@
 		<module>concurrent.futures.process</module>
 		<module>concurrent.futures.thread</module>
 		<module>configparser</module>
+		<module>contextvars</module>
 		<module>copyreg</module>
 		<module>crypt_failed</module>
+		<module>ctypes._aix</module>
 		<module>ctypes.test.__main__</module>
 		<module>ctypes.test.test_bytes</module>
 		<module>ctypes.test.test_errcheck</module>
@@ -563,6 +615,7 @@
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
+		<module>idlelib.calltip</module>
 		<module>idlelib.calltip_w</module>
 		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
@@ -583,34 +636,55 @@
 		<module>idlelib.help_about</module>
 		<module>idlelib.history</module>
 		<module>idlelib.hyperparser</module>
+		<module>idlelib.idle_test.template</module>
+		<module>idlelib.idle_test.test_autocomplete_w</module>
 		<module>idlelib.idle_test.test_browser</module>
+		<module>idlelib.idle_test.test_calltip</module>
+		<module>idlelib.idle_test.test_calltip_w</module>
+		<module>idlelib.idle_test.test_codecontext</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
 		<module>idlelib.idle_test.test_config_key</module>
 		<module>idlelib.idle_test.test_configdialog</module>
 		<module>idlelib.idle_test.test_debugger</module>
+		<module>idlelib.idle_test.test_debugger_r</module>
+		<module>idlelib.idle_test.test_debugobj</module>
+		<module>idlelib.idle_test.test_debugobj_r</module>
 		<module>idlelib.idle_test.test_editmenu</module>
 		<module>idlelib.idle_test.test_editor</module>
+		<module>idlelib.idle_test.test_filelist</module>
 		<module>idlelib.idle_test.test_help</module>
 		<module>idlelib.idle_test.test_help_about</module>
 		<module>idlelib.idle_test.test_history</module>
 		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
+		<module>idlelib.idle_test.test_mainmenu</module>
+		<module>idlelib.idle_test.test_multicall</module>
 		<module>idlelib.idle_test.test_outwin</module>
 		<module>idlelib.idle_test.test_paragraph</module>
 		<module>idlelib.idle_test.test_percolator</module>
+		<module>idlelib.idle_test.test_pyparse</module>
+		<module>idlelib.idle_test.test_pyshell</module>
 		<module>idlelib.idle_test.test_query</module>
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
+		<module>idlelib.idle_test.test_rpc</module>
 		<module>idlelib.idle_test.test_run</module>
+		<module>idlelib.idle_test.test_runscript</module>
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
 		<module>idlelib.idle_test.test_searchdialogbase</module>
+		<module>idlelib.idle_test.test_squeezer</module>
+		<module>idlelib.idle_test.test_stackviewer</module>
+		<module>idlelib.idle_test.test_statusbar</module>
+		<module>idlelib.idle_test.test_tooltip</module>
 		<module>idlelib.idle_test.test_tree</module>
 		<module>idlelib.idle_test.test_undo</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
+		<module>idlelib.idle_test.test_window</module>
+		<module>idlelib.idle_test.test_zoomheight</module>
 		<module>idlelib.iomenu</module>
 		<module>idlelib.macosx</module>
 		<module>idlelib.mainmenu</module>
@@ -631,12 +705,14 @@
 		<module>idlelib.search</module>
 		<module>idlelib.searchbase</module>
 		<module>idlelib.searchengine</module>
+		<module>idlelib.squeezer</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
 		<module>idlelib.textview</module>
 		<module>idlelib.tooltip</module>
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
+		<module>idlelib.window</module>
 		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
 		<module>idlelib.zzdummy</module>
@@ -644,6 +720,7 @@
 		<module>importlib._bootstrap_external</module>
 		<module>importlib.abc</module>
 		<module>importlib.machinery</module>
+		<module>importlib.resources</module>
 		<module>importlib.util</module>
 		<module>ipaddress</module>
 		<module>lib2to3.fixes.fix_asserts</module>
@@ -658,6 +735,7 @@
 		<module>multiprocessing.popen_spawn_win32</module>
 		<module>multiprocessing.resource_sharer</module>
 		<module>multiprocessing.semaphore_tracker</module>
+		<module>multiprocessing.shared_memory</module>
 		<module>multiprocessing.spawn</module>
 		<module>nis_failed</module>
 		<module>pathlib</module>
@@ -666,9 +744,11 @@
 		<module>queue</module>
 		<module>repack_pypi_cache</module>
 		<module>reprlib</module>
+		<module>scipy_doc_mapping</module>
 		<module>secrets</module>
 		<module>selectors</module>
 		<module>socketserver</module>
+		<module>sqlite3.test.backup</module>
 		<module>statistics</module>
 		<module>tkinter</module>
 		<module>tkinter.__main__</module>
@@ -719,6 +799,7 @@
 		<module>turtledemo.peace</module>
 		<module>turtledemo.penrose</module>
 		<module>turtledemo.planet_and_moon</module>
+		<module>turtledemo.rosette</module>
 		<module>turtledemo.round_dance</module>
 		<module>turtledemo.sorting_animate</module>
 		<module>turtledemo.tree</module>
@@ -771,6 +852,7 @@
 		<func>RecursionError</func>
 		<func>ResourceWarning</func>
 		<func>StopAsyncIteration</func>
+		<func>TargetScopeError</func>
 		<func>TimeoutError</func>
 		<func>__build_class__</func>
 		<func>__loader__</func>
@@ -810,17 +892,22 @@
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
 		<module>__main__</module>
+		<module>_abc</module>
 		<module>_abcoll</module>
 		<module>_asyncio</module>
 		<module>_blake2</module>
 		<module>_bytesio</module>
 		<module>_compression</module>
+		<module>_contextvars</module>
 		<module>_dbm</module>
 		<module>_fileio</module>
 		<module>_gdbm</module>
 		<module>_hotshot</module>
 		<module>_lzma</module>
+		<module>_posixshmem</module>
+		<module>_py_abc</module>
 		<module>_pydecimal</module>
+		<module>_queue</module>
 		<module>_sha</module>
 		<module>_sha3</module>
 		<module>_signal</module>
@@ -830,12 +917,16 @@
 		<module>_testmultiphase</module>
 		<module>_tkinter</module>
 		<module>_uuid</module>
+		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
 		<module>asyncio.base_futures</module>
 		<module>asyncio.base_tasks</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.coroutines</module>
+		<module>asyncio.exceptions</module>
+		<module>asyncio.format_helpers</module>
+		<module>asyncio.runners</module>
 		<module>asyncio.sslproto</module>
 		<module>audiodev</module>
 		<module>bsddb</module>
@@ -884,9 +975,11 @@
 		<module>compiler.syntax</module>
 		<module>compiler.transformer</module>
 		<module>compiler.visitor</module>
+		<module>contextvars</module>
 		<module>cookielib</module>
 		<module>copy_reg</module>
 		<module>crypt_failed</module>
+		<module>ctypes._aix</module>
 		<module>ctypes.test.__main__</module>
 		<module>curses.wrapper</module>
 		<module>dataclasses</module>
@@ -926,6 +1019,7 @@
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
+		<module>idlelib.calltip</module>
 		<module>idlelib.calltip_w</module>
 		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
@@ -946,16 +1040,25 @@
 		<module>idlelib.help_about</module>
 		<module>idlelib.history</module>
 		<module>idlelib.hyperparser</module>
+		<module>idlelib.idle_test.template</module>
 		<module>idlelib.idle_test.test_autocomplete</module>
+		<module>idlelib.idle_test.test_autocomplete_w</module>
 		<module>idlelib.idle_test.test_autoexpand</module>
 		<module>idlelib.idle_test.test_browser</module>
+		<module>idlelib.idle_test.test_calltip</module>
+		<module>idlelib.idle_test.test_calltip_w</module>
+		<module>idlelib.idle_test.test_codecontext</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
 		<module>idlelib.idle_test.test_config_key</module>
 		<module>idlelib.idle_test.test_configdialog</module>
 		<module>idlelib.idle_test.test_debugger</module>
+		<module>idlelib.idle_test.test_debugger_r</module>
+		<module>idlelib.idle_test.test_debugobj</module>
+		<module>idlelib.idle_test.test_debugobj_r</module>
 		<module>idlelib.idle_test.test_editmenu</module>
 		<module>idlelib.idle_test.test_editor</module>
+		<module>idlelib.idle_test.test_filelist</module>
 		<module>idlelib.idle_test.test_help</module>
 		<module>idlelib.idle_test.test_help_about</module>
 		<module>idlelib.idle_test.test_history</module>
@@ -963,22 +1066,34 @@
 		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
+		<module>idlelib.idle_test.test_mainmenu</module>
+		<module>idlelib.idle_test.test_multicall</module>
 		<module>idlelib.idle_test.test_outwin</module>
 		<module>idlelib.idle_test.test_paragraph</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_percolator</module>
+		<module>idlelib.idle_test.test_pyparse</module>
+		<module>idlelib.idle_test.test_pyshell</module>
 		<module>idlelib.idle_test.test_query</module>
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
+		<module>idlelib.idle_test.test_rpc</module>
 		<module>idlelib.idle_test.test_run</module>
+		<module>idlelib.idle_test.test_runscript</module>
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
 		<module>idlelib.idle_test.test_searchdialogbase</module>
+		<module>idlelib.idle_test.test_squeezer</module>
+		<module>idlelib.idle_test.test_stackviewer</module>
+		<module>idlelib.idle_test.test_statusbar</module>
 		<module>idlelib.idle_test.test_textview</module>
+		<module>idlelib.idle_test.test_tooltip</module>
 		<module>idlelib.idle_test.test_tree</module>
 		<module>idlelib.idle_test.test_undo</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
+		<module>idlelib.idle_test.test_window</module>
+		<module>idlelib.idle_test.test_zoomheight</module>
 		<module>idlelib.iomenu</module>
 		<module>idlelib.macosx</module>
 		<module>idlelib.mainmenu</module>
@@ -999,17 +1114,20 @@
 		<module>idlelib.search</module>
 		<module>idlelib.searchbase</module>
 		<module>idlelib.searchengine</module>
+		<module>idlelib.squeezer</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
 		<module>idlelib.textview</module>
 		<module>idlelib.tooltip</module>
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
+		<module>idlelib.window</module>
 		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
 		<module>idlelib.zzdummy</module>
 		<module>ihooks</module>
 		<module>importlib._bootstrap_external</module>
+		<module>importlib.resources</module>
 		<module>imputil</module>
 		<module>json.tests</module>
 		<module>json.tests.test_check_circular</module>
@@ -1038,6 +1156,7 @@
 		<module>mimify</module>
 		<module>multifile</module>
 		<module>multiprocessing.forking</module>
+		<module>multiprocessing.shared_memory</module>
 		<module>mutex</module>
 		<module>new</module>
 		<module>nis_failed</module>
@@ -1051,10 +1170,12 @@
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
+		<module>scipy_doc_mapping</module>
 		<module>secrets</module>
 		<module>sets</module>
 		<module>sgmllib</module>
 		<module>sha</module>
+		<module>sqlite3.test.backup</module>
 		<module>sqlite3.test.py25tests</module>
 		<module>sre</module>
 		<module>statvfs</module>
@@ -1071,6 +1192,7 @@
 		<module>tkinter.test.test_tkinter.test_images</module>
 		<module>toaiff</module>
 		<module>ttk</module>
+		<module>turtledemo.rosette</module>
 		<module>turtledemo.sorting_animate</module>
 		<module>typing</module>
 		<module>unittest.test.testmock.testsealable</module>
@@ -1086,6 +1208,7 @@
 		<func>RecursionError</func>
 		<func>StandardError</func>
 		<func>StopAsyncIteration</func>
+		<func>TargetScopeError</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>breakpoint</func>
@@ -1134,15 +1257,20 @@
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
 		<module>__main__</module>
+		<module>_abc</module>
 		<module>_abcoll</module>
 		<module>_asyncio</module>
 		<module>_blake2</module>
 		<module>_bytesio</module>
+		<module>_contextvars</module>
 		<module>_dbm</module>
 		<module>_fileio</module>
 		<module>_gdbm</module>
 		<module>_hotshot</module>
 		<module>_lzma</module>
+		<module>_posixshmem</module>
+		<module>_py_abc</module>
+		<module>_queue</module>
 		<module>_sha</module>
 		<module>_sha3</module>
 		<module>_sqlite3</module>
@@ -1150,10 +1278,14 @@
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_tkinter</module>
 		<module>_uuid</module>
+		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
 		<module>asyncio.base_futures</module>
 		<module>asyncio.base_tasks</module>
+		<module>asyncio.exceptions</module>
+		<module>asyncio.format_helpers</module>
+		<module>asyncio.runners</module>
 		<module>audiodev</module>
 		<module>bsddb</module>
 		<module>bsddb.db</module>
@@ -1201,9 +1333,11 @@
 		<module>compiler.syntax</module>
 		<module>compiler.transformer</module>
 		<module>compiler.visitor</module>
+		<module>contextvars</module>
 		<module>cookielib</module>
 		<module>copy_reg</module>
 		<module>crypt_failed</module>
+		<module>ctypes._aix</module>
 		<module>ctypes.test.runtests</module>
 		<module>ctypes.test.test_errcheck</module>
 		<module>ctypes.test.test_integers</module>
@@ -1240,6 +1374,7 @@
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
+		<module>idlelib.calltip</module>
 		<module>idlelib.calltip_w</module>
 		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
@@ -1259,29 +1394,50 @@
 		<module>idlelib.help_about</module>
 		<module>idlelib.history</module>
 		<module>idlelib.hyperparser</module>
+		<module>idlelib.idle_test.template</module>
+		<module>idlelib.idle_test.test_autocomplete_w</module>
 		<module>idlelib.idle_test.test_browser</module>
+		<module>idlelib.idle_test.test_calltip</module>
+		<module>idlelib.idle_test.test_calltip_w</module>
+		<module>idlelib.idle_test.test_codecontext</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
 		<module>idlelib.idle_test.test_config_key</module>
 		<module>idlelib.idle_test.test_debugger</module>
+		<module>idlelib.idle_test.test_debugger_r</module>
+		<module>idlelib.idle_test.test_debugobj</module>
+		<module>idlelib.idle_test.test_debugobj_r</module>
 		<module>idlelib.idle_test.test_editmenu</module>
+		<module>idlelib.idle_test.test_filelist</module>
 		<module>idlelib.idle_test.test_help</module>
 		<module>idlelib.idle_test.test_help_about</module>
 		<module>idlelib.idle_test.test_history</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
+		<module>idlelib.idle_test.test_mainmenu</module>
+		<module>idlelib.idle_test.test_multicall</module>
 		<module>idlelib.idle_test.test_outwin</module>
 		<module>idlelib.idle_test.test_paragraph</module>
 		<module>idlelib.idle_test.test_percolator</module>
+		<module>idlelib.idle_test.test_pyparse</module>
+		<module>idlelib.idle_test.test_pyshell</module>
 		<module>idlelib.idle_test.test_query</module>
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
+		<module>idlelib.idle_test.test_rpc</module>
 		<module>idlelib.idle_test.test_run</module>
+		<module>idlelib.idle_test.test_runscript</module>
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
+		<module>idlelib.idle_test.test_squeezer</module>
+		<module>idlelib.idle_test.test_stackviewer</module>
+		<module>idlelib.idle_test.test_statusbar</module>
+		<module>idlelib.idle_test.test_tooltip</module>
 		<module>idlelib.idle_test.test_tree</module>
 		<module>idlelib.idle_test.test_undo</module>
+		<module>idlelib.idle_test.test_window</module>
+		<module>idlelib.idle_test.test_zoomheight</module>
 		<module>idlelib.iomenu</module>
 		<module>idlelib.macosx</module>
 		<module>idlelib.mainmenu</module>
@@ -1302,6 +1458,7 @@
 		<module>idlelib.search</module>
 		<module>idlelib.searchbase</module>
 		<module>idlelib.searchengine</module>
+		<module>idlelib.squeezer</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
 		<module>idlelib.testcode</module>
@@ -1309,10 +1466,12 @@
 		<module>idlelib.tooltip</module>
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
+		<module>idlelib.window</module>
 		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
 		<module>idlelib.zzdummy</module>
 		<module>ihooks</module>
+		<module>importlib.resources</module>
 		<module>imputil</module>
 		<module>json.tests</module>
 		<module>json.tests.test_check_circular</module>
@@ -1340,6 +1499,7 @@
 		<module>mimify</module>
 		<module>multifile</module>
 		<module>multiprocessing.forking</module>
+		<module>multiprocessing.shared_memory</module>
 		<module>mutex</module>
 		<module>new</module>
 		<module>nis_failed</module>
@@ -1351,10 +1511,12 @@
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
+		<module>scipy_doc_mapping</module>
 		<module>secrets</module>
 		<module>sets</module>
 		<module>sgmllib</module>
 		<module>sha</module>
+		<module>sqlite3.test.backup</module>
 		<module>sqlite3.test.py25tests</module>
 		<module>sre</module>
 		<module>statvfs</module>
@@ -1371,6 +1533,7 @@
 		<module>tkinter._fix</module>
 		<module>toaiff</module>
 		<module>ttk</module>
+		<module>turtledemo.rosette</module>
 		<module>unittest.test.testmock.testsealable</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
@@ -1381,6 +1544,7 @@
 		<module>xmlrpclib</module>
 		<func>ModuleNotFoundError</func>
 		<func>StandardError</func>
+		<func>TargetScopeError</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>breakpoint</func>
@@ -1430,21 +1594,30 @@
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
 		<module>__main__</module>
+		<module>_abc</module>
 		<module>_abcoll</module>
 		<module>_asyncio</module>
 		<module>_blake2</module>
 		<module>_bytesio</module>
+		<module>_contextvars</module>
 		<module>_fileio</module>
 		<module>_hotshot</module>
+		<module>_posixshmem</module>
+		<module>_py_abc</module>
+		<module>_queue</module>
 		<module>_sha</module>
 		<module>_sha3</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_uuid</module>
+		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
 		<module>asyncio.base_futures</module>
 		<module>asyncio.base_tasks</module>
+		<module>asyncio.exceptions</module>
+		<module>asyncio.format_helpers</module>
+		<module>asyncio.runners</module>
 		<module>audiodev</module>
 		<module>bsddb</module>
 		<module>bsddb.db</module>
@@ -1492,9 +1665,11 @@
 		<module>compiler.syntax</module>
 		<module>compiler.transformer</module>
 		<module>compiler.visitor</module>
+		<module>contextvars</module>
 		<module>cookielib</module>
 		<module>copy_reg</module>
 		<module>crypt_failed</module>
+		<module>ctypes._aix</module>
 		<module>ctypes.test.runtests</module>
 		<module>ctypes.test.test_errcheck</module>
 		<module>ctypes.test.test_integers</module>
@@ -1571,27 +1746,52 @@
 		<module>idlelib.WindowList</module>
 		<module>idlelib.ZoomHeight</module>
 		<module>idlelib.aboutDialog</module>
+		<module>idlelib.calltip</module>
 		<module>idlelib.configDialog</module>
 		<module>idlelib.configHandler</module>
 		<module>idlelib.configHelpSourceEdit</module>
 		<module>idlelib.configSectionNameDialog</module>
 		<module>idlelib.dynOptionMenuWidget</module>
+		<module>idlelib.idle_test.template</module>
+		<module>idlelib.idle_test.test_autocomplete_w</module>
 		<module>idlelib.idle_test.test_browser</module>
+		<module>idlelib.idle_test.test_calltip</module>
+		<module>idlelib.idle_test.test_calltip_w</module>
+		<module>idlelib.idle_test.test_codecontext</module>
 		<module>idlelib.idle_test.test_config_name</module>
+		<module>idlelib.idle_test.test_debugger_r</module>
+		<module>idlelib.idle_test.test_debugobj</module>
+		<module>idlelib.idle_test.test_debugobj_r</module>
+		<module>idlelib.idle_test.test_filelist</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
 		<module>idlelib.idle_test.test_idlehistory</module>
 		<module>idlelib.idle_test.test_io</module>
+		<module>idlelib.idle_test.test_mainmenu</module>
+		<module>idlelib.idle_test.test_multicall</module>
 		<module>idlelib.idle_test.test_outwin</module>
+		<module>idlelib.idle_test.test_pyparse</module>
+		<module>idlelib.idle_test.test_pyshell</module>
+		<module>idlelib.idle_test.test_rpc</module>
 		<module>idlelib.idle_test.test_run</module>
+		<module>idlelib.idle_test.test_runscript</module>
 		<module>idlelib.idle_test.test_searchdialogbase</module>
+		<module>idlelib.idle_test.test_squeezer</module>
+		<module>idlelib.idle_test.test_stackviewer</module>
+		<module>idlelib.idle_test.test_statusbar</module>
+		<module>idlelib.idle_test.test_tooltip</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
+		<module>idlelib.idle_test.test_window</module>
+		<module>idlelib.idle_test.test_zoomheight</module>
 		<module>idlelib.idlever</module>
 		<module>idlelib.keybindingDialog</module>
 		<module>idlelib.macosxSupport</module>
+		<module>idlelib.squeezer</module>
 		<module>idlelib.testcode</module>
 		<module>idlelib.textView</module>
+		<module>idlelib.window</module>
 		<module>idlelib.zzdummy</module>
 		<module>ihooks</module>
+		<module>importlib.resources</module>
 		<module>imputil</module>
 		<module>json.tests</module>
 		<module>json.tests.test_check_circular</module>
@@ -1619,6 +1819,7 @@
 		<module>mimify</module>
 		<module>multifile</module>
 		<module>multiprocessing.forking</module>
+		<module>multiprocessing.shared_memory</module>
 		<module>mutex</module>
 		<module>new</module>
 		<module>nis_failed</module>
@@ -1630,9 +1831,11 @@
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
+		<module>scipy_doc_mapping</module>
 		<module>sets</module>
 		<module>sgmllib</module>
 		<module>sha</module>
+		<module>sqlite3.test.backup</module>
 		<module>sqlite3.test.py25tests</module>
 		<module>sre</module>
 		<module>statvfs</module>
@@ -1649,6 +1852,7 @@
 		<module>tkinter._fix</module>
 		<module>toaiff</module>
 		<module>ttk</module>
+		<module>turtledemo.rosette</module>
 		<module>unittest.test.testmock.testsealable</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
@@ -1659,6 +1863,7 @@
 		<module>xmlrpclib</module>
 		<func>ModuleNotFoundError</func>
 		<func>StandardError</func>
+		<func>TargetScopeError</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>breakpoint</func>
@@ -1711,18 +1916,332 @@
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
 		<module>__main__</module>
+		<module>_abc</module>
 		<module>_abcoll</module>
 		<module>_bytesio</module>
+		<module>_contextvars</module>
 		<module>_dbm</module>
 		<module>_fileio</module>
 		<module>_gdbm</module>
 		<module>_hotshot</module>
+		<module>_posixshmem</module>
+		<module>_py_abc</module>
+		<module>_queue</module>
 		<module>_sha</module>
 		<module>_sqlite3</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata_m</module>
+		<module>_xxsubinterpreters</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
+		<module>asyncio.exceptions</module>
+		<module>asyncio.format_helpers</module>
+		<module>asyncio.runners</module>
+		<module>audiodev</module>
+		<module>bsddb</module>
+		<module>bsddb.db</module>
+		<module>bsddb.dbobj</module>
+		<module>bsddb.dbrecio</module>
+		<module>bsddb.dbshelve</module>
+		<module>bsddb.dbtables</module>
+		<module>bsddb.dbutils</module>
+		<module>bsddb.test</module>
+		<module>bsddb.test.test_all</module>
+		<module>bsddb.test.test_associate</module>
+		<module>bsddb.test.test_basics</module>
+		<module>bsddb.test.test_compare</module>
+		<module>bsddb.test.test_compat</module>
+		<module>bsddb.test.test_cursor_pget_bug</module>
+		<module>bsddb.test.test_db</module>
+		<module>bsddb.test.test_dbenv</module>
+		<module>bsddb.test.test_dbobj</module>
+		<module>bsddb.test.test_dbshelve</module>
+		<module>bsddb.test.test_dbtables</module>
+		<module>bsddb.test.test_distributed_transactions</module>
+		<module>bsddb.test.test_early_close</module>
+		<module>bsddb.test.test_fileid</module>
+		<module>bsddb.test.test_get_none</module>
+		<module>bsddb.test.test_join</module>
+		<module>bsddb.test.test_lock</module>
+		<module>bsddb.test.test_misc</module>
+		<module>bsddb.test.test_pickle</module>
+		<module>bsddb.test.test_queue</module>
+		<module>bsddb.test.test_recno</module>
+		<module>bsddb.test.test_replication</module>
+		<module>bsddb.test.test_sequence</module>
+		<module>bsddb.test.test_thread</module>
+		<module>cPickle</module>
+		<module>cStringIO</module>
+		<module>collections.__main__</module>
+		<module>commands</module>
+		<module>compiler</module>
+		<module>compiler.ast</module>
+		<module>compiler.consts</module>
+		<module>compiler.future</module>
+		<module>compiler.misc</module>
+		<module>compiler.pyassem</module>
+		<module>compiler.pycodegen</module>
+		<module>compiler.symbols</module>
+		<module>compiler.syntax</module>
+		<module>compiler.transformer</module>
+		<module>compiler.visitor</module>
+		<module>contextvars</module>
+		<module>cookielib</module>
+		<module>copy_reg</module>
+		<module>crypt_failed</module>
+		<module>ctypes._aix</module>
+		<module>ctypes.test.runtests</module>
+		<module>ctypes.test.test_errcheck</module>
+		<module>ctypes.test.test_integers</module>
+		<module>curses.wrapper</module>
+		<module>dbhash</module>
+		<module>dircache</module>
+		<module>distutils.emxccompiler</module>
+		<module>distutils.mwerkscompiler</module>
+		<module>distutils.tests.setuptools_build_ext</module>
+		<module>distutils.tests.setuptools_extension</module>
+		<module>distutils.tests.test_ccompiler</module>
+		<module>dumbdbm</module>
+		<module>dummy_thread</module>
+		<module>email.test</module>
+		<module>email.test.test_email</module>
+		<module>email.test.test_email_codecs</module>
+		<module>email.test.test_email_codecs_renamed</module>
+		<module>email.test.test_email_renamed</module>
+		<module>email.test.test_email_torture</module>
+		<module>encodings.string_escape</module>
+		<module>exceptions</module>
+		<module>fpformat</module>
+		<module>future_builtins</module>
+		<module>hotshot</module>
+		<module>hotshot.log</module>
+		<module>hotshot.stats</module>
+		<module>hotshot.stones</module>
+		<module>htmlentitydefs</module>
+		<module>htmllib</module>
+		<module>httplib</module>
+		<module>idlelib.AutoComplete</module>
+		<module>idlelib.AutoCompleteWindow</module>
+		<module>idlelib.AutoExpand</module>
+		<module>idlelib.Bindings</module>
+		<module>idlelib.CallTipWindow</module>
+		<module>idlelib.CallTips</module>
+		<module>idlelib.ClassBrowser</module>
+		<module>idlelib.CodeContext</module>
+		<module>idlelib.ColorDelegator</module>
+		<module>idlelib.Debugger</module>
+		<module>idlelib.Delegator</module>
+		<module>idlelib.EditorWindow</module>
+		<module>idlelib.FileList</module>
+		<module>idlelib.FormatParagraph</module>
+		<module>idlelib.GrepDialog</module>
+		<module>idlelib.HyperParser</module>
+		<module>idlelib.IOBinding</module>
+		<module>idlelib.IdleHistory</module>
+		<module>idlelib.MultiCall</module>
+		<module>idlelib.MultiStatusBar</module>
+		<module>idlelib.ObjectBrowser</module>
+		<module>idlelib.OutputWindow</module>
+		<module>idlelib.ParenMatch</module>
+		<module>idlelib.PathBrowser</module>
+		<module>idlelib.Percolator</module>
+		<module>idlelib.PyParse</module>
+		<module>idlelib.PyShell</module>
+		<module>idlelib.RemoteDebugger</module>
+		<module>idlelib.RemoteObjectBrowser</module>
+		<module>idlelib.ReplaceDialog</module>
+		<module>idlelib.RstripExtension</module>
+		<module>idlelib.ScriptBinding</module>
+		<module>idlelib.ScrolledList</module>
+		<module>idlelib.SearchDialog</module>
+		<module>idlelib.SearchDialogBase</module>
+		<module>idlelib.SearchEngine</module>
+		<module>idlelib.StackViewer</module>
+		<module>idlelib.ToolTip</module>
+		<module>idlelib.TreeWidget</module>
+		<module>idlelib.UndoDelegator</module>
+		<module>idlelib.WidgetRedirector</module>
+		<module>idlelib.WindowList</module>
+		<module>idlelib.ZoomHeight</module>
+		<module>idlelib.aboutDialog</module>
+		<module>idlelib.calltip</module>
+		<module>idlelib.configDialog</module>
+		<module>idlelib.configHandler</module>
+		<module>idlelib.configHelpSourceEdit</module>
+		<module>idlelib.configSectionNameDialog</module>
+		<module>idlelib.dynOptionMenuWidget</module>
+		<module>idlelib.idle_test.template</module>
+		<module>idlelib.idle_test.test_autocomplete_w</module>
+		<module>idlelib.idle_test.test_calltip</module>
+		<module>idlelib.idle_test.test_calltip_w</module>
+		<module>idlelib.idle_test.test_codecontext</module>
+		<module>idlelib.idle_test.test_config_name</module>
+		<module>idlelib.idle_test.test_debugger_r</module>
+		<module>idlelib.idle_test.test_debugobj</module>
+		<module>idlelib.idle_test.test_debugobj_r</module>
+		<module>idlelib.idle_test.test_filelist</module>
+		<module>idlelib.idle_test.test_formatparagraph</module>
+		<module>idlelib.idle_test.test_idlehistory</module>
+		<module>idlelib.idle_test.test_io</module>
+		<module>idlelib.idle_test.test_mainmenu</module>
+		<module>idlelib.idle_test.test_multicall</module>
+		<module>idlelib.idle_test.test_pyparse</module>
+		<module>idlelib.idle_test.test_pyshell</module>
+		<module>idlelib.idle_test.test_rpc</module>
+		<module>idlelib.idle_test.test_runscript</module>
+		<module>idlelib.idle_test.test_searchdialogbase</module>
+		<module>idlelib.idle_test.test_squeezer</module>
+		<module>idlelib.idle_test.test_stackviewer</module>
+		<module>idlelib.idle_test.test_statusbar</module>
+		<module>idlelib.idle_test.test_tooltip</module>
+		<module>idlelib.idle_test.test_widgetredir</module>
+		<module>idlelib.idle_test.test_window</module>
+		<module>idlelib.idle_test.test_zoomheight</module>
+		<module>idlelib.idlever</module>
+		<module>idlelib.keybindingDialog</module>
+		<module>idlelib.macosxSupport</module>
+		<module>idlelib.squeezer</module>
+		<module>idlelib.tabbedpages</module>
+		<module>idlelib.testcode</module>
+		<module>idlelib.textView</module>
+		<module>idlelib.window</module>
+		<module>ihooks</module>
+		<module>importlib.resources</module>
+		<module>imputil</module>
+		<module>json.tests</module>
+		<module>json.tests.test_check_circular</module>
+		<module>json.tests.test_decode</module>
+		<module>json.tests.test_default</module>
+		<module>json.tests.test_dump</module>
+		<module>json.tests.test_encode_basestring_ascii</module>
+		<module>json.tests.test_fail</module>
+		<module>json.tests.test_float</module>
+		<module>json.tests.test_indent</module>
+		<module>json.tests.test_pass1</module>
+		<module>json.tests.test_pass2</module>
+		<module>json.tests.test_pass3</module>
+		<module>json.tests.test_recursion</module>
+		<module>json.tests.test_scanstring</module>
+		<module>json.tests.test_separators</module>
+		<module>json.tests.test_speedups</module>
+		<module>json.tests.test_tool</module>
+		<module>json.tests.test_unicode</module>
+		<module>lib2to3.fixes.fix_callable</module>
+		<module>linuxaudiodev</module>
+		<module>macurl2path</module>
+		<module>markupbase</module>
+		<module>md5</module>
+		<module>mhlib</module>
+		<module>mimetools</module>
+		<module>mimify</module>
+		<module>multifile</module>
+		<module>multiprocessing.forking</module>
+		<module>multiprocessing.shared_memory</module>
+		<module>mutex</module>
+		<module>new</module>
+		<module>nis_failed</module>
+		<module>os2emxpath</module>
+		<module>popen2</module>
+		<module>posixfile</module>
+		<module>pydoc_topics</module>
+		<module>repr</module>
+		<module>rexec</module>
+		<module>rfc822</module>
+		<module>robotparser</module>
+		<module>scipy_doc_mapping</module>
+		<module>sets</module>
+		<module>sgmllib</module>
+		<module>sha</module>
+		<module>sqlite3.test.backup</module>
+		<module>sqlite3.test.py25tests</module>
+		<module>sre</module>
+		<module>statvfs</module>
+		<module>stringold</module>
+		<module>strop</module>
+		<module>sunaudio</module>
+		<module>thread</module>
+		<module>tkColorChooser</module>
+		<module>tkCommonDialog</module>
+		<module>tkFileDialog</module>
+		<module>tkFont</module>
+		<module>tkMessageBox</module>
+		<module>tkSimpleDialog</module>
+		<module>tkinter._fix</module>
+		<module>toaiff</module>
+		<module>ttk</module>
+		<module>turtledemo.rosette</module>
+		<module>urllib2</module>
+		<module>urlparse</module>
+		<module>user</module>
+		<module>versions_updater</module>
+		<module>whichdb</module>
+		<module>xmllib</module>
+		<module>xmlrpclib</module>
+		<func>StandardError</func>
+		<func>TargetScopeError</func>
+		<func>apply</func>
+		<func>basestring</func>
+		<func>buffer</func>
+		<func>cmp</func>
+		<func>coerce</func>
+		<func>execfile</func>
+		<func>file</func>
+		<func>intern</func>
+		<func>long</func>
+		<func>raw_input</func>
+		<func>reduce</func>
+		<func>reload</func>
+		<func>unichr</func>
+		<func>unicode</func>
+		<func>xrange</func>
+	</python>
+	<python version="3.8">
+		<module>BaseHTTPServer</module>
+		<module>Bastion</module>
+		<module>CDROM</module>
+		<module>CGIHTTPServer</module>
+		<module>Canvas</module>
+		<module>ConfigParser</module>
+		<module>Cookie</module>
+		<module>DLFCN</module>
+		<module>Dialog</module>
+		<module>DocXMLRPCServer</module>
+		<module>FileDialog</module>
+		<module>FixTk</module>
+		<module>HTMLParser</module>
+		<module>IN</module>
+		<module>MimeWriter</module>
+		<module>Queue</module>
+		<module>ScrolledText</module>
+		<module>SimpleDialog</module>
+		<module>SimpleHTTPServer</module>
+		<module>SimpleXMLRPCServer</module>
+		<module>SocketServer</module>
+		<module>StringIO</module>
+		<module>TYPES</module>
+		<module>Tix</module>
+		<module>Tkconstants</module>
+		<module>Tkdnd</module>
+		<module>Tkinter</module>
+		<module>UserDict</module>
+		<module>UserList</module>
+		<module>UserString</module>
+		<module>_LWPCookieJar</module>
+		<module>_MozillaCookieJar</module>
+		<module>__builtin__</module>
+		<module>__main__</module>
+		<module>_abcoll</module>
+		<module>_bytesio</module>
+		<module>_fileio</module>
+		<module>_hotshot</module>
+		<module>_lzma</module>
+		<module>_sha</module>
+		<module>_sysconfigdata</module>
+		<module>_sysconfigdata_m</module>
+		<module>_tkinter</module>
+		<module>anydbm</module>
+		<module>asyncio.compat</module>
+		<module>asyncio.test_utils</module>
 		<module>audiodev</module>
 		<module>bsddb</module>
 		<module>bsddb.db</module>
@@ -1848,11 +2367,13 @@
 		<module>idlelib.WindowList</module>
 		<module>idlelib.ZoomHeight</module>
 		<module>idlelib.aboutDialog</module>
+		<module>idlelib.calltips</module>
 		<module>idlelib.configDialog</module>
 		<module>idlelib.configHandler</module>
 		<module>idlelib.configHelpSourceEdit</module>
 		<module>idlelib.configSectionNameDialog</module>
 		<module>idlelib.dynOptionMenuWidget</module>
+		<module>idlelib.idle_test.test_calltips</module>
 		<module>idlelib.idle_test.test_config_name</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
 		<module>idlelib.idle_test.test_idlehistory</module>
@@ -1865,6 +2386,7 @@
 		<module>idlelib.tabbedpages</module>
 		<module>idlelib.testcode</module>
 		<module>idlelib.textView</module>
+		<module>idlelib.windows</module>
 		<module>ihooks</module>
 		<module>imputil</module>
 		<module>json.tests</module>
@@ -1887,6 +2409,7 @@
 		<module>json.tests.test_unicode</module>
 		<module>lib2to3.fixes.fix_callable</module>
 		<module>linuxaudiodev</module>
+		<module>macpath</module>
 		<module>macurl2path</module>
 		<module>markupbase</module>
 		<module>md5</module>
@@ -1925,6 +2448,7 @@
 		<module>tkinter._fix</module>
 		<module>toaiff</module>
 		<module>ttk</module>
+		<module>turtledemo.wikipedia</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
