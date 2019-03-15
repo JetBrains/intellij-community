@@ -160,14 +160,13 @@ public class AppUIUtil {
     }
   }
 
-  public static void updateFrameClass() {
+  public static void updateFrameClass(@NotNull Toolkit toolkit) {
     if (SystemInfoRt.isWindows || SystemInfoRt.isMac) {
       return;
     }
 
     Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_FRAME_CLASS);
     try {
-      Toolkit toolkit = Toolkit.getDefaultToolkit();
       Class<? extends Toolkit> aClass = toolkit.getClass();
       if ("sun.awt.X11.XToolkit".equals(aClass.getName())) {
         ReflectionUtil.setField(aClass, toolkit, null, "awtAppClassName", getFrameClass());

@@ -345,7 +345,11 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     }
 
     @JvmStatic
-    private fun verbose(msg: String, vararg args: Any) = if (JBUI.SCALE_VERBOSE) LOG.info(String.format(msg, *args)) else {}
+    private fun verbose(msg: String, vararg args: Any) {
+      if (UIUtil.SCALE_VERBOSE) {
+        LOG.info(String.format(msg, *args))
+      }
+    }
 
     const val ANIMATION_DURATION = 300 // Milliseconds
 
@@ -435,7 +439,7 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
      */
     @JvmStatic
     fun setupComponentAntialiasing(component: JComponent) {
-      com.intellij.util.ui.GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
+      GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
     }
 
     @JvmStatic
