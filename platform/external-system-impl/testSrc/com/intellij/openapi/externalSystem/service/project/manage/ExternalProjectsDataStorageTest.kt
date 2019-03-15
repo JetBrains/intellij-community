@@ -37,8 +37,7 @@ class ExternalProjectsDataStorageTest: UsefulTestCase() {
 
   @Test
   fun `test external project data is saved and loaded`() = runBlocking<Unit> {
-    val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, testRootDisposable)
-    val dataStorage = ExternalProjectsDataStorage(myFixture.project, alarm)
+    val dataStorage = ExternalProjectsDataStorage(myFixture.project)
 
     val testId = ProjectSystemId("Test")
     val externalName = "external_name"
@@ -52,7 +51,6 @@ class ExternalProjectsDataStorageTest: UsefulTestCase() {
 
     dataStorage.update(externalProjectInfo)
     dataStorage.save()
-    alarm.waitForAllExecuted(1, SECONDS)
     dataStorage.load()
 
     val list = dataStorage.list(testId)
