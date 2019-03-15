@@ -1,17 +1,24 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.openapi.util.RecursionManager
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
 import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.jetbrains.plugins.groovy.util.TypingTest
+import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
 @CompileStatic
 class EmptyListSubstitutorInferenceTest extends GroovyLatestTest implements TypingTest, ResolveTest {
+
+  @Before
+  void disableRecursion() {
+    RecursionManager.assertOnRecursionPrevention(fixture.testRootDisposable)
+  }
 
   @Test
   void 'simple'() {
