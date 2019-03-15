@@ -88,6 +88,10 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     row.addComponent(component, lazyOf(cc))
   }
 
+  fun updateComponentConstraints(component: Component, callback: CC.() -> Unit) {
+    componentConstraints.getOrPut(component) { CC() }.callback()
+  }
+
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
     val lc = createLayoutConstraints()
     lc.gridGapY = gapToBoundSize(spacing.verticalGap, false)

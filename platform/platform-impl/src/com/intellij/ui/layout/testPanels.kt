@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.CommonBundle
@@ -280,5 +280,23 @@ fun titledRow(): JPanel {
       row("Default notebook name:") { JTextField("")() }
       row("Spark version:") { JTextField("")() }
     }
+  }
+}
+
+private data class TestOptions(var threadDumpDelay: Int, var enableLargeIndexing: Boolean, var largeIndexFilesCount: Int)
+
+fun checkBoxFollowedBySpinner(): JPanel {
+  val testOptions = TestOptions(50, true, 100)
+  return panel {
+    row(label = "Thread dump capture delay (ms):") {
+      spinner(testOptions::threadDumpDelay, 50, 5000, 50)
+    }
+    row {
+      val c = checkBox("Create", testOptions::enableLargeIndexing).actsAsLabel()
+      spinner(testOptions::largeIndexFilesCount, 100, 1_000_000, 1_000)
+        .enableIfSelected(c)
+      label("files to start background indexing")
+    }
+
   }
 }

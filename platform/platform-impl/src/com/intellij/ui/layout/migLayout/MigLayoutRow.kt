@@ -325,7 +325,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 class CellBuilderImpl<T : JComponent> internal constructor(
   private val builder: MigLayoutBuilder,
   override val component: T
-) : CellBuilder<T> {
+) : CellBuilder<T>, CheckboxCellBuilder {
   override fun focused(): CellBuilder<T> {
     builder.preferredFocusedComponent = component
     return this
@@ -348,6 +348,10 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   override fun enableIfSelected(button: AbstractButton) {
     component.isEnabled = button.isSelected
     button.addChangeListener { component.isEnabled = button.isSelected }
+  }
+
+  override fun actsAsLabel() {
+    builder.updateComponentConstraints(component) { spanX = 1 }
   }
 }
 
