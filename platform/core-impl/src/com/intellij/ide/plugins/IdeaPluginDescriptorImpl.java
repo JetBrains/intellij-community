@@ -27,7 +27,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.BeanBinding;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
-import gnu.trove.THashMap;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -383,6 +382,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         }
         break;
       }
+
+      child.getContent().clear();
     }
   }
 
