@@ -17,7 +17,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -29,17 +29,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 public abstract class IndexedFilesListener implements BulkFileListener {
   private final ManagingFS myManagingFS = ManagingFS.getInstance();
-  @Nullable private final String myConfigPath;
-  @Nullable private final String myLogPath;
+  @Nullable private final VirtualFile myConfig;
+  @Nullable private final VirtualFile myLog;
 
   public IndexedFilesListener() {
-    myConfigPath = calcConfigPath(PathManager.getConfigPath());
-    myLogPath = calcConfigPath(PathManager.getLogPath());
+    myConfig = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(PathManager.getConfigPath()));
+    myLog = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(PathManager.getLogPath()));
   }
 
   protected void buildIndicesForFileRecursively(@NotNull final VirtualFile file, final boolean contentChange) {
@@ -56,27 +55,19 @@ public abstract class IndexedFilesListener implements BulkFileListener {
     }
   }
 
-  protected boolean invalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
+  private boolean invalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
     if (isUnderConfigOrSystem(file)) {
       return false;
     }
-    if (file.isDirectory()) {
-      doInvalidateIndicesForFile(file, contentChange);
-      if (!FileBasedIndexImpl.isMock(file) && !myManagingFS.wereChildrenAccessed(file)) {
-        return false;
-      }
-    }
-    else {
-      doInvalidateIndicesForFile(file, contentChange);
-    }
-    return true;
+    doInvalidateIndicesForFile(file, contentChange);
+    return !file.isDirectory() || FileBasedIndexImpl.isMock(file) || myManagingFS.wereChildrenAccessed(file);
   }
 
   protected abstract void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator);
   protected abstract void buildIndicesForFile(@NotNull VirtualFile file, boolean contentChange);
   protected abstract void doInvalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange);
 
-  protected void invalidateIndicesRecursively(@NotNull final VirtualFile file, final boolean contentChange) {
+  void invalidateIndicesRecursively(@NotNull final VirtualFile file, final boolean contentChange) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
@@ -149,21 +140,8 @@ public abstract class IndexedFilesListener implements BulkFileListener {
     }
   }
 
-  @Nullable
-  private static String calcConfigPath(@NotNull String path) {
-    try {
-      final String _path = FileUtil.toSystemIndependentName(new File(path).getCanonicalPath());
-      return _path.endsWith("/") ? _path : _path + "/";
-    }
-    catch (IOException e) {
-      FileBasedIndexImpl.LOG.info(e);
-      return null;
-    }
-  }
-
   private boolean isUnderConfigOrSystem(@NotNull VirtualFile file) {
-    final String filePath = file.getPath();
-    return myConfigPath != null && FileUtil.startsWith(filePath, myConfigPath) ||
-           myLogPath != null && FileUtil.startsWith(filePath, myLogPath);
+    return myConfig != null && VfsUtilCore.isAncestor(myConfig, file, false) ||
+           myLog != null && VfsUtilCore.isAncestor(myLog, file, false);
   }
 }
