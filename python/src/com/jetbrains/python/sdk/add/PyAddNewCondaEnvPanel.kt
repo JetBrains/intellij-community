@@ -74,7 +74,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     layout = BorderLayout()
 
     // https://conda.io/docs/user-guide/install/index.html#system-requirements
-    val supportedLanguageLevels = LanguageLevel.SUPPORTED_LEVELS.asReversed().map { it.toString() }
+    val supportedLanguageLevels = LanguageLevel.SUPPORTED_LEVELS.asReversed().filter { it != LanguageLevel.PYTHON38 }.map { it.toString() }
 
     languageLevelsField = JComboBox(supportedLanguageLevels.toTypedArray()).apply {
       selectedItem = if (itemCount > 0) getItemAt(0) else null

@@ -76,7 +76,8 @@ public enum LanguageLevel {
   PYTHON34(34, true, false, true, true),
   PYTHON35(35, true, false, true, true),
   PYTHON36(36, true, false, true, true),
-  PYTHON37(37, true, false, true, true);
+  PYTHON37(37, true, false, true, true),
+  PYTHON38(38, true, false, true, true);
 
   /**
    * This value is mostly bound to the compatibility of our debugger and helpers.
@@ -190,6 +191,9 @@ public enum LanguageLevel {
       }
       if (pythonVersion.startsWith("3.7")) {
         return PYTHON37;
+      }
+      if (pythonVersion.startsWith("3.8")) {
+        return PYTHON38;
       }
       return DEFAULT3;
     }
