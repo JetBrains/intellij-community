@@ -141,7 +141,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   }
 
   private static Icon getToolWindowIcon() {
-    return AllIcons.Toolwindows.ToolWindowRun;
+    return AllIcons.Toolwindows.ToolWindowServices;
   }
 
   static String getToolWindowContextHelpId() {
