@@ -62,9 +62,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
   private Border myTopBorder = new MyTopBorder();
 
   private static final int menuBarGap = 7;
-  private static final int resizeGap = 3;
-  private static final int dragGap = 7;
-
+  private static final int resizeGap = JBUI.scale(3);
 
   public DarculaTitlePane(JRootPane root, DarculaRootPaneUI ui) {
     this.myRootPane = root;
@@ -154,9 +152,12 @@ public class DarculaTitlePane extends JPanel implements Disposable {
     if (frame != null) {
       int state = frame.getExtendedState();
       if (state != MAXIMIZED_VERT && state != MAXIMIZED_BOTH) {
-        menuRect.y += resizeGap + dragGap;
+
+        menuRect.y += Math.round(menuRect.height / 3);
+
         iconRect.y += resizeGap;
         iconRect.x += resizeGap;
+
         buttonsRect.y += resizeGap;
         buttonsRect.x += resizeGap;
         buttonsRect.width -= resizeGap;
