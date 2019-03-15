@@ -33,25 +33,25 @@ public class ConcurrentPackedBitArrayTest extends TestCase {
       bitSet.set(1, 0x10);
       fail("must throw IAE");
     }
-    catch (IllegalArgumentException e) {
+    catch (IllegalArgumentException ignored) {
     }
     try {
       bitSet.set(1, -1);
       fail("must throw IAE");
     }
-    catch (IllegalArgumentException e) {
+    catch (IllegalArgumentException ignored) {
     }
     try {
       new ConcurrentPackedBitsArray(65);
       fail("must throw IAE");
     }
-    catch (IllegalArgumentException e) {
+    catch (IllegalArgumentException ignored) {
     }
     try {
       new ConcurrentPackedBitsArray(0);
       fail("must throw IAE");
     }
-    catch (IllegalArgumentException e) {
+    catch (IllegalArgumentException ignored) {
     }
   }
 
@@ -60,8 +60,16 @@ public class ConcurrentPackedBitArrayTest extends TestCase {
     bitSet.set(0, 0xDEAFBEEFL);
     assertEquals(0xDEAFBEEFL, bitSet.get(0) & 0xFFFFFFFFL);
     
-    bitSet = new ConcurrentPackedBitsArray(64);
-    bitSet.set(0, 0xDEAFBEEFL);
-    assertEquals(0xDEAFBEEFL, bitSet.get(0));
+    bitSet = new ConcurrentPackedBitsArray(31);
+    long eadBeef = 0b0101_1110_1010_1111_1011_1110_1110_1111L;
+    bitSet.set(0, eadBeef);
+    assertEquals(eadBeef, bitSet.get(0));
+
+    try {
+      bitSet.set(0, 0xDEAFBEEFL);
+      fail();
+    }
+    catch (IllegalArgumentException ignored) {
+    }
   }
 }
