@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import com.intellij.openapi.util.RecursionManager
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
 import org.jetbrains.plugins.groovy.util.ResolveTest
@@ -85,10 +86,14 @@ class EmptyListSubstitutorInferenceTest extends GroovyLatestTest implements Typi
 
   @Test
   void 'in argument of generic method call'() {
-    typingTest('''\
-static <T> List<T> add(List<T> l, T value) { l.add(value); return l }
-add([<caret>], 1)
-''', GrListOrMap, 'java.util.List<java.lang.Integer>')
+    typingTest('def <T> T id(T a) {a}; id([<caret>])', GrListOrMap, 'java.util.List')
+    typingTest('def <T> T id(T a) {a}; <caret>id([])', GrMethodCall, 'java.util.List')
+  }
+
+  @Test
+  void 'in argument of generic method call with argument'() {
+    typingTest('def <T> List<T> add(List<T> l, T v) {}; add([<caret>], 1)', GrListOrMap, 'java.util.List<java.lang.Integer>')
+    typingTest('def <T> List<T> add(List<T> l, T v) {}; <caret>add([], 1)', GrMethodCall, 'java.util.List<java.lang.Integer>')
   }
 
   @Ignore("Requires list literal inference from both arguments and context type")
