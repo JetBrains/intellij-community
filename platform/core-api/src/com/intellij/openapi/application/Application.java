@@ -67,7 +67,7 @@ public interface Application extends ComponentManager {
    * @return the result returned by the computation.
    * @throws E re-frown from ThrowableComputable
    */
-  <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E;
+  <T, E extends Throwable> T  runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
    * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
