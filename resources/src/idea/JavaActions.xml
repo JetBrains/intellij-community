@@ -355,6 +355,10 @@
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
     </action>
 
+    <action id="ExtractMethodWithResultObject" class="com.intellij.refactoring.actions.ExtractMethodWithResultObjectAction">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
+    </action>
+
     <action id="IntroduceFunctionalParameter" class="com.intellij.refactoring.actions.IntroduceFunctionalParameterAction">
       <add-to-group group-id="IntroduceActionsGroup" anchor="before" relative-to-action="IntroduceParameterObject"/>
       <keyboard-shortcut first-keystroke="control shift alt P" keymap="$default"/>
