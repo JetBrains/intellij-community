@@ -37,7 +37,6 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
   private final PersistentMapBasedForwardIndex myContents;
   private volatile PersistentHashMap<Integer, String> myIndexingTrace;
 
-  private final SharedMapForwardIndex myForwardIndex;
   private final HashIdForwardIndexAccessor<Key, Value, Input> myHashIdForwardIndexAccessor;
 
   private final boolean myIsPsiBackedIndex;
@@ -49,17 +48,11 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
     myIndexer = indexExtension.getIndexer();
     myContents = createContentsIndex();
     myHashIdForwardIndexAccessor = new HashIdForwardIndexAccessor<>(this);
-    myForwardIndex = new SharedMapForwardIndex(indexExtension, myHashIdForwardIndexAccessor);
     myIndexingTrace = createIndexingTrace();
   }
 
-  @NotNull
-  Map<Key, Value> readInputKeys(int inputId) throws IOException {
-    Integer currentHashId = readInputHashId(inputId);
-    if (currentHashId != null) {
-      return readData(currentHashId);
-    }
-    return Collections.emptyMap();
+  HashIdForwardIndexAccessor<Key, Value, Input> getForwardIndexAccessor() {
+    return myHashIdForwardIndexAccessor;
   }
 
   @NotNull
@@ -74,7 +67,8 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
 
   @NotNull
   @Override
-  public Map<Key, Value> readDataOrMap(@NotNull Input content) {
+  public Map<Key, Value> readDataOrMap(@Nullable Input content) {
+    if (content == null) return Collections.emptyMap();
     Map<Key, Value> data = null;
     boolean havePersistentData = false;
     int hashId;
@@ -187,19 +181,9 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
     }
   }
 
-  void putInputHash(int inputId, int hashId) {
-    try {
-      myForwardIndex.put(inputId, myHashIdForwardIndexAccessor.serializeIndexedData(hashId));
-    }
-    catch (IOException ex) {
-      throw new RuntimeException(ex);
-    }
-  }
-
   @Override
   public void flush() {
     if (myContents != null) myContents.force();
-    if (myForwardIndex != null) myForwardIndex.force();
     if (myIndexingTrace != null) myIndexingTrace.force();
   }
 
@@ -218,20 +202,20 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
         myIndexingTrace = createIndexingTrace();
       }
     } finally {
-      Stream.of(myContents, myForwardIndex).filter(Objects::nonNull).forEach(index -> {
+      if (myContents != null) {
         try {
-          index.clear();
+          myContents.clear();
         }
         catch (IOException e) {
           LOG.error(e);
         }
-      });
+      }
     }
   }
 
   @Override
   public void close() throws IOException {
-    Stream.of(myContents, myForwardIndex, myIndexingTrace).filter(Objects::nonNull).forEach(index -> {
+    Stream.of(myContents, myIndexingTrace).filter(Objects::nonNull).forEach(index -> {
       try {
         index.close();
       }
@@ -275,10 +259,6 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
       IOUtil.deleteAllFilesStartingWith(mapFile);
       throw ex;
     }
-  }
-
-  private Integer readInputHashId(int inputId) throws IOException {
-    return myHashIdForwardIndexAccessor.deserializeData(myForwardIndex.get(inputId));
   }
 
   private ByteArraySequence readContents(Integer hashId) throws IOException {

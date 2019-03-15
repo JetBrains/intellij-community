@@ -81,29 +81,30 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorage<Key, Value> storage,
-                           @Nullable com.intellij.util.indexing.impl.forward.ForwardIndex forwardIndex,
-                           @Nullable ForwardIndexAccessor<Key, Value, ?, Input> forwardIndexAccessor) {
-    myIndexId = extension.getName();
-    myExtension = extension;
-    myIndexer = myExtension.getIndexer();
-    myStorage = storage;
-    myValueExternalizer = extension.getValueExternalizer();
-    myForwardIndexMap = forwardIndex;
-    myForwardIndexAccessor = forwardIndexAccessor;
-    myForwardIndex = null;
-  }
-
-  protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
-                           @NotNull IndexStorage<Key, Value> storage,
+                           @Nullable com.intellij.util.indexing.impl.forward.ForwardIndex forwardIndexMap,
+                           @Nullable ForwardIndexAccessor<Key, Value, ?, Input> forwardIndexAccessor,
                            @Nullable ForwardIndex<Key, Value> forwardIndex) {
     myIndexId = extension.getName();
     myExtension = extension;
     myIndexer = myExtension.getIndexer();
     myStorage = storage;
     myValueExternalizer = extension.getValueExternalizer();
+    myForwardIndexMap = forwardIndexMap;
+    myForwardIndexAccessor = forwardIndexAccessor;
     myForwardIndex = forwardIndex;
-    myForwardIndexMap = null;
-    myForwardIndexAccessor = null;
+  }
+
+  protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                           @NotNull IndexStorage<Key, Value> storage,
+                           @Nullable com.intellij.util.indexing.impl.forward.ForwardIndex forwardIndex,
+                           @Nullable ForwardIndexAccessor<Key, Value, ?, Input> forwardIndexAccessor) {
+    this(extension, storage, forwardIndex, forwardIndexAccessor, null);
+  }
+
+  protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                           @NotNull IndexStorage<Key, Value> storage,
+                           @Nullable ForwardIndex<Key, Value> forwardIndex) {
+    this(extension, storage, null, null, forwardIndex);
   }
 
   public com.intellij.util.indexing.impl.forward.ForwardIndex getForwardIndexMap() {
