@@ -74,11 +74,11 @@ fun PsiSubstitutor.putAll(parameters: Array<out PsiTypeParameter>, arguments: Ar
 }
 
 fun PsiClass.type(): PsiClassType {
-  return PsiElementFactory.SERVICE.getInstance(project).createType(this, PsiSubstitutor.EMPTY)
+  return PsiElementFactory.getInstance(project).createType(this, PsiSubstitutor.EMPTY)
 }
 
 fun PsiClass.rawType(): PsiClassType {
-  val factory = PsiElementFactory.SERVICE.getInstance(project)
+  val factory = PsiElementFactory.getInstance(project)
   return factory.createType(this, factory.createRawSubstitutor(this))
 }
 

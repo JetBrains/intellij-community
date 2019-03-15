@@ -28,7 +28,7 @@ internal class ChangeMethodParameters(target: PsiMethod, override val request: C
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
 
-    val factory = PsiElementFactory.SERVICE.getInstance(project)
+    val factory = PsiElementFactory.getInstance(project)
     val helper = JvmPsiConversionHelper.getInstance(target.project)
 
     tailrec fun updateParameters(currentParameters: List<PsiParameter>, expectedParameters: List<ExpectedParameter>) {

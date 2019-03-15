@@ -36,12 +36,21 @@ import java.util.Map;
  * @see PsiFileFactory
  */
 public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactory {
+
+  /**
+   * @deprecated please use static interface method
+   */
+  @Deprecated
   class SERVICE {
     private SERVICE() { }
 
     public static PsiElementFactory getInstance(Project project) {
-      return ServiceManager.getService(project, PsiElementFactory.class);
+      return PsiElementFactory.getInstance(project);
     }
+  }
+
+  static PsiElementFactory getInstance(Project project) {
+    return ServiceManager.getService(project, PsiElementFactory.class);
   }
 
   /**
