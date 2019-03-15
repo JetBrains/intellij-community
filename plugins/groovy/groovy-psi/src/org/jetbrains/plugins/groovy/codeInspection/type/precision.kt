@@ -1,16 +1,23 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("PrecisionUtil")
+@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 
 package org.jetbrains.plugins.groovy.codeInspection.type
 
 import com.intellij.psi.PsiType
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_MINUS
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_PLUS
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.*
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.lang.Double as JDouble
+import java.lang.Float as JFloat
+import java.lang.Integer as JInteger
+import java.lang.Long as JLong
+import java.lang.Short as JShort
 
 //see org.codehaus.groovy.transform.stc.StaticTypeCheckingSupport.checkPossibleLooseOfPrecision()
 fun isPossibleLooseOfPrecision(targetType: PsiType, actualType: PsiType, expression: GrExpression): Boolean {
@@ -19,60 +26,47 @@ fun isPossibleLooseOfPrecision(targetType: PsiType, actualType: PsiType, express
   if (targetRank == CHARACTER_RANK || actualRank == CHARACTER_RANK || targetRank == BIG_DECIMAL_RANK) return false
   if (actualRank == 0 || targetRank == 0 || actualRank <= targetRank) return false
 
-
   val value = extractLiteralValue(expression) ?: return true
-  when (targetRank) {
+  return when (targetRank) {
     BYTE_RANK -> {
       val byteVal = value.toByte()
-      if (value is Short) {
-        return java.lang.Short.valueOf(byteVal.toShort()) != value
+      when (value) {
+        is Short -> JShort.valueOf(byteVal.toShort()) != value
+        is Int -> JInteger.valueOf(byteVal.toInt()) != value
+        is Long -> JLong.valueOf(byteVal.toLong()) != value
+        is Float -> JFloat.valueOf(byteVal.toFloat()) != value
+        else -> JDouble.valueOf(byteVal.toDouble()) != value
       }
-      if (value is Int) {
-        return Integer.valueOf(byteVal.toInt()) != value
-      }
-      if (value is Long) {
-        return java.lang.Long.valueOf(byteVal.toLong()) != value
-      }
-      return if (value is Float) {
-        java.lang.Float.valueOf(byteVal.toFloat()) != value
-      }
-      else java.lang.Double.valueOf(byteVal.toDouble()) != value
     }
     SHORT_RANK -> {
       val shortVal = value.toShort()
-      if (value is Int) {
-        return Integer.valueOf(shortVal.toInt()) != value
+      when (value) {
+        is Int -> JInteger.valueOf(shortVal.toInt()) != value
+        is Long -> JLong.valueOf(shortVal.toLong()) != value
+        is Float -> JFloat.valueOf(shortVal.toFloat()) != value
+        else -> JDouble.valueOf(shortVal.toDouble()) != value
       }
-      if (value is Long) {
-        return java.lang.Long.valueOf(shortVal.toLong()) != value
-      }
-      return if (value is Float) {
-        java.lang.Float.valueOf(shortVal.toFloat()) != value
-      }
-      else java.lang.Double.valueOf(shortVal.toDouble()) != value
     }
     INTEGER_RANK -> {
       val intVal = value.toInt()
-      if (value is Long) {
-        return java.lang.Long.valueOf(intVal.toLong()) != value
+      when (value) {
+        is Long -> JLong.valueOf(intVal.toLong()) != value
+        is Float -> JFloat.valueOf(intVal.toFloat()) != value
+        else -> JDouble.valueOf(intVal.toDouble()) != value
       }
-      return if (value is Float) {
-        java.lang.Float.valueOf(intVal.toFloat()) != value
-      }
-      else java.lang.Double.valueOf(intVal.toDouble()) != value
     }
     LONG_RANK -> {
       val longVal = value.toLong()
-      return if (value is Float) {
-        java.lang.Float.valueOf(longVal.toFloat()) != value
+      when (value) {
+        is Float -> JFloat.valueOf(longVal.toFloat()) != value
+        else -> JDouble.valueOf(longVal.toDouble()) != value
       }
-      else java.lang.Double.valueOf(longVal.toDouble()) != value
     }
     FLOAT_RANK -> {
       val floatVal = value.toFloat()
-      return java.lang.Double.valueOf(floatVal.toDouble()) != value
+      JDouble.valueOf(floatVal.toDouble()) != value
     }
-    else -> return false
+    else -> false
   }
 }
 
@@ -81,15 +75,14 @@ private fun extractLiteralValue(expression: GrExpression?): Number? {
   var valueExpression = expression
   if (expression is GrUnaryExpression) {
     val operationTokenType = expression.operationTokenType
-
-    if (operationTokenType in listOf(GroovyTokenTypes.mPLUS, GroovyTokenTypes.mMINUS)) {
-      negativeNumber = operationTokenType == GroovyTokenTypes.mMINUS
+    if (operationTokenType in arrayOf(T_PLUS, T_MINUS)) {
+      negativeNumber = operationTokenType == T_MINUS
       valueExpression = expression.operand
     }
   }
 
-  val literalValue = (valueExpression as? GrLiteralImpl)?.value ?: return null
-  return (literalValue as? Number)?.let { if (negativeNumber) commonNegate(it) else it }
+  val value = (valueExpression as? GrLiteral)?.value as? Number ?: return null
+  return if (negativeNumber) commonNegate(value) else value
 }
 
 private fun commonNegate(num: Number): Number? {
