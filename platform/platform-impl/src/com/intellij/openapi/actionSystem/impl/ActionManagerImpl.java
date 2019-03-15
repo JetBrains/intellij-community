@@ -444,7 +444,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private void registerPluginActions() {
     final List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins(null);
     for (IdeaPluginDescriptor plugin : plugins) {
-      final List<Element> elementList = plugin.getActionDescriptionElements();
+      final List<Element> elementList = plugin.getAndClearActionDescriptionElements();
       if (elementList != null) {
         for (Element e : elementList) {
           processActionsChildElement(plugin.getPluginClassLoader(), plugin.getPluginId(), e);

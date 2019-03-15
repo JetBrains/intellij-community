@@ -1246,6 +1246,8 @@ public class PluginManagerCore {
     for (IdeaPluginDescriptorImpl descriptor : descriptors.values()) {
       Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors = descriptor.getOptionalDescriptors();
       if (optionalDescriptors != null && !optionalDescriptors.isEmpty()) {
+        descriptor.setOptionalDescriptors(null);
+
         for (Map.Entry<PluginId, List<IdeaPluginDescriptorImpl>> entry: optionalDescriptors.entrySet()) {
           if (descriptorsWithModules.containsKey(entry.getKey())) {
             for (IdeaPluginDescriptorImpl optionalDescriptor : entry.getValue()) {

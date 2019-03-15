@@ -48,7 +48,7 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   String getCategory();
 
   @Nullable
-  List<Element> getActionDescriptionElements();
+  List<Element> getAndClearActionDescriptionElements();
 
   @NotNull
   List<ComponentConfig> getAppComponents();
