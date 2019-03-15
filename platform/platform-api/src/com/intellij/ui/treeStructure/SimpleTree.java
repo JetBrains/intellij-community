@@ -248,7 +248,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   @Override
-  public final boolean isFileColorsEnabled() {
+  public boolean isFileColorsEnabled() {
     return false;
   }
 
