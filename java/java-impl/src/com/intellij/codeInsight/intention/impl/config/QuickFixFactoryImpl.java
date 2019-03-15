@@ -546,13 +546,13 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createStaticImportMethodFix(@NotNull PsiMethodCallExpression call) {
-    return new StaticImportMethodFix(call);
+    return new StaticImportMethodFix(call.getContainingFile(), call);
   }
 
   @NotNull
   @Override
   public IntentionAction createQualifyStaticMethodCallFix(@NotNull PsiMethodCallExpression call) {
-    return new QualifyStaticMethodCallFix(call);
+    return new QualifyStaticMethodCallFix(call.getContainingFile(), call);
   }
 
   @NotNull
