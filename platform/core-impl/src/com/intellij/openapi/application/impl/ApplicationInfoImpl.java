@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
@@ -107,6 +108,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySubscriptionTipsKey;
   private boolean mySubscriptionTipsAvailable;
   private String mySubscriptionAdditionalFormData;
+  private List<ProgressSlide> myProgressSlides = new ArrayList<>();
 
   private static final String IDEA_PATH = "/idea/";
   private static final String ELEMENT_VERSION = "version";
@@ -190,6 +192,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY = "tips-key";
   private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE = "tips-available";
   private static final String ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA = "additional-form-data";
+  private static final String PROGRESS_SLIDE = "progressSlide";
+  private static final String PROGRESS_PERCENT = "progressPercent";
 
   static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
   static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
@@ -592,6 +596,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return mySubscriptionAdditionalFormData;
   }
 
+  @Override
+  public List<ProgressSlide> getProgressSlides() {
+    return myProgressSlides;
+  }
+
   private static ApplicationInfoImpl ourShadowInstance;
 
   @NotNull
@@ -693,6 +702,20 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       v = logoElement.getAttributeValue(ATTRIBUTE_LICENSE_TEXT_OFFSET_Y);
       if (v != null) {
         myLicenseOffsetY = Integer.parseInt(v);
+      }
+
+      for (Element child : getChildren(logoElement, PROGRESS_SLIDE)) {
+        String slideUrl = child.getAttributeValue(ATTRIBUTE_URL);
+        assert slideUrl != null;
+        String progressPercentString = child.getAttributeValue(PROGRESS_PERCENT);
+        assert progressPercentString != null;
+
+        int progressPercentInt = Integer.parseInt(progressPercentString);
+        assert (progressPercentInt <= 100 && progressPercentInt >= 0);
+
+        float progressPercentFloat = (float) progressPercentInt / 100;
+        ProgressSlide progressSlide = new ProgressSlide(slideUrl, progressPercentFloat);
+        myProgressSlides.add(progressSlide);
       }
     }
 
