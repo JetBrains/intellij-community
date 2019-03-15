@@ -133,6 +133,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       Set<String> attachedPids = JavaDebuggerAttachUtil.getAttachedPids(project);
       VirtualMachine.list().forEach(desc -> {
         String pid = desc.id();
+        // no need to validate the process, it is already validated inside VirtualMachine.list()
         LocalAttachInfo address = getProcessAttachInfo(pid, attachedPids, false);
         if (address != null) {
           map.put(pid, address);
