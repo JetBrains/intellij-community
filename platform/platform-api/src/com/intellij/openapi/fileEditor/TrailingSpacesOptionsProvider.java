@@ -11,5 +11,19 @@ public interface TrailingSpacesOptionsProvider {
   ExtensionPointName<TrailingSpacesOptionsProvider> EP_NAME = new ExtensionPointName<>("com.intellij.trailingSpacesOptionsProvider");
 
   @Nullable
-  TrailingSpacesOptions getOptions(@NotNull Project project, @NotNull VirtualFile file);
+  Options getOptions(@NotNull Project project, @NotNull VirtualFile file);
+
+  interface Options {
+    @Nullable
+    Boolean getStripTrailingSpaces();
+
+    @Nullable
+    Boolean getEnsureNewLineAtEOF();
+
+    @Nullable
+    Boolean getChangedLinesOnly();
+
+    @Nullable
+    Boolean getKeepTrailingSpacesOnCaretLine();
+  }
 }
