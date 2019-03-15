@@ -404,6 +404,7 @@ public class BuildDataManager implements StorageOwner {
     }
   }
 
+  // todo: add relative paths here too
   private final class SourceToOutputMappingWrapper implements SourceToOutputMapping {
     private final SourceToOutputMapping myDelegate;
     private final int myBuildTargetId;

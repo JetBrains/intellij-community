@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.incremental.storage;
 
+import com.intellij.util.Function;
+import com.intellij.util.containers.JBIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
@@ -23,6 +25,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
+
+import static com.intellij.util.containers.ContainerUtil.map;
 
 /**
  * @author Eugene Zhuravlev
@@ -38,48 +42,51 @@ public class SourceToOutputMappingImpl implements SourceToOutputMapping {
 
   @Override
   public void setOutputs(@NotNull String srcPath, @NotNull Collection<String> outputs) throws IOException {
-    System.out.println(myRelativizer.toRelative(srcPath));
-    myMapping.update(srcPath, outputs);
+    myMapping.update(myRelativizer.toRelative(srcPath), map(outputs, s -> myRelativizer.toRelative(s)));
   }
 
   @Override
   public void setOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
-    System.out.println(myRelativizer.toRelative(srcPath));
-
-    myMapping.update(srcPath, outputPath);
+    myMapping.update(myRelativizer.toRelative(srcPath), myRelativizer.toRelative(outputPath));
   }
 
   @Override
   public void appendOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
-    myMapping.appendData(srcPath, outputPath);
+    myMapping.appendData(myRelativizer.toRelative(srcPath), myRelativizer.toRelative(outputPath));
   }
 
   @Override
   public void remove(@NotNull String srcPath) throws IOException {
-    myMapping.remove(srcPath);
+    myMapping.remove(myRelativizer.toRelative(srcPath));
   }
 
   @Override
-  public void removeOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException {
-    myMapping.removeData(sourcePath, outputPath);
+  public void removeOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
+    myMapping.removeData(myRelativizer.toRelative(srcPath), myRelativizer.toRelative(outputPath));
   }
 
   @NotNull
   @Override
   public Collection<String> getSources() throws IOException {
-    return myMapping.getKeys();
+    return map(myMapping.getKeys(), toFull());
   }
 
   @Nullable
   @Override
   public Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
-    return myMapping.getState(srcPath);
+    Collection<String> fromMap = myMapping.getState(myRelativizer.toRelative(srcPath));
+    return fromMap == null ? null : map(fromMap, toFull());
   }
 
   @NotNull
   @Override
   public Iterator<String> getSourcesIterator() throws IOException {
-    return myMapping.getKeysIterator();
+    return JBIterator.from(myMapping.getKeysIterator()).map(toFull());
+  }
+
+  @NotNull
+  private Function<String, String> toFull() {
+    return s -> myRelativizer.toFull(s);
   }
 
   public void flush(boolean memoryCachesOnly) {

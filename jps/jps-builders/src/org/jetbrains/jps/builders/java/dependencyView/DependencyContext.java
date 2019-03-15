@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.incremental.storage.MaybeRelativizer;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +24,7 @@ class DependencyContext implements NamingContext {
   private final Map<TypeRepr.AbstractType, TypeRepr.AbstractType> myTypeMap = new HashMap<>();
   private final Map<UsageRepr.Usage, UsageRepr.Usage> myUsageMap = new HashMap<>();
   private final int myEmptyName;
+  private final MaybeRelativizer myRelativizer;
 
   UsageRepr.Usage getUsage(final UsageRepr.Usage u) {
      final UsageRepr.Usage r = myUsageMap.get(u);
@@ -57,7 +60,8 @@ class DependencyContext implements NamingContext {
     return file;
   }
 
-  DependencyContext(final File rootDir) throws IOException {
+  DependencyContext(final File rootDir, MaybeRelativizer relativizer) throws IOException {
+    myRelativizer = relativizer;
     final File file = getTableFile(rootDir, STRING_TABLE_NAME);
     myEnumerator = new PersistentStringEnumerator(file, true);
     myEmptyName = myEnumerator.enumerate("");
@@ -67,7 +71,8 @@ class DependencyContext implements NamingContext {
   @Nullable
   public String getValue(final int s) {
     try {
-      return myEnumerator.valueOf(s);
+      String value = myEnumerator.valueOf(s);
+      return value == null ? null : myRelativizer.toFull(value);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -77,7 +82,7 @@ class DependencyContext implements NamingContext {
   @Override
   public int get(final String s) {
     try {
-      return StringUtil.isEmpty(s) ? myEmptyName : myEnumerator.enumerate(s);
+      return StringUtil.isEmpty(s) ? myEmptyName : myEnumerator.enumerate(myRelativizer.toRelative(s));
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -97,7 +102,7 @@ class DependencyContext implements NamingContext {
     myEnumerator.force();
   }
 
-  public LoggerWrapper<Integer> getLogger(final com.intellij.openapi.diagnostic.Logger log) {
+  public LoggerWrapper<Integer> getLogger(final Logger log) {
     return new LoggerWrapper<Integer>() {
       @Override
       public boolean isDebugEnabled() {
