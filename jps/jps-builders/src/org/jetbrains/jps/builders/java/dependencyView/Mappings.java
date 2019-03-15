@@ -79,6 +79,10 @@ public class Mappings {
   @Nullable
   private Collection<String> myRemovedFiles;
 
+  public MaybeRelativizer getRelativizer() {
+    return myRelativizer;
+  }
+
   private final MaybeRelativizer myRelativizer;
 
   private Mappings(final Mappings base) throws IOException {
@@ -117,7 +121,7 @@ public class Mappings {
 
   private void createImplementation() throws IOException {
     if (!myIsDelta) {
-      myContext = new DependencyContext(myRootDir);
+      myContext = new DependencyContext(myRootDir, myRelativizer);
       myDebugS = myContext.getLogger(LOG);
     }
 
