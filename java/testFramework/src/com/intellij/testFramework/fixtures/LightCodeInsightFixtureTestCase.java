@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.testFramework.*;
@@ -61,7 +62,14 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   @NotNull public static final LightProjectDescriptor JAVA_10 = new ProjectDescriptor(LanguageLevel.JDK_10);
   @NotNull public static final LightProjectDescriptor JAVA_10_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_10, true);
   @NotNull public static final LightProjectDescriptor JAVA_11 = new ProjectDescriptor(LanguageLevel.JDK_11);
-  @NotNull public static final LightProjectDescriptor JAVA_12 = new ProjectDescriptor(LanguageLevel.JDK_12_PREVIEW);
+  @NotNull public static final LightProjectDescriptor JAVA_12 = new ProjectDescriptor(LanguageLevel.JDK_12_PREVIEW) {
+    @Override
+    public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
+      AcceptedLanguageLevelsSettings.allowLevel(project, myLanguageLevel);
+      super.setUpProject(project, handler);
+    }
+
+  };
   @NotNull public static final LightProjectDescriptor JAVA_X = new ProjectDescriptor(LanguageLevel.JDK_X);
 
   public static final LightProjectDescriptor JAVA_LATEST = new ProjectDescriptor(LanguageLevel.HIGHEST) {
