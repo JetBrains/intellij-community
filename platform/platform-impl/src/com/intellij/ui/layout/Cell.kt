@@ -47,8 +47,17 @@ interface CellBuilder<T : JComponent> {
   }
 }
 
+interface CheckboxCellBuilder {
+  fun actsAsLabel()
+}
+
 fun CellBuilder<out JComponent>.enableIfSelected(builder: CellBuilder<out AbstractButton>) {
   enableIfSelected(builder.component)
+}
+
+fun <T : JCheckBox> CellBuilder<T>.actsAsLabel(): CellBuilder<T> {
+  (this as CheckboxCellBuilder).actsAsLabel()
+  return this
 }
 
 // separate class to avoid row related methods in the `cell { } `
