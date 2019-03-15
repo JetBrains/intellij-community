@@ -4,26 +4,22 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.StringRepeatCanBeUsedInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-public class StringRepeatCanBeUsedInspectionTest extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected LanguageLevel getDefaultLanguageLevel() {
-    return LanguageLevel.JDK_11;
-  }
+import static com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase.JAVA_11;
 
+public class StringRepeatCanBeUsedInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new StringRepeatCanBeUsedInspection()};
   }
 
+  @NotNull
   @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk9();
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_11;
   }
 
   @Override
