@@ -151,7 +151,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
 
       final int nameId = FSRecords.getNameId(id); // name can change if file record was created
-      
+
       if (ensureCanonicalName) {
         CharSequence persistedName = FileNameCache.getVFileName(nameId);
         if (!Comparing.equal(name, persistedName)) {
@@ -163,7 +163,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       FileAttributes attributes = PersistentFS.toFileAttributes(ourPersistence.getFileAttributes(id));
       boolean isEmptyDirectory = attributes.isDirectory() && !ourPersistence.mayHaveChildren(id);
-      
+
       child = createChild(nameId, id, delegate, attributes, isEmptyDirectory);
 
       addChild(child);
@@ -661,6 +661,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public boolean allChildrenLoaded() {
     return getFlagInt(CHILDREN_CACHED);
   }
+
   private void setChildrenLoaded() {
     setFlagInt(CHILDREN_CACHED, true);
   }

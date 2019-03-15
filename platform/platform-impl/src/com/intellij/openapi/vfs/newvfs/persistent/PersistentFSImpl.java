@@ -130,13 +130,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   @Override
   @NotNull
   public String[] list(@NotNull VirtualFile file) {
-    int id = getFileId(file);
-
-    FSRecords.NameId[] nameIds = FSRecords.listAll(id);
-    if (!areChildrenLoaded(id)) {
-      nameIds = persistAllChildren(file, id, nameIds);
-    }
-    return ContainerUtil.map2Array(nameIds, String.class, id1 -> id1.name.toString());
+    FSRecords.NameId[] nameIds = listAll(file);
+    return ContainerUtil.map2Array(nameIds, String.class, id -> id.name.toString());
   }
 
   @Override
@@ -198,12 +193,12 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
 
   @Override
   @NotNull
-  public FSRecords.NameId[] listAll(@NotNull VirtualFile parent) {
-    final int parentId = getFileId(parent);
+  public FSRecords.NameId[] listAll(@NotNull VirtualFile file) {
+    int id = getFileId(file);
 
-    FSRecords.NameId[] nameIds = FSRecords.listAll(parentId);
-    if (!areChildrenLoaded(parentId)) {
-      return persistAllChildren(parent, parentId, nameIds);
+    FSRecords.NameId[] nameIds = FSRecords.listAll(id);
+    if (!areChildrenLoaded(id)) {
+      nameIds = persistAllChildren(file, id, nameIds);
     }
 
     return nameIds;
@@ -622,7 +617,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   // returns last recorded length or -1 if must reload from delegate
   private static long getLengthIfUpToDate(@NotNull VirtualFile file) {
     int fileId = getFileId(file);
-    return checkFlag(fileId, MUST_RELOAD_CONTENT) ? -1 : FSRecords.getLength(fileId);
+    return BitUtil.isSet(FSRecords.getFlags(fileId), MUST_RELOAD_CONTENT) ? -1 : FSRecords.getLength(fileId);
   }
 
   @Override
@@ -973,7 +968,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     List<ChildInfo> childrenAdded = getOrCreateChildInfos(parent, createEvents, VFileCreateEvent::getChildName, (createEvent, childId) -> {
       createEvent.resetCache();
       String name = createEvent.getChildName();
-      Pair<FileAttributes, String> childData = getChildData(delegate, createEvent.getParent(), name, createEvent.getAttributes(), createEvent.getSymlinkTarget());
+      Pair<FileAttributes, String> childData =
+        getChildData(delegate, createEvent.getParent(), name, createEvent.getAttributes(), createEvent.getSymlinkTarget());
       if (childData == null) return null;
       childId = makeChildRecord(parentId, name, childData, delegate);
       return new ChildInfo(childId, name, childData.first, createEvent.getChildren(), createEvent.getSymlinkTarget());
@@ -1025,7 +1021,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   }
 
   // create ChildInfos and fill parentChildrenIds from createEvents.
-  // N.B. be aware that the child can already exist for particular VFileCreateEvent, due to async-ness of "refresh created directory" process
+  // N.B. be aware that the child can already exist for particular VFileCreateEvent, due to asynchronicity of "refresh created directory" process
   @NotNull
   private static <T> List<ChildInfo> getOrCreateChildInfos(@NotNull VirtualDirectoryImpl parent,
                                                            @NotNull Collection<? extends T> createEvents,
@@ -1036,7 +1032,9 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     int parentId = parent.getId();
     FSRecords.NameId[] oldNameIds = FSRecords.listAll(parentId);
     int[] oldIds = new int[oldNameIds.length];
-    Set<CharSequence> persistedNames = new THashSet<>(oldNameIds.length, delegate.isCaseSensitive() ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+    CharSequenceHashingStrategy strategy =
+      delegate.isCaseSensitive() ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE;
+    Set<CharSequence> persistedNames = new THashSet<>(oldNameIds.length, strategy);
     for (int i = 0; i < oldNameIds.length; i++) {
       FSRecords.NameId nameId = oldNameIds[i];
       parentChildrenIds.add(nameId.id);
@@ -1408,10 +1406,6 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     if (oldFlags != flags) {
       FSRecords.setFlags(id, flags, true);
     }
-  }
-
-  private static boolean checkFlag(int fileId, int mask) {
-    return BitUtil.isSet(FSRecords.getFlags(fileId), mask);
   }
 
   private static void executeTouch(@NotNull VirtualFile file,

@@ -12,10 +12,8 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class VFileCreateEvent extends VFileEvent {
-  @NotNull
-  private final VirtualFile myParent;
-  @NotNull
-  private final String myChildName;
+  private final @NotNull VirtualFile myParent;
+  private final @NotNull String myChildName;
   private final boolean myDirectory;
   private final FileAttributes myAttributes;
   private final String mySymlinkTarget;
