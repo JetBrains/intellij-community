@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiTypeParameterListOwner
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
@@ -25,6 +26,11 @@ class SubstitutorInferenceTest extends LightProjectTest implements TypingTest, R
   @Override
   LightProjectDescriptor getProjectDescriptor() {
     GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK
+  }
+
+  @Before
+  void disableRecursion() {
+    RecursionManager.assertOnRecursionPrevention(fixture.testRootDisposable)
   }
 
   @Before
