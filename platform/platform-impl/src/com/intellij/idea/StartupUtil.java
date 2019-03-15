@@ -112,6 +112,8 @@ public class StartupUtil {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     checkHiDPISettings();
 
+    System.setProperty("idea.ui.util.static.init.enabled", "false");
+
     boolean isParallelExecution = SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", false);
     ExecutorService executorService = isParallelExecution ? AppExecutorUtil.getAppExecutorService() : new SameThreadExecutorService();
 
@@ -218,26 +220,20 @@ public class StartupUtil {
 
   private static void addPrepareUiTasks(@NotNull List<Future<?>> futures, @NotNull ExecutorService executorService) {
     futures.add(executorService.submit(() -> {
-      Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init AWT Toolkit");
-      Toolkit.getDefaultToolkit();
-      activity.end();
+      Toolkit toolkit = UIUtil.initDefaultLAF();
 
-      AppUIUtil.updateFrameClass();
+      // updateWindowIcon must be after initDefaultLAF because uses computed system font data for scale context
 
-      // static UIUtil initializer wants toolkit, so, call it here since in any case it will be blocked on synchronized access
+      // no need to wait - doesn't affect other functionality
+      executorService.execute(() -> {
+        Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
+        // most of the time consumed to load SVG - so, can be done in parallel
+        AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
+        activity.end();
+      });
 
-      activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INIT_DEFAULT_LAF);
-      UIUtil.initDefaultLAF();
-      activity.end();
+      AppUIUtil.updateFrameClass(toolkit);
     }));
-
-    // no need to wait - doesn't affect other functionality
-    executorService.execute(() -> {
-      Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
-      // most of the time consumed to load SVG - so, can be done in parallel
-      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
-      activity.end();
-    });
 
     // no need to wait - fonts required for editor, not for license window or splash
     executorService.execute(() -> AppUIUtil.registerBundledFonts());
