@@ -1640,8 +1640,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     fc.putUserData(IndexingDataKeys.PROJECT, project);
   }
 
-  static final Key<Boolean> ourPhysicalContentKey = Key.create("physical.content.flag");
-
   private void updateSingleIndex(@NotNull ID<?, ?> indexId, VirtualFile file, final int inputId, @Nullable FileContent currentFC) {
     if (!RebuildStatus.isOk(indexId) && !myIsUnitTestMode) {
       return; // the index is scheduled for rebuild, no need to update
@@ -1652,9 +1650,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     assert index != null;
 
     boolean hasContent = currentFC != null;
-    if (hasContent && currentFC.getUserData(ourPhysicalContentKey) == null) {
-      currentFC.putUserData(ourPhysicalContentKey, Boolean.TRUE);
-    }
 
     if (ourIndexedFile.get() != null) throw new AssertionError("Reentrant indexing");
     ourIndexedFile.set(file);
