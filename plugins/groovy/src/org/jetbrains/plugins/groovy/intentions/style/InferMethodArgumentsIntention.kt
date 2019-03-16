@@ -1,19 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style;
 
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
+import org.jetbrains.plugins.groovy.intentions.base.Intention
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
@@ -24,49 +23,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
  */
 
 
-internal class InferMethodArgumentsIntention : IntentionAction {
-  override fun getText(): String {
-    return GroovyIntentionsBundle.message("infer.method.arguments")
-  }
+internal class InferMethodArgumentsIntention : Intention() {
 
-  override fun getFamilyName(): String {
-    return GroovyIntentionsBundle.message("infer.method.arguments.for.method.declaration")
-  }
-
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    if (editor == null || file == null) {
-      return false
-    }
-    else {
-      val offset = editor.caretModel.offset
-      return findMethod(file, offset) != null
-    }
-  }
-
-  private fun findMethod(file: PsiFile, offset: Int): GrMethod? {
-    val at = file.findElementAt(offset)
-    val method = PsiTreeUtil.getParentOfType(at, GrMethod::class.java, false, GrTypeDefinition::class.java, GrClosableBlock::class.java)
-    val textRange = method?.textRange
-    if (textRange != null && (!textRange.contains(offset) && !textRange.contains(offset - 1))) {
-      return null
-    }
-    val parameters = method?.parameters
-    if (parameters != null && (parameters.any { it.typeElement == null } || method.hasTypeParameters())) {
-      return method
-    }
-    else {
-      return null
-    }
-
-  }
-
-
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    if (editor == null || file == null) {
-      return
-    }
-    val method: GrMethod = findMethod(file, editor.caretModel.offset) ?: return
-
+  override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
+    val method: GrMethod = element as GrMethod
     val methodParameters = method.parameters
     val elementFactory = GroovyPsiElementFactory.getInstance(project)
     val collectedArgumentTypes = ArrayList<PsiType>()
@@ -119,9 +79,27 @@ internal class InferMethodArgumentsIntention : IntentionAction {
     method.typeParameterList?.delete()
   }
 
-  override fun startInWriteAction(): Boolean {
-    return true
+  override fun getElementPredicate(): PsiElementPredicate {
+    return object : PsiElementPredicate {
+      override fun satisfiedBy(element: PsiElement): Boolean {
+        return element is GrMethod && (element !is GrOpenBlock) && element.parameters.any { it.typeElement == null }
+      }
+
+    }
   }
+
+  override fun isStopElement(element: PsiElement?): Boolean {
+    return element is GrOpenBlock || element is GrMethod || super.isStopElement(element)
+  }
+
+  override fun getText(): String {
+    return GroovyIntentionsBundle.message("infer.method.arguments")
+  }
+
+  override fun getFamilyName(): String {
+    return GroovyIntentionsBundle.message("infer.method.arguments.for.method.declaration")
+  }
+
 
 }
 

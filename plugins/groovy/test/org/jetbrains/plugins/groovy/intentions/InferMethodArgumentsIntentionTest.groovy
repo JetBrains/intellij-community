@@ -23,4 +23,12 @@ class InferMethodArgumentsIntentionTest extends GrIntentionTestCase {
   void testSeveralArguments() {
     doTest(true)
   }
+
+  void testNoInferenceInMethodBody() {
+    doTest(false)
+  }
+
+  void testNoInferenceWithoutNontypedArguments() {
+    doTest(false)
+  }
 }
