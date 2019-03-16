@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.migration;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -6,6 +6,9 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.migration.WhileCanBeForeachInspection;
+
+import java.util.Iterator;
+import java.util.List;
 
 public class WhileCanBeForeachFixTest extends IGQuickFixesTestCase {
   @Override
@@ -23,6 +26,7 @@ public class WhileCanBeForeachFixTest extends IGQuickFixesTestCase {
   public void testVarWithValidInitializer() { doTest(); }
   public void testRawIterator() { doTest(); }
   public void testUnboxing() { doTest(); }
+  public void testParentheses() { doTest(); }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) {
