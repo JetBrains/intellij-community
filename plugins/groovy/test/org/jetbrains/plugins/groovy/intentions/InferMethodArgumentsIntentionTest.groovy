@@ -31,4 +31,12 @@ class InferMethodArgumentsIntentionTest extends GrIntentionTestCase {
   void testNoInferenceWithoutNontypedArguments() {
     doTest(false)
   }
+
+  void testNoResolveForTypeParameters() {
+    doTest(true)
+  }
+
+  void testCustomInheritance() {
+    doTest(true)
+  }
 }

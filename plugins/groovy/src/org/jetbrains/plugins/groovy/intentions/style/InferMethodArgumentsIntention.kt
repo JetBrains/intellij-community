@@ -3,7 +3,10 @@ package org.jetbrains.plugins.groovy.intentions.style;
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
@@ -13,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
@@ -29,24 +33,18 @@ internal class InferMethodArgumentsIntention : Intention() {
     val method: GrMethod = element as GrMethod
     val methodParameters = method.parameters
     val elementFactory = GroovyPsiElementFactory.getInstance(project)
-    val collectedArgumentTypes = ArrayList<PsiType>()
-    val collectedTypeParameters = ArrayList<PsiTypeParameter>()
-    val additionalTypeParametersIndex = HashMap<PsiTypeParameter, Int>()
-    collectedTypeParameters.addAll(method.typeParameters)
-    for (i in methodParameters.indices) {
-      val currentArgumentParameter = methodParameters[i]
-      if (currentArgumentParameter.typeElement == null) {
-        val newTypeParameter = elementFactory.createTypeParameter("T", PsiClassType.EMPTY_ARRAY)
-        collectedTypeParameters.add(newTypeParameter)
-        collectedArgumentTypes.add(newTypeParameter.type())
-        additionalTypeParametersIndex[newTypeParameter] = i
-      }
-      else {
-        collectedArgumentTypes.add(currentArgumentParameter.type)
-      }
-    }
+    val typeIndex = createTypeParameters(methodParameters, elementFactory)
 
-    val resolveSession = GroovyInferenceSession(collectedTypeParameters.toArray(emptyArray()), PsiSubstitutor.EMPTY, method)
+    val resolveSession = inferTypeArguments(typeIndex, method)
+    val substitutor = resolveSession.inferSubst()
+    for (typeParameterEntry in typeIndex.entries) {
+      methodParameters[typeParameterEntry.key].setType(substitutor.substitute(typeParameterEntry.value))
+    }
+  }
+
+  private fun inferTypeArguments(typeIndex: HashMap<Int, PsiTypeParameter>,
+                                 method: GrMethod): GroovyInferenceSession {
+    val resolveSession = GroovyInferenceSession(typeIndex.values.toTypedArray(), PsiSubstitutor.EMPTY, method)
     val references = ReferencesSearch.search(method).findAll()
     for (occurrence in references) {
       if (occurrence is GrReferenceExpression) {
@@ -54,29 +52,29 @@ internal class InferMethodArgumentsIntention : Intention() {
         if (call is GrCall) {
           val args = call.argumentList ?: continue
           for (i in args.expressionArguments.indices) {
-            val arg = args.expressionArguments[i]
-            resolveSession.addConstraint(
-              TypeCompatibilityConstraint(resolveSession.substituteWithInferenceVariables(collectedArgumentTypes[i]),
-                                          arg.type ?: continue))
+            if (typeIndex.containsKey(i)) {
+              val arg = args.expressionArguments[i]
+              resolveSession.addConstraint(
+                TypeCompatibilityConstraint(resolveSession.substituteWithInferenceVariables(typeIndex[i]?.type()),
+                                            arg.type ?: continue))
+            }
           }
         }
       }
     }
-    val substitutor = resolveSession.inferSubst()
-    for (typeParameter in collectedTypeParameters) {
-      val type = substitutor.substitutionMap[typeParameter] ?: return
-      if (additionalTypeParametersIndex.containsKey(typeParameter)) {
-        val param: Int = additionalTypeParametersIndex[typeParameter] ?: return
-        methodParameters[param].setType(type)
-      }
-      else {
-        val typeElement = elementFactory.createTypeElement(type)
-        ReferencesSearch
-          .search(typeParameter)
-          .forEach { it.element.firstChild.replace(typeElement) }
+    return resolveSession
+  }
+
+  private fun createTypeParameters(methodParameters: Array<GrParameter>,
+                                   elementFactory: GroovyPsiElementFactory): HashMap<Int, PsiTypeParameter> {
+    val typeIndex = HashMap<Int, PsiTypeParameter>()
+    for (i in methodParameters.indices) {
+      if (methodParameters[i].typeElement == null) {
+        val newTypeParameter = elementFactory.createTypeParameter("T", PsiClassType.EMPTY_ARRAY)
+        typeIndex.put(i, newTypeParameter);
       }
     }
-    method.typeParameterList?.delete()
+    return typeIndex
   }
 
   override fun getElementPredicate(): PsiElementPredicate {
