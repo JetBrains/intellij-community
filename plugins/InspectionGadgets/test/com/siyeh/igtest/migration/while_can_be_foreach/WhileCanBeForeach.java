@@ -98,6 +98,15 @@ public class WhileCanBeForeach {
       System.out.println(it.next());
     }
   }
+
+  void b(List<String> list) {
+    final var iterator = list.iterator();
+    while (iterator.hasNext()) {
+      System.out.println(iterator.next());
+      final var iterator1 = iterator;
+      System.out.println(iterator1);
+    }
+  }
 }
 class Base implements Iterable<String> {
   @Override
