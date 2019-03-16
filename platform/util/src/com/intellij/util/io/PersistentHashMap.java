@@ -259,6 +259,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     return false;
   }
 
+  private static final int MAX_RECYCLED_BUFFER_SIZE = 4096;
+  
   private SLRUCache<Key, BufferExposingByteArrayOutputStream> createAppendCache(final KeyDescriptor<Key> keyDescriptor) {
     return new SLRUCache<Key, BufferExposingByteArrayOutputStream>(16 * 1024, 4 * 1024, keyDescriptor) {
       @Override
@@ -295,7 +297,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
             myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
           }
 
-          myStreamPool.recycle(bytes);
+          if (bytes.getInternalBuffer().length <= MAX_RECYCLED_BUFFER_SIZE) {
+            // Avoid internal fragmentation by not retaining / reusing large append buffers (IDEA-208533)
+            myStreamPool.recycle(bytes);
+          }
         }
         catch (IOException e) {
           markCorrupted();
