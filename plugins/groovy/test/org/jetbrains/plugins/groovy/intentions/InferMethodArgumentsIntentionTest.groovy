@@ -39,4 +39,8 @@ class InferMethodArgumentsIntentionTest extends GrIntentionTestCase {
   void testCustomInheritance() {
     doTest(true)
   }
+
+  void testResolvedMethodCallInside() {
+    doTest(true)
+  }
 }
