@@ -10,6 +10,7 @@ import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.util.containers.ContainerUtil;
@@ -131,18 +132,24 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
 
   /**
    * @return A list of languages from which code style settings can be copied to this provider's language settings. By default all languages
-   *         with code style settings are returned.
+   *         with code style settings are returned. In UI the languages are shown in the same order they are in the list.
+   * @see #getLanguagesWithCodeStyleSettings()
    */
   public List<Language> getApplicableLanguages() {
     return getLanguagesWithCodeStyleSettings();
   }
 
+  /**
+   * @return A list of languages with code style settings, namely for which {@code LanguageCodeStyleSettingsProvider} exists.
+   *         The list is ordered by language names as returned by {@link #getLanguageName(Language)} method.
+   */
   @NotNull
   public static List<Language> getLanguagesWithCodeStyleSettings() {
     final ArrayList<Language> languages = new ArrayList<>();
     for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
       languages.add(provider.getLanguage());
     }
+    Collections.sort(languages, (l1, l2) -> Comparing.compare(getLanguageName(l1), getLanguageName(l2)));
     return languages;
   }
 

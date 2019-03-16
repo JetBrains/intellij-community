@@ -302,18 +302,13 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private void fillLanguages(JComponent parentMenu) {
     List<Language> languages = myProvider != null ? myProvider.getApplicableLanguages() : Collections.emptyList();
-    java.util.List<JMenuItem> langItems = new ArrayList<>();
     for (final Language lang : languages) {
       if (!lang.equals(getDefaultLanguage())) {
         final String langName = LanguageCodeStyleSettingsProvider.getLanguageName(lang);
         JMenuItem langItem = new JBMenuItem(langName);
         langItem.addActionListener(__ -> applyLanguageSettings(lang));
-        langItems.add(langItem);
+        parentMenu.add(langItem);
       }
-    }
-    Collections.sort(langItems, (item1, item2) -> item1.getText().compareToIgnoreCase(item2.getText()));
-    for (JMenuItem langItem : langItems) {
-      parentMenu.add(langItem);
     }
   }
 
