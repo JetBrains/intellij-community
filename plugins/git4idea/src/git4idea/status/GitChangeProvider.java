@@ -71,8 +71,8 @@ public class GitChangeProvider implements ChangeProvider {
                                                                myFileDocumentManager, myVcsManager);
       for (VirtualFile root : roots) {
         LOG.debug("checking root: " + root.getPath());
-        GitChangesCollector collector = GitNewChangesCollector.collect(myProject, myGit, myChangeListManager, myVcsManager,
-                                                                       vcs, dirtyScope, root);
+        GitNewChangesCollector collector = GitNewChangesCollector.collect(myProject, myGit, myChangeListManager, myVcsManager,
+                                                                          vcs, dirtyScope, root);
         final Collection<Change> changes = collector.getChanges();
         holder.changed(changes);
         for (Change file : changes) {
