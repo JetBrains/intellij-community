@@ -255,10 +255,8 @@ public class JBUI {
 
   private static void setUserScaleFactorProperty(float scale) {
     if (userScaleFactor == scale) return;
-
-    userScaleFactor = scale;
-    PCS.firePropertyChange(USER_SCALE_FACTOR_PROPERTY, userScaleFactor, scale);
-    getLogger().info("User scale factor: " + scale);
+    PCS.firePropertyChange(USER_SCALE_FACTOR_PROPERTY, userScaleFactor, userScaleFactor = scale);
+    getLogger().info("User scale factor: " + userScaleFactor);
   }
 
   /**
@@ -664,7 +662,6 @@ public class JBUI {
         return JBColor.namedColor("DefaultTabs.underlineColor", new JBColor(0x4083C9, 0x4A88C7));
       }
 
-      @NotNull
       public static int underlineHeight() {
         return getInt("DefaultTabs.underlineHeight", scale(2));
       }
@@ -705,7 +702,6 @@ public class JBUI {
                                               ColorUtil.withAlpha(Color.BLACK, .13)));
 
       }
-
     }
 
     public static class EditorTabs {
@@ -714,7 +710,6 @@ public class JBUI {
         return JBColor.namedColor("EditorTabs.underlineColor", DefaultTabs.underlineColor());
       }
 
-      @NotNull
       public static int underlineHeight() {
         return getInt("EditorTabs.underlineHeight", scale(3));
       }
@@ -831,7 +826,6 @@ public class JBUI {
         return getBorder("ToolWindow.HeaderTab.tabHeaderBorder", Borders.empty(1, 0));
       }
 
-      @NotNull
       public static int underlineHeight() {
         return getInt("ToolWindow.HeaderTab.underlineHeight", scale(3));
       }
