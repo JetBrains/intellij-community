@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
@@ -521,7 +520,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       try {
         DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
         stopUpdate();
-        CheckinHandler.ReturnResult result = performBeforeCommitChecks(executor);
+        CheckinHandler.ReturnResult result = myWorkflow.runBeforeCommitChecks(executor, getChangeList());
         if (result == CheckinHandler.ReturnResult.CANCEL) {
           restartUpdate();
         }
@@ -566,7 +565,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
       DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
       stopUpdate();
-      CheckinHandler.ReturnResult result = performBeforeCommitChecks(commitExecutor);
+      CheckinHandler.ReturnResult result = myWorkflow.runBeforeCommitChecks(commitExecutor, getChangeList());
       if (result == CheckinHandler.ReturnResult.CANCEL) {
         restartUpdate();
       }
@@ -703,32 +702,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void restartUpdate() {
     myUpdateDisabled = false;
     myUpdateButtonsRunnable.run();
-  }
-
-  @NotNull
-  private CheckinHandler.ReturnResult performBeforeCommitChecks(@Nullable CommitExecutor executor) {
-    Ref<CheckinHandler.ReturnResult> compoundResultRef = Ref.create();
-    Runnable proceedRunnable = () -> {
-      FileDocumentManager.getInstance().saveAllDocuments();
-      compoundResultRef.set(runBeforeCheckinHandlers(executor));
-    };
-
-    Runnable runnable = myWorkflow.wrapWithCommitMetaHandlers(proceedRunnable);
-    myWorkflow.doRunBeforeCommitChecks(getChangeList(), runnable);
-    return notNull(compoundResultRef.get(), CheckinHandler.ReturnResult.CANCEL);
-  }
-
-  @NotNull
-  private CheckinHandler.ReturnResult runBeforeCheckinHandlers(@Nullable CommitExecutor executor) {
-    for (CheckinHandler handler : getHandlers()) {
-      if (!handler.acceptExecutor(executor)) continue;
-      LOG.debug("CheckinHandler.beforeCheckin: " + handler);
-
-      CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myWorkflow.getAdditionalDataConsumer());
-      if (result != CheckinHandler.ReturnResult.COMMIT) return result;
-    }
-
-    return CheckinHandler.ReturnResult.COMMIT;
   }
 
   private boolean saveCommitOptions() {
