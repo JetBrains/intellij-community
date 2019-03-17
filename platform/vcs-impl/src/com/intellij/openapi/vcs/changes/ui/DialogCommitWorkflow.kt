@@ -81,7 +81,22 @@ open class DialogCommitWorkflow(val project: Project,
     return addUnversionedFilesToVcs(project, changeList, unversionedFiles, callback, null)
   }
 
-  fun wrapWithCommitMetaHandlers(block: Runnable): Runnable {
+  fun runBeforeCommitChecks(executor: CommitExecutor?, changeList: LocalChangeList): CheckinHandler.ReturnResult {
+    var result: CheckinHandler.ReturnResult? = null
+    val checks = Runnable {
+      FileDocumentManager.getInstance().saveAllDocuments()
+      result = runBeforeCommitHandlersChecks(executor)
+    }
+
+    doRunBeforeCommitChecks(changeList, wrapWithCommitMetaHandlers(checks))
+
+    return result ?: CheckinHandler.ReturnResult.CANCEL
+  }
+
+  protected open fun doRunBeforeCommitChecks(changeList: LocalChangeList, checks: Runnable) =
+    PartialChangesUtil.runUnderChangeList(project, changeList, checks)
+
+  private fun wrapWithCommitMetaHandlers(block: Runnable): Runnable {
     var result = block
     commitHandlers.filterIsInstance<CheckinMetaHandler>().forEach { metaHandler ->
       val previousResult = result
@@ -93,8 +108,16 @@ open class DialogCommitWorkflow(val project: Project,
     return result
   }
 
-  protected open fun doRunBeforeCommitChecks(changeList: LocalChangeList, checks: Runnable) =
-    PartialChangesUtil.runUnderChangeList(project, changeList, checks)
+  private fun runBeforeCommitHandlersChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
+    commitHandlers.asSequence().filter { it.acceptExecutor(executor) }.forEach { handler ->
+      LOG.debug("CheckinHandler.beforeCheckin: $handler")
+
+      val result = handler.beforeCheckin(executor, additionalDataConsumer)
+      if (result != CheckinHandler.ReturnResult.COMMIT) return result
+    }
+
+    return CheckinHandler.ReturnResult.COMMIT
+  }
 
   open fun canExecute(executor: CommitExecutor, changes: Collection<Change>): Boolean {
     if (!executor.supportsPartialCommit()) {
