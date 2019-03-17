@@ -55,8 +55,8 @@ import java.util.*;
  *
  * @author Kirill Likhodedov
  */
-class GitNewChangesCollector {
-  private static final Logger LOG = Logger.getInstance(GitNewChangesCollector.class);
+class GitChangesCollector {
+  private static final Logger LOG = Logger.getInstance(GitChangesCollector.class);
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile myVcsRoot;
 
@@ -75,10 +75,10 @@ class GitNewChangesCollector {
    * This may be lengthy.
    */
   @NotNull
-  static GitNewChangesCollector collect(@NotNull Project project, @NotNull Git git, @NotNull ChangeListManager changeListManager,
-                                        @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
-                                        @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot) throws VcsException {
-    return new GitNewChangesCollector(project, git, changeListManager, vcsManager, vcs, dirtyScope, vcsRoot);
+  static GitChangesCollector collect(@NotNull Project project, @NotNull Git git, @NotNull ChangeListManager changeListManager,
+                                     @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
+                                     @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot) throws VcsException {
+    return new GitChangesCollector(project, git, changeListManager, vcsManager, vcs, dirtyScope, vcsRoot);
   }
 
   @NotNull
@@ -91,9 +91,9 @@ class GitNewChangesCollector {
     return myChanges;
   }
 
-  private GitNewChangesCollector(@NotNull Project project, @NotNull Git git, @NotNull ChangeListManager changeListManager,
-                                 @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
-                                 @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot) throws VcsException
+  private GitChangesCollector(@NotNull Project project, @NotNull Git git, @NotNull ChangeListManager changeListManager,
+                              @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
+                              @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot) throws VcsException
   {
     myProject = project;
     myChangeListManager = changeListManager;
