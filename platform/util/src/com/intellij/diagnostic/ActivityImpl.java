@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+// use only JDK classes here (avoid StringUtil and so on)
 public final class ActivityImpl implements Activity {
   private final String name;
   private String description;
@@ -37,7 +37,7 @@ public final class ActivityImpl implements Activity {
                @Nullable StartUpMeasurer.Level level,
                @Nullable ParallelActivity parallelActivity) {
     this.name = name;
-    this.description = StringUtil.nullize(description);
+    this.description = description == null || description.isEmpty() ? null : description;
     this.start = start;
     this.parent = parent;
     this.level = level;
