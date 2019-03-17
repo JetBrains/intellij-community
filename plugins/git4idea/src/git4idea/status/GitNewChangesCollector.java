@@ -17,6 +17,7 @@ package git4idea.status;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -25,6 +26,8 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitFormatException;
 import git4idea.GitRevisionNumber;
@@ -38,9 +41,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * <p>
@@ -54,9 +55,16 @@ import java.util.Set;
  *
  * @author Kirill Likhodedov
  */
-class GitNewChangesCollector extends GitChangesCollector {
-
+class GitNewChangesCollector {
   private static final Logger LOG = Logger.getInstance(GitNewChangesCollector.class);
+  @NotNull private final Project myProject;
+  @NotNull private final VirtualFile myVcsRoot;
+
+  @NotNull private final VcsDirtyScope myDirtyScope;
+  @NotNull private final ChangeListManager myChangeListManager;
+  @NotNull private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private final AbstractVcs myVcs;
+
   private final GitRepository myRepository;
   private final Collection<Change> myChanges = new HashSet<>();
   private final Set<VirtualFile> myUnversionedFiles = new HashSet<>();
@@ -73,14 +81,12 @@ class GitNewChangesCollector extends GitChangesCollector {
     return new GitNewChangesCollector(project, git, changeListManager, vcsManager, vcs, dirtyScope, vcsRoot);
   }
 
-  @Override
   @NotNull
   Collection<VirtualFile> getUnversionedFiles() {
     return myUnversionedFiles;
   }
 
   @NotNull
-  @Override
   Collection<Change> getChanges() {
     return myChanges;
   }
@@ -89,14 +95,81 @@ class GitNewChangesCollector extends GitChangesCollector {
                                  @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
                                  @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot) throws VcsException
   {
-    super(project, changeListManager, vcsManager, vcs, dirtyScope, vcsRoot);
+    myProject = project;
+    myChangeListManager = changeListManager;
+    myVcsManager = vcsManager;
+    myVcs = vcs;
+    myDirtyScope = dirtyScope;
+    myVcsRoot = vcsRoot;
     myGit = git;
     myRepository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(vcsRoot);
 
-    Collection<FilePath> dirtyPaths = dirtyPaths(true);
+    Collection<FilePath> dirtyPaths = dirtyPaths();
     if (!dirtyPaths.isEmpty()) {
       collectChanges(dirtyPaths);
       collectUnversionedFiles();
+    }
+  }
+
+  /**
+   * Collect dirty file paths, previous changes are included in collection.
+   *
+   * @return the set of dirty paths to check, the paths are automatically collapsed if the summary length more than limit
+   */
+  private Collection<FilePath> dirtyPaths() {
+    final List<String> allPaths = new ArrayList<>();
+
+    for (FilePath p : myDirtyScope.getRecursivelyDirtyDirectories()) {
+      addToPaths(p, allPaths);
+    }
+    for (FilePath p : myDirtyScope.getDirtyFilesNoExpand()) {
+      addToPaths(p, allPaths);
+    }
+
+    for (Change c : myChangeListManager.getChangesIn(myVcsRoot)) {
+      switch (c.getType()) {
+        case NEW:
+        case DELETED:
+        case MOVED:
+          ContentRevision afterRevision = c.getAfterRevision();
+          if (afterRevision != null) {
+            addToPaths(afterRevision.getFile(), allPaths);
+          }
+          ContentRevision beforeRevision = c.getBeforeRevision();
+          if (beforeRevision != null) {
+            addToPaths(beforeRevision.getFile(), allPaths);
+          }
+        case MODIFICATION:
+        default:
+          // do nothing
+      }
+    }
+
+    removeCommonParents(allPaths);
+
+    return ContainerUtil.map(allPaths, VcsUtil::getFilePath);
+  }
+
+  private void addToPaths(FilePath pathToAdd, List<String> paths) {
+    VcsRoot fileRoot = myVcsManager.getVcsRootObjectFor(pathToAdd);
+    if (fileRoot != null && fileRoot.getVcs() != null && myVcs.equals(fileRoot.getVcs()) && myVcsRoot.equals(fileRoot.getPath())) {
+      paths.add(pathToAdd.getPath());
+    }
+  }
+
+  private static void removeCommonParents(List<String> allPaths) {
+    Collections.sort(allPaths);
+
+    String prevPath = null;
+    Iterator<String> it = allPaths.iterator();
+    while (it.hasNext()) {
+      String path = it.next();
+      if (prevPath != null && FileUtil.startsWith(path, prevPath, true)) { // the file is under previous file, so enough to check the parent
+        it.remove();
+      }
+      else {
+        prevPath = path;
+      }
     }
   }
 
