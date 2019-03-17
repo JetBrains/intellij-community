@@ -520,8 +520,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     ensureDataIsActual(() -> {
       try {
         DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
+        stopUpdate();
         CheckinHandler.ReturnResult result = performBeforeCommitChecks(executor);
-        if (result == CheckinHandler.ReturnResult.COMMIT) {
+        if (result == CheckinHandler.ReturnResult.CANCEL) {
+          restartUpdate();
+        }
+        else if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
+          ChangeList changeList = getChangeList();
+          moveToFailedList(myProject, changeList, getCommitMessage(), getIncludedChanges(),
+                           message("commit.dialog.rejected.commit.template", changeList.getName()));
+          doCancelAction();
+        }
+        else if (result == CheckinHandler.ReturnResult.COMMIT) {
           close(OK_EXIT_CODE);
           myWorkflow.doCommit(getChangeList(), getIncludedChanges(), getCommitMessage());
 
@@ -555,8 +565,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
 
       DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
+      stopUpdate();
       CheckinHandler.ReturnResult result = performBeforeCommitChecks(commitExecutor);
-      if (result == CheckinHandler.ReturnResult.COMMIT) {
+      if (result == CheckinHandler.ReturnResult.CANCEL) {
+        restartUpdate();
+      }
+      else if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
+        ChangeList changeList = getChangeList();
+        moveToFailedList(myProject, changeList, getCommitMessage(), getIncludedChanges(),
+                         message("commit.dialog.rejected.commit.template", changeList.getName()));
+        doCancelAction();
+      }
+      else if (result == CheckinHandler.ReturnResult.COMMIT) {
         boolean success = false;
         try {
           boolean completed = ProgressManager.getInstance()
@@ -687,8 +707,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull
   private CheckinHandler.ReturnResult performBeforeCommitChecks(@Nullable CommitExecutor executor) {
-    stopUpdate();
-
     Ref<CheckinHandler.ReturnResult> compoundResultRef = Ref.create();
     Runnable proceedRunnable = () -> {
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -705,20 +723,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     for (CheckinHandler handler : getHandlers()) {
       if (!handler.acceptExecutor(executor)) continue;
       LOG.debug("CheckinHandler.beforeCheckin: " + handler);
-      CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myWorkflow.getAdditionalDataConsumer());
-      if (result == CheckinHandler.ReturnResult.COMMIT) continue;
-      if (result == CheckinHandler.ReturnResult.CANCEL) {
-        restartUpdate();
-        return CheckinHandler.ReturnResult.CANCEL;
-      }
 
-      if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
-        ChangeList changeList = getChangeList();
-        moveToFailedList(myProject, changeList, getCommitMessage(), getIncludedChanges(),
-                         message("commit.dialog.rejected.commit.template", changeList.getName()));
-        doCancelAction();
-        return CheckinHandler.ReturnResult.CLOSE_WINDOW;
-      }
+      CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myWorkflow.getAdditionalDataConsumer());
+      if (result != CheckinHandler.ReturnResult.COMMIT) return result;
     }
 
     return CheckinHandler.ReturnResult.COMMIT;
