@@ -50,7 +50,7 @@ public class FoldingModelSupport {
   protected final int myCount;
   @NotNull protected final EditorEx[] myEditors;
 
-  @NotNull protected final List<FoldedBlock[]> myFoldings = new ArrayList<>();
+  @NotNull protected final List<FoldedGroup> myFoldings = new ArrayList<>();
 
   private boolean myDuringSynchronize;
   private final boolean[] myShouldUpdateLineNumbers;
@@ -142,17 +142,17 @@ public class FoldingModelSupport {
           ends[i] = offsets[i * 2];
           last[i] = offsets[i * 2 + 1];
         }
-        addRange(starts, ends);
+        addGroup(starts, ends);
       }
 
       for (int i = 0; i < myCount; i++) {
         starts[i] = last[i];
         ends[i] = Integer.MAX_VALUE;
       }
-      addRange(starts, ends);
+      addGroup(starts, ends);
     }
 
-    private void addRange(int[] starts, int[] ends) {
+    private void addGroup(int[] starts, int[] ends) {
       List<FoldedBlock> result = new ArrayList<>(3);
       int[] rangeStarts = new int[myCount];
       int[] rangeEnds = new int[myCount];
@@ -165,20 +165,20 @@ public class FoldingModelSupport {
           rangeStarts[i] = DiffUtil.bound(starts[i] + shift, 0, myLineCount[i]);
           rangeEnds[i] = DiffUtil.bound(ends[i] - shift, 0, myLineCount[i]);
         }
-        ContainerUtil.addAllNotNull(result, createRange(rangeStarts, rangeEnds, myExpandSuggester.isExpanded(rangeStarts, rangeEnds)));
+        ContainerUtil.addIfNotNull(result, createBlock(rangeStarts, rangeEnds, myExpandSuggester.isExpanded(rangeStarts, rangeEnds)));
       }
 
       if (result.size() > 0) {
-        FoldedBlock[] block = result.toArray(new FoldedBlock[0]);
-        for (FoldedBlock folding : block) {
-          folding.installHighlighter(block);
+        FoldedGroup group = new FoldedGroup(result);
+        for (FoldedBlock folding : group.blocks) {
+          folding.installHighlighter(group);
         }
-        myFoldings.add(block);
+        myFoldings.add(group);
       }
     }
 
     @Nullable
-    private FoldedBlock createRange(int[] starts, int[] ends, boolean expanded) {
+    private FoldedBlock createBlock(int[] starts, int[] ends, boolean expanded) {
       boolean hasFolding = false;
       FoldRegion[] regions = new FoldRegion[myCount];
       boolean hasExpanded = false; // do not desync on runBatchFoldingOperationDoNotCollapseCaret
@@ -376,8 +376,8 @@ public class FoldingModelSupport {
 
     @Override
     public void process(@NotNull Handler handler) {
-      for (FoldedBlock[] block : myFoldings) {
-        for (FoldedBlock folding : block) {
+      for (FoldedGroup group : myFoldings) {
+        for (FoldedBlock folding : group.blocks) {
           FoldRegion region1 = folding.getRegion(myLeft);
           FoldRegion region2 = folding.getRegion(myRight);
           if (region1 == null || !region1.isValid() || region1.isExpanded()) continue;
@@ -442,9 +442,9 @@ public class FoldingModelSupport {
       if (start == end) return null;
 
       //noinspection ConstantConditions
-      List<FoldedRangeState> ranges = myCache.ranges[index];
+      List<FoldedGroupState> ranges = myCache.ranges[index];
       for (; myIndex[index] < ranges.size(); myIndex[index]++) {
-        FoldedRangeState range = ranges.get(myIndex[index]);
+        FoldedGroupState range = ranges.get(myIndex[index]);
         LineRange lineRange = range.getLineRange();
 
         if (lineRange.end <= start) continue;
@@ -467,25 +467,26 @@ public class FoldingModelSupport {
   @NotNull
   private FoldingCache getFoldingCache(@NotNull final Settings settings) {
     return ReadAction.compute(() -> {
-      List<FoldedRangeState>[] result = new List[myCount];
+      //noinspection unchecked
+      List<FoldedGroupState>[] result = new List[myCount];
       for (int i = 0; i < myCount; i++) {
-        result[i] = getFoldedRanges(i, settings);
+        result[i] = collectFoldedGroupsStates(i);
       }
       return new FoldingCache(result, settings.defaultExpanded);
     });
   }
 
   @NotNull
-  private List<FoldedRangeState> getFoldedRanges(int index, @NotNull Settings settings) {
+  private List<FoldedGroupState> collectFoldedGroupsStates(int index) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    List<FoldedRangeState> ranges = new ArrayList<>();
+    List<FoldedGroupState> ranges = new ArrayList<>();
     DocumentEx document = myEditors[index].getDocument();
 
-    for (FoldedBlock[] blocks : myFoldings) {
+    for (FoldedGroup group : myFoldings) {
       LineRange expanded = null;
       LineRange collapsed = null;
 
-      for (FoldedBlock folding : blocks) {
+      for (FoldedBlock folding : group.blocks) {
         FoldRegion region = folding.getRegion(index);
         if (region == null || !region.isValid()) continue;
         if (region.isExpanded()) {
@@ -505,7 +506,7 @@ public class FoldingModelSupport {
       }
 
       if (expanded != null || collapsed != null) {
-        ranges.add(new FoldedRangeState(expanded, collapsed));
+        ranges.add(new FoldedGroupState(expanded, collapsed));
       }
     }
     return ranges;
@@ -513,19 +514,22 @@ public class FoldingModelSupport {
 
   private static class FoldingCache {
     public final boolean expandByDefault;
-    @NotNull public final List<FoldedRangeState>[] ranges;
+    @NotNull public final List<FoldedGroupState>[] ranges;
 
-    FoldingCache(@NotNull List<FoldedRangeState>[] ranges, boolean expandByDefault) {
+    FoldingCache(@NotNull List<FoldedGroupState>[] ranges, boolean expandByDefault) {
       this.ranges = ranges;
       this.expandByDefault = expandByDefault;
     }
   }
 
-  private static class FoldedRangeState {
+  /**
+   * Stores topmost expanded and topmost collapsed ranges for a folded group, if any.
+   */
+  private static class FoldedGroupState {
     @Nullable public final LineRange expanded;
     @Nullable public final LineRange collapsed;
 
-    FoldedRangeState(@Nullable LineRange expanded, @Nullable LineRange collapsed) {
+    FoldedGroupState(@Nullable LineRange expanded, @Nullable LineRange collapsed) {
       assert expanded != null || collapsed != null;
 
       this.expanded = expanded;
@@ -556,10 +560,10 @@ public class FoldingModelSupport {
 
       @Override
       public FoldedBlock next() {
-        FoldedBlock[] group = myFoldings.get(myGroupIndex);
-        FoldedBlock folding = group[myBlockIndex];
+        FoldedGroup group = myFoldings.get(myGroupIndex);
+        FoldedBlock folding = group.blocks.get(myBlockIndex);
 
-        if (group.length > myBlockIndex + 1) {
+        if (group.blocks.size() > myBlockIndex + 1) {
           myBlockIndex++;
         }
         else {
@@ -577,6 +581,24 @@ public class FoldingModelSupport {
     };
   }
 
+  /**
+   * Stores folded blocks for a single unchanged region in text.
+   * These blocks are enclosed one in another and are sorted from outer to inner.
+   *
+   * @see #getRangeShift that is used to calculate enclosed blocks ranges.
+   */
+  private static class FoldedGroup {
+    @NotNull public final List<FoldedBlock> blocks;
+
+    FoldedGroup(@NotNull List<FoldedBlock> blocks) {
+      this.blocks = blocks;
+    }
+  }
+
+  /**
+   * Stores 'matching' fold regions in different Editors (array can contain `null` if Editor has no matching region).
+   * These regions will be collapsed/expanded synchronously, see {@link MyFoldingListener}.
+   */
   protected class FoldedBlock {
     @NotNull private final FoldRegion[] myRegions;
     @NotNull private final int[] myLines;
@@ -588,7 +610,7 @@ public class FoldingModelSupport {
       myLines = new int[myCount];
     }
 
-    public void installHighlighter(@NotNull final FoldedBlock[] block) {
+    public void installHighlighter(@NotNull FoldedGroup group) {
       assert myHighlighters.isEmpty();
 
       for (int i = 0; i < myCount; i++) {
@@ -596,7 +618,7 @@ public class FoldingModelSupport {
         if (region == null || !region.isValid()) continue;
         myHighlighters.addAll(DiffDrawUtil.createLineSeparatorHighlighter(myEditors[i],
                                                                           region.getStartOffset(), region.getEndOffset(),
-                                                                          getHighlighterCondition(block, i)));
+                                                                          getHighlighterCondition(group, i)));
       }
     }
 
@@ -634,11 +656,11 @@ public class FoldingModelSupport {
     }
 
     @NotNull
-    private BooleanGetter getHighlighterCondition(@NotNull final FoldedBlock[] block, final int index) {
+    private BooleanGetter getHighlighterCondition(@NotNull FoldedGroup group, final int index) {
       return () -> {
         if (!myEditors[index].getFoldingModel().isFoldingEnabled()) return false;
 
-        for (FoldedBlock folding : block) {
+        for (FoldedBlock folding : group.blocks) {
           FoldRegion region = folding.getRegion(index);
           boolean visible = region != null && region.isValid() && !region.isExpanded();
           if (folding == this) return visible;
