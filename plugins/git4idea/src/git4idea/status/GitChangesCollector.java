@@ -31,8 +31,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitFormatException;
 import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
-import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
@@ -65,7 +63,7 @@ class GitChangesCollector {
   @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final AbstractVcs myVcs;
 
-  private final GitRepository myRepository;
+  @NotNull private final GitRepository myRepository;
   private final Collection<Change> myChanges = new HashSet<>();
   private final Set<VirtualFile> myUnversionedFiles = new HashSet<>();
   @NotNull private final Git myGit;
@@ -77,8 +75,8 @@ class GitChangesCollector {
   @NotNull
   static GitChangesCollector collect(@NotNull Project project, @NotNull Git git, @NotNull ChangeListManager changeListManager,
                                      @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
-                                     @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot) throws VcsException {
-    return new GitChangesCollector(project, git, changeListManager, vcsManager, vcs, dirtyScope, vcsRoot);
+                                     @NotNull VcsDirtyScope dirtyScope, @NotNull GitRepository repository) throws VcsException {
+    return new GitChangesCollector(project, git, changeListManager, vcsManager, vcs, dirtyScope, repository);
   }
 
   @NotNull
@@ -93,16 +91,15 @@ class GitChangesCollector {
 
   private GitChangesCollector(@NotNull Project project, @NotNull Git git, @NotNull ChangeListManager changeListManager,
                               @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
-                              @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot) throws VcsException
-  {
+                              @NotNull VcsDirtyScope dirtyScope, @NotNull GitRepository repository) throws VcsException {
     myProject = project;
     myChangeListManager = changeListManager;
     myVcsManager = vcsManager;
     myVcs = vcs;
     myDirtyScope = dirtyScope;
-    myVcsRoot = vcsRoot;
+    myVcsRoot = repository.getRoot();
     myGit = git;
-    myRepository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(vcsRoot);
+    myRepository = repository;
 
     Collection<FilePath> dirtyPaths = dirtyPaths();
     if (!dirtyPaths.isEmpty()) {
@@ -181,13 +178,8 @@ class GitChangesCollector {
   }
 
   private void collectUnversionedFiles() throws VcsException {
-    if (myRepository == null) {
-      // if GitRepository was not initialized at the time of creation of the GitNewChangesCollector => collecting unversioned files by hands.
-      myUnversionedFiles.addAll(myGit.untrackedFiles(myProject, myVcsRoot, null));
-    } else {
-      GitUntrackedFilesHolder untrackedFilesHolder = myRepository.getUntrackedFilesHolder();
-      myUnversionedFiles.addAll(untrackedFilesHolder.retrieveUntrackedFiles());
-    }
+    GitUntrackedFilesHolder untrackedFilesHolder = myRepository.getUntrackedFilesHolder();
+    myUnversionedFiles.addAll(untrackedFilesHolder.retrieveUntrackedFiles());
   }
 
   private GitLineHandler statusHandler(Collection<FilePath> dirtyPaths) {
@@ -340,31 +332,11 @@ class GitChangesCollector {
 
   @NotNull
   private VcsRevisionNumber getHead() throws VcsException {
-    if (myRepository != null) {
-      // we force update the GitRepository, because update is asynchronous, and thus the GitChangeProvider may be asked for changes
-      // before the GitRepositoryUpdater has captures the current revision change and has updated the GitRepository.
-      myRepository.update();
-      final String rev = myRepository.getCurrentRevision();
-      return rev != null ? new GitRevisionNumber(rev) : VcsRevisionNumber.NULL;
-    } else {
-      // this may happen on the project startup, when GitChangeProvider may be queried before GitRepository has been initialized.
-      LOG.info("GitRepository is null for root " + myVcsRoot);
-      return getHeadFromGit();
-    }
-  }
-
-  @NotNull
-  private VcsRevisionNumber getHeadFromGit() throws VcsException {
-    VcsRevisionNumber nativeHead = VcsRevisionNumber.NULL;
-    try {
-      nativeHead = GitChangeUtils.resolveReference(myProject, myVcsRoot, "HEAD");
-    }
-    catch (VcsException e) {
-      if (!GitChangeUtils.isHeadMissing(e)) { // fresh repository
-        throw e;
-      }
-    }
-    return nativeHead;
+    // we force update the GitRepository, because update is asynchronous, and thus the GitChangeProvider may be asked for changes
+    // before the GitRepositoryUpdater has captures the current revision change and has updated the GitRepository.
+    myRepository.update();
+    final String rev = myRepository.getCurrentRevision();
+    return rev != null ? new GitRevisionNumber(rev) : VcsRevisionNumber.NULL;
   }
 
   private static void throwYStatus(String output, GitHandler handler, String line, char xStatus, char yStatus) {

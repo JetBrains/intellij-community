@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
@@ -57,22 +58,23 @@ public class GitChangeProvider implements ChangeProvider {
                          @NotNull final ProgressIndicator progress,
                          @NotNull final ChangeListManagerGate addGate) throws VcsException {
     final GitVcs vcs = GitVcs.getInstance(myProject);
+    GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myProject);
     if (LOG.isDebugEnabled()) LOG.debug("initial dirty scope: " + dirtyScope);
     appendNestedVcsRootsToDirt(dirtyScope, vcs, myVcsManager);
     if (LOG.isDebugEnabled()) LOG.debug("after adding nested vcs roots to dirt: " + dirtyScope);
 
     final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRoots();
-    Set<VirtualFile> roots = GitUtil.getRootsForFilesIfAny(myProject, affected);
+    Set<GitRepository> repos = ContainerUtil.map2SetNotNull(affected, repositoryManager::getRepositoryForRoot);
 
     List<FilePath> newDirtyPaths = new ArrayList<>();
 
     try {
       final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, addGate,
                                                                myFileDocumentManager, myVcsManager);
-      for (VirtualFile root : roots) {
-        LOG.debug("checking root: " + root.getPath());
+      for (GitRepository repo : repos) {
+        LOG.debug("checking root: " + repo.getRoot().getPath());
         GitChangesCollector collector = GitChangesCollector.collect(myProject, myGit, myChangeListManager, myVcsManager,
-                                                                    vcs, dirtyScope, root);
+                                                                    vcs, dirtyScope, repo);
         final Collection<Change> changes = collector.getChanges();
         holder.changed(changes);
         for (Change file : changes) {
