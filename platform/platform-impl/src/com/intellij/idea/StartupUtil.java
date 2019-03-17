@@ -118,9 +118,7 @@ public class StartupUtil {
     ExecutorService executorService = isParallelExecution ? AppExecutorUtil.getAppExecutorService() : new SameThreadExecutorService();
 
     List<Future<?>> futures = new ArrayList<>();
-    if (!Main.isHeadless()) {
-      addPrepareUiTasks(futures, executorService);
-    }
+    addPrepareUiTasks(futures, executorService);
 
     configureLogging();
 
@@ -220,23 +218,28 @@ public class StartupUtil {
 
   private static void addPrepareUiTasks(@NotNull List<Future<?>> futures, @NotNull ExecutorService executorService) {
     futures.add(executorService.submit(() -> {
+      // see note about UIUtil static init - we need to init LaF even if headless
       Toolkit toolkit = UIUtil.initDefaultLAF();
 
       // updateWindowIcon must be after initDefaultLAF because uses computed system font data for scale context
 
-      // no need to wait - doesn't affect other functionality
-      executorService.execute(() -> {
-        Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
-        // most of the time consumed to load SVG - so, can be done in parallel
-        AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
-        activity.end();
-      });
+      if (!Main.isHeadless()) {
+        // no need to wait - doesn't affect other functionality
+        executorService.execute(() -> {
+          Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
+          // most of the time consumed to load SVG - so, can be done in parallel
+          AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
+          activity.end();
+        });
 
-      AppUIUtil.updateFrameClass(toolkit);
+        AppUIUtil.updateFrameClass(toolkit);
+      }
     }));
 
-    // no need to wait - fonts required for editor, not for license window or splash
-    executorService.execute(() -> AppUIUtil.registerBundledFonts());
+    if (!Main.isHeadless()) {
+      // no need to wait - fonts required for editor, not for license window or splash
+      executorService.execute(() -> AppUIUtil.registerBundledFonts());
+    }
   }
 
   private static void configureLogging() {
