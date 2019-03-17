@@ -445,16 +445,6 @@ public class GitUtil {
   }
 
   @NotNull
-  public static Set<VirtualFile> getRootsForFilesIfAny(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files) {
-    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
-    return files.stream()
-      .map(file -> manager.getRepositoryForFile(file))
-      .filter(Objects::nonNull)
-      .map(Repository::getRoot)
-      .collect(Collectors.toSet());
-  }
-
-  @NotNull
   public static Set<GitRepository> getRepositoriesForFiles(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files)
     throws VcsException {
     Set<GitRepository> result = new HashSet<>();
