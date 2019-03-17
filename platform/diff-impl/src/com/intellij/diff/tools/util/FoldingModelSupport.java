@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
@@ -83,13 +84,22 @@ public class FoldingModelSupport {
    * Iterator returns ranges of changed lines: start1, end1, start2, end2, ...
    */
   @Nullable
-  private Data collectFoldedRanges(@Nullable final Iterator<int[]> changedLines,
-                                   @NotNull final Settings settings) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
+  protected Data computeFoldedRanges(@Nullable final Iterator<int[]> changedLines,
+                                     @NotNull final Settings settings) {
     if (changedLines == null || settings.range == -1) return null;
 
-    FoldingBuilder builder = new FoldingBuilder(myEditors, settings);
+    int[] lineCount = ReadAction.compute(() -> {
+      ProgressManager.checkCanceled();
+
+      int[] result = new int[myCount];
+      for (int i = 0; i < myCount; i++) {
+        result[i] = getLineCount(myEditors[i].getDocument());
+      }
+      return result;
+    });
+
+
+    FoldingBuilder builder = new FoldingBuilder(lineCount, settings);
     return builder.build(changedLines);
   }
 
@@ -99,13 +109,13 @@ public class FoldingModelSupport {
   protected void install(@Nullable final Iterator<int[]> changedLines,
                          @Nullable final UserDataHolder context,
                          @NotNull final Settings settings) {
-    Data data = collectFoldedRanges(changedLines, settings);
+    Data data = computeFoldedRanges(changedLines, settings);
     install(data, context, settings);
   }
 
-  private void install(@Nullable final Data data,
-                       @Nullable final UserDataHolder context,
-                       @NotNull final Settings settings) {
+  public void install(@Nullable final Data data,
+                      @Nullable final UserDataHolder context,
+                      @NotNull final Settings settings) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     for (FoldedBlock folding : getFoldedBlocks()) {
@@ -128,22 +138,18 @@ public class FoldingModelSupport {
     updateLineNumbers(true);
   }
 
-  private static class FoldingBuilder {
+  protected static class FoldingBuilder {
     @NotNull private final Settings mySettings;
     private final int myCount;
 
     @NotNull private final int[] myLineCount;
     @NotNull private final List<Data.Group> myGroups = new ArrayList<>();
 
-    FoldingBuilder(@NotNull EditorEx[] editors,
-                   @NotNull Settings settings) {
+    public FoldingBuilder(@NotNull int[] lineCount,
+                          @NotNull Settings settings) {
       mySettings = settings;
-      myCount = editors.length;
-
-      myLineCount = new int[myCount];
-      for (int i = 0; i < myCount; i++) {
-        myLineCount[i] = getLineCount(editors[i].getDocument());
-      }
+      myLineCount = lineCount;
+      myCount = lineCount.length;
     }
 
     @NotNull
@@ -580,8 +586,8 @@ public class FoldingModelSupport {
     }
   }
 
-  private static class Data {
-    @NotNull public final List<Group> groups;
+  public static class Data {
+    @NotNull private final List<Group> groups;
 
     private Data(@NotNull List<Group> groups) {
       this.groups = groups;

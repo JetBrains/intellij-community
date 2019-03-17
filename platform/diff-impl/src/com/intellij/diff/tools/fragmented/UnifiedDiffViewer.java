@@ -38,11 +38,12 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntFunction;
@@ -271,8 +272,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       CombinedEditorData editorData = new CombinedEditorData(builder.getText(), data.getHighlighter(), data.getRangeHighlighter(),
                                                              convertor1.createConvertor(), convertor2.createConvertor());
+      FoldingModelSupport.Data foldingState = myFoldingModel.createState(changedLines, getFoldingModelSettings(),
+                                                                         StringUtil.countNewLines(builder.getText()) + 1);
 
-      return apply(editorData, builder.getBlocks(), convertor1, convertor2, changedLines, isContentsEqual);
+      return apply(editorData, builder.getBlocks(), convertor1, convertor2, foldingState, isContentsEqual);
     }
     catch (DiffTooBigException e) {
       return () -> {
@@ -341,7 +344,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
                          @NotNull final List<ChangedBlock> blocks,
                          @NotNull final LineNumberConvertor convertor1,
                          @NotNull final LineNumberConvertor convertor2,
-                         @NotNull final List<LineRange> changedLines,
+                         @Nullable final FoldingModelSupport.Data foldingState,
                          final boolean isContentsEqual) {
     return () -> {
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
@@ -407,7 +410,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
                                                oldCaretLineTwoside.second.select(oldCaretLineTwoside.first));
       myEditor.getCaretModel().moveToOffset(LineCol.toOffset(myDocument, newCaretLine, oldCaretPosition.column));
 
-      myFoldingModel.install(changedLines, myRequest, getFoldingModelSettings());
+      myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
 
       myInitialScrollHelper.onRediff();
 
@@ -1269,14 +1272,19 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(new EditorEx[]{editor}, disposable);
     }
 
-    public void install(@Nullable List<LineRange> changedLines,
-                        @NotNull UserDataHolder context,
-                        @NotNull FoldingModelSupport.Settings settings) {
+    @Nullable
+    public Data createState(@Nullable List<LineRange> changedLines,
+                            @NotNull FoldingModelSupport.Settings settings,
+                            int lineCount) {
       Iterator<int[]> it = map(changedLines, line -> new int[]{
         line.start,
         line.end
       });
-      install(it, context, settings);
+
+      if (changedLines == null || settings.range == -1) return null;
+
+      FoldingBuilder builder = new FoldingBuilder(new int[]{lineCount}, settings);
+      return builder.build(it);
     }
 
     @NotNull
