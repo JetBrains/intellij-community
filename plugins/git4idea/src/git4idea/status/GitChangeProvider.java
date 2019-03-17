@@ -18,7 +18,6 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
-import git4idea.config.GitVersionSpecialty;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -72,11 +71,8 @@ public class GitChangeProvider implements ChangeProvider {
                                                                myFileDocumentManager, myVcsManager);
       for (VirtualFile root : roots) {
         LOG.debug("checking root: " + root.getPath());
-        GitChangesCollector collector = isNewGitChangeProviderAvailable()
-                                        ? GitNewChangesCollector.collect(myProject, myGit, myChangeListManager, myVcsManager,
-                                                                         vcs, dirtyScope, root)
-                                        : GitOldChangesCollector.collect(myProject, myChangeListManager, myVcsManager,
-                                                                         vcs, dirtyScope, root);
+        GitChangesCollector collector = GitNewChangesCollector.collect(myProject, myGit, myChangeListManager, myVcsManager,
+                                                                       vcs, dirtyScope, root);
         final Collection<Change> changes = collector.getChanges();
         holder.changed(changes);
         for (Change file : changes) {
@@ -139,10 +135,6 @@ public class GitChangeProvider implements ChangeProvider {
         }
       }
     }
-  }
-
-  private boolean isNewGitChangeProviderAvailable() {
-    return GitVersionSpecialty.KNOWS_STATUS_PORCELAIN.existsIn(myProject);
   }
 
   private static class MyNonChangedHolder {
