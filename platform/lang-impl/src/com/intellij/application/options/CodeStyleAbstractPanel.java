@@ -564,6 +564,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return mySettings;
   }
 
+  @NotNull
   public Set<String> processListOptions() {
     return Collections.emptySet();
   }

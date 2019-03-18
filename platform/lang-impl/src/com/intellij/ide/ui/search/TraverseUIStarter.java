@@ -224,10 +224,8 @@ public class TraverseUIStarter extends ApplicationStarterEx {
 
   private static void processOptionsContainingConfigurable(OptionsContainingConfigurable configurable, Element configurableElement) {
     Set<String> optionsPath = configurable.processListOptions();
-    if (optionsPath != null) {
-      Set<OptionDescription> result = wordsToOptionDescriptors(optionsPath);
-      writeOptions(configurableElement, result);
-    }
+    Set<OptionDescription> result = wordsToOptionDescriptors(optionsPath);
+    writeOptions(configurableElement, result);
   }
 
   private static Set<OptionDescription> wordsToOptionDescriptors(@NotNull Set<String> optionsPath) {
