@@ -25,7 +25,6 @@ import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
 import gnu.trove.TIntHashSet;
@@ -34,11 +33,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.ObjIntConsumer;
 
-public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implements Disposable {
+public class VcsLogFullDetailsIndex<T, D> implements Disposable {
   protected static final String INDEX = "index";
   @NotNull protected final MyMapReduceIndex myMapReduceIndex;
   @NotNull protected final StorageId myStorageId;
