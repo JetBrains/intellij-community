@@ -55,7 +55,7 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     mySwitchViewAction = new SwitchViewAction();
   }
 
-  public void addView(T view, String viewName, boolean enable) {
+  public void addView(@NotNull T view, @NotNull String viewName, boolean enable) {
     T oldView = getView(viewName);
     if (oldView != null) {
       remove(oldView.getComponent());
@@ -73,17 +73,23 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
   }
 
   public void enableView(@NotNull String viewName) {
+    enableView(viewName, true);
+  }
+
+  public void enableView(@NotNull String viewName, boolean requestFocus) {
     if (!StringUtil.equals(viewName, myEnabledViewRef.get())) {
       myEnabledViewRef.set(viewName);
       CardLayout cl = (CardLayout)(getLayout());
       cl.show(this, viewName);
     }
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      ComponentContainer view = getView(viewName);
-      if (view != null) {
-        IdeFocusManager.getGlobalInstance().requestFocus(view.getPreferredFocusableComponent(), true);
-      }
-    });
+    if (requestFocus) {
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        ComponentContainer view = getView(viewName);
+        if (view != null) {
+          IdeFocusManager.getGlobalInstance().requestFocus(view.getPreferredFocusableComponent(), true);
+        }
+      });
+    }
   }
 
   public boolean isViewEnabled(String viewName) {
@@ -162,9 +168,11 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     public void update(@NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       if (myViewMap.size() <= 1) {
+        presentation.setVisible(false);
         presentation.setEnabled(false);
       }
       else {
+        presentation.setVisible(true);
         presentation.setEnabled(true);
         presentation.putClientProperty(SELECTED_PROPERTY, isSelected(e));
       }
