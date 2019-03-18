@@ -360,30 +360,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitTypeDefinitionBody(@NotNull GrTypeDefinitionBody typeDefinitionBody) {
-    final PsiElement parent = typeDefinitionBody.getParent();
-    if (!(parent instanceof GrAnonymousClassDefinition)) return;
-
-    final PsiElement prev = typeDefinitionBody.getPrevSibling();
-    if (!PsiUtil.isLineFeed(prev)) return;
-
-    final PsiElement newExpression = parent.getParent();
-    if (!(newExpression instanceof GrNewExpression)) return;
-
-    final GrStatementOwner statementOwner = PsiTreeUtil.getParentOfType(newExpression, GrStatementOwner.class);
-
-    final GrParenthesizedExpression parenthesizedExpression = PsiTreeUtil.getParentOfType(newExpression, GrParenthesizedExpression.class);
-    if (parenthesizedExpression != null && PsiTreeUtil.isAncestor(statementOwner, parenthesizedExpression, true)) return;
-
-    final GrArgumentList argumentList = PsiTreeUtil.getParentOfType(newExpression, GrArgumentList.class);
-    if (argumentList != null && !(argumentList instanceof GrCommandArgumentList)) {
-      if (PsiTreeUtil.isAncestor(statementOwner, argumentList, true)) return;
-    }
-
-    myHolder.createErrorAnnotation(typeDefinitionBody, GroovyBundle.message("ambiguous.code.block"));
-  }
-
-  @Override
   public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
     final PsiElement parent = typeDefinition.getParent();
     if (!(typeDefinition.isAnonymous() ||
@@ -1244,9 +1220,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitClosure(@NotNull GrClosableBlock closure) {
     super.visitClosure(closure);
-    if (!closure.hasParametersSection() && !followsError(closure) && isClosureAmbiguous(closure)) {
-      myHolder.createErrorAnnotation(closure, GroovyBundle.message("ambiguous.code.block"));
-    }
 
     if (TypeInferenceHelper.isTooComplexTooAnalyze(closure)) {
       int startOffset = closure.getTextRange().getStartOffset();
@@ -1264,51 +1237,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       myHolder
         .createWeakWarningAnnotation(new TextRange(startOffset, endOffset), GroovyBundle.message("closure.is.too.complex.to.analyze"));
     }
-  }
-
-  /**
-   * for example if (!(a inst)) {}
-   * ^
-   * we are here
-   */
-
-  private static boolean followsError(GrClosableBlock closure) {
-    PsiElement prev = closure.getPrevSibling();
-    return prev instanceof PsiErrorElement || prev instanceof PsiWhiteSpace && prev.getPrevSibling() instanceof PsiErrorElement;
-  }
-
-  private static boolean isClosureAmbiguous(GrClosableBlock closure) {
-    if (mayBeAnonymousBody(closure)) return true;
-    PsiElement place = closure;
-    while (true) {
-      PsiElement parent = place.getParent();
-      if (parent == null || parent instanceof GrUnAmbiguousClosureContainer) return false;
-
-      if (PsiUtil.isExpressionStatement(place)) return true;
-      if (parent.getFirstChild() != place) return false;
-      place = parent;
-    }
-  }
-
-  private static boolean mayBeAnonymousBody(GrClosableBlock closure) {
-    final PsiElement parent = closure.getParent();
-    if (!(parent instanceof GrMethodCallExpression)) {
-      return false;
-    }
-    final GrMethodCallExpression callExpression = (GrMethodCallExpression)parent;
-    if (!(callExpression.getInvokedExpression() instanceof GrNewExpression)) {
-      return false;
-    }
-    if (!contains(closure, callExpression.getClosureArguments())) {
-      return false;
-    }
-    PsiElement run = callExpression.getParent();
-    while (run != null) {
-      if (run instanceof GrParenthesizedExpression) return false;
-      if (run instanceof GrReturnStatement || run instanceof GrAssertStatement || run instanceof GrThrowStatement) return true;
-      run = run.getParent();
-    }
-    return false;
   }
 
   @Override
