@@ -9,7 +9,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -67,8 +68,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.List;
 import java.util.*;
@@ -82,60 +81,13 @@ import static javax.swing.KeyStroke.getKeyStroke;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class Switcher extends AnAction implements DumbAware {
-  private static volatile SwitcherPanel SWITCHER = null;
+  private static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
 
   private static final int MINIMUM_HEIGHT = JBUI.scale(100);
 
-  @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
   private static final Color ON_MOUSE_OVER_BG_COLOR = new JBColor(new Color(231, 242, 249), new Color(77, 80, 84));
-  private static int CTRL_KEY;
-  @Nullable public static final Runnable CHECKER = () -> {
-    synchronized (Switcher.class) {
-      if (SWITCHER != null) {
-        SWITCHER.navigate(null);
-      }
-    }
-  };
-  @NotNull private static final CustomShortcutSet TW_SHORTCUT;
-
-  static {
-    Shortcut recentFiles = ArrayUtil.getFirstElement(getActiveKeymapShortcuts("RecentFiles").getShortcuts());
-    List<Shortcut> shortcuts = ContainerUtil.newArrayList();
-    for (char ch = '0'; ch <= '9'; ch++) {
-      shortcuts.add(CustomShortcutSet.fromString("control " + ch).getShortcuts()[0]);
-    }
-    for (char ch = 'A'; ch <= 'Z'; ch++) {
-      Shortcut shortcut = CustomShortcutSet.fromString("control " + ch).getShortcuts()[0];
-      if (shortcut.equals(recentFiles)) continue;
-      shortcuts.add(shortcut);
-    }
-    TW_SHORTCUT = new CustomShortcutSet(shortcuts.toArray(Shortcut.EMPTY_ARRAY));
-
-    IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(@NotNull AWTEvent event) {
-        ToolWindow tw;
-        if (SWITCHER != null && event instanceof KeyEvent && !SWITCHER.isPinnedMode()) {
-          final KeyEvent keyEvent = (KeyEvent)event;
-          if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
-            ApplicationManager.getApplication().invokeLater(CHECKER, ModalityState.current());
-          }
-          else if (event.getID() == KEY_PRESSED && event != INIT_EVENT
-                   && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
-            SWITCHER.myPopup.closeOk(null);
-            tw.activate(null, true, true);
-          }
-        }
-        return false;
-      }
-    }, null);
-  }
-
-  @NonNls private static final String SWITCHER_TITLE = "Switcher";
-  @NonNls private static InputEvent INIT_EVENT;
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -144,35 +96,32 @@ public class Switcher extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getProject();
+    Project project = e.getProject();
     if (project == null) return;
 
+    SwitcherPanel switcher = SWITCHER_KEY.get(project);
+
     boolean isNewSwitcher = false;
-    synchronized (Switcher.class) {
-      INIT_EVENT = e.getInputEvent();
-      if (SWITCHER != null && SWITCHER.isPinnedMode()) {
-        SWITCHER.cancel();
-        SWITCHER = null;
-      }
-      if (SWITCHER == null) {
-        isNewSwitcher = true;
-        // Assigns SWITCHER field
-        createAndShowSwitcher(project, SWITCHER_TITLE, IdeActions.ACTION_SWITCHER, false, false);
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
-      }
+    if (switcher != null && switcher.isPinnedMode()) {
+      switcher.cancel();
+      switcher = null;
+    }
+    if (switcher == null) {
+      isNewSwitcher = true;
+      switcher = createAndShowSwitcher(project, "Switcher", IdeActions.ACTION_SWITCHER, false, false);
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("switcher");
     }
 
-    assert SWITCHER != null;
-    if (!SWITCHER.isPinnedMode()) {
+    if (!switcher.isPinnedMode()) {
       if (e.getInputEvent() != null && e.getInputEvent().isShiftDown()) {
-        SWITCHER.goBack();
+        switcher.goBack();
       }
       else {
         if (isNewSwitcher && !FileEditorManagerEx.getInstanceEx(project).hasOpenedFile()) {
-          SWITCHER.files.setSelectedIndex(0);
+          switcher.files.setSelectedIndex(0);
         }
         else {
-          SWITCHER.goForward();
+          switcher.goForward();
         }
       }
     }
@@ -186,41 +135,40 @@ public class Switcher extends AnAction implements DumbAware {
   public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, boolean pinned, @Nullable final VirtualFile[] vFiles) {
     return createAndShowSwitcher(e, title, "RecentFiles", pinned, vFiles != null);
   }
-  
+
+  @Nullable
   public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, @NotNull String actionId, boolean onlyEdited, boolean pinned) {
     Project project = e.getProject();
-    if (SWITCHER != null) {
-      final boolean sameShortcut = Comparing.equal(SWITCHER.myTitle, title);
-      if (SWITCHER.isCheckboxMode()) {
+    if (project == null) return null;
+    SwitcherPanel switcher = SWITCHER_KEY.get(project);
+    if (switcher != null) {
+      boolean sameShortcut = Comparing.equal(switcher.myTitle, title);
+      if (switcher.isCheckboxMode()) {
         if (sameShortcut) {
-          SWITCHER.toggleShowEditedFiles();
+          switcher.toggleShowEditedFiles();
         }
         else {
-          SWITCHER.setShowOnlyEditedFiles(onlyEdited);
+          switcher.setShowOnlyEditedFiles(onlyEdited);
         }
         return null;
       }
       else if (sameShortcut) {
-        SWITCHER.goForward();
+        switcher.goForward();
         return null;
       }
     }
-    return project == null ? null : createAndShowSwitcher(project, title, actionId, onlyEdited, pinned);
+    return createAndShowSwitcher(project, title, actionId, onlyEdited, pinned);
   }
 
-  @Nullable
+  @NotNull
   private static SwitcherPanel createAndShowSwitcher(@NotNull Project project,
                                                      @NotNull String title,
                                                      @NotNull String actionId,
                                                      boolean onlyEdited,
                                                      boolean pinned) {
-    synchronized (Switcher.class) {
-      if (SWITCHER != null) {
-        SWITCHER.cancel();
-      }
-      SWITCHER = new SwitcherPanel(project, title, actionId, onlyEdited, pinned);
-      return SWITCHER;
-    }
+    SwitcherPanel switcher = new SwitcherPanel(project, title, actionId, onlyEdited, pinned);
+    SWITCHER_KEY.set(project, switcher);
+    return switcher;
   }
 
   public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener, DataProvider,
@@ -235,12 +183,13 @@ public class Switcher extends AnAction implements DumbAware {
     final JPanel myTopPanel;
     final JPanel descriptions;
     final Project project;
-    private final boolean myPinned;
+    final boolean myPinned;
     final Map<String, ToolWindow> twShortcuts;
     final Alarm myAlarm;
     final SwitcherSpeedSearch mySpeedSearch;
     final String myTitle;
     final String myActionId;
+    final int myBaseModifier;
     private JBPopup myHint;
 
     @Nullable
@@ -482,24 +431,21 @@ public class Switcher extends AnAction implements DumbAware {
         }
 
         @Override
-        public void valueChanged(@NotNull final ListSelectionEvent e) {
+        public void valueChanged(@NotNull ListSelectionEvent e) {
           if (e.getValueIsAdjusting()) return;
-          updatePathLabel();
-          PopupUpdateProcessorBase popupUpdater = myHint == null || !myHint.isVisible() ?
-                                                  null : myHint.getUserData(PopupUpdateProcessorBase.class);
-          if (popupUpdater != null) popupUpdater.updatePopup(CommonDataKeys.PSI_ELEMENT.getData(
-            DataManager.getInstance().getDataContext(SwitcherPanel.this)));
-        }
-
-        private void updatePathLabel() {
-          List<FileInfo> values = files.getSelectedValuesList();
-          if (values != null && values.size() == 1) {
-            VirtualFile file = values.get(0).first;
-            String presentableUrl = ObjectUtils.notNull(file.getParent(), file).getPresentableUrl();
+          FileInfo selectedInfo = ContainerUtil.getOnlyItem(files.getSelectedValuesList());
+          if (selectedInfo != null) {
+            String presentableUrl = ObjectUtils.notNull(selectedInfo.first.getParent(), selectedInfo.first).getPresentableUrl();
             pathLabel.setText(getTitle2Text(FileUtil.getLocationRelativeToUserHome(presentableUrl)));
           }
           else {
             pathLabel.setText(" ");
+          }
+          PopupUpdateProcessorBase popupUpdater = myHint == null || !myHint.isVisible() ?
+                                                  null : myHint.getUserData(PopupUpdateProcessorBase.class);
+          if (popupUpdater != null) {
+            DataContext dataContext = DataManager.getInstance().getDataContext(SwitcherPanel.this);
+            popupUpdater.updatePopup(CommonDataKeys.PSI_ELEMENT.getData(dataContext));
           }
         }
       };
@@ -554,7 +500,7 @@ public class Switcher extends AnAction implements DumbAware {
       final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_SWITCHER).getShortcutSet();
       final int modifiers = getModifiers(shortcutSet);
       final boolean isAlt = (modifiers & Event.ALT_MASK) != 0;
-      CTRL_KEY = isAlt ? VK_ALT : VK_CONTROL;
+      myBaseModifier = isAlt ? VK_ALT : VK_CONTROL;
       files.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
       toolWindows.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
       KeymapUtil.reassignAction(toolWindows, getKeyStroke(VK_UP, 0), getKeyStroke(VK_UP, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
@@ -569,13 +515,15 @@ public class Switcher extends AnAction implements DumbAware {
         .setRequestFocus(true)
         .setCancelOnWindowDeactivation(true)
         .setCancelOnOtherWindowOpen(true)
+        .setCancelOnClickOutside(true)
         .setMovable(pinned)
+        .setKeyEventHandler(this::keyEvent)
         .setMinSize(new Dimension(myTopPanel.getMinimumSize().width, MINIMUM_HEIGHT))
         .setCancelKeyEnabled(false)
         .setCancelCallback(() -> {
           Container popupFocusAncestor = getPopupFocusAncestor();
           if (popupFocusAncestor != null) popupFocusAncestor.setFocusTraversalPolicy(null);
-          SWITCHER = null;
+          SWITCHER_KEY.set(project, null);
           return true;
         }).createPopup();
 
@@ -596,14 +544,6 @@ public class Switcher extends AnAction implements DumbAware {
           }
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), this, myPopup);
       }
-      if (!myPinned) {
-        new DumbAwareAction(null, null, null) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            //suppress all actions to activate a toolwindow : IDEA-71277
-          }
-        }.registerCustomShortcutSet(TW_SHORTCUT, this, myPopup);
-      }
       Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
       if (window == null) {
         window = WindowManager.getInstance().getFrame(project);
@@ -622,6 +562,25 @@ public class Switcher extends AnAction implements DumbAware {
 
       fromListToList(toolWindows, files);
       fromListToList(files, toolWindows);
+    }
+
+    private boolean keyEvent(KeyEvent event) {
+      if (isPinnedMode()) return false;
+      if (event.getID() == KEY_RELEASED && event.getKeyCode() == myBaseModifier) {
+        event.consume();
+        ApplicationManager.getApplication().invokeLater(() -> navigate(null), ModalityState.current());
+        return true;
+      }
+      if (event.getID() == KEY_PRESSED) {
+        ToolWindow tw = twShortcuts.get(String.valueOf((char)event.getKeyCode()));
+        if (tw != null) {
+          event.consume();
+          myPopup.closeOk(null);
+          tw.activate(null, true, true);
+          return true;
+        }
+      }
+      return false;
     }
 
     @Override
@@ -644,10 +603,12 @@ public class Switcher extends AnAction implements DumbAware {
                                             boolean pinned) {
       ListModel<T> listModel;
       if (pinned) {
-        listModel = new NameFilteringListModel<>(baseModel, namer, s -> !speedSearch.isPopupActive()
-                                                                        || StringUtil.isEmpty(speedSearch.getEnteredPrefix())
-                                                                        || speedSearch.getComparator().matchingFragments(speedSearch.getEnteredPrefix(), s) != null, () -> StringUtil.notNullize(
-          speedSearch.getEnteredPrefix()));
+        listModel = new NameFilteringListModel<>(
+          baseModel, namer,
+          s -> !speedSearch.isPopupActive() ||
+               StringUtil.isEmpty(speedSearch.getEnteredPrefix()) ||
+               speedSearch.getComparator().matchingFragments(speedSearch.getEnteredPrefix(), s) != null,
+          () -> StringUtil.notNullize(speedSearch.getEnteredPrefix()));
       }
       else {
         listModel = baseModel;
@@ -694,10 +655,7 @@ public class Switcher extends AnAction implements DumbAware {
           }
         }
       }
-      if (editors.size() < 2 || pinned) {
-        if (pinned && editors.size() > 1) {
-          filesData.addAll(editors);
-        }
+      if (editors.size() < 2) {
         int maxFiles = Math.max(editors.size(), filesForInit.size());
         int minIndex = pinned ? 0 : (filesForInit.size() - Math.min(toolWindowsCount, maxFiles));
         boolean firstRecentMarked = false;
@@ -768,18 +726,12 @@ public class Switcher extends AnAction implements DumbAware {
       return topPanel;
     }
 
-    private static void  addFocusTraversalKeys (Container focusCycleRoot, int focusTraversalType, String keyStroke) {
+    private static void addFocusTraversalKeys (Container focusCycleRoot, int focusTraversalType, String keyStroke) {
       Set<AWTKeyStroke> focusTraversalKeySet = focusCycleRoot.getFocusTraversalKeys(focusTraversalType);
 
       Set<AWTKeyStroke> set = new HashSet<>(focusTraversalKeySet);
       set.add(getKeyStroke(keyStroke));
       focusCycleRoot.setFocusTraversalKeys(focusTraversalType, set);
-    }
-
-    @Deprecated
-    @NotNull
-    protected List<VirtualFile> getFiles(@NotNull Project project) {
-      throw new UnsupportedOperationException("deprecated");
     }
 
     @NotNull
@@ -868,7 +820,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     @Override
     public void keyReleased(@NotNull KeyEvent e) {
-      boolean ctrl = e.getKeyCode() == CTRL_KEY;
+      boolean ctrl = e.getKeyCode() == myBaseModifier;
       if ((ctrl && isAutoHide())) {
         navigate(e);
       }
@@ -984,10 +936,6 @@ public class Switcher extends AnAction implements DumbAware {
       return files.getModel().getSize() > 0;
     }
 
-    private boolean isToolWindowsSelected() {
-      return getSelectedList() == toolWindows;
-    }
-
     private void cancel() {
       myPopup.cancel();
     }
@@ -1047,6 +995,7 @@ public class Switcher extends AnAction implements DumbAware {
       final int selectionIndex = filesAndSelection.getSecond();
 
       ListModel<FileInfo> model = files.getModel();
+      files.clearSelection(); // workaround JDK-7108280
       ListUtil.removeAllItems(model);
       ListUtil.addAllItems(model, filesAndSelection.getFirst());
 
@@ -1105,22 +1054,15 @@ public class Switcher extends AnAction implements DumbAware {
 
     private void tryToOpenFileSearch(final InputEvent e, final String fileName) {
       AnAction gotoFile = ActionManager.getInstance().getAction("GotoFile");
-      if (gotoFile != null && !StringUtil.isEmpty(fileName)) {
-        myPopup.cancel();
-        final AnAction action = gotoFile;
-        ApplicationManager.getApplication().invokeLater(() -> DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
-          final DataContext dataContext = dataId -> {
-            if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
-              return fileName;
-            }
-            return context.getData(dataId);
-          };
-          final AnActionEvent event =
-            new AnActionEvent(e, dataContext, ActionPlaces.EDITOR_POPUP, new PresentationFactory().getPresentation(action),
-                              ActionManager.getInstance(), 0);
-          action.actionPerformed(event);
-        }), ModalityState.current());
-      }
+      if (gotoFile == null || StringUtil.isEmpty(fileName)) return;
+      myPopup.cancel();
+      ApplicationManager.getApplication().invokeLater(
+        () -> DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(
+          fromFocus -> {
+            DataContext dataContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.PREDEFINED_TEXT.getName(), fileName, fromFocus);
+            AnActionEvent event = AnActionEvent.createFromAnAction(gotoFile, e, ActionPlaces.EDITOR_POPUP, dataContext);
+            gotoFile.actionPerformed(event);
+          }), ModalityState.current());
     }
 
     @Nullable
@@ -1191,11 +1133,10 @@ public class Switcher extends AnAction implements DumbAware {
     public void mouseDragged(@NotNull MouseEvent e) {
     }
 
-    private static class SwitcherSpeedSearch extends SpeedSearchBase<SwitcherPanel> implements PropertyChangeListener {
+    private static class SwitcherSpeedSearch extends SpeedSearchBase<SwitcherPanel> {
 
       SwitcherSpeedSearch(@NotNull SwitcherPanel switcher) {
         super(switcher);
-        addChangeListener(this);
         setComparator(new SpeedSearchComparator(false, true));
       }
 
@@ -1203,7 +1144,7 @@ public class Switcher extends AnAction implements DumbAware {
       protected void processKeyEvent(@NotNull KeyEvent e) {
         int keyCode = e.getKeyCode();
         if (keyCode == VK_ENTER) {
-          SWITCHER.navigate(e);
+          myComponent.navigate(e);
           e.consume();
           return;
         }
@@ -1278,7 +1219,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
 
       @Override
-      public void propertyChange(@NotNull PropertyChangeEvent evt) {
+      protected void onSearchFieldUpdated(String pattern) {
         if (myComponent.project.isDisposed()) {
           myComponent.myPopup.cancel();
           return;
