@@ -274,7 +274,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   private String buildMacZip(String macDistPath) {
-    return buildContext.messages.block("Build zip archive for macOS") {
+    return buildContext.messages.block("Build .zip archive for macOS") {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
       def zipRoot = getZipRoot(buildContext, customizer)
@@ -285,7 +285,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
       def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.zip").absolutePath
       generateProductJson(buildContext, productJsonDir, null)
-      allPaths += [productJsonDir]
+      allPaths += productJsonDir
 
       buildContext.ant.zip(zipfile: targetPath) {
         allPaths.each {

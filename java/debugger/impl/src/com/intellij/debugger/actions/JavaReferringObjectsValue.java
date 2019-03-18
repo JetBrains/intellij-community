@@ -72,7 +72,8 @@ public class JavaReferringObjectsValue extends JavaValue {
 
           List<ReferringObject> referringObjects;
           try {
-            referringObjects = myReferringObjectsProvider.getReferringObjects((ObjectReference)value, MAX_REFERRING);
+            referringObjects = myReferringObjectsProvider.getReferringObjects(getEvaluationContext(), (ObjectReference)value,
+                                                                              MAX_REFERRING);
           } catch (ObjectCollectedException e) {
             node.setErrorMessage(DebuggerBundle.message("evaluation.error.object.collected"));
             return;

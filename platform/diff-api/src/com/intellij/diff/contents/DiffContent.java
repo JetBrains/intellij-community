@@ -27,7 +27,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents some data that probably can be compared with some other.
  *
- * @see DiffRequest
+ * @see com.intellij.diff.requests.ContentDiffRequest
+ * @see com.intellij.diff.DiffContentFactory
  */
 public interface DiffContent extends UserDataHolder {
   @Nullable

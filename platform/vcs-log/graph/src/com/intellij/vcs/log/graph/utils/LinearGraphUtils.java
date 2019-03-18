@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -150,6 +151,6 @@ public class LinearGraphUtils {
   @NotNull
   public static Set<Integer> convertIdsToNodeIndexes(@NotNull final LinearGraph graph, @NotNull Collection<Integer> ids) {
     List<Integer> result = ContainerUtil.mapNotNull(ids, id -> graph.getNodeIndex(id));
-    return ContainerUtil.newHashSet(result);
+    return new HashSet<>(result);
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiTypeParameterListOwner
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
@@ -25,6 +26,11 @@ class SubstitutorInferenceTest extends LightProjectTest implements TypingTest, R
   @Override
   LightProjectDescriptor getProjectDescriptor() {
     GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK
+  }
+
+  @Before
+  void disableRecursion() {
+    RecursionManager.assertOnRecursionPrevention(fixture.testRootDisposable)
   }
 
   @Before
@@ -64,7 +70,11 @@ class Files {
 
   @Test
   void 'diamond in variable initializer'() {
-    typingTest('I<PG> l = <caret>new C<>()', GrNewExpression, 'C<PG>')
+    def expression = elementUnderCaret('I<PG> l = <caret>new C<>()', GrNewExpression)
+    assertType('C<PG>', expression.type)
+    def resolved = (MethodResolveResult)expression.advancedResolve()
+    def typeParameter = resolved.element.containingClass.typeParameters.first()
+    assertType('PG', resolved.substitutor.substitute(typeParameter))
   }
 
   @Test
@@ -185,42 +195,6 @@ static <T> T ppp(Producer<T> p) {}
   @Test
   void 'vararg method call type from array argument'() {
     expressionTypeTest('static <T> List<T> foo(T... t) {}; foo("".split(""))', 'java.util.List<java.lang.String>')
-  }
-
-  @Test
-  void 'empty list literal from variable'() {
-    typingTest('List<List<Integer>> l = [<caret>]', GrListOrMap, 'java.util.List<java.util.List<java.lang.Integer>>')
-  }
-
-  @Test
-  void 'empty list literal from new expression'() {
-    typingTest 'new ArrayList<Integer>([<caret>])', GrListOrMap, 'java.util.List<java.lang.Integer>'
-  }
-
-  @Test
-  void 'empty list literal from diamond in new expression'() {
-    typingTest 'new ArrayList<Integer>(new ArrayList<>([<caret>]))', GrListOrMap, 'java.util.List<java.lang.Integer>'
-  }
-
-  @Test
-  void 'empty list literal from nested diamond in variable initializer'() {
-    typingTest 'List<Integer> l = new ArrayList<>(new ArrayList<>([<caret>]))', GrListOrMap, 'java.util.List<java.lang.Integer>'
-  }
-
-  @Ignore("Requires list literal inference from both arguments and context type")
-  @Test
-  void 'empty list literal from outer list literal'() {
-    typingTest('List<List<Integer>> l = [[<caret>]]', GrListOrMap, 'java.util.List<java.lang.Integer>')
-  }
-
-  /**
-   * This test is wrong and exists only to preserve behaviour
-   * and should fail when 'empty list literal from outer list literal' will pass.
-   */
-  @Test
-  void 'list literal with empty list literal'() {
-    typingTest('List<List<Integer>> l = <caret>[[]]', GrListOrMap, 'java.util.List<java.util.List<java.lang.Object>>')
-    typingTest('List<List<Integer>> l = [[<caret>]]', GrListOrMap, 'java.util.List<java.lang.Object>')
   }
 
   @Ignore("Requires list literal inference from both arguments and context type")

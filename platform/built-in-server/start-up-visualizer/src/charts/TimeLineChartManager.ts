@@ -1,13 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import {XYChartManager} from "@/core"
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
-import {computeLevels, disableGridButKeepBorderLines, TimeLineItem} from "./timeLineChartHelper"
-import {InputData} from "@/data"
-import {DataManager} from "@/state"
+import {disableGridButKeepBorderLines, TimeLineItem, transformToTimeLineItems} from "./timeLineChartHelper"
+import {XYChartManager} from "@/charts/ChartManager"
+import {DataManager} from "@/state/DataManager"
+import {Item} from "@/state/data"
 
 export class TimelineChartManager extends XYChartManager {
   private maxRowIndex = 0
+
+  private readonly statsLabel: am4core.Label
 
   constructor(container: HTMLElement) {
     super(container, module.hot)
@@ -16,6 +18,13 @@ export class TimelineChartManager extends XYChartManager {
     const levelAxis = this.configureLevelAxis()
     this.configureSeries()
     this.addHeightAdjuster(levelAxis)
+
+    this.statsLabel = this.chart.createChild(am4core.Label)
+    this.statsLabel.selectable = true
+    // cannot be placed on chart because overlaps data
+    // this.statLabel.isMeasured = false
+    // this.statLabel.x = 5
+    // this.statLabel.y = 40
   }
 
   private configureLevelAxis() {
@@ -64,6 +73,8 @@ export class TimelineChartManager extends XYChartManager {
     series.dataFields.valueX = "end"
     series.dataFields.categoryY = "rowIndex"
 
+    // series.cursorHoverEnabled = false
+
     series.columns.template.propertyFields.fill = "color"
     series.columns.template.propertyFields.stroke = "color"
     // series.columns.template.strokeOpacity = 1
@@ -91,24 +102,49 @@ export class TimelineChartManager extends XYChartManager {
   }
 
   render(data: DataManager) {
-    this.chart.data = this.transformIjData(data.data)
+    const originalItems = data.data.items || []
 
-    const originalItems = data.data.items
+    this.setStatsLabel(data)
+    this.chart.data = this.transformIjData(originalItems)
+
     const durationAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
-    durationAxis.max = originalItems[originalItems.length - 1].end
+    durationAxis.max = originalItems.length === 0 ? 0 : originalItems[originalItems.length - 1].end
   }
 
-  private transformIjData(input: InputData): Array<any> {
-    const colorSet = new am4core.ColorSet()
-    const transformedItems = new Array<any>(input.items.length)
-    computeLevels(input.items)
+  private setStatsLabel(data: DataManager) {
+    if (!data.isStatSupported) {
+      this.statsLabel.html = ""
+      return
+    }
 
+    const stats = data.data.stats
+    const itemStats = data.itemStats
+    const statsLabelData = [
+      "Plugin count", stats.plugin, "",
+      "Component count", stats.component.app + stats.component.project + stats.component.module, `(${itemStats.reportedComponentCount} of them took more than 10ms)`,
+      "Service count", stats.service.app + stats.service.project + stats.service.module, `(${itemStats.reportedServiceCount} created and each took more than 10ms)`,
+    ]
+
+    let result = "<table>"
+    for (let i = 0; i < statsLabelData.length; i += 3) {
+      result += `<tr><td>${statsLabelData[i]}:</td><td style="text-align: right">${statsLabelData[i + 1]}</td>`
+      result += `<td>${statsLabelData[i + 2]}</td>`
+      result += `</tr>`
+    }
+    result += "</table>"
+
+    this.statsLabel.html = result
+  }
+
+  private transformIjData(originalItems: Array<Item>): Array<any> {
+    const colorSet = new am4core.ColorSet()
+    const items = transformToTimeLineItems(originalItems)
     // we cannot use actual level as row index because in this case labels will be overlapped, so,
     // row index simply incremented till empirical limit.
     let rowIndex = 0
     this.maxRowIndex = 0
-    for (let i = 0; i < input.items.length; i++) {
-      const item = input.items[i] as TimeLineItem
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
       if (rowIndex > 5 && item.level === 0) {
         rowIndex = 0
       }
@@ -116,14 +152,11 @@ export class TimelineChartManager extends XYChartManager {
         this.maxRowIndex = rowIndex
       }
 
-      transformedItems[i] = {
-        ...item,
-        rowIndex: rowIndex++,
-        color: colorSet.getIndex(item.colorIndex),
-      }
+      item.rowIndex = rowIndex++,
+      item.color = colorSet.getIndex(item.colorIndex)
     }
 
-    transformedItems.sort((a, b) => a.rowIndex - b.rowIndex)
-    return transformedItems
+    items.sort((a, b) => a.rowIndex - b.rowIndex)
+    return items
   }
 }

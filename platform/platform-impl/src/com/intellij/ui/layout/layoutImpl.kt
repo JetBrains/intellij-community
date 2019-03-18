@@ -31,4 +31,5 @@ interface LayoutBuilderImpl {
 
   val preferredFocusedComponent: JComponent?
   val validateCallbacks: List<() -> ValidationInfo?>
+  val applyCallbacks: List<() -> Unit>
 }

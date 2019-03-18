@@ -380,7 +380,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Nullable
   @Override
-  protected String measureTokenNamePrefix() {
+  protected String activityNamePrefix() {
     return "project ";
   }
 }

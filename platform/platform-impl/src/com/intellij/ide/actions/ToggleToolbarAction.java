@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -175,7 +176,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
     private final ToolWindow myToolWindow;
 
     OptionsGroup(ToolWindow toolWindow) {
-      super("View Options", true);
+      super(IdeBundle.message("group.view.options"), true);
       myToolWindow = toolWindow;
     }
 

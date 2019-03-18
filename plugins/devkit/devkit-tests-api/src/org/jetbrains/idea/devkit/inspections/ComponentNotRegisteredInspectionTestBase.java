@@ -71,6 +71,10 @@ public abstract class ComponentNotRegisteredInspectionTestBase extends PluginMod
     }
   }
 
+  public void testUnregisteredActionDeprecated() {
+    myFixture.testHighlighting("UnregisteredActionDeprecated." + getSourceFileExtension());
+  }
+
   public void testUnregisteredActionUsedViaConstructor() {
     myFixture.testHighlighting("UnregisteredActionUsedViaConstructor." + getSourceFileExtension());
   }

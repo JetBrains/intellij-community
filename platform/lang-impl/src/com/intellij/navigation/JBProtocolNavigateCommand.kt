@@ -8,7 +8,9 @@ import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
 import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -49,12 +51,12 @@ class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
           ProjectManager.getInstance().openProjects.find { project -> project.name == projectName }?.let {
             findAndNavigateToReference(it, parameters)
           } ?: run {
-            RecentProjectsManagerBase.getInstanceEx().doOpenProject(recentProjectAction.projectPath, null, false)?.let {
-              StartupManager.getInstance(it).registerPostStartupActivity(Runnable { findAndNavigateToReference(it, parameters) })
-            }
-            ?: run {
-              LOG.warn("Cannot open project by path: " + recentProjectAction.projectPath)
-            }
+            ApplicationManager.getApplication().invokeLater(
+              {
+                RecentProjectsManagerBase.getInstanceEx().doOpenProject(recentProjectAction.projectPath, null, false)?.let {
+                  StartupManager.getInstance(it).registerPostStartupActivity(Runnable { findAndNavigateToReference(it, parameters) })
+                }
+              }, ModalityState.NON_MODAL)
           }
         }
       }

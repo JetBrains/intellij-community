@@ -24,7 +24,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -34,7 +33,6 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -43,7 +41,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
@@ -60,7 +57,6 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
 
   @NotNull
   private final Project myProject;
-  private final Alarm myAlarm;
   @NotNull
   private final Map<Pair<ProjectSystemId, File>, InternalExternalProjectInfo> myExternalRootProjects =
     ConcurrentCollectionFactory.createMap(ExternalSystemUtil.HASHING_STRATEGY);
@@ -74,13 +70,6 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
 
   public ExternalProjectsDataStorage(@NotNull Project project) {
     myProject = project;
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
-  }
-
-  @TestOnly
-  public ExternalProjectsDataStorage(@NotNull Project project, @NotNull Alarm alarm) {
-    myProject = project;
-    myAlarm = alarm;
   }
 
   public synchronized void load() {
@@ -151,16 +140,15 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
     if (!changed.compareAndSet(true, false)) {
       return;
     }
-
-    myAlarm.cancelAllRequests();
-    myAlarm.addRequest(new MySaveTask(myProject, myExternalRootProjects.values()), 0);
-  }
-
-  @TestOnly
-  public synchronized void saveAndWait() throws Exception {
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode(), "This method is available for tests only");
-    doSave();
-    myAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread(), "Should not be called on EDT");
+    }
+    try {
+      doSave(myProject, myExternalRootProjects.values());
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+    }
   }
 
   synchronized void update(@NotNull ExternalProjectInfo externalProjectInfo) {
@@ -499,26 +487,6 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
 
     ModuleState(Collection<String> values) {
       set.addAll(values);
-    }
-  }
-
-  private static class MySaveTask implements Runnable {
-    private final Project myProject;
-    private final Collection<InternalExternalProjectInfo> myExternalProjects;
-
-    MySaveTask(Project project, Collection<InternalExternalProjectInfo> externalProjects) {
-      myProject = project;
-      myExternalProjects = ContainerUtil.map(externalProjects, info -> (InternalExternalProjectInfo)info.copy());
-    }
-
-    @Override
-    public void run() {
-      try {
-        doSave(myProject, myExternalProjects);
-      }
-      catch (IOException e) {
-        LOG.debug(e);
-      }
     }
   }
 }

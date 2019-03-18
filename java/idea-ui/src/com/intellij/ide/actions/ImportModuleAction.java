@@ -32,6 +32,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.ui.Messages;
@@ -51,7 +52,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class ImportModuleAction extends AnAction {
+public class ImportModuleAction extends AnAction implements NewProjectOrModuleAction {
 
   private static final String LAST_IMPORTED_LOCATION = "last.imported.location";
 
@@ -64,7 +65,13 @@ public class ImportModuleAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(getEventProject(e) != null);
-    NewProjectAction.updatePresentationForNonJavaIdes(this, e);
+    NewProjectAction.updateActionText(this, e);
+  }
+
+  @NotNull
+  @Override
+  public String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
+    return ProjectBundle.message("import.module.action.text", isInNewSubmenu ? 1 : 0, isInJavaIde ? 1 : 0);
   }
 
   @Override

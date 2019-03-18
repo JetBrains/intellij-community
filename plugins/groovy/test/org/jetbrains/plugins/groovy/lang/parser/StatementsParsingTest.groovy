@@ -19,6 +19,32 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testBlocks$clos6() throws Throwable { doTest() }
 
+  void testBlocks$nested1() throws Throwable { doTest() }
+
+  void testBlocks$nested2() throws Throwable { doTest() }
+
+  void testBlocks$nested3() throws Throwable { doTest() }
+
+  void testBlocks$nested4() throws Throwable { doTest() }
+
+  void testBlocks$nested5() throws Throwable { doTest() }
+
+  void testBlocks$nested6() throws Throwable { doTest() }
+
+  void testBlocks$nested7() throws Throwable { doTest() }
+
+  void testBlocks$nested8() throws Throwable { doTest() }
+
+  void testBlocks$nested9() throws Throwable { doTest() }
+
+  void testBlocks$nested10() throws Throwable { doTest() }
+
+  void testBlocks$nested11() throws Throwable { doTest() }
+
+  void testBlocks$nested12() throws Throwable { doTest() }
+
+  void testBlocks$closureWithCall() throws Throwable { doTest() }
+
   void testBlocks$form() throws Throwable { doTest() }
 
   void testBlocks$labeledClosure() throws Throwable { doTest() }

@@ -3,11 +3,13 @@ package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
+import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
@@ -51,7 +53,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
         try {
           outPairs = getEditorConfigOptions(project, psiFile, EditorConfigNavigationActionsFactory.getInstance(file));
           // Apply editorconfig settings for the current editor
-          if (applyCodeStyleSettings(outPairs, psiFile, settings)) {
+          if (applyCodeStyleSettings(new MyContext(settings, outPairs, psiFile))) {
             settings.addDependencies(EditorConfigNavigationActionsFactory.getInstance(file).getEditorConfigFiles());
             return true;
           }
@@ -70,47 +72,53 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     return new EditorConfigCodeStyleStatusBarUIContributor();
   }
 
-  private static boolean applyCodeStyleSettings(@NotNull List<OutPair> editorConfigOptions,
-                                                @NotNull PsiFile file,
-                                                @NotNull CodeStyleSettings settings) {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
+  private static boolean applyCodeStyleSettings(@NotNull MyContext context) {
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(context.getLanguage());
     if (provider != null) {
-      AbstractCodeStylePropertyMapper mapper = provider.getPropertyMapper(settings);
+      AbstractCodeStylePropertyMapper mapper = provider.getPropertyMapper(context.getSettings());
       Set<String> processed = ContainerUtil.newHashSet();
-      boolean isModified = processOptions(editorConfigOptions, mapper, false, processed);
-      isModified = processOptions(editorConfigOptions, mapper, true, processed) || isModified;
+      boolean isModified = processOptions(context, mapper, false, processed);
+      isModified = processOptions(context, mapper, true, processed) || isModified;
       return isModified;
 
     }
     return false;
   }
 
-  private static boolean processOptions(@NotNull List<OutPair> editorConfigOptions,
+  private static boolean processOptions(@NotNull MyContext context,
                                         @NotNull AbstractCodeStylePropertyMapper mapper,
                                         boolean languageSpecific,
                                         Set<String> processed) {
     String langPrefix = languageSpecific ? mapper.getLanguageDomainId() + "_" : null;
     boolean isModified = false;
-    for (OutPair option : editorConfigOptions) {
+    for (OutPair option : context.getOptions()) {
       final String optionKey = option.getKey();
       String intellijName = EditorConfigIntellijNameUtil.toIntellijName(optionKey);
       CodeStylePropertyAccessor accessor = findAccessor(mapper, intellijName, langPrefix);
       if (accessor != null) {
+        final String val = preprocessValue(context, optionKey, option.getVal());
         if (DEPENDENCIES.containsKey(optionKey)) {
           for (String dependency : DEPENDENCIES.get(optionKey)) {
             if (!processed.contains(dependency)) {
               CodeStylePropertyAccessor dependencyAccessor = findAccessor(mapper, dependency, null);
               if (dependencyAccessor != null) {
-                isModified |= dependencyAccessor.setFromString(option.getVal());
+                isModified |= dependencyAccessor.setFromString(val);
               }
             }
           }
         }
-        isModified |= accessor.setFromString(option.getVal());
+        isModified |= accessor.setFromString(val);
         processed.add(intellijName);
       }
     }
     return isModified;
+  }
+
+  private static String preprocessValue(@NotNull MyContext context, @NotNull String optionKey, @NotNull String optionValue) {
+    if ("indent_size".equals(optionKey) && "tab".equals(optionValue)) {
+      return context.getTabSize();
+    }
+    return optionValue;
   }
 
   @Nullable
@@ -137,5 +145,42 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     String filePath = Utils.getFilePath(project, psiFile.getVirtualFile());
     final Set<String> rootDirs = SettingsProviderComponent.getInstance().getRootDirs(project);
     return new EditorConfig().getProperties(filePath, rootDirs, callback);
+  }
+
+  private static class MyContext {
+    private final @NotNull CodeStyleSettings mySettings;
+    private final @NotNull List<OutPair> myOptions;
+    private final @NotNull PsiFile myFile;
+
+    private MyContext(@NotNull CodeStyleSettings settings, @NotNull List<OutPair> options, @NotNull PsiFile file) {
+      mySettings = settings;
+      myOptions = options;
+      myFile = file;
+    }
+
+    @NotNull
+    private CodeStyleSettings getSettings() {
+      return mySettings;
+    }
+
+    @NotNull
+    private List<OutPair> getOptions() {
+      return myOptions;
+    }
+
+    @NotNull
+    private Language getLanguage() {
+      return myFile.getLanguage();
+    }
+
+    private String getTabSize() {
+      for (OutPair pair : myOptions) {
+        if ("tab_width".equals(pair.getKey())) {
+          return pair.getVal();
+        }
+      }
+      CommonCodeStyleSettings.IndentOptions indentOptions = mySettings.getIndentOptions(myFile.getFileType());
+      return String.valueOf(indentOptions.TAB_SIZE);
+    }
   }
 }

@@ -159,19 +159,34 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
 
   @NotNull
   private static String calcExprType(LighterASTNode funExpr, FileLocalResolver resolver) {
-    LighterASTNode scope = skipExpressionsUp(resolver.getLightTree(), funExpr, TokenSet.create(LOCAL_VARIABLE, FIELD, TYPE_CAST_EXPRESSION, RETURN_STATEMENT, ASSIGNMENT_EXPRESSION));
+    LighterAST tree = resolver.getLightTree();
+    LighterASTNode scope = skipExpressionsUp(tree, funExpr, TokenSet.create(
+      LOCAL_VARIABLE, FIELD, TYPE_CAST_EXPRESSION, RETURN_STATEMENT, ASSIGNMENT_EXPRESSION, ARRAY_INITIALIZER_EXPRESSION));
+    int arrayDepth = 0;
+    while (scope != null && scope.getTokenType() == ARRAY_INITIALIZER_EXPRESSION) {
+      scope = tree.getParent(scope);
+      // should be either new-expression or variable/field declaration
+      arrayDepth++;
+    }
     if (scope != null) {
       if (scope.getTokenType() == ASSIGNMENT_EXPRESSION) {
-        LighterASTNode lValue = findExpressionChild(scope, resolver.getLightTree());
+        LighterASTNode lValue = findExpressionChild(scope, tree);
         scope = lValue == null ? null : resolver.resolveLocally(lValue).getTarget();
       }
       else if (scope.getTokenType() == RETURN_STATEMENT) {
-        scope = LightTreeUtil.getParentOfType(resolver.getLightTree(), scope,
+        scope = LightTreeUtil.getParentOfType(tree, scope,
                                               TokenSet.create(METHOD),
                                               TokenSet.orSet(ElementType.MEMBER_BIT_SET, TokenSet.create(LAMBDA_EXPRESSION)));
       }
+      else if (scope.getTokenType() == NEW_EXPRESSION) {
+        assert arrayDepth > 0;
+        if (arrayDepth != LightTreeUtil.getChildrenOfType(tree, scope, JavaTokenType.LBRACKET).size()) return "";
+        LighterASTNode typeRef = LightTreeUtil.firstChildOfType(tree, scope, JAVA_CODE_REFERENCE);
+        String refName = JavaLightTreeUtil.getNameIdentifierText(tree, typeRef);
+        return StringUtil.notNullize(refName);
+      }
     }
-    return StringUtil.notNullize(scope == null ? null : resolver.getShortClassTypeName(scope));
+    return StringUtil.notNullize(scope == null ? null : resolver.getShortClassTypeName(scope, arrayDepth));
   }
 
   private static int getArgIndex(List<? extends LighterASTNode> args, LighterASTNode expr) {

@@ -12,6 +12,8 @@ import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.InvertedIndex;
 import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
@@ -198,6 +200,7 @@ public class CompilerReferenceIndex<Input> {
   
   public void setRebuildRequestCause(Throwable e) {
     myRebuildRequestCause = e;
+    LOG.error(e);
   }
 
   private static void close(InvertedIndex<?, ?, ?> index, CommonProcessors.FindFirstProcessor<Exception> exceptionProcessor) {
@@ -231,17 +234,8 @@ public class CompilerReferenceIndex<Input> {
       throws IOException {
       super(extension,
             createIndexStorage(extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getName(), indexDir, readOnly),
-            readOnly ? null : new KeyCollectionBasedForwardIndex<Key, Value>(extension) {
-              @NotNull
-              @Override
-              public PersistentHashMap<Integer, Collection<Key>> createMap() throws IOException {
-                IndexId<Key, Value> id = getIndexExtension().getName();
-                return new PersistentHashMap<>(new File(indexDir, id.getName() + ".inputs"),
-                                               EnumeratorIntegerDescriptor.INSTANCE,
-                                               new InputIndexDataExternalizer<>(extension.getKeyDescriptor(),
-                                                                                id));
-              }
-            });
+            readOnly ? null : new PersistentMapBasedForwardIndex(new File(indexDir, extension.getName().getName() + ".inputs")),
+            readOnly ? null : new KeyCollectionForwardIndexAccessor<>(extension));
     }
 
     @Override

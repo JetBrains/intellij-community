@@ -5,7 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.apache.batik.anim.dom.*;
 import org.apache.batik.bridge.BridgeContext;
 import org.apache.batik.bridge.GVTBuilder;
@@ -32,7 +33,7 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
 
 /**
  * @author tav
@@ -167,6 +168,14 @@ public class SVGLoader {
     BufferedImage image = (BufferedImage)load(url, stream, ctx.getScale(PIX_SCALE));
     //noinspection unchecked
     return (T)ImageUtil.ensureHiDPI(image, ctx);
+  }
+
+  /**
+   * @deprecated Use {@link #loadHiDPI(URL, InputStream, ScaleContext)}.
+   */
+  @Deprecated
+  public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream , JBUI.ScaleContext ctx) throws IOException {
+    return loadHiDPI(url, stream, (ScaleContext)ctx);
   }
 
   @SuppressWarnings("SSBasedInspection")

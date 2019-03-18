@@ -2,12 +2,10 @@
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.engine.DebugProcessAdapterImpl;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.memory.agent.extractor.AgentExtractor;
 import com.intellij.debugger.memory.ui.JavaReferenceInfo;
 import com.intellij.debugger.memory.ui.SizedReferenceInfo;
@@ -56,13 +54,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 import java.util.jar.Attributes;
 
 public class MemoryAgentUtil {
   private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
   private static final String MEMORY_AGENT_EXTRACT_DIRECTORY = "memory.agent.extract.dir";
   private static final Key<Boolean> LISTEN_MEMORY_AGENT_STARTUP_FAILED = Key.create("LISTEN_MEMORY_AGENT_STARTUP_FAILED");
+  private static final Key<Boolean> DEBUGGER_ATTACHED_WITH_MEMORY_AGENT = Key.create("DEBUGGER_ATTACHED_WITH_MEMORY_AGENT");
   private static final int ESTIMATE_OBJECTS_SIZE_LIMIT = 2000;
 
   public static void addMemoryAgent(@NotNull JavaParameters parameters) {
@@ -120,13 +118,13 @@ public class MemoryAgentUtil {
   }
 
   public static List<JavaReferenceInfo> tryCalculateSizes(@NotNull List<JavaReferenceInfo> objects, @Nullable MemoryAgent agent) {
-    if (agent == null || !agent.canEvaluateObjectsSizes()) return objects;
+    if (agent == null || !agent.capabilities().canEstimateObjectsSizes()) return objects;
     if (objects.size() > ESTIMATE_OBJECTS_SIZE_LIMIT) {
       LOG.info("Too many objects to estimate their sizes");
       return objects;
     }
     try {
-      long[] sizes = agent.evaluateObjectsSizes(ContainerUtil.map(objects, x -> x.getObjectReference()));
+      long[] sizes = agent.estimateObjectsSizes(ContainerUtil.map(objects, x -> x.getObjectReference()));
       return IntStreamEx.range(0, objects.size())
         .mapToObj(i -> new SizedReferenceInfo(objects.get(i).getObjectReference(), sizes[i]))
         .reverseSorted(Comparator.comparing(x -> x.size()))
@@ -140,47 +138,20 @@ public class MemoryAgentUtil {
     return objects;
   }
 
-  public static void loadAgentProxy(@NotNull DebugProcessImpl debugProcess, @NotNull Consumer<MemoryAgent> agentLoaded) {
+  public static void setupAgent(@NotNull DebugProcessImpl debugProcess) {
+    if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) return;
     debugProcess.addDebugProcessListener(new DebugProcessAdapterImpl() {
-      private final AtomicBoolean isInitializing = new AtomicBoolean(false);
+      private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
       @Override
-      public void paused(SuspendContextImpl suspendContext) {
-        if (isInitializing.compareAndSet(false, true)) {
-          try {
-            MemoryAgent memoryAgent = initMemoryAgent(suspendContext);
-            if (memoryAgent == null) {
-              LOG.warn("Could not initialize memory agent.");
-              return;
-            }
-
-            agentLoaded.accept(memoryAgent);
+      public void paused(@NotNull SuspendContextImpl suspendContext) {
+        EvaluationContextImpl context = new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy());
+        if (context.isEvaluationPossible()) {
+          if (isInitialized.compareAndSet(false, true)) {
             debugProcess.removeDebugProcessListener(this);
-          }
-          finally {
-            isInitializing.set(false);
+            MemoryAgentOperations.initializeCapabilities(context);
           }
         }
-      }
-
-      @Nullable
-      private MemoryAgent initMemoryAgent(@NotNull SuspendContextImpl suspendContext) {
-        if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) {
-          LOG.info("Memory agent disabled");
-          return AgentLoader.DEFAULT_PROXY;
-        }
-
-        StackFrameProxyImpl frameProxy = suspendContext.getFrameProxy();
-        if (frameProxy == null) {
-          LOG.warn("frame proxy is not available");
-          return null;
-        }
-
-        long start = System.currentTimeMillis();
-        EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, frameProxy);
-        MemoryAgent agent = new AgentLoader().load(evaluationContext, debugProcess.getVirtualMachineProxy());
-        LOG.info("Memory agent loading took " + (System.currentTimeMillis() - start) + " ms");
-        return agent;
       }
     });
   }
@@ -240,11 +211,30 @@ public class MemoryAgentUtil {
 
     project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
+      public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
+        if (executorId != DefaultDebugExecutor.EXECUTOR_ID) return;
+        DebugProcess debugProcess = DebuggerManager.getInstance(env.getProject()).getDebugProcess(handler);
+        if (debugProcess == null) return;
+        if (debugProcess.isAttached()) {
+          handler.putUserData(DEBUGGER_ATTACHED_WITH_MEMORY_AGENT, true);
+        }
+        else {
+          debugProcess.addDebugProcessListener(new DebugProcessListener() {
+            @Override
+            public void processAttached(@NotNull DebugProcess process) {
+              process.getProcessHandler().putUserData(DEBUGGER_ATTACHED_WITH_MEMORY_AGENT, true);
+              process.removeDebugProcessListener(this);
+            }
+          });
+        }
+      }
+
+      @Override
       public void processTerminated(@NotNull String executorId,
                                     @NotNull ExecutionEnvironment env,
                                     @NotNull ProcessHandler handler,
                                     int exitCode) {
-        if (executorId != DefaultDebugExecutor.EXECUTOR_ID || exitCode == 0) return;
+        if (executorId != DefaultDebugExecutor.EXECUTOR_ID || exitCode == 0 || wasDebuggerAttached(handler)) return;
         RunContentDescriptor content = env.getContentToReuse();
         if (content == null) return;
 
@@ -277,6 +267,10 @@ public class MemoryAgentUtil {
             LOG.error(exception);
           }
         }, project.getDisposed());
+      }
+
+      private boolean wasDebuggerAttached(@NotNull ProcessHandler handler) {
+        return Boolean.TRUE.equals(handler.getUserData(DEBUGGER_ATTACHED_WITH_MEMORY_AGENT));
       }
     });
 

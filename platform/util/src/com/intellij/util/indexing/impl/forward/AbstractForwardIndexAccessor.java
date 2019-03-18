@@ -4,6 +4,7 @@ package com.intellij.util.indexing.impl.forward;
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
@@ -17,7 +18,7 @@ import java.io.IOException;
 import java.util.Map;
 
 @ApiStatus.Experimental
-public abstract class AbstractForwardIndexAccessor<Key, Value, DataType, Input> implements ForwardIndexAccessor<Key, Value, Input> {
+public abstract class AbstractForwardIndexAccessor<Key, Value, DataType, Input> implements ForwardIndexAccessor<Key, Value, DataType, Input> {
   @NotNull
   private final DataExternalizer<DataType> myDataTypeExternalizer;
 
@@ -27,31 +28,38 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType, Input> 
 
   protected abstract InputDataDiffBuilder<Key, Value> createDiffBuilder(int inputId, @Nullable DataType inputData) throws IOException;
 
-  protected abstract DataType convertToDataType(@Nullable Map<Key, Value> map, @Nullable Input content) throws IOException;
+  @Nullable
+  public DataType deserializeData(@Nullable ByteArraySequence sequence) throws IOException {
+    if (sequence == null) return null;
+    return deserializeFromByteSeq(sequence, myDataTypeExternalizer);
+  }
 
   @NotNull
   @Override
   public InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
-    return createDiffBuilder(inputId, sequence == null ? null : deserializeFromByteSeq(sequence, myDataTypeExternalizer));
+    return createDiffBuilder(inputId, deserializeData(sequence));
   }
 
   @Nullable
   @Override
-  public ByteArraySequence serializeIndexedData(@Nullable Map<Key, Value> map, @Nullable Input content) throws IOException {
-    if (map == null) return null;
-    return serializeToByteSeq(convertToDataType(map, content), myDataTypeExternalizer, map.size());
+  public ByteArraySequence serializeIndexedData(@Nullable DataType data) throws IOException {
+    if (data == null) return null;
+    return serializeToByteSeq(data, myDataTypeExternalizer, getBufferInitialSize(data));
+  }
+
+  protected int getBufferInitialSize(@NotNull DataType dataType) {
+    return 4;
   }
 
   private static final ThreadLocalCachedByteArray ourSpareByteArray = new ThreadLocalCachedByteArray();
   public static <Data> ByteArraySequence serializeToByteSeq(@NotNull Data data,
                                                             @NotNull DataExternalizer<Data> externalizer,
                                                             int bufferInitialSize) throws IOException {
-    BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(ourSpareByteArray.getBuffer(4 * bufferInitialSize));
+    BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(ourSpareByteArray.getBuffer(bufferInitialSize));
     DataOutputStream stream = new DataOutputStream(out);
     externalizer.save(stream, data);
     return out.toByteArraySequence();
   }
-
 
   public static <Data> Data deserializeFromByteSeq(@NotNull ByteArraySequence bytes,
                                                    @NotNull DataExternalizer<Data> externalizer) throws IOException {

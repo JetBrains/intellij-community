@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -29,11 +30,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
-  protected final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRef;
-
-  public StaticImportConstantFix(@NotNull PsiJavaCodeReferenceElement referenceElement) {
-    myRef = SmartPointerManager.getInstance(referenceElement.getProject()).createSmartPsiElementPointer(referenceElement);
+public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, PsiJavaCodeReferenceElement> {
+  StaticImportConstantFix(@NotNull PsiFile file, @NotNull PsiJavaCodeReferenceElement referenceElement) {
+    super(file, referenceElement);
   }
 
   @NotNull
@@ -44,7 +43,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
 
   @NotNull
   @Override
-  protected String getMemberPresentableText(PsiField field) {
+  protected String getMemberPresentableText(@NotNull PsiField field) {
     return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_NAME |
                                                PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
                                                PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
@@ -66,6 +65,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
     final StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<PsiField>(element, toAddStaticImports(), searchMode) {
       @Override
       protected boolean isApplicable(PsiField field, PsiElement place) {
+        ProgressManager.checkCanceled();
         PsiType fieldType = field.getType();
         return isApplicableFor(fieldType);
       }
@@ -76,7 +76,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
 
   @Override
   @NotNull
-  protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(List<? extends PsiField> methodsToImport, @NotNull Project project, Editor editor) {
+  protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(@NotNull List<? extends PsiField> methodsToImport, @NotNull Project project, Editor editor) {
     return new StaticImportMethodQuestionAction<PsiField>(project, editor, methodsToImport, myRef) {
       @NotNull
       @Override

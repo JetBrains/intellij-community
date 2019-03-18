@@ -3,6 +3,7 @@ package com.intellij.debugger.memory.action;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.memory.agent.MemoryAgent;
+import com.intellij.debugger.memory.agent.MemoryAgentCapabilities;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.util.ArrayUtil;
@@ -15,7 +16,7 @@ public class CalculateRetainedSizeAction extends MemoryAgentActionBase {
   protected void perform(@NotNull MemoryAgent memoryAgent,
                          @NotNull ObjectReference reference,
                          @NotNull XValueNodeImpl node) throws EvaluateException {
-    long size = memoryAgent.evaluateObjectSize(reference);
+    long size = memoryAgent.estimateObjectSize(reference);
     ApplicationManager.getApplication().invokeLater(
       () -> new MessageDialog(node.getTree().getProject(), String.valueOf(size), "Size of the Object",
                               ArrayUtil.EMPTY_STRING_ARRAY, 0, null, false)
@@ -23,7 +24,7 @@ public class CalculateRetainedSizeAction extends MemoryAgentActionBase {
   }
 
   @Override
-  protected boolean isEnabled(@NotNull MemoryAgent agent) {
-    return agent.canEvaluateObjectSize();
+  protected boolean isEnabled(@NotNull MemoryAgentCapabilities agentCapabilities) {
+    return agentCapabilities.canEstimateObjectSize();
   }
 }

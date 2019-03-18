@@ -5,7 +5,7 @@ import com.intellij.openapi.util.IconLoader.CachedImageIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.paint.ImageComparator;
 import com.intellij.util.ui.paint.ImageComparator.AASmootherComparator;
 import org.junit.BeforeClass;
@@ -18,7 +18,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.MalformedURLException;
 
-import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.SYS_SCALE;
 import static com.intellij.util.ui.TestScaleHelper.loadImage;
 import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 

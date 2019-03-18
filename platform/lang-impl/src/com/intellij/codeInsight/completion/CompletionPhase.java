@@ -2,11 +2,13 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -18,11 +20,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +42,8 @@ import java.util.concurrent.ExecutorService;
  * @author peter
  */
 public abstract class CompletionPhase implements Disposable {
+  private static final Logger LOG = Logger.getInstance(CompletionPhase.class);
+
   public static final CompletionPhase NoCompletion = new CompletionPhase(null) {
     @Override
     public int newCompletionStarted(int time, boolean repeated) {
@@ -110,17 +117,20 @@ public abstract class CompletionPhase implements Disposable {
       CompletionServiceImpl.setCompletionPhase(phase);
       phase.ignoreCurrentDocumentChange();
 
+      boolean autopopup = prevIndicator == null || prevIndicator.isAutopopupCompletion();
+
       ReadAction
         .nonBlocking(() -> {
           // retrieve the injected file from scratch since our typing might have destroyed the old one completely
           PsiFile topLevelFile = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument());
           Editor completionEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile, offset);
-          if (condition != null) {
-            PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(completionEditor.getDocument());
-            if (file != null && !condition.value(file)) {
-              return null;
-            }
+          PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(completionEditor.getDocument());
+          if (file == null ||
+              autopopup && shouldSkipAutoPopup(completionEditor, file) ||
+              condition != null && !condition.value(file)) {
+            return null;
           }
+
           return completionEditor;
         })
         .withDocumentsCommitted(project)
@@ -128,7 +138,6 @@ public abstract class CompletionPhase implements Disposable {
         .expireWhen(() -> phase.isExpired())
         .finishOnUiThread(ModalityState.current(), completionEditor -> {
           if (completionEditor != null) {
-            boolean autopopup = prevIndicator == null || prevIndicator.isAutopopupCompletion();
             int time = prevIndicator == null ? 0 : prevIndicator.getInvocationCount();
             CodeCompletionHandlerBase handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false);
             handler.invokeCompletion(project, completionEditor, time, false);
@@ -144,6 +153,26 @@ public abstract class CompletionPhase implements Disposable {
           }
         }));
     }
+
+    private static boolean shouldSkipAutoPopup(Editor editor, PsiFile psiFile) {
+      int offset = editor.getCaretModel().getOffset();
+      int psiOffset = Math.max(0, offset - 1);
+
+      PsiElement elementAt = psiFile.findElementAt(psiOffset);
+      if (elementAt == null) return true;
+
+      Language language = PsiUtilCore.findLanguageFromElement(elementAt);
+
+      for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
+        final ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
+        if (result != ThreeState.UNSURE) {
+          LOG.debug(confidence + " has returned shouldSkipAutopopup=" + result);
+          return result == ThreeState.YES;
+        }
+      }
+      return false;
+    }
+
   }
   public static class Synchronous extends CompletionPhase {
     public Synchronous(CompletionProgressIndicator indicator) {

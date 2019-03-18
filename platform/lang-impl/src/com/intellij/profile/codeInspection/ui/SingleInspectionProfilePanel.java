@@ -11,6 +11,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -919,12 +920,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     myDisposable = null;
   }
 
-  private JPanel createInspectionProfileSettingsPanel() {
-
-    myBrowser = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
-    myBrowser.setEditable(false);
-    myBrowser.setBorder(JBUI.Borders.empty(5));
-    myBrowser.addHyperlinkListener(new HyperlinkAdapter() {
+  public static HyperlinkAdapter createSettingsHyperlinkListener(Project project){
+    return new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
         String description = e.getDescription();
@@ -932,9 +929,11 @@ public class SingleInspectionProfilePanel extends JPanel {
           DataContext context = DataManager.getInstance().getDataContextFromFocus().getResult();
           if (context != null) {
             Settings settings = Settings.KEY.getData(context);
+            String configId = description.substring(SETTINGS.length());
             if (settings != null) {
-              String configId = description.substring(SETTINGS.length());
               settings.select(settings.find(configId));
+            } else {
+              ShowSettingsUtilImpl.showSettingsDialog(project, configId, "");
             }
           }
         }
@@ -942,7 +941,15 @@ public class SingleInspectionProfilePanel extends JPanel {
           BrowserUtil.browse(description);
         }
       }
-    });
+    };
+  }
+
+  private JPanel createInspectionProfileSettingsPanel() {
+
+    myBrowser = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
+    myBrowser.setEditable(false);
+    myBrowser.setBorder(JBUI.Borders.empty(5));
+    myBrowser.addHyperlinkListener(createSettingsHyperlinkListener(myProjectProfileManager.getProject()));
 
     initToolStates();
     fillTreeData(myProfileFilter != null ? myProfileFilter.getFilter() : null, true);

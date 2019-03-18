@@ -35,6 +35,7 @@ public class NotNullList<E> extends ArrayList<E> {
 
   public NotNullList(@NotNull Collection<? extends E> c) {
     super(c);
+    checkNotNullCollection(c);
   }
 
   @Override
@@ -58,14 +59,20 @@ public class NotNullList<E> extends ArrayList<E> {
     return super.set(index, element);
   }
 
-  private void checkNotNullCollection(Collection<? extends E> c) {
+  @Override
+  @NotNull
+  public E get(int index) {
+    return super.get(index);
+  }
+
+  private void checkNotNullCollection(@NotNull Collection<? extends E> c) {
     for (E e : c) {
       if (e == null) throw new IllegalArgumentException("null element in the collection: "+c);
     }
   }
 
   @Override
-  public boolean addAll(int index, Collection<? extends E> c) {
+  public boolean addAll(int index, @NotNull Collection<? extends E> c) {
     checkNotNullCollection(c);
     return super.addAll(index, c);
   }
@@ -76,6 +83,7 @@ public class NotNullList<E> extends ArrayList<E> {
     final List<E> subList = super.subList(fromIndex, toIndex);
     return new AbstractList<E>() {
       @Override
+      @NotNull
       public E get(int index) {
         return subList.get(index);
       }

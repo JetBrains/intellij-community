@@ -1,4 +1,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <module value="com.intellij.modules.xml"/>
+
   <xi:include href="/componentSets/Xml.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>

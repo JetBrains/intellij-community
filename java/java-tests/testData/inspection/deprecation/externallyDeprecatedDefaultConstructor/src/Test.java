@@ -10,3 +10,10 @@ class Test2 {
     new A() {}
   }
 }
+
+class Test3 extends A {
+  //Here "Default constructor in A is deprecated" warning must be reported.
+  public Test3() {
+    super();
+  }
+}

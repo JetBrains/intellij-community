@@ -8,7 +8,6 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
@@ -155,7 +154,7 @@ class ModuleStoreTest {
     removeContentRoot(m1)
     removeContentRoot(m2)
 
-    (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
+    StoreReloadManager.getInstance().reloadChangedStorageFiles()
 
     assertChangesApplied(m1)
     assertChangesApplied(m2)

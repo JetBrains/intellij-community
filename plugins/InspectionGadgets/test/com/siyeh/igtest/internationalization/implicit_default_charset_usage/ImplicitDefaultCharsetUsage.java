@@ -47,5 +47,9 @@ class ImplicitDefaultCharsetUsage {
     InputStreamReader is = new InputStreamReader(inputStream, cd);
     CharsetEncoder ce = cs.newEncoder();
     final OutputStreamWriter ow = new OutputStreamWriter(outputStream, ce);
+    new <warning descr="'new FileReader()' call uses the platform's default charset">FileReader</warning>("/etc/passwd");
+    new FileReader("/etc/passwd", cs);
+    new <warning descr="'new FileWriter()' call uses the platform's default charset">FileWriter</warning>("/etc/passwd", true);
+    new FileWriter("/etc/passwd", cs, true);
   }
 }

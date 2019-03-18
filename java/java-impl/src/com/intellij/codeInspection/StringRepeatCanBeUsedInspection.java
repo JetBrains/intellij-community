@@ -4,7 +4,6 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -105,12 +104,22 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
       CommentTracker ct = new CommentTracker();
       String repeatQualifier = getRepeatQualifier(arg, ct);
       String countText = getCountText(from, to, loop.isIncluding(), ct);
-      if (myAddMathMax && canBeNegative(from, to)) {
+      if (myAddMathMax) {
         countText = CommonClassNames.JAVA_LANG_MATH + ".max(0," + countText + ")";
       }
       String replacement = repeatQualifier + ".repeat(" + countText + ")";
       ct.replace(arg, replacement);
-      ct.replaceAndRestoreComments(statement, call.getParent());
+      PsiExpressionStatement result = (PsiExpressionStatement)ct.replaceAndRestoreComments(statement, call.getParent());
+      if (myAddMathMax) {
+        PsiMethodCallExpression appendCall = (PsiMethodCallExpression)result.getExpression();
+        PsiMethodCallExpression repeatCall = (PsiMethodCallExpression)appendCall.getArgumentList().getExpressions()[0];
+        PsiMethodCallExpression maxCall = (PsiMethodCallExpression)repeatCall.getArgumentList().getExpressions()[0];
+        PsiExpression count = maxCall.getArgumentList().getExpressions()[1];
+        LongRangeSet range = CommonDataflow.getExpressionRange(count);
+        if (range != null && !range.isEmpty() && range.min() >= 0) {
+          maxCall.replace(count);
+        }
+      }
     }
 
     @NotNull
@@ -135,19 +144,6 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
         }
       }
       return countText;
-    }
-
-    private static boolean canBeNegative(PsiExpression from, PsiExpression to) {
-      boolean canBeNegative = true;
-      CommonDataflow.DataflowResult dataflow = CommonDataflow.getDataflowResult(from);
-      if (dataflow != null) {
-        LongRangeSet fromRange = dataflow.getExpressionFact(from, DfaFactType.RANGE);
-        LongRangeSet toRange = dataflow.getExpressionFact(to, DfaFactType.RANGE);
-        if (fromRange != null && !fromRange.isEmpty() && toRange != null && !toRange.isEmpty() && fromRange.max() <= toRange.min()) {
-          canBeNegative = false;
-        }
-      }
-      return canBeNegative;
     }
 
     @NotNull

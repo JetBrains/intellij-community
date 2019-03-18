@@ -14,11 +14,16 @@ import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
+import com.intellij.openapi.ui.panel.PanelGridBuilder;
+import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,13 +40,20 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ui.FormBuilder;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextArea;
+import com.intellij.util.ui.UI;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.xml.CommonXmlStrings;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,11 +68,13 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugin> {
   private static final Logger LOG = Logger.getInstance(PluginXmlDomInspection.class);
@@ -70,6 +84,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
   public List<String> myRegistrationCheckIgnoreClassList = new ExternalizableStringSet();
 
+  @XCollection
+  public List<PluginModuleSet> PLUGINS_MODULES = new ArrayList<>();
+  private final AtomicClearableLazyValue<Map<String, PluginModuleSet>> myPluginModuleSetByModuleName = AtomicClearableLazyValue.create(() -> {
+    Map<String, PluginModuleSet> result = new HashMap<>();
+    for (PluginModuleSet modulesSet : PLUGINS_MODULES) {
+      for (String module : modulesSet.modules) {
+        result.put(module, modulesSet);
+      }
+    }
+    return result;
+  });
+
 
   public PluginXmlDomInspection() {
     super(IdeaPlugin.class);
@@ -78,10 +104,47 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    String title = DevKitBundle.message("inspections.plugin.xml.ignore.classes.title");
-    ListTable table = new ListTable(new ListWrappingTableModel(myRegistrationCheckIgnoreClassList, title));
-    JPanel panel = UiUtils.createAddRemoveTreeClassChooserPanel(table, title);
-    return new FormBuilder().addComponentFillVertically(panel, 0).getPanel();
+    ListTable table = new ListTable(new ListWrappingTableModel(myRegistrationCheckIgnoreClassList, ""));
+    JPanel panel = UiUtils.createAddRemoveTreeClassChooserPanel(table, DevKitBundle.message("inspections.plugin.xml.add.ignored.class.title"));
+    PanelGridBuilder grid = UI.PanelFactory.grid();
+    grid.resize().add(
+      UI.PanelFactory.panel(panel)
+        .withLabel(DevKitBundle.message("inspections.plugin.xml.ignore.classes.title"))
+        .moveLabelOnTop()
+        .resizeY(true)
+    );
+
+    if (ApplicationManager.getApplication().isInternal()) {
+      JBTextArea component = new JBTextArea(5, 80);
+      component.setText(PLUGINS_MODULES.stream().map(it -> String.join(",", it.modules)).collect(Collectors.joining("\n")));
+      component.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(@NotNull DocumentEvent e) {
+          PLUGINS_MODULES.clear();
+          for (String line : StringUtil.splitByLines(component.getText())) {
+            PluginModuleSet set = new PluginModuleSet();
+            set.modules = new LinkedHashSet<>(StringUtil.split(line, ","));
+            PLUGINS_MODULES.add(set);
+          }
+          myPluginModuleSetByModuleName.drop();
+        }
+      });
+      ComponentPanelBuilder pluginModulesPanel =
+        UI.PanelFactory.panel(new JBScrollPane(component))
+          .withLabel(DevKitBundle.message("inspections.plugin.xml.plugin.modules.label"))
+          .moveLabelOnTop()
+          .withComment(DevKitBundle.message("inspections.plugin.xml.plugin.modules.description"))
+          .resizeY(true);
+      grid.add(pluginModulesPanel);
+    }
+
+    return grid.createPanel();
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) {
+    super.readSettings(node);
+    myPluginModuleSetByModuleName.drop();
   }
 
   @Override
@@ -102,37 +165,42 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         checkPluginIcon((IdeaPlugin)element, holder, module);
       }
     }
-    else if (element instanceof Extension) {
-      annotateExtension((Extension)element, holder);
-    }
-    else if (element instanceof ExtensionPoint) {
-      annotateExtensionPoint((ExtensionPoint)element, holder);
-    }
-    else if (element instanceof Vendor) {
-      annotateVendor((Vendor)element, holder);
-    }
-    else if (element instanceof ProductDescriptor) {
-      annotateProductDescriptor((ProductDescriptor)element, holder);
-    }
-    else if (element instanceof IdeaVersion) {
-      annotateIdeaVersion((IdeaVersion)element, holder);
-    }
-    else if (element instanceof Extensions) {
-      annotateExtensions((Extensions)element, holder);
-    }
-    else if (element instanceof AddToGroup) {
-      annotateAddToGroup((AddToGroup)element, holder);
-    }
-    else if (element instanceof Action) {
-      annotateAction((Action)element, holder);
-    }
-    else if (element instanceof Group) {
-      annotateGroup((Group)element, holder);
-    }
-    else if (element instanceof Component) {
-      annotateComponent((Component)element, holder);
-      if (element instanceof Component.Project) {
-        annotateProjectComponent((Component.Project)element, holder);
+    else {
+      ComponentModuleRegistrationChecker componentModuleRegistrationChecker = new ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName,
+                                                                                                                     myRegistrationCheckIgnoreClassList,
+                                                                                                                     holder);
+      if (element instanceof Extension) {
+        annotateExtension((Extension)element, holder, componentModuleRegistrationChecker);
+      }
+      else if (element instanceof ExtensionPoint) {
+        annotateExtensionPoint((ExtensionPoint)element, holder, componentModuleRegistrationChecker);
+      }
+      else if (element instanceof Vendor) {
+        annotateVendor((Vendor)element, holder);
+      }
+      else if (element instanceof ProductDescriptor) {
+        annotateProductDescriptor((ProductDescriptor)element, holder);
+      }
+      else if (element instanceof IdeaVersion) {
+        annotateIdeaVersion((IdeaVersion)element, holder);
+      }
+      else if (element instanceof Extensions) {
+        annotateExtensions((Extensions)element, holder);
+      }
+      else if (element instanceof AddToGroup) {
+        annotateAddToGroup((AddToGroup)element, holder);
+      }
+      else if (element instanceof Action) {
+        annotateAction((Action)element, holder);
+      }
+      else if (element instanceof Group) {
+        annotateGroup((Group)element, holder);
+      }
+      else if (element instanceof Component) {
+        annotateComponent((Component)element, holder, componentModuleRegistrationChecker);
+        if (element instanceof Component.Project) {
+          annotateProjectComponent((Component.Project)element, holder);
+        }
       }
     }
 
@@ -208,6 +276,13 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     if (!hasRealPluginId(ideaPlugin)) return;
 
+    String id = ideaPlugin.getId().getStringValue();
+    if (id != null &&
+        (StringUtil.startsWith(id, "com.android.") ||
+         id.equals("org.jetbrains.android"))) {
+      return;
+    }
+
     XmlTag xmlTag = ideaPlugin.getXmlTag();
     if (xmlTag == null) return;
 
@@ -245,7 +320,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     return pluginId != null && !pluginId.equals(PluginManagerCore.CORE_PLUGIN_ID);
   }
 
-  private void annotateExtensionPoint(ExtensionPoint extensionPoint, DomElementAnnotationHolder holder) {
+  private void annotateExtensionPoint(ExtensionPoint extensionPoint,
+                                      DomElementAnnotationHolder holder,
+                                      ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
     if (extensionPoint.getWithElements().isEmpty() &&
         !extensionPoint.collectMissingWithTags().isEmpty()) {
       holder.createProblem(extensionPoint, DevKitBundle.message("inspections.plugin.xml.ep.doesnt.have.with"), new AddWithTagFix());
@@ -255,8 +332,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     checkEpNameAndQualifiedName(extensionPoint, holder);
 
     Module module = extensionPoint.getModule();
-    if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
-      ComponentModuleRegistrationChecker.checkProperModule(extensionPoint, holder, myRegistrationCheckIgnoreClassList);
+    if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
+      componentModuleRegistrationChecker.checkProperModule(extensionPoint);
     }
   }
 
@@ -425,7 +502,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     return false;
   }
 
-  private void annotateExtension(Extension extension, DomElementAnnotationHolder holder) {
+  private void annotateExtension(Extension extension,
+                                 DomElementAnnotationHolder holder, ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
     final ExtensionPoint extensionPoint = extension.getExtensionPoint();
     if (extensionPoint == null) return;
     final GenericAttributeValue<PsiClass> interfaceAttribute = extensionPoint.getInterface();
@@ -464,6 +542,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       }
     }
 
+    
+    if (ServiceDescriptor.class.getName().equals(extensionPoint.getBeanClass().getStringValue())) {
+      GenericAttributeValue serviceInterface = getAttribute(extension, "serviceInterface");
+      GenericAttributeValue serviceImplementation = getAttribute(extension, "serviceImplementation");
+      if (serviceInterface != null && serviceImplementation != null &&
+          StringUtil.equals(serviceInterface.getStringValue(), serviceImplementation.getStringValue())) {
+        holder.createProblem(serviceInterface,
+                             ProblemHighlightType.WARNING,
+                             DevKitBundle.message("inspections.plugin.xml.service.interface.class.redundant"),
+                             null,
+                             new RemoveDomElementQuickFix(serviceInterface)).highlightWholeElement();
+      }
+    }
+
     final List<? extends DomAttributeChildDescription> descriptions = extension.getGenericInfo().getAttributeChildrenDescriptions();
     for (DomAttributeChildDescription attributeDescription : descriptions) {
       final GenericAttributeValue attributeValue = attributeDescription.getDomAttributeValue(extension);
@@ -489,16 +581,27 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
 
     Module module = extension.getModule();
-    if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
-      ComponentModuleRegistrationChecker.checkProperXmlFileForExtension(extension, holder, myRegistrationCheckIgnoreClassList);
+    if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
+      componentModuleRegistrationChecker.checkProperXmlFileForExtension(extension);
     }
   }
 
-  private void annotateComponent(Component component, DomElementAnnotationHolder holder) {
+  @Nullable
+  private static GenericAttributeValue getAttribute(DomElement domElement, String attributeName) {
+    final DomAttributeChildDescription attributeDescription = domElement.getGenericInfo().getAttributeChildDescription(attributeName);
+    if (attributeDescription == null) {
+      return null;
+    }
+
+    return attributeDescription.getDomAttributeValue(domElement);
+  }
+
+  private void annotateComponent(Component component,
+                                 DomElementAnnotationHolder holder, ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
     Module module = component.getModule();
-    if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
-      ComponentModuleRegistrationChecker.checkProperXmlFileForClass(
-        component, holder, component.getImplementationClass().getValue(), myRegistrationCheckIgnoreClassList);
+    if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
+      componentModuleRegistrationChecker.checkProperXmlFileForClass(
+        component, component.getImplementationClass().getValue());
     }
 
     GenericDomValue<PsiClass> interfaceClassElement = component.getInterfaceClass();
@@ -801,5 +904,12 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       }
       return null;
     }
+  }
+
+  @Tag("modules-set")
+  public static class PluginModuleSet {
+    @XCollection(elementName = "module", valueAttributeName = "name")
+    @Property(surroundWithTag = false)
+    public Set<String> modules = new LinkedHashSet<>();
   }
 }

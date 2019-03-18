@@ -57,7 +57,8 @@ abstract class ExtensionPointReferenceBase extends PsiReferenceBase<PsiElement> 
     final CommonProcessors.FindProcessor<Extension> resolveProcessor = new CommonProcessors.FindProcessor<Extension>() {
       @Override
       protected boolean accept(Extension extension) {
-        return myId.equals(getNameElement(extension).getStringValue());
+        final GenericAttributeValue<String> nameElement = getNameElement(extension);
+        return nameElement != null && myId.equals(nameElement.getStringValue());
       }
     };
     processCandidates(resolveProcessor);

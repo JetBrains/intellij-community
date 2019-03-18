@@ -378,7 +378,7 @@ public class GradleInstallationManager {
   /**
    * Allows to answer if given virtual file points to the gradle installation root.
    *
-   * @param file gradle installation root candidate
+   * @param gradleHomePath gradle installation root candidate
    * @return {@code true} if we consider that given file actually points to the gradle installation root;
    * {@code false} otherwise
    */

@@ -15,10 +15,12 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
+import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +29,7 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleTestsExecutionConsole extends SMTRunnerConsoleView {
+public class GradleTestsExecutionConsole extends SMTRunnerConsoleView implements BuildViewSettingsProvider {
   private final Map<String, SMTestProxy> testsMap = ContainerUtil.newHashMap();
   private final StringBuilder myBuffer = new StringBuilder();
 
@@ -51,5 +53,10 @@ public class GradleTestsExecutionConsole extends SMTRunnerConsoleView {
 
   public SMTestLocator getUrlProvider() {
     return GradleConsoleProperties.GRADLE_TEST_LOCATOR;
+  }
+
+  @Override
+  public boolean isExecutionViewHidden() {
+    return Registry.is("build.view.side-by-side", false);
   }
 }

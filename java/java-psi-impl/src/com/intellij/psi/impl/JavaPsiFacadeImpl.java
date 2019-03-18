@@ -429,6 +429,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   @Override
   @NotNull
   public PsiElementFactory getElementFactory() {
-    return PsiElementFactory.SERVICE.getInstance(myProject);
+    return PsiElementFactory.getInstance(myProject);
   }
 }

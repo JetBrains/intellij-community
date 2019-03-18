@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -55,7 +56,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -78,6 +81,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
+import com.intellij.ui.UiInterceptors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ReflectionUtil;
@@ -390,6 +394,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       () -> CodeStyle.dropTemporarySettings(project),
       () -> myCodeStyleSettingsTracker.checkForSettingsDamage(),
       () -> doTearDown(project, ourApplication),
+      () -> {
+        // needed for myVirtualFilePointerTracker check below
+        ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
+      },
       () -> checkEditorsReleased(),
       () -> myOldSdks.checkForJdkTableLeaks(),
       super::tearDown,
@@ -428,6 +436,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
         }
       })).
+      append(() -> EditorHistoryManager.getInstance(project).removeAllFiles()).
       append(() -> assertFalse(PsiManager.getInstance(project).isDisposed())).
       append(() -> {
         clearEncodingManagerDocumentQueue();
@@ -449,6 +458,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
+      append(() -> UiInterceptors.clear()).
       append(() -> ourTestCase = null).
       append(() -> CompletionProgressIndicator.cleanupForNextTest()).
       append(() -> {

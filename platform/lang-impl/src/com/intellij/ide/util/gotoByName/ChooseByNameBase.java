@@ -326,11 +326,6 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       myHint = null;
     }
 
-    @Override
-    public Component asComponent() {
-      return this;
-    }
-
     public void hideHint() {
       if (myHint != null) {
         myHint.cancel();

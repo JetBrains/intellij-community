@@ -27,13 +27,13 @@ import java.io.File;
 import java.util.*;
 
 /**
+ * Coverage engine provide coverage support for different languages or coverage runner classes.
+ * E.g. engine for JVM languages, Ruby, Python
+ * <p/>
+ * Each coverage engine may work with several coverage runner. E.g. Java coverage engine supports IDEA/EMMA/Cobertura,
+ * Ruby engine works with RCov
+ *
  * @author Roman.Chernyatchik
- *         <p/>
- *         Coverage engine provide coverage support for different languages or coverage runner classes.
- *         E.g. engine for JVM languages, Ruby, Python
- *         <p/>
- *         Each coverage engine may work with several coverage runner. E.g. Java coverage engine supports IDEA/EMMA/Cobertura,
- *         Ruby engine works with RCov
  */
 public abstract class CoverageEngine {
   public static final ExtensionPointName<CoverageEngine> EP_NAME = ExtensionPointName.create("com.intellij.coverageEngine");
@@ -203,7 +203,8 @@ public abstract class CoverageEngine {
    * When output directory is empty we probably should recompile source and then choose suite again
    *
    * @param module
-   * @param chooseSuiteAction @return True if should stop and wait compilation (e.g. for Java). False if we can ignore output (e.g. for Ruby)
+   * @param chooseSuiteAction
+   * @return True if should stop and wait compilation (e.g. for Java). False if we can ignore output (e.g. for Ruby)
    */
   public abstract boolean recompileProjectAndRerunAction(@NotNull final Module module, @NotNull final CoverageSuitesBundle suite,
                                                          @NotNull final Runnable chooseSuiteAction);

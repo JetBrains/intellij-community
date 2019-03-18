@@ -5,10 +5,10 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
 import gnu.trove.TIntArrayList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -35,7 +35,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchExpression(PsiSwitchExpression expression) {
-        if (!SwitchUtils.isRuleFormatSwitch(expression)) return;
+        if (!isNonemptyRuleFormatSwitch(expression)) return;
         if (findReplacer(expression) == null) return;
         String message = InspectionsBundle.message("inspection.switch.expression.backward.expression.migration.inspection.name");
         holder.registerProblem(expression.getFirstChild(), message, new ReplaceWithOldStyleSwitchFix());
@@ -43,10 +43,15 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
 
       @Override
       public void visitSwitchStatement(PsiSwitchStatement statement) {
-        if (!SwitchUtils.isRuleFormatSwitch(statement)) return;
+        if (!isNonemptyRuleFormatSwitch(statement)) return;
         if (findReplacer(statement) == null) return;
         String message = InspectionsBundle.message("inspection.switch.expression.backward.statement.migration.inspection.name");
         holder.registerProblem(statement.getFirstChild(), message, new ReplaceWithOldStyleSwitchFix());
+      }
+
+      private boolean isNonemptyRuleFormatSwitch(PsiSwitchBlock block) {
+        PsiSwitchLabelStatementBase label = PsiTreeUtil.getChildOfType(block.getBody(), PsiSwitchLabelStatementBase.class);
+        return label instanceof PsiSwitchLabeledRuleStatement;
       }
     };
   }
@@ -160,7 +165,8 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     private final PsiSwitchBlock mySwitchBlock;
     final PsiElementFactory myFactory;
 
-    SwitchGenerator(PsiSwitchBlock switchBlock) {mySwitchBlock = switchBlock;
+    SwitchGenerator(PsiSwitchBlock switchBlock) {
+      mySwitchBlock = switchBlock;
       myFactory = JavaPsiFacade.getElementFactory(mySwitchBlock.getProject());
     }
 
@@ -176,6 +182,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
       List<CommentTracker> branchTrackers = new ArrayList<>();
       TIntArrayList caseCounts = new TIntArrayList();
       StringJoiner joiner = new StringJoiner("\n");
+      boolean addDefaultBranch = mySwitchBlock instanceof PsiSwitchExpression;
       for (PsiSwitchLabeledRuleStatement rule : rules) {
         CommentTracker ct = new CommentTracker();
         branchTrackers.add(ct);
@@ -185,6 +192,10 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
         caseCounts.add(caseCount);
         joiner.add(generate);
         mainCommentTracker.markUnchanged(rule);
+        addDefaultBranch &= !rule.isDefaultCase();
+      }
+      if (addDefaultBranch) {
+        joiner.add("default:throw new java.lang.IllegalArgumentException();");
       }
       String bodyText = joiner.toString();
       String switchText = "switch(" + mainCommentTracker.text(expression) + "){" + bodyText + "}";

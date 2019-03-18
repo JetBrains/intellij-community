@@ -321,11 +321,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     registerHint(null);
   }
 
-  @Override
-  public Component asComponent() {
-    return this;
-  }
-
   private void hideHint() {
     if (myHint != null && myHint.isVisible()) {
       myHint.cancel();
@@ -448,7 +443,9 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
           String reportableID = getContributor()
             .map(SearchEverywhereUsageTriggerCollector::getReportableContributorID)
             .orElse(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
-          FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(reportableID, "mouseClick");
+          FeatureUsageData data = SearchEverywhereUsageTriggerCollector
+            .createData(reportableID)
+            .addInputEvent(e);
           featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
         }
       });
@@ -625,16 +622,16 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     });
     registerAction(SearchEverywhereActions.NAVIGATE_TO_NEXT_GROUP, e -> {
       fetchGroups(true);
-      FeatureUsageData data = getEventShortcut(e)
-        .map(shortcut -> SearchEverywhereUsageTriggerCollector.createData(null, shortcut))
-        .orElse(null);
+      FeatureUsageData data = SearchEverywhereUsageTriggerCollector
+        .createData(null)
+        .addInputEvent(e);
       featureTriggered(SearchEverywhereUsageTriggerCollector.GROUP_NAVIGATE, data);
     });
     registerAction(SearchEverywhereActions.NAVIGATE_TO_PREV_GROUP, e -> {
       fetchGroups(false);
-      FeatureUsageData data = getEventShortcut(e)
-        .map(shortcut -> SearchEverywhereUsageTriggerCollector.createData(null, shortcut))
-        .orElse(null);
+      FeatureUsageData data = SearchEverywhereUsageTriggerCollector
+        .createData(null)
+        .addInputEvent(e);
       featureTriggered(SearchEverywhereUsageTriggerCollector.GROUP_NAVIGATE, data);
     });
     registerSelectItemAction();
@@ -748,17 +745,14 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     }
   }
 
-  private static Optional<String> getEventShortcut(AnActionEvent event) {
-    return Optional.ofNullable(KeymapUtil.getEventCallerKeystrokeText(event));
-  }
-
   private void triggerTabSwitched(AnActionEvent e) {
-    String shortcut = getEventShortcut(e).orElse(null);
     String id = mySelectedTab.getContributor()
       .map(SearchEverywhereUsageTriggerCollector::getReportableContributorID)
       .orElse(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
 
-    FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(id, shortcut);
+    FeatureUsageData data = SearchEverywhereUsageTriggerCollector
+      .createData(id)
+      .addInputEvent(e);
     featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
   }
 
@@ -846,7 +840,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       Object value = myListModel.getElementAt(i);
       if (isAllTab) {
         String reportableContributorID = SearchEverywhereUsageTriggerCollector.getReportableContributorID(contributor);
-        FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(reportableContributorID, null);
+        FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(reportableContributorID);
         featureTriggered(SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ITEM_SELECTED, data);
       }
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
@@ -855,7 +849,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     if (closePopup) {
       closePopup();
     } else {
-      myResultsList.repaint();
+      ApplicationManager.getApplication().invokeLater(() -> myResultsList.repaint());
     }
   }
 
@@ -1457,9 +1451,9 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (completeCommand()) {
-        FeatureUsageData data = getEventShortcut(e)
-          .map(shortcut -> SearchEverywhereUsageTriggerCollector.createData(null, shortcut))
-          .orElse(null);
+        FeatureUsageData data = SearchEverywhereUsageTriggerCollector
+          .createData(null)
+          .addInputEvent(e);
         featureTriggered(SearchEverywhereUsageTriggerCollector.COMMAND_COMPLETED, data);
       }
     }

@@ -12,8 +12,7 @@
       </el-col>
     </el-row>
 
-    <TimelineChart/>
-
+    <TabbedInfoCharts/>
     <TabbedCharts/>
 
     <el-row>
@@ -35,15 +34,31 @@
   import {Component, Vue} from "vue-property-decorator"
   import InputForm from "@/views/InputForm.vue"
   import TabbedCharts from "@/views/TabbedCharts.vue"
-  import TimelineChart from "@/views/TimelineChart.vue"
+  import TabbedInfoCharts from "@/views/TabbedInfoCharts.vue"
 
-  @Component({components: {InputForm, TimelineChart, TabbedCharts}})
+  @Component({components: {TabbedInfoCharts, InputForm, TabbedCharts}})
   export default class Main extends Vue {
   }
 </script>
+
 <style>
 .activityChart {
   width: 100%;
+  /*
+  our data has extraordinary high values (extremes) and it makes item chart not readable (extremes are visible and others column bars are too low),
+  as solution, amCharts supports breaks (https://www.amcharts.com/demos/column-chart-with-axis-break/),
+  but it contradicts to our goal - to show that these items are extremes,
+  so, as solution, we increase chart height to give more space to render bars.
+
+  It is ok, as now we use UI Library (ElementUI) and can use Tabs, Collapse and any other component to group charts.
+  Also, as we use Vue.js and Vue Router, it is one-line to provide dedicated view (/#/components and so on)
+  */
+  height: 500px;
+}
+
+.timeLineChart {
+  width: 100%;
+  /* in any case time line chart will adjust height according to items */
   height: 380px;
 }
 </style>

@@ -3,19 +3,23 @@ package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.util.Function;
 import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.JBUIScale.DerivedScaleType;
+import com.intellij.util.ui.JBUIScale.Scale;
+import com.intellij.util.ui.JBUIScale.ScaleType;
+import com.intellij.util.ui.JBUIScale.UserScaleContext;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import gnu.trove.TDoubleObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -26,15 +30,12 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
-import java.awt.image.ImageObserver;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.util.ui.JBUI.ScaleType.*;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.SYS_SCALE;
 
 /**
  * @author Konstantin Bulenkov
@@ -42,173 +43,16 @@ import static com.intellij.util.ui.JBUI.ScaleType.*;
  */
 @SuppressWarnings("UseJBColor")
 public class JBUI {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.JBUI");
-
   public static final String USER_SCALE_FACTOR_PROPERTY = "JBUI.userScaleFactor";
 
   private static final PropertyChangeSupport PCS = new PropertyChangeSupport(new JBUI());
 
   private static final float DISCRETE_SCALE_RESOLUTION = 0.25f;
 
-  public static final boolean SCALE_VERBOSE = Boolean.getBoolean("ide.ui.scale.verbose");
-
-  /**
-   * The IDE supports two different HiDPI modes:
-   *
-   * 1) IDE-managed HiDPI mode.
-   *
-   * Supported for backward compatibility until complete transition to the JRE-managed HiDPI mode happens.
-   * In this mode there's a single coordinate space and the whole UI is scaled by the IDE guided by the
-   * user scale factor ({@link #USR_SCALE}).
-   *
-   * 2) JRE-managed HiDPI mode.
-   *
-   * In this mode the JRE scales graphics prior to drawing it on the device. So, there're two coordinate
-   * spaces: the user space and the device space. The system scale factor ({@link #SYS_SCALE}) defines the
-   * transform b/w the spaces. The UI size metrics (windows, controls, fonts height) are in the user
-   * coordinate space. Though, the raster images should be aware of the device scale in order to meet
-   * HiDPI. (For instance, JRE on a Mac Retina monitor device works in the JRE-managed HiDPI mode,
-   * transforming graphics to the double-scaled device coordinate space)
-   *
-   * The IDE operates the scale factors of the following types:
-   *
-   * 1) The user scale factor: {@link #USR_SCALE}
-   * 2) The system (monitor device) scale factor: {@link #SYS_SCALE}
-   * 3) The object (UI instance specific) scale factor: {@link #OBJ_SCALE}
-   * 4) The pixel scale factor: {@link #PIX_SCALE}
-   *
-   * @see UIUtil#isJreHiDPIEnabled()
-   * @see UIUtil#isJreHiDPI()
-   * @see UIUtil#isJreHiDPI(GraphicsConfiguration)
-   * @see UIUtil#isJreHiDPI(Graphics2D)
-   * @see JBUI#isUsrHiDPI()
-   * @see JBUI#isPixHiDPI(GraphicsConfiguration)
-   * @see JBUI#isPixHiDPI(Graphics2D)
-   * @see UIUtil#drawImage(Graphics, Image, Rectangle, Rectangle, ImageObserver)
-   * @see UIUtil#createImage(Graphics, int, int, int)
-   * @see UIUtil#createImage(GraphicsConfiguration, int, int, int)
-   * @see UIUtil#createImage(int, int, int)
-   * @see ScaleContext
-   */
-  public enum ScaleType {
-    /**
-     * The user scale factor is set and managed by the IDE. Currently it's derived from the UI font size,
-     * specified in the IDE Settings.
-     *
-     * The user scale value depends on which HiDPI mode is enabled. In the IDE-managed HiDPI mode the
-     * user scale "includes" the default system scale and simply equals it with the default UI font size.
-     * In the JRE-managed HiDPI mode the user scale is independent of the system scale and equals 1.0
-     * with the default UI font size. In case the default UI font size changes, the user scale changes
-     * proportionally in both the HiDPI modes.
-     *
-     * In the IDE-managed HiDPI mode the user scale completely defines the UI scale. In the JRE-managed
-     * HiDPI mode the user scale can be considered a supplementary scale taking effect in cases like
-     * the IDE Presentation Mode and when the default UI scale is changed by the user.
-     *
-     * @see #setUserScaleFactor(float)
-     * @see #scale(float)
-     * @see #scale(int)
-     */
-    USR_SCALE,
-    /**
-     * The system scale factor is defined by the device DPI and/or the system settings. For instance,
-     * Mac Retina monitor device has the system scale 2.0 by default. As there can be multiple devices
-     * (multi-monitor configuration) there can be multiple system scale factors, appropriately. However,
-     * there's always a single default system scale factor corresponding to the default device. And it's
-     * the only system scale available in the IDE-managed HiDPI mode.
-     *
-     * In the JRE-managed HiDPI mode, the system scale defines the scale of the transform b/w the user
-     * and the device coordinate spaces performed by the JRE.
-     *
-     * @see #sysScale()
-     * @see #sysScale(GraphicsConfiguration)
-     * @see #sysScale(Graphics2D)
-     * @see #sysScale(Component)
-     */
-    SYS_SCALE,
-    /**
-     * An extra scale factor of a particular UI object, which doesn't affect any other UI object, as opposed
-     * to the user scale and the system scale factors. This scale factor affects the user space size of the object
-     * and doesn't depend on the HiDPI mode. By default it is set to 1.0.
-     */
-    OBJ_SCALE,
-    /**
-     * The effective user scale factor. Combines all the user space scale factors which are: {@code USR_SCALE} and {@code OBJ_SCALE}.
-     * So, basically it equals {@code USR_SCALE} * {@code OBJ_SCALE}.
-     */
-    EFF_USR_SCALE,
-    /**
-     * The pixel scale factor "combines" all the other scale factors (user, system and object) and defines the
-     * effective scale of a particular UI object.
-     *
-     * For instance, on Mac Retina monitor (JRE-managed HiDPI) in the Presentation mode (which, say,
-     * doubles the UI scale) the pixel scale would equal 4.0 (provided the object scale is 1.0). The value
-     * is the product of the user scale 2.0 and the system scale 2.0. In the IDE-managed HiDPI mode,
-     * the pixel scale equals {@link #EFF_USR_SCALE}.
-     *
-     * @see #pixScale()
-     * @see #pixScale(GraphicsConfiguration)
-     * @see #pixScale(Graphics2D)
-     * @see #pixScale(Component)
-     * @see #pixScale(GraphicsConfiguration, float)
-     * @see #pixScale(float)
-     */
-    PIX_SCALE;
-
-    @NotNull
-    public Scale of(double value) {
-      return Scale.create(value, this);
-    }
-  }
-
-  /**
-   * A scale factor of a particular type.
-   */
-  public static class Scale {
-    private final double value;
-    private final ScaleType type;
-
-    // The cache radically reduces potentially thousands of equal Scale instances.
-    private static final ThreadLocal<EnumMap<ScaleType, TDoubleObjectHashMap<Scale>>> cache =
-      ThreadLocal.withInitial(() -> new EnumMap<>(ScaleType.class));
-
-    @NotNull
-    public static Scale create(double value, @NotNull ScaleType type) {
-      EnumMap<ScaleType, TDoubleObjectHashMap<Scale>> emap = cache.get();
-      TDoubleObjectHashMap<Scale> map = emap.get(type);
-      if (map == null) {
-        emap.put(type, map = new TDoubleObjectHashMap<>());
-      }
-      Scale scale = map.get(value);
-      if (scale != null) return scale;
-      map.put(value, scale = new Scale(value, type));
-      return scale;
-    }
-
-    private Scale(double value, @NotNull ScaleType type) {
-      this.value = value;
-      this.type = type;
-    }
-
-    public double value() {
-      return value;
-    }
-
-    @NotNull
-    public ScaleType type() {
-      return type;
-    }
-
-    @NotNull
-    Scale newOrThis(double value) {
-      if (this.value == value) return this;
-      return type.of(value);
-    }
-
-    @Override
-    public String toString() {
-      return "[" + type.name() + " " + value + "]";
-    }
+  @NotNull
+  // cannot be static because logging maybe not configured yet
+  private static Logger getLogger() {
+    return Logger.getInstance("#com.intellij.util.ui.JBUI");
   }
 
   /**
@@ -240,7 +84,7 @@ public class JBUI {
 
     @Override
     protected void onInitialized(@NotNull Float scale) {
-      LOG.info("System scale factor: " + scale + " (" + (UIUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
+      getLogger().info("System scale factor: " + scale + " (" + (UIUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
     }
 
     @TestOnly
@@ -268,7 +112,7 @@ public class JBUI {
           return Float.parseFloat(prop);
         }
         catch (NumberFormatException e) {
-          LOG.error("ide.ui.scale system property is not a float value: " + prop);
+          getLogger().error("ide.ui.scale system property is not a float value: " + prop);
         }
       }
       else if (Registry.is("ide.ui.scale.override")) {
@@ -357,7 +201,7 @@ public class JBUI {
     return sysScale();
   }
 
-  public static double sysScale(@Nullable ScaleContext ctx) {
+  public static double sysScale(@Nullable JBUIScale.ScaleContext ctx) {
     if (ctx != null) {
       return ctx.getScale(SYS_SCALE);
     }
@@ -376,13 +220,6 @@ public class JBUI {
    */
   public static float pixScale(float f) {
     return pixScale() * f;
-  }
-
-  /**
-   * Returns "f" scaled by pixScale(gc).
-   */
-  public static float pixScale(@Nullable GraphicsConfiguration gc, float f) {
-    return pixScale(gc) * f;
   }
 
   /**
@@ -409,10 +246,9 @@ public class JBUI {
     return pixScale(comp != null ? comp.getGraphicsConfiguration() : null);
   }
 
-  public static <T extends BaseScaleContext> double pixScale(@Nullable T ctx) {
+  public static <T extends UserScaleContext> double pixScale(@Nullable T ctx) {
     if (ctx != null) {
-      double usrScale = ctx.getScale(USR_SCALE);
-      return UIUtil.isJreHiDPIEnabled() ? ctx.getScale(SYS_SCALE) * usrScale : usrScale;
+      return ctx.getScale(PIX_SCALE);
     }
     return pixScale();
   }
@@ -420,7 +256,7 @@ public class JBUI {
   private static void setUserScaleFactorProperty(float scale) {
     if (userScaleFactor == scale) return;
     PCS.firePropertyChange(USER_SCALE_FACTOR_PROPERTY, userScaleFactor, userScaleFactor = scale);
-    LOG.info("User scale factor: " + userScaleFactor);
+    getLogger().info("User scale factor: " + userScaleFactor);
   }
 
   /**
@@ -571,6 +407,16 @@ public class JBUI {
   }
 
   @NotNull
+  public static <T extends JBScalableIcon> T scale(@NotNull T icon) {
+    //noinspection unchecked
+    return (T)icon.withIconPreScaled(false);
+  }
+
+  /**
+   * @deprecated Use {@link #scale(JBScalableIcon)}.
+   */
+  @Deprecated
+  @NotNull
   public static <T extends JBIcon> T scale(@NotNull T icon) {
     //noinspection unchecked
     return (T)icon.withIconPreScaled(false);
@@ -603,7 +449,7 @@ public class JBUI {
   }
 
   /**
-   * Returns whether the {@link ScaleType#PIX_SCALE} scale factor assumes HiDPI-awareness in the provided graphics config.
+   * Returns whether the {@link DerivedScaleType#PIX_SCALE} scale factor assumes HiDPI-awareness in the provided graphics config.
    * An equivalent of {@code isHiDPI(pixScale(gc))}
    */
   public static boolean isPixHiDPI(@Nullable GraphicsConfiguration gc) {
@@ -611,7 +457,7 @@ public class JBUI {
   }
 
   /**
-   * Returns whether the {@link ScaleType#PIX_SCALE} scale factor assumes HiDPI-awareness in the provided graphics.
+   * Returns whether the {@link DerivedScaleType#PIX_SCALE} scale factor assumes HiDPI-awareness in the provided graphics.
    * An equivalent of {@code isHiDPI(pixScale(g))}
    */
   public static boolean isPixHiDPI(@Nullable Graphics2D g) {
@@ -619,7 +465,7 @@ public class JBUI {
   }
 
   /**
-   * Returns whether the {@link ScaleType#PIX_SCALE} scale factor assumes HiDPI-awareness in the provided component's device.
+   * Returns whether the {@link DerivedScaleType#PIX_SCALE} scale factor assumes HiDPI-awareness in the provided component's device.
    * An equivalent of {@code isHiDPI(pixScale(comp))}
    */
   public static boolean isPixHiDPI(@Nullable Component comp) {
@@ -759,790 +605,6 @@ public class JBUI {
     }
   }
 
-  /**
-   * A wrapper over a user scale supplier, representing a state of a UI element
-   * in which its initial size is either pre-scaled (according to {@link #currentScale()})
-   * or not (given in a standard resolution, e.g. 16x16 for an icon).
-   */
-  public abstract static class Scaler {
-    protected double initialScale = currentScale();
-
-    private double alignedScale() {
-      return currentScale() / initialScale;
-    }
-
-    protected boolean isPreScaled() {
-      return initialScale != 1d;
-    }
-
-    protected void setPreScaled(boolean preScaled) {
-      initialScale = preScaled ? currentScale() : 1d;
-    }
-
-    /**
-     * @param value the value (e.g. a size of the associated UI object) to scale
-     * @return the scaled result, taking into account the pre-scaled state and {@link #currentScale()}
-     */
-    public double scaleVal(double value) {
-      return value * alignedScale();
-    }
-
-    /**
-     * Supplies the Scaler with the current user scale. This can be the current global user scale or
-     * the context scale ({@link BaseScaleContext#usrScale}) or something else.
-     */
-    protected abstract double currentScale();
-
-    /**
-     * Synchronizes the state with the provided scaler.
-     *
-     * @return whether the state has been updated
-     */
-    public boolean update(@NotNull Scaler scaler) {
-      boolean updated = initialScale != scaler.initialScale;
-      initialScale = scaler.initialScale;
-      return updated;
-    }
-  }
-
-  /**
-   * Represents a snapshot of the scale factors (see {@link ScaleType}), except the system scale.
-   * The context can be associated with a UI object (see {@link ScaleContextAware}) to define its HiDPI behaviour.
-   * Unlike {@link ScaleContext}, BaseScaleContext is system scale independent and is thus used for vector-based painting.
-   *
-   * @see ScaleContextAware
-   * @see ScaleContext
-   * @author tav
-   */
-  public static class BaseScaleContext {
-    protected Scale usrScale = USR_SCALE.of(scale(1f));
-    protected Scale objScale = OBJ_SCALE.of(1d);
-    protected Scale pixScale = PIX_SCALE.of(usrScale.value);
-
-    private List<UpdateListener> listeners;
-
-    private BaseScaleContext() {
-    }
-
-    /**
-     * Creates a context with all scale factors set to 1.
-     */
-    @NotNull
-    public static BaseScaleContext createIdentity() {
-      return create(USR_SCALE.of(1));
-    }
-
-    /**
-     * Creates a context with the provided scale factors (system scale is ignored)
-     */
-    @NotNull
-    public static BaseScaleContext create(@NotNull Scale... scales) {
-      BaseScaleContext ctx = create();
-      for (Scale s : scales) ctx.update(s);
-      return ctx;
-    }
-
-    /**
-     * Creates a default context with the current user scale
-     */
-    @NotNull
-    public static BaseScaleContext create() {
-      return new BaseScaleContext();
-    }
-
-    /**
-     * Creates a context from the provided {@code ctx}.
-     */
-    @NotNull
-    public static BaseScaleContext create(@Nullable BaseScaleContext ctx) {
-      BaseScaleContext c = createIdentity();
-      c.update(ctx);
-      return c;
-    }
-
-    protected double derivePixScale() {
-      return usrScale.value * objScale.value;
-    }
-
-    /**
-     * @return the context scale factor of the provided type (1d for system scale)
-     */
-    public double getScale(@NotNull ScaleType type) {
-      switch (type) {
-        case USR_SCALE: return usrScale.value;
-        case SYS_SCALE: return 1d;
-        case OBJ_SCALE: return objScale.value;
-        case PIX_SCALE:
-        case EFF_USR_SCALE:
-          return pixScale.value;
-      }
-      return 1f; // unreachable
-    }
-
-    /**
-     * Applies the provided {@code ScaleType}'s to the provided {@code value} and returns the result.
-     */
-    public double apply(double value, @NotNull ScaleType... types) {
-      for (ScaleType t : types) value *= getScale(t);
-      return value;
-    }
-
-    /**
-     * Applies {@code PIX_SCALE} to the provided {@code value} and returns the result.
-     */
-    public double apply(double value) {
-      return value * getScale(PIX_SCALE);
-    }
-
-    protected boolean onUpdated(boolean updated) {
-      if (updated) {
-        update(pixScale, derivePixScale());
-        notifyUpdateListeners();
-      }
-      return updated;
-    }
-
-    /**
-     * Updates the user scale with the current global user scale if necessary.
-     *
-     * @return whether any of the scale factors has been updated
-     */
-    public boolean update() {
-      return onUpdated(update(usrScale, scale(1f)));
-    }
-
-    /**
-     * Updates the provided scale if necessary (system scale is ignored)
-     *
-     * @param scale the new scale
-     * @return whether the scale factor has been updated
-     */
-    public boolean update(@NotNull Scale scale) {
-      boolean updated = false;
-      switch (scale.type) {
-        case USR_SCALE: updated = update(usrScale, scale.value); break;
-        case OBJ_SCALE: updated = update(objScale, scale.value); break;
-        case SYS_SCALE:
-        case PIX_SCALE:
-        case EFF_USR_SCALE:
-          break;
-      }
-      return onUpdated(updated);
-    }
-
-    /**
-     * Updates the context with the state of the provided one.
-     *
-     * @param ctx the new context
-     * @return whether any of the scale factors has been updated
-     */
-    public boolean update(@Nullable BaseScaleContext ctx) {
-      if (ctx == null) return update();
-      return onUpdated(updateAll(ctx));
-    }
-
-    protected <T extends BaseScaleContext> boolean updateAll(@NotNull T ctx) {
-      boolean updated = update(usrScale, ctx.usrScale.value);
-      return update(objScale, ctx.objScale.value) || updated;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == this) return true;
-      if (!(obj instanceof BaseScaleContext)) return false;
-
-      BaseScaleContext that = (BaseScaleContext)obj;
-      return that.usrScale.value == usrScale.value &&
-             that.objScale.value == objScale.value;
-    }
-
-    @Override
-    public int hashCode() {
-      return Double.hashCode(usrScale.value) * 31 + Double.hashCode(objScale.value);
-    }
-
-    /**
-     * Clears the links.
-     */
-    public void dispose() {
-      listeners = null;
-    }
-
-    /**
-     * A context update listener. Used to listen to possible external context updates.
-     */
-    public interface UpdateListener {
-      void contextUpdated();
-    }
-
-    public void addUpdateListener(@NotNull UpdateListener l) {
-      if (listeners == null) listeners = new ArrayList<>(1);
-      listeners.add(l);
-    }
-
-    public void removeUpdateListener(@NotNull UpdateListener l) {
-      if (listeners != null) listeners.remove(l);
-    }
-
-    protected void notifyUpdateListeners() {
-      if (listeners == null) return;
-      for (UpdateListener l : listeners) {
-        l.contextUpdated();
-      }
-    }
-
-    protected boolean update(@NotNull Scale scale, double value) {
-      Scale newScale = scale.newOrThis(value);
-      if (newScale == scale) return false;
-      switch (scale.type) {
-        case USR_SCALE: usrScale = newScale; break;
-        case OBJ_SCALE: objScale = newScale; break;
-        case PIX_SCALE: pixScale = newScale; break;
-        case EFF_USR_SCALE: break;
-      }
-      return true;
-    }
-
-    @NotNull
-    public <T extends BaseScaleContext> T copy() {
-      BaseScaleContext ctx = createIdentity();
-      ctx.updateAll(this);
-      //noinspection unchecked
-      return (T)ctx;
-    }
-
-    @Override
-    public String toString() {
-      return usrScale + ", " + objScale + ", " + pixScale;
-    }
-
-    /**
-     * A cache for the last usage of a data object matching a scale context.
-     *
-     * @param <D> the data type
-     * @param <S> the context type
-     */
-    public static class Cache<D, S extends BaseScaleContext> {
-      private final Function<? super S, ? extends D> myDataProvider;
-      private final AtomicReference<Pair<Double, D>> myData = new AtomicReference<>(null);
-
-      /**
-       * @param dataProvider provides a data object matching the passed scale context
-       */
-      public Cache(@NotNull Function<? super S, ? extends D> dataProvider) {
-        myDataProvider = dataProvider;
-      }
-
-      /**
-       * Retunrs the data object from the cache if it matches the {@code ctx},
-       * otherwise provides the new data via the provider and caches it.
-       */
-      @Nullable
-      public D getOrProvide(@NotNull S ctx) {
-        Pair<Double, D> data = myData.get();
-        double scale = ctx.getScale(PIX_SCALE);
-        if (data == null || Double.compare(scale, data.first) != 0) {
-          myData.set(data = Pair.create(scale, myDataProvider.fun(ctx)));
-        }
-        return data.second;
-      }
-
-      /**
-       * Clears the cache.
-       */
-      public void clear() {
-        myData.set(null);
-      }
-    }
-  }
-
-  /**
-   * Extends {@link BaseScaleContext} with the system scale, and is thus used for raster-based painting.
-   * The context is created via a context provider. If the provider is {@link Component}, the context's
-   * system scale can be updated via a call to {@link #update()}, reflecting the current component's
-   * system scale (which may change as the component moves b/w devices).
-   *
-   * @see ScaleContextAware
-   * @author tav
-   */
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  public static class ScaleContext extends BaseScaleContext {
-    protected Scale sysScale = SYS_SCALE.of(sysScale());
-
-    @Nullable
-    private WeakReference<Component> compRef;
-
-    private ScaleContext() {
-      update(pixScale, derivePixScale());
-    }
-
-    private ScaleContext(@NotNull Scale scale) {
-      switch (scale.type) {
-        case USR_SCALE: update(usrScale, scale.value); break;
-        case SYS_SCALE: update(sysScale, scale.value); break;
-        case OBJ_SCALE: update(objScale, scale.value); break;
-        case PIX_SCALE:
-        case EFF_USR_SCALE:
-          break;
-      }
-      update(pixScale, derivePixScale());
-    }
-
-    /**
-     * Creates a context with all scale factors set to 1.
-     */
-    @NotNull
-    public static ScaleContext createIdentity() {
-      return create(USR_SCALE.of(1), SYS_SCALE.of(1));
-    }
-
-    /**
-     * Creates a context from the provided {@code ctx}.
-     */
-    @NotNull
-    public static ScaleContext create(@Nullable BaseScaleContext ctx) {
-      ScaleContext c = create();
-      c.update(ctx);
-      return c;
-    }
-
-    /**
-     * Creates a context based on the comp's system scale and sticks to it via the {@link #update()} method.
-     */
-    @NotNull
-    public static ScaleContext create(@Nullable Component comp) {
-      final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(sysScale(comp)));
-      if (comp != null) ctx.compRef = new WeakReference<>(comp);
-      return ctx;
-    }
-
-    /**
-     * Creates a context based on the component's (or graphics's) scale and sticks to it via the {@link #update()} method.
-     */
-    @NotNull
-    public static ScaleContext create(@Nullable Component component, @Nullable Graphics2D graphics) {
-      /* [tav] todo: Relying on the component's scale is likely wrong. If a client code manually scales
-       * a graphics and renders a component into it, the component and all its subcomponents should
-       * (and will by default) honor the graphics scale, not the component's scale. So I comment the
-       * code below and in case it won't cause regressions this method should be inlined and removed.
-       *
-      // Component is preferable to Graphics as a scale provider, as it lets the context stick
-      // to the comp's actual scale via the update method.
-      if (component != null) {
-        GraphicsConfiguration gc = component.getGraphicsConfiguration();
-        if (gc == null ||
-            gc.getDevice().getType() == GraphicsDevice.TYPE_IMAGE_BUFFER ||
-            gc.getDevice().getType() == GraphicsDevice.TYPE_PRINTER)
-        {
-          // can't rely on gc in this case as it may provide incorrect transform or scale
-          component = null;
-        }
-      }
-      if (component != null) {
-        return create(component);
-      }
-      */
-      return create(graphics);
-    }
-
-    /**
-     * Creates a context based on the gc's system scale
-     */
-    @NotNull
-    public static ScaleContext create(@Nullable GraphicsConfiguration gc) {
-      return new ScaleContext(SYS_SCALE.of(sysScale(gc)));
-    }
-
-    /**
-     * Creates a context based on the g's system scale
-     */
-    @NotNull
-    public static ScaleContext create(Graphics2D g) {
-      return new ScaleContext(SYS_SCALE.of(sysScale(g)));
-    }
-
-    /**
-     * Creates a context with the provided scale
-     */
-    @NotNull
-    public static ScaleContext create(@NotNull Scale scale) {
-      return new ScaleContext(scale);
-    }
-
-    /**
-     * Creates a context with the provided scale factors
-     */
-    @NotNull
-    public static ScaleContext create(@NotNull Scale... scales) {
-      ScaleContext ctx = create();
-      for (Scale s : scales) ctx.update(s);
-      return ctx;
-    }
-
-    /**
-     * Creates a default context with the default screen scale and the current user scale
-     */
-    @NotNull
-    public static ScaleContext create() {
-      return new ScaleContext();
-    }
-
-    @Override
-    protected double derivePixScale() {
-      return UIUtil.isJreHiDPIEnabled() ? sysScale.value * super.derivePixScale() : super.derivePixScale();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public double getScale(@NotNull ScaleType type) {
-      if (type == SYS_SCALE) return sysScale.value;
-      if (type == EFF_USR_SCALE) return usrScale.value * objScale.value;
-      return super.getScale(type);
-    }
-
-    /**
-     * {@inheritDoc}
-     * Also updates the system scale (if the context was created from Component) if necessary.
-     */
-    @Override
-    public boolean update() {
-      boolean updated = update(usrScale, scale(1f));
-      if (compRef != null) {
-        Component comp = compRef.get();
-        if (comp != null) updated = update(sysScale, sysScale(comp)) || updated;
-      }
-      return onUpdated(updated);
-    }
-
-    /**
-     * {@inheritDoc}
-     * Also includes the system scale.
-     */
-    @Override
-    public boolean update(@NotNull Scale scale) {
-      if (scale.type == SYS_SCALE) return onUpdated(update(sysScale, scale.value));
-      return super.update(scale);
-    }
-
-    @Override
-    protected <T extends BaseScaleContext> boolean updateAll(@NotNull T ctx) {
-      boolean updated = super.updateAll(ctx);
-      if (!(ctx instanceof ScaleContext)) return updated;
-      ScaleContext context = (ScaleContext)ctx;
-
-      if (compRef != null) compRef.clear();
-      compRef = context.compRef;
-
-      return update(sysScale, context.sysScale.value) || updated;
-    }
-
-    @Override
-    protected boolean update(@NotNull Scale scale, double value) {
-      if (scale.type == SYS_SCALE) {
-        Scale newScale = scale.newOrThis(value);
-        if (newScale == scale) return false;
-        sysScale = newScale;
-        return true;
-      }
-      return super.update(scale, value);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (super.equals(obj) && obj instanceof ScaleContext) {
-        ScaleContext that = (ScaleContext)obj;
-        return that.sysScale.value == sysScale.value;
-      }
-      return false;
-    }
-
-    @Override
-    public int hashCode() {
-      return Double.hashCode(sysScale.value) * 31 + super.hashCode();
-    }
-
-    @Override
-    public void dispose() {
-      super.dispose();
-      if (compRef != null) {
-        compRef.clear();
-      }
-    }
-
-    @NotNull
-    @Override
-    public <T extends BaseScaleContext> T copy() {
-      ScaleContext ctx = createIdentity();
-      ctx.updateAll(this);
-      //noinspection unchecked
-      return (T)ctx;
-    }
-
-    @Override
-    public String toString() {
-      return usrScale + ", " + sysScale + ", " + objScale + ", " + pixScale;
-    }
-
-    public static class Cache<D> extends BaseScaleContext.Cache<D, ScaleContext> {
-      public Cache(@NotNull Function<? super ScaleContext, ? extends D> dataProvider) {
-        super(dataProvider);
-      }
-    }
-  }
-
-  /**
-   * Provides ScaleContext awareness of a UI object.
-   *
-   * @see ScaleContextSupport
-   * @author tav
-   */
-  public interface ScaleContextAware {
-    /**
-     * @return the scale context
-     */
-    @NotNull
-    BaseScaleContext getScaleContext();
-
-    /**
-     * Updates the current context with the state of the provided context.
-     * If {@code ctx} is null, then updates the current context via {@link ScaleContext#update()}
-     * and returns the result.
-     *
-     * @param ctx the new scale context
-     * @return whether any of the scale factors has been updated
-     */
-    boolean updateScaleContext(@Nullable BaseScaleContext ctx);
-
-    /**
-     * @return the scale of the provided type from the context
-     */
-    double getScale(@NotNull ScaleType type);
-
-    /**
-     * Updates the provided scale in the context
-     *
-     * @return whether the provided scale has been changed
-     */
-    boolean updateScale(@NotNull Scale scale);
-  }
-
-  public static class ScaleContextSupport<T extends BaseScaleContext> implements ScaleContextAware {
-    @NotNull
-    private final T myScaleContext;
-
-    public ScaleContextSupport(@NotNull T ctx) {
-      myScaleContext = ctx;
-    }
-
-    @NotNull
-    @Override
-    public T getScaleContext() {
-      return myScaleContext;
-    }
-
-    @Override
-    public boolean updateScaleContext(@Nullable BaseScaleContext ctx) {
-      return myScaleContext.update(ctx);
-    }
-
-    @Override
-    public double getScale(@NotNull ScaleType type) {
-      return getScaleContext().getScale(type);
-    }
-
-    @Override
-    public boolean updateScale(@NotNull Scale scale) {
-      return getScaleContext().update(scale);
-    }
-  }
-
-  /**
-   * A {@link BaseScaleContext} aware Icon, assuming vector-based painting, system scale independent.
-   *
-   * @author tav
-   */
-  public abstract static class JBIcon extends ScaleContextSupport<BaseScaleContext> implements Icon {
-    private final Scaler myScaler = new Scaler() {
-      @Override
-      protected double currentScale() {
-        if (autoUpdateScaleContext) getScaleContext().update();
-        return getScale(USR_SCALE);
-      }
-    };
-    private boolean autoUpdateScaleContext = true;
-
-    protected JBIcon() {
-      super(BaseScaleContext.create());
-    }
-
-    protected JBIcon(@NotNull JBIcon icon) {
-      this();
-      updateScaleContext(icon.getScaleContext());
-      myScaler.update(icon.myScaler);
-      autoUpdateScaleContext = icon.autoUpdateScaleContext;
-    }
-
-    protected boolean isIconPreScaled() {
-      return myScaler.isPreScaled();
-    }
-
-    protected void setIconPreScaled(boolean preScaled) {
-      myScaler.setPreScaled(preScaled);
-    }
-
-    /**
-     * The pre-scaled state of the icon indicates whether the initial size of the icon
-     * is pre-scaled (by the global user scale) or not. If the size is not pre-scaled,
-     * then there're two approaches to deal with it:
-     * 1) scale its initial size right away and store;
-     * 2) scale its initial size every time it's requested.
-     * The 2nd approach is preferable because of the the following. Scaling of the icon may
-     * involve not only USR_SCALE but OBJ_SCALE as well. In which case applying all the scale
-     * factors and then rounding (the size is integer, the scale factors are not) gives more
-     * accurate result than rounding and then scaling.
-     * <p>
-     * For example, say we have an icon of 15x15 initial size, USR_SCALE is 1.5f, OBJ_SCALE is 1,5f.
-     * Math.round(Math.round(15 * USR_SCALE) * OBJ_SCALE) = 35
-     * Math.round(15 * USR_SCALE * OBJ_SCALE) = 34
-     * <p>
-     * Thus, JBUI.scale(MyIcon.create(w, h)) is preferable to MyIcon.create(JBUI.scale(w), JBUI.scale(h)).
-     * Here [w, h] is "raw" unscaled size.
-     *
-     * @param preScaled whether the icon is pre-scaled
-     * @return the icon in the provided pre-scaled state
-     * @see JBUI#scale(JBIcon)
-     */
-    @NotNull
-    public JBIcon withIconPreScaled(boolean preScaled) {
-      setIconPreScaled(preScaled);
-      return this;
-    }
-
-    /**
-     * See {@link Scaler#scaleVal(double)}
-     */
-    protected double scaleVal(double value) {
-      return myScaler.scaleVal(value);
-    }
-
-    /**
-     * Sets whether the scale context should be auto-updated by the {@link Scaler}.
-     * This ensures that {@link #scaleVal(double)} always uses up-to-date scale.
-     * This is useful when the icon doesn't need to recalculate its internal sizes
-     * on the scale context update and so it doesn't need the result of the update
-     * and/or it doesn't listen for updates. Otherwise, the value should be set to
-     * false and the scale context should be updated manually.
-     * <p>
-     * By default the value is true.
-     */
-    protected void setAutoUpdateScaleContext(boolean autoUpdate) {
-      autoUpdateScaleContext = autoUpdate;
-    }
-
-    @Override
-    public String toString() {
-      return getClass().getName() + " " + getIconWidth() + "x" + getIconHeight();
-    }
-  }
-
-  /**
-   * A {@link JBIcon} implementing {@link ScalableIcon}
-   *
-   * @author tav
-   */
-  public abstract static class ScalableJBIcon extends JBIcon implements ScalableIcon {
-    protected ScalableJBIcon() {}
-
-    protected ScalableJBIcon(@NotNull ScalableJBIcon icon) {
-      super(icon);
-    }
-
-    @Override
-    public float getScale() {
-      return (float)getScale(OBJ_SCALE); // todo: float -> double
-    }
-
-    @Override
-    @NotNull
-    public Icon scale(float scale) {
-      updateScale(OBJ_SCALE.of(scale));
-      return this;
-    }
-
-    /**
-     * An equivalent of scaleVal(value, PIX_SCALE)
-     */
-    @Override
-    protected double scaleVal(double value) {
-      return scaleVal(value, PIX_SCALE);
-    }
-
-    /**
-     * Returns the value scaled according to the provided scale type
-     */
-    protected double scaleVal(double value, @NotNull ScaleType type) {
-      switch (type) {
-        case USR_SCALE: return super.scaleVal(value);
-        case EFF_USR_SCALE: return super.scaleVal(value) * getScale(OBJ_SCALE);
-        case SYS_SCALE: return value * getScale(SYS_SCALE);
-        case OBJ_SCALE: return value * getScale(OBJ_SCALE);
-        case PIX_SCALE: return super.scaleVal(value * getScale(OBJ_SCALE));
-      }
-      return value; // unreachable
-    }
-  }
-
-  /**
-   * A {@link ScalableJBIcon} providing an immutable caching implementation of the {@link ScalableIcon#scale(float)} method.
-   *
-   * @author tav
-   * @author Aleksey Pivovarov
-   */
-  public abstract static class CachingScalableJBIcon<T extends CachingScalableJBIcon> extends ScalableJBIcon implements CopyableIcon {
-    private T myScaledIconCache;
-
-    protected CachingScalableJBIcon() {}
-
-    protected CachingScalableJBIcon(@NotNull CachingScalableJBIcon icon) {
-      super(icon);
-    }
-
-    /**
-     * @return a new scaled copy of this icon, or the cached instance of the provided scale
-     */
-    @Override
-    @NotNull
-    public T scale(float scale) {
-      if (scale == getScale()) {
-        //noinspection unchecked
-        return (T)this;
-      }
-
-      if (myScaledIconCache == null || myScaledIconCache.getScale() != scale) {
-        myScaledIconCache = copy();
-        myScaledIconCache.updateScale(OBJ_SCALE.of(scale));
-      }
-      return myScaledIconCache;
-    }
-
-    @NotNull
-    @Override
-    public abstract T copy();
-  }
-
-  /**
-   * A {@link ScaleContext} aware Icon, assuming raster-based painting, system scale dependant.
-   *
-   * @author tav
-   */
-  public abstract static class RasterJBIcon extends ScaleContextSupport<ScaleContext> implements CopyableIcon {
-    public RasterJBIcon() {
-      super(ScaleContext.create());
-    }
-  }
-
   public static Border asUIResource(@NotNull Border border) {
     if (border instanceof UIResource) return border;
     return new BorderUIResource(border);
@@ -1570,6 +632,11 @@ public class JBUI {
       public static Color hoverBorder() {
         return JBColor.namedColor("ActionButton.hoverBorderColor", Gray.xDF);
       }
+
+      @NotNull
+      public static Color hoverSeparatorColor() {
+        return JBColor.namedColor("ActionButton.hoverSeparatorColor", new JBColor(Gray.xB3, Gray.x6B));
+      }
     }
 
     public static class CustomFrameDecorations {
@@ -1595,8 +662,6 @@ public class JBUI {
         return JBColor.namedColor("DefaultTabs.underlineColor", new JBColor(0x4083C9, 0x4A88C7));
       }
 
-
-      @NotNull
       public static int underlineHeight() {
         return getInt("DefaultTabs.underlineHeight", scale(2));
       }
@@ -1637,7 +702,6 @@ public class JBUI {
                                               ColorUtil.withAlpha(Color.BLACK, .13)));
 
       }
-
     }
 
     public static class EditorTabs {
@@ -1646,7 +710,6 @@ public class JBUI {
         return JBColor.namedColor("EditorTabs.underlineColor", DefaultTabs.underlineColor());
       }
 
-      @NotNull
       public static int underlineHeight() {
         return getInt("EditorTabs.underlineHeight", scale(3));
       }
@@ -1763,7 +826,6 @@ public class JBUI {
         return getBorder("ToolWindow.HeaderTab.tabHeaderBorder", Borders.empty(1, 0));
       }
 
-      @NotNull
       public static int underlineHeight() {
         return getInt("ToolWindow.HeaderTab.underlineHeight", scale(3));
       }
@@ -2064,4 +1126,61 @@ public class JBUI {
     Border border = UIManager.getBorder(propertyName);
     return border == null ? defaultBorder : border;
   }
+
+  /*
+   * The scaling classes/methods below are left for binary compatibility with plugins (based on API Watcher).
+   */
+
+  /**
+   * @deprecated Use {@link JBUIScale.UserScaleContext}.
+   */
+  @Deprecated
+  public static class BaseScaleContext extends JBUIScale.UserScaleContext {
+    @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
+    public boolean update(@Nullable BaseScaleContext ctx) {
+      return super.update(ctx);
+    }
+
+    public boolean update(@NotNull Scale scale) {
+      return setScale(scale);
+    }
+  }
+
+  /**
+   * @deprecated Use {@link JBUIScale.ScaleContext}.
+   */
+  @Deprecated
+  @SuppressWarnings({"ClassNameSameAsAncestorName", "MethodOverridesStaticMethodOfSuperclass"})
+  public static class ScaleContext extends JBUIScale.ScaleContext {
+    protected ScaleContext() {
+    }
+
+    @NotNull
+    public static ScaleContext create() {
+      return new ScaleContext();
+    }
+
+    @NotNull
+    public static ScaleContext create(@Nullable Component comp) {
+      final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(sysScale(comp)));
+      if (comp != null) ctx.compRef = new WeakReference<>(comp);
+      return ctx;
+    }
+
+    @NotNull
+    public static ScaleContext create(@NotNull Scale scale) {
+      return new ScaleContext(scale);
+    }
+
+    protected ScaleContext(@NotNull Scale scale) {
+      setScale(scale);
+    }
+  }
+
+  /**
+   * @deprecated Use {@link JBScalableIcon}.
+   */
+  @Deprecated
+  @SuppressWarnings("AbstractClassNeverImplemented")
+  public abstract static class JBIcon extends JBScalableIcon {}
 }

@@ -408,7 +408,7 @@ public class ReflectionUtil {
         }
       }
 
-      ExceptionUtilRt.rethrow(e);
+      ExceptionUtil.rethrow(e);
     }
 
     // error will be thrown

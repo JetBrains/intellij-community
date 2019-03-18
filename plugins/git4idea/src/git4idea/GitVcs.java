@@ -38,7 +38,10 @@ import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.checkout.GitCheckoutProvider;
 import git4idea.commands.Git;
-import git4idea.config.*;
+import git4idea.config.GitExecutableManager;
+import git4idea.config.GitExecutableValidator;
+import git4idea.config.GitVcsSettings;
+import git4idea.config.GitVersion;
 import git4idea.diff.GitDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
@@ -225,7 +228,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     }
     if (path != null) {
       try {
-        VirtualFile root = GitUtil.getGitRoot(path);
+        VirtualFile root = GitUtil.getRepositoryForFile(myProject, path).getRoot();
         return GitRevisionNumber.resolve(myProject, root, revision);
       }
       catch (VcsException e) {

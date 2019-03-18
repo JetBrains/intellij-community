@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
@@ -24,6 +26,8 @@ import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import static com.intellij.util.pico.DefaultPicoContainer.getActivityLevel;
 
 /**
  * @author AKireyev
@@ -272,6 +276,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
     assertNotReadOnlyMode();
 
+    long startTime = StartUpMeasurer.getCurrentTime();
+
     int totalSize = myAdapters.size();
     Class<T> extensionClass = getExtensionClass();
     T[] result = ArrayUtil.newArray(extensionClass, totalSize);
@@ -281,7 +287,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
     // check before to avoid any "restore" work if already cancelled
     CHECK_CANCELED.run();
-
     processingAdaptersNow = true;
     try {
       List<ExtensionComponentAdapter> adapters = myAdapters;
@@ -332,6 +337,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       if (extensionIndex != result.length) {
         result = Arrays.copyOf(result, extensionIndex);
       }
+
+      // don't count ProcessCanceledException as valid action to measure (later special category can be introduced if needed)
+      ParallelActivity.EXTENSION.record(startTime, extensionClass, getActivityLevel(myPicoContainer));
       return result;
     }
     finally {

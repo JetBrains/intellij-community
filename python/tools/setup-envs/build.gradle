@@ -17,14 +17,13 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.27"
+  id "com.jetbrains.python.envs" version "0.0.30"
 }
 
 
 envs {
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
-  _64Bits = true
 
   if (System.getenv().containsKey("PYCHARM_ZIP_REPOSITORY")) {
     zipRepository = new URL(System.getenv().get("PYCHARM_ZIP_REPOSITORY"))
@@ -36,6 +35,8 @@ envs {
   python "python36", "3.6.8"
   python "python37", "3.7.2"
 
-  conda "Anaconda2", "Anaconda2-2018.12", "64", []
-  conda "Anaconda3", "Anaconda3-2018.12", "64", []
+  if (System.getenv("PYCHARM_BOOTSTRAP_ANACONDA") == "true") {
+    conda "Anaconda2", "Anaconda2-2018.12", "64", []
+    conda "Anaconda3", "Anaconda3-2018.12", "64", []
+  }
 }

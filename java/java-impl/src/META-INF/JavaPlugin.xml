@@ -108,6 +108,17 @@
     <extensionPoint qualifiedName="com.intellij.languageCompilerRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter"/>
     <extensionPoint qualifiedName="com.intellij.framework.type" interface="com.intellij.framework.FrameworkTypeEx"/>
     <extensionPoint qualifiedName="com.intellij.runConfigurationExtension" interface="com.intellij.execution.RunConfigurationExtension"/>
+
+    <extensionPoint qualifiedName="com.intellij.moduleConfigurable"
+                    beanClass="com.intellij.openapi.options.ModuleConfigurableEP"
+                    area="IDEA_MODULE">
+      <with attribute="instance" implements="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleConfigurable"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.variableTypeCalculator" interface="com.intellij.codeInsight.template.macro.VariableTypeCalculator"/>
+    <extensionPoint qualifiedName="com.intellij.jreProvider"
+                    interface="com.intellij.execution.ui.JreProvider"/>
+    <extensionPoint qualifiedName="com.intellij.sdkEditorAdditionalOptionsProvider" interface="com.intellij.openapi.SdkEditorAdditionalOptionsProvider"/>
+    <extensionPoint qualifiedName="com.intellij.exceptionFilter" interface="com.intellij.execution.filters.ExceptionFilterFactory"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -369,7 +380,7 @@
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveInner.MoveInnerToUpperHandler"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandlerDelegate"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveMembers.MoveMembersHandler"/>
-    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.JavaMoveFilesOrDirectoriesHandler" id="moveJavaFileOrDir"/>
+    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.JavaMoveFilesOrDirectoriesHandler" id="moveJavaFileOrDir" order="before moveFileOrDir"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler" order="before moveJavaFileOrDir"/>
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyClassesHandler" order="before copyFilesOrDirectories"/>
     <saveFileAsTemplateHandler implementation="com.intellij.ide.fileTemplates.SaveJavaAsTemplateHandler"/>

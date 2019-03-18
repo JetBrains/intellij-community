@@ -7,15 +7,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.*;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -41,11 +38,14 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
   private final AtomicBoolean myInMemoryMode = new AtomicBoolean();
   private final TIntObjectHashMap<Map<Key, Value>> myInMemoryKeysAndValues = new TIntObjectHashMap<>();
-  private final SnapshotInputMappings<Key, Value, Input> mySnapshotInputMappings;
+  private final SnapshotInputMappingIndex<Key, Value, Input> mySnapshotInputMappings;
 
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                                 @NotNull IndexStorage<Key, Value> storage) throws IOException {
-    this(extension, storage, getForwardIndex(extension));
+    this(extension,
+         storage,
+         getForwardIndex(extension),
+         hasSnapshotMapping(extension) ? new SnapshotInputMappings<>(extension) : null);
     if (!(myIndexId instanceof ID<?, ?>)) {
       throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
     }
@@ -53,12 +53,15 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                                 @NotNull IndexStorage<Key, Value> storage,
-                                @Nullable ForwardIndex<Key, Value> forwardIndex) throws IOException {
-    super(extension, storage, forwardIndex);
+                                @Nullable ForwardIndex<Key, Value> forwardIndex,
+                                @Nullable SnapshotInputMappings<Key, Value, Input> snapshotInputMappings) throws IOException {
+    super(extension,
+          storage,
+          snapshotInputMappings != null ? new SharedMapForwardIndex(extension, snapshotInputMappings.getForwardIndexAccessor()): null,
+          snapshotInputMappings != null ? snapshotInputMappings.getForwardIndexAccessor(): null,
+          forwardIndex);
     SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
-    mySnapshotInputMappings = myForwardIndex == null && hasSnapshotMapping(extension)?
-                              new SnapshotInputMappings<>(extension) :
-                              null;
+    mySnapshotInputMappings = snapshotInputMappings;
     installMemoryModeListener();
   }
 
@@ -70,49 +73,39 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
   @NotNull
   @Override
-  protected UpdateData<Key, Value> calculateUpdateData(int inputId, @Nullable Input content) {
-    Map<Key, Value> data;
-    int hashId;
-    final boolean isContentPhysical = isContentPhysical(content);
-    if (mySnapshotInputMappings != null && content != null && isContentPhysical) {
-      final SnapshotInputMappings.Snapshot<Key, Value> snapshot = mySnapshotInputMappings.readPersistentDataOrMap(content);
-      data = snapshot.getData();
-      hashId = snapshot.getHashId();
+  protected Map<Key, Value> mapInput(@Nullable Input content) {
+    if (mySnapshotInputMappings != null && !myInMemoryMode.get()) {
+      return mySnapshotInputMappings.readDataOrMap(content);
     }
-    else {
-      data = mapInput(content);
-      hashId = 0;
-    }
-    return createUpdateData(data, () -> {
-      if (mySnapshotInputMappings != null && isContentPhysical) {
-        return new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
-      }
-      if (myInMemoryMode.get()) {
-        synchronized (myInMemoryKeysAndValues) {
-          Map<Key, Value> keysAndValues = myInMemoryKeysAndValues.get(inputId);
-          if (keysAndValues != null) {
-            return new MapInputDataDiffBuilder<>(inputId, keysAndValues);
-          }
-        }
+    return super.mapInput(content);
+  }
 
-        if (mySnapshotInputMappings != null) {
-          return new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
+  @NotNull
+  @Override
+  protected InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
+    if (mySnapshotInputMappings != null && !myInMemoryMode.get()) {
+      return super.getKeysDiffBuilder(inputId);
+    }
+    if (myInMemoryMode.get()) {
+      synchronized (myInMemoryKeysAndValues) {
+        Map<Key, Value> keysAndValues = myInMemoryKeysAndValues.get(inputId);
+        if (keysAndValues != null) {
+          return new MapInputDataDiffBuilder<>(inputId, keysAndValues);
         }
       }
-      return getKeysDiffBuilder(inputId);
-    }, () -> {
-      if (myInMemoryMode.get()) {
-        synchronized (myInMemoryKeysAndValues) {
-          myInMemoryKeysAndValues.put(inputId, data);
-        }
-      } else {
-        if (mySnapshotInputMappings != null ) {
-          mySnapshotInputMappings.putInputHash(inputId, hashId);
-        } else {
-          myForwardIndex.putInputData(inputId, data);
-        }
+    }
+    return super.getKeysDiffBuilder(inputId);
+  }
+
+  @Override
+  protected void updateForwardIndex(int inputId, @NotNull Map<Key, Value> data, @Nullable Object forwardIndexData) throws IOException {
+    if (myInMemoryMode.get()) {
+      synchronized (myInMemoryKeysAndValues) {
+        myInMemoryKeysAndValues.put(inputId, data);
       }
-    });
+    } else {
+      super.updateForwardIndex(inputId, data, forwardIndexData);
+    }
   }
 
   @Override
@@ -146,13 +139,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       try {
         removeTransientDataForKeys(inputId, keyCollection);
 
-        InputDataDiffBuilder<Key, Value> builder;
-        if (mySnapshotInputMappings != null) {
-          builder =  new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
-        } else {
-          builder = getKeysDiffBuilder(inputId);
-        }
-
+        InputDataDiffBuilder<Key, Value> builder = getKeysDiffBuilder(inputId);
         if (builder instanceof CollectionInputDataDiffBuilder<?, ?>) {
           Collection<Key> keyCollectionFromDisk = ((CollectionInputDataDiffBuilder<Key, Value>)builder).getSeq();
           if (keyCollectionFromDisk != null) {
@@ -271,7 +258,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
       try {
         final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)myIndexExtension.getName());
-        return new PersistentHashMap<>(indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, new MapDataExternalizer<>(myIndexExtension));
+        return new PersistentHashMap<>(indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, new InputMapExternalizer<>(myIndexExtension));
       } finally {
         PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
       }
@@ -313,12 +300,6 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     }
   }
 
-  private boolean isContentPhysical(Input content) {
-    return content == null ||
-           (content instanceof UserDataHolder &&
-            FileBasedIndexImpl.ourPhysicalContentKey.get((UserDataHolder)content, Boolean.FALSE));
-  }
-
   private void installMemoryModeListener() {
     IndexStorage<Key, Value> storage = getStorage();
     if (storage instanceof MemoryIndexStorage) {
@@ -342,59 +323,5 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     return extension instanceof CustomInputsIndexFileBasedIndexExtension
            ? ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer()
            : new InputIndexDataExternalizer<>(extension.getKeyDescriptor(), extension.getName());
-  }
-
-  static class MapDataExternalizer<Key, Value> implements DataExternalizer<Map<Key, Value>> {
-    final DataExternalizer<Value> myValueExternalizer;
-    private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
-
-    MapDataExternalizer(IndexExtension<Key, Value, ?> extension) {
-      myValueExternalizer = extension.getValueExternalizer();
-      mySnapshotIndexExternalizer = createInputsIndexExternalizer(extension);
-    }
-
-    @Override
-    public void save(@NotNull DataOutput stream, Map<Key, Value> data) throws IOException {
-      int size = data.size();
-      DataInputOutputUtil.writeINT(stream, size);
-
-      if (size > 0) {
-        THashMap<Value, List<Key>> values = new THashMap<>();
-        List<Key> keysForNullValue = null;
-        for (Map.Entry<Key, Value> e : data.entrySet()) {
-          Value value = e.getValue();
-
-          List<Key> keys = value != null ? values.get(value):keysForNullValue;
-          if (keys == null) {
-            if (value != null) values.put(value, keys = new SmartList<>());
-            else keys = keysForNullValue = new SmartList<>();
-          }
-          keys.add(e.getKey());
-        }
-
-        if (keysForNullValue != null) {
-          myValueExternalizer.save(stream, null);
-          mySnapshotIndexExternalizer.save(stream, keysForNullValue);
-        }
-
-        for(Value value:values.keySet()) {
-          myValueExternalizer.save(stream, value);
-          mySnapshotIndexExternalizer.save(stream, values.get(value));
-        }
-      }
-    }
-
-    @Override
-    public Map<Key, Value> read(@NotNull DataInput in) throws IOException {
-      int pairs = DataInputOutputUtil.readINT(in);
-      if (pairs == 0) return Collections.emptyMap();
-      Map<Key, Value> result = new THashMap<>(pairs);
-      while (((InputStream)in).available() > 0) {
-        Value value = myValueExternalizer.read(in);
-        Collection<Key> keys = mySnapshotIndexExternalizer.read(in);
-        for(Key k:keys) result.put(k, value);
-      }
-      return result;
-    }
   }
 }

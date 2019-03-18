@@ -230,8 +230,6 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
 
     final Project project = module.getProject();
     if (myWizardContext.isCreatingNewProject()) {
-      preventOldSettingsMigration(project);
-
       getExternalProjectSettings().setExternalProjectPath(rootProjectPath);
       AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID);
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);
@@ -275,15 +273,6 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
       // execute when current dialog is closed
       ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, runnable);
     }
-  }
-
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
-  private static void preventOldSettingsMigration(Project project) {
-    DefaultGradleProjectSettings.MyState state = new DefaultGradleProjectSettings.MyState();
-    state.isMigrated = true;
-    state.delegatedBuild = true;
-    state.testRunner = TestRunner.GRADLE;
-    DefaultGradleProjectSettings.getInstance(project).loadState(state);
   }
 
   @Override

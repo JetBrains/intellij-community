@@ -33,9 +33,10 @@ public class JsonSchemaTestSuite {
     suite.addTestSuite(JsonSchemaCrossReferencesTest.class);
     suite.addTestSuite(JsonSchemaDocumentationTest.class);
     suite.addTestSuite(JsonSchemaHighlightingTest.class);
+    suite.addTestSuite(JsonSchemaInjectionTest.class);
     suite.addTestSuite(JsonSchemaReSharperHighlightingTest.class);
     suite.addTestSuite(JsonSchemaPatternComparatorTest.class);
-    suite.addTestSuite(JsonSchemaSelfHighligthingTest.class);
+    suite.addTestSuite(JsonSchemaSelfHighlightingTest.class);
     suite.addTestSuite(JsonBySchemaCompletionTest.class);
     suite.addTestSuite(JsonBySchemaHeavyCompletionTest.class);
     suite.addTestSuite(JsonSchemaReadTest.class);

@@ -1,0 +1,173 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.ide
+
+import com.intellij.idea.StartupUtil
+import com.intellij.notification.NotificationDisplayType
+import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NotNullLazyValue
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.SystemProperties
+import com.intellij.util.Url
+import com.intellij.util.Urls
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.net.NetUtils
+import org.jetbrains.builtInWebServer.*
+import org.jetbrains.io.BuiltInServer
+import org.jetbrains.io.BuiltInServer.Companion.recommendedWorkerCount
+import org.jetbrains.io.NettyUtil
+import org.jetbrains.io.SubServer
+import java.io.IOException
+import java.net.InetAddress
+import java.net.NetworkInterface
+import java.net.URLConnection
+import java.util.*
+import java.util.concurrent.Future
+
+private const val PORTS_COUNT = 20
+private const val PROPERTY_RPC_PORT = "rpc.port"
+
+class BuiltInServerManagerImpl : BuiltInServerManager() {
+  private var serverStartFuture: Future<*>? = null
+
+  private var server: BuiltInServer? = null
+
+  override val port: Int
+    get() = if (server == null) defaultPort else server!!.port
+
+  override val serverDisposable: Disposable?
+    get() = server
+
+  init {
+    serverStartFuture = when {
+      ApplicationManager.getApplication().isUnitTestMode -> null
+      else -> startServerInPooledThread()
+    }
+  }
+
+  override fun createClientBootstrap() = NettyUtil.nioClientBootstrap(server!!.eventLoopGroup)
+
+  companion object {
+    private val LOG = logger<BuiltInServerManager>()
+
+    @JvmField
+    val NOTIFICATION_GROUP: NotNullLazyValue<NotificationGroup> = object : NotNullLazyValue<NotificationGroup>() {
+      override fun compute(): NotificationGroup {
+        return NotificationGroup("Built-in Server", NotificationDisplayType.STICKY_BALLOON, true)
+      }
+    }
+
+    @JvmStatic
+    fun isOnBuiltInWebServerByAuthority(authority: String): Boolean {
+      val portIndex = authority.indexOf(':')
+      if (portIndex < 0 || portIndex == authority.length - 1) {
+        return false
+      }
+
+      val port = StringUtil.parseInt(authority.substring(portIndex + 1), -1)
+      if (port == -1) {
+        return false
+      }
+
+      val options = BuiltInServerOptions.getInstance()
+      val idePort = BuiltInServerManager.getInstance().port
+      if (options.builtInServerPort != port && idePort != port) {
+        return false
+      }
+
+      val host = authority.substring(0, portIndex)
+      if (NetUtils.isLocalhost(host)) {
+        return true
+      }
+
+      try {
+        val inetAddress = InetAddress.getByName(host)
+        return inetAddress.isLoopbackAddress ||
+               inetAddress.isAnyLocalAddress ||
+               options.builtInServerAvailableExternally && idePort != port && NetworkInterface.getByInetAddress(inetAddress) != null
+      }
+      catch (e: IOException) {
+        return false
+      }
+    }
+  }
+
+  override fun waitForStart(): BuiltInServerManager {
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode || !ApplicationManager.getApplication().isDispatchThread)
+
+    var future: Future<*>?
+    synchronized(this) {
+      future = serverStartFuture
+      if (future == null) {
+        future = startServerInPooledThread()
+        serverStartFuture = future
+      }
+    }
+
+    future!!.get()
+    return this
+  }
+
+  private fun startServerInPooledThread(): Future<*> {
+    return AppExecutorUtil.getAppExecutorService().submit {
+      try {
+        val mainServer = StartupUtil.getServer()
+        @Suppress("DEPRECATION")
+        server = when {
+          mainServer == null || mainServer.eventLoopGroup is io.netty.channel.oio.OioEventLoopGroup -> BuiltInServer.start(recommendedWorkerCount, defaultPort, PORTS_COUNT)
+          else -> BuiltInServer.start(mainServer.eventLoopGroup, false, defaultPort, PORTS_COUNT, true, null)
+        }
+        bindCustomPorts(server!!)
+      }
+      catch (e: Throwable) {
+        LOG.info(e)
+        NOTIFICATION_GROUP.value.createNotification(
+          "Cannot start internal HTTP server. Git integration, JavaScript debugger and LiveEdit may operate with errors. " +
+          "Please check your firewall settings and restart " + ApplicationNamesInfo.getInstance().fullProductName,
+          NotificationType.ERROR).notify(null)
+        return@submit
+      }
+
+      LOG.info("built-in server started, port ${server!!.port}")
+      Disposer.register(ApplicationManager.getApplication(), server!!)
+    }
+  }
+
+  override fun isOnBuiltInWebServer(url: Url?): Boolean {
+    return url != null && !url.authority.isNullOrEmpty() && isOnBuiltInWebServerByAuthority(url.authority!!)
+  }
+
+  override fun addAuthToken(url: Url): Url {
+    return when {
+      // built-in server url contains query only if token specified
+      url.parameters != null -> url
+      else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, Collections.singletonMap(TOKEN_PARAM_NAME, acquireToken()))
+    }
+  }
+
+  override fun configureRequestToWebServer(connection: URLConnection) {
+    connection.setRequestProperty(TOKEN_HEADER_NAME, acquireToken())
+  }
+}
+
+// Default port will be occupied by main idea instance - define the custom default to avoid searching of free port
+private val defaultPort: Int
+  get() = SystemProperties.getIntProperty(PROPERTY_RPC_PORT, if (ApplicationManager.getApplication().isUnitTestMode) 64463 else BuiltInServerOptions.DEFAULT_PORT)
+
+private fun bindCustomPorts(server: BuiltInServer) {
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    return
+  }
+
+  for (customPortServerManager in CustomPortServerManager.EP_NAME.extensionList) {
+    LOG.runAndLogException {
+      SubServer(customPortServerManager, server).bind(customPortServerManager.port)
+    }
+  }
+}

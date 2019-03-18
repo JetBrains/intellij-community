@@ -339,7 +339,7 @@ public class SwingHelper {
   public static void setHistory(@NotNull TextFieldWithHistory textFieldWithHistory,
                                 @NotNull List<String> history,
                                 boolean mergeWithPrevHistory) {
-    Set<String> newHistorySet = ContainerUtil.newHashSet(history);
+    Set<String> newHistorySet = new HashSet<>(history);
     List<String> prevHistory = textFieldWithHistory.getHistory();
     List<String> mergedHistory = ContainerUtil.newArrayListWithCapacity(history.size());
     if (mergeWithPrevHistory) {

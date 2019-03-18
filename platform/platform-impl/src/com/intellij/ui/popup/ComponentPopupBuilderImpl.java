@@ -33,8 +33,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author anna
@@ -83,6 +83,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private BooleanFunction<KeyEvent> myKeyEventHandler;
   private Color myBorderColor;
   private boolean myNormalWindowLevel;
+  private @Nullable Runnable myOkHandler;
 
   public ComponentPopupBuilderImpl(@NotNull JComponent component, JComponent preferredFocusedComponent) {
     myComponent = component;
@@ -242,6 +243,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
     );
 
     popup.setNormalWindowLevel(myNormalWindowLevel);
+    popup.setOkHandler(myOkHandler);
 
     if (myUserData != null) {
       popup.setUserData(myUserData);
@@ -376,6 +378,13 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @Override
   public ComponentPopupBuilder setBorderColor(Color color) {
     myBorderColor = color;
+    return this;
+  }
+  
+  @NotNull
+  @Override
+  public ComponentPopupBuilder setOkHandler(@Nullable Runnable okHandler) {
+    myOkHandler = okHandler;
     return this;
   }
 }

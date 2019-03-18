@@ -33,8 +33,10 @@ class BuildTreeConsoleViewTest: LightPlatformTestCase() {
                                                  "test descriptor",
                                                  "fake path",
                                                  1L)
-
-    treeConsoleView = BuildTreeConsoleView(getProject(), buildDescriptor)
+    treeConsoleView = BuildTreeConsoleView(getProject(), buildDescriptor, null, object : BuildViewSettingsProvider {
+      override fun isExecutionViewHidden(): Boolean = false
+      override fun isSideBySideView(): Boolean = true
+    })
   }
 
   @Test
@@ -42,7 +44,8 @@ class BuildTreeConsoleViewTest: LightPlatformTestCase() {
     val tree = treeConsoleView.tree
     val message = "build Started"
     treeConsoleView.onEvent(StartBuildEventImpl(buildDescriptor, message))
-    PlatformTestUtil.waitWhileBusy(tree);
+    PlatformTestUtil.waitWhileBusy(tree, (tree.model as TreeTableModelWithColumns).delegate)
+
     assertThat(TreeUtil.collectExpandedUserObjects(tree))
       .extracting("name")
       .containsExactly(message)

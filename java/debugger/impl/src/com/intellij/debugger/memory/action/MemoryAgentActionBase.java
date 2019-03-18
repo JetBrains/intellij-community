@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.managerThread.DebuggerCommand;
 import com.intellij.debugger.memory.agent.MemoryAgent;
+import com.intellij.debugger.memory.agent.MemoryAgentCapabilities;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,8 +28,11 @@ public abstract class MemoryAgentActionBase extends DebuggerTreeAction {
     debugProcess.getManagerThread().invokeCommand(new DebuggerCommand() {
       @Override
       public void action() {
-        MemoryAgent memoryAgent = debugProcess.getMemoryAgent();
-        LOG.assertTrue(memoryAgent != null);
+        MemoryAgent memoryAgent = MemoryAgent.using(debugProcess);
+        if (memoryAgent == null) {
+          LOG.error("Evaluation impossible");
+          return;
+        }
         try {
           perform(memoryAgent, reference, node);
         }
@@ -48,17 +52,17 @@ public abstract class MemoryAgentActionBase extends DebuggerTreeAction {
   protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     if (!super.isEnabled(node, e)) return false;
     DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(node.getTree().getProject());
-    MemoryAgent memoryAgent = debugProcess == null ? null : debugProcess.getMemoryAgent();
-    if (memoryAgent == null || !memoryAgent.isLoaded()) {
+    if (debugProcess == null || !MemoryAgent.capabilities(debugProcess).isLoaded()) {
       e.getPresentation().setVisible(false);
       return false;
     }
+
     ObjectReference reference = getObjectReference(node);
 
-    return reference != null && isEnabled(memoryAgent);
+    return reference != null && isEnabled(MemoryAgent.capabilities(debugProcess));
   }
 
-  protected abstract boolean isEnabled(@NotNull MemoryAgent agent);
+  protected abstract boolean isEnabled(@NotNull MemoryAgentCapabilities agentCapabilities);
 
   protected abstract void perform(@NotNull MemoryAgent agent,
                                   @NotNull ObjectReference reference,

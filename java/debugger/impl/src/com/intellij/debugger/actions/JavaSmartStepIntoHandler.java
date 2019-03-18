@@ -360,6 +360,16 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                                                       owner.replace("/", "."), name, desc,
                                                       suspendContext.getDebugProcess())) {
                       iterator.remove();
+                      MethodSmartStepTarget target = (MethodSmartStepTarget)e;
+                      // fix ordinals
+                      StreamEx.of(targets).select(MethodSmartStepTarget.class)
+                        .filter(t -> t.getMethod().equals(target.getMethod()))
+                        .forEach(t -> {
+                          int ordinal = t.getOrdinal();
+                          if (ordinal > target.getOrdinal()) {
+                            t.setOrdinal(ordinal - 1);
+                          }
+                        });
                       break;
                     }
                   }

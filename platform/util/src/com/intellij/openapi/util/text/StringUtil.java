@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
@@ -1140,6 +1141,13 @@ public class StringUtil extends StringUtilRt {
 
   @Nullable
   @Contract(pure = true)
+  public static String nullize(@Nullable String s, @Nullable String defaultValue) {
+    boolean empty = isEmpty(s) || Comparing.equal(s, defaultValue);
+    return empty ? null : s;
+  }
+
+  @Nullable
+  @Contract(pure = true)
   public static String nullize(@Nullable String s, boolean nullizeSpaces) {
     boolean empty = nullizeSpaces ? isEmptyOrSpaces(s) : isEmpty(s);
     return empty ? null : s;
@@ -1566,9 +1574,16 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration, @NotNull String unitSeparator) {
+    return formatDuration(duration, unitSeparator, Integer.MAX_VALUE);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  private static String formatDuration(long duration, @NotNull String unitSeparator, int maxFragments) {
     String[] units = TIME_UNITS;
 
-    StringBuilder sb = new StringBuilder();
+    List<String> fragments = new ArrayList<>();
+
     long count = duration;
     int i = 1;
     for (; i < units.length && count > 0; i++) {
@@ -1576,24 +1591,27 @@ public class StringUtil extends StringUtilRt {
       if (count < multiplier) break;
       long remainder = count % multiplier;
       count /= multiplier;
-      if (remainder != 0 || sb.length() > 0) {
-        if (!units[i - 1].isEmpty()) {
-          sb.insert(0, units[i - 1]);
-          sb.insert(0, unitSeparator);
-        }
-        sb.insert(0, remainder).insert(0, " ");
+      if (remainder != 0 || fragments.size() > 0) {
+        fragments.add(0, remainder + unitSeparator + units [i - 1]);
       }
       else {
         remainder = Math.round(remainder * 100 / (double)multiplier);
         count += remainder / 100;
       }
     }
-    if (!units[i - 1].isEmpty()) {
-      sb.insert(0, units[i - 1]);
-      sb.insert(0, unitSeparator);
+    fragments.add(0, count + unitSeparator + units [i - 1]);
+    if (fragments.size() > maxFragments) {
+      fragments = fragments.subList(0, maxFragments);
     }
-    sb.insert(0, count);
-    return sb.toString();
+    return join(fragments, " ");
+  }
+
+  /**
+   * Formats given duration as a sum of time units with at most two units
+   * (example: {@code formatDuration(123456, "") = "2m 3s"}).
+   */
+  public static String formatDurationApproximate(long duration) {
+    return formatDuration(duration, " ", 2);
   }
 
   /**

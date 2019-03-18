@@ -345,9 +345,12 @@ public class ChangeContextUtil {
   }
 
   public static void clearContextInfo(PsiElement scope) {
+    scope.putCopyableUserData(ENCODED_KEY, null);
     scope.putCopyableUserData(THIS_QUALIFIER_CLASS_KEY, null);
     scope.putCopyableUserData(REF_MEMBER_KEY, null);
     scope.putCopyableUserData(CAN_REMOVE_QUALIFIER_KEY, null);
+    scope.putCopyableUserData(REF_CLASS_KEY, null);
+    scope.putCopyableUserData(REF_MEMBER_THIS_CLASS_KEY, null);
     for(PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()){
       clearContextInfo(child);
     }

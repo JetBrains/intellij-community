@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.apiUsage
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.infos.MethodCandidateInfo
@@ -49,7 +48,7 @@ abstract class ApiUsageVisitorBase : PsiElementVisitor(), ApiUsageDetector {
 
   private fun visitMethod(method: PsiMethod) {
     if (method.isConstructor) {
-      checkImplicitCallToSuper(method)
+      checkCallToSuperEmptyConstructor(method)
     }
     else {
       checkMethodOverriding(method)
@@ -82,12 +81,27 @@ abstract class ApiUsageVisitorBase : PsiElementVisitor(), ApiUsageDetector {
     }
   }
 
-  private fun checkImplicitCallToSuper(constructor: PsiMethod) {
+  private fun checkCallToSuperEmptyConstructor(constructor: PsiMethod) {
     val superClass = constructor.containingClass?.superClass ?: return
     val statements = constructor.body?.statements ?: return
-    if (statements.isEmpty() || !JavaHighlightUtil.isSuperOrThisCall(statements.first(), true, true)) {
+    if (isCallToEmptySuper(statements)) {
       processEmptyConstructorOfSuperClassImplicitInvocationAtSubclassConstructor(superClass, constructor)
     }
+  }
+
+  private fun isCallToEmptySuper(statements: Array<PsiStatement>): Boolean {
+    if (statements.isEmpty()) {
+      //Implicit call to super()
+      return true
+    }
+    val expressionStatement = statements.first() as? PsiExpressionStatement
+    val methodCallExpression = expressionStatement?.expression as? PsiMethodCallExpression
+    val methodExpression = methodCallExpression?.methodExpression
+    if (methodExpression == null) {
+      //First statement is not "this" nor "super" => there is implicit super().
+      return true
+    }
+    return methodExpression.text == "super" && methodCallExpression.argumentList.isEmpty
   }
 
   private fun checkMethodOverriding(method: PsiMethod) {

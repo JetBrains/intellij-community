@@ -5,8 +5,10 @@
 
   <description><![CDATA[
       This plugin collects data about your usage of code completion, anonymizes and sends it to JetBrains.
-      Note, the plugin doesn't send any of your personal data or code. All we send is just numbers
-      calculated based on your completion usage patterns. If you don't want to send anything just disable this plugin.
+      Note, the plugin doesn't send any of your personal data or code. All it sends is just numbers
+      calculated based on your completion usage patterns. The plugin does not send more than 15MB of data per day.
+      It will not send anything until you explicitly allow it in the settings/preferences: Editor | General | Code Completion,
+      "Machine Learning Assistant Code Completion" section.
     ]]></description>
 
   <change-notes><![CDATA[
@@ -18,6 +20,8 @@
   <depends>com.intellij.modules.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+
+    <applicationService serviceImplementation="com.intellij.completion.settings.CompletionStatsCollectorSettings"/>
 
     <applicationService serviceInterface="com.intellij.stats.completion.CompletionLoggerProvider"
                         serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider">
@@ -51,21 +55,17 @@
                         serviceImplementation="com.intellij.completion.sorting.MLSorterFactory">
     </applicationService>
 
-    <applicationService serviceInterface="com.intellij.stats.experiment.ExperimentDecision"
-                        serviceImplementation="com.intellij.stats.experiment.PermanentInstallationIDBasedDecision"
-                        testServiceImplementation="com.intellij.mocks.TestExperimentDecision">
-    </applicationService>
-
     <applicationService serviceInterface="com.intellij.stats.completion.InstallationIdProvider"
                         serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider">
     </applicationService>
+
+    <codeCompletionConfigurable provider="com.intellij.completion.settings.CompletionStatsCollectorConfigurableProvider"/>
 
     <postStartupActivity implementation="com.intellij.completion.NotificationManager"/>
 
     <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementPositionTracker"
                         serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementPositionTracker"/>
 
-    <reporting.sendPermission implementation="com.intellij.reporting.AllowedOnlyInEAP"/>
   </extensions>
 
   <application-components>

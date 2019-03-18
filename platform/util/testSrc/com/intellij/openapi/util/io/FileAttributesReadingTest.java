@@ -466,11 +466,12 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void hardLink() throws IOException {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
     File target = tempDir.newFile("file.txt");
     File link = new File(tempDir.getRoot(), "link");
     Files.createLink(link.toPath(), target.toPath());
 
-    FileAttributes attributes = getAttributes(link, SystemInfo.isSymLinkCreationSupported);  // ignore XP
+    FileAttributes attributes = getAttributes(link, SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer);  // ignore XP
     assertEquals(FileAttributes.Type.FILE, attributes.type);
     assertEquals(target.length(), attributes.length);
     assertTimestampsEqual(target.lastModified(), attributes.lastModified);
@@ -485,7 +486,7 @@ public abstract class FileAttributesReadingTest {
       assertEquals(myTestData.length, bytes.length);
     }
 
-    attributes = getAttributes(link, SystemInfo.isSymLinkCreationSupported);  // ignore XP
+    attributes = getAttributes(link, SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer);  // ignore XP
     assertEquals(FileAttributes.Type.FILE, attributes.type);
     assertEquals(target.length(), attributes.length);
     assertTimestampsEqual(target.lastModified(), attributes.lastModified);

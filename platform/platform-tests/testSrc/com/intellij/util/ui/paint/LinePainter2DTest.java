@@ -5,6 +5,8 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.LinePainter2D.Align;
 import com.intellij.ui.paint.LinePainter2D.StrokeType;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.junit.Test;
@@ -13,7 +15,7 @@ import java.awt.*;
 import java.awt.geom.Line2D;
 import java.util.EnumSet;
 
-import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUI.scale;
 import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 
@@ -43,7 +45,7 @@ public class LinePainter2DTest extends AbstractPainter2DTest {
   }
 
   private static Void testAlign(Graphics2D g) {
-    double scale = JBUI.ScaleContext.create(g).getScale(PIX_SCALE);
+    double scale = ScaleContext.create(g).getScale(PIX_SCALE);
     String msg = "LinePainter2D.align is incorrect (JreHiDPIEnabled: " + UIUtil.isJreHiDPIEnabled() + "; scale: " + scale + ")";
     double delta = 0.000001;
     boolean jhd = UIUtil.isJreHiDPIEnabled();

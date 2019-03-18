@@ -19,7 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconLoader.DarkIconProvider;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ui.JBCachingScalableIcon;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,10 +28,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
-import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
-import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
 
-public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> implements DarkIconProvider, CompositeIcon {
+public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements DarkIconProvider, CompositeIcon {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
   private final Icon[] myIcons;
   private Icon[] myScaledIcons;
@@ -80,6 +81,16 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> implements D
   @Override
   public LayeredIcon copy() {
     return new LayeredIcon(this);
+  }
+
+  @NotNull
+  @Override
+  public LayeredIcon deepCopy() {
+    LayeredIcon icon = new LayeredIcon(this);
+    for (int i = 0; i < icon.myIcons.length; i++) {
+      icon.myIcons[i] = IconUtil.copy(icon.myIcons[i], null);
+    }
+    return icon;
   }
 
   @NotNull

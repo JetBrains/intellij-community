@@ -12,7 +12,7 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil.findFirstParent
 import com.intellij.psi.util.PsiTreeUtil.getParentOfType
-import com.intellij.util.toArray
+import com.intellij.util.containers.toArray
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement

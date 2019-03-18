@@ -243,10 +243,9 @@ public class CodeInsightTestUtil {
   public static GotoTargetHandler.GotoData gotoImplementation(Editor editor, PsiFile file) {
     GotoTargetHandler.GotoData data = new GotoImplementationHandler().getSourceAndTargetElements(editor, file);
     if (data.listUpdaterTask != null) {
-      JBList list = new JBList();
-      CollectionListModel model = new CollectionListModel(new ArrayList());
-      list.setModel(model);
-      list.setModel(new NameFilteringListModel(list, Function.ID, Condition.FALSE, String::new));
+      JBList<Object> list = new JBList<>();
+      CollectionListModel<Object> model = new CollectionListModel<>(new ArrayList<>());
+      list.setModel(new NameFilteringListModel<>(model, Function.ID, Condition.FALSE, String::new));
       JBPopup popup = new ComponentPopupBuilderImpl(list, null).createPopup();
       data.listUpdaterTask.init(popup, new JBListUpdater(list), new Ref<>());
 

@@ -33,16 +33,16 @@
 <script lang="ts">
   import {Component, Vue} from "vue-property-decorator"
   import {getModule} from "vuex-module-decorators"
-  import {DataModule} from "@/state"
+  import {AppStateModule} from "@/state/state"
 
   @Component
   export default class InputForm extends Vue {
-    private readonly dataModule = getModule(DataModule, this.$store)
+    private readonly dataModule = getModule(AppStateModule, this.$store)
 
     private inputTimerId: number = -1
 
     inputData: string = this.dataModule.data == null ? "" : JSON.stringify(this.dataModule.data, null, 2)
-    portNumber: number = this.dataModule.recentlyUsedIdePort || 63342
+    portNumber: number = this.dataModule.recentlyUsedIdePort
 
     // we can set this flag using reference to button, but "[Vue warn]: Avoid mutating a prop directly...",
     // so, it seems that data property it is the only recommended way
@@ -50,7 +50,8 @@
     isFetchingDev: boolean = false
 
     dataChanged() {
-      this.dataModule.updateData(JSON.parse(this.inputData))
+      const text = this.inputData
+      this.dataModule.updateData(text.length === 0 ? null : JSON.parse(text))
     }
 
     inputChanged() {
@@ -85,7 +86,9 @@
     }
 
     private doGetFromRunningInstance(port: number, processed: () => void) {
-      const host = `localhost:${port}`
+      // localhost blocked by Firefox, but 127.0.0.1 not.
+      // Google Chrome correctly resolves localhost, but Firefox doesn't.
+      const host = `127.0.0.1:${port}`
 
       const showError = (reason: string) => {
         this.$notify.error({

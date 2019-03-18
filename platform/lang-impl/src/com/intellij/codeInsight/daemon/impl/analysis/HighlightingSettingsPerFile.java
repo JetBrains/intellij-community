@@ -105,7 +105,10 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     defaults[rootIndex] = setting;
     boolean toRemove = true;
     for (FileHighlightingSetting aDefault : defaults) {
-      if (aDefault != FileHighlightingSetting.NONE) toRemove = false;
+      if (aDefault != FileHighlightingSetting.NONE) {
+        toRemove = false;
+        break;
+      }
     }
     if (toRemove) {
       myHighlightSettings.remove(virtualFile);

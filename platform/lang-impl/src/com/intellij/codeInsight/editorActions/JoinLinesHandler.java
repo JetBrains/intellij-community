@@ -191,8 +191,9 @@ public class JoinLinesHandler extends EditorActionHandler {
     if (rc != CANNOT_JOIN) {
       RangeMarker marker = doc.createRangeMarker(rc, rc);
       docManager.doPostponedOperationsAndUnblockDocument(doc);
-      rc = marker.getStartOffset();
-      if (caretRestoreOffset.get() == CANNOT_JOIN) caretRestoreOffset.set(rc);
+      if (caretRestoreOffset.get() == CANNOT_JOIN && marker.isValid()) {
+        caretRestoreOffset.set(marker.getStartOffset());
+      }
       return;
     }
     docManager.doPostponedOperationsAndUnblockDocument(doc);

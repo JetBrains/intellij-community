@@ -32,7 +32,6 @@ import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
 import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
@@ -47,8 +46,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 @State(name = "DockManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 
@@ -111,7 +110,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   @Override
   public Set<DockContainer> getContainers() {
-    return Collections.unmodifiableSet(ContainerUtil.newHashSet(myContainers));
+    return Collections.unmodifiableSet(new HashSet<>(myContainers));
   }
 
   @Override

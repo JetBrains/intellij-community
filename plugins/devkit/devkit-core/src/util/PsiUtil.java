@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -96,6 +97,8 @@ public class PsiUtil {
   private static boolean isSimpleClassNameExpression(PsiMethodCallExpression expr) {
     String text = expr.getText();
     if (text == null) return false;
+    if (!StringUtil.contains(text, "getSimpleName")) return false;
+    
     text = text.replaceAll(" ", "")
       .replaceAll("\n", "")
       .replaceAll("\t", "")
@@ -108,8 +111,11 @@ public class PsiUtil {
     PsiCodeBlock body = method.getBody();
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
-      if (statements.length == 1 && statements[0] instanceof PsiReturnStatement) {
-        PsiExpression value = ((PsiReturnStatement)statements[0]).getReturnValue();
+      if (statements.length != 1) return null;
+
+      PsiStatement statement = statements[0];
+      if (statement instanceof PsiReturnStatement) {
+        PsiExpression value = ((PsiReturnStatement)statement).getReturnValue();
         if (value instanceof PsiReferenceExpression) {
           PsiElement element = ((PsiReferenceExpression)value).resolve();
           if (element instanceof PsiField) {
@@ -119,6 +125,12 @@ public class PsiUtil {
             }
           }
         }
+        else if (value instanceof PsiMethodCallExpression && 
+                 !isSimpleClassNameExpression((PsiMethodCallExpression)value)) {
+          final PsiMethod calledMethod = ((PsiMethodCallExpression)value).resolveMethod();
+          return calledMethod != null ? getReturnedExpression(calledMethod) : null;
+        }
+
         return value;
       }
     }

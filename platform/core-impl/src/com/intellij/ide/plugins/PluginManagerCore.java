@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.StartupProgress;
@@ -917,7 +920,7 @@ public class PluginManagerCore {
                                                  @NotNull Function<? super String, ? extends IdeaPluginDescriptorImpl> optionalDescriptorLoader) {
     Map<PluginId, List<String>> optionalConfigs = descriptor.getOptionalConfigs();
     if (optionalConfigs != null && !optionalConfigs.isEmpty()) {
-      Map<PluginId, List<IdeaPluginDescriptorImpl>> descriptors = new THashMap<>(optionalConfigs.size());
+      Map<PluginId, List<IdeaPluginDescriptorImpl>> descriptors = new LinkedHashMap<>(optionalConfigs.size());
 
       for (Map.Entry<PluginId, List<String>> entry : optionalConfigs.entrySet()) {
         for (String optionalDescriptorName : entry.getValue()) {
@@ -1187,7 +1190,7 @@ public class PluginManagerCore {
 
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
 
-    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.LOAD_PLUGIN_DESCRIPTORS);
+    Activity activity = StartUpMeasurer.start(Phases.LOAD_PLUGIN_DESCRIPTORS);
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(PluginManagerCore.class.getClassLoader(), urlsFromClassPath);
 
@@ -1209,10 +1212,10 @@ public class PluginManagerCore {
       }
     }
     catch (InterruptedException | ExecutionException e) {
-      ExceptionUtilRt.rethrow(e);
+      ExceptionUtil.rethrow(e);
     }
 
-    measureToken.end();
+    activity.end();
 
     return topoSortPlugins(result, errors);
   }
@@ -1243,6 +1246,8 @@ public class PluginManagerCore {
     for (IdeaPluginDescriptorImpl descriptor : descriptors.values()) {
       Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors = descriptor.getOptionalDescriptors();
       if (optionalDescriptors != null && !optionalDescriptors.isEmpty()) {
+        descriptor.setOptionalDescriptors(null);
+
         for (Map.Entry<PluginId, List<IdeaPluginDescriptorImpl>> entry: optionalDescriptors.entrySet()) {
           if (descriptorsWithModules.containsKey(entry.getKey())) {
             for (IdeaPluginDescriptorImpl optionalDescriptor : entry.getValue()) {
@@ -1586,7 +1591,7 @@ public class PluginManagerCore {
   }
 
   private static void initPlugins(@Nullable StartupProgress progress) {
-    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.INIT_PLUGINS);
+    Activity activity = StartUpMeasurer.start(Phases.INIT_PLUGINS);
     try {
       initializePlugins(progress);
     }
@@ -1597,7 +1602,7 @@ public class PluginManagerCore {
       getLogger().error(e);
       throw e;
     }
-    measureToken.end("plugin count: " + ourPlugins.length);
+    activity.end("plugin count: " + ourPlugins.length);
     logPlugins();
     ClassUtilCore.clearJarURLCache();
   }

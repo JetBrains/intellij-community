@@ -55,7 +55,7 @@ import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.JBValue.JBValueGroup;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import gnu.trove.TIntArrayList;
@@ -1214,8 +1214,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     double centerY = PaintUtil.alignToInt(y + width / 2, g) + strokeOff;
     switch (type) {
       case COLLAPSED:
+      case COLLAPSED_SINGLE_LINE:
         if (y <= clip.y + clip.height && y + height >= clip.y) {
-          drawSquareWithPlus(g, centerX, centerY, width, active);
+          drawSquareWithPlusOrMinus(g, centerX, centerY, width, true, active);
+        }
+        break;
+      case EXPANDED_SINGLE_LINE:
+        if (y <= clip.y + clip.height && y + height >= clip.y) {
+          drawSquareWithPlusOrMinus(g, centerX, centerY, width, false, active);
         }
         break;
       case EXPANDED_TOP:
@@ -1257,23 +1263,24 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     g.setColor(getOutlineColor(active));
     LinePainter2D.paintPolygon(g, dxPoints, dyPoints, 5, StrokeType.CENTERED_CAPS_SQUARE, sw, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    drawPlusOrMinus(g, false, centerX, centerY, width, sw);
+    drawLine(g, false, centerX, centerY, width, sw);
   }
 
-  private void drawPlusOrMinus(Graphics2D g, boolean plus, double centerX, double centerY, double width, double strokeWidth) {
+  private void drawLine(Graphics2D g, boolean vertical, double centerX, double centerY, double width, double strokeWidth) {
     double length = width - getSquareInnerOffset(width) * 2;
     Line2D line = LinePainter2D.align(g,
                                       EnumSet.of(LinePainter2D.Align.CENTER_X, LinePainter2D.Align.CENTER_Y),
-                                      centerX, centerY, length, plus, StrokeType.CENTERED, strokeWidth);
+                                      centerX, centerY, length, vertical, StrokeType.CENTERED, strokeWidth);
 
     LinePainter2D.paint(g, line, StrokeType.CENTERED, strokeWidth, RenderingHints.VALUE_ANTIALIAS_OFF);
   }
 
-  private void drawSquareWithPlus(Graphics2D g,
-                                  double centerX,
-                                  double centerY,
-                                  double width,
-                                  boolean active)
+  private void drawSquareWithPlusOrMinus(Graphics2D g,
+                                         double centerX,
+                                         double centerY,
+                                         double width,
+                                         boolean plus,
+                                         boolean active)
   {
     double sw = getStrokeWidth();
     Rectangle2D rect = RectanglePainter2D.align(g,
@@ -1286,8 +1293,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     g.setColor(getOutlineColor(active));
     RectanglePainter2D.DRAW.paint(g, rect, null, StrokeType.CENTERED, sw, RenderingHints.VALUE_ANTIALIAS_OFF);
 
-    drawPlusOrMinus(g, false, centerX, centerY, width, sw);
-    drawPlusOrMinus(g, true, centerX, centerY, width, sw);
+    drawLine(g, false, centerX, centerY, width, sw);
+    if (plus) {
+      drawLine(g, true, centerX, centerY, width, sw);
+    }
   }
 
   /**

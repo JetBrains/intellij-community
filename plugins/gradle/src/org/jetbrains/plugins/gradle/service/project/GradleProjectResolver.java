@@ -227,8 +227,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       if(!resolverCtx.isPreviewMode()){
         // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
         try {
-          projectImportAction.addProjectImportExtraModelProvider(
-            new ClassSetProjectImportExtraModelProvider(resolverExtension.getExtraProjectModelClasses()));
+          projectImportAction.addProjectImportExtraModelProvider(resolverExtension.getExtraModelProvider());
         }
         catch (Throwable t) {
           LOG.warn(t);
@@ -662,7 +661,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
       ContentRootData mergedContentRoot = null;
       String rootPath = toCanonicalPath(root.getAbsolutePath());
-      Set<String> paths = ContainerUtil.newHashSet(sourceSetRoots.keySet());
+      Set<String> paths = new HashSet<>(sourceSetRoots.keySet());
       for (String path : paths) {
         if (FileUtil.isAncestor(rootPath, path, true)) {
           Collection<ContentRootData> values = sourceSetRoots.remove(path);

@@ -299,12 +299,14 @@ fun <C : Container> ContainerFixture<C>.textfield(textLabel: String?, timeout: T
 fun <C : Container> ContainerFixture<C>.jTree(vararg pathStrings: String,
                                               timeout: Timeout = defaultTimeout,
                                               predicate: FinderPredicate = Predicate.equality): ExtendedJTreePathFixture =
-  ExtendedJTreePathFixture(GuiTestUtil.jTreeComponent(
-    container = target() as Container,
-    timeout = timeout,
-    pathStrings = *pathStrings,
-    predicate = predicate
-  ), pathStrings.toList(), predicate)
+  step("search for jtree object for path [${pathStrings.joinToString()}]") {
+    ExtendedJTreePathFixture(GuiTestUtil.jTreeComponent(
+      container = target() as Container,
+      timeout = timeout,
+      pathStrings = *pathStrings,
+      predicate = predicate
+    ), pathStrings.toList(), predicate)
+  }
 
 /**
  * Finds a CheckboxTree component in hierarchy of context component by a path and returns CheckboxTreeFixture.

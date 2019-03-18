@@ -18,10 +18,7 @@ import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
+import com.intellij.openapi.actionSystem.impl.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -68,6 +65,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +124,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private final Stack<Context> myBackStack = new Stack<>();
   private final Stack<Context> myForwardStack = new Stack<>();
-  private final ActionToolbar myToolBar;
+  private final ActionToolbarImpl myToolBar;
   private volatile boolean myIsEmpty;
   private boolean mySizeTrackerRegistered;
   private JSlider myFontSizeSlider;
@@ -352,11 +350,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                   Rectangle bounds = a.getBounds();
                   int width = (int)super.getPreferredSpan(View.X_AXIS);
                   int height = (int)super.getPreferredSpan(View.Y_AXIS);
+                  if (width <= 0 || height <= 0) return;
                   @SuppressWarnings("UndesirableClassUsage")
                   BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                   Graphics2D graphics = image.createGraphics();
                   super.paint(graphics, new Rectangle(image.getWidth(), image.getHeight()));
-                  UIUtil.drawImage(g, ImageUtil.ensureHiDPI(image, JBUI.ScaleContext.create(myEditorPane)), bounds.x, bounds.y, null);
+                  UIUtil.drawImage(g, ImageUtil.ensureHiDPI(image, ScaleContext.create(myEditorPane)), bounds.x, bounds.y, null);
                 }
               };
             }
@@ -471,7 +470,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
         super.processMouseMotionEvent(e);
       }
+
+      @NotNull
+      @Override
+      protected ActionButton createSecondaryButton(DefaultActionGroup secondaryActions,
+                                                   Presentation presentation,
+                                                   String place, final Dimension minimumSize) {
+        return new ActionButton.Transparent(secondaryActions, presentation, place, minimumSize);
+      }
     };
+    myToolBar.setSecondaryActionsIcon(AllIcons.Actions.More);
 
     JLayeredPane layeredPane = new JBLayeredPane() {
       @Override
@@ -511,13 +519,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     gearActions.addSeparator();
     gearActions.addAll(actions);
     Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.General.GearPlain);
-    myCorner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20)) {
-      @Override
-      public void paintComponent(Graphics g) {
-        paintButtonLook(g);
-      }
-    };
+    presentation.setIcon(AllIcons.Actions.More);
+    myCorner = new ActionButton.Transparent(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20));
     myCorner.setNoIconsInPopup(true);
     layeredPane.add(myCorner);
     layeredPane.setLayer(myCorner, JLayeredPane.POPUP_LAYER);
@@ -610,6 +613,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule(".pre {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule("html { padding-bottom: 5px; }");
+    editorKit.getStyleSheet().addRule("h1, h2, h3, h4, h5, h6 { margin-top: 0; padding-top: 1px; }");
     editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(getLinkColor()) + "; text-decoration: none;}");
     editorKit.getStyleSheet().addRule(".definition { padding: 3px 17px 1px 7px; border-bottom: thin solid #" + ColorUtil.toHex(borderColor) + "; }");
     editorKit.getStyleSheet().addRule(".definition-only { padding: 3px 17px 0 7px; }");
@@ -617,7 +621,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule(".bottom { padding: 3px 16px 0 7px; }");
     editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 16px 0 7px; }");
     editorKit.getStyleSheet().addRule("p { padding: 1px 0 2px 0; }");
-    editorKit.getStyleSheet().addRule("ul { padding: 5px 16px 0 7px; }");
+    editorKit.getStyleSheet().addRule("ol { padding: 0 16px 0 0; }");
+    editorKit.getStyleSheet().addRule("ul { padding: 0 16px 0 0; }");
     editorKit.getStyleSheet().addRule("li { padding: 1px 0 2px 0; }");
     editorKit.getStyleSheet().addRule(".grayed { color: #909090; display: inline;}");
     editorKit.getStyleSheet().addRule(".centered { text-align: center}");
@@ -970,7 +975,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (links != null) {
       text = text + getBottom(location != null) + links;
     }
-
+    //workaround for Swing html renderer not removing empty paragraphs before non-inline tags
+    text = text.replaceAll("<p>\\s*(<(?:[uo]l|h\\d|p))", "$1");
     text = addExternalLinksIcon(text);
     return text;
   }

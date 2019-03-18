@@ -70,7 +70,7 @@ public class GppTypeConverter extends GrTypeConverter {
 
   public static boolean hasDefaultConstructor(PsiType type) {
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-    return psiClass != null && PsiUtil.hasDefaultConstructor(psiClass, true, false);
+    return psiClass != null && PsiUtil.hasDefaultConstructor(psiClass, true, true);
 
   }
 

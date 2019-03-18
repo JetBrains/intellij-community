@@ -16,11 +16,8 @@ import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
-import io.netty.channel.oio.OioEventLoopGroup
 import io.netty.channel.socket.ServerSocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.channel.socket.oio.OioServerSocketChannel
-import io.netty.channel.socket.oio.OioSocketChannel
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpRequest
@@ -55,10 +52,11 @@ fun serverBootstrap(group: EventLoopGroup): ServerBootstrap {
   return bootstrap
 }
 
+@Suppress("DEPRECATION")
 private fun EventLoopGroup.serverSocketChannelClass(): Class<out ServerSocketChannel> {
   return when {
     this is NioEventLoopGroup -> NioServerSocketChannel::class.java
-    this is OioEventLoopGroup -> OioServerSocketChannel::class.java
+    this is io.netty.channel.oio.OioEventLoopGroup -> io.netty.channel.socket.oio.OioServerSocketChannel::class.java
     //  SystemInfo.isMacOSSierra && this is KQueueEventLoopGroup -> KQueueServerSocketChannel::class.java
     else -> throw Exception("Unknown event loop group type: ${this.javaClass.name}")
   }
@@ -70,7 +68,8 @@ inline fun ChannelFuture.addChannelListener(crossinline listener: (future: Chann
 
 // if NIO, so, it is shared and we must not shutdown it
 fun EventLoop.shutdownIfOio() {
-  (parent() as? OioEventLoopGroup)?.shutdownGracefully(1L, 2L, TimeUnit.NANOSECONDS)
+  @Suppress("DEPRECATION")
+  (parent() as? io.netty.channel.oio.OioEventLoopGroup)?.shutdownGracefully(1L, 2L, TimeUnit.NANOSECONDS)
 }
 
 // Event loop will be shut downed only if OIO
@@ -108,7 +107,8 @@ private fun doConnect(bootstrap: Bootstrap,
   }
 
   var attemptCount = 0
-  if (bootstrap.config().group() !is OioEventLoopGroup) {
+  @Suppress("DEPRECATION")
+  if (bootstrap.config().group() !is io.netty.channel.oio.OioEventLoopGroup) {
     return connectNio(bootstrap, remoteAddress, maxAttemptCount, stopCondition, attemptCount)
   }
 
@@ -116,7 +116,8 @@ private fun doConnect(bootstrap: Bootstrap,
 
   while (true) {
     try {
-      val channel = OioSocketChannel(Socket(remoteAddress.address, remoteAddress.port))
+      @Suppress("DEPRECATION")
+      val channel = io.netty.channel.socket.oio.OioSocketChannel(Socket(remoteAddress.address, remoteAddress.port))
       BootstrapUtil.initAndRegister(channel, bootstrap).sync()
       return ConnectToChannelResult(channel)
     }
@@ -265,6 +266,7 @@ fun HttpRequest.isLocalOrigin(onlyAnyOrLoopback: Boolean = true, hostsOnly: Bool
   return parseAndCheckIsLocalHost(origin, onlyAnyOrLoopback, hostsOnly) && parseAndCheckIsLocalHost(referrer, onlyAnyOrLoopback, hostsOnly)
 }
 
+@Suppress("SpellCheckingInspection")
 private fun isTrustedChromeExtension(url: Url): Boolean {
   return url.scheme == "chrome-extension" &&
          (url.authority == "hmhgeddbohgjknpmjagkdomcpobmllji" ||

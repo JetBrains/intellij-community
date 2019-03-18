@@ -5,6 +5,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -94,8 +95,9 @@ public class JvmSmartStepIntoActionHandler extends XSmartStepIntoHandler<JvmSmar
 
     @Nullable
     @Override
-    public PsiElement getHighlightElement() {
-      return myTarget.getHighlightElement();
+    public TextRange getHighlightRange() {
+      PsiElement element = myTarget.getHighlightElement();
+      return element != null ? element.getTextRange() : null;
     }
   }
 }

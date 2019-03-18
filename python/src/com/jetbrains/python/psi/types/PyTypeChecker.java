@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.pyi.PyiFile;
+import com.jetbrains.python.sdk.PythonSdkType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -840,7 +841,7 @@ public class PyTypeChecker {
     final PsiFile subClassFile = subClass.getContainingFile();
 
     final boolean isPy2 = subClassFile instanceof PyiFile
-                          ? PyBuiltinCache.getInstance(subClass).getObjectType(PyNames.TYPE_UNICODE) != null
+                          ? PythonSdkType.getLanguageLevelForSdk(PythonSdkType.findPythonSdk(subClassFile)).isPython2()
                           : LanguageLevel.forElement(subClass).isPython2();
 
     final String superClassName = superClass.getName();

@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.LineSeparator;
@@ -48,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -65,6 +67,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private final PendingTasksRunner myOnResizedRunner;
   private final TerminalConsoleContentHelper myContentHelper = new TerminalConsoleContentHelper(this);
 
+  private boolean myEnterKeyDefaultCodeEnabled = false; // TODO turn on by default in 2019.2
   private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();
 
   {
@@ -113,6 +116,21 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   public void setAutoNewLineMode(boolean enabled) {
     myKeyEncoder.setAutoNewLine(enabled);
+  }
+
+  /**
+   * @deprecated use
+   */
+  @Deprecated
+  @NotNull
+  public TerminalExecutionConsole withEnterKeyLineSeparator(@NotNull LineSeparator lineSeparator) {
+    return this;
+  }
+
+  @NotNull
+  public TerminalExecutionConsole withEnterKeyDefaultCodeEnabled(boolean enterKeyDefaultCodeEnabled) {
+    myEnterKeyDefaultCodeEnabled = enterKeyDefaultCodeEnabled;
+    return this;
   }
 
   public void addMessageFilter(Project project, Filter filter) {
@@ -295,7 +313,9 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   }
 
   public static boolean isAcceptable(@NotNull ProcessHandler processHandler) {
-    return processHandler instanceof OSProcessHandler && ((OSProcessHandler)processHandler).getProcess() instanceof PtyProcess;
+    return processHandler instanceof OSProcessHandler &&
+           ((OSProcessHandler)processHandler).getProcess() instanceof PtyProcess &&
+           !(processHandler instanceof ColoredProcessHandler);
   }
 
   private class ConsoleTerminalWidget extends JBTerminalWidget implements DataProvider {
@@ -330,11 +350,15 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       return new TerminalStarter(terminal, connector, myDataStream) {
         @Override
         public byte[] getCode(int key, int modifiers) {
-          if (key == 10) {
+          if (key == KeyEvent.VK_ENTER) {
+            if (modifiers == 0 && myEnterKeyDefaultCodeEnabled) {
+              // pty4j expects \r on Windows and \n on Unix as Enter key code
+              // https://github.com/JetBrains/pty4j/commit/3166f860354c24740729999df51e9b8a46fb417c
+              return SystemInfo.isWindows ? LineSeparator.CR.getSeparatorBytes() : LineSeparator.LF.getSeparatorBytes();
+            }
             return myKeyEncoder.getCode(key, modifiers);
-          } else {
-            return super.getCode(key, modifiers);
           }
+          return super.getCode(key, modifiers);
         }
       };
     }

@@ -2,6 +2,9 @@
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivitySubNames;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +12,6 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
@@ -18,7 +20,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
@@ -68,6 +70,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Map;
@@ -83,24 +86,30 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public class UIUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
-
   public static final String BORDER_LINE = "<hr size=1 noshade>";
 
-  private static final StyleSheet DEFAULT_HTML_KIT_CSS;
+  private static StyleSheet DEFAULT_HTML_KIT_CSS;
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
 
-  static {
-    blockATKWrapper();
-    // save the default JRE CSS and ..
-    HTMLEditorKit kit = new HTMLEditorKit();
-    DEFAULT_HTML_KIT_CSS = kit.getStyleSheet();
-    // .. erase global ref to this CSS so no one can alter it
-    kit.setStyleSheet(null);
+  // should be here and not in JBUI to avoid dependency on JBUI class in initSystemFontData method
+  public static final boolean SCALE_VERBOSE = Boolean.getBoolean("ide.ui.scale.verbose");
 
-    // Applied to all JLabel instances, including subclasses. Supported in JBSDK only.
-    UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet());
+  static {
+    // static init it is hell - if this UIUtil static init is not called, null stylesheet added and it leads to NPE on some UI tests
+    // e.g. workaround is used in UiDslTest, where UIUtil is not called at all, so, UI tasks like "set comment text" failed because of NPE.
+    // (e.g. configurable tests - DatasourceConfigurableTest). It should be fixed, but for now old behaviour is preserved.
+    // StartupUtil set it to false, to ensure that init logic is predictable and called in a reliable manner
+    if (SystemProperties.getBooleanProperty("idea.ui.util.static.init.enabled", true)) {
+      blockATKWrapper();
+      configureHtmlKitStylesheet();
+    }
+  }
+
+  @NotNull
+  // cannot be static because logging maybe not configured yet
+  private static Logger getLogger() {
+    return Logger.getInstance("#com.intellij.util.ui.UIUtil");
   }
 
   @Deprecated
@@ -132,17 +141,20 @@ public class UIUtil {
     return isWindowClientPropertyTrue(dialog, "PossibleOwner");
   }
 
+  /*
+   * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
+   * which is called from Toolkit.getDefaultToolkit().
+   */
   private static void blockATKWrapper() {
-    /*
-     * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
-     * which is called from Toolkit.getDefaultToolkit().
-     */
-    if (!(SystemInfo.isLinux && Registry.is("linux.jdk.accessibility.atkwrapper.block"))) return;
+    // registry must be not used here, because this method called before application loading
+    if (!SystemInfo.isLinux || !SystemProperties.getBooleanProperty("linux.jdk.accessibility.atkwrapper.block", true)) {
+      return;
+    }
 
     if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
       // Replace AtkWrapper with a dummy Object. It'll be instantiated & GC'ed right away, a NOP.
       System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
-      LOG.info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219");
+      getLogger().info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219");
     }
   }
 
@@ -492,7 +504,7 @@ public class UIUtil {
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided system scale context is HiDPI.
    */
-  public static boolean isJreHiDPI(@Nullable ScaleContext ctx) {
+  public static boolean isJreHiDPI(@Nullable JBUIScale.ScaleContext ctx) {
     return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(ctx));
   }
 
@@ -511,7 +523,7 @@ public class UIUtil {
    * Returns whether the JRE-managed HiDPI mode is enabled.
    * (True for macOS JDK >= 7.10 versions)
    *
-   * @see JBUI.ScaleType
+   * @see JBUIScale.ScaleType
    */
   public static boolean isJreHiDPIEnabled() {
     if (jreHiDPI.get() != null) return jreHiDPI.get();
@@ -578,23 +590,23 @@ public class UIUtil {
         getScaleFactorMethod = Class.forName("sun.awt.CGraphicsDevice").getMethod("getScaleFactor");
       } catch (ClassNotFoundException | NoSuchMethodException e) {
         // not an Oracle Mac JDK or API has been changed
-        LOG.debug("CGraphicsDevice.getScaleFactor(): not an Oracle Mac JDK or API has been changed");
+        getLogger().debug("CGraphicsDevice.getScaleFactor(): not an Oracle Mac JDK or API has been changed");
       }
       catch (Exception e) {
-        LOG.debug(e);
-        LOG.debug("CGraphicsDevice.getScaleFactor(): probably it is Java 9");
+        getLogger().debug(e);
+        getLogger().debug("CGraphicsDevice.getScaleFactor(): probably it is Java 9");
       }
 
       try {
         isRetina =  getScaleFactorMethod == null || (Integer)getScaleFactorMethod.invoke(device) != 1;
       } catch (IllegalAccessException e) {
-        LOG.debug("CGraphicsDevice.getScaleFactor(): Access issue");
+        getLogger().debug("CGraphicsDevice.getScaleFactor(): Access issue");
         isRetina = false;
       } catch (InvocationTargetException e) {
-        LOG.debug("CGraphicsDevice.getScaleFactor(): Invocation issue");
+        getLogger().debug("CGraphicsDevice.getScaleFactor(): Invocation issue");
         isRetina = false;
       } catch (IllegalArgumentException e) {
-        LOG.debug("object is not an instance of declaring class: " + device.getClass().getName());
+        getLogger().debug("object is not an instance of declaring class: " + device.getClass().getName());
         isRetina = false;
       }
 
@@ -1119,7 +1131,7 @@ public class UIUtil {
 
   @NotNull
   public static Color getContextHelpForeground() {
-    return JBColor.namedColor("Label.infoForeground", Gray.x78);
+    return JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
   }
 
   @NotNull
@@ -2365,7 +2377,7 @@ public class UIUtil {
         ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
       }
       catch (Exception e) {
-        LOG.error(e);
+        getLogger().error(e);
       }
 
       if (i % 10000 == 0) {
@@ -2400,7 +2412,7 @@ public class UIUtil {
       queue.take();
     }
     catch (InterruptedException e) {
-      LOG.error(e);
+      getLogger().error(e);
     }
   }
 
@@ -2770,11 +2782,11 @@ public class UIUtil {
     if (url == null) return null;
     try {
       StyleSheet styleSheet = new StyleSheet();
-      styleSheet.loadRules(new InputStreamReader(url.openStream(), CharsetToolkit.UTF8), url);
+      styleSheet.loadRules(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8), url);
       return styleSheet;
     }
     catch (IOException e) {
-      LOG.warn(url + " loading failed", e);
+      getLogger().warn(url + " loading failed", e);
       return null;
     }
   }
@@ -3100,7 +3112,7 @@ public class UIUtil {
         EdtInvocationManager.getInstance().invokeAndWait(runnable);
       }
       catch (Exception e) {
-        LOG.error(e);
+        getLogger().error(e);
       }
     }
   }
@@ -3210,12 +3222,36 @@ public class UIUtil {
     return systemLaFClassName = UIManager.getSystemLookAndFeelClassName();
   }
 
-  public static void initDefaultLAF() {
+  public static void initDefaultLaF() {
+    blockATKWrapper();
+
+    // separate activity to make clear that it is not our code takes time
+    Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init AWT Toolkit");
+    Toolkit.getDefaultToolkit();
+    activity = activity.endAndStart("configure html kit");
+
+    // this will use toolkit, order of code is critically important
+    configureHtmlKitStylesheet();
+
+    activity = activity.endAndStart(ActivitySubNames.INIT_DEFAULT_LAF);
     try {
       UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
-      initSystemFontData();
     }
-    catch (Exception ignore) {}
+    catch (Exception e) {
+      getLogger().error("Cannot initialize default LaF", e);
+    }
+    activity.end();
+  }
+
+  private static void configureHtmlKitStylesheet() {
+    // save the default JRE CSS and ..
+    HTMLEditorKit kit = new HTMLEditorKit();
+    DEFAULT_HTML_KIT_CSS = kit.getStyleSheet();
+    // .. erase global ref to this CSS so no one can alter it
+    kit.setStyleSheet(null);
+
+    // Applied to all JLabel instances, including subclasses. Supported in JBR only.
+    UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", JBHtmlEditorKit.createStyleSheet());
   }
 
   public static void initSystemFontData() {
@@ -3223,14 +3259,21 @@ public class UIUtil {
 
     // With JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = getLabelFont();
-    if (JBUI.SCALE_VERBOSE) {
-      LOG.info(String.format("Label font: %s, %d", font.getFontName(), font.getSize()));
+    if (SystemInfo.isMacOSElCapitan) {
+      // Text family should be used for relatively small sizes (<20pt), don't change to Display
+      // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
+      font = new Font(".SF NS Text", font.getStyle(), font.getSize());
+    }
+
+    boolean isScaleVerbose = SCALE_VERBOSE;
+    if (isScaleVerbose) {
+      getLogger().info(String.format("Label font: %s, %d", font.getFontName(), font.getSize()));
     }
 
     if (SystemInfo.isLinux) {
       Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
-      if (JBUI.SCALE_VERBOSE) {
-        LOG.info(String.format("gnome.Xft/DPI: %s", value));
+      if (isScaleVerbose) {
+        getLogger().info(String.format("gnome.Xft/DPI: %s", value));
       }
       if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
         // If the property is defined, then:
@@ -3240,16 +3283,16 @@ public class UIUtil {
         if (dpi < 50) dpi = 50;
         float scale = isJreHiDPIEnabled() ? 1f : JBUI.discreteScale(dpi / 96f); // no scaling in JRE-HiDPI mode
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
-        if (JBUI.SCALE_VERBOSE) {
-          LOG.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE));
+        if (isScaleVerbose) {
+          getLogger().info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE));
         }
       }
       else if (!SystemInfo.isJetBrainsJvm) {
         // With Oracle JDK: derive scale from X server DPI, do not change DEF_SYSTEM_FONT_SIZE
         float size = DEF_SYSTEM_FONT_SIZE * getScreenScale();
         font = font.deriveFont(size);
-        if (JBUI.SCALE_VERBOSE) {
-          LOG.info(String.format("(Not-JB JRE) reset font size: %.2f", size));
+        if (isScaleVerbose) {
+          getLogger().info(String.format("(Not-JB JRE) reset font size: %.2f", size));
         }
       }
     }
@@ -3258,14 +3301,14 @@ public class UIUtil {
       Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
       if (winFont != null) {
         font = winFont; // comes scaled
-        if (JBUI.SCALE_VERBOSE) {
-          LOG.info(String.format("Windows sys font: %s, %d", winFont.getFontName(), winFont.getSize()));
+        if (isScaleVerbose) {
+          getLogger().info(String.format("Windows sys font: %s, %d", winFont.getFontName(), winFont.getSize()));
         }
       }
     }
     ourSystemFontData = Pair.create(font.getName(), font.getSize());
-    if (JBUI.SCALE_VERBOSE) {
-      LOG.info(String.format("ourSystemFontData: %s, %d", ourSystemFontData.first, ourSystemFontData.second));
+    if (isScaleVerbose) {
+      getLogger().info(String.format("ourSystemFontData: %s, %d", ourSystemFontData.first, ourSystemFontData.second));
     }
   }
 
@@ -3528,9 +3571,8 @@ public class UIUtil {
 
   @Nullable
   public static <T extends JComponent> T findComponentOfType(JComponent parent, Class<T> cls) {
-    if (parent == null || cls.isAssignableFrom(parent.getClass())) {
-      @SuppressWarnings("unchecked") final T t = (T)parent;
-      return t;
+    if (parent == null || cls.isInstance(parent)) {
+      return cls.cast(parent);
     }
     for (Component component : parent.getComponents()) {
       if (component instanceof JComponent) {
@@ -4070,7 +4112,9 @@ public class UIUtil {
       try {
         onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class).invoke(onWindow, set);
       }
-      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) { LOG.debug(e); }
+      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        getLogger().debug(e);
+      }
     }
   }
 
@@ -4182,7 +4226,7 @@ public class UIUtil {
         clip.start();
       }
       catch (Exception e) {
-        LOG.info(e);
+        getLogger().info(e);
       }
     }, "play sound").start();
   }
@@ -4492,7 +4536,7 @@ public class UIUtil {
   }
 
   public static void typeAheadUntilFocused(InputEvent event, @NotNull Component component) {
-    LOG.assertTrue(component.isFocusable());
+    getLogger().assertTrue(component.isFocusable());
     Method enqueueKeyEventsMethod = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class, "enqueueKeyEvents", long.class, Component.class);
     try {
       if (enqueueKeyEventsMethod != null) {
@@ -4501,7 +4545,7 @@ public class UIUtil {
       }
     }
     catch (IllegalAccessException | InvocationTargetException e) {
-      LOG.debug(e);
+      getLogger().debug(e);
     }
   }
 

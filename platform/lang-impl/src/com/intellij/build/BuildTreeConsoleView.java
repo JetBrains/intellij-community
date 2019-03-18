@@ -8,8 +8,12 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.EditSourceAction;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -66,6 +70,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import static com.intellij.build.BuildView.CONSOLE_VIEW_NAME;
+
 /**
  * @author Vladislav.Soroka
  */
@@ -73,20 +79,26 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private static final Logger LOG = Logger.getInstance(BuildTreeConsoleView.class);
 
   @NonNls private static final String TREE = "tree";
+  @NonNls private static final String SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
   private final JPanel myPanel = new JPanel();
   private final Map<Object, ExecutionNode> nodesMap = ContainerUtil.newConcurrentMap();
 
   private final Project myProject;
-  private final DetailsHandler myDetailsHandler;
+  private final ConsoleViewHandler myConsoleViewHandler;
+  @NotNull
+  private final BuildViewSettingsProvider myViewSettingsProvider;
   private final TableColumn myTimeColumn;
   private final String myWorkingDir;
-  private volatile int myTimeColumnWidth;
   private final AtomicBoolean myDisposed = new AtomicBoolean();
   private final StructureTreeModel<SimpleTreeStructure> myTreeModel;
   private final TreeTableTree myTree;
   private final ExecutionNode myRootNode;
+  private volatile int myTimeColumnWidth;
 
-  public BuildTreeConsoleView(Project project, BuildDescriptor buildDescriptor) {
+  public BuildTreeConsoleView(Project project,
+                              BuildDescriptor buildDescriptor,
+                              @Nullable ExecutionConsole executionConsole,
+                              @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
     myProject = project;
     myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
     final ColumnInfo[] COLUMNS = {
@@ -107,6 +119,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         }
       }
     };
+    myViewSettingsProvider = buildViewSettingsProvider;
     myRootNode = new ExecutionNode(myProject, null);
     myRootNode.setAutoExpandNode(true);
 
@@ -155,43 +168,34 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
     });
     final TreeCellRenderer treeCellRenderer = myTree.getCellRenderer();
-    myTree.setCellRenderer(new TreeCellRenderer() {
-      @Override
-      public Component getTreeCellRendererComponent(JTree tree,
-                                                    Object value,
-                                                    boolean selected,
-                                                    boolean expanded,
-                                                    boolean leaf,
-                                                    int row,
-                                                    boolean hasFocus) {
-        final Component rendererComponent =
-          treeCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-        if (rendererComponent instanceof SimpleColoredComponent) {
-          Color bg = UIUtil.getTreeBackground(selected, true);
-          Color fg = UIUtil.getTreeForeground(selected, true);
-          if (selected) {
-            for (SimpleColoredComponent.ColoredIterator it = ((SimpleColoredComponent)rendererComponent).iterator(); it.hasNext(); ) {
-              it.next();
-              int offset = it.getOffset();
-              int endOffset = it.getEndOffset();
-              SimpleTextAttributes currentAttributes = it.getTextAttributes();
-              SimpleTextAttributes newAttributes =
-                new SimpleTextAttributes(bg, fg, currentAttributes.getWaveColor(), currentAttributes.getStyle());
-              it.split(endOffset - offset, newAttributes);
-            }
+    myTree.setCellRenderer((tree, value, selected, expanded, leaf, row, hasFocus) -> {
+      final Component rendererComponent =
+        treeCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+      if (rendererComponent instanceof SimpleColoredComponent) {
+        Color bg = UIUtil.getTreeBackground(selected, true);
+        Color fg = UIUtil.getTreeForeground(selected, true);
+        if (selected) {
+          for (SimpleColoredComponent.ColoredIterator it = ((SimpleColoredComponent)rendererComponent).iterator(); it.hasNext(); ) {
+            it.next();
+            int offset = it.getOffset();
+            int endOffset = it.getEndOffset();
+            SimpleTextAttributes currentAttributes = it.getTextAttributes();
+            SimpleTextAttributes newAttributes =
+              new SimpleTextAttributes(bg, fg, currentAttributes.getWaveColor(), currentAttributes.getStyle());
+            it.split(endOffset - offset, newAttributes);
           }
-
-          SpeedSearchUtil.applySpeedSearchHighlighting(treeTable, (SimpleColoredComponent)rendererComponent, true, selected);
         }
-        return rendererComponent;
+
+        SpeedSearchUtil.applySpeedSearchHighlighting(treeTable, (SimpleColoredComponent)rendererComponent, true, selected);
       }
+      return rendererComponent;
     });
     new TreeTableSpeedSearch(treeTable).setComparator(new SpeedSearchComparator(false));
     treeTable.setTableHeader(null);
 
     myTimeColumn = treeTable.getColumnModel().getColumn(1);
     myTimeColumn.setResizable(false);
-    updateTimeColumnWidth("Running for " + StringUtil.formatDuration(11111L), true);
+    updateTimeColumnWidth(StringUtil.formatDurationApproximate(11111L), true);
 
     TreeUtil.installActions(myTree);
 
@@ -202,26 +206,35 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myPanel.setLayout(new BorderLayout());
     ThreeComponentsSplitter myThreeComponentsSplitter = new ThreeComponentsSplitter() {
       @Override
+      public void setFirstSize(int size) {
+        super.setFirstSize(size);
+        float proportion = size / (float)getWidth();
+        PropertiesComponent.getInstance().setValue(SPLITTER_PROPERTY, proportion, 0.3f);
+      }
+
+      @Override
       public void doLayout() {
         super.doLayout();
-        JComponent detailsComponent = myDetailsHandler.getComponent();
+        JComponent detailsComponent = myConsoleViewHandler.getComponent();
         if (detailsComponent != null && detailsComponent.isVisible()) {
-          int firstSize = getFirstSize();
-          int lastSize = getLastSize();
-          if (firstSize == 0 && lastSize == 0) {
-            int width = Math.round(getWidth() / 2f);
-            if (width > 0) {
-              setFirstSize(width);
-            }
-          }
+          updateSplitter(this);
         }
       }
     };
     Disposer.register(this, myThreeComponentsSplitter);
     myThreeComponentsSplitter.setFirstComponent(myContentPanel);
-    myDetailsHandler = new DetailsHandler(myProject, myTree, myThreeComponentsSplitter);
-    myThreeComponentsSplitter.setLastComponent(myDetailsHandler.getComponent());
+    myConsoleViewHandler =
+      new ConsoleViewHandler(myProject, myTree, myThreeComponentsSplitter, executionConsole, buildViewSettingsProvider);
+    myThreeComponentsSplitter.setLastComponent(myConsoleViewHandler.getComponent());
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
+  }
+
+  @Override
+  public void clear() {
+    getRootElement().removeChildren();
+    nodesMap.clear();
+    myConsoleViewHandler.clear();
+    myTreeModel.invalidate();
   }
 
   private ExecutionNode getRootElement() {
@@ -232,96 +245,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
   }
 
-  @Override
-  public void clear() {
-    getRootElement().removeChildren();
-    nodesMap.clear();
-    myDetailsHandler.clear();
-    myTreeModel.invalidate();
-  }
-
-  @Override
-  public void scrollTo(int offset) {
-  }
-
-  @Override
-  public void attachToProcess(ProcessHandler processHandler) {
-  }
-
-  @Override
-  public void setOutputPaused(boolean value) {
-  }
-
-  @Override
-  public boolean isOutputPaused() {
-    return false;
-  }
-
-  @Override
-  public boolean hasDeferredOutput() {
-    return false;
-  }
-
-  @Override
-  public void performWhenNoDeferredOutput(@NotNull Runnable runnable) {
-  }
-
-  @Override
-  public void setHelpId(@NotNull String helpId) {
-  }
-
-  @Override
-  public void addMessageFilter(@NotNull Filter filter) {
-  }
-
-  @Override
-  public void printHyperlink(@NotNull String hyperlinkText, @Nullable HyperlinkInfo info) {
-  }
-
-  @Override
-  public int getContentSize() {
-    return 0;
-  }
-
-  @Override
-  public boolean canPause() {
-    return false;
-  }
-
-  @NotNull
-  @Override
-  public AnAction[] createConsoleActions() {
-    return AnAction.EMPTY_ARRAY;
-  }
-
-  @Override
-  public void allowHeavyFilters() {
-  }
-
-  @Override
-  public JComponent getComponent() {
-    return myPanel;
-  }
-
-  @Override
-  public JComponent getPreferredFocusableComponent() {
-    return myTree;
-  }
-
-  @Override
-  public void dispose() {
-    myDisposed.set(true);
-  }
-
-  public boolean isDisposed() {
-    return myDisposed.get();
-  }
-
-  @Override
-  public void onEvent(@NotNull BuildEvent event) {
-    myTreeModel.getInvoker().runOrInvokeLater(() -> onEventInternal(event));
-  }
-
   public void onEventInternal(@NotNull BuildEvent event) {
     ExecutionNode parentNode = event.getParentId() == null ? null : nodesMap.get(event.getParentId());
     ExecutionNode currentNode = nodesMap.get(event.getId());
@@ -330,6 +253,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       if (currentNode == null) {
         if (event instanceof StartBuildEvent) {
           currentNode = rootElement;
+          installContextMenu((StartBuildEvent)event);
         }
         else {
           if (event instanceof MessageEvent) {
@@ -405,9 +329,12 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       aHint = aHint == null ? "at " + time : aHint + " at " + time;
       currentNode.setHint(aHint);
       updateTimeColumnWidth(myTimeColumnWidth);
-      if (myDetailsHandler.myExecutionNode == null) {
+      if (myViewSettingsProvider.isSideBySideView()) {
+        currentNode.setResult(null);
+      }
+      if (myConsoleViewHandler.myExecutionNode == null) {
         ExecutionNode element = getRootElement();
-        ApplicationManager.getApplication().invokeLater(() -> myDetailsHandler.setNode(element));
+        ApplicationManager.getApplication().invokeLater(() -> myConsoleViewHandler.setNode(element));
       }
 
       if (((FinishBuildEvent)event).getResult() instanceof FailureResult) {
@@ -428,6 +355,121 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
     }
     scheduleUpdate(currentNode);
+  }
+
+  private void installContextMenu(@NotNull StartBuildEvent startBuildEvent) {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      final DefaultActionGroup group = new DefaultActionGroup();
+      final DefaultActionGroup rerunActionGroup = new DefaultActionGroup();
+      AnAction[] restartActions = startBuildEvent.getRestartActions();
+      for (AnAction anAction : restartActions) {
+        rerunActionGroup.add(anAction);
+      }
+      if (restartActions.length > 0) {
+        group.addAll(rerunActionGroup);
+        group.addSeparator();
+      }
+      EditSourceAction edit = new EditSourceAction();
+      ActionUtil.copyFrom(edit, "EditSource");
+      group.add(edit);
+
+      TreeTable treeTable = myTree.getTreeTable();
+      PopupHandler.installPopupHandler(treeTable, group, "BuildView");
+    });
+  }
+
+  @Override
+  public void scrollTo(int offset) {
+  }
+
+  @Override
+  public void attachToProcess(ProcessHandler processHandler) {
+  }
+
+  @Override
+  public boolean isOutputPaused() {
+    return false;
+  }
+
+  @Override
+  public void setOutputPaused(boolean value) {
+  }
+
+  @Override
+  public boolean hasDeferredOutput() {
+    return false;
+  }
+
+  @Override
+  public void performWhenNoDeferredOutput(@NotNull Runnable runnable) {
+  }
+
+  @Override
+  public void setHelpId(@NotNull String helpId) {
+  }
+
+  @Override
+  public void addMessageFilter(@NotNull Filter filter) {
+  }
+
+  @Override
+  public void printHyperlink(@NotNull String hyperlinkText, @Nullable HyperlinkInfo info) {
+  }
+
+  @Override
+  public int getContentSize() {
+    return 0;
+  }
+
+  @Override
+  public boolean canPause() {
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public AnAction[] createConsoleActions() {
+    return AnAction.EMPTY_ARRAY;
+  }
+
+  @Override
+  public void allowHeavyFilters() {
+  }
+
+  @Override
+  public JComponent getComponent() {
+    return myPanel;
+  }
+
+  @Override
+  public JComponent getPreferredFocusableComponent() {
+    return myTree;
+  }
+
+  @Override
+  public void dispose() {
+    myDisposed.set(true);
+  }
+
+  public boolean isDisposed() {
+    return myDisposed.get();
+  }
+
+  @Override
+  public void onEvent(@NotNull BuildEvent event) {
+    myTreeModel.getInvoker().runOrInvokeLater(() -> onEventInternal(event));
+  }
+
+  private static void updateSplitter(@NotNull ThreeComponentsSplitter myThreeComponentsSplitter) {
+    int firstSize = myThreeComponentsSplitter.getFirstSize();
+    int splitterWidth = myThreeComponentsSplitter.getWidth();
+    if (firstSize == 0) {
+      float proportion = PropertiesComponent.getInstance().getFloat(SPLITTER_PROPERTY, 0.3f);
+      int width = Math.round(splitterWidth * proportion);
+      if (width > 0) {
+        myThreeComponentsSplitter.setFirstSize(width);
+      }
+    }
   }
 
   protected void expand(TreeTableTree tree) {
@@ -461,12 +503,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     final MessageEvent.Kind eventKind = messageEvent.getKind();
     if (!(groupNodeResult instanceof MessageEventResult) ||
         ((MessageEventResult)groupNodeResult).getKind().compareTo(eventKind) > 0) {
-      messagesGroupNode.setResult(new MessageEventResult() {
-        @Override
-        public MessageEvent.Kind getKind() {
-          return eventKind;
-        }
-      });
+      messagesGroupNode.setResult((MessageEventResult)() -> eventKind);
     }
     if (messageEvent instanceof FileMessageEvent) {
       ExecutionNode fileParentNode = messagesGroupNode;
@@ -522,41 +559,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     }
     return parentNode;
   }
-
-  @NotNull
-  private static ExecutionNode getOrCreateMessagesNode(MessageEvent messageEvent,
-                                                       String nodeId,
-                                                       ExecutionNode parentNode,
-                                                       String nodeName,
-                                                       String nodeTitle,
-                                                       boolean autoExpandNode,
-                                                       @Nullable Supplier<? extends Icon> iconProvider,
-                                                       @Nullable Navigatable navigatable,
-                                                       Map<Object, ExecutionNode> nodesMap,
-                                                       Project project) {
-    ExecutionNode node = nodesMap.get(nodeId);
-    if (node == null) {
-      node = new ExecutionNode(project, parentNode);
-      node.setName(nodeName);
-      node.setTitle(nodeTitle);
-      if (autoExpandNode) {
-        node.setAutoExpandNode(true);
-      }
-      node.setStartTime(messageEvent.getEventTime());
-      node.setEndTime(messageEvent.getEventTime());
-      if (iconProvider != null) {
-        node.setIconProvider(iconProvider);
-      }
-      if (navigatable != null) {
-        node.setNavigatable(navigatable);
-      }
-      parentNode.add(node);
-      nodesMap.put(nodeId, node);
-    }
-    return node;
-  }
-
-
 
   public void hideRootNode() {
     UIUtil.invokeLaterIfNeeded(() -> {
@@ -617,30 +619,78 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return myTree;
   }
 
-  private static class DetailsHandler {
-    private final ThreeComponentsSplitter mySplitter;
+  @NotNull
+  private static ExecutionNode getOrCreateMessagesNode(MessageEvent messageEvent,
+                                                       String nodeId,
+                                                       ExecutionNode parentNode,
+                                                       String nodeName,
+                                                       String nodeTitle,
+                                                       boolean autoExpandNode,
+                                                       @Nullable Supplier<? extends Icon> iconProvider,
+                                                       @Nullable Navigatable navigatable,
+                                                       Map<Object, ExecutionNode> nodesMap,
+                                                       Project project) {
+    ExecutionNode node = nodesMap.get(nodeId);
+    if (node == null) {
+      node = new ExecutionNode(project, parentNode);
+      node.setName(nodeName);
+      node.setTitle(nodeTitle);
+      if (autoExpandNode) {
+        node.setAutoExpandNode(true);
+      }
+      node.setStartTime(messageEvent.getEventTime());
+      node.setEndTime(messageEvent.getEventTime());
+      if (iconProvider != null) {
+        node.setIconProvider(iconProvider);
+      }
+      if (navigatable != null) {
+        node.setNavigatable(navigatable);
+      }
+      parentNode.add(node);
+      nodesMap.put(nodeId, node);
+    }
+    return node;
+  }
+
+  private static class ConsoleViewHandler {
+    private static final String TASK_OUTPUT_VIEW_NAME = "taskOutputView";
+    private final JPanel myPanel;
+    private final CompositeView<ExecutionConsole> myView;
+    @NotNull
+    private final BuildViewSettingsProvider myViewSettingsProvider;
     @Nullable
     private ExecutionNode myExecutionNode;
-    private final ConsoleView myConsole;
-    private final JPanel myPanel;
 
-    DetailsHandler(Project project,
-                          TreeTableTree tree,
-                          ThreeComponentsSplitter threeComponentsSplitter) {
-      myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
-      mySplitter = threeComponentsSplitter;
+    ConsoleViewHandler(Project project,
+                       TreeTableTree tree,
+                       ThreeComponentsSplitter threeComponentsSplitter,
+                       @Nullable ExecutionConsole executionConsole,
+                       @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
       myPanel = new JPanel(new BorderLayout());
-      JComponent consoleComponent = myConsole.getComponent();
-      AnAction[] consoleActions = myConsole.createConsoleActions();
+      ConsoleView myNodeConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+      myViewSettingsProvider = buildViewSettingsProvider;
+      myView = new CompositeView<>(null);
+      if (executionConsole != null && buildViewSettingsProvider.isSideBySideView()) {
+        myView.addView(executionConsole, CONSOLE_VIEW_NAME, true);
+      }
+      myView.addView(myNodeConsole, TASK_OUTPUT_VIEW_NAME, false);
+      if (buildViewSettingsProvider.isSideBySideView()) {
+        myView.enableView(CONSOLE_VIEW_NAME, false);
+        myPanel.setVisible(true);
+      }
+      else {
+        myPanel.setVisible(false);
+      }
+      JComponent consoleComponent = myNodeConsole.getComponent();
+      AnAction[] consoleActions = myNodeConsole.createConsoleActions();
       consoleComponent.setFocusable(true);
       final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
       consoleComponent.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT),
                                                     new SideBorder(editorBackground, SideBorder.LEFT)));
-      myPanel.add(consoleComponent, BorderLayout.CENTER);
+      myPanel.add(myView.getComponent(), BorderLayout.CENTER);
       final ActionToolbar toolbar = ActionManager.getInstance()
         .createActionToolbar("BuildResults", new DefaultActionGroup(consoleActions), false);
       myPanel.add(toolbar.getComponent(), BorderLayout.EAST);
-      myPanel.setVisible(false);
       tree.addTreeSelectionListener(e -> {
         TreePath path = e.getPath();
         if (path == null || !e.isAddedPath()) {
@@ -650,15 +700,21 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         setNode(selectionPath != null ? (DefaultMutableTreeNode)selectionPath.getLastPathComponent() : null);
       });
 
-      Disposer.register(threeComponentsSplitter, myConsole);
+      Disposer.register(threeComponentsSplitter, myView);
+      Disposer.register(threeComponentsSplitter, myNodeConsole);
+    }
+
+    private ConsoleView getTaskOutputView() {
+      return (ConsoleView)myView.getView(TASK_OUTPUT_VIEW_NAME);
     }
 
     public boolean setNode(@NotNull ExecutionNode node) {
       EventResult eventResult = node.getResult();
       boolean hasChanged = false;
 
+      ConsoleView taskOutputView = getTaskOutputView();
       if (eventResult instanceof FailureResult) {
-        myConsole.clear();
+        taskOutputView.clear();
         List<? extends Failure> failures = ((FailureResult)eventResult).getFailures();
         if (failures.isEmpty()) return false;
         for (Iterator<? extends Failure> iterator = failures.iterator(); iterator.hasNext(); ) {
@@ -671,7 +727,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
           printDetails(failure, text);
           hasChanged = true;
           if (iterator.hasNext()) {
-            myConsole.print("\n\n", ConsoleViewContentType.NORMAL_OUTPUT);
+            taskOutputView.print("\n\n", ConsoleViewContentType.NORMAL_OUTPUT);
           }
         }
       }
@@ -683,27 +739,22 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         if (details.isEmpty()) {
           return false;
         }
-        myConsole.clear();
+        taskOutputView.clear();
         printDetails(null, details);
         hasChanged = true;
       }
 
       if (!hasChanged) return false;
 
-      myConsole.scrollTo(0);
-      int firstSize = mySplitter.getFirstSize();
-      int lastSize = mySplitter.getLastSize();
+      taskOutputView.scrollTo(0);
 
-      if (firstSize == 0 && lastSize == 0) {
-        int width = Math.round(mySplitter.getWidth() / 2f);
-        mySplitter.setFirstSize(width);
-      }
+      myView.enableView(TASK_OUTPUT_VIEW_NAME, !myViewSettingsProvider.isSideBySideView());
       myPanel.setVisible(true);
       return true;
     }
 
-    private boolean printDetails(Failure failure, @Nullable String details) {
-      return BuildConsoleUtils.printDetails(myConsole, failure, details);
+    private void printDetails(Failure failure, @Nullable String details) {
+      BuildConsoleUtils.printDetails(getTaskOutputView(), failure, details);
     }
 
     public void setNode(@Nullable DefaultMutableTreeNode node) {
@@ -716,7 +767,13 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
 
       myExecutionNode = null;
-      myPanel.setVisible(false);
+      if (myView.getView(CONSOLE_VIEW_NAME) != null && myViewSettingsProvider.isSideBySideView()) {
+        myView.enableView(CONSOLE_VIEW_NAME, false);
+        myPanel.setVisible(true);
+      }
+      else {
+        myPanel.setVisible(false);
+      }
     }
 
     public JComponent getComponent() {
@@ -725,7 +782,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
     public void clear() {
       myPanel.setVisible(false);
-      myConsole.clear();
+      getTaskOutputView().clear();
     }
   }
 }

@@ -150,7 +150,7 @@ public abstract class DumbService {
   /**
    * Pause the current thread until dumb mode ends, and then attempt to execute the runnable. If it fails due to another dumb mode having started,
    * try again until the runnable can complete successfully.
-   * This method provides no guarantees and should be avoided, please use {@link #runReadActionInSmartMode} instead.
+   * @deprecated This method provides no guarantees and should be avoided, please use {@link #runReadActionInSmartMode} instead.
    */
   @Deprecated
   public void repeatUntilPassesInSmartMode(@NotNull final Runnable r) {

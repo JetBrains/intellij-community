@@ -107,7 +107,7 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
    * There is a number of well-known methods where automatic inference fails (for example, {@link Objects#requireNonNull(Object)}.
    * For such methods, contracts are hardcoded, and for their parameters inferred @NotNull are suppressed.<p/>
    *
-   * {@link Contract} and {@link NotNull} annotations on methods are not necessarily applicable to the overridden implementations, so they're ignored, too.<p/>
+   * {@link org.jetbrains.annotations.Contract} and {@link NotNull} annotations on methods are not necessarily applicable to the overridden implementations, so they're ignored, too.<p/>
    *
    * @return whether inference is to be suppressed the given annotation on the given method or parameter
    */
@@ -171,10 +171,7 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
   }
 
   private boolean hasExplicitNullability(PsiModifierListOwner owner) {
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-    return findAnnotation(owner, manager.getNotNulls(), true) != null ||
-           findAnnotation(owner, manager.getNullables(), true) != null ||
-           manager.findNullityDefaultInHierarchy(owner) != null;
+    return NullableNotNullManager.getInstance(myProject).findExplicitNullability(owner) != null;
   }
 
   @Nullable

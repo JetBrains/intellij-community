@@ -144,6 +144,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testEnumConstantConstructorParameterNestedLambda() {
+    doTest();
+  }
+
   public void testEnumConstantConstructorWithArgs() {
     doTest();
   }

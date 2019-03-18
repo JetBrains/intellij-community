@@ -330,6 +330,23 @@ class CompilationPartsUtil {
           return
         }
       }
+      executor.submit {
+        // Remove stalled directories not present in metadata
+        def expectedDirectories = new HashSet<String>(metadata.files.keySet())
+        // We need to traverse with depth 2 since first level is [production,test]
+        def subroots = (new File(classesOutput).listFiles() ?: new File[0]).toList().findAll { it.directory }.collect { it.absoluteFile }
+        for (File subroot : subroots) {
+          def modules = subroot.listFiles()
+          if (modules == null) continue
+          for (File module : modules) {
+            def name = "$subroot.name/$module.name".toString()
+            if (!expectedDirectories.contains(name)) {
+              messages.info("Removing stalled directory '$name'")
+              FileUtil.delete(module)
+            }
+          }
+        }
+      }
       executor.waitForAllComplete(messages)
       verifyTime += TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
     }

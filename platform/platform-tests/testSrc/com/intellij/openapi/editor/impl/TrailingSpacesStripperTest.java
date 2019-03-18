@@ -195,27 +195,6 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     checkResultByText(" xxx <caret>\nyyy\n\t\t\t\n");
   }
 
-  public void testOverrideStripTrailingSpaces() {
-    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-    configureFromFileText("x.txt", "xxx<caret>\n   222    \nyyy");
-    myVFile.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY,
-                        EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-    type(' ');
-    FileDocumentManager.getInstance().saveAllDocuments();
-    checkResultByText("xxx <caret>\n   222\nyyy");
-  }
-
-  public void testOverrideEnsureNewline() {
-    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    settings.setEnsureNewLineAtEOF(false);
-    configureFromFileText("x.txt", "XXX<caret>\nYYY");
-    myVFile.putUserData(TrailingSpacesStripper.OVERRIDE_ENSURE_NEWLINE_KEY, Boolean.TRUE);
-    type(' ');
-    FileDocumentManager.getInstance().saveAllDocuments();
-    checkResultByText("XXX <caret>\nYYY\n");
-  }
-
   public void testModifySameLineInTwoFilesAndSaveAllShouldStripAtLeastOneFile() {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);

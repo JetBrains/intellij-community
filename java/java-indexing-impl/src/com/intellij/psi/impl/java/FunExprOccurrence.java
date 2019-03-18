@@ -103,17 +103,29 @@ public class FunExprOccurrence {
     if (referenceContext.isEmpty()) return true;
 
     Set<PsiClass> qualifiers = null;
+    int maxPossiblePackageComponent = referenceContext.size() - 2;
+    for (int i = 0; i < referenceContext.size(); i++) {
+      if (referenceContext.get(i).isCall) {
+        maxPossiblePackageComponent = i - 2;
+        break;
+      }
+    }
     for (int i = 0; i < referenceContext.size(); i++) {
       ReferenceChainLink link = referenceContext.get(i);
-      List<? extends PsiMember> candidates = i == 0 ? link.getGlobalMembers(placeFile, samClasses.get(0).getProject())
-                                                    : link.getSymbolMembers(qualifiers);
-      if (candidates == null) return true;
+      if (qualifiers == null && i > 0 && i <= maxPossiblePackageComponent) {
+        // probably fully qualified name: skip to possible class name (right before the first call)
+        continue;
+      }
+      List<? extends PsiMember> candidates = qualifiers == null ? link.getGlobalMembers(placeFile, samClasses.get(0).getProject())
+                                                                : link.getSymbolMembers(qualifiers);
+      if (candidates == null) {
+        continue;
+      }
 
       if (i == referenceContext.size() - 1) {
         return ContainerUtil.exists(candidates, m -> isCompatible(link, m, samClasses));
       }
       qualifiers = ApproximateResolver.getDefiniteSymbolTypes(candidates, qualifiers != null ? qualifiers : Collections.emptySet());
-      if (qualifiers == null) return true;
     }
 
     return true;

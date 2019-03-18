@@ -15,10 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static com.intellij.codeInsight.AnnotationUtil.*;
 
@@ -209,8 +206,6 @@ public abstract class NullableNotNullManager {
     if (type == null || TypeConversionUtil.isPrimitiveAndNotNull(type)) return null;
 
     List<String> nullables = getNullablesWithNickNames();
-    Set<String> annotationNames = ContainerUtil.newHashSet(nullables);
-    annotationNames.addAll(getNotNullsWithNickNames());
     PsiAnnotation annotation = findPlainNullityAnnotation(owner, false);
     if (annotation != null) {
       return new NullabilityAnnotationInfo(annotation,
@@ -218,6 +213,25 @@ public abstract class NullableNotNullManager {
                                            false);
     }
     return null;
+  }
+
+  /**
+   * Returns information about explicit nullability annotation (without looking into external/inferred annotations, 
+   * but looking into container annotations). This method is rarely useful in client code, it's designed mostly 
+   * to aid the inference procedure.
+   *
+   * @param owner element to get the info about
+   * @return the annotation info or null if no explicit annotation found
+   */
+  @Nullable
+  public NullabilityAnnotationInfo findExplicitNullability(PsiModifierListOwner owner) {
+    PsiAnnotation annotation = findAnnotation(owner, getAllNullabilityAnnotationsWithNickNames(), true);
+    if (annotation != null) {
+      Nullability nullability =
+        getNullablesWithNickNames().contains(annotation.getQualifiedName()) ? Nullability.NULLABLE : Nullability.NOT_NULL;
+      return new NullabilityAnnotationInfo(annotation, nullability, false);
+    }
+    return findNullityDefaultInHierarchy(owner);
   }
 
   /**
@@ -238,10 +252,13 @@ public abstract class NullableNotNullManager {
   @Nullable
   private NullabilityAnnotationInfo doFindEffectiveNullabilityAnnotation(@NotNull PsiModifierListOwner owner) {
     List<String> nullables = getNullablesWithNickNames();
-    Set<String> annotationNames = ContainerUtil.newHashSet(nullables);
-    annotationNames.addAll(getNotNullsWithNickNames());
-    Set<String> extraAnnotations = DEFAULT_ALL.stream().filter(anno -> !annotationNames.contains(anno)).collect(Collectors.toSet());
-    annotationNames.addAll(extraAnnotations);
+    Set<String> annotationNames = getAllNullabilityAnnotationsWithNickNames();
+    Set<String> extraAnnotations = new HashSet<>(DEFAULT_ALL);
+    extraAnnotations.removeAll(annotationNames);
+    if (!extraAnnotations.isEmpty()) {
+      annotationNames = new HashSet<>(annotationNames);
+      annotationNames.addAll(extraAnnotations);
+    }
 
     PsiAnnotation annotation = findPlainAnnotation(owner, true, annotationNames);
     if (annotation != null) {
@@ -289,8 +306,7 @@ public abstract class NullableNotNullManager {
   }
 
   private PsiAnnotation findPlainNullityAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
-    Set<String> qNames = ContainerUtil.newHashSet(getNullablesWithNickNames());
-    qNames.addAll(getNotNullsWithNickNames());
+    Set<String> qNames = getAllNullabilityAnnotationsWithNickNames();
     return findPlainAnnotation(owner, checkBases, qNames);
   }
 
@@ -324,8 +340,11 @@ public abstract class NullableNotNullManager {
   }
 
   private static boolean areDifferentNullityAnnotations(@NotNull PsiAnnotation memberAnno, @NotNull PsiAnnotation typeAnno) {
-    return isNullableAnnotation(typeAnno) && isNotNullAnnotation(memberAnno) ||
-        isNullableAnnotation(memberAnno) && isNotNullAnnotation(typeAnno);
+    NullableNotNullManager manager = getInstance(memberAnno.getProject());
+    List<String> notNulls = manager.getNotNullsWithNickNames();
+    List<String> nullables = manager.getNullablesWithNickNames();
+    return nullables.contains(typeAnno.getQualifiedName()) && notNulls.contains(memberAnno.getQualifiedName()) ||
+           nullables.contains(memberAnno.getQualifiedName()) && notNulls.contains(typeAnno.getQualifiedName());
   }
 
   @NotNull
@@ -336,6 +355,13 @@ public abstract class NullableNotNullManager {
   @NotNull
   protected List<String> getNotNullsWithNickNames() {
     return getNotNulls();
+  }
+
+  @NotNull
+  protected Set<String> getAllNullabilityAnnotationsWithNickNames() {
+    Set<String> qNames = new HashSet<>(getNullablesWithNickNames());
+    qNames.addAll(getNotNullsWithNickNames());
+    return Collections.unmodifiableSet(qNames);
   }
 
   protected boolean hasHardcodedContracts(@NotNull PsiElement element) {
@@ -460,11 +486,12 @@ public abstract class NullableNotNullManager {
   
   public abstract void setInstrumentedNotNulls(@NotNull List<String> names);
 
-  public static boolean isNullableAnnotation(@NotNull PsiAnnotation annotation) {
-    return getInstance(annotation.getProject()).getNullablesWithNickNames().contains(annotation.getQualifiedName());
-  }
-
-  public static boolean isNotNullAnnotation(@NotNull PsiAnnotation annotation) {
-    return getInstance(annotation.getProject()).getNotNullsWithNickNames().contains(annotation.getQualifiedName());
+  /**
+   * Checks if given annotation specifies the nullability (either nullable or not-null)
+   * @param annotation annotation to check
+   * @return true if given annotation specifies nullability
+   */
+  public static boolean isNullabilityAnnotation(@NotNull PsiAnnotation annotation) {
+    return getInstance(annotation.getProject()).getAllNullabilityAnnotationsWithNickNames().contains(annotation.getQualifiedName());
   }
 }

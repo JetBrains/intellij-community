@@ -24,7 +24,7 @@ internal fun readSchemeFromFile(file: VirtualFile, schemeLoader: SchemeLoader<An
     return null
   }
 
-  catchAndLog(fileName) {
+  catchAndLog({ file.path }) {
     schemeLoader.loadScheme(fileName, null, file.contentsToByteArray())
   }
 
@@ -106,8 +106,7 @@ private fun callSchemeContentChangedIfSupported(changedScheme: Any?, fileName: S
 
   // unrealistic case, but who knows
   val externalInfo = schemeManager.schemeToInfo.get(changedScheme) ?: return false
-
-  catchAndLog(fileName) {
+  catchAndLog({ file.path }) {
     val bytes = file.contentsToByteArray()
     lazyPreloadScheme(bytes, schemeManager.isOldSchemeNaming) { name, parser ->
       val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }

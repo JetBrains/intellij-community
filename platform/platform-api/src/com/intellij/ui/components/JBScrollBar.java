@@ -243,6 +243,9 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
         setValue(value + valueAdjusted);
       }
     }
+    else if (delta != 0.0) {
+      return true; // do not consume event if it can be processed by parent component
+    }
     event.consume();
     return true;
   }

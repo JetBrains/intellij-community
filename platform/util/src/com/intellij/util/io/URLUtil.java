@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.Base64;
 import com.intellij.util.ThreeState;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +14,8 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -245,8 +246,8 @@ public class URLUtil {
       try {
         String content = matcher.group(4);
         return ";base64".equalsIgnoreCase(matcher.group(3))
-               ? Base64.decode(content)
-               : content.getBytes(CharsetToolkit.UTF8_CHARSET);
+               ? Base64.getDecoder().decode(content)
+               : content.getBytes(StandardCharsets.UTF_8);
       }
       catch (IllegalArgumentException e) {
         return null;

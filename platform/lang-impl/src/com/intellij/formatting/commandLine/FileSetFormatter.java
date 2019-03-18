@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -57,7 +56,7 @@ public class FileSetFormatter extends FileSetProcessor {
   }
 
   private void createProject() throws IOException {
-    ProjectManagerEx projectManager = (ProjectManagerEx)ProjectManager.getInstance();
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     File projectDir = createProjectDir();
     myProject = projectManager.createProject(myProjectUID, projectDir.getPath());
     if (myProject != null) {

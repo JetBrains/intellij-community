@@ -37,7 +37,7 @@ public class LookupElementPresentation {
   private String myItemText;
   private String myTypeText;
   private boolean myStrikeout;
-  private Color myItemTextForeground = JBColor.foreground();
+  private Color myItemTextForeground = JBColor.namedColor("CompletionPopup.foreground", JBColor.foreground());
   private boolean myItemTextBold;
   private boolean myItemTextUnderlined;
   private boolean myItemTextItalic;

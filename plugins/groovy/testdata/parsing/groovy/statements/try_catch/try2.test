@@ -30,11 +30,10 @@ Groovy script
       PsiErrorElement:',' expected, got ')'
         PsiElement())(')')
       PsiWhiteSpace(' ')
-      Closable block
-        PsiElement({)('{')
-        Parameter list
-          <empty list>
-        PsiElement(})('}')
+      Block statement
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiErrorElement:';', <statement> or new line expected, got 'catch'
         PsiElement(catch)('catch')
@@ -54,22 +53,20 @@ Groovy script
       PsiErrorElement:',' expected, got ')'
         PsiElement())(')')
       PsiWhiteSpace(' ')
-      Closable block
-        PsiElement({)('{')
-        Parameter list
-          <empty list>
-        PsiElement(})('}')
+      Block statement
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiErrorElement:';', <statement> or new line expected, got 'finally'
         PsiElement(finally)('finally')
-      Closable block
-        PsiElement({)('{')
-        PsiWhiteSpace(' ')
-        Parameter list
-          <empty list>
-        Reference expression
-          PsiElement(identifier)('doNothing')
-        PsiWhiteSpace(' ')
-        PsiElement(})('}')
+      Block statement
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace(' ')
+          Reference expression
+            PsiElement(identifier)('doNothing')
+          PsiWhiteSpace(' ')
+          PsiElement(})('}')
       PsiErrorElement:';', <statement>, new line or '}' expected
         <empty list>

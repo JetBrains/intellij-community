@@ -3,7 +3,6 @@ package org.jetbrains.yaml.schema;
 
 import com.intellij.lang.documentation.DocumentationProviderEx;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -39,9 +38,7 @@ public class YamlJsonSchemaDocumentationProvider extends DocumentationProviderEx
     final JsonSchemaService jsonSchemaService = JsonSchemaService.Impl.get(element.getProject());
     PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
-    VirtualFile virtualFile = containingFile.getVirtualFile();
-    if (virtualFile == null) return null;
-    JsonSchemaObject schemaObject = jsonSchemaService.getSchemaObject(virtualFile);
+    JsonSchemaObject schemaObject = jsonSchemaService.getSchemaObject(containingFile);
     if (schemaObject == null) return null;
     return JsonSchemaDocumentationProvider.generateDoc(element, schemaObject, preferShort, null);
   }
@@ -64,8 +61,7 @@ public class YamlJsonSchemaDocumentationProvider extends DocumentationProviderEx
                                                   @NotNull PsiFile file,
                                                   @Nullable PsiElement contextElement) {
     JsonSchemaService service = JsonSchemaService.Impl.get(file.getProject());
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null || service == null || service.getSchemaObject(virtualFile) == null) return null;
+    if (service == null || service.getSchemaObject(file) == null) return null;
     return contextElement;
   }
 }

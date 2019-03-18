@@ -26,7 +26,10 @@ public final class YamlKeyValueRenameInputValidator implements RenameInputValida
 
   // Taken from yaml.flex, NS_PLAIN_ONE_LINE_block. This may not be entirely correct, but it is less restrictive than the default names
   // validator
-  private static final Pattern IDENTIFIER_PATTERN = Pattern.compile(IDENTIFIER_START_PATTERN + "([ \t]*" + IDENTIFIER_END_PATTERN + ")*");
+  public static final Pattern IDENTIFIER_PATTERN = Pattern.compile(
+    "(" + IDENTIFIER_START_PATTERN + "([ \t]*" + IDENTIFIER_END_PATTERN + ")*)|" +
+    "('[^\\n']*')|(\"[^\\n\"]*\")"
+  );
 
   @Nullable
   @Override

@@ -127,6 +127,7 @@ public class FormsBindingManager extends FormsBuilder {
           if (!excludes.isExcluded(boundSource)) {
             addBinding(boundSource, form, srcToForms);
             FSOperations.markDirty(context, CompilationRound.CURRENT, boundSource);
+            context.getScope().markIndirectlyAffected(target, boundSource);
             filesToCompile.put(boundSource, target);
             exitCode = ExitCode.OK;
           }
@@ -145,6 +146,7 @@ public class FormsBindingManager extends FormsBuilder {
             if (!excludes.isExcluded(formFile) && formFile.exists()) {
               addBinding(srcFile, formFile, srcToForms);
               FSOperations.markDirty(context, CompilationRound.CURRENT, formFile);
+              context.getScope().markIndirectlyAffected(target, formFile);
               formsToCompile.put(formFile, target);
               exitCode = ExitCode.OK;
             }

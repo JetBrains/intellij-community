@@ -34,6 +34,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Download = IconLoader.getIcon("/actions/download.svg");
     /** 16x16 */ public static final Icon Dump = IconLoader.getIcon("/actions/dump.svg");
     /** 16x16 */ public static final Icon Edit = IconLoader.getIcon("/actions/edit.svg");
+    /** 16x16 */ public static final Icon EditScheme = IconLoader.getIcon("/actions/editScheme.svg");
     /** 16x16 */ public static final Icon EditSource = IconLoader.getIcon("/actions/editSource.svg");
     /** 16x16 */ public static final Icon Execute = IconLoader.getIcon("/actions/execute.svg");
     /** 16x16 */ public static final Icon Exit = IconLoader.getIcon("/actions/exit.svg");
@@ -888,6 +889,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon BalloonInformation = IconLoader.getIcon("/general/balloonInformation.svg");
     /** 16x16 */ public static final Icon BalloonWarning = IconLoader.getIcon("/general/balloonWarning.svg");
     /** 12x12 */ public static final Icon BalloonWarning12 = IconLoader.getIcon("/general/balloonWarning12.svg");
+    /** 8x4 */ public static final Icon ButtonDropTriangle = IconLoader.getIcon("/general/buttonDropTriangle.svg");
     /** 12x12 */ public static final Icon CollapseComponent = IconLoader.getIcon("/general/collapseComponent.svg");
     /** 12x12 */ public static final Icon CollapseComponentHover = IconLoader.getIcon("/general/collapseComponentHover.svg");
     /** 16x16 */ public static final Icon ContextHelp = IconLoader.getIcon("/general/contextHelp.svg");
@@ -2876,6 +2878,7 @@ public class AllIcons {
     /** 13x13 */ public static final Icon ToolWindowProfiler = IconLoader.getIcon("/toolwindows/toolWindowProfiler.svg");
     /** 13x13 */ public static final Icon ToolWindowProject = IconLoader.getIcon("/toolwindows/toolWindowProject.svg");
     /** 13x13 */ public static final Icon ToolWindowRun = IconLoader.getIcon("/toolwindows/toolWindowRun.svg");
+    /** 13x13 */ public static final Icon ToolWindowServices = IconLoader.getIcon("/toolwindows/toolWindowServices.svg");
     /** 13x13 */ public static final Icon ToolWindowStructure = IconLoader.getIcon("/toolwindows/toolWindowStructure.svg");
     /** 13x13 */ public static final Icon ToolWindowTodo = IconLoader.getIcon("/toolwindows/toolWindowTodo.svg");
     /** 13x13 */ public static final Icon ToolWindowUIDesigner = IconLoader.getIcon("/toolwindows/toolWindowUIDesigner.svg");

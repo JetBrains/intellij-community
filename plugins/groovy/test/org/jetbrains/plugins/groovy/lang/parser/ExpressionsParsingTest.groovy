@@ -648,6 +648,10 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testcommandExpr$closureArg3() { doTest() }
 
+  void testcommandExpr$closureArg4() { doTest() }
+
+  void testcommandExpr$closureArg5() { doTest() }
+
   void testcommandExpr$not() { doTest() }
 
   void testcommandExpr$methodCall() { doTest() }

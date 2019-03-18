@@ -90,9 +90,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   private boolean myModelUpdateInProgress;
 
-  public ChangesTree(@NotNull Project project,
-                     boolean showCheckboxes,
-                     boolean highlightProblems) {
+  public ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+    this(project, showCheckboxes, highlightProblems, false);
+  }
+
+  protected ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems, boolean expandInSpeedSearch) {
     super(ChangesBrowserNode.createRoot());
     myProject = project;
     myShowCheckboxes = showCheckboxes;
@@ -101,7 +103,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setRootVisible(false);
     setShowsRootHandles(true);
     setOpaque(false);
-    new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER);
+    new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, expandInSpeedSearch);
 
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
     setCellRenderer(new MyTreeCellRenderer(nodeRenderer));
@@ -332,7 +334,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return myModelUpdateInProgress;
   }
 
-  private void resetTreeState() {
+  protected void resetTreeState() {
     TreeUtil.expandAll(this);
 
     int selectedTreeRow = -1;

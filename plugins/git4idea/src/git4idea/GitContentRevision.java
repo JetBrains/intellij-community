@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
 import com.intellij.openapi.project.Project;
@@ -67,7 +67,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
   }
 
   private byte[] loadContent() throws VcsException {
-    VirtualFile root = GitUtil.getGitRoot(myFile);
+    VirtualFile root = GitUtil.getRepositoryForFile(myProject, myFile).getRoot();
     return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myFile));
   }
 
@@ -95,28 +95,6 @@ public class GitContentRevision implements ByteBackedContentRevision {
     return myFile.hashCode() + myRevision.hashCode();
   }
 
-  /**
-   * Create revision
-   *
-   *
-   * @param vcsRoot        a vcs root for the repository
-   * @param path           an path inside with possibly escape sequences
-   * @param revisionNumber a revision number, if null the current revision will be created
-   * @param project        the context project
-   * @param unescapePath
-   * @return a created revision
-   * @throws VcsException if there is a problem with creating revision
-   */
-  @NotNull
-  public static ContentRevision createRevision(@NotNull VirtualFile vcsRoot,
-                                               @NotNull String path,
-                                               @Nullable VcsRevisionNumber revisionNumber,
-                                               Project project,
-                                               boolean unescapePath) throws VcsException {
-    FilePath file = createPath(vcsRoot, path, unescapePath);
-    return createRevision(file, revisionNumber, project, null);
-  }
-
   @Nullable
   public static GitSubmodule getRepositoryIfSubmodule(@NotNull Project project, @NotNull FilePath path) {
     VirtualFile file = path.getVirtualFile();
@@ -136,20 +114,15 @@ public class GitContentRevision implements ByteBackedContentRevision {
   }
 
   @NotNull
-  public static ContentRevision createRevisionForTypeChange(@NotNull Project project,
-                                                            @NotNull VirtualFile vcsRoot,
-                                                            @NotNull String path,
+  public static ContentRevision createRevisionForTypeChange(@NotNull FilePath filePath,
                                                             @Nullable VcsRevisionNumber revisionNumber,
-                                                            boolean unescapePath) throws VcsException {
-    FilePath filePath;
+                                                            @NotNull Project project) {
     if (revisionNumber == null) {
-      File file = new File(makeAbsolutePath(vcsRoot, path, unescapePath));
+      File file = filePath.getIOFile();
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-      filePath = virtualFile == null ? VcsUtil.getFilePath(file, false) : VcsUtil.getFilePath(virtualFile);
-    } else {
-      filePath = createPath(vcsRoot, path, unescapePath);
+      if (virtualFile != null) filePath = VcsUtil.getFilePath(virtualFile);
     }
-    return createRevision(filePath, revisionNumber, project, null);
+    return createRevision(filePath, revisionNumber, project);
   }
 
   @NotNull
@@ -167,10 +140,9 @@ public class GitContentRevision implements ByteBackedContentRevision {
   }
 
   @NotNull
-  public static ContentRevision createRevision(@NotNull VirtualFile file,
+  public static ContentRevision createRevision(@NotNull FilePath filePath,
                                                @Nullable VcsRevisionNumber revisionNumber,
                                                @NotNull Project project) {
-    FilePath filePath = VcsUtil.getFilePath(file);
     return createRevision(filePath, revisionNumber, project, null);
   }
 

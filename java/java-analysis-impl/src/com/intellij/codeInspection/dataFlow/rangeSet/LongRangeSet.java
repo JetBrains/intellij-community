@@ -183,6 +183,9 @@ public abstract class LongRangeSet {
     if (token.equals(JavaTokenType.OR)) {
       return bitwiseOr(right, isLong);
     }
+    if (token.equals(JavaTokenType.XOR)) {
+      return bitwiseXor(right, isLong);
+    }
     if (token.equals(JavaTokenType.PERC)) {
       return mod(right);
     }
@@ -261,6 +264,21 @@ public abstract class LongRangeSet {
   public LongRangeSet bitwiseOr(LongRangeSet other, boolean isLong) {
     if (this.isEmpty() || other.isEmpty()) return empty();
     LongRangeSet result = fromBits(getBitwiseMask().or(other.getBitwiseMask()));
+    return isLong ? result : result.intersect(Range.INT_RANGE);
+  }
+
+  /**
+   * Returns a range which represents all the possible values after applying {@code x ^ y} operation for
+   * all {@code x} from this set and for all {@code y} from the other set. The resulting set may contain
+   * some more values.
+   *
+   * @param other other set to perform bitwise-xor with
+   * @return a new range
+   */
+  @NotNull
+  public LongRangeSet bitwiseXor(LongRangeSet other, boolean isLong) {
+    if (this.isEmpty() || other.isEmpty()) return empty();
+    LongRangeSet result = fromBits(getBitwiseMask().xor(other.getBitwiseMask()));
     return isLong ? result : result.intersect(Range.INT_RANGE);
   }
 
@@ -1780,7 +1798,9 @@ public abstract class LongRangeSet {
           result = setBits;
         }
       }
-      return new BitString(result, mask).and(super.getBitwiseMask());
+      BitString intersection = new BitString(result, mask).intersect(super.getBitwiseMask());
+      assert intersection != null;
+      return intersection;
     }
 
     private long getMask() {

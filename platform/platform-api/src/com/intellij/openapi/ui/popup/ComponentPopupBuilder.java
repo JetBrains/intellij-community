@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
@@ -166,4 +167,13 @@ public interface ComponentPopupBuilder {
   default ComponentPopupBuilder setBorderColor(Color color) {
     return this;
   }
+
+  /**
+   * Set a handler to be called when popup is closed via {@link JBPopup#closeOk(InputEvent)}.
+   * 
+   * @param okHandler handler to call
+   * @return this builder
+   */
+  @NotNull
+  ComponentPopupBuilder setOkHandler(@Nullable Runnable okHandler);
 }

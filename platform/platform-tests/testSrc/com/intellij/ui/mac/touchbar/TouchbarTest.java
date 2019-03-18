@@ -3,10 +3,11 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.util.containers.hash.HashSet;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.Random;
 
 public class TouchbarTest {
   private static Icon ourTestIcon = IconLoader.getIcon("/modules/edit.png");
@@ -19,7 +20,7 @@ public class TouchbarTest {
     Foundation.init();
     NST.loadLibrary();
 
-    final TouchBar testTB = _createTestButtonsTouchbar();
+    final TouchBar testTB = _createTestScrubberTouchbar();
     testTB.selectVisibleItemsToShow();
     NST.setTouchBar(testTB);
 
@@ -41,17 +42,65 @@ public class TouchbarTest {
     return testTB;
   }
 
+  private static Collection<Integer> ourIndices;
+  private static Collection<Integer> _makeRandomCollection(int maxIndex) {
+    if (ourIndices != null)
+      return ourIndices;
+
+    final Random rnd = new Random(System.currentTimeMillis());
+    final int size = rnd.nextInt(maxIndex/2);
+    ourIndices = new HashSet<>();
+    // System.out.println("generated test indices:");
+    if (false) {
+      ourIndices.add(4);
+      ourIndices.add(6);
+      ourIndices.add(7);
+      ourIndices.add(11);
+      System.out.println(ourIndices);
+      return ourIndices;
+    }
+
+
+    for (int c = 0; c < size; ++c) {
+      final int id = rnd.nextInt(maxIndex);
+      ourIndices.add(id);
+      // System.out.println("\t" + id);
+    }
+
+    ourIndices.remove(1);
+    ourIndices.remove(2);
+    return ourIndices;
+  }
+
+  private static boolean ourVisible = true;
+  private static boolean ourEnabled = true;
   private static TouchBar _createTestScrubberTouchbar() {
     final TouchBar testTB = new TouchBar("test", false);
     testTB.addSpacing(true);
 
     final TBItemScrubber scrubber = testTB.addScrubber();
-    for (int c = 0; c < 11; ++c) {
-      String txt;
-      if (c == 3)           txt = "very very long text";
-      else                  txt = String.format("r%1.2f", Math.random());
+    final int size = 130;
+    for (int c = 0; c < size; ++c) {
+      String txt = String.format("%d[%1.2f]", c, Math.random());
       int finalC = c;
-      scrubber.addItem(ourTestIcon, txt, () -> System.out.println("performed action of scrubber item at index " + finalC + " [thread:" + Thread.currentThread() + "]"));
+      Runnable action = () -> System.out.println("performed action of scrubber item at index " + finalC + " [thread:" + Thread.currentThread() + "]");
+      if (c == 11) {
+        txt = "very very long text";
+      } else if (c == 1) {
+        txt = "show";
+        action = ()->SwingUtilities.invokeLater(()->{
+          ourVisible = !ourVisible;
+          NST.showScrubberItem(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourVisible);
+        });
+      } else if (c == 2) {
+        txt = "enable";
+        action = ()->SwingUtilities.invokeLater(()->{
+          ourEnabled = !ourEnabled;
+          NST.enableScrubberItem(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourEnabled);
+        });
+      }
+
+      scrubber.addItem(ourTestIcon, txt, action);
     }
 
     return testTB;
@@ -72,14 +121,12 @@ public class TouchbarTest {
 
     expandTB.addButton().setIcon(ourTestIcon).setThreadSafeAction(createPrintTextCallback("pressed popover-image button"));
     final TBItemScrubber scrubber = expandTB.addScrubber();
-    List<TBItemScrubber.ItemData> scrubberItems = new ArrayList<>();
     for (int c = 0; c < 15; ++c) {
       String txt;
       if (c == 7)           txt = "very very long configuration name (debugging type)";
       else                  txt = String.format("r%1.2f", Math.random());
       int finalC = c;
-      scrubberItems.add(new TBItemScrubber.ItemData(ourTestIcon, txt,
-                                                    () -> System.out.println("JAVA: performed action of scrubber item at index " + finalC + " [thread:" + Thread.currentThread() + "]")));
+      scrubber.addItem(ourTestIcon, txt, () -> System.out.println("JAVA: performed action of scrubber item at index " + finalC + " [thread:" + Thread.currentThread() + "]"));
     }
     expandTB.selectVisibleItemsToShow();
 

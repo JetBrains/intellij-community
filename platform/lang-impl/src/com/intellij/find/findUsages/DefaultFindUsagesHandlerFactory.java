@@ -18,9 +18,7 @@ public final class DefaultFindUsagesHandlerFactory extends FindUsagesHandlerFact
     if (element instanceof PsiFileSystemItem) {
       return ((PsiFileSystemItem)element).getVirtualFile() != null;
     }
-    else {
-      return LanguageFindUsages.canFindUsagesFor(element);
-    }
+    return LanguageFindUsages.canFindUsagesFor(element);
   }
 
   @Override

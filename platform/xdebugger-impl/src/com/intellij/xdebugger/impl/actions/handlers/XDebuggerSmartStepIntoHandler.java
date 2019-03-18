@@ -21,12 +21,11 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ObjectUtils;
@@ -120,7 +119,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
                                                                XSourcePosition position,
                                                                final XDebugSession session,
                                                                Editor editor) {
-    if (Registry.is("debugger.smart.step.inplace") && variants.stream().allMatch(v -> v.getHighlightElement() != null)) {
+    if (Registry.is("debugger.smart.step.inplace") && variants.stream().allMatch(v -> v.getHighlightRange() != null)) {
       inplaceChoose(handler, variants, session, editor);
     }
     else {
@@ -170,26 +169,18 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       public void valueChanged(ListSelectionEvent e) {
         if (!e.getValueIsAdjusting()) {
           Object selectedValue = ObjectUtils.doIfCast(e.getSource(), JBList.class, it -> it.getSelectedValue());
-          highlightVariant(ObjectUtils.tryCast(selectedValue, XSmartStepIntoVariant.class), session, editor, highlighter);
+          highlightVariant(ObjectUtils.tryCast(selectedValue, XSmartStepIntoVariant.class), highlighter);
         }
       }
     });
-    highlightVariant(ObjectUtils.tryCast(ContainerUtil.getFirstItem(variants), XSmartStepIntoVariant.class), session, editor, highlighter);
+    highlightVariant(ObjectUtils.tryCast(ContainerUtil.getFirstItem(variants), XSmartStepIntoVariant.class), highlighter);
     DebuggerUIUtil.showPopupForEditorLine(popup, editor, position.getLine());
   }
 
-  private static void highlightVariant(@Nullable XSmartStepIntoVariant variant,
-                                       XDebugSession session,
-                                       Editor editor,
-                                       @NotNull ScopeHighlighter highlighter) {
-    PsiElement element = variant != null ? variant.getHighlightElement() : null;
-    if (element != null) {
-      PsiFile currentFile = PsiDocumentManager.getInstance(session.getProject()).getPsiFile(editor.getDocument());
-      PsiFile containingFile = element.getContainingFile();
-      if (containingFile == null || !containingFile.getOriginalFile().equals(currentFile)) {
-        LOG.error("Highlight element " + element + " is not from the current file");
-      }
-      highlighter.highlight(element, Collections.singletonList(element));
+  private static void highlightVariant(@Nullable XSmartStepIntoVariant variant, @NotNull ScopeHighlighter highlighter) {
+    TextRange range = variant != null ? variant.getHighlightRange() : null;
+    if (range != null) {
+      highlighter.highlight(Pair.create(range, Collections.singletonList(range)));
     }
   }
 
@@ -206,10 +197,11 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
     EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor);
     for (SmartStepData.VariantInfo info : data.myVariants) {
-      PsiElement element = info.myVariant.getHighlightElement();
-      if (element != null) {
+      TextRange range = info.myVariant.getHighlightRange();
+      if (range != null) {
         List<RangeHighlighter> highlighters = ContainerUtil.newSmartList();
-        highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{element}, attributes, true, highlighters);
+        highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes,
+                                                HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE, highlighters, null);
         hyperlinkSupport.createHyperlink(highlighters.get(0), project -> data.stepInto(info));
       }
     }
@@ -275,8 +267,8 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       myVariants =
         StreamEx.of(variants)
           .map(VariantInfo::new)
-          .sorted(Comparator.<VariantInfo>comparingInt(v -> v.myVariant.getHighlightElement().getTextRange().getStartOffset())
-                    .thenComparingInt(v -> v.myVariant.getHighlightElement().getTextRange().getLength()))
+          .sorted(Comparator.<VariantInfo>comparingInt(v -> v.myVariant.getHighlightRange().getStartOffset())
+                    .thenComparingInt(v -> v.myVariant.getHighlightRange().getLength()))
           .toList();
     }
 
@@ -332,8 +324,9 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
         highlightManager.removeSegmentHighlighter(myEditor, myCurrentVariantHl);
       }
       List<RangeHighlighter> highlighters = ContainerUtil.newSmartList();
-      highlightManager
-        .addOccurrenceHighlights(myEditor, new PsiElement[]{variant.myVariant.getHighlightElement()}, attributes, true, highlighters);
+      TextRange range = variant.myVariant.getHighlightRange();
+      highlightManager.addOccurrenceHighlight(myEditor, range.getStartOffset(), range.getEndOffset(), attributes,
+                                              HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE, highlighters, null);
       myCurrentVariantHl = ContainerUtil.getFirstItem(highlighters);
     }
 
@@ -345,7 +338,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     void clear() {
       myEditor.putUserData(SMART_STEP_INPLACE_DATA, null);
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(mySession.getProject());
-      highlightManager.hideHighlights(myEditor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_ANY_KEY);
+      highlightManager.hideHighlights(myEditor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE);
     }
 
     class VariantInfo {
@@ -354,7 +347,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
       VariantInfo(V variant) {
         myVariant = variant;
-        myStartPoint = myEditor.offsetToXY(variant.getHighlightElement().getTextRange().getStartOffset());
+        myStartPoint = myEditor.offsetToXY(variant.getHighlightRange().getStartOffset());
       }
     }
   }

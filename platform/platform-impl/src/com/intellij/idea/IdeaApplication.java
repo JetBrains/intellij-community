@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
-import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.PluginManager;
@@ -15,7 +16,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -32,7 +32,7 @@ import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StartUpMeasurer;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,13 +67,14 @@ public class IdeaApplication {
 
   @SuppressWarnings("SSBasedInspection")
   public static void initApplication(@NotNull String[] args) {
-    PluginManager.startupStart.end();
-    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.INIT_APP);
+    Activity activity = PluginManager.startupStart.endAndStart(Phases.INIT_APP);
     IdeaApplication app = new IdeaApplication(args);
     // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
+    Activity placeOnEventQueueActivity = activity.startChild(Phases.PLACE_ON_EVENT_QUEUE);
     SwingUtilities.invokeLater(() -> {
       PluginManager.installExceptionHandler();
-      measureToken.end();
+      placeOnEventQueueActivity.end();
+      activity.end();
       // this run is blocking, while app is running
       app.run();
     });
@@ -185,7 +186,11 @@ public class IdeaApplication {
 
     IconLoader.activate();
 
-    new JFrame().pack(); // this peer will prevent shutting down our application
+    // isStartParallel doesn't affect this functionality, but isStartParallel flag is used as default value for this flag
+    if (SystemProperties.getBooleanProperty("idea.app.use.fake.frame", !StartupUtil.isStartParallel())) {
+      // this peer will prevent shutting down our application
+      new JFrame().pack();
+    }
   }
 
   @NotNull
@@ -193,11 +198,12 @@ public class IdeaApplication {
     if (myArgs.length > 0) {
       PluginManagerCore.getPlugins();
 
-      ExtensionPoint<ApplicationStarter> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.APPLICATION_STARTER);
-      ApplicationStarter[] starters = point.getExtensions();
+      ExtensionPoint<ApplicationStarter> point = ApplicationStarter.EP_NAME.getPoint(null);
       String key = myArgs[0];
-      for (ApplicationStarter o : starters) {
-        if (Comparing.equal(o.getCommandName(), key)) return o;
+      for (ApplicationStarter o : point.getExtensionList()) {
+        if (Comparing.equal(o.getCommandName(), key)) {
+          return o;
+        }
       }
     }
 
@@ -217,21 +223,6 @@ public class IdeaApplication {
     }
   }
 
-  private static void initLAF() {
-    try {
-      Class.forName("com.jgoodies.looks.plastic.PlasticLookAndFeel");
-
-      if (SystemInfo.isWindows) {
-        UIManager.installLookAndFeel("JGoodies Windows L&F", "com.jgoodies.looks.windows.WindowsLookAndFeel");
-      }
-
-      UIManager.installLookAndFeel("JGoodies Plastic", "com.jgoodies.looks.plastic.PlasticLookAndFeel");
-      UIManager.installLookAndFeel("JGoodies Plastic 3D", "com.jgoodies.looks.plastic.Plastic3DLookAndFeel");
-      UIManager.installLookAndFeel("JGoodies Plastic XP", "com.jgoodies.looks.plastic.PlasticXPLookAndFeel");
-    }
-    catch (ClassNotFoundException ignored) { }
-  }
-
   public static class IdeStarter extends ApplicationStarterEx {
     private Splash mySplash;
 
@@ -247,7 +238,6 @@ public class IdeaApplication {
 
     @Override
     public void premain(String[] args) {
-      initLAF();
     }
 
     @Nullable

@@ -2,13 +2,15 @@
 package com.intellij.ide
 
 import com.google.gson.stream.JsonWriter
+import com.intellij.diagnostic.ActivityImpl
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.util.StartUpMeasurer
-import com.intellij.util.StartUpMeasurer.Item
 import gnu.trove.THashMap
 import java.io.StringWriter
 import java.util.concurrent.TimeUnit
@@ -31,7 +33,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
   companion object {
     // need to be exposed for tests, but I don't want to expose as top-level function, so, as companion object
-    fun sortItems(items: MutableList<Item>) {
+    fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
         if (o1 == o2.parent) {
           return@Comparator -1
@@ -84,14 +86,21 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
   @Synchronized
   private fun logStats(end: Long, activationNumber: Int) {
-    val items = mutableListOf<Item>()
-    val activities = THashMap<String, MutableList<Item>>()
+    val items = mutableListOf<ActivityImpl>()
+    val activities = THashMap<String, MutableList<ActivityImpl>>()
+
     StartUpMeasurer.processAndClear(Consumer { item ->
-      if (item.name.first() == '_') {
-        activities.getOrPut(item.name) { mutableListOf() }.add(item)
+      val parallelActivity = item.parallelActivity
+      if (parallelActivity == null) {
+        items.add(item)
       }
       else {
-        items.add(item)
+        val level = item.level
+        var name = parallelActivity.jsonName
+        if (level != null) {
+          name = "${level.jsonFieldNamePrefix}${name.capitalize()}"
+        }
+        activities.getOrPut(name) { mutableListOf() }.add(item)
       }
     })
 
@@ -108,9 +117,10 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.setIndent("  ")
     writer.beginObject()
 
-    writer.name("version").value("2")
+    writer.name("version").value("4")
+    writeServiceStats(writer)
 
-    val startTime = if (activationNumber == 0) StartUpMeasurer.getStartTime() else items.first().start
+    val startTime = if (activationNumber == 0) StartUpMeasurer.getClassInitStartTime() else items.first().start
 
     writer.name("items")
     writer.beginArray()
@@ -133,7 +143,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     totalDuration += writeUnknown(writer, items.last().end, end, startTime)
     writer.endArray()
 
-    writeActivities(activities, startTime, writer)
+    writeParallelActivities(activities, startTime, writer)
 
     writer.name("totalDurationComputed").value(TimeUnit.NANOSECONDS.toMillis(totalDuration))
     writer.name("totalDurationActual").value(TimeUnit.NANOSECONDS.toMillis(end - startTime))
@@ -150,24 +160,63 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     LOG.info(string)
   }
 
-  private fun writeActivities(activities: THashMap<String, MutableList<Item>>, startTime: Long, writer: JsonWriter) {
+  private fun writeParallelActivities(activities: Map<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonWriter) {
     // sorted to get predictable JSON
     for (name in activities.keys.sorted()) {
-      val list = activities.get(name)!!
+      val list = activities.getValue(name)
       sortItems(list)
       writeActivities(list, startTime, writer, activityNameToJsonFieldName(name))
     }
   }
 }
 
+private fun writeServiceStats(writer: JsonWriter) {
+  class StatItem(val name: String) {
+    var app = 0
+    var project = 0
+    var module = 0
+  }
+
+  // components can be inferred from data, but to verify that items reported correctly (and because for items threshold is applied (not all are reported))
+  val component = StatItem("component")
+  val service = StatItem("service")
+
+  val plugins = PluginManagerCore.getLoadedPlugins(null)
+  for (plugin in plugins) {
+    service.app += (plugin as IdeaPluginDescriptorImpl).appServices.size
+    service.project += plugin.projectServices.size
+    service.module += plugin.moduleServices.size
+
+    component.app += plugin.appComponents.size
+    component.project += plugin.projectComponents.size
+    component.module += plugin.moduleComponents.size
+  }
+
+  writer.name("stats")
+  writer.beginObject()
+
+  writer.name("plugin").value(plugins.size)
+
+  for (statItem in listOf(component, service)) {
+    writer.name(statItem.name)
+    writer.beginObject()
+    writer.name("app").value(statItem.app)
+    writer.name("project").value(statItem.project)
+    writer.name("module").value(statItem.module)
+    writer.endObject()
+  }
+
+  writer.endObject()
+}
+
 private fun activityNameToJsonFieldName(name: String): String {
   return when {
-    name.last() == 'y' -> name.substring(1, name.length - 1) + "ies"
-    else -> name.substring(1) + 's'
+    name.last() == 'y' -> name.substring(0, name.length - 1) + "ies"
+    else -> name.substring(0) + 's'
   }
 }
 
-private fun writeActivities(slowComponents: List<Item>, offset: Long, writer: JsonWriter, fieldName: String) {
+private fun writeActivities(slowComponents: List<ActivityImpl>, offset: Long, writer: JsonWriter, fieldName: String) {
   if (slowComponents.isEmpty()) {
     return
   }
@@ -178,7 +227,7 @@ private fun writeActivities(slowComponents: List<Item>, offset: Long, writer: Js
 
   for (item in slowComponents) {
     writer.beginObject()
-    writer.name("name").value(item.description)
+    writer.name("name").value(item.name)
     writeItemTimeInfo(item, item.end - item.start, offset, writer)
     writer.endObject()
   }
@@ -186,13 +235,13 @@ private fun writeActivities(slowComponents: List<Item>, offset: Long, writer: Js
   writer.endArray()
 }
 
-private fun writeItemTimeInfo(item: Item, duration: Long, offset: Long, writer: JsonWriter) {
+private fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, writer: JsonWriter) {
   writer.name("duration").value(TimeUnit.NANOSECONDS.toMillis(duration))
   writer.name("start").value(TimeUnit.NANOSECONDS.toMillis(item.start - offset))
   writer.name("end").value(TimeUnit.NANOSECONDS.toMillis(item.end - offset))
 }
 
-private fun isSubItem(item: Item, itemIndex: Int, list: List<Item>): Boolean {
+private fun isSubItem(item: ActivityImpl, itemIndex: Int, list: List<ActivityImpl>): Boolean {
   if (item.parent != null) {
     return true
   }

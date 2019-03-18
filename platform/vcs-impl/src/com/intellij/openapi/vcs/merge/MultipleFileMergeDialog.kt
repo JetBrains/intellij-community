@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.merge
 
 import com.intellij.CommonBundle
+import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.diff.DiffManager
 import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.InvalidDiffRequestException
@@ -14,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.impl.mergeTool.MergeVersion
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileTooBigException
@@ -70,7 +70,6 @@ open class MultipleFileMergeDialog(
   private lateinit var acceptTheirsButton: JButton
   private lateinit var mergeButton: JButton
   private val tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(), createColumns())
-  private val projectManager = ProjectManagerEx.getInstanceEx()
 
   private var groupByDirectory: Boolean = false
     get() = when {
@@ -87,7 +86,7 @@ open class MultipleFileMergeDialog(
   }
 
   init {
-    projectManager.blockReloadingProjectOnExternalChanges()
+    StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges()
     title = mergeDialogCustomizer.multipleFileDialogTitle
     virtualFileRenderer.font = UIUtil.getListFont()
 
@@ -276,7 +275,7 @@ open class MultipleFileMergeDialog(
   }
 
   override fun dispose() {
-    projectManager.unblockReloadingProjectOnExternalChanges()
+    StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges()
     super.dispose()
   }
 

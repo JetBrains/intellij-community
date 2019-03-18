@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -47,7 +47,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   public JavaMatchingVisitor(GlobalMatchingVisitor matchingVisitor) {
-    this.myMatchingVisitor = matchingVisitor;
+    myMatchingVisitor = matchingVisitor;
   }
 
   @Override
@@ -656,7 +656,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (typeElement.isInferredType()) {
       // replace inferred type with explicit type if possible
       final PsiType type = typeElement.getType();
-      if (type == PsiType.NULL) {
+      if (type == PsiType.NULL || type instanceof PsiLambdaParameterType) {
         return typeElement;
       }
       final String canonicalText = type.getCanonicalText();
@@ -1195,10 +1195,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitForStatement(final PsiForStatement for1) {
     final PsiForStatement for2 = (PsiForStatement)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(myMatchingVisitor.match(for1.getInitialization(), for2.getInitialization()) &&
-                                myMatchingVisitor.match(for1.getCondition(), for2.getCondition()) &&
-                                myMatchingVisitor.match(for1.getUpdate(), for2.getUpdate()) &&
+    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(notEmpty(for1.getInitialization()), notEmpty(for2.getInitialization())) &&
+                                myMatchingVisitor.matchOptionally(for1.getCondition(), for2.getCondition()) &&
+                                myMatchingVisitor.matchOptionally(for1.getUpdate(), for2.getUpdate()) &&
                                 matchBody(for1.getBody(), for2.getBody()));
+  }
+
+  private static PsiStatement notEmpty(PsiStatement statement) {
+    return statement instanceof PsiEmptyStatement ? null : statement;
   }
 
   @Override

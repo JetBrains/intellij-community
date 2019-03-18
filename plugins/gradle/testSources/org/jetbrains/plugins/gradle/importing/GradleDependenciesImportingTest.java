@@ -884,6 +884,48 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project.project2.test", "project.project1.test", DependencyScope.COMPILE);
   }
 
+  @Test
+  public void testDependencyOnDefaultConfigurationWithAdditionalArtifact() throws Exception {
+    createSettingsFile("include 'project1', 'project2'");
+    createProjectSubFile("project1/build.gradle",
+                         new GradleBuildScriptBuilderEx()
+                           .withJavaPlugin()
+                           .addPostfix(
+                             "configurations {",
+                             "  parentCfg",
+                             "  compile.extendsFrom parentCfg",
+                             "}",
+                             "sourceSets {",
+                             "  parentSrc { java.srcDirs = ['src/parent/java'] }",
+                             "  main { java { compileClasspath += parentSrc.output } }",
+                             "}",
+                             "task parentSrcJar(type:Jar) {",
+                             "    appendix 'parent'",
+                             "    from sourceSets.parentSrc.output",
+                             "}",
+                             "artifacts {",
+                             "  parentCfg parentSrcJar",
+                             "}"
+                           )
+                           .generate()
+    );
+
+    createProjectSubFile("project2/build.gradle",
+                         new GradleBuildScriptBuilderEx().withJavaPlugin().addPostfix(
+                           "dependencies {",
+                           "  compile project(':project1')",
+                           "}"
+                         ).generate());
+
+    importProject("");
+
+    assertModules("project",
+                  "project.project1", "project.project1.main", "project.project1.test", "project.project1.parentSrc",
+                  "project.project2", "project.project2.main", "project.project2.test");
+
+    assertModuleModuleDeps("project.project2.main", "project.project1.main", "project.project1.parentSrc");
+  }
+
 
   @Test
   @TargetVersions("2.0+")

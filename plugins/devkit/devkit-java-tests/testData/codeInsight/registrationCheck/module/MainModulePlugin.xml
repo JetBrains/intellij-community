@@ -8,12 +8,13 @@
   <extensionPoints>
     <extensionPoint name="myMainModuleClassEp" interface="MainModuleClass"/>
     <extensionPoint name="myDependencyModuleClassEp" interface="DependencyModuleClass"/>
-    <<error descr="Element should be registered in DependencyModulePlugin.xml">extensionPoint</error> name="myDependencyModuleClassWithEpNameEp" interface="DependencyModuleClassWithEpName"/>
+    <extensionPoint name="myAdditionalClassEp" beanClass="AdditionalModuleClass"/>
+    <<error descr="Element should be registered in 'anotherModule' module where its class 'DependencyModuleClassWithEpName' is defined">extensionPoint</error> name="myDependencyModuleClassWithEpNameEp" interface="DependencyModuleClassWithEpName"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <myPlugin.myMainModuleClassEp implementation="MainModuleClass"/>
-    <<error descr="Element should be registered in DependencyModulePlugin.xml">myPlugin.myDependencyModuleClassEp</error> implementation="DependencyModuleClass"/>
+    <<error descr="Element should be registered in 'anotherModule' module where its class 'DependencyModuleClass' is defined">myPlugin.myDependencyModuleClassEp</error> implementation="DependencyModuleClass"/>
   </extensions>
 
 </idea-plugin>

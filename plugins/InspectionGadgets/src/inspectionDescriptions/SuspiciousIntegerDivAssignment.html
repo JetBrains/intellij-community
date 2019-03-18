@@ -1,0 +1,20 @@
+<html>
+<body>
+Reports cases when the right side of the assignment is a division that shouldn't be truncated to integer.
+<p>
+  For example, the following code doesn't change <b>x</b> because of the integer division result:
+<pre><code>
+  <b>int</b> x = 18;
+  x *= 3/2;
+</code></pre>
+So, it should be replaced with:
+<pre><code>
+  <b>int</b> x = 18;
+  x *= 3.0/2;
+</code></pre>
+<!-- tooltip end -->
+<p>
+  <small>New in 2019.2</small>
+</p>
+</body>
+</html>

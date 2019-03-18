@@ -422,7 +422,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
     MyTextSeparator() {
       super();
-      setTextForeground(JBColor.BLACK);
+      setTextForeground(UIUtil.getListForeground());
       setCaptionCentered(false);
       UIUtil.addInsets(this, DEFAULT_VGAP, UIUtil.getListCellHPadding(), 0, 0);
     }

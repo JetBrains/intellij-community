@@ -1,6 +1,8 @@
 package org.testng;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
+import org.testng.annotations.Test;
+import org.testng.internal.ConstructorOrMethod;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlTest;
@@ -8,6 +10,7 @@ import org.testng.xml.XmlTest;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -354,7 +357,29 @@ public class IDEATestNGRemoteListener {
 
     public DelegatedResult(ITestResult result) {
       myResult = result;
-      myTestName = myResult.getTestName();
+      myTestName = calculateDisplayName();
+    }
+
+    //workaround for https://github.com/cbeust/testng/issues/1944
+    private String calculateDisplayName() {
+      String name = myResult.getTestName();
+      if (name != null && !name.equals(myResult.getTestClass().getTestName())) {
+        return name;
+      }
+      ITestNGMethod method = myResult.getMethod();
+      ConstructorOrMethod constructorOrMethod = method.getConstructorOrMethod();
+      AccessibleObject member = null;
+      if (constructorOrMethod.getMethod() != null) {
+        member = constructorOrMethod.getMethod();
+      }
+      if (constructorOrMethod.getConstructor() != null) {
+        member = constructorOrMethod.getConstructor();
+      }
+      if (member == null) return method.getMethodName();
+      Test annotation = member.getAnnotation(Test.class);
+      if (annotation == null) return method.getMethodName();
+      String testNameFromAnnotation = annotation.testName();
+      return testNameFromAnnotation == null || testNameFromAnnotation.length() == 0 ? method.getMethodName() : testNameFromAnnotation;
     }
 
     public Object[] getParameters() {
@@ -366,7 +391,7 @@ public class IDEATestNGRemoteListener {
     }
 
     public String getDisplayMethodName() {
-      return myTestName != null && myTestName.length() > 0 ? myTestName : myResult.getMethod().getMethodName();
+      return myTestName;
     }
 
     public String getClassName() {

@@ -216,19 +216,15 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     Element lafElement = element.getChild(ELEMENT_LAF);
     if (lafElement != null) {
       className = lafElement.getAttributeValue(ATTRIBUTE_CLASS_NAME);
-      String themeId = lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME);
-      if (themeId != null) {
-        for (UIManager.LookAndFeelInfo f : myLaFs) {
-          if (f instanceof UIThemeBasedLookAndFeelInfo) {
-            if (((UIThemeBasedLookAndFeelInfo)f).getTheme().getId().equals(themeId)) {
-              laf = f;
-              break;
-            }
-          }
-        }
-      }
       if (className != null && ourLafClassesAliases.containsKey(className)) {
         className = ourLafClassesAliases.get(className);
+      }
+
+      String themeId = lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME);
+      if (themeId != null) {
+        laf = Arrays.stream(myLaFs).
+          filter(l -> l instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)l).getTheme().getId().equals(themeId)).
+          findFirst().orElse(null);
       }
     }
 
@@ -306,15 +302,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Nullable
   private UIManager.LookAndFeelInfo findLaf(@Nullable String className) {
-    if (className == null) {
-      return null;
-    }
-    for (UIManager.LookAndFeelInfo laf : myLaFs) {
-      if (Comparing.equal(laf.getClassName(), className)) {
-        return laf;
-      }
-    }
-    return null;
+    return Arrays.stream(myLaFs).
+      filter(l -> !(l instanceof UIThemeBasedLookAndFeelInfo) && Comparing.equal(l.getClassName(), className)).
+      findFirst().
+      orElse(null);
   }
 
   /**
@@ -415,7 +406,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void updateEditorSchemeIfNecessary(UIManager.LookAndFeelInfo oldLaf) {
-    if (oldLaf instanceof TempUIThemeBasedLookAndFeelInfo) return;
+    if (oldLaf instanceof TempUIThemeBasedLookAndFeelInfo || myCurrentLaf instanceof TempUIThemeBasedLookAndFeelInfo) return;
     if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
       if (((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().getEditorSchemeName() != null) {
         return;

@@ -20,21 +20,20 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
                                                             null) {
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
-    val pullRequest = e.getData(GithubPullRequestKeys.SELECTED_PULL_REQUEST)
-    val dataProvider = e.getData(GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER)
-    e.presentation.isEnabled = project != null && !project.isDefault && pullRequest != null && dataProvider != null
+    val selection = e.getData(GithubPullRequestKeys.DATA_CONTEXT)?.selectedPullRequestDataProvider
+    e.presentation.isEnabled = project != null && !project.isDefault && selection != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val pullRequest = e.getRequiredData(GithubPullRequestKeys.SELECTED_PULL_REQUEST)
-    val repository = e.getRequiredData(GithubPullRequestKeys.REPOSITORY)
+    val context = e.getRequiredData(GithubPullRequestKeys.DATA_CONTEXT)
+    val repository = context.gitRepository
     val repositoryList = listOf(repository)
-    val dataProvider = e.getRequiredData(GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER)
+    val dataProvider = context.selectedPullRequestDataProvider ?: return
 
-    val options = GitBranchUtil.getNewBranchNameFromUser(project, repositoryList,
-                                                         "Create New Branch From Pull Request #${pullRequest.number}",
-                                                         "pull/${pullRequest.number}") ?: return
+    val options = GitBranchUtil.getNewBranchNameFromUser(project, listOf(repository),
+                                                         "Create New Branch From Pull Request #${dataProvider.number}",
+                                                         "pull/${dataProvider.number}") ?: return
 
     if (!options.checkout) {
       object : Task.Backgroundable(project, "Creating Branch From Pull Request", true) {

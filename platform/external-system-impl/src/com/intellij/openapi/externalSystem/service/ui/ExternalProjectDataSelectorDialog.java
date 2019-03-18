@@ -433,7 +433,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   @NotNull
   private static Set<Key<?>> getPublicKeys() {
-    Set<Key<?>> result = ContainerUtil.newHashSet(DATA_KEYS);
+    Set<Key<?>> result = new HashSet<>(DATA_KEYS);
     for (ExternalProjectStructureCustomizer customizer : ExternalProjectStructureCustomizer.EP_NAME.getExtensions()) {
       result.addAll(customizer.getPublicDataKeys());
     }
@@ -442,7 +442,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   @NotNull
   private static Set<Key<?>> getIgnorableKeys() {
-    Set<Key<?>> result = ContainerUtil.newHashSet(DATA_KEYS);
+    Set<Key<?>> result = new HashSet<>(DATA_KEYS);
     for (ExternalProjectStructureCustomizer customizer : ExternalProjectStructureCustomizer.EP_NAME.getExtensions()) {
       result.addAll(customizer.getIgnorableDataKeys());
     }

@@ -69,7 +69,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
 
   private fun getPaneById(id: String): PaneFixture {
     activate()
-    val projectView = ProjectView.getInstance(myProject)
+    val projectView = computeOnEdt { ProjectView.getInstance(myProject) } ?: throw Exception("Unable to compute ProjectView on EDT")
     assertProjectViewIsInitialized(projectView)
     runOnEdt { projectView.changeView(id) }
     return PaneFixture(projectView.getProjectViewPaneById(id))

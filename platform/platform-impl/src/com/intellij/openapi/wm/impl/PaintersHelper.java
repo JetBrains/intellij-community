@@ -30,6 +30,8 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -241,7 +243,7 @@ final class PaintersHelper implements Painter.Listener {
           ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
             BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
-            Image m = ImageLoader.loadFromUrl(url, true, true, new ImageFilter[]{flipFilter}, JBUI.ScaleContext.create());
+            Image m = ImageLoader.loadFromUrl(url, true, true, new ImageFilter[]{flipFilter}, ScaleContext.create());
             ApplicationManager.getApplication().invokeLater(() -> resetImage(propertyValue, m, newAlpha, newFillType, newAnchor), modalityState);
           });
         }

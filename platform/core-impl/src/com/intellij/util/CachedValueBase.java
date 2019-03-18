@@ -11,7 +11,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ProfilingInfo;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.NotNullList;
-import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,14 +36,11 @@ public abstract class CachedValueBase<T> {
       return new Data<>(null, ArrayUtil.EMPTY_OBJECT_ARRAY, ArrayUtil.EMPTY_LONG_ARRAY);
     }
     T value = result.getValue();
-    Object[] dependencies = getDependencies(result);
-
-    TLongArrayList timeStamps = new TLongArrayList(dependencies.length);
-    List<Object> deps = new NotNullList<>(dependencies.length);
-    collectDependencies(timeStamps, deps, dependencies);
-
-    Object[] inferredDependencies = ArrayUtil.toObjectArray(deps);
-    long[] inferredTimeStamps = timeStamps.toNativeArray();
+    Object[] inferredDependencies = normalizeDependencies(result);
+    long[] inferredTimeStamps = new long[inferredDependencies.length];
+    for (int i = 0; i < inferredDependencies.length; i++) {
+      inferredTimeStamps[i] = getTimeStamp(inferredDependencies[i]);
+    }
 
     if (CachedValueProfiler.canProfile()) {
       ProfilingInfo profilingInfo = CachedValueProfiler.getInstance().getTemporaryInfo(result);
@@ -72,10 +68,14 @@ public abstract class CachedValueBase<T> {
   }
 
   @NotNull
-  private Object[] getDependencies(@NotNull CachedValueProvider.Result<T> result) {
+  protected Object[] normalizeDependencies(@NotNull CachedValueProvider.Result<T> result) {
     Object[] items = result.getDependencyItems();
     T value = result.getValue();
-    return myTrackValue && value != null ? ArrayUtil.append(items, value) : items;
+    Object[] rawDependencies = myTrackValue && value != null ? ArrayUtil.append(items, value) : items;
+
+    List<Object> flattened = new NotNullList<>(rawDependencies.length);
+    collectDependencies(flattened, rawDependencies);
+    return ArrayUtil.toObjectArray(flattened);
   }
 
   public void clear() {
@@ -123,15 +123,14 @@ public abstract class CachedValueBase<T> {
     return timeStamp < 0 || timeStamp != oldTimeStamp;
   }
 
-  private void collectDependencies(@NotNull TLongArrayList timeStamps, @NotNull List<Object> resultingDeps, @NotNull Object[] dependencies) {
+  private static void collectDependencies(@NotNull List<Object> resultingDeps, @NotNull Object[] dependencies) {
     for (Object dependency : dependencies) {
       if (dependency == ObjectUtils.NULL) continue;
       if (dependency instanceof Object[]) {
-        collectDependencies(timeStamps, resultingDeps, (Object[])dependency);
+        collectDependencies(resultingDeps, (Object[])dependency);
       }
       else {
         resultingDeps.add(dependency);
-        timeStamps.add(getTimeStamp(dependency));
       }
     }
   }
@@ -169,11 +168,8 @@ public abstract class CachedValueBase<T> {
   public T setValue(@NotNull CachedValueProvider.Result<T> result) {
     Data<T> data = computeData(result);
     setData(data);
-    valueUpdated(result.getDependencyItems());
     return data.getValue();
   }
-
-  protected void valueUpdated(@NotNull Object[] dependencies) {}
 
   public abstract boolean isFromMyProject(@NotNull Project project);
 
@@ -192,8 +188,14 @@ public abstract class CachedValueBase<T> {
       myTimeStamps = timeStamps;
     }
 
-    Object[] getDependencies() {
+    @NotNull
+    public Object[] getDependencies() {
       return myDependencies;
+    }
+
+    @NotNull
+    public long[] getTimeStamps() {
+      return myTimeStamps;
     }
 
     @Override
@@ -250,7 +252,6 @@ public abstract class CachedValueBase<T> {
         }
         Data<T> toReturn = cacheOrGetData(alreadyComputed, reuse ? null : data);
         if (toReturn != null) {
-          valueUpdated(toReturn.myDependencies);
           return toReturn.getValue();
         }
       }

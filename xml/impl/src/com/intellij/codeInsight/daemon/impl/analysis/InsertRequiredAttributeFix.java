@@ -69,7 +69,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
   @Override
   public void invoke(@NotNull final Project project,
                      @NotNull PsiFile file,
-                     @Nullable("is null when called from inspection") final Editor editor,
+                     @Nullable final Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     XmlTag myTag = (XmlTag)startElement;

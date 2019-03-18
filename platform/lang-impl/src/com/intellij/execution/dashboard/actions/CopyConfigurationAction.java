@@ -48,6 +48,7 @@ public class CopyConfigurationAction extends AnAction {
     RunnerAndConfigurationSettings copiedSettings = ((RunnerAndConfigurationSettingsImpl)settings).clone();
     runManager.setUniqueNameIfNeed(copiedSettings);
     copiedSettings.setFolderName(settings.getFolderName());
+    copiedSettings.getConfiguration().setBeforeRunTasks(settings.getConfiguration().getBeforeRunTasks());
 
     final ConfigurationFactory factory = settings.getFactory();
     RunConfiguration configuration = settings.getConfiguration();
@@ -62,7 +63,6 @@ public class CopyConfigurationAction extends AnAction {
 
     if (RunDialog.editConfiguration(project, copiedSettings,
                                     ExecutionBundle.message("run.dashboard.edit.configuration.dialog.title"))) {
-      copiedSettings.setShared(settings.isShared());
       runManager.addConfiguration(copiedSettings);
     }
   }

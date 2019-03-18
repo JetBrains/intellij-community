@@ -153,7 +153,6 @@ public class ArtifactRepositoryManager {
       com.google.common.base.Predicate.class, //guava
       org.apache.http.HttpConnection.class, //httpcore
       org.apache.http.client.HttpClient.class, //httpclient
-      org.apache.commons.codec.binary.Base64.class, // commons-codec
       org.apache.commons.logging.LogFactory.class, // commons-logging
       org.slf4j.Marker.class // slf4j
     );

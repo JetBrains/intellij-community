@@ -4,8 +4,6 @@ package com.intellij.util.containers
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import gnu.trove.THashSet
-import java.io.FileInputStream
-import java.nio.file.Path
 import java.util.*
 import java.util.stream.Stream
 
@@ -185,4 +183,11 @@ inline fun <T> Collection<T>.filterSmart(predicate: (T) -> Boolean): List<T> {
 
 inline fun <T> Collection<T>.filterSmartMutable(predicate: (T) -> Boolean): MutableList<T> {
   return filterTo(if (size <= 1) SmartList() else ArrayList(), predicate)
+}
+
+inline fun <reified E : Enum<E>, V> enumMapOf(): MutableMap<E, V> = EnumMap<E, V>(E::class.java)
+
+fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> {
+  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
+  return (this as java.util.Collection<E>).toArray(empty)
 }

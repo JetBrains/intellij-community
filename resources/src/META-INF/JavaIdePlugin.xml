@@ -24,7 +24,6 @@
   <module value="com.intellij.modules.lang"/>
   <module value="com.intellij.modules.vcs"/>
   <module value="com.intellij.modules.xdebugger"/>
-  <module value="com.intellij.modules.xml"/>
   <module value="com.intellij.modules.externalSystem"/>
 
   <xi:include href="/componentSets/IdeaComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -41,6 +40,61 @@
     <xi:include href="/META-INF/LangExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
     <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
     <xi:include href="/META-INF/ExternalSystemExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+
+    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
+                        serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
+                        serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtil"
+                        serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
+    <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
+                        serviceImplementation="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
+
+    <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
+
+    <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
+                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexFacade"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
+
+    <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
+
+    <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
+                    serviceImplementation="com.intellij.psi.impl.file.PsiDirectoryFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.ide.todo.nodes.TodoTreeHelper"
+                    serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
+    <projectService serviceInterface="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"
+                    serviceImplementation="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"
+                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"/>
+    <projectService serviceInterface="com.intellij.usages.impl.rules.DirectoryGroupingRule"
+                    serviceImplementation="com.intellij.usages.impl.rules.DirectoryGroupingRule"/>
+    <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
+                    serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter"/>
+    <projectService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
+                    serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
+    <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
+
+    <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last"/>
+    <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
+                    serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
+                        serviceImplementation="com.intellij.openapi.roots.PlatformModifiableModelsProvider"/>
+
+    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyFilesOrDirectories"/>
+    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler"
+                             id="moveFileOrDir"/>
+
+    <treeStructureProvider implementation="com.intellij.platform.PlatformProjectViewStructureProvider"/>
+
+    <programRunner implementation="com.intellij.execution.runners.DefaultRunProgramRunner" order="last"/>
+
+    <projectConfigurable groupId="editor" groupWeight="160" displayName="Inspections" id="Errors" provider="com.intellij.profile.codeInspection.ui.ErrorsConfigurableProviderImpl" order="before preferences.intentionPowerPack"/>
+    <projectConfigurable groupId="appearance" groupWeight="111" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable"
+                         id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle"/>
   </extensions>
 
   <actions>
@@ -221,10 +275,6 @@
     <extensionPoint name="projectImportBuilder" interface="com.intellij.projectImport.ProjectImportBuilder"/>
     <extensionPoint name="projectStructureDetector" interface="com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector"/>
 
-    <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.lang.WordCompletionElementFilter"/>
-    </extensionPoint>
-
     <extensionPoint name="projectStructureConfigurableFilter"
                     interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter"/>
     <extensionPoint name="projectStructureConfigurableAdder"
@@ -350,7 +400,8 @@
     <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
 
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
-                        serviceImplementation="com.intellij.ide.RecentProjectsManagerBase"/>
+                        serviceImplementation="com.intellij.ide.RecentProjectsManagerBase"
+                        overrides="true"/>
 
     <applicationService serviceInterface="com.intellij.util.descriptors.ConfigFileFactory"
                         serviceImplementation="com.intellij.util.descriptors.impl.ConfigFileFactoryImpl"/>
@@ -375,9 +426,8 @@
                         serviceImplementation="com.intellij.facet.impl.ui.FacetEditorsFactoryImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
-                        serviceImplementation="com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl"/>
-    <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
-
+                        serviceImplementation="com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl"
+                        overrides="true"/>
 
     <applicationService serviceInterface="com.intellij.execution.runners.ProcessProxyFactory"
                         serviceImplementation="com.intellij.execution.runners.ProcessProxyFactoryImpl"/>
@@ -401,9 +451,6 @@
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinderImpl"/>
     <applicationService serviceImplementation="com.intellij.packaging.impl.artifacts.InvalidArtifactType"/>
 
-    <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
-                    serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
-
     <projectService serviceInterface="com.intellij.openapi.compiler.CompilerManager"
                     serviceImplementation="com.intellij.compiler.CompilerManagerImpl"/>
     <projectService serviceInterface="com.intellij.compiler.options.ValidationConfiguration"
@@ -422,12 +469,9 @@
     <changesGroupingPolicy key="module" id="module"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.ModuleChangesGroupingPolicy$Factory"/>
 
-    <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
-    <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
-                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexFacade"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsPathPresenter"/>
+                    serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsPathPresenter"
+                    overrides="true"/>
 
     <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"
                     serviceImplementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"/>
@@ -439,7 +483,6 @@
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager"
                         serviceImplementation="com.intellij.openapi.roots.ui.configuration.libraries.impl.LibraryPresentationManagerImpl"/>
-    <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
 
     <daemon.highlightInfoFilter implementation="com.intellij.debugger.engine.evaluation.DebuggerHighlightFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>
@@ -451,11 +494,6 @@
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable"/>
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable"/>
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable"/>
-
-    <!-- Errors -->
-    <!-- Show full error options configurable only in full IDEA - platform supports only default IDE profile for now -->
-    <projectConfigurable groupId="editor" groupWeight="160" displayName="Inspections" id="Errors"
-                         provider="com.intellij.profile.codeInspection.ui.ErrorsConfigurableProviderImpl"/>
 
     <!-- Compiler -->
     <projectConfigurable groupId="build" groupWeight="130" instance="com.intellij.compiler.options.CompilerConfigurable"
@@ -479,9 +517,6 @@
                          id="Template Data Languages" key="template.data.language.configurable" bundle="messages.LangBundle"
                          nonDefaultProject="true"/>
 
-    <!-- Scopes -->
-    <projectConfigurable groupId="appearance" groupWeight="111" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable"
-                         id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle"/>
 
     <!-- Application Configurables -->
 
@@ -493,10 +528,10 @@
                              key="title.path.variables" bundle="messages.ApplicationBundle"/>
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
-    <editorNotificationProviderApp implementation="com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider"/>
-    <editorNotificationProviderApp implementation="com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider"/>
     <projectSdkSetupValidator id="javaSdk" implementation="com.intellij.codeInsight.daemon.impl.JavaProjectSdkSetupValidator"/>
-    <editorNotificationProviderApp implementation="com.intellij.debugger.ui.AlternativeSourceNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.debugger.ui.AlternativeSourceNotificationProvider"/>
 
     <attachSourcesProvider implementation="com.intellij.jarFinder.InternetAttachSourceProvider"/>
     <attachSourcesProvider implementation="com.intellij.jarFinder.IvyAttachSourceProvider"/>
@@ -563,7 +598,6 @@
                             order="after compileBeforeRunNoErrorCheck"/>
     <externalSystem.beforeRunTaskImporter implementation="com.intellij.compiler.options.CompileStepBeforeRunImporter"/>
     <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
-    <programRunner implementation="com.intellij.execution.runners.DefaultRunProgramRunner" order="last"/>
 
     <checkinHandlerFactory implementation="com.intellij.compiler.impl.vcs.UnloadedModulesCompilationCheckinHandler$Factory"/>
 
@@ -583,7 +617,8 @@
                     serviceImplementation="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
-                        serviceImplementation="com.intellij.openapi.roots.IdeaModifiableModelsProvider"/>
+                        serviceImplementation="com.intellij.openapi.roots.IdeaModifiableModelsProvider"
+                        overrides="true"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettings"
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettingsImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettings"
@@ -608,7 +643,7 @@
 
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
 
-    <editorNotificationProviderApp implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
+    <editorNotificationProvider implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
 
     <applicationService serviceInterface="com.intellij.debugger.engine.DebuggerUtils"
                         serviceImplementation="com.intellij.debugger.impl.DebuggerUtilsImpl"/>
@@ -719,11 +754,6 @@
     <internalFileTemplate name="package-info"/>
     <internalFileTemplate name="module-info"/>
 
-    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyFilesOrDirectories"/>
-
-    <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtil"
-                        serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
-
     <elementLookupRenderer implementation="com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer"/>
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.PackageViewPane"/>
@@ -785,7 +815,8 @@
 
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"
-                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.IdeaProjectSettingsService"/>
+                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.IdeaProjectSettingsService"
+                    overrides="true"/>
 
     <projectWizard.projectCategory implementation="com.intellij.ide.projectWizard.ModuleTypeCategory$JavaSE"/>
 
@@ -800,9 +831,6 @@
              implementationClass="com.intellij.compiler.chainsSearch.completion.MethodChainWeigher"/>
 
     <projectTemplate projectType="JAVA_MODULE" templatePath="resources/projectTemplates/Java/Command_Line_App.zip"/>
-    <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
-    <projectService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
-                    serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
 
     <codeInsight.linkHandler prefix="#assignment/" handlerClass="com.intellij.codeInsight.intention.impl.config.AssignmentTooltipLinkHandler"/>
     <library.javaSourceRootDetector implementation="com.intellij.openapi.roots.ui.configuration.LibraryJavaSourceRootDetector"/>
@@ -826,7 +854,8 @@
     </intentionAction>
 
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
-                        serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"/>
+                        serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"
+                        overrides="true"/>
     <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.IndentHelper"
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaIndentHelper"
                         overrides="true"/>
@@ -834,15 +863,20 @@
                         serviceImplementation="com.intellij.openapi.module.impl.JavaAwareModuleTypeManagerImpl"
                         overrides="true"/>
     <projectService serviceInterface="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"
-                    serviceImplementation="com.intellij.ide.projectView.impl.JavaProjectViewDirectoryHelper"/>
+                    serviceImplementation="com.intellij.ide.projectView.impl.JavaProjectViewDirectoryHelper"
+                    overrides="true"/>
     <projectService serviceInterface="com.intellij.usages.impl.rules.DirectoryGroupingRule"
-                    serviceImplementation="com.intellij.usages.impl.rules.PackageGroupingRule"/>
+                    serviceImplementation="com.intellij.usages.impl.rules.PackageGroupingRule"
+                    overrides="true"/>
     <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
-                    serviceImplementation="com.intellij.psi.impl.file.PsiJavaDirectoryFactory"/>
+                    serviceImplementation="com.intellij.psi.impl.file.PsiJavaDirectoryFactory"
+                    overrides="true"/>
     <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
-                    serviceImplementation="com.intellij.refactoring.openapi.impl.JavaRefactoringFactoryImpl"/>
+                    serviceImplementation="com.intellij.refactoring.openapi.impl.JavaRefactoringFactoryImpl"
+                    overrides="true"/>
     <projectService serviceInterface="com.intellij.ide.todo.nodes.TodoTreeHelper"
-                    serviceImplementation="com.intellij.ide.todo.nodes.TodoJavaTreeHelper"/>
+                    serviceImplementation="com.intellij.ide.todo.nodes.TodoJavaTreeHelper"
+                    overrides="true"/>
   </extensions>
 
   <actions>
@@ -890,7 +924,7 @@
             icon="AllIcons.General.ProjectStructure">
       <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>
       <add-to-group group-id="MainToolBarSettings" anchor="after" relative-to-action="ShowSettings"/>
-      <add-to-group group-id="NavBarToolBar" anchor="last"/>
+      <add-to-group group-id="NavBarToolBar" relative-to-action="NavBarToolBarOthers" anchor="after"/>
     </action>
     <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>

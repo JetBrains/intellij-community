@@ -9,9 +9,6 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -55,9 +52,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   @NotNull
   @Override
   public final PsiReference[] getReferences() {
-    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result.create(
-      ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS),
-      PsiModificationTracker.MODIFICATION_COUNT));
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
   }
 
   @Nullable

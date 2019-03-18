@@ -22,7 +22,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated Use XAttachProcessPresentationGroup (will be removed in 2018.2)
+ * @deprecated Use {@link XAttachProcessPresentationGroup} (will be removed in 2018.2)
  */
 @Deprecated
 @ApiStatus.Experimental
@@ -34,7 +34,7 @@ public interface XLocalAttachGroup extends XAttachProcessPresentationGroup {
   XLocalAttachGroup DEFAULT = new XDefaultLocalAttachGroup();
 
   /**
-   * @deprecated use {@link #compare(Object, Object)} (will be removed in 2018.2)
+   * @deprecated use {@link #compare(ProcessInfo, ProcessInfo)} (will be removed in 2018.2)
    */
   @Override
   @Deprecated

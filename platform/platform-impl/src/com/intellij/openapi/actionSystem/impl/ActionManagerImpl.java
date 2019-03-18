@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -37,6 +38,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -444,7 +446,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private void registerPluginActions() {
     final List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins(null);
     for (IdeaPluginDescriptor plugin : plugins) {
-      final List<Element> elementList = plugin.getActionsDescriptionElements();
+      final List<Element> elementList = plugin.getAndClearActionDescriptionElements();
       if (elementList != null) {
         for (Element e : elementList) {
           processActionsChildElement(plugin.getPluginClassLoader(), plugin.getPluginId(), e);
@@ -543,12 +545,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
    * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of {@code AnAction}.
    */
   @Nullable
-  private AnAction processActionElement(Element element, final ClassLoader loader, PluginId pluginId) {
+  private AnAction processActionElement(@NotNull Element element, final ClassLoader loader, PluginId pluginId) {
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null || className.isEmpty()) {
       reportActionError(pluginId, "action element should have specified \"class\" attribute");
       return null;
     }
+
     // read ID and register loaded action
     String id = obtainActionId(element, className);
     if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
@@ -624,7 +627,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private AnAction processGroupElement(Element element, final ClassLoader loader, PluginId pluginId) {
+  private AnAction processGroupElement(@NotNull Element element, final ClassLoader loader, PluginId pluginId) {
     final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
 
@@ -948,7 +951,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return action;
   }
 
-  private void processActionsChildElement(final ClassLoader loader, final PluginId pluginId, final Element child) {
+  private void processActionsChildElement(final ClassLoader loader, final PluginId pluginId, @NotNull Element child) {
     String name = child.getName();
     if (ACTION_ELEMENT_NAME.equals(name)) {
       AnAction action = processActionElement(child, loader, pluginId);
@@ -1190,7 +1193,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
-    ActionsCollector.getInstance().record(CommonDataKeys.PROJECT.getData(dataContext), action, event);
+    final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    final Language language = file != null ? file.getLanguage() : null;
+    ActionsCollector.getInstance().record(CommonDataKeys.PROJECT.getData(dataContext), action, event, language);
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
     }

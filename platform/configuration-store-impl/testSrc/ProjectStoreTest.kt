@@ -6,7 +6,6 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.SystemInfo
@@ -74,7 +73,7 @@ internal class ProjectStoreTest {
       file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
       LocalFileSystem.getInstance().findFileByPath(project.basePath!!)!!.refresh(false, true)
-      (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
+      StoreReloadManager.getInstance().reloadChangedStorageFiles()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
 
@@ -183,16 +182,16 @@ internal class ProjectStoreTest {
     """.trimIndent())
       it.path
     }) { project ->
-      val stalledStorageBean = StalledStorageBean()
+      val obsoleteStorageBean = ObsoleteStorageBean()
       val storageFileName = "foo.xml"
-      stalledStorageBean.file = storageFileName
-      stalledStorageBean.components.addAll(listOf("AppLevelLoser"))
+      obsoleteStorageBean.file = storageFileName
+      obsoleteStorageBean.components.addAll(listOf("AppLevelLoser"))
 
-      val projectStalledStorageBean = StalledStorageBean()
+      val projectStalledStorageBean = ObsoleteStorageBean()
       projectStalledStorageBean.file = storageFileName
       projectStalledStorageBean.isProjectLevel = true
       projectStalledStorageBean.components.addAll(listOf("ProjectLevelLoser"))
-      PlatformTestUtil.maskExtensions(STALLED_STORAGE_EP, listOf(stalledStorageBean, projectStalledStorageBean), project)
+      PlatformTestUtil.maskExtensions(OBSOLETE_STORAGE_EP, listOf(obsoleteStorageBean, projectStalledStorageBean), project)
 
       val componentStore = project.stateStore
 
@@ -205,7 +204,7 @@ internal class ProjectStoreTest {
 
       componentStore.save()
 
-      assertThat(Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_CONFIG_DIR)).resolve(stalledStorageBean.file)).isEqualTo("""
+      assertThat(Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_CONFIG_DIR)).resolve(obsoleteStorageBean.file)).isEqualTo("""
       <?xml version="1.0" encoding="UTF-8"?>
       <project version="4">
         <component name="AppLevelLoser" foo="old?" />

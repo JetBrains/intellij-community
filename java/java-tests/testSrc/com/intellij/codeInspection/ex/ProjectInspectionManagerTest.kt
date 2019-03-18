@@ -2,9 +2,8 @@
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
-import com.intellij.configurationStore.ConfigurationStorageReloader
+import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
@@ -72,12 +71,12 @@ class ProjectInspectionManagerTest {
       file.delete()
 
       project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
+      StoreReloadManager.getInstance().reloadChangedStorageFiles()
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
       file.write(doNotUseProjectProfileData)
       project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
+      StoreReloadManager.getInstance().reloadChangedStorageFiles()
       assertThat(projectInspectionProfileManager.state).isEqualTo(doNotUseProjectProfileState)
     }
   }
@@ -142,7 +141,7 @@ class ProjectInspectionManagerTest {
       </component>""".trimIndent())
 
       project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
+      StoreReloadManager.getInstance().reloadChangedStorageFiles()
       assertThat(projectInspectionProfileManager.currentProfile.getToolDefaultState("Convert2Diamond", project).level).isEqualTo(HighlightDisplayLevel.ERROR)
     }
   }

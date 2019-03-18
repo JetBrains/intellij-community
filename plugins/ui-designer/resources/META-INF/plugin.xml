@@ -136,6 +136,7 @@
 
     <compiler implementation="com.intellij.uiDesigner.make.Form2SourceCompiler"/>
     <compileServer.plugin classpath="jps/ui-designer-jps-plugin.jar"/>
+    <postStartupActivity implementation="com.intellij.uiDesigner.make.FormTypeRegistrar" />
 
     <psi.referenceContributor language="TEXT" implementation="com.intellij.uiDesigner.binding.FormReferenceContributor"/>
 

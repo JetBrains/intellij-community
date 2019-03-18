@@ -5,7 +5,10 @@ import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.StoreUtil;
+import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
@@ -437,7 +440,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       }, true);
 
-      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.APP_INITIALIZED_CALLBACK);
+      Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
       ExtensionPoint<ApplicationInitializedListener> initializedExtensionPoint = ApplicationInitializedListener.EP_NAME.getPoint(null);
       for (ApplicationInitializedListener listener : initializedExtensionPoint.getExtensionList()) {
         try {
@@ -454,7 +457,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       catch (Throwable e) {
         LOG.error(e);
       }
-      measureToken.end();
+      activity.end();
     }
     finally {
       token.finish();
@@ -926,7 +929,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
     }
 
-    ProjectManagerEx projectManager = (ProjectManagerEx)ProjectManager.getInstance();
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project[] projects = projectManager.getOpenProjects();
     for (Project project : projects) {
       if (!projectManager.canClose(project)) {
@@ -1485,7 +1488,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Nullable
   @Override
-  protected String measureTokenNamePrefix() {
+  protected String activityNamePrefix() {
     return "app ";
   }
 

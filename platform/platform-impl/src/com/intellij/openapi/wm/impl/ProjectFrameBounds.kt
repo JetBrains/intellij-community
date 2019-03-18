@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.WindowManagerImpl.FrameBoundsConverter.convertToDeviceSpace
+import com.intellij.ui.ScreenUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import org.jdom.Element
@@ -34,7 +36,7 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
   }
 
   override fun getModificationCount(): Long {
-    val frameInfoInDeviceSpace = (WindowManager.getInstance() as? WindowManagerImpl)?.getFrameInfoInDeviceSpace(project)
+    val frameInfoInDeviceSpace = (WindowManager.getInstance() as? WindowManagerImpl)?.getFrameInfoInDeviceSpace(project, rawFrameInfo)
     if (frameInfoInDeviceSpace != null) {
       if (rawFrameInfo == null) {
         rawFrameInfo = frameInfoInDeviceSpace
@@ -55,16 +57,23 @@ class FrameInfo : BaseState() {
   @get:Attribute var fullScreen by property(false)
 }
 
-fun WindowManagerImpl.getFrameInfoInDeviceSpace(project: Project): FrameInfo? {
+fun WindowManagerImpl.getFrameInfoInDeviceSpace(project: Project, prev: FrameInfo?): FrameInfo? {
   val frame = getFrame(project) ?: return null
+
+  // save bounds even if maximized because on unmaximize we must restore previous frame bounds
+  val deviceSpaceBounds = convertToDeviceSpace(frame.graphicsConfiguration, myDefaultFrameInfo.bounds ?: return null)
+
+  // don't report if was already reported
+  if (prev?.bounds != deviceSpaceBounds && !ScreenUtil.intersectsVisibleScreen(frame)) {
+    logger<WindowInfoImpl>().error("Frame bounds are invalid: $deviceSpaceBounds")
+  }
+
+  val frameInfo = FrameInfo()
+  frameInfo.bounds = deviceSpaceBounds
 
   // updateFrameBounds will also update myDefaultFrameInfo,
   // so, we have to call this method before other code in this method and if later extendedState is used only for macOS
-  val extendedState = updateFrameBounds(frame)
-  val frameInfo = FrameInfo()
-  // save bounds even if maximized because on unmaximize we must restore previous frame bounds
-  frameInfo.bounds = convertToDeviceSpace(frame.graphicsConfiguration, myDefaultFrameInfo.bounds!!)
-  frameInfo.extendedState = extendedState
+  frameInfo.extendedState = updateFrameBounds(frame)
 
   if (isFullScreenSupportedInCurrentOS) {
     frameInfo.fullScreen = frame.isInFullScreen

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.ui.UISettings;
@@ -21,21 +21,16 @@ import java.util.List;
 public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner {
   private final List<Transferable> myData = new ArrayList<>();
   private final EventDispatcher<ContentChangedListener> myDispatcher = EventDispatcher.create(ContentChangedListener.class);
-  private final ClipboardSynchronizer myClipboardSynchronizer;
   private boolean myOwnContent;
 
   public static CopyPasteManagerEx getInstanceEx() {
     return (CopyPasteManagerEx)getInstance();
   }
 
-  public CopyPasteManagerEx(ClipboardSynchronizer clipboardSynchronizer) {
-    myClipboardSynchronizer = clipboardSynchronizer;
-  }
-
   @Override
   public void lostOwnership(Clipboard clipboard, Transferable contents) {
     myOwnContent = false;
-    myClipboardSynchronizer.resetContent();
+    ClipboardSynchronizer.getInstance().resetContent();
     fireContentChanged(contents, null);
   }
 
@@ -60,7 +55,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   @Override
   public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
-    return flavors.length > 0 &&  myClipboardSynchronizer.areDataFlavorsAvailable(flavors);
+    return flavors.length > 0 && ClipboardSynchronizer.getInstance().areDataFlavorsAvailable(flavors);
   }
 
   @Override
@@ -91,7 +86,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   private void setSystemClipboardContent(Transferable content) {
-    myClipboardSynchronizer.setContent(content, this);
+    ClipboardSynchronizer.getInstance().setContent(content, this);
     myOwnContent = true;
   }
 
@@ -217,7 +212,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   @Override
   public Transferable getContents() {
-    return myClipboardSynchronizer.getContents();
+    return ClipboardSynchronizer.getInstance().getContents();
   }
 
   @Nullable
@@ -225,7 +220,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   public <T> T getContents(@NotNull DataFlavor flavor) {
     if (areDataFlavorsAvailable(flavor)) {
       //noinspection unchecked
-      return (T)myClipboardSynchronizer.getData(flavor);
+      return (T)ClipboardSynchronizer.getInstance().getData(flavor);
     }
     return null;
   }

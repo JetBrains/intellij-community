@@ -318,7 +318,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     events.clear();
     TempFileSystem fs = TempFileSystem.getInstance();
     IntStream.range(0, N)
-      .mapToObj(i -> new VFileCreateEvent(this, temp, i + ".txt", false, null, null, false, false))
+      .mapToObj(i -> new VFileCreateEvent(this, temp, i + ".txt", false, null, null, false, null))
       .peek(event -> {
         if (fs.findModelChild(temp, event.getChildName()) == null) {
           fs.createChildFile(this, temp, event.getChildName());

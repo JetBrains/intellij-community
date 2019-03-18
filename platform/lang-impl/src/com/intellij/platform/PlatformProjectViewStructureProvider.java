@@ -18,6 +18,7 @@ package com.intellij.platform;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
@@ -45,7 +46,8 @@ public class PlatformProjectViewStructureProvider implements TreeStructureProvid
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull final AbstractTreeNode parent, @NotNull final Collection<AbstractTreeNode> children, final ViewSettings settings) {
-    if (parent instanceof PsiDirectoryNode) {
+    if (parent instanceof PsiDirectoryNode &&
+        ProjectViewDirectoryHelper.getInstance(myProject).shouldHideProjectConfigurationFilesDirectory()) {
       final VirtualFile vFile = ((PsiDirectoryNode)parent).getVirtualFile();
       if (vFile != null && Comparing.equal(ProjectFileIndex.SERVICE.getInstance(myProject).getContentRootForFile(vFile), vFile)) {
         final Collection<AbstractTreeNode> moduleChildren = ((PsiDirectoryNode) parent).getChildren();

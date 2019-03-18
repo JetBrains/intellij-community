@@ -111,18 +111,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
                                    @NotNull String title,
                                    boolean isOffline) {
     LOG.assertTrue(myContent == null, "GlobalInspectionContext is busy under other view now");
-    myContentManager.getValue().addContentManagerListener(new ContentManagerAdapter() {
-      @Override
-      public void contentRemoved(@NotNull ContentManagerEvent event) {
-        if (event.getContent() == myContent) {
-          if (myView != null) {
-            close(false);
-          }
-          myContent = null;
-        }
-      }
-    });
-
     myView = view;
     if (!isOffline) {
       myView.setUpdating(true);
@@ -130,6 +118,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
     myContent = ContentFactory.SERVICE.getInstance().createContent(view, title, false);
     myContent.setHelpId(InspectionResultsView.HELP_ID);
     myContent.setDisposer(myView);
+    Disposer.register(myContent, () -> {
+      if (myView != null) {
+        close(false);
+      }
+      myContent = null;
+    });
 
     ContentManager contentManager = getContentManager();
     contentManager.addContent(myContent);

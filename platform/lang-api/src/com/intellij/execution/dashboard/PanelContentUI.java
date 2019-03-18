@@ -15,7 +15,11 @@
  */
 package com.intellij.execution.dashboard;
 
+import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.content.*;
+import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,6 +32,7 @@ import java.awt.*;
  */
 class PanelContentUI implements ContentUI {
   private JPanel myPanel;
+  private ContentManager myContentManager;
 
   PanelContentUI() {
   }
@@ -40,6 +45,8 @@ class PanelContentUI implements ContentUI {
 
   @Override
   public void setManager(@NotNull ContentManager manager) {
+    assert myContentManager == null;
+    myContentManager = manager;
     manager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
       public void selectionChanged(@NotNull final ContentManagerEvent event) {
@@ -59,6 +66,18 @@ class PanelContentUI implements ContentUI {
       return;
     }
     myPanel = new JPanel(new BorderLayout());
+    UIUtil.putClientProperty(myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() -> {
+      if (myContentManager == null || myContentManager.getContentCount() == 0) {
+        return EmptyIterator.getInstance();
+      }
+      return JBIterable.of(myContentManager.getContents())
+        .map(content -> {
+          JComponent component = content.getComponent();
+          return component != null && myPanel != component.getParent() ? component : null;
+        })
+        .filter(Conditions.notNull())
+        .iterator();
+    });
   }
 
   private void showContent(@NotNull Content content) {
@@ -128,5 +147,8 @@ class PanelContentUI implements ContentUI {
 
   @Override
   public void dispose() {
+    if (myPanel != null) {
+      myPanel.removeAll();
+    }
   }
 }

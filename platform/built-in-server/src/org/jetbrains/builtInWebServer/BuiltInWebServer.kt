@@ -9,7 +9,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
@@ -46,7 +46,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
 
-internal val LOG = Logger.getInstance(BuiltInWebServer::class.java)
+internal val LOG = logger<BuiltInWebServer>()
 
 // name is duplicated in the ConfigImportHelper
 private const val IDE_TOKEN_FILE = "user.web.token"

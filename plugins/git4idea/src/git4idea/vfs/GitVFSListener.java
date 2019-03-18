@@ -100,13 +100,7 @@ public class GitVFSListener extends VcsVFSListener {
                                           @NotNull ExecuteAddCallback executeAddCallback) {
     saveUnsavedVcsIgnoreFiles();
     // Filter added files before further processing
-    Map<VirtualFile, List<VirtualFile>> sortedFiles;
-    try {
-      sortedFiles = GitUtil.sortFilesByGitRoot(addedFiles, true);
-    }
-    catch (VcsException e) {
-      throw new RuntimeException("The exception is not expected here", e);
-    }
+    Map<VirtualFile, List<VirtualFile>> sortedFiles = GitUtil.sortFilesByGitRootIgnoringMissing(myProject, addedFiles);
     final HashSet<VirtualFile> retainedFiles = new HashSet<>();
     final ProgressManager progressManager = ProgressManager.getInstance();
     progressManager.run(new Task.Backgroundable(myProject, GitBundle.getString("vfs.listener.checking.ignored"), true) {
@@ -232,13 +226,13 @@ public class GitVFSListener extends VcsVFSListener {
           List<FilePath> dirtyPaths = newArrayList();
           List<File> toRefresh = newArrayList();
           //perform adding
-          for (Map.Entry<VirtualFile, List<FilePath>> toAddEntry : GitUtil.sortFilePathsByGitRoot(toAdd, true).entrySet()) {
+          for (Map.Entry<VirtualFile, List<FilePath>> toAddEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, toAdd).entrySet()) {
             List<FilePath> files = toAddEntry.getValue();
             executeAdding(toAddEntry.getKey(), files);
             dirtyPaths.addAll(files);
           }
           //perform deletion
-          for (Map.Entry<VirtualFile, List<FilePath>> toRemoveEntry : GitUtil.sortFilePathsByGitRoot(toRemove, true).entrySet()) {
+          for (Map.Entry<VirtualFile, List<FilePath>> toRemoveEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, toRemove).entrySet()) {
             List<FilePath> paths = toRemoveEntry.getValue();
             toRefresh.addAll(executeDeletion(toRemoveEntry.getKey(), paths));
             dirtyPaths.addAll(paths);
@@ -246,7 +240,7 @@ public class GitVFSListener extends VcsVFSListener {
           //perform force move if needed
           Map<FilePath, MovedFileInfo> filesToForceMove = map2Map(toForceMove, info -> Pair.create(VcsUtil.getFilePath(info.myNewPath), info));
           dirtyPaths.addAll(map(toForceMove, fileInfo -> VcsUtil.getFilePath(fileInfo.myOldPath)));
-          for (Map.Entry<VirtualFile, List<FilePath>> toForceMoveEntry : GitUtil.sortFilePathsByGitRoot(filesToForceMove.keySet(), true).entrySet()) {
+          for (Map.Entry<VirtualFile, List<FilePath>> toForceMoveEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, filesToForceMove.keySet()).entrySet()) {
             List<FilePath> paths = toForceMoveEntry.getValue();
             toRefresh.addAll(executeForceMove(toForceMoveEntry.getKey(), paths, filesToForceMove));
             dirtyPaths.addAll(paths);
@@ -312,14 +306,7 @@ public class GitVFSListener extends VcsVFSListener {
   private void performBackgroundOperation(@NotNull Collection<FilePath> files,
                                           @NotNull String operationTitle,
                                           @NotNull LongOperationPerRootExecutor executor) {
-    Map<VirtualFile, List<FilePath>> sortedFiles;
-    try {
-      sortedFiles = GitUtil.sortFilePathsByGitRoot(files, true);
-    }
-    catch (VcsException e) {
-      myVcsConsoleWriter.showMessage(e.getMessage());
-      return;
-    }
+    Map<VirtualFile, List<FilePath>> sortedFiles = GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, files);
 
     GitVcs.runInBackground(new Task.Backgroundable(myProject, operationTitle) {
       @Override

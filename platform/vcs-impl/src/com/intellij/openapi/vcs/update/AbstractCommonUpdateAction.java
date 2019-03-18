@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
@@ -16,7 +17,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
@@ -332,7 +332,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     }
 
     private void runImpl() {
-      ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
+      StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
       myProjectLevelVcsManager.startBackgroundVcsOperation();
 
       myBefore = LocalHistory.getInstance().putSystemLabel(myProject, "Before update");
@@ -480,7 +480,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
 
     private void onSuccessImpl(final boolean wasCanceled) {
       if (!myProject.isOpen() || myProject.isDisposed()) {
-        ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
+        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
         LocalHistory.getInstance().putSystemLabel(myProject, LOCAL_HISTORY_ACTION); // TODO check why this label is needed
         return;
       }
@@ -522,7 +522,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
 
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
         if (myProject.isDisposed()) {
-          ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
+          StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
           return;
         }
 
@@ -564,7 +564,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
           VcsNotifier.getInstance(myProject).notify(notification);
         }
 
-        ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
+        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
 
         if (continueChainFinal && updateSuccess) {
           if (!noMerged) {

@@ -6,7 +6,7 @@ class Test {
             // 3
             int y = 23;
             //5
-        }
+        };
         Runnable r = () -> {
             <caret>x/*7*/++;
             ref.y++;

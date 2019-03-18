@@ -15,29 +15,49 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.ClickListener
-import com.intellij.ui.HyperlinkLabel
-import com.intellij.ui.ListCellRendererWrapper
-import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
+import com.intellij.ui.*
 import com.intellij.ui.components.*
+import com.intellij.ui.layout.migLayout.*
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
+import java.util.function.Consumer
+import java.util.function.Supplier
 import javax.swing.*
+import kotlin.reflect.KMutableProperty0
+import kotlin.reflect.KProperty0
 
 @DslMarker
 annotation class CellMarker
 
 interface CellBuilder<T : JComponent> {
+  val component: T
+
   fun focused(): CellBuilder<T>
   fun withValidation(callback: (T) -> ValidationInfo?): CellBuilder<T>
+  fun onApply(callback: () -> Unit): CellBuilder<T>
+  fun enabled(isEnabled: Boolean)
+  fun enableIfSelected(button: AbstractButton)
 
   fun withErrorIf(message: String, callback: (T) -> Boolean): CellBuilder<T> {
     withValidation { if (callback(it)) ValidationInfo(message, it) else null }
     return this
   }
+}
+
+interface CheckboxCellBuilder {
+  fun actsAsLabel()
+}
+
+fun CellBuilder<out JComponent>.enableIfSelected(builder: CellBuilder<out AbstractButton>) {
+  enableIfSelected(builder.component)
+}
+
+fun <T : JCheckBox> CellBuilder<T>.actsAsLabel(): CellBuilder<T> {
+  (this as CheckboxCellBuilder).actsAsLabel()
+  return this
 }
 
 // separate class to avoid row related methods in the `cell { } `
@@ -84,7 +104,12 @@ abstract class Cell {
     button(*constraints)
   }
 
-  inline fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, propertyUiManager: BooleanPropertyUiManager? = null, vararg constraints: CCFlags, crossinline actionListener: (event: ActionEvent, component: JCheckBox) -> Unit): JCheckBox {
+  inline fun checkBox(text: String,
+                      isSelected: Boolean = false,
+                      comment: String? = null,
+                      propertyUiManager: BooleanPropertyUiManager? = null,
+                      vararg constraints: CCFlags,
+                      crossinline actionListener: (event: ActionEvent, component: JCheckBox) -> Unit): JCheckBox {
     val component = checkBox(text, isSelected, comment, propertyUiManager, *constraints)
     component.addActionListener(ActionListener {
       actionListener(it, component)
@@ -93,12 +118,18 @@ abstract class Cell {
   }
 
   @JvmOverloads
-  fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, propertyUiManager: BooleanPropertyUiManager? = null, vararg constraints: CCFlags): JCheckBox {
+  fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, propertyUiManager: BooleanPropertyUiManager? = null, vararg constraints: CCFlags = emptyArray()): JCheckBox {
     val component = JCheckBox(text)
     component.isSelected = isSelected
     propertyUiManager?.registerCheckBox(component)
     component(*constraints, comment = comment)
     return component
+  }
+
+  fun checkBox(text: String, prop: KMutableProperty0<Boolean>): CellBuilder<JBCheckBox> {
+    val component = JBCheckBox(text, prop.get())
+    return component()
+      .onApply { prop.set(component.isSelected) }
   }
 
   inline fun <T> comboBox(propertyUiManager: BooleanPropertyWithListUiManager<T, out ComboBoxModel<T>>, growPolicy: GrowPolicy? = null, crossinline renderer: ListCellRendererWrapper<T?>.(value: T, index: Int, isSelected: Boolean) -> Unit) {
@@ -118,6 +149,29 @@ abstract class Cell {
       component.renderer = renderer
     }
     component(growPolicy = growPolicy)
+  }
+
+  fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JTextField> {
+    val component = JTextField(prop.get(),columns ?: 0)
+    val builder = component()
+    builder.onApply { prop.set(component.text) }
+    return builder
+  }
+
+  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null): CellBuilder<JTextField> {
+    return textField(Supplier { prop.get().toString() }, Consumer { value -> value.toIntOrNull()?.let { prop.set(it) } }, columns)
+  }
+
+  fun textField(getter: Supplier<String>, setter: Consumer<String>, columns: Int? = null): CellBuilder<JTextField> {
+    val component = JTextField(getter.get(),columns ?: 0)
+    val builder = component()
+    builder.onApply { setter.accept(component.text) }
+    return builder
+  }
+
+  fun spinner(prop: KMutableProperty0<Int>, minValue: Int, maxValue: Int, step: Int = 1): CellBuilder<JBIntSpinner> {
+    val component = JBIntSpinner(prop.get(), minValue, maxValue, step)
+    return component().onApply { prop.set(component.number) }
   }
 
   fun textFieldWithHistoryWithBrowseButton(browseDialogTitle: String,
@@ -177,5 +231,11 @@ abstract class Cell {
     JBScrollPane(component)(*constraints)
   }
 
-  abstract operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null): CellBuilder<T>
+  abstract operator fun <T : JComponent> T.invoke(
+    vararg constraints: CCFlags,
+    gapLeft: Int = 0,
+    growPolicy: GrowPolicy? = null,
+    comment: String? = null
+  ): CellBuilder<T>
+
 }

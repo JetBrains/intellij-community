@@ -15,6 +15,9 @@
  */
 package com.intellij.psi.util;
 
+/**
+ * @see ParameterizedCachedValue
+ */
 @FunctionalInterface
 public interface ParameterizedCachedValueProvider<ResultType, ParameterType> {
   CachedValueProvider.Result<ResultType> compute(ParameterType param);

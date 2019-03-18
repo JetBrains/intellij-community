@@ -58,8 +58,12 @@
                          id="smart-step-into-down"/>
     <editorActionHandler action="EditorLeft" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$LeftHandler"
                          id="smart-step-into-left"/>
+    <editorActionHandler action="PrevParameter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$LeftHandler"
+                         id="smart-step-into-previous"/>
     <editorActionHandler action="EditorRight" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$RightHandler"
                          id="smart-step-into-right"/>
+    <editorActionHandler action="NextParameter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$RightHandler"
+                         id="smart-step-into-next"/>
     <editorActionHandler action="EditorEnter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$EnterHandler"
                          id="smart-step-into-enter"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$EscHandler"

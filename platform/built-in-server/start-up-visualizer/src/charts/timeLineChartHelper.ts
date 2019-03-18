@@ -1,33 +1,44 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
-import {Item} from "@/data"
+import * as am4core from "@amcharts/amcharts4/core"
+import {Item} from "@/state/data"
 
 export interface TimeLineItem extends Item {
   level: number
   rowIndex: number
 
   colorIndex: number
+
+  color: am4core.Color
 }
 
-export function computeLevels(items: Array<Item>) {
+export function transformToTimeLineItems(items: Array<Item>): Array<TimeLineItem> {
+  const result = new Array<TimeLineItem>(items.length)
   let lastAllocatedColorIndex = 0
   for (let i = 0; i < items.length; i++) {
-    const item = items[i] as TimeLineItem
-    let level = 0
+    const item: TimeLineItem = {
+      ...items[i],
+      level: 0,
+      colorIndex: -1,
+      rowIndex: -1,
+      color: null as any,
+    }
+    result[i] = item
+
     for (let j = i - 1; j >= 0; j--) {
-      const prevItem = items[j] as TimeLineItem
+      const prevItem = result[j]
       if (prevItem.end >= item.end) {
-        level = prevItem.level + 1
+        item.level = prevItem.level + 1
         item.colorIndex = prevItem.colorIndex
         break
       }
     }
 
-    if (item.colorIndex === undefined) {
+    if (item.colorIndex === -1) {
       item.colorIndex = lastAllocatedColorIndex++
     }
-    item.level = level
   }
+  return result
 }
 
 export function disableGridButKeepBorderLines(axis: am4charts.Axis) {

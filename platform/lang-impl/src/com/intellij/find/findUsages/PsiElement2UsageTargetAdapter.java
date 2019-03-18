@@ -126,7 +126,7 @@ public class PsiElement2UsageTargetAdapter
   public void findUsages() {
     PsiElement element = getElement();
     if (element == null) return;
-    ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager().startFindUsages(element, myOptions, null, null);
+    ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager().startFindUsages(element, myOptions);
   }
 
   @Override

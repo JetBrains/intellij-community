@@ -320,6 +320,14 @@ object GithubApiRequests {
 
       private fun getMergeUrl(pullRequest: GithubPullRequest) = pullRequest.url + "/merge"
 
+      @JvmStatic
+      fun getListETag(server: GithubServerPath, repoPath: GithubFullPath) =
+        object : Get<String?>(getUrl(server, Repos.urlSuffix, "/${repoPath.fullName}", urlSuffix,
+                                     GithubApiUrlQueryBuilder.urlQuery { param(GithubRequestPagination(pageSize = 1)) })) {
+
+          override fun extractResult(response: GithubApiResponse) = response.findHeader("ETag")
+        }.withOperationName("get pull request list ETag")
+
       object Reviewers : Entity("/requested_reviewers") {
         @JvmStatic
         fun add(server: GithubServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =

@@ -27,7 +27,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.BeanBinding;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
-import gnu.trove.THashMap;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -53,10 +52,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginDescriptor");
 
+  private static final String APPLICATION_SERVICE = "com.intellij.applicationService";
+  private static final String PROJECT_SERVICE = "com.intellij.projectService";
+  private static final String MODULE_SERVICE = "com.intellij.moduleService";
+
   @SuppressWarnings("SSBasedInspection")
-  public static final List<String> SERVICE_QUALIFIED_ELEMENT_NAMES = Arrays.asList("com.intellij.applicationService",
-                                                                                   "com.intellij.projectService",
-                                                                                   "com.intellij.moduleService");
+  public static final List<String> SERVICE_QUALIFIED_ELEMENT_NAMES = Arrays.asList(APPLICATION_SERVICE, PROJECT_SERVICE, MODULE_SERVICE);
 
   private final File myPath;
   private final boolean myBundled;
@@ -225,7 +226,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     Set<PluginId> dependentPlugins = new LinkedHashSet<>();
     Set<PluginId> nonOptionalDependentPlugins = new LinkedHashSet<>();
     if (pluginBean.dependencies != null) {
-      myOptionalConfigs = new THashMap<>();
+      myOptionalConfigs = new LinkedHashMap<>();
       for (PluginDependency dependency : pluginBean.dependencies) {
         String text = dependency.pluginId;
         if (!StringUtil.isEmptyOrSpaces(text)) {
@@ -293,20 +294,19 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
             String qualifiedExtensionPointName = stringInterner.intern(ExtensionsAreaImpl.extractPointName(extensionElement, ns));
             List<ServiceDescriptor> services;
-            // compare by identity - interned by PluginXmlFactory
-            if (qualifiedExtensionPointName == "com.intellij.applicationService") {
+            if (qualifiedExtensionPointName.equals(APPLICATION_SERVICE)) {
               if (myAppServices == null) {
                 myAppServices = new ArrayList<>();
               }
               services = myAppServices;
             }
-            else if (qualifiedExtensionPointName == "com.intellij.projectService") {
+            else if (qualifiedExtensionPointName.equals(PROJECT_SERVICE)) {
               if (myProjectServices == null) {
                 myProjectServices = new ArrayList<>();
               }
               services = myProjectServices;
             }
-            else if (qualifiedExtensionPointName == "com.intellij.moduleService") {
+            else if (qualifiedExtensionPointName.equals(MODULE_SERVICE)) {
               if (myModuleServices == null) {
                 myModuleServices = new ArrayList<>();
               }
@@ -382,6 +382,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         }
         break;
       }
+
+      child.getContent().clear();
     }
   }
 
@@ -613,8 +615,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   @Nullable
-  public List<Element> getActionsDescriptionElements() {
-    return myActionElements;
+  public List<Element> getAndClearActionDescriptionElements() {
+    List<Element> result = myActionElements;
+    myActionElements = null;
+    return result;
   }
 
   @Override
@@ -796,7 +800,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myOptionalDescriptors;
   }
 
-  void setOptionalDescriptors(@NotNull Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors) {
+  void setOptionalDescriptors(@Nullable Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors) {
     myOptionalDescriptors = optionalDescriptors;
   }
 

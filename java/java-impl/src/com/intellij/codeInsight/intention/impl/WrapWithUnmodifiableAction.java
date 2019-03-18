@@ -97,7 +97,7 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
     }
     PsiExpression expression = getParentExpression(editor, file);
     if (expression != null) {
-      if (isUnmodifiable(expression)) {
+      if (PsiUtil.isOnAssignmentLeftHand(expression) || isUnmodifiable(expression)) {
         return false;
       }
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());

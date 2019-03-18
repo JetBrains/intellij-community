@@ -43,6 +43,7 @@ import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -121,7 +122,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent impl
 
   private Set<Pair<String, String>> collectRemoteRepositoriesIdsAndUrls() {
     Set<Pair<String, String>> result = new THashSet<>();
-    Set<MavenRemoteRepository> remoteRepositories = ContainerUtil.newHashSet(getMavenProjectManager().getRemoteRepositories());
+    Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(getMavenProjectManager().getRemoteRepositories());
     for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensions()) {
       ContainerUtil.addAll(remoteRepositories, repositoryProvider.getRemoteRepositories(myProject));
     }

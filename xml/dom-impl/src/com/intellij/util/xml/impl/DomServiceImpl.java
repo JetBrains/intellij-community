@@ -70,7 +70,7 @@ public class DomServiceImpl extends DomService {
       return computeHeaderByPsi(file);
     }
 
-    if (!XmlUtil.isStubBuilding() && file.getFileType() == XmlFileType.INSTANCE) {
+    if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null && file.getFileType() == XmlFileType.INSTANCE) {
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile instanceof VirtualFileWithId) {
         ObjectStubTree tree = StubTreeLoader.getInstance().readFromVFile(file.getProject(), virtualFile);

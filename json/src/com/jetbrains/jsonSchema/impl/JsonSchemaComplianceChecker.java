@@ -61,7 +61,7 @@ public class JsonSchemaComplianceChecker {
     if (firstProp != null) {
       final JsonPointerPosition position = myWalker.findPosition(firstProp.getDelegate(), true);
       if (position == null || position.isEmpty()) return;
-      final MatchResult result = new JsonSchemaResolver(project, myRootSchema, false, position).detailedResolve();
+      final MatchResult result = new JsonSchemaResolver(project, myRootSchema, position).detailedResolve();
       for (JsonValueAdapter value : firstProp.getValues()) {
         createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(project, value, result, myOptions));
       }

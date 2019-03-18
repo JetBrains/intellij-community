@@ -18,7 +18,10 @@
 
         <<error descr="Deprecated EP 'com.intellij.myPlugin.deprecatedEP'">myPlugin.deprecatedEP</error> implementation="foo.MyDeprecatedEPImpl"/>
 
-        <myPlugin.foo.bar implementation="java.util.ArrayList"/>
+        <myService serviceImplementation="foo.<error descr="Cannot resolve class 'MyInvalid'">MyInvalid</error>"/>
+
+        <myService serviceImplementation="foo.MyRunnable" os="mac"/>
+        <myPlugin.foo.bar implementation="java.util.ArrayList" os="<error descr="Unknown enum value 'INVALID_VALUE'">INVALID_VALUE</error>"/>
         <completion.contributor/>
         <custom.custom/>
         <indirect.indirect/>

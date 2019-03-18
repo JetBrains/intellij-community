@@ -137,11 +137,11 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   protected void update() {
   }
 
-  public boolean isShowInSeparateWindow() {
+  boolean isShowInSeparateWindow() {
     return myCbToOpenInNewTab != null && myCbToOpenInNewTab.isSelected();
   }
 
-  public boolean isSkipResultsWhenOneUsage() {
+  private boolean isSkipResultsWhenOneUsage() {
     return myCbToSkipResultsWhenOneUsage != null && myCbToSkipResultsWhenOneUsage.isSelected();
   }
 

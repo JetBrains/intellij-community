@@ -16,9 +16,11 @@
 package com.intellij.openapi.vcs.checkout;
 
 import com.intellij.ide.actions.NewProjectAction;
+import com.intellij.ide.actions.NewProjectOrModuleAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -28,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class NewProjectFromVCSGroup extends CheckoutActionGroup {
+public class NewProjectFromVCSGroup extends CheckoutActionGroup implements NewProjectOrModuleAction {
 
   public NewProjectFromVCSGroup() {
     super("NewProjectFromVCS");
@@ -61,6 +63,12 @@ public class NewProjectFromVCSGroup extends CheckoutActionGroup {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    NewProjectAction.updatePresentationForNonJavaIdes(this, e);
+    NewProjectAction.updateActionText(this, e);
+  }
+
+  @NotNull
+  @Override
+  public String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
+    return ProjectBundle.message("import.project.from.vcs.action.text", isInNewSubmenu ? 1 : 0, isInJavaIde ? 1 : 0);
   }
 }

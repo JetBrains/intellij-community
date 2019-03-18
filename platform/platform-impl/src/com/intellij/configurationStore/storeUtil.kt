@@ -135,16 +135,12 @@ fun getStateSpec(originalClass: Class<*>): State? {
   return null
 }
 
-interface ConfigurationStorageReloader {
-  suspend fun reloadChangedStorageFiles()
-}
-
 /**
  * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
  */
 @CalledInAny
 suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Project? = null) {
-  (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
+  StoreReloadManager.getInstance().reloadChangedStorageFiles()
 
   val start = System.currentTimeMillis()
   saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings)

@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.stateStore
@@ -23,6 +24,7 @@ import com.intellij.util.io.getDirectoryTree
 import com.intellij.util.io.move
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -53,7 +55,14 @@ internal class DoNotSaveDefaultsTest {
     }
   }
 
-  private suspend fun doTest(componentManager: ComponentManagerImpl) {
+  @Test
+  fun `project - load empty state`() = runBlocking {
+    createOrLoadProject(tempDir, directoryBased = false) { project ->
+      doTest(project as ProjectImpl, isTestEmptyState = true)
+    }
+  }
+
+  private suspend fun doTest(componentManager: ComponentManagerImpl, isTestEmptyState: Boolean = false) {
     // wake up (edt, some configurables want read action)
     withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       val picoContainer = componentManager.picoContainer
@@ -64,7 +73,10 @@ internal class DoNotSaveDefaultsTest {
             && className != "com.intellij.lang.javascript.bower.BowerPackagingService"
             && !className.endsWith(".MessDetectorConfigurationManager")
             && className != "org.jetbrains.plugins.groovy.mvc.MvcConsole") {
-          picoContainer.getComponentInstance(className)
+          val instance = picoContainer.getComponentInstance(className)
+          if (isTestEmptyState && instance is PersistentStateComponent<*>) {
+            testEmptyState(instance)
+          }
         }
         true
       }
@@ -78,6 +90,7 @@ internal class DoNotSaveDefaultsTest {
     propertyComponent.unsetValue("CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2")
     propertyComponent.unsetValue("ts.lib.d.ts.version")
     propertyComponent.unsetValue("nodejs_interpreter_path.stuck_in_default_project")
+    propertyComponent.unsetValue("android-component-compatibility-check")
 
     val useModCountOldValue = System.getProperty("store.save.use.modificationCount")
     try {
@@ -105,6 +118,24 @@ internal class DoNotSaveDefaultsTest {
     ))
     println(directoryTree)
     assertThat(directoryTree).isEmpty()
+  }
+
+  private fun testEmptyState(instance: PersistentStateComponent<*>) {
+    val stateSpec = getStateSpec(javaClass) ?: return
+    if (stateSpec.defaultStateAsResource) {
+      // component expect some default state if no state
+      return
+    }
+
+    val stateClass = ComponentSerializationUtil.getStateClass<Any>(instance.javaClass)
+    val emptyState = try {
+      deserializeState(Element("state"), stateClass, null)!!
+    }
+    catch (e: Exception) {
+      throw RuntimeException("Cannot create empty state for ${instance.javaClass}", e)
+    }
+    @Suppress("UNCHECKED_CAST")
+    (instance as PersistentStateComponent<Any>).loadState(emptyState)
   }
 }
 

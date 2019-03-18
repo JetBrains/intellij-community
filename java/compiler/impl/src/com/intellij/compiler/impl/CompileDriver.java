@@ -538,7 +538,7 @@ public class CompileDriver {
       else {
         message = CompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
       }
-      message = message + " in " + StringUtil.formatDuration(duration);
+      message = message + " in " + StringUtil.formatDurationApproximate(duration);
     }
     return message;
   }
@@ -590,7 +590,7 @@ public class CompileDriver {
           }
           catch (Throwable t) {
             LOG.error("Error executing task", t);
-            context.addMessage(CompilerMessageCategory.WARNING, "Task "  + task.toString()  + " failed", null, -1, -1);
+            context.addMessage(CompilerMessageCategory.INFORMATION, "Task "  + task.toString()  + " failed, please see idea.log for details", null, -1, -1);
           }
 
         }

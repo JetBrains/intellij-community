@@ -73,7 +73,6 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
   }
 }
 
-// cannot check com.intellij.codeInsight.intention.IntentionAction by class qualified name because not all IntentionAction used as IntentionActionBean
 private fun findExtensionPoint(clazz: UClass, project: Project): ExtensionPoint? {
   var result: ExtensionPoint? = null
   val qualifiedNamed = clazz.qualifiedName ?: return null
@@ -94,7 +93,7 @@ private fun findExtensionPoint(clazz: UClass, project: Project): ExtensionPoint?
   return result
 }
 
-// todo can we use attribute `with` to avoid hardcoding?
+// todo can we use attribute `with`?
 private val ignoredTagNames = THashSet(listOf("semContributor", "modelFacade", "scriptGenerator", "editorActionHandler", "editorTypedHandler", "dataImporter", "java.error.fix", "explainPlanProvider"))
 
 // problem - tag
@@ -151,7 +150,6 @@ private val interfacesToCheck = THashSet<String>(listOf(
 ))
 
 private val classesToCheck = THashSet<String>(listOf(
-  "com.intellij.openapi.extensions.AbstractExtensionPointBean",
   "com.intellij.codeInsight.completion.CompletionContributor",
   "com.intellij.codeInsight.completion.CompletionConfidence",
   "com.intellij.psi.PsiReferenceContributor"

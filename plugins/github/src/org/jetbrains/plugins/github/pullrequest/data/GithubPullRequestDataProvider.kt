@@ -9,6 +9,8 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 interface GithubPullRequestDataProvider {
+  val number: Long
+
   val detailsRequest: CompletableFuture<GithubPullRequestDetailedWithHtml>
   val branchFetchRequest: CompletableFuture<Unit>
   val apiCommitsRequest: CompletableFuture<List<GithubCommit>>

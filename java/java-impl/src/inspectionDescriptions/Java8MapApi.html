@@ -1,7 +1,7 @@
 <html>
 <body>
 Reports calls to <code>Map.get()</code> which could be replaced with <code>getOrDefault()</code>, <code>computeIfAbsent()</code> or
-<code>putIfAbsent()</code>.
+<code>putIfAbsent()</code>. Also reports calls to <code>Map.put()</code> which could be replaced with <code>replaceAll()</code>.
 <ul>
   <li><b>Map.getOrDefault</b> method could be used to replace the code like this:
     <pre>
@@ -25,6 +25,13 @@ Reports calls to <code>Map.get()</code> which could be replaced with <code>getOr
       Integer val = map.get(key);
       if (val == null) map.put(key, 1);
       else map.put(key, val + 1);</pre>
+  </li>
+  <li><b>Map.replaceAll</b> method could be used to replace the code like this:
+    <pre>
+      for (Map.Entry&lt;String, String&gt; entry : map.entrySet()) {
+        map.put(entry.getKey(), transform(entry.getValue()));
+      }
+    </pre>
   </li>
 
 </ul>

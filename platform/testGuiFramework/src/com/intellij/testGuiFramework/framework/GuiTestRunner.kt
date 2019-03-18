@@ -84,15 +84,13 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
 
     val eachNotifier = EachTestNotifier(notifier, description)
 
+    val testName = runner.getTestName(method.name)
     if (testShouldBeIgnored(method)) {
-      eachNotifier.fireTestIgnored()
+      SERVER_LOG.info("Test $testName ignored by @DisabledOnOs annotation")
       return
     }
 
-    val testName = runner.getTestName(method.name)
-
     if (criticalError.get()) {
-      SERVER_LOG.info("Test $testName ignored by @DisabledOnOs annotation")
       eachNotifier.fireTestIgnored()
       return
     }
@@ -173,9 +171,9 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
 
   private fun sendRunTestCommand(method: FrameworkMethod, testName: String) {
     val jUnitTestContainer = if (runner is GuiTestLocalRunnerParam)
-      JUnitTestContainer(method.declaringClass, testName, mapOf(Pair(PARAMETERS, (runner as GuiTestLocalRunnerParam).getParameters())))
+      JUnitTestContainer(method.declaringClass.canonicalName, testName, mapOf(Pair(PARAMETERS, (runner as GuiTestLocalRunnerParam).getParameters())))
     else
-      JUnitTestContainer(method.declaringClass, testName)
+      JUnitTestContainer(method.declaringClass.canonicalName, testName)
     runTest(jUnitTestContainer)
   }
 

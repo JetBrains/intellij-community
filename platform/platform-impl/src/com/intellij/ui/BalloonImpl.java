@@ -763,6 +763,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   @Override
   public void revalidate(@NotNull PositionTracker<Balloon> tracker) {
+    if (ApplicationManager.getApplication().isDisposeInProgress()) {
+      return;
+    }
     RelativePoint newPosition = tracker.recalculateLocation(this);
 
     if (newPosition != null) {
@@ -1248,7 +1251,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     protected abstract Rectangle getPointlessContentRec(Rectangle bounds, int pointerLength);
 
     public Set<AbstractPosition> getOtherPositions() {
-      HashSet<AbstractPosition> all = new HashSet<>();
+      LinkedHashSet<AbstractPosition> all = new LinkedHashSet<>();
       all.add(BELOW);
       all.add(ABOVE);
       all.add(AT_RIGHT);

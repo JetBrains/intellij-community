@@ -273,6 +273,12 @@
       "description": "Light-colored links. Used in the Variables tab of the Debugger tool window. Can be seen when a tree line is long, does not fit into the tab's width, and its popup on hover goes beyond the right monitor side."
     },
     {
+      "key": "MemoryIndicator.usedBackground"
+    },
+    {
+      "key": "MemoryIndicator.allocatedBackground"
+    },
+    {
       "key": "NavBar.borderColor",
       "description": "Border above the navbar, visible when the toolbar is on"
     },
@@ -518,6 +524,9 @@
     },
     {
       "key": "SearchEverywhere.Tab.selectedForeground"
+    },
+    {
+      "key": "SearchField.errorBackground"
     },
     {
       "key": "SearchMatch.endBackground",

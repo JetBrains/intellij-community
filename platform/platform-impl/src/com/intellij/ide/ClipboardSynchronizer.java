@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.Patches;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ClipboardUtil;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -45,7 +44,7 @@ import java.util.function.Supplier;
  *
  * @author nik
  */
-public class ClipboardSynchronizer implements Disposable, BaseComponent {
+public class ClipboardSynchronizer implements Disposable {
   private static final Logger LOG = Logger.getInstance(ClipboardSynchronizer.class);
 
   private final ClipboardHandler myClipboardHandler;
@@ -67,10 +66,7 @@ public class ClipboardSynchronizer implements Disposable, BaseComponent {
     else {
       myClipboardHandler = new ClipboardHandler();
     }
-  }
 
-  @Override
-  public void initComponent() {
     myClipboardHandler.init();
   }
 

@@ -92,6 +92,8 @@ class CachedValueStabilityChecker {
    * we can neither avoid that nor check equivalence in this case.
    */
   private static boolean seemConcurrentlyCreatedLambdas(Class<?> c1, Class<?> c2) {
+    if (c1 == c2) return false;
+
     String name1 = c1.getName();
     String name2 = c2.getName();
     int index = name1.indexOf("$$Lambda");

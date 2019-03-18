@@ -25,7 +25,6 @@ import com.intellij.stats.personalization.UserFactorsManager
 import com.jetbrains.completion.feature.BinaryFeature
 import com.jetbrains.completion.feature.CategoricalFeature
 import com.jetbrains.completion.feature.DoubleFeature
-import com.jetbrains.completion.feature.impl.FeatureUtils
 
 /**
  * @author Vitaliy.Bibaev
@@ -36,6 +35,12 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
     }
     private val userFactors = mutableMapOf<String, UserFactor>()
     init {
+        if (UserFactorsManager.ENABLE_USER_FACTORS) {
+            registerAllFactors()
+        }
+    }
+
+    private fun registerAllFactors() {
         // user factors
         register(TypedSelectRatio())
         register(ExplicitSelectRatio())
@@ -86,10 +91,6 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
     }
 
     override fun getAllFactors(): List<UserFactor> = userFactors.values.toList()
-
-    override fun getAllFactorIds(): List<String> = userFactors.keys.toList()
-
-    override fun getFactor(id: String): UserFactor = userFactors[id]!!
 
     private fun register(factor: UserFactor) {
         val old = userFactors.put(factor.id, factor)

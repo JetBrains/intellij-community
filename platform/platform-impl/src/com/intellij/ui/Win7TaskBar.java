@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.IdeFrame;
@@ -73,21 +60,21 @@ class Win7TaskBar {
     boolean FlashWindow(WinDef.HWND hwnd, boolean bInvert);
   }
 
-  private static boolean ourInitialized = true;
-
+  private static final boolean ourInitialized;
   static {
+    boolean initialized = false;
     try {
-      initialize();
+      initialized = initialize();
     }
     catch (Throwable e) {
       LOG.error(e);
-      ourInitialized = false;
     }
+    ourInitialized = initialized;
   }
 
-  private static void initialize() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
+  private static boolean initialize() {
+    if (ApplicationManager.getApplication().isUnitTestMode() || !JnaLoader.isLoaded()) {
+      return false;
     }
 
     Ole32 ole32 = Ole32.INSTANCE;
@@ -99,8 +86,7 @@ class Win7TaskBar {
     WinNT.HRESULT hr = ole32.CoCreateInstance(CLSID_TaskbarList, Pointer.NULL, ObjBase.CLSCTX_ALL, IID_ITaskbarList3, p);
     if (!W32Errors.S_OK.equals(hr)) {
       LOG.error("Win7TaskBar CoCreateInstance(IID_ITaskbarList3) hResult: " + hr);
-      ourInitialized = false;
-      return;
+      return false;
     }
 
     myInterfacePointer = p.getValue();
@@ -111,6 +97,8 @@ class Win7TaskBar {
     mySetProgressValue = Function.getFunction(vTable[TaskBarList_SetProgressValue], Function.ALT_CONVENTION);
     mySetProgressState = Function.getFunction(vTable[TaskBarList_SetProgressState], Function.ALT_CONVENTION);
     mySetOverlayIcon = Function.getFunction(vTable[TaskBarList_SetOverlayIcon], Function.ALT_CONVENTION);
+
+    return true;
   }
 
   static void setProgress(IdeFrame frame, double value, boolean isOk) {
@@ -124,7 +112,7 @@ class Win7TaskBar {
   }
 
   private static boolean isEnabled() {
-    return !ApplicationManager.getApplication().isUnitTestMode() && ourInitialized;
+    return ourInitialized;
   }
 
   static void hideProgress(IdeFrame frame) {

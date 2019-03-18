@@ -2,6 +2,7 @@
 .DS_Store
 .idea/gradle_extensions.xml
 .idea/libraries/Gradle__*.xml
+.idea/shelf
 .idea/usage.statistics.xml
 .idea/workspace.xml
 /android

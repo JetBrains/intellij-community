@@ -6,9 +6,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -22,9 +24,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -33,11 +37,9 @@ import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.history.FileHistoryKt;
 import com.intellij.vcs.log.history.FileHistoryUtil;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.MergedChange;
-import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -48,6 +50,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.*;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.*;
@@ -60,6 +64,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTE
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
 public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
+  private static final Logger LOG = Logger.getInstance(VcsLogChangesBrowser.class);
   @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
   @NotNull private final Project myProject;
   @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
@@ -162,42 +167,99 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   }
 
   public void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
+    setSelectedDetails(detailsList, false);
+  }
+
+  private void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList, boolean showBigCommits) {
     myChanges.clear();
     myChangesToParents.clear();
     myRoots.clear();
 
-    myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
-
     if (detailsList.isEmpty()) {
       myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
     }
-    else if (detailsList.size() == 1) {
-      VcsFullCommitDetails detail = notNull(getFirstItem(detailsList));
-      myChanges.addAll(detail.getChanges());
-
-      if (detail.getParents().size() > 1) {
-        for (int i = 0; i < detail.getParents().size(); i++) {
-          THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(detail.getChanges(i));
-          myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
-        }
-      }
-
-      if (myChanges.isEmpty() && detail.getParents().size() > 1) {
-        myViewer.getEmptyText().setText("No merged conflicts.").
-          appendSecondaryText("Show changes to parents", VcsLogUiUtil.getLinkAttributes(),
-                              e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
+    else {
+      int maxSize = getMaxSize(detailsList);
+      if (maxSize > Registry.intValue("vcs.log.max.changes.shown") && !showBigCommits) {
+        String commitText = detailsList.size() == 1 ? "This commit" : "One of the selected commits";
+        String sizeText = getSizeText(maxSize);
+        myViewer.getEmptyText().setText(commitText + " has " + sizeText + " changes").
+          appendSecondaryText("Show anyway", VcsLogUiUtil.getLinkAttributes(), e -> setSelectedDetails(detailsList, true));
       }
       else {
-        myViewer.setEmptyText("");
+        myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
+
+        if (detailsList.size() == 1) {
+          VcsFullCommitDetails detail = notNull(getFirstItem(detailsList));
+          myChanges.addAll(detail.getChanges());
+
+          if (detail.getParents().size() > 1) {
+            for (int i = 0; i < detail.getParents().size(); i++) {
+              THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(detail.getChanges(i));
+              myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
+            }
+          }
+
+          if (myChanges.isEmpty() && detail.getParents().size() > 1) {
+            myViewer.getEmptyText().setText("No merged conflicts.").
+              appendSecondaryText("Show changes to parents", VcsLogUiUtil.getLinkAttributes(),
+                                  e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
+          }
+          else {
+            myViewer.setEmptyText("");
+          }
+        }
+        else {
+          myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
+          myViewer.setEmptyText("");
+        }
       }
-    }
-    else {
-      myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
-      myViewer.setEmptyText("");
     }
 
     myViewer.rebuildTree();
     myDispatcher.getMulticaster().onModelUpdated();
+  }
+
+  @NotNull
+  private static String getSizeText(int maxSize) {
+    if (maxSize < 1000) {
+      return String.valueOf(maxSize);
+    }
+    DecimalFormat format = new DecimalFormat("#.#");
+    format.setRoundingMode(RoundingMode.FLOOR);
+    if (maxSize < 10_000) {
+      return format.format(maxSize / 1000.0) + "K";
+    }
+    else if (maxSize < 1_000_000) {
+      return (maxSize / 1000) + "K";
+    }
+    else if (maxSize < 10_000_000) {
+      return format.format(maxSize / 1_000_000.0) + "M";
+    }
+    return (maxSize / 1_000_000) + "M";
+  }
+
+  private static int getMaxSize(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
+    int maxSize = 0;
+    for (VcsFullCommitDetails details : detailsList) {
+      int size = 0;
+      if (details instanceof VcsIndexableDetails) {
+        size = ((VcsIndexableDetails)details).size();
+      }
+      else {
+        for (int i = 0; i < details.getParents().size(); i++) {
+          size += details.getChanges(i).size();
+        }
+      }
+      maxSize = Math.max(size, maxSize);
+    }
+    return maxSize;
+  }
+
+  @NotNull
+  @Override
+  protected ChangesBrowserTreeList createTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+    return new MyChangesTree(project, showCheckboxes, highlightProblems);
   }
 
   @NotNull
@@ -466,6 +528,28 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     @Override
     public int hashCode() {
       return Objects.hash(myCommit);
+    }
+  }
+
+  protected class MyChangesTree extends ChangesBrowserTreeList {
+    MyChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+      super(VcsLogChangesBrowser.this, project, showCheckboxes, highlightProblems);
+    }
+
+    @Override
+    protected void resetTreeState() {
+      long start = System.currentTimeMillis();
+      if (isShowChangesFromParents()) {
+        TreeUtil.expand(this, path -> {
+          if (path.getLastPathComponent() instanceof ChangesBrowserParentNode) return TreeVisitor.Action.SKIP_CHILDREN;
+          return TreeVisitor.Action.CONTINUE;
+        }, path -> {
+        });
+      }
+      else {
+        TreeUtil.expandAll(this);
+      }
+      LOG.debug("Resetting changes tree state took " + StopWatch.formatTime(System.currentTimeMillis() - start));
     }
   }
 }

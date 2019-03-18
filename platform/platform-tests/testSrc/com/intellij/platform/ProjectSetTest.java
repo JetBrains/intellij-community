@@ -32,7 +32,6 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 public class ProjectSetTest extends LightPlatformTestCase {
-
   private static String getTestDataPath() {
     return PlatformTestUtil.getPlatformTestDataPath() + "projectSet/";
   }
@@ -62,7 +61,6 @@ public class ProjectSetTest extends LightPlatformTestCase {
   }
 
   public void testVcsCheckoutProcessor() throws IOException {
-
     final List<Pair<String, String>> pairs = new ArrayList<>();
     VcsCheckoutProcessor.EXTENSION_POINT_NAME.getPoint(null).registerExtension(new VcsCheckoutProcessor() {
       @NotNull
@@ -103,7 +101,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     Project project = ContainerUtil.find(projects, project1 -> projectName.equals(project1.getName()));
     assertNotNull(project);
-    ((ProjectManagerEx)ProjectManager.getInstance()).forceCloseProject(project, true);
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project, true);
   }
 
   @Override

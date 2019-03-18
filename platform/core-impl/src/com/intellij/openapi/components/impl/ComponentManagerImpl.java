@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,9 +29,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.StartUpMeasurer;
-import com.intellij.util.StartUpMeasurer.Activities;
-import com.intellij.util.StartUpMeasurer.Phases;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
@@ -43,6 +44,8 @@ import org.picocontainer.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.util.pico.DefaultPicoContainer.getActivityLevel;
 
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
@@ -77,7 +80,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Nullable
-  protected String measureTokenNamePrefix() {
+  protected String activityNamePrefix() {
     return null;
   }
 
@@ -85,15 +88,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
                             @Nullable ProgressIndicator indicator,
                             @Nullable Runnable componentsRegistered,
                             boolean isNeededToMeasure) {
-    StartUpMeasurer.MeasureToken totalMeasureToken =
-      isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix() + Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
+    Activity totalActivity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix() + Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
 
     final Application app = ApplicationManager.getApplication();
     boolean headless = app == null || app.isHeadlessEnvironment();
 
-    String measureTokenNamePrefix = StringUtil.notNullize(measureTokenNamePrefix());
-    StartUpMeasurer.MeasureToken measureToken =
-      isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX) : null;
+    String activityNamePrefix = StringUtil.notNullize(activityNamePrefix());
+    Activity activity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX) : null;
     int componentConfigCount = 0;
     for (IdeaPluginDescriptor plugin : plugins) {
       for (ComponentConfig config : getMyComponentConfigsFromDescriptor(plugin)) {
@@ -110,28 +111,28 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       registerServices(plugin);
     }
 
-    if (measureToken != null) {
-      measureToken.end();
+    if (activity != null) {
+      activity.end();
     }
     myComponentConfigCount = componentConfigCount;
 
     if (componentsRegistered != null) {
-      measureToken = isNeededToMeasure ? totalMeasureToken.startChild(measureTokenNamePrefix + Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
+      activity = isNeededToMeasure ? totalActivity.startChild(activityNamePrefix + Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
       componentsRegistered.run();
-      if (measureToken != null) {
-        measureToken.end();
+      if (activity != null) {
+        activity.end();
       }
     }
 
-    measureToken = isNeededToMeasure ? totalMeasureToken.startChild(measureTokenNamePrefix + Phases.CREATE_COMPONENTS_SUFFIX) : null;
+    activity = isNeededToMeasure ? totalActivity.startChild(activityNamePrefix + Phases.CREATE_COMPONENTS_SUFFIX) : null;
     createComponents(indicator);
-    if (measureToken != null) {
-      measureToken.end();
+    if (activity != null) {
+      activity.end();
     }
 
     myComponentsCreated = true;
     if (isNeededToMeasure) {
-      totalMeasureToken.end("component count: " + getComponentConfigCount());
+      totalActivity.end("component count: " + getComponentConfigCount());
     }
   }
 
@@ -481,9 +482,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
             return instance;
           }
 
-          // if it will be module component, then get rid of such component instead of measurement
-          boolean appComponent = ComponentManagerImpl.this instanceof Application;
-          StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(appComponent ? Activities.APP_COMPONENT : Activities.PROJECT_COMPONENT);
+          long startTime = StartUpMeasurer.getCurrentTime();
           instance = super.getComponentInstance(picoContainer);
 
           if (myInitializing) {
@@ -511,7 +510,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               ((BaseComponent)instance).initComponent();
             }
 
-            measureToken.endWithThreshold(instance.getClass());
+            ParallelActivity.COMPONENT.record(startTime, instance.getClass(), getActivityLevel(picoContainer));
           }
           finally {
             myInitializing = false;
