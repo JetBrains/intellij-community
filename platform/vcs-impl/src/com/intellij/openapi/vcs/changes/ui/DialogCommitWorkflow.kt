@@ -164,7 +164,6 @@ open class DialogCommitWorkflow(val project: Project,
 
     browser.setInclusionChangedListener { dialog.inclusionChanged() }
     browser.setSelectedListChangeListener { dialog.selectedChangeListChanged() }
-    browser.viewer.addSelectionListener { dialog.changeDetails(browser.viewer.isModelUpdateInProgress) }
   }
 
   companion object {
