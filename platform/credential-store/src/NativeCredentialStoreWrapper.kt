@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.google.common.cache.CacheBuilder
 import com.intellij.credentialStore.keePass.InMemoryCredentialStore
+import com.intellij.jna.JnaLoader
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -112,19 +113,15 @@ private fun notifyUnsatisfiedLinkError(e: UnsatisfiedLinkError) {
 }
 
 private class MacOsCredentialStoreFactory : CredentialStoreFactory {
-  override fun create(): CredentialStore? {
-    if (isMacOsCredentialStoreSupported) {
-      return NativeCredentialStoreWrapper(KeyChainCredentialStore())
-    }
-    return null
+  override fun create(): CredentialStore? = when {
+    isMacOsCredentialStoreSupported && JnaLoader.isLoaded() -> NativeCredentialStoreWrapper(KeyChainCredentialStore())
+    else -> null
   }
 }
 
 private class LinuxSecretCredentialStoreFactory : CredentialStoreFactory {
-  override fun create(): CredentialStore? {
-    if (SystemInfo.isLinux) {
-      return NativeCredentialStoreWrapper(SecretCredentialStore("com.intellij.credentialStore.Credential"))
-    }
-    return null
+  override fun create(): CredentialStore? = when {
+    SystemInfo.isLinux && JnaLoader.isLoaded() -> NativeCredentialStoreWrapper(SecretCredentialStore("com.intellij.credentialStore.Credential"))
+    else -> null
   }
 }
