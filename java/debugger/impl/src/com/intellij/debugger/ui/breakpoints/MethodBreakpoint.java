@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class MethodBreakpoint
@@ -210,6 +210,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     for (Method method : methods) {
       found = true;
       if (method.isNative()) {
+        LOG.info("Breakpoint emulation was disabled because " + method + " is native");
         breakpoint.disableEmulation();
         return;
       }
@@ -220,6 +221,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
       List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
       if (allLineLocations == null && !method.isBridge()) { // no line numbers
+        LOG.info("Breakpoint emulation was disabled because " + method + " contains no line info");
         breakpoint.disableEmulation();
         return;
       }
