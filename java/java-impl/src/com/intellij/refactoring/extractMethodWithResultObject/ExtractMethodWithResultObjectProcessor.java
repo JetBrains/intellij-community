@@ -24,6 +24,7 @@ public class ExtractMethodWithResultObjectProcessor {
   private final Project myProject;
   private final Editor myEditor;
   private final PsiElement[] myElements;
+  private final PsiExpression myExpression;
   private final PsiElement myCodeFragmentMember;
   private final Map<PsiReferenceExpression, PsiVariable> myInputs = new HashMap<>();
   private final Set<PsiVariable> myOutputVariables = new HashSet<>();
@@ -37,7 +38,18 @@ public class ExtractMethodWithResultObjectProcessor {
   public ExtractMethodWithResultObjectProcessor(@NonNls Project project, @NonNls Editor editor, @NonNls PsiElement[] elements) {
     myProject = project;
     myEditor = editor;
+
+    PsiExpression expression = null;
+    if (elements.length != 0 && elements[0] instanceof PsiExpression) {
+      expression = (PsiExpression)elements[0];
+      if (expression.getParent() instanceof PsiExpressionStatement) {
+        elements = new PsiElement[]{expression.getParent()};
+        expression = null;
+      }
+    }
+
     myElements = elements;
+    myExpression = expression;
 
     PsiElement codeFragment = ControlFlowUtil.findCodeFragment(elements[0]);
     myCodeFragmentMember = getCodeFragmentMember(codeFragment);
@@ -156,6 +168,9 @@ public class ExtractMethodWithResultObjectProcessor {
 
     for (PsiElement element : myElements) {
       element.accept(elementsVisitor);
+    }
+    if (myExpression != null) {
+      myReturnValues.add(myExpression);
     }
   }
 

@@ -21,9 +21,8 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightTestCase() {
     return JavaTestUtil.getJavaTestDataPath()
   }
 
-  fun testSimple() {
-    doTest()
-  }
+  fun testSimple() = doTest()
+  fun testCodeDuplicatesWithMultiOccurrences() = doTest()
 
   private fun doTest() {
     configureByFile(BASE_PATH + getTestName(false) + ".java")
