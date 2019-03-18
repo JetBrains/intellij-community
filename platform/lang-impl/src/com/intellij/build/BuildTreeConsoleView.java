@@ -10,8 +10,10 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -251,14 +253,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       if (currentNode == null) {
         if (event instanceof StartBuildEvent) {
           currentNode = rootElement;
-          UIUtil.invokeLaterIfNeeded(() -> {
-            final DefaultActionGroup rerunActionGroup = new DefaultActionGroup();
-            for (AnAction anAction : ((StartBuildEvent)event).getRestartActions()) {
-              rerunActionGroup.add(anAction);
-            }
-            TreeTable treeTable = myTree.getTreeTable();
-            PopupHandler.installPopupHandler(treeTable, rerunActionGroup, "BuildView");
-          });
+          installContextMenu((StartBuildEvent)event);
         }
         else {
           if (event instanceof MessageEvent) {
@@ -360,6 +355,27 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
     }
     scheduleUpdate(currentNode);
+  }
+
+  private void installContextMenu(@NotNull StartBuildEvent startBuildEvent) {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      final DefaultActionGroup group = new DefaultActionGroup();
+      final DefaultActionGroup rerunActionGroup = new DefaultActionGroup();
+      AnAction[] restartActions = startBuildEvent.getRestartActions();
+      for (AnAction anAction : restartActions) {
+        rerunActionGroup.add(anAction);
+      }
+      if (restartActions.length > 0) {
+        group.addAll(rerunActionGroup);
+        group.addSeparator();
+      }
+      EditSourceAction edit = new EditSourceAction();
+      ActionUtil.copyFrom(edit, "EditSource");
+      group.add(edit);
+
+      TreeTable treeTable = myTree.getTreeTable();
+      PopupHandler.installPopupHandler(treeTable, group, "BuildView");
+    });
   }
 
   @Override
