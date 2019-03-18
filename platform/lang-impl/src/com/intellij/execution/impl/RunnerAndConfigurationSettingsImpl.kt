@@ -57,6 +57,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
                                                                    private var isTemplate: Boolean = false,
                                                                    private var singleton: Boolean = false,
                                                                    var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
+
+  init {
+    (_configuration as? PersistentAwareRunConfiguration)?.setTemplate(isTemplate)
+  }
+
   companion object {
     @Suppress("DEPRECATION")
     @JvmStatic
@@ -215,7 +220,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
     when (configuration) {
       is PersistentStateComponent<*> -> configuration.deserializeAndLoadState(element)
-      is PersistentAwareRunConfiguration -> configuration.readPersistent(element, isTemplate)
+      is PersistentAwareRunConfiguration -> {
+        configuration.setTemplate(isTemplate)
+        configuration.readPersistent(element)
+      }
       else -> configuration.readExternal(element)
     }
 
