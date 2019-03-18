@@ -180,7 +180,7 @@ public class IntroduceTargetChooser {
 
     @Override
     public String toString() {
-      return render();
+      return isValid() ? render() : "invalid";
     }
   }
 }
