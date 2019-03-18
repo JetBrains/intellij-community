@@ -31,7 +31,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class CustomCodeStyleSettings implements Cloneable {
-  private final CodeStyleSettings myContainer;
+  private CodeStyleSettings myContainer;
   private final String myTagName;
 
   protected CustomCodeStyleSettings(@NonNls @NotNull String tagName, CodeStyleSettings container) {
@@ -41,6 +41,10 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
 
   public final CodeStyleSettings getContainer() {
     return myContainer;
+  }
+
+  void setContainer(CodeStyleSettings container) {
+    myContainer = container;
   }
 
   @NonNls @NotNull
