@@ -174,6 +174,13 @@ public class ExternalDocumentValidator {
             String messageId = endIndex != -1 ? localizedMessage.substring(0, endIndex ):"";
             localizedMessage = localizedMessage.substring(endIndex + 1).trim();
 
+            if ("cvc-elt.1.a".equals(messageId)) {
+              XmlTag tag = PsiTreeUtil.getParentOfType(currentElement, XmlTag.class);
+              if (tag != null && tag.getNamespace().isEmpty()) {
+                // "Cannot find the declaration of element" is not helpful without schema
+                return;
+              }
+            }
             if (localizedMessage.startsWith(CANNOT_FIND_DECLARATION_ERROR_PREFIX) ||
                 localizedMessage.startsWith(ELEMENT_ERROR_PREFIX) ||
                 localizedMessage.startsWith(ROOT_ELEMENT_ERROR_PREFIX) ||
