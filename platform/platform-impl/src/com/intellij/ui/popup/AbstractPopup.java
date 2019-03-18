@@ -33,7 +33,10 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.*;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.FunctionUtil;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
@@ -773,7 +776,6 @@ public class AbstractPopup implements JBPopup {
     debugState("show popup", State.INIT);
     myState = State.SHOWING;
 
-    installWindowHook(this);
     installProjectDisposer();
     addActivity();
 
@@ -1115,14 +1117,6 @@ public class AbstractPopup implements JBPopup {
         };
         Disposer.register(project, myProjectDisposable);
       }
-    }
-  }
-
-  //Sometimes just after popup was shown the WINDOW_ACTIVATED cancels it
-  private static void installWindowHook(final AbstractPopup popup) {
-    if (popup.myCancelOnWindow) {
-      popup.myCancelOnWindow = false;
-      new Alarm(popup).addRequest(() -> popup.myCancelOnWindow = true, 100);
     }
   }
 
