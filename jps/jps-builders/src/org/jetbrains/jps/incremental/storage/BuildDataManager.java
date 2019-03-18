@@ -121,7 +121,7 @@ public class BuildDataManager implements StorageOwner {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
     mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"));
-    myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"));
+    myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"), relativizer);
     myMappings = new Mappings(getMappingsRoot(myDataPaths.getDataStorageRoot()), relativizer, useMemoryTempCaches);
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
     myRelativizer = relativizer;
