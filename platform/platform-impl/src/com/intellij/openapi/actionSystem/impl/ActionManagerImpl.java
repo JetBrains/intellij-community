@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -37,6 +38,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -1191,7 +1193,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
-    ActionsCollector.getInstance().record(CommonDataKeys.PROJECT.getData(dataContext), action, event);
+    final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    final Language language = file != null ? file.getLanguage() : null;
+    ActionsCollector.getInstance().record(CommonDataKeys.PROJECT.getData(dataContext), action, event, language);
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
     }

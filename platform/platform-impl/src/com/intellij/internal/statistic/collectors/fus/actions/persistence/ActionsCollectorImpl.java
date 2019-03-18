@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceCom
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -54,7 +55,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   }
 
   @Override
-  public void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event) {
+  public void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event, @Nullable Language lang) {
     if (action == null) return;
 
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
@@ -66,6 +67,9 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
         addData("context_menu", event.isFromContextMenu());
     }
 
+    if (lang != null) {
+      data.addCurrentFile(lang);
+    }
     FUCounterUsageLogger.getInstance().logEvent(GROUP, toReportedId(info, action, data), data);
   }
 

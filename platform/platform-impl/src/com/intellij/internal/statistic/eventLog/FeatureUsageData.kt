@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.psi.PsiFile
 import com.intellij.util.containers.ContainerUtil
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -88,6 +89,14 @@ class FeatureUsageData {
     val type = getPluginType(language.javaClass)
     if (type.isSafeToReport()) {
       data["lang"] = language.id
+    }
+    return this
+  }
+
+  fun addCurrentFile(language: Language): FeatureUsageData {
+    val type = getPluginType(language.javaClass)
+    if (type.isSafeToReport()) {
+      data["current_file"] = language.id
     }
     return this
   }
