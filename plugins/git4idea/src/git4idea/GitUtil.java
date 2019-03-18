@@ -223,9 +223,31 @@ public class GitUtil {
                                                                         @NotNull Collection<? extends VirtualFile> virtualFiles,
                                                                         boolean ignoreNonGit)
     throws VcsException {
-    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
+    Map<GitRepository, List<VirtualFile>> map = sortFilesByRepository(project, virtualFiles, ignoreNonGit);
 
     Map<VirtualFile, List<VirtualFile>> result = new HashMap<>();
+    map.forEach((repo, files) -> result.put(repo.getRoot(), files));
+    return result;
+  }
+
+  /**
+   * @throws VcsException if non git files are passed
+   */
+  @NotNull
+  public static Map<GitRepository, List<VirtualFile>> sortFilesByRepository(@NotNull Project project,
+                                                                            @NotNull Collection<? extends VirtualFile> filePaths)
+    throws VcsException {
+    return sortFilesByRepository(project, filePaths, false);
+  }
+
+  @NotNull
+  private static Map<GitRepository, List<VirtualFile>> sortFilesByRepository(@NotNull Project project,
+                                                                             @NotNull Collection<? extends VirtualFile> virtualFiles,
+                                                                             boolean ignoreNonGit)
+    throws VcsException {
+    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
+
+    Map<GitRepository, List<VirtualFile>> result = new HashMap<>();
     for (VirtualFile file : virtualFiles) {
       // directory is reported only when it is a submodule or a mistakenly non-ignored nested root
       // => it should be treated in the context of super-root
@@ -237,7 +259,7 @@ public class GitUtil {
         throw new GitRepositoryNotFoundException(file);
       }
 
-      List<VirtualFile> files = result.computeIfAbsent(repository.getRoot(), key -> new ArrayList<>());
+      List<VirtualFile> files = result.computeIfAbsent(repository, key -> new ArrayList<>());
       files.add(file);
     }
     return result;
