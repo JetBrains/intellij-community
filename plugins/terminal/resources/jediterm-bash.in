@@ -74,7 +74,7 @@ function configureCommandHistory {
     then
       command cp "$HISTFILE" "$commandHistoryFile"
     fi
-    trap "history -w $HISTFILE" EXIT
+    trap "history -w \"$HISTFILE\"" EXIT
     export HISTFILE="$commandHistoryFile"
   fi
 }
