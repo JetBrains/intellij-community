@@ -18,17 +18,17 @@ import java.util.Arrays;
 
 import static org.jetbrains.jps.incremental.storage.HashStorage.HashPerTarget;
 
-public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> implements StampsStorage<HashStorage.Hash> {
+public class HashStorage extends AbstractStateStorage<String, HashPerTarget[]> implements StampsStorage<HashStorage.Hash> {
   public static final int MD5_SIZE = 16;
+  private final MaybeRelativizer myRelativizer;
   private final BuildTargetsState myTargetsState;
   private final File myHashesRoot;
   private final MessageDigest md;
 
-  public HashStorage(File dataStorageRoot,
-                     MaybeRelativizer relativizer,
-                     BuildTargetsState targetsState) throws IOException {
-    super(new File(calcStorageRoot(dataStorageRoot), "data"), new MaybeRelativeFileKeyDescriptor(relativizer), new StateExternalizer());
+  public HashStorage(File dataStorageRoot, MaybeRelativizer relativizer, BuildTargetsState targetsState) throws IOException {
+    super(new File(calcStorageRoot(dataStorageRoot), "data"), new PathStringDescriptor(), new StateExternalizer());
     myHashesRoot = calcStorageRoot(dataStorageRoot);
+    myRelativizer = relativizer;
     myTargetsState = targetsState;
     try {
       md = MessageDigest.getInstance("MD5");
@@ -36,6 +36,11 @@ public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> imp
     catch (NoSuchAlgorithmException e) {
       throw new IOException(e);
     }
+  }
+
+  @NotNull
+  public String relativePath(@NotNull File file) {
+    return myRelativizer.toRelative(file.getPath());
   }
 
   @NotNull
@@ -49,18 +54,8 @@ public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> imp
   }
 
   @Override
-  public void force() {
-    super.force();
-  }
-
-  @Override
-  public void clean() throws IOException {
-    super.clean();
-  }
-
-  @Override
   public Hash getStamp(File file, BuildTarget<?> target) throws IOException {
-    final HashPerTarget[] state = getState(file);
+    HashPerTarget[] state = getState(relativePath(file));
     if (state != null) {
       int targetId = myTargetsState.getBuildTargetId(target);
       for (HashPerTarget hashPerTarget : state) {
@@ -88,7 +83,8 @@ public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> imp
   @Override
   public void saveStamp(File file, BuildTarget<?> target, Hash stamp) throws IOException {
     int targetId = myTargetsState.getBuildTargetId(target);
-    update(file, updateTimestamp(getState(file), targetId, stamp.asBytes()));
+    String path = relativePath(file);
+    update(path, updateTimestamp(getState(path), targetId, stamp.asBytes()));
   }
 
   @NotNull
@@ -108,18 +104,19 @@ public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> imp
 
   @Override
   public void removeStamp(File file, BuildTarget<?> buildTarget) throws IOException { // todo: a full copy, consider to pull up
-    HashPerTarget[] state = getState(file);
+    String path = relativePath(file);
+    HashPerTarget[] state = getState(path);
     if (state != null) {
       int targetId = myTargetsState.getBuildTargetId(buildTarget);
       for (int i = 0; i < state.length; i++) {
         HashPerTarget timestampPerTarget = state[i];
         if (timestampPerTarget.targetId == targetId) {
           if (state.length == 1) {
-            remove(file);
+            remove(path);
           }
           else {
             HashPerTarget[] newState = ArrayUtil.remove(state, i);
-            update(file, newState);
+            update(path, newState);
             break;
           }
         }
