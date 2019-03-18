@@ -15,7 +15,7 @@ class CircletApplicationComponent : ApplicationComponent {
 
         mutableUiDispatch = ApplicationUiDispatch
 
-        initArenas()
+        initCircletArenas()
 
         ApiClassesDeserializer(ExtendableSerializationRegistry.global).registerDeserializers()
     }
