@@ -57,6 +57,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
                                                                    private var isTemplate: Boolean = false,
                                                                    private var isSingleton: Boolean = false,
                                                                    var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
+
+  init {
+    (_configuration as? PersistentAwareRunConfiguration)?.setTemplate(isTemplate)
+  }
+
   companion object {
     @JvmStatic
     fun getUniqueIdFor(configuration: RunConfiguration): String {
@@ -222,7 +227,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 
     when (configuration) {
       is PersistentStateComponent<*> -> configuration.deserializeAndLoadState(element)
-      is PersistentAwareRunConfiguration -> configuration.readPersistent(element, isTemplate)
+      is PersistentAwareRunConfiguration -> {
+        configuration.setTemplate(isTemplate)
+        configuration.readPersistent(element)
+      }
       else -> configuration.readExternal(element)
     }
 
