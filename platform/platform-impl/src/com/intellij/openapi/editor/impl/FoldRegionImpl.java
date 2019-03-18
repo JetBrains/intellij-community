@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldRegion {
   private static final Key<Boolean> MUTE_INNER_HIGHLIGHTERS = Key.create("mute.inner.highlighters");
+  private static final Key<Boolean> SHOW_GUTTER_MARK_FOR_SINGLE_LINE = Key.create("show.gutter.mark.for.single.line");
 
   private boolean myIsExpanded;
   private final EditorImpl myEditor;
@@ -160,6 +161,19 @@ public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldReg
   @Override
   public boolean areInnerHighlightersMuted() {
     return Boolean.TRUE.equals(getUserData(MUTE_INNER_HIGHLIGHTERS));
+  }
+
+  @Override
+  public void setGutterMarkEnabledForSingleLine(boolean value) {
+    if (value != isGutterMarkEnabledForSingleLine()) {
+      putUserData(SHOW_GUTTER_MARK_FOR_SINGLE_LINE, value ? Boolean.TRUE : null);
+      myEditor.getGutterComponentEx().repaint();
+    }
+  }
+
+  @Override
+  public boolean isGutterMarkEnabledForSingleLine() {
+    return Boolean.TRUE.equals(getUserData(SHOW_GUTTER_MARK_FOR_SINGLE_LINE));
   }
 
   @Override

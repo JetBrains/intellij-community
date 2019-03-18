@@ -144,7 +144,9 @@ class UpdateFoldRegionsOperation implements Runnable {
         region.dispose();
         continue;
       }
-        
+
+      region.setGutterMarkEnabledForSingleLine(descriptor.isGutterMarkEnabledForSingleLine());
+
       if (descriptor.canBeRemovedWhenCollapsed()) region.putUserData(CAN_BE_REMOVED_WHEN_COLLAPSED, Boolean.TRUE);
       region.putUserData(COLLAPSED_BY_DEFAULT, regionInfo.collapsedByDefault);
       region.putUserData(SIGNATURE, ObjectUtils.chooseNotNull(regionInfo.signature, NO_SIGNATURE));
