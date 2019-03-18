@@ -439,6 +439,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     boolean showDetails = PropertiesComponent.getInstance().getBoolean(DETAILS_SHOW_OPTION, DETAILS_SHOW_OPTION_DEFAULT);
     if (showDetails) {
       myDetailsSplitter.initOn();
+      runWhenWindowOpened(getWindow(), () -> myDetailsSplitter.setInitialProportion());
     }
     changeDetails(false);
   }
