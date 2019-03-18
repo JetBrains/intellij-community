@@ -3556,6 +3556,51 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // <<isParameterizedClosure>> expression_or_application
+  //                                                                 | expression_or_application !<<isAfterClosure>>
+  static boolean expression_or_application_except_zero_params_closure(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_or_application_except_zero_params_closure")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = expression_or_application_except_zero_params_closure_0(b, l + 1);
+    if (!r) r = expression_or_application_except_zero_params_closure_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // <<isParameterizedClosure>> expression_or_application
+  private static boolean expression_or_application_except_zero_params_closure_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_or_application_except_zero_params_closure_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = isParameterizedClosure(b, l + 1);
+    r = r && expression_or_application(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // expression_or_application !<<isAfterClosure>>
+  private static boolean expression_or_application_except_zero_params_closure_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_or_application_except_zero_params_closure_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = expression_or_application(b, l + 1);
+    r = r && expression_or_application_except_zero_params_closure_1_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // !<<isAfterClosure>>
+  private static boolean expression_or_application_except_zero_params_closure_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_or_application_except_zero_params_closure_1_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !isAfterClosure(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
   // expression application*
   static boolean expression_or_application_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "expression_or_application_inner")) return false;
@@ -3579,57 +3624,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<isParameterizedClosure>> expression_or_application
-  //                                                                 | expression_or_application !<<isAfterClosure>>
-  static boolean expression_or_application_without_zero_params_closure(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "expression_or_application_without_zero_params_closure")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = expression_or_application_without_zero_params_closure_0(b, l + 1);
-    if (!r) r = expression_or_application_without_zero_params_closure_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // <<isParameterizedClosure>> expression_or_application
-  private static boolean expression_or_application_without_zero_params_closure_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "expression_or_application_without_zero_params_closure_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = isParameterizedClosure(b, l + 1);
-    r = r && expression_or_application(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // expression_or_application !<<isAfterClosure>>
-  private static boolean expression_or_application_without_zero_params_closure_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "expression_or_application_without_zero_params_closure_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = expression_or_application(b, l + 1);
-    r = r && expression_or_application_without_zero_params_closure_1_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // !<<isAfterClosure>>
-  private static boolean expression_or_application_without_zero_params_closure_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "expression_or_application_without_zero_params_closure_1_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NOT_);
-    r = !isAfterClosure(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // expression_or_application_without_zero_params_closure
+  // expression_or_application_except_zero_params_closure
   public static boolean expression_single_parameter_lambda_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "expression_single_parameter_lambda_body")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, EXPRESSION_LAMBDA_BODY, "<expression single parameter lambda body>");
-    r = expression_or_application_without_zero_params_closure(b, l + 1);
+    r = expression_or_application_except_zero_params_closure(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -6337,7 +6337,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   //             | throw_statement
   //             | labeled_statement
   //             | type_definition | <<withProtectedLastVariantPos tuple_var_declaration>> | parse_block_declaration
-  //             | expression_or_application_without_zero_params_closure
+  //             | expression_or_application_except_zero_params_closure
   //             | block_statement
   public static boolean statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "statement")) return false;
@@ -6359,7 +6359,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!r) r = type_definition(b, l + 1);
     if (!r) r = withProtectedLastVariantPos(b, l + 1, GroovyGeneratedParser::tuple_var_declaration);
     if (!r) r = parse_block_declaration(b, l + 1);
-    if (!r) r = expression_or_application_without_zero_params_closure(b, l + 1);
+    if (!r) r = expression_or_application_except_zero_params_closure(b, l + 1);
     if (!r) r = block_statement(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
