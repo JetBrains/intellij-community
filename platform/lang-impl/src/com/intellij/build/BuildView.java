@@ -323,7 +323,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
       rerunActionGroup.add(stopAction);
     }
     actionGroup.add(rerunActionGroup);
-    if (myViewManager.isBuildContentView() && !myViewSettingsProvider.isSideBySideView()) {
+    if (myViewManager.isBuildContentView() && (myViewSettingsProvider == null || !myViewSettingsProvider.isSideBySideView())) {
       actionGroup.addAll(getSwitchActions());
       actionGroup.addSeparator();
     }
