@@ -446,9 +446,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   private static void updateSplitter(@NotNull ThreeComponentsSplitter myThreeComponentsSplitter) {
     int firstSize = myThreeComponentsSplitter.getFirstSize();
-    //int lastSize = myThreeComponentsSplitter.getLastSize();
     int splitterWidth = myThreeComponentsSplitter.getWidth();
-    if (firstSize == 0/* && lastSize == 0*/) {
+    if (firstSize == 0) {
       float proportion = PropertiesComponent.getInstance().getFloat(SPLITTER_PROPERTY, 0.3f);
       int width = Math.round(splitterWidth * proportion);
       if (width > 0) {
