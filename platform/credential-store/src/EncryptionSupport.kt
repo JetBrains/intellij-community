@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.gpg.Pgp
 import com.intellij.credentialStore.windows.WindowsCryptUtils
+import com.intellij.jna.JnaLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.toByteArray
 import java.nio.ByteBuffer
@@ -84,15 +85,16 @@ internal fun createEncryptionSupport(spec: EncryptionSpec): EncryptionSupport {
 }
 
 internal fun createBuiltInOrCrypt32EncryptionSupport(isCrypt32: Boolean): EncryptionSupport {
-  return when {
-    isCrypt32 -> {
-      if (!SystemInfo.isWindows) {
-        throw IllegalArgumentException("Crypt32 encryption is supported only on Windows")
-      }
-      WindowsCrypt32EncryptionSupport(builtInEncryptionKey)
+  if (isCrypt32) {
+    if (!SystemInfo.isWindows) {
+      throw IllegalArgumentException("Crypt32 encryption is supported only on Windows")
     }
-    else -> AesEncryptionSupport(builtInEncryptionKey)
+    if (JnaLoader.isLoaded()) {
+      return WindowsCrypt32EncryptionSupport(builtInEncryptionKey)
+    }
   }
+
+  return AesEncryptionSupport(builtInEncryptionKey)
 }
 
 internal fun CharArray.toByteArrayAndClear(): ByteArray {
