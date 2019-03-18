@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.EditorFactoryEvent
@@ -755,16 +754,19 @@ class LineStatusTrackerManager(
 
   class CheckinFactory : CheckinHandlerFactory() {
     override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+      val project = panel.project
       return object : CheckinHandler() {
         override fun checkinSuccessful() {
-          runInEdt {
-            getInstanceImpl(panel.project).resetExcludedFromCommitMarkers()
-          }
+          resetExcludedFromCommit()
         }
 
         override fun checkinFailed(exception: MutableList<VcsException>?) {
+          resetExcludedFromCommit()
+        }
+
+        private fun resetExcludedFromCommit() {
           runInEdt {
-            getInstanceImpl(panel.project).resetExcludedFromCommitMarkers()
+            if (!project.isDisposed) getInstanceImpl(project).resetExcludedFromCommitMarkers()
           }
         }
       }
