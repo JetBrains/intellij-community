@@ -46,6 +46,8 @@ import static com.intellij.openapi.util.text.StringUtil.*;
  */
 public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
 
+  public static final String HELP_COMMAND = "gradle";
+
   @NotNull
   @Override
   public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull String value) {
@@ -202,7 +204,7 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
   @NotNull
   @Override
   public String getHelpCommand() {
-    return "gradle";
+    return HELP_COMMAND;
   }
 
   @Override
