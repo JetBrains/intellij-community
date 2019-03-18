@@ -15,11 +15,13 @@ import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ObjectUtils;
+import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
@@ -56,6 +58,8 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
   private final Color myInactiveForeground = UIManager.getColor("inactiveCaptionText");
   private Color myActiveForeground = null;
+  private boolean myIsActive;
+  private Border myTopBorder = new MyTopBorder();
 
   private static final int menuBarGap = 7;
   private static final int resizeGap = 3;
@@ -74,6 +78,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
     setOpaque(true);
     setBackground(JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground());
+    setBorder(myTopBorder);
   }
 
   private void uninstall() {
@@ -87,6 +92,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
       myWindowListener = createWindowListener();
 
       myWindow.addWindowListener(myWindowListener);
+      myWindow.addWindowStateListener((WindowStateListener)myWindowListener);
 
       myComponentListener = new ComponentAdapter() {
         @Override
@@ -413,6 +419,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
   private void setActive(boolean isSelected) {
     buttonPanes.setSelected(isSelected);
     titleLabel.setForeground(isSelected ? myActiveForeground : myInactiveForeground);
+    myIsActive = isSelected;
   }
 
   private Frame getFrame() {
@@ -490,12 +497,50 @@ public class DarculaTitlePane extends JPanel implements Disposable {
   private class WindowHandler extends WindowAdapter {
     @Override
     public void windowActivated(WindowEvent ev) {
+      DarculaTitlePane.this.repaint(0, 0, getWidth(), MyTopBorderConsts.THICKNESS);
       setActive(true);
     }
 
     @Override
     public void windowDeactivated(WindowEvent ev) {
+      DarculaTitlePane.this.repaint(0, 0, getWidth(), MyTopBorderConsts.THICKNESS);
       setActive(false);
+    }
+
+    @Override
+    public void windowStateChanged(WindowEvent e) {
+      //noinspection ConstantConditions
+      if ((getFrame().getExtendedState() & Frame.MAXIMIZED_VERT) != 0) {
+        setBorder(null);
+      }
+      else {
+        setBorder(myTopBorder);
+      }
+    }
+  }
+
+  private interface MyTopBorderConsts {
+    int THICKNESS = 1;
+    Color ACTIVE_COLOR = ObjectUtils.notNull((Color)Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor"),
+                                             () -> (Color)Toolkit.getDefaultToolkit().getDesktopProperty("win.frame.activeBorderColor"));
+    Color INACTIVE_COLOR = (Color)Toolkit.getDefaultToolkit().getDesktopProperty("win.3d.shadowColor");
+  }
+
+  private class MyTopBorder implements Border {
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      g.setColor(myIsActive ? MyTopBorderConsts.ACTIVE_COLOR : MyTopBorderConsts.INACTIVE_COLOR);
+      RectanglePainter2D.FILL.paint((Graphics2D)g, x, y, width, MyTopBorderConsts.THICKNESS);
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      return JBUI.insetsTop(MyTopBorderConsts.THICKNESS);
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return true;
     }
   }
 }
