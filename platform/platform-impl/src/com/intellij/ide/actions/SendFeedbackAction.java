@@ -17,9 +17,11 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.FeedbackDescriptionProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -43,7 +45,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
   }
 
   public static void doPerformAction(@Nullable Project project) {
-    doPerformActionImpl(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription());
+    doPerformActionImpl(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription(project));
   }
 
   public static void doPerformAction(@Nullable Project project, @NotNull String description) {
@@ -64,8 +66,17 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     BrowserUtil.browse(url, project);
   }
 
+  /**
+   * @deprecated use {@link #getDescription(Project)} instead
+   */
+  @Deprecated
   @NotNull
   public static String getDescription() {
+    return getDescription(null);
+  }
+
+  @NotNull
+  public static String getDescription(@Nullable Project project) {
     StringBuilder sb = new StringBuilder("\n\n");
     sb.append(ApplicationInfoEx.getInstanceEx().getBuild().asString()).append(", ");
     String javaVersion = System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"));
@@ -106,6 +117,14 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
         sb.append(SystemInfo.isMac ? "; Retina" : "; HiDPI");
       }
     }
+    for (FeedbackDescriptionProvider ext : EP_NAME.getExtensions()) {
+      String pluginDescription = ext.getDescription(project);
+      if (pluginDescription != null && pluginDescription.length() > 0) {
+        sb.append("\n").append(pluginDescription);
+      }
+    }
     return sb.toString();
   }
+
+  private static final ExtensionPointName<FeedbackDescriptionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.feedbackDescriptionProvider");
 }

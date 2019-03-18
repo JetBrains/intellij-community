@@ -5,14 +5,13 @@ Groovy script
   PsiErrorElement:';', <statement> or new line expected, got 'else'
     PsiElement(else)('else')
   PsiElement(new line)('\n')
-  Closable block
-    PsiElement({)('{')
-    Parameter list
-      <empty list>
-    Additive expression
-      Literal
-        PsiElement(Integer)('1')
-      PsiElement(+)('+')
-      Literal
-        PsiElement(Integer)('2')
-    PsiElement(})('}')
+  Block statement
+    Open block
+      PsiElement({)('{')
+      Additive expression
+        Literal
+          PsiElement(Integer)('1')
+        PsiElement(+)('+')
+        Literal
+          PsiElement(Integer)('2')
+      PsiElement(})('}')

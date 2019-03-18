@@ -62,8 +62,8 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
   private final AtomicBoolean isBuildStartEventProcessed = new AtomicBoolean();
   private final List<BuildEvent> myAfterStartEvents = ContainerUtil.createConcurrentList();
   private final ViewManager myViewManager;
-  @Nullable private ExecutionConsole myExecutionConsole;
-  private BuildViewSettingsProvider myViewSettingsProvider;
+  @Nullable private volatile ExecutionConsole myExecutionConsole;
+  private volatile BuildViewSettingsProvider myViewSettingsProvider;
 
   public BuildView(Project project, BuildDescriptor buildDescriptor, String selectionStateKey, ViewManager viewManager) {
     this(project, null, buildDescriptor, selectionStateKey, viewManager);
@@ -291,7 +291,8 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         String eventViewName = BuildTreeConsoleView.class.getName();
-        e.getPresentation().setVisible(!myViewSettingsProvider.isSideBySideView() && !BuildView.this.isViewEnabled(eventViewName));
+        e.getPresentation().setVisible(myViewSettingsProvider != null && !myViewSettingsProvider.isSideBySideView()
+                                       && !BuildView.this.isViewEnabled(eventViewName));
       }
     };
 
@@ -322,7 +323,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
       rerunActionGroup.add(stopAction);
     }
     actionGroup.add(rerunActionGroup);
-    if (myViewManager.isBuildContentView() && !myViewSettingsProvider.isSideBySideView()) {
+    if (myViewManager.isBuildContentView() && (myViewSettingsProvider == null || !myViewSettingsProvider.isSideBySideView())) {
       actionGroup.addAll(getSwitchActions());
       actionGroup.addSeparator();
     }

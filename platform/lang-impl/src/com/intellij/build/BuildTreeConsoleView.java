@@ -251,6 +251,14 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       if (currentNode == null) {
         if (event instanceof StartBuildEvent) {
           currentNode = rootElement;
+          UIUtil.invokeLaterIfNeeded(() -> {
+            final DefaultActionGroup rerunActionGroup = new DefaultActionGroup();
+            for (AnAction anAction : ((StartBuildEvent)event).getRestartActions()) {
+              rerunActionGroup.add(anAction);
+            }
+            TreeTable treeTable = myTree.getTreeTable();
+            PopupHandler.installPopupHandler(treeTable, rerunActionGroup, "BuildView");
+          });
         }
         else {
           if (event instanceof MessageEvent) {
@@ -438,9 +446,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   private static void updateSplitter(@NotNull ThreeComponentsSplitter myThreeComponentsSplitter) {
     int firstSize = myThreeComponentsSplitter.getFirstSize();
-    //int lastSize = myThreeComponentsSplitter.getLastSize();
     int splitterWidth = myThreeComponentsSplitter.getWidth();
-    if (firstSize == 0/* && lastSize == 0*/) {
+    if (firstSize == 0) {
       float proportion = PropertiesComponent.getInstance().getFloat(SPLITTER_PROPERTY, 0.3f);
       int width = Math.round(splitterWidth * proportion);
       if (width > 0) {
@@ -730,8 +737,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       return true;
     }
 
-    private boolean printDetails(Failure failure, @Nullable String details) {
-      return BuildConsoleUtils.printDetails(getTaskOutputView(), failure, details);
+    private void printDetails(Failure failure, @Nullable String details) {
+      BuildConsoleUtils.printDetails(getTaskOutputView(), failure, details);
     }
 
     public void setNode(@Nullable DefaultMutableTreeNode node) {
@@ -744,8 +751,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
 
       myExecutionNode = null;
-      if (myView.getView(CONSOLE_VIEW_NAME) != null) {
-        myView.enableView(CONSOLE_VIEW_NAME);
+      if (myView.getView(CONSOLE_VIEW_NAME) != null && myViewSettingsProvider.isSideBySideView()) {
+        myView.enableView(CONSOLE_VIEW_NAME, false);
         myPanel.setVisible(true);
       }
       else {

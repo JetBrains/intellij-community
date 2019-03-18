@@ -16,8 +16,11 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +34,7 @@ public class PythonOverridingBuiltinReferenceResolveProvider implements PyOverri
   public List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element, @NotNull TypeEvalContext context) {
     final String referencedName = element.getReferencedName();
 
-    // resolve implicit __class__ inside class function
+    // resolve implicit __class__ inside method
     if (element instanceof PyReferenceExpression &&
         PyNames.__CLASS__.equals(referencedName) &&
         !LanguageLevel.forElement(element).isPython2()) {
@@ -45,7 +48,15 @@ public class PythonOverridingBuiltinReferenceResolveProvider implements PyOverri
           PyResolveUtil.scopeCrawlUp(processor, element, referencedName, containingFunction);
 
           if (processor.getElements().isEmpty()) {
-            return Collections.singletonList(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, containingClass));
+            final PyType objectType = PyBuiltinCache.getInstance(element).getObjectType();
+            if (objectType != null) {
+              final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+              final List<? extends RatedResolveResult> results =
+                objectType.resolveMember(PyNames.__CLASS__, element, AccessDirection.of(element), resolveContext);
+              if (results != null) {
+                return new SmartList<>(results);
+              }
+            }
           }
         }
       }

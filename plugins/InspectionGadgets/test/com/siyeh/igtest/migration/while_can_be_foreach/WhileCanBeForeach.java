@@ -107,6 +107,14 @@ public class WhileCanBeForeach {
       System.out.println(iterator1);
     }
   }
+
+  void c(List<String> strings) {
+      Iterator<String> iterator = strings.listIterator();
+      while (iterator.hasNext()) {
+        System.out.println(iterator.next());
+        iterator.remove();
+      }
+  }
 }
 class Base implements Iterable<String> {
   @Override

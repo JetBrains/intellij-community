@@ -959,6 +959,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         }
       }
       updateEditorCanBeTyped();
+      putEditorHint(myEditor, readOnly && isEditable(myMasterSide, false));
     }
 
     @Override

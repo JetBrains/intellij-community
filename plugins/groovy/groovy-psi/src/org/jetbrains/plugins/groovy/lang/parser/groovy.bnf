@@ -686,13 +686,13 @@ statement ::= if_statement
             | throw_statement
             | labeled_statement
             | type_definition | <<withProtectedLastVariantPos tuple_var_declaration>> | parse_block_declaration
-            | expression_or_application
+            | expression_or_application_without_zero_params_closure
+            | block_statement
 {
   elementType = ''
 }
 
-private branch ::= <<extendedStatement>> | block_or_statement
-private block_or_statement ::= block_statement | statement
+private branch ::= <<extendedStatement>> | statement
 
 block_statement ::= lazy_block
 
@@ -767,7 +767,7 @@ private fvd_tail ::= variable_declaration_tail <<wrapLeft>>
 expression_list ::= expression (',' expression)*
 
 // FIXME get rid of this weird logic
-private for_body ::= &<<extendedStatement>> | followed_by_semi | block_or_statement { name = 'loop body' }
+private for_body ::= &<<extendedStatement>> | followed_by_semi | statement { name = 'loop body' }
 
 synchronized_statement ::= 'synchronized' '(' expression ')' mb_nl lazy_block
 {
@@ -775,7 +775,7 @@ synchronized_statement ::= 'synchronized' '(' expression ')' mb_nl lazy_block
 }
 
 labeled_statement ::= IDENTIFIER after_label
-private after_label ::= ':' mb_nl block_or_statement
+private after_label ::= ':' mb_nl statement
 {
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
@@ -961,8 +961,7 @@ single_parameter_lambda_parameter ::= modifier_list IDENTIFIER {
   elementType = parameter
 }
 private single_parameter_lambda_body ::= expression_single_parameter_lambda_body | lazy_block_lambda_body
-expression_single_parameter_lambda_body ::= <<isParameterizedClosure>> expression_or_application
-                                              | expression_or_application !<<isAfterClosure>>
+expression_single_parameter_lambda_body ::= expression_or_application_without_zero_params_closure
 {
   elementType = expression_lambda_body
 }
@@ -1136,6 +1135,9 @@ left application_ref ::= IDENTIFIER | simple_literal_tokens
 left application_expression ::= application_argument_list | clear_variants_and_fail
 left application_call ::= call_argument_list (mb_nl lazy_closure)* | empty_argument_list (mb_nl lazy_closure)+ { elementType = method_call_expression }
 left application_index ::= mb_question index_expression_argument_list
+
+private expression_or_application_without_zero_params_closure ::= <<isParameterizedClosure>> expression_or_application
+                                                                | expression_or_application !<<isAfterClosure>>
 // endregion
 
 

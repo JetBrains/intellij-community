@@ -4,12 +4,15 @@ Groovy script
   do-while statement
     PsiElement(do)('do')
     PsiWhiteSpace(' ')
-    Block statement
-      Open block
+    Call expression
+      Closable block
         PsiElement({)('{')
+        Parameter list
+          <empty list>
         PsiElement(})('}')
-    PsiErrorElement:while expected, got 'abc'
+      PsiWhiteSpace(' ')
+      Command arguments
+        Reference expression
+          PsiElement(identifier)('abc')
+    PsiErrorElement:',' or while expected
       <empty list>
-    PsiWhiteSpace(' ')
-    Reference expression
-      PsiElement(identifier)('abc')

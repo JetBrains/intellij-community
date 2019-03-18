@@ -8,27 +8,13 @@ class BaseLineService {
 
 String abc = 5
 -----
-assert
-boolean
-byte
-char
-double
+as
 else
 false
-float
-for
-int
-long
+in
+instanceof
 new
 null
-return
-short
 super
-switch
-synchronized
 this
-throw
 true
-try
-void
-while
