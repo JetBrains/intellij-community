@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 
 /**
  * Allows plugins to add additional details, which we want to see pre-populated in the bug reports. The implementation of this interface
- * must be registered as extensions of 'com.intellij.feedbackDescriptionProvider' extension point.
+ * must be registered as an extension of 'com.intellij.feedbackDescriptionProvider' extension point.
  */
 interface FeedbackDescriptionProvider {
   /**
