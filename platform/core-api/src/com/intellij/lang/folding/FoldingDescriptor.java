@@ -48,6 +48,7 @@ public class FoldingDescriptor {
   private final Boolean myCollapsedByDefault;
   private String myPlaceholderText;
   private boolean myCanBeRemovedWhenCollapsed;
+  private boolean myGutterMarkEnabledForSingleLine;
 
   /**
    * Creates a folding region related to the specified AST node and covering the specified
@@ -261,6 +262,22 @@ public class FoldingDescriptor {
    */
   public void setCanBeRemovedWhenCollapsed(boolean canBeRemovedWhenCollapsed) {
     myCanBeRemovedWhenCollapsed = canBeRemovedWhenCollapsed;
+  }
+
+  /**
+   * @see #setGutterMarkEnabledForSingleLine()
+   */
+  public boolean isGutterMarkEnabledForSingleLine() {
+    return myGutterMarkEnabledForSingleLine;
+  }
+
+  /**
+   * See javadoc for {@code com.intellij.openapi.editor.FoldRegion.setGutterMarkEnabledForSingleLine(boolean)}.
+   *
+   * @see #isGutterMarkEnabledForSingleLine()
+   */
+  public void setGutterMarkEnabledForSingleLine(boolean value) {
+    myGutterMarkEnabledForSingleLine = value;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
