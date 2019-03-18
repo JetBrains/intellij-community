@@ -118,6 +118,8 @@
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.gradle.statistics.GradleSettingsCollector"/>
     <statistics.counterUsagesCollector groupId="build.gradle.actions" version="1"/>
+    <externalSystem.runConfigurationImporter
+        implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationImporter"/>
   </extensions>
 
   <actions>
