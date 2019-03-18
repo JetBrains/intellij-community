@@ -321,11 +321,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     registerHint(null);
   }
 
-  @Override
-  public Component asComponent() {
-    return this;
-  }
-
   private void hideHint() {
     if (myHint != null && myHint.isVisible()) {
       myHint.cancel();
