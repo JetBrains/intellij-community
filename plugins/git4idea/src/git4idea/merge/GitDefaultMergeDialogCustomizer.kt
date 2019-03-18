@@ -36,14 +36,14 @@ open class GitDefaultMergeDialogCustomizer(
         append("<html>Merging ")
         append(mergeBranches.toSet().singleOrNull()?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" } ?: "diverging branches ")
         append(" into ")
-        append(getSingleCurrentBranchName(project, repos.map { it.root })?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" }
+        append(getSingleCurrentBranchName(repos)?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" }
                ?: "diverging branches")
       }
     }
 
     val rebaseOntoBranches = repos.map { resolveRebaseOntoBranch(it) }
     if (rebaseOntoBranches.any { it != null }) {
-      val singleCurrentBranch = getSingleCurrentBranchName(project, repos.map { it.root })
+      val singleCurrentBranch = getSingleCurrentBranchName(repos)
       val singleOntoBranch = rebaseOntoBranches.toSet().singleOrNull()
       return getDescriptionForRebase(singleCurrentBranch, singleOntoBranch)
     }
@@ -181,17 +181,15 @@ private fun tryResolveRef(repository: GitRepository, ref: String): Hash? {
   }
 }
 
-fun getSingleMergeBranchName(project: Project, roots: Collection<VirtualFile>): String? {
+fun getSingleMergeBranchName(roots: Collection<GitRepository>): String? {
   return roots.asSequence()
-    .mapNotNull { root -> GitRepositoryManager.getInstance(project).getRepositoryForRoot(root) }
     .mapNotNull { repo -> resolveMergeBranchOrCherryPick(repo) }
     .distinct()
     .singleOrNull()
 }
 
-fun getSingleCurrentBranchName(project: Project, roots: Collection<VirtualFile>): String? {
+fun getSingleCurrentBranchName(roots: Collection<GitRepository>): String? {
   return roots.asSequence()
-    .mapNotNull { root -> GitRepositoryManager.getInstance(project).getRepositoryForRoot(root) }
     .mapNotNull { repo -> repo.currentBranchName }
     .distinct()
     .singleOrNull()
