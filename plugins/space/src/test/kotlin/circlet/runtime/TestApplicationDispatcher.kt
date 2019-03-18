@@ -3,6 +3,7 @@ package circlet.runtime
 import circlet.utils.*
 import com.intellij.mock.*
 import com.intellij.openapi.application.*
+import com.intellij.openapi.util.*
 import junit.framework.*
 import junit.framework.TestCase.*
 import kotlinx.coroutines.*
@@ -99,6 +100,19 @@ private class TestApplication : MockApplication({}) {
     }
 
     override fun invokeLater(runnable: Runnable) {
+        executor.execute(runnable)
+    }
+
+
+    override fun invokeLater(runnable: java.lang.Runnable, expired: Condition<*>) {
+        executor.execute(runnable)
+    }
+
+    override fun invokeLater(runnable: java.lang.Runnable, state: ModalityState, expired: Condition<*>) {
+        executor.execute(runnable)
+    }
+
+    override fun invokeLater(runnable: java.lang.Runnable, state: ModalityState) {
         executor.execute(runnable)
     }
 }
