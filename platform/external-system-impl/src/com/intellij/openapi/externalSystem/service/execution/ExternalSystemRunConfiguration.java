@@ -350,6 +350,9 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
             if (progressListener != null) {
               long eventTime = System.currentTimeMillis();
               AnAction rerunTaskAction = new MyTaskRerunAction(progressListener, myEnv, myContentDescriptor);
+              BuildViewSettingsProvider viewSettingsProvider =
+                consoleView instanceof BuildViewSettingsProvider ?
+                new BuildViewSettingsProviderAdapter((BuildViewSettingsProvider)consoleView) : null;
               progressListener.onEvent(
                 new StartBuildEventImpl(new DefaultBuildDescriptor(id, executionName, workingDir, eventTime), "running...")
                   .withProcessHandler(processHandler, view -> {
@@ -360,6 +363,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
                   .withRestartAction(rerunTaskAction)
                   .withRestartActions(restartActions)
                   .withExecutionEnvironment(myEnv)
+                  .withBuildViewSettingsProvider(viewSettingsProvider)
               );
             }
           }
