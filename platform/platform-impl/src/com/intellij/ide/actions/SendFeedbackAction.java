@@ -119,12 +119,12 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     }
     for (FeedbackDescriptionProvider ext : EP_NAME.getExtensions()) {
       String pluginDescription = ext.getDescription(project);
-      if (pluginDescription != null && pluginDescription.length() > 0)
+      if (pluginDescription != null && pluginDescription.length() > 0) {
         sb.append("\n").append(pluginDescription);
+      }
     }
     return sb.toString();
   }
 
-  private static ExtensionPointName<FeedbackDescriptionProvider> EP_NAME =
-    new ExtensionPointName<>("com.intellij.feedbackDescriptionProvider");
+  private static final ExtensionPointName<FeedbackDescriptionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.feedbackDescriptionProvider");
 }

@@ -4,12 +4,12 @@ package com.intellij.ide
 import com.intellij.openapi.project.Project
 
 /**
- * Allows plugins to add additional details, which we want to see pre-populated in the bug reports.
+ * Allows plugins to add additional details, which we want to see pre-populated in the bug reports. The implementation of this interface
+ * must be registered as extensions of 'com.intellij.feedbackDescriptionProvider' extension point.
  */
 interface FeedbackDescriptionProvider {
-
-    /**
-     * @return additional description details.
-     */
-    fun getDescription(project: Project?): String?
+  /**
+   * Return additional details which should be appended to the description of a created issue.
+   */
+  fun getDescription(project: Project?): String?
 }
