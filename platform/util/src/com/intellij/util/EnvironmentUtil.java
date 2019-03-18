@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import static java.util.Collections.unmodifiableMap;
@@ -41,8 +40,8 @@ public class EnvironmentUtil {
 
   public static final String BASH_EXECUTABLE_NAME = "bash";
   public static final String SHELL_VARIABLE_NAME = "SHELL";
-  private static final String SHELL_INTERACTIVE_ARGUMENT = "-i";
-  private static final String SHELL_LOGIN_ARGUMENT = "-l";
+  public static final String SHELL_INTERACTIVE_ARGUMENT = "-i";
+  public static final String SHELL_LOGIN_ARGUMENT = "-l";
   public static final String SHELL_COMMAND_ARGUMENT = "-c";
 
   private static final Future<Map<String, String>> ourEnvGetter;

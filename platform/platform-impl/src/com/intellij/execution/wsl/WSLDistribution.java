@@ -7,6 +7,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.*;
+import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -14,16 +16,22 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.EnvironmentUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.util.EnvironmentUtil.BASH_EXECUTABLE_NAME;
+import static com.intellij.util.EnvironmentUtil.SHELL_LOGIN_ARGUMENT;
 
 /**
  * Represents a single linux distribution in WSL, installed after <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Fall Creators Update</a>
@@ -36,6 +44,8 @@ public class WSLDistribution {
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
   private static final Logger LOG = Logger.getInstance(WSLDistribution.class);
+  private static final Key<String> ORIGINAL_COMMAND_LINE = Key.create("wsl.original.command.line");
+  private static final Key<String> WRAPPER_SCRIPT_TEXT = Key.create("wsl.wrapper.script.text");
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
@@ -67,12 +77,12 @@ public class WSLDistribution {
     try {
       final String key = "PRETTY_NAME";
       final String releaseInfo = "/etc/os-release"; // available for all distributions
-      final ProcessOutput output = executeOnWsl(10000, "cat", releaseInfo);
+      final ProcessOutput output = executeSimpleCommand(10000, "cat", releaseInfo);
       if (!output.checkSuccess(LOG)) return null;
       for (String line : output.getStdoutLines(true)) {
         if (line.startsWith(key) && line.length() >= (key.length() + 1)) {
           final String prettyName = line.substring(key.length() + 1);
-          return  StringUtil.nullize(StringUtil.unquoteString(prettyName));
+          return StringUtil.nullize(StringUtil.unquoteString(prettyName));
         }
       }
     }
@@ -92,6 +102,16 @@ public class WSLDistribution {
   }
 
   /**
+   * Performs execution of simple command, like {@code env} or {@code pwd} with a {@code timeout} and returns result. Does not support
+   * sudo, environment passing and so on.
+   */
+  public ProcessOutput executeSimpleCommand(int timeout, @NotNull String... args) throws ExecutionException {
+    GeneralCommandLine commandLine = new GeneralCommandLine(getExecutablePath().toString(), getRunCommandLineParameter());
+    commandLine.addParameters(args);
+    return executeWslCommandLine(commandLine, timeout, null);
+  }
+
+  /**
    * Creates a patched command line, executes it on wsl distribution and returns output
    *
    * @param timeout                timeout in ms
@@ -102,7 +122,18 @@ public class WSLDistribution {
                                     @Nullable Consumer<? super ProcessHandler> processHandlerConsumer,
                                     @NotNull String... args) throws ExecutionException {
     GeneralCommandLine commandLine = createWslCommandLine(args);
-    CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
+    return executeWslCommandLine(commandLine, timeout, processHandlerConsumer);
+  }
+
+  /**
+   * Executes a wsl command line as it is with a {@code timeout}. Resulting processHandler fed into {@code processHandlerConsumer} if any
+   *
+   * @see #executeSimpleCommand(int, String...)
+   */
+  public ProcessOutput executeWslCommandLine(@NotNull GeneralCommandLine wslCommandLine,
+                                             int timeout,
+                                             @Nullable Consumer<? super ProcessHandler> processHandlerConsumer) throws ExecutionException {
+    CapturingProcessHandler processHandler = new CapturingProcessHandler(wslCommandLine);
     if (processHandlerConsumer != null) {
       processHandlerConsumer.consume(processHandler);
     }
@@ -154,26 +185,29 @@ public class WSLDistribution {
 
 
   /**
-   * Patches passed command line to make it runnable in WSL context, e.g changes {@code date} to {@code ubuntu run "date"}.<p/>
-   * <p>
-   * Environment variables and working directory are mapped to the chain calls: working dir using {@code cd} and environment variables using {@code export},
-   * e.g {@code bash -c "export var1=val1 && export var2=val2 && cd /some/working/dir && date"}.<p/>
-   * <p>
-   * Method should properly handle quotation and escaping of the environment variables.<p/>
+   * Builds a shell script from the passed {@code commandLine}, makes a temporary file and changes the command line to run it in WSL.
+   * E.g. {@code ubuntu run /path/to/script}
    *
-   * @param commandLine      command line to patch
-   * @param project          current project
-   * @param remoteWorkingDir path to WSL working directory
-   * @param askForSudo       true if we need to ask for sudo. To make this work, process handler, created from this command line should be patched using {@link #patchProcessHandler(GeneralCommandLine, ProcessHandler)}
-   * @param <T>              GeneralCommandLine or descendant
-   * @return original {@code commandLine}, prepared to run in WSL context
+   * @param askForSudo          true if we need to ask for sudo. To make this work, process handler, created from this command line should be patched using {@link #patchProcessHandler(GeneralCommandLine, ProcessHandler)}
+   * @param useLoginShell       if true, wrapper script going to be executed with {@code bash -l -c}
+   * @param useInteractiveShell if true, wrapper script going to be executed with {@code bash -i -c}
+   * @return original {@code commandLine} object, changed to to run command provided in the WSL context
+   * @apiNote <ul>
+   * <li>Working directory changed using {@code cd} command in the shell script</li>
+   * <li>Unquoted environment variables are going to be escaped (" symbol) and quoted with double quotes, quoted variables passed as is.</li>
+   * <li>Original command line text may be obtained using {@link #getOriginalCommandLineText(GeneralCommandLine)}</li>
+   * <li>Text of generated script may be obtained using {@link #getWrapperScript(GeneralCommandLine)}</li>
+   * <li>If you are running script in the console, and would like original command line to be printed in it, use {@link #attachOriginalCommandLinePrinter(GeneralCommandLine, ProcessHandler)}</li>
+   * </ul>
    */
   @NotNull
   public <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                            @Nullable Project project,
                                                            @Nullable String remoteWorkingDir,
-                                                           boolean askForSudo
-  ) {
+                                                           boolean askForSudo,
+                                                           boolean useLoginShell,
+                                                           boolean useInteractiveShell) {
+    ORIGINAL_COMMAND_LINE.set(commandLine, commandLine.getCommandLineString());
     Map<String, String> additionalEnvs = new THashMap<>(commandLine.getEnvironment());
     commandLine.getEnvironment().clear();
 
@@ -187,20 +221,21 @@ public class WSLDistribution {
               (askForSudo ? "; with sudo" : ": without sudo")
     );
 
-    StringBuilder commandLineString = new StringBuilder();
-    ParametersList parametersList = commandLine.getParametersList();
-    List<String> realParamsList = parametersList.getList();
+    StringBuilder scriptBuilder = new StringBuilder("#!/bin/bash\n");
 
-    // avoiding double wrapping into bash -c; may cause problems with escaping
-    if (realParamsList.size() == 2 && "bash".equals(commandLine.getExePath()) && "-c".equals(realParamsList.get(0))) {
-      commandLineString.append(realParamsList.get(1));
+    if (StringUtil.isNotEmpty(remoteWorkingDir)) {
+      scriptBuilder.append("cd ").append(remoteWorkingDir).append("\n");
     }
-    else {
-      commandLineString.append(commandLine.getCommandLineString());
-    }
+
+    additionalEnvs.forEach((key, val) -> {
+      val = StringUtil.isQuotedString(val) ? val : '"' + StringUtil.escapeChar(val, '"') + '"';
+      scriptBuilder.append("export ").append(key).append("=").append(val).append("\n");
+    });
+
+    StringBuilder commandLineBuilder = new StringBuilder(commandLine.getCommandLineString());
 
     if (askForSudo) { // fixme shouldn't we sudo for every chunk? also, preserve-env, login?
-      prependCommandLineString(commandLineString, "sudo", "-S", "-p", "''");
+      commandLineBuilder.insert(0, "sudo -S -p '' ");
       //TODO[traff]: ask password only if it is needed. When user is logged as root, password isn't asked.
 
       SUDO_LISTENER_KEY.set(commandLine, new ProcessAdapter() {
@@ -230,25 +265,44 @@ public class WSLDistribution {
       });
     }
 
-    if (StringUtil.isNotEmpty(remoteWorkingDir)) {
-      prependCommandLineString(commandLineString, "cd", remoteWorkingDir, "&&");
+    String wrapperScriptText = scriptBuilder.append(commandLineBuilder).toString();
+
+    LOG.debug("Generated script: " + wrapperScriptText);
+    File wrapperScript;
+    try {
+      wrapperScript = ExecUtil.createTempExecutableScript("wsl_command_wrapper", "", wrapperScriptText);
+      WRAPPER_SCRIPT_TEXT.set(commandLine, wrapperScriptText);
+    }
+    catch (ExecutionException | IOException e) {
+      LOG.error(e);
+      return commandLine;
     }
 
-    additionalEnvs.forEach((key, val) -> {
-      if (StringUtil.containsChar(val, '*') && !StringUtil.isQuotedString(val)) {
-        val = "'" + val + "'";
-      }
-      prependCommandLineString(commandLineString, "export", key + "=" + val, "&&");
-    });
-
-
     commandLine.setExePath(getExecutablePath().toString());
+    ParametersList parametersList = commandLine.getParametersList();
     parametersList.clearAll();
     parametersList.add(getRunCommandLineParameter());
-    parametersList.add(commandLineString.toString());
+    if (useLoginShell || useInteractiveShell) {
+      parametersList.add(BASH_EXECUTABLE_NAME);
+      if (useInteractiveShell) {
+        parametersList.add(EnvironmentUtil.SHELL_INTERACTIVE_ARGUMENT);
+      }
+      if (useLoginShell) {
+        parametersList.add(SHELL_LOGIN_ARGUMENT);
+      }
+    }
+    parametersList.add(getWslPath(wrapperScript.toString()));
 
     LOG.debug("[" + getId() + "] " + "Patched as: " + commandLine.getCommandLineString());
     return commandLine;
+  }
+
+  @NotNull
+  public <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
+                                                           @Nullable Project project,
+                                                           @Nullable String remoteWorkingDir,
+                                                           boolean askForSudo) {
+    return patchCommandLine(commandLine, project, remoteWorkingDir, askForSudo, false, false);
   }
 
   @NotNull
@@ -267,7 +321,7 @@ public class WSLDistribution {
   public String resolveSymlink(@NotNull String path, int timeoutInMilliseconds) {
 
     try {
-      final ProcessOutput output = executeOnWsl(timeoutInMilliseconds, "readlink", "-f", path);
+      final ProcessOutput output = executeSimpleCommand(timeoutInMilliseconds, "readlink", "-f", path);
       if (output.getExitCode() == 0) {
         String stdout = output.getStdout().trim();
         if (output.getExitCode() == 0 && StringUtil.isNotEmpty(stdout)) {
@@ -294,7 +348,7 @@ public class WSLDistribution {
    * @return passed processHandler, patched with sudo listener if any
    */
   @NotNull
-  public <T extends ProcessHandler>T patchProcessHandler(@NotNull GeneralCommandLine commandLine, @NotNull T processHandler) {
+  public <T extends ProcessHandler> T patchProcessHandler(@NotNull GeneralCommandLine commandLine, @NotNull T processHandler) {
     ProcessListener listener = SUDO_LISTENER_KEY.get(commandLine);
     if (listener != null) {
       processHandler.addProcessListener(listener);
@@ -304,12 +358,41 @@ public class WSLDistribution {
   }
 
   /**
+   * Patches process handler with listener, which prints original command line into the process handler like:<br/>
+   * <code>
+   * Executing: &lt;original command line&gt;<br/>
+   * as
+   * </code>
+   *
+   * @return passed processHandler
+   * @apiNote this listener is expected to be added before console one. In such case, actual command line going to be printed immediately
+   * after {@code as}
+   */
+  @NotNull
+  public <T extends ProcessHandler> T attachOriginalCommandLinePrinter(@NotNull GeneralCommandLine commandLine, @NotNull T processHandler) {
+    String executablePath = commandLine.getExePath();
+    String originalCommandLineText = getOriginalCommandLineText(commandLine);
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        if (ProcessOutputType.isSystem(outputType) && StringUtil.startsWith(event.getText(), executablePath)) {
+          if (StringUtil.isNotEmpty(originalCommandLineText)) {
+            processHandler.notifyTextAvailable(IdeBundle.message("wsl.executing.with", originalCommandLineText), outputType);
+          }
+        }
+        super.onTextAvailable(event, outputType);
+      }
+    });
+    return processHandler;
+  }
+
+  /**
    * @return environment map of the default user in wsl
    */
   @NotNull
   public Map<String, String> getEnvironment() {
     try {
-      ProcessOutput processOutput = executeOnWsl(5000, "env");
+      ProcessOutput processOutput = executeSimpleCommand(5000, "env");
       Map<String, String> result = new THashMap<>();
       for (String string : processOutput.getStdoutLines()) {
         int assignIndex = string.indexOf('=');
@@ -348,15 +431,6 @@ public class WSLDistribution {
     return null;
   }
 
-  /**
-   * @param windowsAbsolutePath properly formatted windows local absolute path: {@code drive:\path}
-   * @return windows path converted to the linux path according to wsl rules: {@code c:\some\path} => {@code c/some/path}
-   */
-  @NotNull
-  static String convertWindowsPath(@NotNull String windowsAbsolutePath) {
-    return Character.toLowerCase(windowsAbsolutePath.charAt(0)) + FileUtil.toSystemIndependentName(windowsAbsolutePath.substring(2));
-  }
-
   @NotNull
   public String getId() {
     return myDescriptor.getId();
@@ -379,14 +453,6 @@ public class WSLDistribution {
            '}';
   }
 
-  private static void prependCommandLineString(@NotNull StringBuilder commandLineString, @NotNull String... commands) {
-    commandLineString.insert(0, createAdditionalCommand(commands) + " ");
-  }
-
-  private static String createAdditionalCommand(@NotNull String... commands) {
-    return new GeneralCommandLine(commands).getCommandLineString();
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -402,5 +468,32 @@ public class WSLDistribution {
   @Override
   public int hashCode() {
     return myDescriptor.hashCode();
+  }
+
+  /**
+   * @param windowsAbsolutePath properly formatted windows local absolute path: {@code drive:\path}
+   * @return windows path converted to the linux path according to wsl rules: {@code c:\some\path} => {@code c/some/path}
+   */
+  @NotNull
+  static String convertWindowsPath(@NotNull String windowsAbsolutePath) {
+    return Character.toLowerCase(windowsAbsolutePath.charAt(0)) + FileUtil.toSystemIndependentName(windowsAbsolutePath.substring(2));
+  }
+
+  /**
+   * @return stringified command line, passed to the {@link #patchCommandLine(GeneralCommandLine, Project, String, boolean)}
+   */
+  @Contract("null->null")
+  @Nullable
+  public static String getOriginalCommandLineText(@Nullable GeneralCommandLine commandLine) {
+    return commandLine == null ? null : ORIGINAL_COMMAND_LINE.get(commandLine);
+  }
+
+  /**
+   * @return wrapper script created by the {@link #patchCommandLine(GeneralCommandLine, Project, String, boolean)}
+   */
+  @Contract("null->null")
+  @Nullable
+  public static String getWrapperScript(@Nullable GeneralCommandLine commandLine) {
+    return commandLine == null ? null : WRAPPER_SCRIPT_TEXT.get(commandLine);
   }
 }

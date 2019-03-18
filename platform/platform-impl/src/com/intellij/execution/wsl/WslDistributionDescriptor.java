@@ -128,7 +128,7 @@ final class WslDistributionDescriptor {
     }
     ProcessOutput pwdOutput;
     try {
-      pwdOutput = distribution.executeOnWsl(-1, "pwd");
+      pwdOutput = distribution.executeSimpleCommand(-1, "pwd");
     }
     catch (ExecutionException e) {
       LOG.warn("Error reading pwd output for " + getId(), e);
