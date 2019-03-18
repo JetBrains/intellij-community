@@ -33,7 +33,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -291,8 +290,25 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @Override
   public void setShowConfigurations(boolean value) {
     myShowConfigurations = value;
-    updateToolWindowContent();
+
+    // Ensure dashboard tree gets focus before tool window content update.
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    if (toolWindowManager == null) return;
+    toolWindowManager.invokeLater(() -> {
+      if (myProject.isDisposed()) {
+        return;
+      }
+      if (myToolWindowContentManager != null) {
+        Content content = myToolWindowContentManager.getSelectedContent();
+        if (content != null && content.equals(myToolWindowContent)) {
+          myToolWindowContentManager.setSelectedContent(content, true);
+        }
+      }
+    });
+    // Hide or show dashboard tree at first in order to get focus events on tree component which will be added/removed from tool window.
     updateDashboard(false);
+    // Add or remove dashboard tree content from tool window.
+    updateToolWindowContent();
   }
 
   @Override
@@ -429,7 +445,14 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   private void updateToolWindowContent() {
-    AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    if (toolWindowManager == null) return;
+
+    toolWindowManager.invokeLater(() -> {
+      if (myProject.isDisposed()) {
+        return;
+      }
+
       if (myToolWindowContent == null || myToolWindowContentManager == null ||
           myToolWindowContentManagerListener == null) {
         return;
@@ -474,9 +497,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
           myToolWindowContentManager.addContentManagerListener(myToolWindowContentManagerListener);
         }
       }
-
-      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      if (toolWindowManager == null) return;
 
       ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolWindowId());
       if (toolWindow instanceof ToolWindowImpl) {
