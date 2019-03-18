@@ -686,7 +686,7 @@ statement ::= if_statement
             | throw_statement
             | labeled_statement
             | type_definition | <<withProtectedLastVariantPos tuple_var_declaration>> | parse_block_declaration
-            | expression_or_application_without_zero_params_closure
+            | expression_or_application_except_zero_params_closure
             | block_statement
 {
   elementType = ''
@@ -961,7 +961,7 @@ single_parameter_lambda_parameter ::= modifier_list IDENTIFIER {
   elementType = parameter
 }
 private single_parameter_lambda_body ::= expression_single_parameter_lambda_body | lazy_block_lambda_body
-expression_single_parameter_lambda_body ::= expression_or_application_without_zero_params_closure
+expression_single_parameter_lambda_body ::= expression_or_application_except_zero_params_closure
 {
   elementType = expression_lambda_body
 }
@@ -1136,7 +1136,7 @@ left application_expression ::= application_argument_list | clear_variants_and_f
 left application_call ::= call_argument_list (mb_nl lazy_closure)* | empty_argument_list (mb_nl lazy_closure)+ { elementType = method_call_expression }
 left application_index ::= mb_question index_expression_argument_list
 
-private expression_or_application_without_zero_params_closure ::= <<isParameterizedClosure>> expression_or_application
+private expression_or_application_except_zero_params_closure ::= <<isParameterizedClosure>> expression_or_application
                                                                 | expression_or_application !<<isAfterClosure>>
 // endregion
 

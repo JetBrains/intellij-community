@@ -21,8 +21,7 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testBlocks$nested1() throws Throwable { doTest() }
 
-  void testBlocks$nested2() throws Throwable { doTest()
-  }
+  void testBlocks$nested2() throws Throwable { doTest() }
 
   void testBlocks$nested3() throws Throwable { doTest() }
 
