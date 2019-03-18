@@ -216,21 +216,6 @@ public class IdeaApplication {
     }
   }
 
-  private static void initLAF() {
-    try {
-      Class.forName("com.jgoodies.looks.plastic.PlasticLookAndFeel");
-
-      if (SystemInfo.isWindows) {
-        UIManager.installLookAndFeel("JGoodies Windows L&F", "com.jgoodies.looks.windows.WindowsLookAndFeel");
-      }
-
-      UIManager.installLookAndFeel("JGoodies Plastic", "com.jgoodies.looks.plastic.PlasticLookAndFeel");
-      UIManager.installLookAndFeel("JGoodies Plastic 3D", "com.jgoodies.looks.plastic.Plastic3DLookAndFeel");
-      UIManager.installLookAndFeel("JGoodies Plastic XP", "com.jgoodies.looks.plastic.PlasticXPLookAndFeel");
-    }
-    catch (ClassNotFoundException ignored) { }
-  }
-
   public static class IdeStarter extends ApplicationStarterEx {
     private Splash mySplash;
 
@@ -246,7 +231,6 @@ public class IdeaApplication {
 
     @Override
     public void premain(String[] args) {
-      initLAF();
     }
 
     @Nullable
