@@ -730,8 +730,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       return true;
     }
 
-    private boolean printDetails(Failure failure, @Nullable String details) {
-      return BuildConsoleUtils.printDetails(getTaskOutputView(), failure, details);
+    private void printDetails(Failure failure, @Nullable String details) {
+      BuildConsoleUtils.printDetails(getTaskOutputView(), failure, details);
     }
 
     public void setNode(@Nullable DefaultMutableTreeNode node) {
@@ -744,8 +744,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
 
       myExecutionNode = null;
-      if (myView.getView(CONSOLE_VIEW_NAME) != null) {
-        myView.enableView(CONSOLE_VIEW_NAME);
+      if (myView.getView(CONSOLE_VIEW_NAME) != null && myViewSettingsProvider.isSideBySideView()) {
+        myView.enableView(CONSOLE_VIEW_NAME, false);
         myPanel.setVisible(true);
       }
       else {
