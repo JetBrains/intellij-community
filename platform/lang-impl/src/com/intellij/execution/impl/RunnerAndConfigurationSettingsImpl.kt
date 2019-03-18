@@ -57,6 +57,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
   @Suppress("UNUSED_PARAMETER")
   constructor(manager: RunManagerImpl, configuration: RunConfiguration, isTemplate: Boolean, isSingleton: Boolean) : this(manager, configuration, isTemplate)
 
+  init {
+    (_configuration as? PersistentAwareRunConfiguration)?.setTemplate(isTemplate)
+  }
+
   companion object {
     @JvmStatic
     fun getUniqueIdFor(configuration: RunConfiguration): String {
@@ -509,7 +513,10 @@ fun serializeConfigurationInto(configuration: RunConfiguration, element: Element
 fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element, isTemplate: Boolean = false) {
   when (configuration) {
     is PersistentStateComponent<*> -> deserializeAndLoadState(configuration, element)
-    is PersistentAwareRunConfiguration -> configuration.readPersistent(element, isTemplate)
+    is PersistentAwareRunConfiguration -> {
+      configuration.setTemplate(isTemplate)
+      configuration.readPersistent(element)
+    }
     else -> configuration.readExternal(element)
   }
 }
