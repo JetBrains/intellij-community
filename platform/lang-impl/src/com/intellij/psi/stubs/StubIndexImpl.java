@@ -510,7 +510,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     }
   }
 
-  <K> void removeTransientDataForFile(@NotNull StubIndexKey<K, ?> key, int inputId, @NotNull Collection<? extends K> keys) {
+  <K> void removeTransientDataForFile(@NotNull StubIndexKey<K, ?> key, int inputId, @NotNull Collection<? extends K> keys) throws IOException {
     MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(key);
     index.removeTransientDataForKeys(inputId, keys);
   }
@@ -573,7 +573,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     }
 
     MyIndex(@NotNull IndexExtension<K, StubIdList, Void> extension, @NotNull IndexStorage<K, StubIdList> storage) throws IOException {
-      super(extension, storage, null, null);
+      super(extension, storage, (ForwardIndex<K, StubIdList>)null, null);
     }
 
     @Override

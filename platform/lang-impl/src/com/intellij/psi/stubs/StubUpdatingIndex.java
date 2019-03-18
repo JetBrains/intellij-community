@@ -20,6 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -38,6 +39,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
 import com.intellij.util.io.*;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -47,14 +49,11 @@ import java.io.DataOutputStream;
 import java.io.*;
 import java.util.*;
 
-/*
- * @author max
- * Key used by this index is the same as key of SingleEntryFileBasedIndexExtension
- */
-public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent>
-  implements PsiDependentIndex, CustomInputsIndexFileBasedIndexExtension<Integer> {
+public class StubUpdatingIndex
+  extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
+  implements PsiDependentIndex, CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent> {
   static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
-  private static final int VERSION = 37 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0);
+  private static final int VERSION = 38 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0);
 
   // todo remove once we don't need this for stub-ast mismatch debug info
   private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 2, true);
@@ -118,24 +117,20 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     return true;
   }
 
-  @NotNull
-  @Override
-  public DataExternalizer<Collection<Integer>> createExternalizer() {
-    return new DataExternalizer<Collection<Integer>>() {
+  private static DataExternalizer<Map<StubIndexKey, Map<Object, StubIdList>>> createStubIndexMapsExternalizer() {
+    return new DataExternalizer<Map<StubIndexKey, Map<Object, StubIdList>>>() {
       private volatile boolean myEnsuredStubElementTypesLoaded;
 
       @Override
-      public void save(@NotNull DataOutput out, Collection<Integer> value) throws IOException {
-        DataInputOutputUtil.writeINT(out, value.iterator().next());
-        Map<StubIndexKey, Map<Object, StubIdList>> stubIndicesValueMap = ((StubUpdatingIndexKeys)value).myStubIndicesValueMap;
-        DataInputOutputUtil.writeINT(out, stubIndicesValueMap != null ? stubIndicesValueMap.size() : 0);
+      public void save(@NotNull DataOutput out, Map<StubIndexKey, Map<Object, StubIdList>> value) throws IOException {
+        DataInputOutputUtil.writeINT(out, value.size());
 
-        if (stubIndicesValueMap != null && !stubIndicesValueMap.isEmpty()) {
+        if (!value.isEmpty()) {
           StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
 
-          for (StubIndexKey stubIndexKey : stubIndicesValueMap.keySet()) {
+          for (StubIndexKey stubIndexKey : value.keySet()) {
             DataInputOutputUtil.writeINT(out, stubIndexKey.getUniqueId());
-            Map<Object, StubIdList> map = stubIndicesValueMap.get(stubIndexKey);
+            Map<Object, StubIdList> map = value.get(stubIndexKey);
 
             stubIndex.serializeIndexValue(out, stubIndexKey, map);
           }
@@ -143,79 +138,39 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
 
       @Override
-      public Collection<Integer> read(@NotNull DataInput in) throws IOException {
+      public Map<StubIndexKey, Map<Object, StubIdList>> read(@NotNull DataInput in) throws IOException {
         if (!myEnsuredStubElementTypesLoaded) {
           SerializationManager.getInstance().initSerializers();
           StubIndexImpl.initExtensions();
           myEnsuredStubElementTypesLoaded = true;
         }
-        int fileId = DataInputOutputUtil.readINT(in);
-        StubUpdatingIndexKeys integers = new StubUpdatingIndexKeys(ContainerUtil.set(fileId));
 
         int stubIndicesValueMapSize = DataInputOutputUtil.readINT(in);
-        if (stubIndicesValueMapSize > 0) {
-          THashMap<StubIndexKey, Map<Object, StubIdList>> stubIndicesValueMap = new THashMap<>(stubIndicesValueMapSize);
-          StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
+        if (stubIndicesValueMapSize <= 0) return Collections.emptyMap();
+        THashMap<StubIndexKey, Map<Object, StubIdList>> stubIndicesValueMap = new THashMap<>(stubIndicesValueMapSize);
+        StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
 
-          for (int i = 0; i < stubIndicesValueMapSize; ++i) {
-            int stubIndexId = DataInputOutputUtil.readINT(in);
-            ID<Object, ?> indexKey = (ID<Object, ?>)ID.findById(stubIndexId);
-            if (indexKey instanceof StubIndexKey) { // indexKey can be ID in case of removed index
-              StubIndexKey<Object, ?> stubIndexKey = (StubIndexKey<Object, ?>)indexKey;
-              stubIndicesValueMap.put(stubIndexKey, stubIndex.deserializeIndexValue(in, stubIndexKey));
-            }
+        for (int i = 0; i < stubIndicesValueMapSize; ++i) {
+          int stubIndexId = DataInputOutputUtil.readINT(in);
+          ID<Object, ?> indexKey = (ID<Object, ?>)ID.findById(stubIndexId);
+          if (indexKey instanceof StubIndexKey) { // indexKey can be ID in case of removed index
+            StubIndexKey<Object, ?> stubIndexKey = (StubIndexKey<Object, ?>)indexKey;
+            stubIndicesValueMap.put(stubIndexKey, stubIndex.deserializeIndexValue(in, stubIndexKey));
           }
-          integers.myStubIndicesValueMap = stubIndicesValueMap;
         }
-        return integers;
+        return stubIndicesValueMap;
       }
     };
   }
 
-  static class StubUpdatingIndexKeys extends AbstractSet<Integer> {
-    @NotNull
-    private final Set<Integer> myBackingMap;
-    @NotNull
-    private Map<StubIndexKey, Map<Object, StubIdList>> myStubIndicesValueMap = Collections.emptyMap();
-
-    StubUpdatingIndexKeys(@NotNull Set<Integer> backingMap) {
-      myBackingMap = backingMap;
-    }
-
-    @NotNull
-    @Override
-    public Iterator<Integer> iterator() {
-      return myBackingMap.iterator();
-    }
-
-    @Override
-    public int size() {
-      return myBackingMap.size();
-    }
-  }
-
   @NotNull
   @Override
-  public DataIndexer<Integer, SerializedStubTree, FileContent> getIndexer() {
-    return new DataIndexer<Integer, SerializedStubTree, FileContent>() {
+  public SingleEntryIndexer<SerializedStubTree> getIndexer() {
+    return new SingleEntryIndexer<SerializedStubTree>(false) {
       @Override
-      @NotNull
-      public Map<Integer, SerializedStubTree> map(@NotNull final FileContent inputData) {
-        final Map<Integer, SerializedStubTree> result = new THashMap<Integer, SerializedStubTree>() {
-          StubUpdatingIndexKeys myKeySet;
-
-          @NotNull
-          @Override
-          public Set<Integer> keySet() {
-            if (myKeySet == null) {
-              myKeySet = new StubUpdatingIndexKeys(super.keySet());
-            }
-
-            return myKeySet;
-          }
-        };
-
-        ApplicationManager.getApplication().runReadAction(() -> {
+      @Nullable
+      public SerializedStubTree computeValue(@NotNull final FileContent inputData) {
+        return ReadAction.compute(() -> {
           Stub rootStub = null;
 
           if (Registry.is("use.prebuilt.indices")) {
@@ -236,7 +191,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             rootStub = StubTreeBuilder.buildStubTree(inputData);
           }
 
-          if (rootStub == null) return;
+          if (rootStub == null) return null;
 
           VirtualFile file = inputData.getFile();
           int contentLength;
@@ -264,22 +219,13 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
               LOG.error("Error indexing:" + file, t);
             }
           }
-          final int key = SingleEntryFileBasedIndexExtension.getFileKey(file);
           SerializedStubTree serializedStubTree =
             new SerializedStubTree(bytes.getInternalBuffer(), bytes.size(), rootStub, file.getLength(), contentLength);
           if (LOG.isDebugEnabled()) {
             LOG.debug("Indexing " + file + "; lengths=" + serializedStubTree.dumpLengths());
           }
-          result.put(key, serializedStubTree);
-          try {
-            ((StubUpdatingIndexKeys)result.keySet()).myStubIndicesValueMap = calcStubIndicesValueMap(serializedStubTree);
-          }
-          catch (StorageException ex) {
-            throw new RuntimeException(ex);
-          }
+          return serializedStubTree;
         });
-
-        return result;
       }
     };
   }
@@ -319,12 +265,6 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       LOG.error(e);
       return null;
     }
-  }
-
-  @NotNull
-  @Override
-  public KeyDescriptor<Integer> getKeyDescriptor() {
-    return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
   @NotNull
@@ -398,8 +338,9 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   @NotNull
   private static
-  Map<StubIndexKey, Map<Object, StubIdList>> calcStubIndicesValueMap(@NotNull SerializedStubTree stub) throws StorageException {
+  Map<StubIndexKey, Map<Object, StubIdList>> calcStubIndicesValueMap(@Nullable SerializedStubTree stub) {
     try {
+      if (stub == null) return Collections.emptyMap();
       ObjectStubBase root = (ObjectStubBase)stub.getStub(true);
       ObjectStubTree objectStubTree = root instanceof PsiFileStub ? new StubTree((PsiFileStub)root, false) :
                                       new ObjectStubTree(root, false);
@@ -419,7 +360,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       return stubIndicesValueMap;
     }
     catch (SerializerNotFoundException e) {
-      throw new StorageException(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -429,7 +370,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
     MyIndex(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension, @NotNull IndexStorage<Integer, SerializedStubTree> storage)
       throws StorageException, IOException {
-      super(extension, storage);
+      super(extension, storage, VfsAwareMapReduceIndex.createForwardIndex(extension), new MyForwardIndexAccessor());
       checkNameStorage();
     }
 
@@ -442,44 +383,11 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
 
     static class StubUpdatingData extends UpdateData<Integer, SerializedStubTree> {
-      private Collection<Integer> oldStubIndexKeys;
 
       StubUpdatingData(@NotNull Map<Integer, SerializedStubTree> newData,
                        @NotNull ThrowableComputable<InputDataDiffBuilder<Integer, SerializedStubTree>, IOException> iterator,
                        @Nullable ThrowableRunnable<IOException> forwardIndexUpdate) {
         super(newData, iterator, INDEX_ID, forwardIndexUpdate);
-      }
-
-      @NotNull
-      @Override
-      protected ThrowableComputable<InputDataDiffBuilder<Integer, SerializedStubTree>, IOException> getCurrentDataEvaluator() {
-        return () -> {
-          final InputDataDiffBuilder<Integer, SerializedStubTree> diffBuilder = super.getCurrentDataEvaluator().compute();
-          if (diffBuilder instanceof CollectionInputDataDiffBuilder) {
-            oldStubIndexKeys = ((CollectionInputDataDiffBuilder<Integer, SerializedStubTree>)diffBuilder).getSeq();
-          } else if (diffBuilder instanceof MapInputDataDiffBuilder) {
-            oldStubIndexKeys = ((MapInputDataDiffBuilder<Integer, SerializedStubTree>)diffBuilder).getMap().keySet();
-          }
-          return diffBuilder;
-        };
-      }
-
-      @NotNull
-      Map<StubIndexKey, Map<Object, StubIdList>> getOldStubIndicesValueMap() {
-        return getStubIndicesValuesMap(oldStubIndexKeys);
-      }
-
-      @NotNull
-      Map<StubIndexKey, Map<Object, StubIdList>> getNewStubIndicesValueMap() {
-        return getStubIndicesValuesMap(getNewData().keySet());
-      }
-
-      @NotNull
-      private static Map<StubIndexKey, Map<Object, StubIdList>> getStubIndicesValuesMap(@NotNull Collection<Integer> keys) {
-        if (keys instanceof StubUpdatingIndexKeys) {
-          return ((StubUpdatingIndexKeys)keys).myStubIndicesValueMap;
-        }
-        return Collections.emptyMap();
       }
     }
 
@@ -499,14 +407,16 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
                                  @NotNull UpdateData<Integer, SerializedStubTree> updateData) throws StorageException {
       checkNameStorage();
       StubUpdatingData stubUpdatingData = (StubUpdatingData)updateData;
-      final Map<StubIndexKey, Map<Object, StubIdList>> newStubIndicesValueMap = stubUpdatingData.getNewStubIndicesValueMap();
+      final Map<StubIndexKey, Map<Object, StubIdList>> newStubIndicesValueMap = calcStubIndicesValueMap(getValue(stubUpdatingData.getNewData()));
 
       try {
         getWriteLock().lock();
 
-        super.updateWithMap(inputId, updateData);
+        Map<StubIndexKey, Map<Object, StubIdList>> previousStubIndicesValueMap =
+          ((AbstractForwardIndexAccessor<Integer, SerializedStubTree, Map<StubIndexKey, Map<Object, StubIdList>>, ?>)getForwardIndexAccessor()).deserializeData(getForwardIndexMap().get(inputId));
+        previousStubIndicesValueMap = ContainerUtil.notNullize(previousStubIndicesValueMap);
 
-        final Map<StubIndexKey, Map<Object, StubIdList>> previousStubIndicesValueMap = stubUpdatingData.getOldStubIndicesValueMap();
+        super.updateWithMap(inputId, updateData);
 
         updateStubIndices(
           getAffectedIndices(previousStubIndicesValueMap, newStubIndicesValueMap),
@@ -514,6 +424,9 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           previousStubIndicesValueMap,
           newStubIndicesValueMap
         );
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
       finally {
         getWriteLock().unlock();
@@ -538,13 +451,16 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
 
     @Override
-    public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Integer> keys) {
+    public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Integer> keys) throws IOException {
       super.removeTransientDataForKeys(inputId, keys);
-      if (keys instanceof StubUpdatingIndexKeys) {
-        Map<StubIndexKey, Map<Object, StubIdList>> stubIndicesValueMap = ((StubUpdatingIndexKeys)keys).myStubIndicesValueMap;
-        final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
-        for (StubIndexKey key : stubIndicesValueMap.keySet()) {
-          stubIndex.removeTransientDataForFile(key, inputId, stubIndicesValueMap.get(key).keySet());
+      MyForwardIndexAccessor forwardIndexAccessor = (MyForwardIndexAccessor)getForwardIndexAccessor();
+      for (int key : keys) {
+        Map<StubIndexKey, Map<Object, StubIdList>> map = forwardIndexAccessor.deserializeData(getForwardIndexMap().get(key));
+        if (map != null) {
+          final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
+          for (StubIndexKey stubIndexKey : map.keySet()) {
+            stubIndex.removeTransientDataForFile(stubIndexKey, inputId, map.get(stubIndexKey).keySet());
+          }
         }
       }
     }
@@ -600,5 +516,41 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         return false;
       }
     }
+
+    private static class MyForwardIndexAccessor extends AbstractForwardIndexAccessor<Integer, SerializedStubTree, Map<StubIndexKey, Map<Object, StubIdList>>, FileContent> {
+      public MyForwardIndexAccessor() {super(createStubIndexMapsExternalizer());}
+
+      @Override
+      public Map<StubIndexKey, Map<Object, StubIdList>> convertToDataType(@Nullable Map<Integer, SerializedStubTree> map,
+                                                                          @Nullable FileContent content) {
+        SerializedStubTree stubTree = getValue(map);
+        if (stubTree == null) return Collections.emptyMap();
+        return calcStubIndicesValueMap(stubTree);
+      }
+
+      @Override
+      protected InputDataDiffBuilder<Integer, SerializedStubTree> createDiffBuilder(int inputId, @Nullable Map<StubIndexKey, Map<Object, StubIdList>> inputData) {
+        return new InputDataDiffBuilder<Integer, SerializedStubTree>(inputId) {
+          @Override
+          public boolean differentiate(@NotNull Map<Integer, SerializedStubTree> newData,
+                                       @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> addProcessor,
+                                       @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> updateProcessor,
+                                       @NotNull RemovedKeyProcessor<? super Integer> removeProcessor) throws StorageException {
+            removeProcessor.process(myInputId, myInputId);
+            SerializedStubTree newStub = getValue(newData);
+            if (newStub != null) {
+              addProcessor.process(myInputId, newStub, myInputId);
+              return true;
+            }
+            return false;
+          }
+        };
+      }
+    }
+  }
+
+  @Nullable
+  private static SerializedStubTree getValue(@Nullable Map<Integer, SerializedStubTree> map) {
+    return map == null ? null : ContainerUtil.getFirstItem(map.values());
   }
 }

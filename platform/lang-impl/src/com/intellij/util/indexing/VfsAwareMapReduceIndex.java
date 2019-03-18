@@ -12,6 +12,8 @@ import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.*;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
@@ -62,6 +64,16 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
           forwardIndex);
     SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
     mySnapshotInputMappings = snapshotInputMappings;
+    installMemoryModeListener();
+  }
+
+  public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                                @NotNull IndexStorage<Key, Value> storage,
+                                @Nullable com.intellij.util.indexing.impl.forward.ForwardIndex forwardIndex,
+                                @Nullable ForwardIndexAccessor<Key, Value, ?, Input> forwardIndexAccessor) {
+    super(extension, storage, forwardIndex, forwardIndexAccessor);
+    SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
+    mySnapshotInputMappings = null;
     installMemoryModeListener();
   }
 
@@ -165,7 +177,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     }
   }
 
-  public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Key> keys) {
+  public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Key> keys) throws IOException {
     MemoryIndexStorage memoryIndexStorage = (MemoryIndexStorage)getStorage();
     for (Key key : keys) {
       memoryIndexStorage.clearMemoryMapForId(key, inputId);
@@ -238,13 +250,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   private static <Key, Value> ForwardIndex<Key, Value> getForwardIndex(@NotNull IndexExtension<Key, Value, ?> indexExtension)
     throws IOException {
     if (hasSnapshotMapping(indexExtension)) return null;
-
-    if (!(indexExtension instanceof CustomInputsIndexFileBasedIndexExtension)) {
-      return new MyMapBasedForwardIndex<>(indexExtension);
-    }
-    KeyCollectionBasedForwardIndex<Key, Value> backgroundIndex =
-      !SharedIndicesData.ourFileSharedIndicesEnabled || SharedIndicesData.DO_CHECKS ? new MyForwardIndex<>(indexExtension) : null;
-    return new SharedMapBasedForwardIndex<>(indexExtension, backgroundIndex);
+    return new MyMapBasedForwardIndex<>(indexExtension);
   }
 
   private static class MyMapBasedForwardIndex<Key, Value> extends MapBasedForwardIndex<Key, Value, Map<Key, Value>> {
@@ -277,27 +283,9 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     }
   }
 
-  private static class MyForwardIndex<Key, Value> extends KeyCollectionBasedForwardIndex<Key, Value> {
-    protected MyForwardIndex(IndexExtension<Key, Value, ?> indexExtension) throws IOException {
-      super(indexExtension);
-    }
-
-    @NotNull
-    @Override
-    public PersistentHashMap<Integer, Collection<Key>> createMap() throws IOException {
-      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
-      try {
-        return createIdToDataKeysIndex(myIndexExtension);
-      } finally {
-        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
-      }
-    }
-
-    @NotNull
-    private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull IndexExtension<K, ?, ?> extension) throws IOException {
-      final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)extension.getName());
-      return new PersistentHashMap<>(indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, createInputsIndexExternalizer(extension));
-    }
+  public static <Key, Value> com.intellij.util.indexing.impl.forward.ForwardIndex createForwardIndex(IndexExtension<Key, Value, ?> extension) throws IOException {
+    final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)extension.getName());
+    return new PersistentMapBasedForwardIndex(indexStorageFile, false);
   }
 
   private void installMemoryModeListener() {
@@ -317,11 +305,5 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
         }
       });
     }
-  }
-
-  protected static <K> DataExternalizer<Collection<K>> createInputsIndexExternalizer(IndexExtension<K, ?, ?> extension) {
-    return extension instanceof CustomInputsIndexFileBasedIndexExtension
-           ? ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer()
-           : new InputIndexDataExternalizer<>(extension.getKeyDescriptor(), extension.getName());
   }
 }
