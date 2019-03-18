@@ -53,7 +53,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Supplier;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -243,10 +242,20 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     }
     else if (ShowPreviewEditorAction.DATA_KEY.is(dataId)) {
       if (myFilePath.isDirectory()) return null;
-      return (Supplier<DiffRequestProcessor>)() -> {
-        FileHistoryDiffPreview preview = notNull(createDiffPreview());
-        preview.updatePreview(true);
-        return preview;
+      return new ShowPreviewEditorAction.DiffPreviewProvider() {
+        @NotNull
+        @Override
+        public DiffRequestProcessor createDiffRequestProcessor() {
+          FileHistoryDiffPreview preview = notNull(createDiffPreview());
+          preview.updatePreview(true);
+          return preview;
+        }
+
+        @NotNull
+        @Override
+        public Object getOwner() {
+          return myUi;
+        }
       };
     }
     return null;
