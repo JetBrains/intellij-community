@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
+import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,6 +50,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.popup.PopupUpdateProcessorBase;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.*;
@@ -221,7 +223,8 @@ public class Switcher extends AnAction implements DumbAware {
     }
   }
 
-  public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener, DataProvider {
+  public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener, DataProvider,
+                                                              QuickSearchComponent {
     final JBPopup myPopup;
     final JBList<ToolWindow> toolWindows;
     final JBList<FileInfo> files;
@@ -238,10 +241,19 @@ public class Switcher extends AnAction implements DumbAware {
     final SwitcherSpeedSearch mySpeedSearch;
     final String myTitle;
     final String myActionId;
+    private JBPopup myHint;
 
     @Nullable
     @Override
     public Object getData(@NotNull @NonNls String dataId) {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return this.project;
+      }
+      if (PlatformDataKeys.SELECTED_ITEM.is(dataId)) {
+        List list = getSelectedList().getSelectedValuesList();
+        Object o = ContainerUtil.getOnlyItem(list);
+        return o instanceof FileInfo ? ((FileInfo)o).first : null;
+      }
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         final List list = getSelectedList().getSelectedValuesList();
         if (!list.isEmpty()) {
@@ -471,7 +483,12 @@ public class Switcher extends AnAction implements DumbAware {
 
         @Override
         public void valueChanged(@NotNull final ListSelectionEvent e) {
-          ApplicationManager.getApplication().invokeLater(this::updatePathLabel);
+          if (e.getValueIsAdjusting()) return;
+          updatePathLabel();
+          PopupUpdateProcessorBase popupUpdater = myHint == null || !myHint.isVisible() ?
+                                                  null : myHint.getUserData(PopupUpdateProcessorBase.class);
+          if (popupUpdater != null) popupUpdater.updatePopup(CommonDataKeys.PSI_ELEMENT.getData(
+            DataManager.getInstance().getDataContext(SwitcherPanel.this)));
         }
 
         private void updatePathLabel() {
@@ -579,13 +596,14 @@ public class Switcher extends AnAction implements DumbAware {
           }
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), this, myPopup);
       }
-      new DumbAwareAction(null, null, null) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          //suppress all actions to activate a toolwindow : IDEA-71277
-        }
-      }.registerCustomShortcutSet(TW_SHORTCUT, this, myPopup);
-
+      if (!myPinned) {
+        new DumbAwareAction(null, null, null) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            //suppress all actions to activate a toolwindow : IDEA-71277
+          }
+        }.registerCustomShortcutSet(TW_SHORTCUT, this, myPopup);
+      }
       Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
       if (window == null) {
         window = WindowManager.getInstance().getFrame(project);
@@ -604,6 +622,19 @@ public class Switcher extends AnAction implements DumbAware {
 
       fromListToList(toolWindows, files);
       fromListToList(files, toolWindows);
+    }
+
+    @Override
+    public void registerHint(@NotNull JBPopup h) {
+      if (myHint != null && myHint.isVisible() && myHint != h) {
+        myHint.cancel();
+      }
+      myHint = h;
+    }
+
+    @Override
+    public void unregisterHint() {
+      myHint = null;
     }
 
     @NotNull
