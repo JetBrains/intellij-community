@@ -373,5 +373,15 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       return ((List<Executor>)myExecutorGroup.childExecutors()).stream().map(myChildConverter).collect(Collectors.toList())
         .toArray(AnAction.EMPTY_ARRAY);
     }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      final Project project = e.getProject();
+      if (project == null || !project.isInitialized() || project.isDisposed()) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+      e.getPresentation().setEnabledAndVisible(myExecutorGroup.isApplicable(project));
+    }
   }
 }
