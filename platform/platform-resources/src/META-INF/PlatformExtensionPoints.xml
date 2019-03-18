@@ -346,5 +346,7 @@
     <extensionPoint qualifiedName="com.intellij.search.traverseUiHelper" interface="com.intellij.ide.ui.search.TraverseUIHelper"/>
 
     <extensionPoint name="stalledStorage" beanClass="com.intellij.configurationStore.StalledStorageBean"/>
+
+    <extensionPoint name="feedbackDescriptionProvider" interface="com.intellij.ide.FeedbackDescriptionProvider"/>
   </extensionPoints>
 </idea-plugin>
