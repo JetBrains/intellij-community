@@ -251,6 +251,14 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       if (currentNode == null) {
         if (event instanceof StartBuildEvent) {
           currentNode = rootElement;
+          UIUtil.invokeLaterIfNeeded(() -> {
+            final DefaultActionGroup rerunActionGroup = new DefaultActionGroup();
+            for (AnAction anAction : ((StartBuildEvent)event).getRestartActions()) {
+              rerunActionGroup.add(anAction);
+            }
+            TreeTable treeTable = myTree.getTreeTable();
+            PopupHandler.installPopupHandler(treeTable, rerunActionGroup, "BuildView");
+          });
         }
         else {
           if (event instanceof MessageEvent) {
