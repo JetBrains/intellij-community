@@ -288,6 +288,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void beforeInit() {
+    myBrowser.getViewer().addSelectionListener(() -> changeDetails(myBrowser.getViewer().isModelUpdateInProgress()));
+
     myBrowserBottomPanel.add(myLegend.getComponent());
     BorderLayoutPanel topPanel = JBUI.Panels.simplePanel().addToCenter(myBrowser).addToBottom(myBrowserBottomPanel);
 
@@ -1053,7 +1055,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  void changeDetails(boolean fromModelRefresh) {
+  private void changeDetails(boolean fromModelRefresh) {
     SwingUtilities.invokeLater(() -> {
       if (myDetailsSplitter.isOn()) {
         myDiffDetails.refresh(fromModelRefresh);
