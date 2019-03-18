@@ -177,10 +177,10 @@ public class GitMergeProvider implements MergeProvider2 {
     MyMergeSession(List<VirtualFile> filesToMerge) {
       // get conflict type by the file
       try {
-        Map<VirtualFile, List<VirtualFile>> filesByRoot = GitUtil.sortFilesByGitRoot(myProject, filesToMerge);
-        for (Map.Entry<VirtualFile, List<VirtualFile>> e : filesByRoot.entrySet()) {
+        Map<GitRepository, List<VirtualFile>> filesByRoot = GitUtil.sortFilesByRepository(myProject, filesToMerge);
+        for (Map.Entry<GitRepository, List<VirtualFile>> e : filesByRoot.entrySet()) {
           Map<String, Conflict> cs = new HashMap<>();
-          VirtualFile root = e.getKey();
+          VirtualFile root = e.getKey().getRoot();
           List<VirtualFile> files = e.getValue();
           GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.LS_FILES);
           h.setStdoutSuppressed(true);
@@ -233,8 +233,8 @@ public class GitMergeProvider implements MergeProvider2 {
             myConflicts.put(f, new GitConflict(VcsUtil.getFilePath(f), root, c.myStatusTheirs, c.myStatusYours));
           }
         }
-        currentBranchName = GitDefaultMergeDialogCustomizerKt.getSingleCurrentBranchName(myProject, filesByRoot.keySet());
-        mergeHeadBranchName = GitDefaultMergeDialogCustomizerKt.getSingleMergeBranchName(myProject, filesByRoot.keySet());
+        currentBranchName = GitDefaultMergeDialogCustomizerKt.getSingleCurrentBranchName(filesByRoot.keySet());
+        mergeHeadBranchName = GitDefaultMergeDialogCustomizerKt.getSingleMergeBranchName(filesByRoot.keySet());
       }
       catch (VcsException ex) {
         throw new IllegalStateException("The git operation should not fail in this context", ex);
