@@ -632,11 +632,11 @@ public class ForCanBeForeachInspection extends BaseInspection {
           final PsiExpression qualifier = methodExpression.getQualifierExpression();
           if (ExpressionUtils.isReferenceTo(qualifier, iterator)) {
             numCallsToIteratorNext++;
+            return;
           }
         }
-      } else {
-        super.visitMethodCallExpression(expression);
       }
+      super.visitMethodCallExpression(expression);
     }
 
     @Override
@@ -645,6 +645,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
       super.visitReferenceExpression(expression);
       if (ExpressionUtils.isReferenceTo(expression, iterator)) {
         iteratorUsed = true;
+        stopWalking();
       }
     }
 
@@ -660,8 +661,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     private final PsiVariable arrayVariable;
     private final PsiVariable indexVariable;
 
-    private VariableOnlyUsedAsIndexVisitor(PsiVariable arrayVariable,
-                                           PsiVariable indexVariable) {
+    private VariableOnlyUsedAsIndexVisitor(PsiVariable arrayVariable, PsiVariable indexVariable) {
       this.arrayVariable = arrayVariable;
       this.indexVariable = indexVariable;
     }
