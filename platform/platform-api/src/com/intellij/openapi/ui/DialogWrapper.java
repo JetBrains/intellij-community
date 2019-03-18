@@ -200,7 +200,7 @@ public abstract class DialogWrapper {
   public static final Color BALLOON_WARNING_BORDER = new JBColor(new Color(0xcca869), new Color(0x4e452f));
   public static final Color BALLOON_WARNING_BACKGROUND = new JBColor(new Color(0xf9f4ee), new Color(0x594e32));
 
-  public static Object DIALOG_CONTENT_PANEL_PROPERTY = new Object();
+  public static final Object DIALOG_CONTENT_PANEL_PROPERTY = new Object();
 
   /**
    * Creates modal {@code DialogWrapper}. The currently active window will be the dialog's parent.
