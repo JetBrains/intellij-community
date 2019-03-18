@@ -55,7 +55,7 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
     return myHashIdForwardIndexAccessor;
   }
 
-  @NotNull
+  @Nullable
   @Override
   public Map<Key, Value> readData(int hashId) throws IOException {
     ByteArraySequence byteSequence = readContents(hashId);
@@ -79,10 +79,9 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
       hashId = getHashOfContent(fileContent);
       if (doReadSavedPersistentData) {
         if (myContents == null || !myContents.isBusyReading() || DebugAssertions.EXTRA_SANITY_CHECKS) { // avoid blocking read, we can calculate index value
-          ByteArraySequence bytes = readContents(hashId);
+          data = readData(hashId);
 
-          if (bytes != null) {
-            data = AbstractForwardIndexAccessor.deserializeFromByteSeq(bytes, myMapExternalizer);
+          if (data != null) {
             havePersistentData = true;
             if (DebugAssertions.EXTRA_SANITY_CHECKS) {
               Map<Key, Value> contentData = myIndexer.map(content);
