@@ -50,7 +50,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.function.Supplier;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -254,10 +253,20 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return myUi.getLogData().getLogProvider(notNull(getFirstItem(roots))).getDiffHandler();
     }
     else if (ShowPreviewEditorAction.DATA_KEY.is(dataId)) {
-      return (Supplier<DiffRequestProcessor>)() -> {
-        VcsLogChangeProcessor preview = new VcsLogChangeProcessor(myLogData.getProject(), myChangesBrowser, myChangesBrowser);
-        preview.updatePreview(true);
-        return preview;
+      return new ShowPreviewEditorAction.DiffPreviewProvider() {
+        @NotNull
+        @Override
+        public DiffRequestProcessor createDiffRequestProcessor() {
+          VcsLogChangeProcessor preview = new VcsLogChangeProcessor(myLogData.getProject(), myChangesBrowser, myChangesBrowser);
+          preview.updatePreview(true);
+          return preview;
+        }
+
+        @NotNull
+        @Override
+        public Object getOwner() {
+          return myUi;
+        }
       };
     }
     return null;

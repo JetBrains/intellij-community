@@ -12,17 +12,14 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
-import java.util.function.Supplier;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class ShowPreviewEditorAction extends DumbAwareAction {
-  public static final DataKey<Supplier<DiffRequestProcessor>> DATA_KEY = DataKey.create("com.intellij.diff.impl.DiffRequestProcessor");
+  public static final DataKey<DiffPreviewProvider> DATA_KEY = DataKey.create("com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction.DiffPreviewProvider");
 
   public ShowPreviewEditorAction() {
     super("Show Diff Preview in Editor", null, AllIcons.Actions.ChangeView);
@@ -35,40 +32,40 @@ public class ShowPreviewEditorAction extends DumbAwareAction {
       return;
     }
 
-    Project project = e.getProject();
-    VcsLogUi owner = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    Supplier<DiffRequestProcessor> diffPreviewSupplier = e.getData(DATA_KEY);
-    e.getPresentation().setEnabledAndVisible(project != null && diffPreviewSupplier != null && owner != null);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && e.getData(DATA_KEY) != null);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = notNull(e.getProject());
-    VcsLogUi owner = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    Supplier<DiffRequestProcessor> diffPreviewSupplier = e.getRequiredData(DATA_KEY);
-    FileEditorManager.getInstance(project).openFile(new MyDiffVirtualFile(owner, diffPreviewSupplier), true);
+    FileEditorManager.getInstance(notNull(e.getProject())).openFile(new MyDiffVirtualFile(e.getRequiredData(DATA_KEY)), true);
+  }
+
+  public interface DiffPreviewProvider {
+    @NotNull
+    DiffRequestProcessor createDiffRequestProcessor();
+
+    @NotNull
+    Object getOwner();
   }
 
   private static class MyDiffVirtualFile extends DiffVirtualFile {
-    @NotNull private final Object myOwner;
-    @NotNull private final Supplier<DiffRequestProcessor> myDiffPreviewSupplier;
+    @NotNull private final DiffPreviewProvider myProvider;
 
-    private MyDiffVirtualFile(@NotNull Object owner,
-                              @NotNull Supplier<DiffRequestProcessor> diffPreviewSupplier) {
-      myOwner = owner;
-      myDiffPreviewSupplier = diffPreviewSupplier;
+    private MyDiffVirtualFile(@NotNull DiffPreviewProvider provider) {
+      myProvider = provider;
     }
 
     @Override
     public boolean isValid() {
-      if (!(myOwner instanceof Disposable)) return true;
-      return !Disposer.isDisposed((Disposable)myOwner);
+      Object owner = myProvider.getOwner();
+      if (!(owner instanceof Disposable)) return true;
+      return !Disposer.isDisposed((Disposable)owner);
     }
 
     @NotNull
     @Override
     public Builder createProcessorAsync(@NotNull Project project) {
-      return () -> myDiffPreviewSupplier.get();
+      return () -> myProvider.createDiffRequestProcessor();
     }
 
     @Override
@@ -76,12 +73,12 @@ public class ShowPreviewEditorAction extends DumbAwareAction {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       MyDiffVirtualFile file = (MyDiffVirtualFile)o;
-      return myOwner.equals(file.myOwner);
+      return myProvider.getOwner().equals(file.myProvider.getOwner());
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myOwner);
+      return Objects.hash(myProvider.getOwner());
     }
   }
 }
