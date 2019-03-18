@@ -10,7 +10,7 @@ import java.util.Map;
 
 @ApiStatus.Experimental
 public interface SnapshotInputMappingIndex<Key, Value, Input> {
-  @Nullable
+  @NotNull
   Map<Key, Value> readData(int hashId) throws IOException;
 
   @NotNull
