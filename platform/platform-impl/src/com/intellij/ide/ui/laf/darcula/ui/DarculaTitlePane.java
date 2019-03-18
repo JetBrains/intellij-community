@@ -201,12 +201,12 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
         JPanel pane = new JPanel(new MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"));
         pane.setOpaque(false);
-        pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin 22");
-        pane.add(projectLabel.getView(), "center, gapbottom 2, growx, wmin 0, gapbefore " + menuBarGap + ", gapafter " + menuBarGap);
+        pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin 23");
+        pane.add(projectLabel.getView(), "center, growx, wmin 0, gapbefore " + menuBarGap + ", gapafter " + menuBarGap);
 
         add(pane, "wmin 0, growx");
-
-      } else {
+      }
+      else {
         add(titleLabel, "growx, snap 2");
       }
       add(buttonPanes.getView(), "top, wmin pref");
@@ -421,6 +421,12 @@ public class DarculaTitlePane extends JPanel implements Disposable {
     buttonPanes.setSelected(isSelected);
     titleLabel.setForeground(isSelected ? myActiveForeground : myInactiveForeground);
     myIsActive = isSelected;
+
+    repaintTopBorderArea();
+  }
+
+  private void repaintTopBorderArea() {
+    repaint(0, 0, getWidth(), MyTopBorderConsts.THICKNESS);
   }
 
   private Frame getFrame() {
@@ -498,23 +504,21 @@ public class DarculaTitlePane extends JPanel implements Disposable {
   private class WindowHandler extends WindowAdapter {
     @Override
     public void windowActivated(WindowEvent ev) {
-      DarculaTitlePane.this.repaint(0, 0, getWidth(), MyTopBorderConsts.THICKNESS);
       setActive(true);
     }
 
     @Override
     public void windowDeactivated(WindowEvent ev) {
-      DarculaTitlePane.this.repaint(0, 0, getWidth(), MyTopBorderConsts.THICKNESS);
       setActive(false);
     }
 
     @Override
     public void windowStateChanged(WindowEvent e) {
       //noinspection ConstantConditions
-      if ((getFrame().getExtendedState() & Frame.MAXIMIZED_VERT) != 0) {
+      int state = getFrame().getExtendedState();
+      if (state == MAXIMIZED_VERT || state == MAXIMIZED_BOTH) {
         setBorder(null);
-      }
-      else {
+      } else {
         setBorder(myTopBorder);
       }
     }
