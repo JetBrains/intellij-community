@@ -19,6 +19,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -46,12 +47,12 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private final PredefinedCodeStyle[] myPredefinedCodeStyles;
   private JPopupMenu myCopyFromMenu;
   @Nullable private TabChangeListener myListener;
-  @Nullable private final LanguageCodeStyleSettingsProvider myProvider;
+
+  private Ref<LanguageCodeStyleSettingsProvider> myProviderRef;
 
   protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(language, currentSettings, settings);
     myPredefinedCodeStyles = getPredefinedStyles();
-    myProvider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
   }
 
   /**
@@ -68,7 +69,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
    */
   protected void initTabs(CodeStyleSettings settings) {
     addIndentOptionsTab(settings);
-    if (myProvider != null) {
+    if (getProvider() != null) {
       addSpacesTab(settings);
       addWrappingAndBracesTab(settings);
       addBlankLinesTab(settings);
@@ -81,11 +82,10 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
    * @param settings CodeStyleSettings to be used with "Tabs and Indents" panel.
    */
   protected void addIndentOptionsTab(CodeStyleSettings settings) {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
-    if (provider != null) {
-      IndentOptionsEditor indentOptionsEditor = provider.getIndentOptionsEditor();
+    if (getProvider() != null) {
+      IndentOptionsEditor indentOptionsEditor = getProvider().getIndentOptionsEditor();
       if (indentOptionsEditor != null) {
-        MyIndentOptionsWrapper indentOptionsWrapper = new MyIndentOptionsWrapper(settings, provider, indentOptionsEditor);
+        MyIndentOptionsWrapper indentOptionsWrapper = new MyIndentOptionsWrapper(settings, indentOptionsEditor);
         addTab(indentOptionsWrapper);
       }
     }
@@ -287,7 +287,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
 
   private void fillLanguages(JComponent parentMenu) {
-    List<Language> languages = myProvider != null ? myProvider.getApplicableLanguages() : Collections.emptyList();
+    List<Language> languages = getProvider() != null ? getProvider().getApplicableLanguages() : Collections.emptyList();
     for (final Language lang : languages) {
       if (!lang.equals(getDefaultLanguage())) {
         final String langName = LanguageCodeStyleSettingsProvider.getLanguageName(lang);
@@ -341,6 +341,14 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
         applyPredefinedSettings(style);
       }
     }
+  }
+
+  @Nullable
+  private LanguageCodeStyleSettingsProvider getProvider() {
+    if (myProviderRef == null) {
+      myProviderRef = Ref.create(LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage()));
+    }
+    return myProviderRef.get();
   }
 
 //========================================================================================================================================
@@ -485,14 +493,21 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   protected class MyIndentOptionsWrapper extends CodeStyleAbstractPanel {
 
     private final IndentOptionsEditor myEditor;
-    private final LanguageCodeStyleSettingsProvider myProvider;
     private final JPanel myTopPanel = new JPanel(new BorderLayout());
     private final JPanel myLeftPanel = new JPanel(new BorderLayout());
     private final JPanel myRightPanel;
 
+    /**
+     * @deprecated Use {@link #MyIndentOptionsWrapper(CodeStyleSettings, IndentOptionsEditor)}
+     */
+    @SuppressWarnings("unused")
+    @Deprecated
     protected MyIndentOptionsWrapper(CodeStyleSettings settings, LanguageCodeStyleSettingsProvider provider, IndentOptionsEditor editor) {
+      this(settings, editor);
+    }
+
+    protected MyIndentOptionsWrapper(CodeStyleSettings settings, IndentOptionsEditor editor) {
       super(settings);
-      myProvider = provider;
       myTopPanel.add(myLeftPanel, BorderLayout.WEST);
       myRightPanel = new JPanel();
       installPreviewPanel(myRightPanel);
@@ -509,7 +524,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     @Override
     protected int getRightMargin() {
-      return myProvider.getRightMargin(LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS);
+      return getProvider() != null ? getProvider().getRightMargin(LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS) : -1;
     }
 
     @Override
@@ -527,13 +542,13 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     @Override
     protected String getPreviewText() {
-      return myProvider != null ? myProvider.getCodeSample(LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS) : "Loading...";
+      return getProvider() != null ? getProvider().getCodeSample(LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS) : "";
     }
 
     @Override
     protected String getFileExt() {
-      if (myProvider != null) {
-        String ext = myProvider.getFileExt();
+      if (getProvider() != null) {
+        String ext = getProvider().getFileExt();
         if (ext != null) return ext;
       }
       return super.getFileExt();
@@ -561,10 +576,11 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     @Override
     protected void resetImpl(CodeStyleSettings settings) {
       CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions(settings);
-      if (indentOptions == null) {
+      if (indentOptions == null && getProvider() != null) {
         myEditor.setEnabled(false);
-        indentOptions = settings.getIndentOptions(myProvider.getLanguage().getAssociatedFileType());
+        indentOptions = settings.getIndentOptions(getProvider().getLanguage().getAssociatedFileType());
       }
+      assert indentOptions != null;
       myEditor.reset(settings, indentOptions);
     }
 
