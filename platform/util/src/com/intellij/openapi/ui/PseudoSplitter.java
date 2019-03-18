@@ -51,7 +51,8 @@ public class PseudoSplitter extends Splitter {
   public void doLayout() {
     int total = getSizeForComp(this);
     if (myFirstIsFixed) {
-      myProportion = ((float)myFirstFixedSize) / (total - getDividerWidth());
+      float fixedProportion = ((float)myFirstFixedSize) / (total - getDividerWidth());
+      myProportion = Math.min(0.95f, Math.max(0.05f, fixedProportion));
     }
     super.doLayout();
   }
