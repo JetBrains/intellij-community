@@ -8,8 +8,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.extractMethod.ControlFlowWrapper;
-import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -20,14 +18,13 @@ import java.util.*;
 /**
  * @author Pavel.Dolgov
  */
-class ExtractMethodWithResultObjectProcessor {
+public class ExtractMethodWithResultObjectProcessor {
   private static final Logger LOG = Logger.getInstance(ExtractMethodWithResultObjectProcessor.class);
 
   private final Project myProject;
   private final Editor myEditor;
   private final PsiElement[] myElements;
   private final PsiElement myCodeFragmentMember;
-  private final ControlFlowWrapper myControlFlowWrapper;
   private final Map<PsiReferenceExpression, PsiVariable> myInputs = new HashMap<>();
   private final Set<PsiVariable> myOutputVariables = new HashSet<>();
   private final List<PsiExpression> myReturnValues = new ArrayList<>();
@@ -37,15 +34,13 @@ class ExtractMethodWithResultObjectProcessor {
 
   @NonNls static final String REFACTORING_NAME = "Extract Method With Result Object";
 
-  ExtractMethodWithResultObjectProcessor(@NonNls Project project, @NonNls Editor editor, @NonNls PsiElement[] elements)
-    throws PrepareFailedException {
+  public ExtractMethodWithResultObjectProcessor(@NonNls Project project, @NonNls Editor editor, @NonNls PsiElement[] elements) {
     myProject = project;
     myEditor = editor;
     myElements = elements;
 
     PsiElement codeFragment = ControlFlowUtil.findCodeFragment(elements[0]);
     myCodeFragmentMember = getCodeFragmentMember(codeFragment);
-    myControlFlowWrapper = new ControlFlowWrapper(myProject, codeFragment, myElements);
   }
 
   Project getProject() {
@@ -69,7 +64,7 @@ class ExtractMethodWithResultObjectProcessor {
     return codeFragmentMember;
   }
 
-  boolean prepare() {
+  public boolean prepare() {
     LOG.info("prepare");
 
     collectInputsAndOutputs();
@@ -231,17 +226,20 @@ class ExtractMethodWithResultObjectProcessor {
     dumpElements(myReturnValues, factory, "out");
     dumpElements(myOutputVariables, factory, "out");
     dumpElements(new HashSet<>(myInputs.values()), factory, "in");
+    dumpText(factory, "ins and outs");
   }
 
   private void dumpElements(Collection<? extends PsiElement> elements, PsiElementFactory factory, String prefix) {
     elements.stream()
       .map(PsiElement::toString)
       .sorted(Comparator.reverseOrder())
-      .forEach(text -> {
-        PsiElement comment = factory.createCommentFromText("//" + prefix + ": " + text, null);
-        myAnchor.getParent().addAfter(comment, myAnchor);
-        LOG.warn(prefix + ": " + text);
-      });
+      .forEach(text -> dumpText(factory, prefix + ": " + text));
+  }
+
+  private void dumpText(PsiElementFactory factory, String text) {
+    PsiElement comment = factory.createCommentFromText("//" + text, null);
+    myAnchor.getParent().addAfter(comment, myAnchor);
+    LOG.warn(text);
   }
 
   private void chooseTargetClass() {
