@@ -34,7 +34,7 @@ public class GroovyBracesUnwrapper extends GroovyUnwrapper {
 
   @Override
   protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
-    context.extractFromBlockOrSingleStatement(((GrBlockStatement)element), element);
+    context.extractFromBlockOrSingleStatement((GrBlockStatement)element, element);
     context.delete(element);
   }
 }
