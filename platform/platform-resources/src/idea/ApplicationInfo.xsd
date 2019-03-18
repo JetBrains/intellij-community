@@ -164,6 +164,28 @@
         Describes the splash screen which is shown when the product is starting.
       </xs:documentation>
     </xs:annotation>
+    
+    <xs:sequence>
+      <xs:element name="progressSlide" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:attribute type="xs:string" name="url">
+            <xs:annotation>
+              <xs:documentation>
+                url to the slide to be presented
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute type="xs:int" name="progressPercent">
+            <xs:annotation>
+              <xs:documentation>
+                percentage ratio when the indicated slide should be shown. Must be from 0 to 100.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+
     <xs:attribute type="xs:string" name="url" use="required">
       <xs:annotation>
         <xs:documentation>
