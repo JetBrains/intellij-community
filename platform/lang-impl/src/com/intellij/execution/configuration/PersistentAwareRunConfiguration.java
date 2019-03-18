@@ -12,9 +12,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface PersistentAwareRunConfiguration extends RunConfiguration {
   /**
+   * Sets whether the run configuration is template
+   */
+  void setTemplate(boolean isTemplate);
+
+  /**
    * This method is called to read persistent state while {@link RunConfiguration#readExternal} is called to read state in other cases.
    */
-  void readPersistent(@NotNull Element element, boolean isTemplate);
+  void readPersistent(@NotNull Element element);
   /**
    * This method is called to write persistent state while {@link RunConfiguration#writeExternal} is called to write state in other cases.
    */
