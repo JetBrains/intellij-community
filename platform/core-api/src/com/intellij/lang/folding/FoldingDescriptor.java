@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.BitUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,15 +41,18 @@ import java.util.Set;
 public class FoldingDescriptor {
   public static final FoldingDescriptor[] EMPTY = new FoldingDescriptor[0];
 
+  private static final byte FLAG_NEVER_EXPANDS = 1;
+  private static final byte FLAG_COLLAPSED_BY_DEFAULT_DEFINED = 1 << 1;
+  private static final byte FLAG_COLLAPSED_BY_DEFAULT = 1 << 2;
+  private static final byte FLAG_CAN_BE_REMOVED_WHEN_COLLAPSED = 1 << 3;
+  private static final byte FLAG_GUTTER_MARK_ENABLED_FOR_SINGLE_LINE = 1 << 4;
+
   private final ASTNode myElement;
   private final TextRange myRange;
   @Nullable private final FoldingGroup myGroup;
   private final Set<Object> myDependencies;
-  private final boolean myNeverExpands;
-  private final Boolean myCollapsedByDefault;
   private String myPlaceholderText;
-  private boolean myCanBeRemovedWhenCollapsed;
-  private boolean myGutterMarkEnabledForSingleLine;
+  private byte myFlags;
 
   /**
    * Creates a folding region related to the specified AST node and covering the specified
@@ -192,9 +196,12 @@ public class FoldingDescriptor {
     myGroup = group;
     myDependencies = dependencies;
     assert !myDependencies.contains(null);
-    myNeverExpands = neverExpands;
     myPlaceholderText = placeholderText;
-    myCollapsedByDefault = collapsedByDefault;
+    setFlag(FLAG_NEVER_EXPANDS, neverExpands);
+    if (collapsedByDefault != null) {
+      setFlag(FLAG_COLLAPSED_BY_DEFAULT_DEFINED, true);
+      setFlag(FLAG_COLLAPSED_BY_DEFAULT, collapsedByDefault);
+    }
   }
 
   /**
@@ -244,16 +251,16 @@ public class FoldingDescriptor {
   }
 
   public boolean isNonExpandable() {
-    return myNeverExpands;
+    return getFlag(FLAG_NEVER_EXPANDS);
   }
 
   public boolean canBeRemovedWhenCollapsed() {
-    return myCanBeRemovedWhenCollapsed;
+    return getFlag(FLAG_CAN_BE_REMOVED_WHEN_COLLAPSED);
   }
 
   @Nullable
   public Boolean isCollapsedByDefault() {
-    return myCollapsedByDefault;
+    return getFlag(FLAG_COLLAPSED_BY_DEFAULT_DEFINED) ? getFlag(FLAG_COLLAPSED_BY_DEFAULT) : null;
   }
 
   /**
@@ -261,14 +268,14 @@ public class FoldingDescriptor {
    * This method allows to override default behaviour for specific regions.
    */
   public void setCanBeRemovedWhenCollapsed(boolean canBeRemovedWhenCollapsed) {
-    myCanBeRemovedWhenCollapsed = canBeRemovedWhenCollapsed;
+    setFlag(FLAG_CAN_BE_REMOVED_WHEN_COLLAPSED, canBeRemovedWhenCollapsed);
   }
 
   /**
-   * @see #setGutterMarkEnabledForSingleLine()
+   * @see #setGutterMarkEnabledForSingleLine(boolean)
    */
   public boolean isGutterMarkEnabledForSingleLine() {
-    return myGutterMarkEnabledForSingleLine;
+    return getFlag(FLAG_GUTTER_MARK_ENABLED_FOR_SINGLE_LINE);
   }
 
   /**
@@ -277,7 +284,15 @@ public class FoldingDescriptor {
    * @see #isGutterMarkEnabledForSingleLine()
    */
   public void setGutterMarkEnabledForSingleLine(boolean value) {
-    myGutterMarkEnabledForSingleLine = value;
+    setFlag(FLAG_GUTTER_MARK_ENABLED_FOR_SINGLE_LINE, value);
+  }
+
+  private boolean getFlag(byte mask) {
+    return BitUtil.isSet(myFlags, mask);
+  }
+
+  private void setFlag(byte mask, boolean value) {
+    myFlags = BitUtil.set(myFlags, mask, value);
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
