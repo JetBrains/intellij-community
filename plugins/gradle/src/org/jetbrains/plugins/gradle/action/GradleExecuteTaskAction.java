@@ -5,24 +5,20 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.runAnything.RunAnythingManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.externalSystem.action.ExternalSystemAction;
-import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
-import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
-import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -32,14 +28,14 @@ import org.gradle.cli.ParsedCommandLine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsConverter;
-import org.jetbrains.plugins.gradle.service.task.ExecuteGradleTaskHistoryService;
-import org.jetbrains.plugins.gradle.service.task.GradleRunTaskDialog;
 import org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.jetbrains.plugins.gradle.execution.GradleRunAnythingProvider.HELP_COMMAND;
 
 /**
  * @author Vladislav.Soroka
@@ -67,41 +63,12 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    final Project project = e.getProject();
+    if (project == null) return;
     GradleActionsUsagesCollector.trigger(project, this, e);
-    ExecuteGradleTaskHistoryService historyService = ExecuteGradleTaskHistoryService.getInstance(project);
-    GradleRunTaskDialog dialog = new GradleRunTaskDialog(project, historyService.getHistory());
-    String lastWorkingDirectory = historyService.getWorkDirectory();
-    if (lastWorkingDirectory.length() == 0) {
-      lastWorkingDirectory = obtainAppropriateWorkingDirectory(e);
-    }
-
-    dialog.setWorkDirectory(lastWorkingDirectory);
-
-    if (StringUtil.isEmptyOrSpaces(historyService.getCanceledCommand())) {
-      if (historyService.getHistory().size() > 0) {
-        dialog.setCommandLine(historyService.getHistory().get(0));
-      }
-    }
-    else {
-      dialog.setCommandLine(historyService.getCanceledCommand());
-    }
-
-    if (!dialog.showAndGet()) {
-      historyService.setCanceledCommand(dialog.getCommandLine());
-      return;
-    }
-
-    historyService.setCanceledCommand(null);
-
-    String fullCommandLine = dialog.getCommandLine();
-    fullCommandLine = fullCommandLine.trim();
-
-    String workDirectory = dialog.getWorkDirectory();
-
-    historyService.addCommand(fullCommandLine, workDirectory);
-
-    runGradle(project, null, workDirectory, fullCommandLine);
+    RunAnythingManager runAnythingManager = RunAnythingManager.getInstance(project);
+    IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
+    runAnythingManager.show(HELP_COMMAND + " ", false, e);
   }
 
   public static void runGradle(@NotNull Project project,
@@ -176,24 +143,5 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     settings.setVmOptions(vmOptions);
     settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.toString());
     return new ExternalTaskExecutionInfo(settings, executor == null ? DefaultRunExecutor.EXECUTOR_ID : executor.getId());
-  }
-
-  private static String obtainAppropriateWorkingDirectory(AnActionEvent e) {
-    final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
-    if (selectedNodes == null || selectedNodes.size() != 1) {
-      final Module module = ExternalSystemActionUtil.getModule(e.getDataContext());
-      String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
-      return projectPath == null ? "" : projectPath;
-    }
-
-    final ExternalSystemNode<?> node = selectedNodes.get(0);
-    final Object externalData = node.getData();
-    if (externalData instanceof ExternalConfigPathAware) {
-      return ((ExternalConfigPathAware)externalData).getLinkedExternalProjectPath();
-    }
-    else {
-      final ExternalConfigPathAware parentExternalConfigPathAware = node.findParentData(ExternalConfigPathAware.class);
-      return parentExternalConfigPathAware != null ? parentExternalConfigPathAware.getLinkedExternalProjectPath() : "";
-    }
   }
 }

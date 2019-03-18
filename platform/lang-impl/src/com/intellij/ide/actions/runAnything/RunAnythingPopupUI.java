@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
@@ -93,7 +92,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private int myCalcThreadRestartRequestId = 0;
   private final Object myWorkerRestartRequestLock = new Object();
   private boolean mySkipFocusGain = false;
-  private Editor myEditor;
   @Nullable
   private VirtualFile myVirtualFile;
   @NotNull private final DataContext myDataContext;
@@ -153,12 +151,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
           mySkipFocusGain = false;
           return;
         }
-        String text = RunAnythingUtil.getInitialTextForNavigation(myEditor);
-        text = text != null ? text.trim() : "";
-
-        mySearchField.setText(text);
         mySearchField.setForeground(UIUtil.getLabelForeground());
-        mySearchField.selectAll();
         mySearchField.setColumns(SEARCH_FIELD_COLUMNS);
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
@@ -822,7 +815,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
         synchronized (lock) {
           myCurrentWorker = ActionCallback.DONE;
           myCalcThread = null;
-          myEditor = null;
           myVirtualFile = null;
           myProject = null;
           myModule = null;
@@ -838,7 +830,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myActionEvent = actionEvent;
 
     myCurrentWorker = ActionCallback.DONE;
-    myEditor = actionEvent.getData(CommonDataKeys.EDITOR);
     myVirtualFile = actionEvent.getData(CommonDataKeys.VIRTUAL_FILE);
 
     myProject = ObjectUtils.notNull(CommonDataKeys.PROJECT.getData(myActionEvent.getDataContext()));
