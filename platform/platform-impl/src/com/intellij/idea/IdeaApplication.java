@@ -4,7 +4,7 @@ package com.intellij.idea;
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.PluginManager;
@@ -32,6 +32,7 @@ import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,11 +67,13 @@ public class IdeaApplication {
 
   @SuppressWarnings("SSBasedInspection")
   public static void initApplication(@NotNull String[] args) {
-    Activity activity = PluginManager.startupStart.endAndStart(StartUpMeasurer.Phases.INIT_APP);
+    Activity activity = PluginManager.startupStart.endAndStart(Phases.INIT_APP);
     IdeaApplication app = new IdeaApplication(args);
     // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
+    Activity placeOnEventQueueActivity = activity.startChild(Phases.PLACE_ON_EVENT_QUEUE);
     SwingUtilities.invokeLater(() -> {
       PluginManager.installExceptionHandler();
+      placeOnEventQueueActivity.end();
       activity.end();
       // this run is blocking, while app is running
       app.run();
@@ -183,7 +186,11 @@ public class IdeaApplication {
 
     IconLoader.activate();
 
-    new JFrame().pack(); // this peer will prevent shutting down our application
+    // isStartParallel doesn't affect this functionality, but isStartParallel flag is used as default value for this flag
+    if (SystemProperties.getBooleanProperty("idea.app.use.fake.frame", !StartupUtil.isStartParallel())) {
+      // this peer will prevent shutting down our application
+      new JFrame().pack();
+    }
   }
 
   @NotNull
