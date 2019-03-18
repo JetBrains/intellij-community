@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -710,13 +711,13 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
   private static GlobalMenuLib _loadLibrary() {
     try {
-      if (!SystemInfo.isLinux
-          || Registry.is("linux.native.menu.force.disable")
-          || (isCLionSwiftPluginInstalled() && _isUnderVMWare())
-      )
+      if (!SystemInfo.isLinux ||
+          Registry.is("linux.native.menu.force.disable") ||
+          !Experiments.isFeatureEnabled("linux.native.menu") ||
+          !JnaLoader.isLoaded() ||
+          (isCLionSwiftPluginInstalled() && _isUnderVMWare())) {
         return null;
-      if (!Experiments.isFeatureEnabled("linux.native.menu"))
-        return null;
+      }
     } catch (Throwable e) {
       LOG.error(e);
       return null;

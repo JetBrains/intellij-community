@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,16 +33,24 @@ public class NST {
   private static final String MIN_OS_VERSION = "10.12.2";
   static boolean isSupportedOS() { return SystemInfo.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION); }
 
-  private static final boolean ourHeadless = GraphicsEnvironment.isHeadless();
-
   static {
     try {
-      final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false) && !ourHeadless;
-      if (
-        isSupportedOS()
-        && isRegistryKeyEnabled
-        && Utils.isTouchBarServerRunning()
-      ) {
+      if (!isSupportedOS()) {
+        LOG.info("OS doesn't support touchbar, skip nst loading");
+      }
+      else if (GraphicsEnvironment.isHeadless()) {
+        LOG.info("The graphics environment is headless, skip nst loading");
+      }
+      else if (!Registry.is(ourRegistryKeyTouchbar, false)) {
+        LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
+      }
+      else if (!JnaLoader.isLoaded()) {
+        LOG.info("JNA library is unavailable, skip nst loading");
+      }
+      else if (!Utils.isTouchBarServerRunning()) {
+        LOG.info("touchbar-server isn't running, skip nst loading");
+      }
+      else {
         try {
           loadLibrary();
         } catch (Throwable e) {
@@ -66,15 +75,7 @@ public class NST {
         } else {
           LOG.error("nst library wasn't loaded");
         }
-      } else if (!isSupportedOS())
-        LOG.info("OS doesn't support touchbar, skip nst loading");
-      else if (ourHeadless)
-        LOG.info("The graphics environment is headless, skip nst loading");
-      else if (!isRegistryKeyEnabled)
-        LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
-      else
-        LOG.info("touchbar-server isn't running, skip nst loading");
-
+      }
 
       if (ourNSTLibrary != null) {
         final String appId = Utils.getAppId();
