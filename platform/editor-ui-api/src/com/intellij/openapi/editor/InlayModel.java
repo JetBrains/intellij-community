@@ -3,7 +3,6 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,10 +15,8 @@ import java.util.List;
  * Such elements are not reflected in document contents. Elements are 'anchored' to a certain document offset at creation,
  * this offset behaves similar to a zero-range {@link RangeMarker} with respect to document changes.
  * <p>
- * WARNING! This is an experimental API, it can change at any time.
  * @see Editor#getInlayModel()
  */
-@ApiStatus.Experimental
 public interface InlayModel {
   /**
    * Same as {@link #addInlineElement(int, boolean, EditorCustomElementRenderer)}, making created element associated with following text.
