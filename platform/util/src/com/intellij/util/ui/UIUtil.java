@@ -4114,6 +4114,16 @@ public class UIUtil {
     }
   }
 
+  public static void runWhenWindowOpened(@NotNull Window window, @NotNull Runnable runnable) {
+    window.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowOpened(WindowEvent e) {
+        e.getWindow().removeWindowListener(this);
+        runnable.run();
+      }
+    });
+  }
+
   //May have no usages but it's useful in runtime (Debugger "watches", some logging etc.)
   @NotNull
   public static String getDebugText(Component c) {
