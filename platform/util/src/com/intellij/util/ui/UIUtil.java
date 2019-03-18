@@ -3222,29 +3222,25 @@ public class UIUtil {
     return systemLaFClassName = UIManager.getSystemLookAndFeelClassName();
   }
 
-  @NotNull
-  public static Toolkit initDefaultLAF() {
+  public static void initDefaultLaF() {
     blockATKWrapper();
 
     // separate activity to make clear that it is not our code takes time
     Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init AWT Toolkit");
-    Toolkit toolkit = Toolkit.getDefaultToolkit();
-
-    activity = activity.endAndStart(ActivitySubNames.INIT_DEFAULT_LAF);
+    Toolkit.getDefaultToolkit();
+    activity = activity.endAndStart("configure html kit");
 
     // this will use toolkit, order of code is critically important
     configureHtmlKitStylesheet();
 
+    activity = activity.endAndStart(ActivitySubNames.INIT_DEFAULT_LAF);
     try {
       UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
-      initSystemFontData();
     }
     catch (Exception e) {
       getLogger().error("Cannot initialize default LaF", e);
     }
     activity.end();
-
-    return toolkit;
   }
 
   private static void configureHtmlKitStylesheet() {
