@@ -393,8 +393,13 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       }
     });
 
-    final ToolWindow window =
-      ToolWindowManager.getInstance(getProject()).registerToolWindow(VARIABLES_WINDOW_ID, false, ToolWindowAnchor.RIGHT);
+    ToolWindow window =
+      ToolWindowManager.getInstance(getProject()).getToolWindow(VARIABLES_WINDOW_ID);
+    if (window == null) {
+      window = ToolWindowManager.getInstance(getProject()).registerToolWindow(VARIABLES_WINDOW_ID, false, ToolWindowAnchor.RIGHT);
+    } else {
+      window.getContentManager().removeAllContents(true);
+    }
     window.setIcon(Debug.SpecialVar);
     final Content content = new ContentImpl(view.getPanel(), "", true);
     window.getContentManager().addContent(content);
