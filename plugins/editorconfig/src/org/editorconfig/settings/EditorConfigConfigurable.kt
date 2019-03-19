@@ -12,6 +12,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsProvider
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.layout.*
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -25,67 +26,54 @@ import java.awt.*
  * @author Dennis.Ushakov
  */
 class EditorConfigConfigurable : CodeStyleSettingsProvider(), GeneralCodeStyleOptionsProvider {
-  private var myEnabled: JBCheckBox? = null
+  private lateinit var myEnabled: JCheckBox
 
-  override fun createComponent(): JComponent? {
-    myEnabled = JBCheckBox(EditorConfigBundle.message("config.enable"))
-    val result = JPanel()
-    result.layout = BoxLayout(result, BoxLayout.LINE_AXIS)
-    val panel = JPanel(VerticalFlowLayout())
-    result.border = IdeBorderFactory.createTitledBorder(EditorConfigBundle.message("config.title"), false)
-    panel.add(myEnabled)
-    val warning = JLabel(EditorConfigBundle.message("config.warning"))
-    warning.font = UIUtil.getLabelFont(UIUtil.FontSize.SMALL)
-    warning.border = JBUI.Borders.emptyLeft(20)
-    panel.add(warning)
-    panel.alignmentY = Component.TOP_ALIGNMENT
-    result.add(panel)
-    val export = JButton(EditorConfigBundle.message("config.export"))
-    // export.setVisible(EditorConfigExportProviderEP.shouldShowExportButton());
-    export.addActionListener { event ->
-      val parent = UIUtil.findUltimateParent(result)
+  override fun createComponent(): JComponent {
+    return panel(title = EditorConfigBundle.message("config.title")) {
+      row {
+        myEnabled = checkBox(EditorConfigBundle.message("config.enable"), comment = EditorConfigBundle.message("config.warning"))
 
-      if (parent is IdeFrame) {
-        val project = (parent as IdeFrame).project
-        if (project != null) {
-          if (EditorConfigExportProviderEP.tryExportViaProviders(project)) return@addActionListener
-          Utils.export(project)
+        button(EditorConfigBundle.message("config.export")) {
+          val parent = UIUtil.findUltimateParent(myEnabled)
+
+          if (parent is IdeFrame) {
+            val project = (parent as IdeFrame).project
+            if (project != null) {
+              if (EditorConfigExportProviderEP.tryExportViaProviders(project)) return@button
+              Utils.export(project)
+            }
+          }
         }
       }
     }
-    export.alignmentY = Component.TOP_ALIGNMENT
-    result.add(export)
-    return result
   }
 
   override fun isModified(settings: CodeStyleSettings): Boolean {
-    return myEnabled!!.isSelected != settings.getCustomSettings(EditorConfigSettings::class.java).ENABLED
+    return myEnabled.isSelected != settings.getCustomSettings(EditorConfigSettings::class.java).ENABLED
   }
 
   override fun apply(settings: CodeStyleSettings) {
-    val newValue = myEnabled!!.isSelected
+    val newValue = myEnabled.isSelected
     settings.getCustomSettings(EditorConfigSettings::class.java).ENABLED = newValue
     val bus = ApplicationManager.getApplication().messageBus
     bus.syncPublisher(EditorConfigSettings.EDITOR_CONFIG_ENABLED_TOPIC).valueChanged(newValue)
   }
 
   override fun reset(settings: CodeStyleSettings) {
-    myEnabled!!.isSelected = settings.getCustomSettings(EditorConfigSettings::class.java).ENABLED
+    myEnabled.isSelected = settings.getCustomSettings(EditorConfigSettings::class.java).ENABLED
   }
 
   override fun disposeUIResources() {
-    myEnabled = null
   }
 
   override fun isModified(): Boolean = false
 
-  @Throws(ConfigurationException::class)
   override fun apply() {
   }
 
   override fun hasSettingsPage(): Boolean = false
 
-  override fun createCustomSettings(settings: CodeStyleSettings): CustomCodeStyleSettings? {
+  override fun createCustomSettings(settings: CodeStyleSettings): CustomCodeStyleSettings {
     return EditorConfigSettings(settings)
   }
 }
