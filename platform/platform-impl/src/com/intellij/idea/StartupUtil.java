@@ -12,6 +12,7 @@ import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startupWizard.StartupWizard;
@@ -49,6 +50,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -111,7 +113,8 @@ public class StartupUtil {
     }
   }
 
-  static void prepareAndStart(@NotNull String[] args, AppStarter appStarter) {
+  static void prepareAndStart(@NotNull String[] args, @NotNull AppStarter appStarter)
+    throws InvocationTargetException, InterruptedException, ExecutionException {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     checkHiDPISettings();
 
@@ -146,16 +149,11 @@ public class StartupUtil {
     addInitUiTasks(futures, executorService, log, initLafTask);
 
     if (isParallelExecution) {
-      try {
-        Activity activity = StartUpMeasurer.start(Phases.WAIT_TASKS);
-        for (Future<?> future : futures) {
-          future.get();
-        }
-        activity.end();
+      Activity activity = StartUpMeasurer.start(Phases.WAIT_TASKS);
+      for (Future<?> future : futures) {
+        future.get();
       }
-      catch (ExecutionException | InterruptedException e) {
-        throw new RuntimeException(e);
-      }
+      activity.end();
 
       futures.clear();
     }
@@ -164,7 +162,10 @@ public class StartupUtil {
 
     if (newConfigFolder) {
       appStarter.beforeImportConfigs();
-      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath(), log);
+      SwingUtilities.invokeAndWait(() -> {
+        PluginManager.installExceptionHandler();
+        ConfigImportHelper.importConfigsTo(PathManager.getConfigPath(), log);
+      });
     }
     else {
       installPluginUpdates();
@@ -172,6 +173,11 @@ public class StartupUtil {
 
     if (!Main.isHeadless()) {
       AppUIUtil.showUserAgreementAndConsentsIfNeeded();
+    }
+
+    if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
+      // exception handler is already set by ConfigImportHelper
+      SwingUtilities.invokeAndWait(() -> runStartupWizard());
     }
 
     appStarter.start(newConfigFolder);
