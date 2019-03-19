@@ -18,4 +18,10 @@ class PyCharmBuildOptions {
    * Path to a zip file containing generated universal stubs.
    */
   static final String prebuiltStubsArchive = System.getProperty("intellij.build.pycharm.prebuilt.stubs.archive")
+
+  /**
+   * Miniconda installer folder name
+   * The same folder should be specified at com.jetbrains.python.PythonMinicondaLocator#getMinicondaInstallerFolder()
+   * */
+  static final String minicondaInstallerFolderName = "minicondaInstaller"
 }

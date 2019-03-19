@@ -32,6 +32,10 @@ class PyCharmMacDistributionCustomizer extends MacDistributionCustomizer {
         include(name: "skeletons-mac*.zip")
       }
     }
+
+    context.ant.mkdir(dir: "$targetDirectory/$PyCharmBuildOptions.minicondaInstallerFolderName")
+    context.ant.get(src: "https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh",
+                    dest: "$targetDirectory/$PyCharmBuildOptions.minicondaInstallerFolderName")
   }
 
   @Override

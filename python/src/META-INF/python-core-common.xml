@@ -882,6 +882,11 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
+    <action id="InstallMiniconda" class="com.jetbrains.python.actions.InstallCondaAction"
+            text="Install Miniconda 3...">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+
     <action id="PythonGenerateDictionaries" class="com.jetbrains.python.spellchecker.PythonSpellcheckerGenerateDictionariesAction"
             text="Generate Python Spellchecker Dictionaries" internal="true">
       <add-to-group group-id="Internal"/>
