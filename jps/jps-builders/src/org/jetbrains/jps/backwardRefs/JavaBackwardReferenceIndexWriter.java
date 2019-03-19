@@ -77,7 +77,7 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
       }
 
       if (CompilerReferenceIndex.exists(buildDir) || isRebuild) {
-        ourInstance = new JavaBackwardReferenceIndexWriter(new JavaCompilerBackwardReferenceIndex(buildDir, false));
+        ourInstance = new JavaBackwardReferenceIndexWriter(new JavaCompilerBackwardReferenceIndex(buildDir, dataManager.getRelativizer(), false));
         ShutDownTracker.getInstance().registerShutdownTask(() -> {
           closeIfNeeded(false);
         });
