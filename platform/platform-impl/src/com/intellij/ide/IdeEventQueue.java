@@ -369,6 +369,11 @@ public class IdeEventQueue extends EventQueue {
       e = metaEvent;
     }
     if (JAVA_11_OR_LATER && (SystemInfo.isMac || SystemInfo.isWindows)) {
+      if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH) {
+        if (!Registry.is("actionSystem.force.alt.gr") && Registry.is("actionSystem.fix.alt.gr")) {
+          ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
+        }
+      }
       if (e instanceof InputEvent && ((InputEvent)e).isAltGraphDown()) {
         if (!Registry.is("actionSystem.force.alt.gr") && Registry.is("actionSystem.fix.alt.gr")) {
           try {
