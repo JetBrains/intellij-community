@@ -202,7 +202,7 @@ class FindPopupScopeUIImpl implements FindPopupScopeUI {
 
     ScopeType scope = getScope(findModel);
     ScopeType selectedScope = Arrays.stream(myComponents).filter(o -> o.first == scope).findFirst().orElse(null) == null
-                              ? myComponents[myComponents.length - 1].first
+                              ? myComponents[0].first
                               : scope;
     if (selectedScope == MODULE) {
       myModuleComboBox.setSelectedItem(findModel.getModuleName());
