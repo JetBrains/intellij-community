@@ -55,6 +55,10 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
     return myHashIdForwardIndexAccessor;
   }
 
+  File getInputIndexStorageFile() {
+    return new File(IndexInfrastructure.getIndexRootDir(myIndexId), "fileIdToHashId");
+  }
+
   @NotNull
   @Override
   public Map<Key, Value> readData(int hashId) throws IOException {
