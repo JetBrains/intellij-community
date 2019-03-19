@@ -105,8 +105,9 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
         myCompilerTester.tearDown();
       }
       PathMacros.getInstance().setMacro(PathMacrosImpl.MAVEN_REPOSITORY, oldMacroValue);
-      PlatformTestUtil.forceCloseProjectWithoutSaving(myProject);
+      Project project = myProject;
       myProject = null;
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project);
       InspectionProfileImpl.INIT_INSPECTIONS = false;
     }
     catch (Throwable e) {
