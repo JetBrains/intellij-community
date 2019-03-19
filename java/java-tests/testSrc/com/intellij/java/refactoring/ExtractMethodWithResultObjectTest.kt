@@ -23,13 +23,27 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightTestCase() {
 
   fun testSimple() = doTest()
   fun testCodeDuplicatesWithMultiOccurrences() = doTest()
+  fun testAnonInner() = doTest()
+  fun testArgumentFoldingMethodCall() = doTest()
+  fun testArgumentFoldingWholeStatement() = doTest()
+  fun testArgumentFoldingWholeStatementForUpdate() = doTest()
+  fun testArgumentFoldingWholeStatementForUpdateList() = doTest()
+  fun testArrayAccess() = doTest()
+  fun testArrayAccess1() = doTest()
+  fun testArrayAccessWithDuplicates() = doTest()
+  fun testArrayAccessWithLocalIndex() = doTest()
+  fun testArrayAccessWithTopExpression() = doTest()
+  fun test() = doTest()
 
   private fun doTest() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java")
+    val testName = getTestName(false)
+    if (testName.isEmpty()) return
+
+    configureByFile("$BASE_PATH$testName.java")
 
     performAction()
 
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java")
+    checkResultByFile(null, BASE_PATH + testName + "_after.java", true)
   }
 
   private fun performAction() {
