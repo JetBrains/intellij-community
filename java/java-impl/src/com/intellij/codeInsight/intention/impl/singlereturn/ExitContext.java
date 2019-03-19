@@ -33,7 +33,7 @@ class ExitContext {
     myFactory = JavaPsiFacade.getElementFactory(block.getProject());
     myReturnType = returnType;
     myReturnVariable =
-      new VariableNameGenerator(block, VariableKind.LOCAL_VARIABLE).byName("result", "res").byType(returnType).generate(false);
+      new VariableNameGenerator(block, VariableKind.LOCAL_VARIABLE).byName("result", "res").byType(returnType).generate(true);
     myReturnVariableDefaultValue = marker.myDefaultValue;
     if (myReturnVariableDefaultValue != null && myReturnVariableDefaultValue.isPhysical()) {
       myReturnVariableDefaultValue = (PsiExpression)myReturnVariableDefaultValue.copy();
@@ -89,12 +89,13 @@ class ExitContext {
     if (myFinishMarkerType != FinishMarker.FinishMarkerType.SEPARATE_VAR) return;
     if (myFinishedVariable == null) {
       myFinishedVariable =
-        new VariableNameGenerator(myBlock, VariableKind.LOCAL_VARIABLE).byName("finished", "completed").generate(false);
+        new VariableNameGenerator(myBlock, VariableKind.LOCAL_VARIABLE).byName("finished", "completed").generate(true);
     }
-    String firstItem = ContainerUtil.getFirstItem(replacements);
     String assignment = myFinishedVariable + "=true;";
-    if (!assignment.equals(firstItem)) {
-      replacements.add(0, assignment);
+    if (!replacements.contains(assignment)) {
+      String first = ContainerUtil.getFirstItem(replacements);
+      int index = first != null && first.startsWith(myReturnVariable + "=") ? 1 : 0;
+      replacements.add(index, assignment);
     }
   }
 

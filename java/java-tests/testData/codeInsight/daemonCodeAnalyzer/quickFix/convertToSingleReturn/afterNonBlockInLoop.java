@@ -6,8 +6,8 @@ class Test {
         for (String s : list) {
             for (int i = 0; i < 10; i++) {
                 if (s.length() == i) {
-                    finished = true;
                     result = foo;
+                    finished = true;
                     break;
                 }
             }

@@ -6,8 +6,8 @@ class Test {
         if (strings.length > 2) {
             String string = strings[0];
             if (string.equals(strings[1])) {
-                finished = true;
                 res = foo(string);
+                finished = true;
             }
         }
         if (!finished) {
