@@ -1437,7 +1437,16 @@ public class PythonCompletionTest extends PyTestCase {
 
   public void testPathCompletion() {
     String newPath = myFixture.getTestDataPath() + "/pathCompletion/";
-    final List<String> suggested = doTestByText("read_csv(\"" + newPath + "<caret>\")", 2);
+    final List<String> suggested = doTestByText("read_csv(\"" + newPath + "<caret>\")", 1);
+    String trimmedPath = newPath.startsWith("/") ? newPath.substring(1) : newPath;
+    String[] strings = ArrayUtil.toStringArray(
+      ContainerUtil.map(new String[]{"first", "second"}, s -> trimmedPath + s));
+    assertContainsElements(suggested, strings);
+  }
+
+  public void testPathCompletion(String strToComplete, List<String> expectedResult) {
+    String newPath = myFixture.getTestDataPath() + "/pathCompletion/";
+    final List<String> suggested = doTestByText(strToComplete, 1);
     String trimmedPath = newPath.startsWith("/") ? newPath.substring(1) : newPath;
     String[] strings = ArrayUtil.toStringArray(
       ContainerUtil.map(new String[]{"first", "second"}, s -> trimmedPath + s));

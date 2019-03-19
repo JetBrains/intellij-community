@@ -1,53 +1,114 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.CompletionInitializationContext;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.*;
+import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.patterns.PyElementPattern;
+import com.jetbrains.python.psi.PyStringElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Pattern;
 
-// TODO: Logic of this class can be extracted and abstracted from the concrete language.
-public class PyPathCompletionContributor extends PyExtendedCompletionContributor {
-  @Override
-  protected void doFillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    if (isPath(parameters.getPosition())) {
-      String text = normalize(parameters.getPosition().getText());
-      addPathVariants(result, text);
-    }
+public class PyPathCompletionContributor extends CompletionContributor {
+  private static final Logger LOG = Logger.getInstance(PyPathCompletionContributor.class);
+  private static final int STRING_LITERAL_LIMIT = 10_000;
+
+  public PyPathCompletionContributor() {
+    extend(CompletionType.BASIC,
+           // Because very broad selection of strings can represent path and we want to avoid
+           // interactions with file system, we restrict strings set treated as paths to
+           // 1. relative paths containing "<file-separator>"
+           // 2. absolute paths.
+           // These two items can be summarized as 'contains file separator'.
+           pyStringLiteralMatches("[/\\\\]"),
+           new PathCompletionProvider());
   }
 
-  private boolean isPath(PsiElement position) {
-    PyStringLiteralExpression sl = PsiTreeUtil.getContextOfType(position, PyStringLiteralExpression.class);
-    return sl != null;
-  }
+  private static class PathCompletionProvider extends CompletionProvider<CompletionParameters> {
+    @Override
+    protected void addCompletions(@NotNull CompletionParameters parameters,
+                                  @NotNull ProcessingContext context,
+                                  @NotNull CompletionResultSet result) {
+      PyStringLiteralExpression pos = getStringLiteral(parameters.getOriginalPosition());
 
-  // handle paths in system independent way by using normal slashes for all systems
-  static void addPathVariants(CompletionResultSet result, @NotNull String str) {
-    // unquote string literal
-    str = str.substring(1);
-    int lastSep = str.lastIndexOf('/');
-    if (lastSep < 0) return;
+      assert pos != null;
 
-    // include '/' to properly handle windows root paths e.g. c:/
-    File path = new File(lastSep == 0 ? "/" : str.substring(0, lastSep + 1));
-    if (!path.exists()) return;
+      Path path = Paths.get(pos.getStringValue());
+      List<PyStringElement> stringElements = pos.getStringElements();
+      stringElements.subList(0, stringElements.size() - 1);
 
-    File[] list = path.listFiles();
-    if (list != null) {
-      for (File file : list) {
-        String item = file.getPath().replace(File.separatorChar, '/');
-        item = item.startsWith("/") ? item.substring(1) : item;
-        result.addElement(new PathLookupElement(item, file.isDirectory()));
+      if (!path.isAbsolute()) {
+        Path basePath = Paths.get(Objects.requireNonNull(parameters.getOriginalPosition().getProject().getBasePath()));
+        path = basePath.resolve(path);
+      }
+
+      File f = path.toFile();
+      final File dir = f.isDirectory() ? f : f.getParentFile();
+
+      if (!dir.exists()) return;
+
+      try {
+        List<PathLookupElement> completions = ApplicationUtil.runWithCheckCanceled(() -> {
+          File[] files = dir.listFiles();
+
+          if (files == null) {
+            return Collections.emptyList();
+          }
+
+          return ContainerUtil.map(files, file -> {
+            String item = file.getPath().replace(File.separatorChar, '/');
+            item = item.startsWith("/") ? item.substring(1) : item;
+            return new PathLookupElement(item, file.isDirectory());
+          });
+        }, EmptyProgressIndicator.notNullize(ProgressManager.getInstance().getProgressIndicator()));
+
+        result.addAllElements(completions);
+      }
+      catch (ProcessCanceledException e) {
+        LOG.info("Path completion was canceled");
+      }
+      catch (Exception e) {
+        LOG.info("Cannot add path completions", e);
       }
     }
   }
 
-  private String normalize(String str) {
-    return str.substring(0, str.lastIndexOf(CompletionInitializationContext.DUMMY_IDENTIFIER));
+  public static PyElementPattern.Capture<PyStringLiteralExpression> pyStringLiteralMatches(final String regexp) {
+    final Pattern pattern = Pattern.compile(regexp, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    return new PyElementPattern.Capture<>(new InitialPatternCondition<PyStringLiteralExpression>(PyStringLiteralExpression.class) {
+      @Override
+      public boolean accepts(@Nullable Object o, ProcessingContext context) {
+        final PyStringLiteralExpression expr = (PyStringLiteralExpression)o;
+        // We complete only the last string element.
+        if (!DocStringUtil.isDocStringExpression(expr) && expr.getTextLength() < STRING_LITERAL_LIMIT) {
+          final String value = expr.getStringValue();
+          return pattern.matcher(value).find();
+        }
+        return false;
+      }
+    });
+  }
+
+  @Nullable
+  static PyStringLiteralExpression getStringLiteral(@Nullable PsiElement o) {
+    return PsiTreeUtil.getContextOfType(o, PyStringLiteralExpression.class);
   }
 }

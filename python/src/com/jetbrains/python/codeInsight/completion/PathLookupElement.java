@@ -3,9 +3,13 @@ package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.jetbrains.python.codeInsight.completion.PyPathCompletionContributor.getStringLiteral;
 
 public class PathLookupElement extends PythonLookupElement {
     private static final Icon textIcon = IconLoader.getIcon("/fileTypes/text.png");
@@ -18,6 +22,12 @@ public class PathLookupElement extends PythonLookupElement {
 
         int pos = path.lastIndexOf('/');
         file = pos < 0 ? path : path.substring(pos + 1);
+    }
+
+    @Nullable
+    @Override
+    public PsiElement getPsiElement() {
+        return getStringLiteral(super.getPsiElement());
     }
 
     @Override
