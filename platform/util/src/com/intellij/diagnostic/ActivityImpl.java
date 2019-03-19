@@ -9,6 +9,8 @@ public final class ActivityImpl implements Activity {
   private final String name;
   private String description;
 
+  private final String thread;
+
   private final long start;
   private long end;
 
@@ -42,6 +44,13 @@ public final class ActivityImpl implements Activity {
     this.parent = parent;
     this.level = level;
     this.parallelActivity = parallelActivity;
+
+    this.thread = Thread.currentThread().getName();
+  }
+
+  @NotNull
+  public String getThread() {
+    return thread;
   }
 
   @Nullable

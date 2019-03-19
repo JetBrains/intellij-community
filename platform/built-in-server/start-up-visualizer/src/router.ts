@@ -11,10 +11,10 @@ Vue.use(Router)
 // to simplify development
 const chartComponentRoutes: Array<RouteConfig> = chartDescriptors.map(it => {
   return {
-    path: `/${it.name}`,
+    path: `/${it.id}`,
     name: it.label,
     component: ItemChart,
-    props: {type: it.name},
+    props: {type: it.id},
   }
 })
 

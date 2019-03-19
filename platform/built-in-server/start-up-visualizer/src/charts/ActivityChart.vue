@@ -6,7 +6,7 @@
 <script lang="ts">
   import {Component, Prop, Watch} from "vue-property-decorator"
   import {ActivityChartManager, ComponentChartManager} from "./ActivityChartManager"
-  import {ActivityChartType} from "@/charts/ActivityChartDescriptor"
+  import {ActivityChartType, chartDescriptors} from "@/charts/ActivityChartDescriptor"
   import {BaseChartComponent} from "@/charts/BaseChartComponent"
 
   @Component
@@ -15,7 +15,7 @@
     type!: ActivityChartType
 
     @Watch("type")
-    typeChanged(_type: any, _oldType: any): void {
+    typeChanged(_type: ActivityChartType, _oldType: ActivityChartType): void {
       const oldChartManager = this.chartManager
       if (oldChartManager != null) {
         oldChartManager.dispose()
@@ -30,23 +30,17 @@
     protected createChartManager(): ActivityChartManager {
       const chartContainer = this.$refs.chartContainer as HTMLElement
       const type = this.type
-      if (type === "components" || type == null) {
-        return new ComponentChartManager(chartContainer)
+      const descriptor = chartDescriptors.find(it => it.id === type)
+      if (descriptor == null) {
+        throw new Error(`Unknown chart type: ${type}`)
       }
-      else if (type === "services") {
-        return new ActivityChartManager(chartContainer, ["appServices", "projectServices", "moduleServices"])
-      }
-      else if (type === "extensions") {
-        return new ActivityChartManager(chartContainer, ["appExtensions", "projectExtensions", "moduleExtensions"])
-      }
-      else if (type === "topHitProviders") {
-        return new ActivityChartManager(chartContainer, ["appOptionsTopHitProviders", "projectOptionsTopHitProviders"])
-      }
-      else if (type === "prepareAppInitActivity") {
-        return new ActivityChartManager(chartContainer, ["prepareAppInitActivities"])
+
+      const sourceNames = descriptor.sourceNames
+      if (type === "components") {
+        return new ComponentChartManager(chartContainer, sourceNames!!)
       }
       else {
-        throw new Error(`Unknown chart type: ${type}`)
+        return new ActivityChartManager(chartContainer, sourceNames == null ? [type] : sourceNames)
       }
     }
   }

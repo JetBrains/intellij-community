@@ -86,14 +86,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected final void init(@NotNull List<? extends IdeaPluginDescriptor> plugins,
                             @Nullable ProgressIndicator indicator,
-                            @Nullable Runnable componentsRegistered,
-                            boolean isNeededToMeasure) {
-    Activity totalActivity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix() + Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
+                            @Nullable Runnable componentsRegistered) {
+    String activityNamePrefix = activityNamePrefix();
+    boolean isNeededToMeasure = activityNamePrefix != null;
+    Activity totalActivity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
 
     final Application app = ApplicationManager.getApplication();
     boolean headless = app == null || app.isHeadlessEnvironment();
 
-    String activityNamePrefix = StringUtil.notNullize(activityNamePrefix());
     Activity activity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX) : null;
     int componentConfigCount = 0;
     for (IdeaPluginDescriptor plugin : plugins) {

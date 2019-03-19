@@ -3,6 +3,7 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.components.ComponentConfig;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -24,10 +25,13 @@ final class DefaultProject extends ProjectImpl {
     return true; // no startup activities, never opened
   }
 
-  @NotNull
+  @Nullable
   @Override
   protected String activityNamePrefix() {
-    return "default project ";
+    // exclude from measurement because default project initialization is not a sequential activity
+    // (so, complicates timeline because not applicable)
+    // for now we don't measure default project initialization at all, because it takes only ~10 ms
+    return null;
   }
 
   @Override
