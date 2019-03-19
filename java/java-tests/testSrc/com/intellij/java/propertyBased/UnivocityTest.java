@@ -18,10 +18,13 @@ package com.intellij.java.propertyBased;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -67,7 +70,15 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
         }
 
         env.executeCommands(Generator.constant(env1 -> {
-          PsiJavaFile file = env1.generateValue(psiJavaFiles(), "Open %s in editor");
+          PsiJavaFile file = env1.generateValue(psiJavaFiles(), null);
+          env1.logMessage("Open " + file.getVirtualFile().getPath() + " in editor");
+          if ("Example.java".equals(file.getName())) {
+            env1.logMessage("OutputTester class: " + JavaPsiFacade.getInstance(myProject).findClass("com.univocity.test.OutputTester", GlobalSearchScope.allScope(myProject)));
+            env1.logMessage("OutputTester files: " + Arrays.toString(
+                                FilenameIndex.getFilesByName(myProject, "OutputTester.java", GlobalSearchScope.allScope(myProject))));
+            env1.logMessage("content roots: " + Arrays.toString(
+              ModuleRootManager.getInstance(ModuleManager.getInstance(myProject).getModules()[0]).getSourceRoots(true)));
+          }
           env1.executeCommands(IntDistribution.uniform(1, 5), Generator.constant(new InvokeIntention(file, new JavaGreenIntentionPolicy())));
         }));
 
