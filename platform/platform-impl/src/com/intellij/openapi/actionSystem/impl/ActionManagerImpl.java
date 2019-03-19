@@ -612,7 +612,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     synchronized (myLock) {
       if (Boolean.valueOf(element.getAttributeValue(OVERRIDES_ATTR_NAME))) {
         if (getActionOrStub(id) == null) {
-          throw new RuntimeException(element.getName() + " '" + id + "' doesn't override anything");
+          LOG.error(element.getName() + " '" + id + "' doesn't override anything");
+          return;
         }
         AnAction prev = replaceAction(id, action, pluginId);
         if (action instanceof DefaultActionGroup && prev instanceof DefaultActionGroup) {
