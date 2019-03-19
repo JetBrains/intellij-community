@@ -69,7 +69,6 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
 
   private JCheckBox myCbHighlightScope;
 
-  private JTextField myClipboardContentLimitTextField;
   private JCheckBox  myCbSmoothScrolling;
   private JCheckBox  myCbVirtualPageAtBottom;
   private JCheckBox  myCbEnableDnD;
@@ -184,9 +183,6 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
     myCbCaretInsideTabs.setSelected(editorSettings.isCaretInsideTabs());
     myCbVirtualPageAtBottom.setSelected(editorSettings.isAdditionalPageAtBottom());
 
-    // Limits
-    myClipboardContentLimitTextField.setText(Integer.toString(uiSettings.getMaxClipboardContents()));
-
     // Strip trailing spaces on save
 
     String stripTrailingSpaces = editorSettings.getStripTrailingSpaces();
@@ -277,21 +273,6 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
     editorSettings.setCaretInsideTabs(myCbCaretInsideTabs.isSelected());
     editorSettings.setAdditionalPageAtBottom(myCbVirtualPageAtBottom.isSelected());
 
-    // Limits
-
-
-
-    boolean uiSettingsChanged = false;
-    int maxClipboardContents = getMaxClipboardContents();
-    if (uiSettings.getMaxClipboardContents() != maxClipboardContents) {
-      uiSettings.getState().setMaxClipboardContents(maxClipboardContents);
-      uiSettingsChanged = true;
-    }
-
-    if(uiSettingsChanged){
-      uiSettings.fireUISettingsChanged();
-    }
-
     // Strip trailing spaces on save
 
     if(STRIP_NONE.equals(myStripTrailingSpacesCombo.getSelectedItem())) {
@@ -346,6 +327,7 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
 
     reinitAllEditors();
 
+    boolean uiSettingsChanged = false;
     String temp=myRecentFilesLimitField.getText();
     if(temp.trim().length() > 0){
       try {
@@ -436,22 +418,10 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
     return ConfigurableWrapper.createConfigurables(ErrorOptionsProviderEP.EP_NAME);
   }
 
-  private int getMaxClipboardContents(){
-    int maxClipboardContents = -1;
-    try {
-      maxClipboardContents = Integer.parseInt(myClipboardContentLimitTextField.getText());
-    } catch (NumberFormatException ignored) {}
-    if (maxClipboardContents <= 0) {
-      maxClipboardContents = 1;
-    }
-    return maxClipboardContents;
-  }
-
   @Override
   public boolean isModified() {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-    UISettings uiSettings=UISettings.getInstance();
     VcsApplicationSettings vcsSettings = VcsApplicationSettings.getInstance();
 
     // Display
@@ -471,11 +441,6 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
     isModified |= isModified(myCbVirtualSpace, editorSettings.isVirtualSpace());
     isModified |= isModified(myCbCaretInsideTabs, editorSettings.isCaretInsideTabs());
     isModified |= isModified(myCbVirtualPageAtBottom, editorSettings.isAdditionalPageAtBottom());
-
-    // Limits
-
-
-    isModified |= getMaxClipboardContents() != uiSettings.getMaxClipboardContents();
 
     // Paste
 
