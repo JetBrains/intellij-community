@@ -89,6 +89,7 @@ public class IdeaApplication {
     LOG.assertTrue(ourInstance == null);
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourInstance = this;
+
     myArgs = processProgramArguments(args);
     boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
     boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
@@ -133,7 +134,7 @@ public class IdeaApplication {
    */
   @NotNull
   private static String[] processProgramArguments(@NotNull String[] args) {
-    ArrayList<String> arguments = new ArrayList<>();
+    List<String> arguments = new ArrayList<>();
     List<String> safeKeys = Arrays.asList(SAFE_JAVA_ENV_PARAMETERS);
     for (String arg : args) {
       if (arg.startsWith("-D")) {
@@ -154,7 +155,9 @@ public class IdeaApplication {
 
   private static void patchSystem(boolean headless) {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(headless);
-    LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors()+"; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() + "; factory: " + ForkJoinPool.commonPool().getFactory());
+    LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors() +
+             "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() +
+             "; factory: " + ForkJoinPool.commonPool().getFactory());
 
     System.setProperty("sun.awt.noerasebackground", "true");
 
@@ -319,8 +322,7 @@ public class IdeaApplication {
     public void main(String[] args) {
       SystemDock.updateMenu();
 
-      // if OS has dock, RecentProjectsManager will be already created, but not all OS have dock, so, we trigger creation here to ensure that RecentProjectsManager app listener will be added
-      RecentProjectsManager.getInstance();
+      RecentProjectsManager.getInstance();  // ensures that RecentProjectsManager app listener is added
 
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other

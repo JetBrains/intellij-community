@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
@@ -69,11 +68,9 @@ public class AppUIUtil {
   private static boolean ourMacDocIconSet = false;
 
   public static void updateWindowIcon(@NotNull Window window) {
-    if (SystemInfo.isWindows &&
-        SystemProperties.getBooleanProperty("ide.native.launcher", false) &&
-        SystemProperties.getBooleanProperty("jbre.win.app.icon.supported", false)) // todo[tav] defined by JBRE, remove when OpenJDK supports it as well
-    {
-      return; // JDK will load icon from the exe resource
+    // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
+    if (SystemInfo.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported")) {
+      return;  // JDK will load icon from the exe resource
     }
 
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
@@ -161,7 +158,7 @@ public class AppUIUtil {
   }
 
   public static void updateFrameClass(@NotNull Toolkit toolkit) {
-    if (SystemInfoRt.isWindows || SystemInfoRt.isMac) {
+    if (SystemInfo.isWindows || SystemInfo.isMac) {
       return;
     }
 
