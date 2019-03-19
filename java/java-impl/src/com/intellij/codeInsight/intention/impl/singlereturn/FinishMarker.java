@@ -70,14 +70,21 @@ class FinishMarker {
    */
   static boolean mayNeedMarker(PsiReturnStatement returnStatement, PsiCodeBlock block) {
     PsiElement parent = returnStatement.getParent();
-    if (parent instanceof PsiCodeBlock) {
+    while (parent instanceof PsiCodeBlock) {
       PsiElement grandParent = parent.getParent();
-      if (grandParent instanceof PsiStatement) {
+      if (grandParent instanceof PsiBlockStatement) {
         parent = grandParent.getParent();
+        continue;
       }
-      else {
-        return parent != block;
+      if (grandParent instanceof PsiCatchSection) {
+        parent = grandParent.getParent();
+        break;
       }
+      if (grandParent instanceof PsiStatement) {
+        parent = grandParent;
+        break;
+      }
+      return parent != block;
     }
     if (!(parent instanceof PsiStatement)) return true;
     PsiStatement currentContext = (PsiStatement)parent;

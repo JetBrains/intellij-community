@@ -6,20 +6,17 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Objects.requireNonNull;
@@ -61,7 +58,7 @@ class ReturnReplacementContext {
   @NotNull
   private PsiStatement goUp() {
     PsiElement parent = myReturnStatement.getParent();
-    if (parent instanceof PsiCodeBlock) {
+    while (parent instanceof PsiCodeBlock) {
       PsiElement grandParent = parent.getParent();
       if (!(grandParent instanceof PsiSwitchStatement)) {
         PsiStatement[] statements = ((PsiCodeBlock)parent).getStatements();
@@ -76,15 +73,23 @@ class ReturnReplacementContext {
           }
         }
       }
-      if (grandParent instanceof PsiBlockStatement || grandParent instanceof PsiTryStatement ||
-          grandParent instanceof PsiSwitchStatement) {
+      if (grandParent instanceof PsiBlockStatement) {
         parent = grandParent.getParent();
+        continue;
+      }
+      if (grandParent instanceof PsiCatchSection) {
+        parent = grandParent.getParent();
+        break;
+      }
+      if (grandParent instanceof PsiStatement) {
+        parent = grandParent;
       }
       else if (parent != myBlock) {
         throw new RuntimeExceptionWithAttachments("Unexpected structure: " + grandParent.getClass(),
                                                   new Attachment("body.txt", myBlock.getText()),
                                                   new Attachment("context.txt", grandParent.getText()));
       }
+      break;
     }
     if (!(parent instanceof PsiStatement)) {
       throw new RuntimeExceptionWithAttachments("Unexpected structure: " + parent.getClass(),
@@ -154,7 +159,8 @@ class ReturnReplacementContext {
             PsiElement tailEnd = ArrayUtil.getLastElement(tail);
             ifBlock.addRangeAfter(tailStart, tailEnd, lBrace);
             contextParent.deleteChildRange(tailStart, tailEnd);
-            contextParent.addAfter(ifStatement, currentContext);
+            PsiElement insertedIf = contextParent.addAfter(ifStatement, currentContext);
+            fixNonInitializedVars(insertedIf);
           }
         }
       }
@@ -163,6 +169,9 @@ class ReturnReplacementContext {
       }
       else if (contextParent.getParent() instanceof PsiStatement) {
         currentContext = (PsiStatement)contextParent.getParent();
+      }
+      else if (contextParent.getParent() instanceof PsiCatchSection) {
+        currentContext = (PsiStatement)contextParent.getParent().getParent();
       }
       else {
         throw new RuntimeExceptionWithAttachments("Unexpected structure: " + contextParent.getParent().getClass(),
@@ -179,6 +188,35 @@ class ReturnReplacementContext {
                                                 new Attachment("context.txt", contextParent.getText()));
     }
     return currentContext;
+  }
+
+  private void fixNonInitializedVars(PsiElement element) {
+    Set<PsiLocalVariable> locals = new HashSet<>();
+    PsiTreeUtil.processElements(element, e -> {
+      if (e instanceof PsiReferenceExpression) {
+        PsiLocalVariable variable = ExpressionUtils.resolveLocalVariable((PsiExpression)e);
+        if (variable != null && variable.getInitializer() == null && PsiTreeUtil.isAncestor(myBlock, variable, true)) {
+          locals.add(variable);
+        }
+      }
+      return true;
+    });
+    if (!locals.isEmpty()) {
+      ControlFlow flow;
+      try {
+        flow = ControlFlowFactory.getInstance(myProject).getControlFlow(myBlock, new LocalsControlFlowPolicy(myBlock), false, false);
+      }
+      catch (AnalysisCanceledException ignored) {
+        return;
+      }
+      int offset = flow.getStartOffset(element);
+      if (offset == -1) return;
+      for (PsiLocalVariable local : locals) {
+        if (ControlFlowUtil.getVariablePossiblyUnassignedOffsets(local, flow)[offset]) {
+          local.setInitializer(myFactory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(local.getType()), null));
+        }
+      }
+    }
   }
 
   @NotNull
@@ -236,7 +274,7 @@ class ReturnReplacementContext {
   }
 
   private void replace() {
-    if (!(myReturnStatement.getParent().getParent() instanceof PsiBlockStatement)) {
+    if (!(myReturnStatement.getParent() instanceof PsiCodeBlock)) {
       myReturnStatement = BlockUtils.expandSingleStatementToBlockStatement(myReturnStatement);
     }
     PsiStatement[] newStatements = ContainerUtil.map2Array(
