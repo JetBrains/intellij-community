@@ -438,7 +438,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
             LOG.error(e);
           }
         }
-      }, true);
+      });
 
       Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
       ExtensionPoint<ApplicationInitializedListener> initializedExtensionPoint = ApplicationInitializedListener.EP_NAME.getPoint(null);

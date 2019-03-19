@@ -5,22 +5,11 @@ import {XYChartManager} from "@/charts/ChartManager"
 import {DataManager} from "@/state/DataManager"
 import {Item} from "@/state/data"
 
-export type ComponentProviderSourceNames = "appComponents" | "projectComponents" | "moduleComponents"
-export type ServiceProviderSourceNames = "appServices" | "projectServices" | "moduleServices"
-export type ExtensionProviderSourceNames = "appExtensions" | "projectExtensions" | "moduleExtensions"
-export type TopHitProviderSourceNames = "appOptionsTopHitProviders" | "projectOptionsTopHitProviders"
-export type PrepareAppInitSourceNames = "prepareAppInitActivities"
-
 export class ActivityChartManager extends XYChartManager {
   private legendHitHandler: ((item: LegendItem, isActive: boolean) => void) | null = null
 
   // isUseYForName - if true, names are more readable, but not possible to see all components because layout from top to bottom (so, opposite from left to right some data can be out of current screen)
-  constructor(container: HTMLElement,
-              private readonly sourceNames: Array<ComponentProviderSourceNames>
-                | Array<TopHitProviderSourceNames>
-                | Array<ServiceProviderSourceNames>
-                | Array<ExtensionProviderSourceNames>
-                | Array<PrepareAppInitSourceNames>) {
+  constructor(container: HTMLElement, private readonly sourceNames: Array<string>) {
     super(container, module.hot)
 
     this.configureNameAxis()
@@ -95,7 +84,7 @@ export class ActivityChartManager extends XYChartManager {
     series.dataFields.categoryX = "shortName"
     series.dataFields.valueY = "duration"
     series.columns.template.configField = "chartConfig"
-    series.columns.template.tooltipText = "{name}: {duration} ms\nrange: {start}-{end}"
+    series.columns.template.tooltipText = "{name}: {duration} ms\nrange: {start}-{end}\nthread: {thread}"
   }
 
   // https://www.amcharts.com/docs/v4/concepts/series/#Note_about_Series_data_and_Category_axis
@@ -115,6 +104,7 @@ export class ActivityChartManager extends XYChartManager {
 
       // generate color before - even if no data for this type of items, still color should be the same regardless of current data set
       // so, if currently no data for project, but there is data for modules, color for modules should use index 3 and not 2
+      // @ts-ignore
       const items = data.data[sourceName]
       if (items == null || items.length === 0) {
         continue
@@ -175,7 +165,10 @@ export class ActivityChartManager extends XYChartManager {
     const nameAxis = this.nameAxis
     nameAxis.axisRanges.clear()
     for (const guideLineDescriptor of data.computeGuides(items)) {
-      this.createRangeMarker(nameAxis, guideLineDescriptor.item as ClassItem, guideLineDescriptor.label)
+      // do not add range marker if equals to first item - it means that all items beyond of phase (e.g. project post-startup activities)
+      if (guideLineDescriptor.item !== items[0]) {
+        this.createRangeMarker(nameAxis, guideLineDescriptor.item as ClassItem, guideLineDescriptor.label)
+      }
     }
   }
 
@@ -207,8 +200,8 @@ function getShortName(item: Item): string {
 }
 
 export class ComponentChartManager extends ActivityChartManager {
-  constructor(container: HTMLElement) {
-    super(container, ["appComponents", "projectComponents", "moduleComponents"])
+  constructor(container: HTMLElement, sourceNames: Array<string>) {
+    super(container, sourceNames)
   }
 
   // doesn't make sense for components - cannot be outside of ready, and app initialized is clear

@@ -46,6 +46,7 @@ public final class StartUpMeasurer {
     public static final String PROJECT_STARTUP = "project startup";
 
     public static final String PROJECT_DUMB_POST_STARTUP = "project dumb post-startup";
+    public static final String RUN_PROJECT_POST_STARTUP_ACTIVITIES = "project post-startup activities";
 
     public static final String LOAD_MODULES = "module loading";
   }

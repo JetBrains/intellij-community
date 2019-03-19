@@ -108,7 +108,7 @@ export class TimelineChartManager extends XYChartManager {
     this.chart.data = this.transformIjData(originalItems)
 
     const durationAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
-    durationAxis.max = originalItems.length === 0 ? 0 : originalItems[originalItems.length - 1].end
+    durationAxis.max = Math.max(data.data.totalDurationComputed, data.data.totalDurationActual)
   }
 
   private setStatsLabel(data: DataManager) {
