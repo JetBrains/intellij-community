@@ -68,7 +68,6 @@ public abstract class AppIcon {
 
   public abstract void requestFocus(IdeFrame frame);
 
-
   private static abstract class BaseIcon extends AppIcon {
     private ApplicationActivationListener myAppListener;
     protected Object myCurrentProcessId;
@@ -147,7 +146,6 @@ public abstract class AppIcon {
       return app != null && app.isActive();
     }
   }
-
 
   @SuppressWarnings("UseJBColor")
   static class MacAppIcon extends BaseIcon {
@@ -366,7 +364,6 @@ public abstract class AppIcon {
     }
   }
 
-
   @SuppressWarnings("UseJBColor")
   private static class Win7AppIcon extends BaseIcon {
     @Override
@@ -420,13 +417,13 @@ public abstract class AppIcon {
 
       try (ByteArrayOutputStream os = new ByteArrayOutputStream();
            BinaryOutputStream bos = new BinaryOutputStream(os, ByteOrder.LITTLE_ENDIAN)) {
-        int scanline_size = (bitCount * src.getWidth() + 7) / 8;
-        if ((scanline_size % 4) != 0)
-          scanline_size += 4 - (scanline_size % 4); // pad scanline to 4 byte size.
-        int t_scanline_size = (src.getWidth() + 7) / 8;
-        if ((t_scanline_size % 4) != 0)
-          t_scanline_size += 4 - (t_scanline_size % 4); // pad scanline to 4 byte size.
-        int imageSize = 40 + src.getHeight() * scanline_size + src.getHeight() * t_scanline_size;
+        int scan_line_size = (bitCount * src.getWidth() + 7) / 8;
+        if ((scan_line_size % 4) != 0)
+          scan_line_size += 4 - (scan_line_size % 4); // pad scan line to 4 byte size.
+        int t_scan_line_size = (src.getWidth() + 7) / 8;
+        if ((t_scan_line_size % 4) != 0)
+          t_scan_line_size += 4 - (t_scan_line_size % 4); // pad scan line to 4 byte size.
+        int imageSize = 40 + src.getHeight() * scan_line_size + src.getHeight() * t_scan_line_size;
 
         // ICONDIR
         bos.write2Bytes(0); // reserved
@@ -464,7 +461,7 @@ public abstract class AppIcon {
 
         int bit_cache = 0;
         int bits_in_cache = 0;
-        int row_padding = scanline_size - (bitCount * src.getWidth() + 7) / 8;
+        int row_padding = scan_line_size - (bitCount * src.getWidth() + 7) / 8;
         for (int y = src.getHeight() - 1; y >= 0; y--) {
           for (int x = 0; x < src.getWidth(); x++) {
             int argb = src.getRGB(x, y);
@@ -479,7 +476,7 @@ public abstract class AppIcon {
             bos.write(0);
         }
 
-        int t_row_padding = t_scanline_size - (src.getWidth() + 7) / 8;
+        int t_row_padding = t_scan_line_size - (src.getWidth() + 7) / 8;
         for (int y = src.getHeight() - 1; y >= 0; y--) {
           for (int x = 0; x < src.getWidth(); x++) {
             int argb = src.getRGB(x, y);
@@ -505,6 +502,7 @@ public abstract class AppIcon {
           for (int x = 0; x < t_row_padding; x++)
             bos.write(0);
         }
+
         return os.toByteArray();
       }
     }
@@ -605,7 +603,7 @@ public abstract class AppIcon {
     public void _requestAttention(IdeFrame frame, boolean critical) {
       try {
         if (isValid(frame)) {
-          Win7TaskBar.attention(frame, critical);
+          Win7TaskBar.attention(frame);
         }
       }
       catch (Throwable e) {
@@ -625,7 +623,6 @@ public abstract class AppIcon {
       return frame != null && ((Component)frame).isDisplayable();
     }
   }
-
 
   private static class EmptyIcon extends AppIcon {
     @Override
@@ -653,13 +650,11 @@ public abstract class AppIcon {
 
   private static void assertIsDispatchThread() {
     Application app = ApplicationManager.getApplication();
-    if (app != null) {
-      if (!app.isUnitTestMode()) {
-        app.assertIsDispatchThread();
-      }
-    }
-    else {
+    if (app == null) {
       assert EventQueue.isDispatchThread();
+    }
+    else if (!app.isUnitTestMode()) {
+      app.assertIsDispatchThread();
     }
   }
 }

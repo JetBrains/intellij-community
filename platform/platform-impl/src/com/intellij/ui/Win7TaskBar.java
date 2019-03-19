@@ -47,9 +47,9 @@ class Win7TaskBar {
   public interface User32Ex extends StdCallLibrary {
     User32Ex INSTANCE = Native.loadLibrary("user32", User32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
 
-    int LookupIconIdFromDirectoryEx(Memory presbits, boolean fIcon, int cxDesired, int cyDesired, int Flags);
+    int LookupIconIdFromDirectoryEx(Memory pResBits, boolean fIcon, int cxDesired, int cyDesired, int Flags);
 
-    WinDef.HICON CreateIconFromResourceEx(Pointer presbits,
+    WinDef.HICON CreateIconFromResourceEx(Pointer pResBits,
                                           WinDef.DWORD dwResSize,
                                           boolean fIcon,
                                           WinDef.DWORD dwVer,
@@ -57,6 +57,7 @@ class Win7TaskBar {
                                           int cyDesired,
                                           int Flags);
 
+    @SuppressWarnings("UnusedReturnValue")
     boolean FlashWindow(WinDef.HWND hwnd, boolean bInvert);
   }
 
@@ -66,8 +67,8 @@ class Win7TaskBar {
     try {
       initialized = initialize();
     }
-    catch (Throwable e) {
-      LOG.error(e);
+    catch (Throwable t) {
+      LOG.error(t);
     }
     ourInitialized = initialized;
   }
@@ -80,12 +81,12 @@ class Win7TaskBar {
     Ole32 ole32 = Ole32.INSTANCE;
     ole32.CoInitializeEx(Pointer.NULL, 0);
 
-    Guid.GUID CLSID_TaskbarList = Ole32Util.getGUIDFromString("{56FDF344-FD6D-11d0-958A-006097C9A090}");
-    Guid.GUID IID_ITaskbarList3 = Ole32Util.getGUIDFromString("{EA1AFB91-9E28-4B86-90E9-9E9F8A5EEFAF}");
+    Guid.GUID CLSID_TaskBarList = Ole32Util.getGUIDFromString("{56FDF344-FD6D-11d0-958A-006097C9A090}");
+    Guid.GUID IID_ITaskBarList3 = Ole32Util.getGUIDFromString("{EA1AFB91-9E28-4B86-90E9-9E9F8A5EEFAF}");
     PointerByReference p = new PointerByReference();
-    WinNT.HRESULT hr = ole32.CoCreateInstance(CLSID_TaskbarList, Pointer.NULL, ObjBase.CLSCTX_ALL, IID_ITaskbarList3, p);
-    if (!W32Errors.S_OK.equals(hr)) {
-      LOG.error("Win7TaskBar CoCreateInstance(IID_ITaskbarList3) hResult: " + hr);
+    WinNT.HRESULT hr = ole32.CoCreateInstance(CLSID_TaskBarList, Pointer.NULL, ObjBase.CLSCTX_ALL, IID_ITaskBarList3, p);
+    if (!WinError.S_OK.equals(hr)) {
+      LOG.error("Win7TaskBar CoCreateInstance(IID_ITaskBarList3) hResult: " + hr);
       return false;
     }
 
@@ -102,7 +103,7 @@ class Win7TaskBar {
   }
 
   static void setProgress(IdeFrame frame, double value, boolean isOk) {
-    if (!isEnabled()) {
+    if (!ourInitialized) {
       return;
     }
 
@@ -111,12 +112,8 @@ class Win7TaskBar {
     mySetProgressValue.invokeInt(new Object[]{myInterfacePointer, handle, new WinDef.ULONGLONG((long)(value * 100)), TOTAL_PROGRESS});
   }
 
-  private static boolean isEnabled() {
-    return ourInitialized;
-  }
-
   static void hideProgress(IdeFrame frame) {
-    if (!isEnabled()) {
+    if (!ourInitialized) {
       return;
     }
 
@@ -124,7 +121,7 @@ class Win7TaskBar {
   }
 
   static void setOverlayIcon(IdeFrame frame, Object icon, boolean dispose) {
-    if (!isEnabled()) {
+    if (!ourInitialized) {
       return;
     }
 
@@ -138,7 +135,7 @@ class Win7TaskBar {
   }
 
   static Object createIcon(byte[] ico) {
-    if (!isEnabled()) {
+    if (!ourInitialized) {
       return new Object();
     }
 
@@ -159,8 +156,8 @@ class Win7TaskBar {
     }
   }
 
-  static void attention(IdeFrame frame, boolean critical) {
-    if (!isEnabled()) {
+  static void attention(IdeFrame frame) {
+    if (!ourInitialized) {
       return;
     }
 
