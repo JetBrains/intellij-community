@@ -3,6 +3,7 @@ package com.jetbrains.changeReminder.commit.handle
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
@@ -129,6 +130,9 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
         userSettings.updateState(UserSettings.Companion.UserAction.COMMIT)
         ReturnResult.COMMIT
       }
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
     }
     catch (e: Exception) {
       LOG.error("Unexpected problem with ChangeReminder prediction", e)
