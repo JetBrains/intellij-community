@@ -58,6 +58,10 @@ public class ProcessOutputType extends Key {
     return getBaseOutputType() == ProcessOutputTypes.STDERR;
   }
 
+  public boolean isSystem() {
+    return getBaseOutputType() == ProcessOutputTypes.SYSTEM;
+  }
+
   public static boolean isStderr(@NotNull Key key) {
     return key instanceof ProcessOutputType && ((ProcessOutputType)key).isStderr();
   }
@@ -65,6 +69,8 @@ public class ProcessOutputType extends Key {
   public static boolean isStdout(@NotNull Key key) {
     return key instanceof ProcessOutputType && ((ProcessOutputType)key).isStdout();
   }
+
+  public static boolean isSystem(@NotNull Key key) {return key instanceof ProcessOutputType && ((ProcessOutputType)key).isSystem();}
 
   @NotNull
   public static String getKeyNameForLogging(@NotNull Key key) {
