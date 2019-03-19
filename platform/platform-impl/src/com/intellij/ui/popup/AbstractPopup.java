@@ -1139,11 +1139,11 @@ public class AbstractPopup implements JBPopup {
     myContent.addMouseListener(mouseAdapter);
     Disposer.register(this, () -> myContent.removeMouseListener(mouseAdapter));
 
-    myContent.registerKeyboardAction(__ -> {
-      if (myCancelKeyEnabled) {
+    if (myCancelKeyEnabled) {
+      myContent.registerKeyboardAction(__ -> {
         cancel();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }
 
 
     myContent.addKeyListener(mySpeedSearch);
