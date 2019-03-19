@@ -465,10 +465,10 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   @NotNull
   private static <K, V> UpdatableIndex<K, V, FileContent> createIndex(@NotNull final FileBasedIndexExtension<K, V> extension,
-                                                               @NotNull final MemoryIndexStorage<K, V> storage)
+                                                                      @NotNull final MemoryIndexStorage<K, V> storage)
     throws StorageException, IOException {
     return extension instanceof CustomImplementationFileBasedIndexExtension
-           ? ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(extension, storage)
+           ? ((CustomImplementationFileBasedIndexExtension<K, V>)extension).createIndexImplementation(extension, storage)
            : new VfsAwareMapReduceIndex<>(extension, storage);
   }
 
