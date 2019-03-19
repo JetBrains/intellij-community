@@ -1003,6 +1003,8 @@
     <extensionPoint name="trafficLightRendererContributor" interface="com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor"/>
 
     <extensionPoint name="implementationViewSessionFactory" interface="com.intellij.codeInsight.hint.ImplementationViewSessionFactory"/>
+
+    <extensionPoint name="scriptedExtensionsProvider" interface="com.intellij.ide.script.ScriptedExtensionsProvider"/>
   </extensionPoints>
 </idea-plugin>
 
