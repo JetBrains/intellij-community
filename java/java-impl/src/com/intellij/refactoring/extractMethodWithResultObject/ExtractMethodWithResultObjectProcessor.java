@@ -8,12 +8,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.extractMethod.ControlFlowWrapper;
+import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author Pavel.Dolgov
@@ -25,22 +28,33 @@ public class ExtractMethodWithResultObjectProcessor {
   private final Editor myEditor;
   private final PsiElement[] myElements;
   private final PsiExpression myExpression;
+  private final PsiElement myCodeFragment;
   private final PsiElement myCodeFragmentMember;
   private final Map<PsiReferenceExpression, PsiVariable> myInputs = new HashMap<>();
   private final Set<PsiVariable> myOutputVariables = new HashSet<>();
-  private final List<PsiExpression> myReturnValues = new ArrayList<>();
+  private final Map<PsiExpression, ReturnType> myReturnValues = new HashMap<>();
 
   private PsiClass myTargetClass;
   private PsiElement myAnchor;
 
   @NonNls static final String REFACTORING_NAME = "Extract Method With Result Object";
 
+  private enum ReturnType {
+    EXPRESSION,
+    INSIDE,
+    OUTSIDE,
+    UNDEFINED
+  }
+
   public ExtractMethodWithResultObjectProcessor(@NonNls Project project, @NonNls Editor editor, @NonNls PsiElement[] elements) {
+    if (elements.length == 0) {
+      throw new IllegalArgumentException("elements.length");
+    }
     myProject = project;
     myEditor = editor;
 
     PsiExpression expression = null;
-    if (elements.length != 0 && elements[0] instanceof PsiExpression) {
+    if (elements[0] instanceof PsiExpression) {
       expression = (PsiExpression)elements[0];
       if (expression.getParent() instanceof PsiExpressionStatement) {
         elements = new PsiElement[]{expression.getParent()};
@@ -51,8 +65,8 @@ public class ExtractMethodWithResultObjectProcessor {
     myElements = elements;
     myExpression = expression;
 
-    PsiElement codeFragment = ControlFlowUtil.findCodeFragment(elements[0]);
-    myCodeFragmentMember = getCodeFragmentMember(codeFragment);
+    myCodeFragment = ControlFlowUtil.findCodeFragment(elements[0]);
+    myCodeFragmentMember = getCodeFragmentMember(myCodeFragment);
   }
 
   Project getProject() {
@@ -78,9 +92,21 @@ public class ExtractMethodWithResultObjectProcessor {
 
   public boolean prepare() {
     LOG.info("prepare");
+    if (myElements.length == 0) {
+      return false;
+    }
+
+    ControlFlowWrapper controlFlowWrapper;
+    try {
+      controlFlowWrapper = new ControlFlowWrapper(myProject, myCodeFragment, myElements);
+    }
+    catch (PrepareFailedException e) {
+      return false;
+    }
 
     collectInputsAndOutputs();
     collectDeclaredInsideUsedAfter();
+    collectReturnedImmediatelyAfter(controlFlowWrapper);
 
     chooseTargetClass();
     chooseAnchor();
@@ -138,7 +164,7 @@ public class ExtractMethodWithResultObjectProcessor {
         if (!myExpressionsOnly) {
           PsiExpression returnValue = statement.getReturnValue();
           if (returnValue != null) {
-            myReturnValues.add(returnValue);
+            myReturnValues.put(returnValue, ReturnType.INSIDE);
           }
         }
       }
@@ -170,7 +196,7 @@ public class ExtractMethodWithResultObjectProcessor {
       element.accept(elementsVisitor);
     }
     if (myExpression != null) {
-      myReturnValues.add(myExpression);
+      myReturnValues.put(myExpression, ReturnType.EXPRESSION);
     }
   }
 
@@ -206,6 +232,18 @@ public class ExtractMethodWithResultObjectProcessor {
     }
   }
 
+  private void collectReturnedImmediatelyAfter(ControlFlowWrapper controlFlowWrapper) {
+    try {
+      controlFlowWrapper.prepareExitStatements(myElements, myCodeFragment);
+      if (controlFlowWrapper.isGenerateConditionalExit()) {
+        myReturnValues.put(null, ReturnType.OUTSIDE);
+      }
+    }
+    catch (ControlFlowWrapper.ExitStatementsNotSameException e) {
+      myReturnValues.put(null, ReturnType.UNDEFINED);
+    }
+  }
+
   private void processPossibleOutput(PsiVariable variable) {
     if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
       if (PsiTreeUtil.isAncestor(myCodeFragmentMember, variable, true)) {
@@ -238,15 +276,18 @@ public class ExtractMethodWithResultObjectProcessor {
     LOG.warn("doRefactoring");
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
-    dumpElements(myReturnValues, factory, "out");
+    dumpTexts(myReturnValues.entrySet().stream().map(e -> e.getValue() + " " + e.getKey()), factory, "out");
     dumpElements(myOutputVariables, factory, "out");
     dumpElements(new HashSet<>(myInputs.values()), factory, "in");
     dumpText(factory, "ins and outs");
   }
 
   private void dumpElements(Collection<? extends PsiElement> elements, PsiElementFactory factory, String prefix) {
-    elements.stream()
-      .map(PsiElement::toString)
+    dumpTexts(elements.stream().map(PsiElement::toString), factory, prefix);
+  }
+
+  private void dumpTexts(Stream<String> elements, PsiElementFactory factory, String prefix) {
+    elements
       .sorted(Comparator.reverseOrder())
       .forEach(text -> dumpText(factory, prefix + ": " + text));
   }

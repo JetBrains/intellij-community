@@ -3,5 +3,5 @@ class Test {
         boolean isDirty = i == 0 || otherTests();
     }//ins and outs
 //in: PsiParameter:i
-//out: PsiBinaryExpression:i == 0
+//out: EXPRESSION PsiBinaryExpression:i == 0
 }

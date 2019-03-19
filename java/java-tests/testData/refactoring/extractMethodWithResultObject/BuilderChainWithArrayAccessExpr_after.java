@@ -4,7 +4,7 @@ class UseBuilder {
     }//ins and outs
 //in: PsiParameter:arr
 //in: PsiParameter:builder
-//out: PsiMethodCallExpression:builder.foo("xyz").bar(arr[0])
+//out: EXPRESSION PsiMethodCallExpression:builder.foo("xyz").bar(arr[0])
 
     static class Builder {
         Builder foo(String s) {

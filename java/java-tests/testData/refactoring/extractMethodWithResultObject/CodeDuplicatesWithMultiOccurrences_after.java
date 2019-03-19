@@ -4,5 +4,5 @@ class Test {
         System.out.println("f = " + f + ", " + m.get(f));
     }//ins and outs
 //in: PsiLocalVariable:f
-//out: PsiReferenceExpression:f
+//out: EXPRESSION PsiReferenceExpression:f
 }
