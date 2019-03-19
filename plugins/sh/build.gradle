@@ -3,30 +3,29 @@ plugins {
 }
 
 version = "${version}.$buildNumber"
-allprojects {
-    apply plugin: 'java'
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
-    tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 
-    sourceSets {
-        main {
-            java.srcDirs 'src', 'gen'
-            resources.srcDirs 'resources'
-        }
-        test {
-            java.srcDir 'tests'
-        }
-    }
+apply plugin: 'java'
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
+tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 
-    apply plugin: 'org.jetbrains.intellij'
-    intellij {
-        version ideaVersion
-        downloadSources Boolean.valueOf(sources)
-        sameSinceUntilBuild Boolean.valueOf(isEAP)
-        alternativeIdePath localIdePath
-        updateSinceUntilBuild false
+sourceSets {
+    main {
+        java.srcDirs 'src', 'gen'
+        resources.srcDirs 'resources'
     }
+    test {
+        java.srcDir 'tests'
+    }
+}
+
+apply plugin: 'org.jetbrains.intellij'
+intellij {
+    version ideaVersion
+    downloadSources Boolean.valueOf(sources)
+    sameSinceUntilBuild Boolean.valueOf(isEAP)
+    alternativeIdePath localIdePath
+    updateSinceUntilBuild false
 }
 
 apply plugin: 'idea'
