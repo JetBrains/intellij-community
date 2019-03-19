@@ -2,9 +2,9 @@
 <template>
   <el-tabs v-model="activeName" @tab-click="navigate">
     <!--  use v-once because `charts` is not going to be changed  -->
-    <el-tab-pane v-once v-for="item in charts" :key="item.name" :label="item.label" :name="item.name" lazy>
+    <el-tab-pane v-once v-for="item in charts" :key="item.name" :label="item.label" :name="item.id" lazy>
       <keep-alive>
-        <ActivityChart :type="item.name"/>
+        <ActivityChart :type="item.id"/>
       </keep-alive>
     </el-tab-pane>
   </el-tabs>
@@ -20,7 +20,7 @@
   export default class TabbedCharts extends Vue {
     charts = chartDescriptors
 
-    activeName: ActivityChartType = this.charts[0].name
+    activeName: ActivityChartType = chartDescriptors[0].id
 
     created() {
       this.updateLocation(this.$route)
@@ -34,7 +34,13 @@
     private updateLocation(location: Location): void {
       const tab = location.query == null ? null : location.query.tab
       // do not check `location.path === "/"` because if component displayed, so, active
-      this.activeName = tab == null ? this.charts[0].name : tab as ActivityChartType
+      if (tab == null) {
+        this.activeName = chartDescriptors[0].id
+      }
+      else {
+        const descriptor = chartDescriptors.find(it => it.id === tab)
+        this.activeName = descriptor == null ? chartDescriptors[0].id : descriptor.id
+      }
     }
 
     navigate(): void {

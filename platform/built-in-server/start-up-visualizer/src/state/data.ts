@@ -34,6 +34,8 @@ export interface InputData {
   readonly appOptionsTopHitProviders?: Array<Item>
   readonly projectOptionsTopHitProviders?: Array<Item>
 
+  readonly projectPostStartupActivities?: Array<Item>
+
   readonly totalDurationComputed: number
   readonly totalDurationActual: number
 }
