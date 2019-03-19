@@ -8,5 +8,5 @@ class C {
     void foo() {
       System.out.println(c);
     }//ins and outs
-//out: EXPRESSION PsiReferenceExpression:c
+//exit: EXPRESSION PsiReferenceExpression:c
 }

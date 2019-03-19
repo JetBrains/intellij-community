@@ -11,8 +11,8 @@ class Conditional {
         return new int[0];
     }//ins and outs
 //in: PsiParameter:s
-//out: INSIDE PsiReferenceExpression:n
-//out: OUTSIDE null
+//exit: RETURN PsiMethod:bar<-PsiReferenceExpression:n
+//exit: UNDEFINED
 
     int[] baz(String[] z) {
         if (z != null) {

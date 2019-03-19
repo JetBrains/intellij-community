@@ -11,6 +11,7 @@ class C {
         y.add(str());
         baz();
     }//ins and outs
+//exit: RETURN PsiMethod:foo<-void
 
     private void bar() {
         if (y.isEmpty()) return;

@@ -5,5 +5,5 @@ class C {
 //in: PsiParameter:i
 //in: PsiParameter:j
 //in: PsiParameter:vars
-//out: EXPRESSION PsiMethodCallExpression:vars[i][j].length()
+//exit: EXPRESSION PsiMethodCallExpression:vars[i][j].length()
 }

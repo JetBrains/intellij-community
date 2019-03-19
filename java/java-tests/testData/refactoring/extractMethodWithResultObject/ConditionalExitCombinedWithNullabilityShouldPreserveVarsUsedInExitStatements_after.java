@@ -11,6 +11,6 @@ class X {
   }//ins and outs
 //in: PsiParameter:method
 //in: PsiParameter:testName
-//out: INSIDE PsiBinaryExpression:strings.substring(0) + testName
-//out: OUTSIDE null
+//exit: RETURN PsiMethod:guessTestDataName<-PsiBinaryExpression:strings.substring(0) + testName
+//exit: UNDEFINED
 }

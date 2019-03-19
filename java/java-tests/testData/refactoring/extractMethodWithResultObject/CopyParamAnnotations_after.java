@@ -19,6 +19,6 @@ class X {
     return null;
   }//ins and outs
 //in: PsiParameter:b
-//out: INSIDE PsiMethodCallExpression:fun1(x)
-//out: OUTSIDE null
+//exit: RETURN PsiMethod:fun2<-PsiMethodCallExpression:fun1(x)
+//exit: UNDEFINED
 }

@@ -5,6 +5,6 @@ class A {
      return 1;
    }//ins and outs
 //in: PsiParameter:o
-//out: INSIDE PsiLiteralExpression:0
-//out: OUTSIDE null
+//exit: RETURN PsiMethod:foo<-PsiLiteralExpression:0
+//exit: UNDEFINED
 }

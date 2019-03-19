@@ -5,7 +5,7 @@ class C {
         return i.toString();
     }//ins and outs
 //in: PsiParameter:o
-//out: INSIDE PsiMethodCallExpression:i.toString()
+//exit: RETURN PsiMethod:method<-PsiMethodCallExpression:i.toString()
 
     {
         Integer j = new Integer(Boolean.TRUE.hashCode());

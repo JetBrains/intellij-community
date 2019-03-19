@@ -8,8 +8,8 @@ class Test {
         return null;
     }//ins and outs
 //in: PsiParameter:a
-//out: INSIDE PsiReferenceExpression:n
-//out: OUTSIDE null
+//exit: RETURN PsiMethod:foo<-PsiReferenceExpression:n
+//exit: UNDEFINED
 
     public static Integer bar(Integer[] a) {
         if (a.length != 0) {

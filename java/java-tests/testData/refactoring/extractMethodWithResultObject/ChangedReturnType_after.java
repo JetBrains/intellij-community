@@ -8,7 +8,8 @@ class X {
   }//ins and outs
 //in: PsiParameter:o
 //out: PsiLocalVariable:x
-//out: OUTSIDE null
+//exit: CONTINUE PsiForeachStatement<-PsiContinueStatement
+//exit: UNDEFINED
 
     private String bar(Object o) {
     return "";

@@ -11,6 +11,6 @@ class Foo {
 //in: PsiLocalVariable:i
 //in: PsiLocalVariable:j
 //in: PsiParameter:a
-//out: INSIDE PsiLiteralExpression:true
-//out: OUTSIDE null
+//exit: RETURN PsiMethod:bar<-PsiLiteralExpression:true
+//exit: UNDEFINED
 }

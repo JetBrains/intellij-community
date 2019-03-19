@@ -8,5 +8,5 @@ public /*abstract*/ class WillWorkTest {
     }//ins and outs
 //in: PsiLocalVariable:i
 //out: PsiLocalVariable:k
-//out: INSIDE PsiReferenceExpression:k
+//exit: RETURN PsiMethod:opera<-PsiReferenceExpression:k
 }

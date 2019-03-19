@@ -7,8 +7,8 @@ class Conditional {
         return 0;
     }//ins and outs
 //in: PsiParameter:s
-//out: INSIDE PsiReferenceExpression:n
-//out: OUTSIDE null
+//exit: RETURN PsiMethod:bar<-PsiReferenceExpression:n
+//exit: UNDEFINED
 
     int baz(String z) {
         int x = -1;

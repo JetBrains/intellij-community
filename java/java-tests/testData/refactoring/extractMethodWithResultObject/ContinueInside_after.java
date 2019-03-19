@@ -10,6 +10,6 @@ class Test {
     return null;
   }//ins and outs
 //in: PsiParameter:args
-//out: INSIDE PsiLiteralExpression:null
-//out: OUTSIDE null
+//exit: RETURN PsiMethod:foo<-PsiLiteralExpression:null
+//exit: UNDEFINED
 }

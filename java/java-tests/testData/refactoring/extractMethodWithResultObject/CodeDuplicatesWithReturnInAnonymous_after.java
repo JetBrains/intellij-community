@@ -12,5 +12,5 @@ class Test10 {
       }
     };
   }//ins and outs
-//out: INSIDE PsiLiteralExpression:0
+//exit: RETURN PsiMethod:test<-PsiLiteralExpression:0
 }

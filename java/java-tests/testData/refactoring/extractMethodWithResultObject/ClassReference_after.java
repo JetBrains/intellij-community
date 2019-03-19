@@ -6,7 +6,7 @@ class C {
       return B.getInstance();
     }
   }//ins and outs
-//out: INSIDE PsiMethodCallExpression:A.getInstance()
+//exit: RETURN PsiMethod:foo<-PsiMethodCallExpression:A.getInstance()
 }
 class A {
   static A getInstance() {

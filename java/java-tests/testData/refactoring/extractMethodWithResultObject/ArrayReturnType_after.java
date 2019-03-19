@@ -7,5 +7,5 @@ class Test {
     }
     System.out.println(foos.length);
   }//ins and outs
-//out: EXPRESSION PsiReferenceExpression:foos
+//exit: EXPRESSION PsiReferenceExpression:foos
 }

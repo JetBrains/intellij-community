@@ -8,6 +8,6 @@ class Foo {
     }//ins and outs
 //in: PsiLocalVariable:i
 //in: PsiParameter:a
-//out: INSIDE PsiLiteralExpression:true
-//out: OUTSIDE null
+//exit: RETURN PsiMethod:bar<-PsiLiteralExpression:true
+//exit: UNDEFINED
 }

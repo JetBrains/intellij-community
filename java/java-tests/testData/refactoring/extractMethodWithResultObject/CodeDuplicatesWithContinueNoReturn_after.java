@@ -5,6 +5,7 @@ class C {
         }
     }//ins and outs
 //in: PsiLocalVariable:i
+//exit: CONTINUE PsiForStatement<-PsiContinueStatement
 
     {
         for(int i = 0; i < 10; i++){

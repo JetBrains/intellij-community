@@ -32,18 +32,35 @@ public class ExtractMethodWithResultObjectProcessor {
   private final PsiElement myCodeFragmentMember;
   private final Map<PsiReferenceExpression, PsiVariable> myInputs = new HashMap<>();
   private final Set<PsiVariable> myOutputVariables = new HashSet<>();
-  private final Map<PsiExpression, ReturnType> myReturnValues = new HashMap<>();
+  private final Map<PsiStatement, Exit> myExits = new HashMap<>();
 
   private PsiClass myTargetClass;
   private PsiElement myAnchor;
 
   @NonNls static final String REFACTORING_NAME = "Extract Method With Result Object";
 
-  private enum ReturnType {
+  private enum ExitType {
     EXPRESSION,
-    INSIDE,
-    OUTSIDE,
+    RETURN,
+    BREAK,
+    CONTINUE,
+    SEQUENTIAL, // todo support
     UNDEFINED
+  }
+
+  private static class Exit {
+    final ExitType myType;
+    final PsiElement myExitedElement;
+
+    private Exit(ExitType type, PsiElement element) {
+      myType = type;
+      myExitedElement = element;
+    }
+
+    @Override
+    public String toString() {
+      return myExitedElement != null ? myType + " " + myExitedElement : myType.toString();
+    }
   }
 
   public ExtractMethodWithResultObjectProcessor(@NonNls Project project, @NonNls Editor editor, @NonNls PsiElement[] elements) {
@@ -115,6 +132,7 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   private void collectInputsAndOutputs() {
+    // todo take care of surrounding try-catch
     JavaRecursiveElementWalkingVisitor elementsVisitor = new JavaRecursiveElementWalkingVisitor() {
       private boolean myExpressionsOnly;
 
@@ -162,9 +180,30 @@ public class ExtractMethodWithResultObjectProcessor {
         super.visitReturnStatement(statement);
 
         if (!myExpressionsOnly) {
-          PsiExpression returnValue = statement.getReturnValue();
-          if (returnValue != null) {
-            myReturnValues.put(returnValue, ReturnType.INSIDE);
+          myExits.put(statement, new Exit(ExitType.RETURN, myCodeFragmentMember));
+        }
+      }
+
+      @Override
+      public void visitContinueStatement(PsiContinueStatement statement) {
+        super.visitContinueStatement(statement);
+
+        if (!myExpressionsOnly) {
+          PsiStatement continuedStatement = statement.findContinuedStatement();
+          if (continuedStatement != null && !isInside(continuedStatement)) {
+            myExits.put(statement, new Exit(ExitType.CONTINUE, continuedStatement));
+          }
+        }
+      }
+
+      @Override
+      public void visitBreakStatement(PsiBreakStatement statement) {
+        super.visitBreakStatement(statement);
+
+        if (!myExpressionsOnly) {
+          PsiElement exitedElement = statement.findExitedElement();
+          if (exitedElement != null && !isInside(exitedElement)) {
+            myExits.put(statement, new Exit(ExitType.BREAK, exitedElement));
           }
         }
       }
@@ -196,7 +235,7 @@ public class ExtractMethodWithResultObjectProcessor {
       element.accept(elementsVisitor);
     }
     if (myExpression != null) {
-      myReturnValues.put(myExpression, ReturnType.EXPRESSION);
+      myExits.put(null, new Exit(ExitType.EXPRESSION, myExpression));
     }
   }
 
@@ -242,11 +281,11 @@ public class ExtractMethodWithResultObjectProcessor {
     try {
       controlFlowWrapper.prepareExitStatements(myElements, myCodeFragment);
       if (controlFlowWrapper.isGenerateConditionalExit()) {
-        myReturnValues.put(null, ReturnType.OUTSIDE);
+        myExits.put(null, new Exit(ExitType.UNDEFINED, null));
       }
     }
     catch (ControlFlowWrapper.ExitStatementsNotSameException e) {
-      myReturnValues.put(null, ReturnType.UNDEFINED);
+      myExits.put(null, new Exit(ExitType.UNDEFINED, null));
     }
   }
 
@@ -265,12 +304,16 @@ public class ExtractMethodWithResultObjectProcessor {
 
   private void processPossibleInput(PsiReferenceExpression expression, PsiVariable variable) {
     if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
-      PsiElement context = PsiTreeUtil.findFirstContext(variable, true,
-                                                        e -> e == myCodeFragmentMember || ArrayUtil.find(myElements, e) >= 0);
-      if (context == myCodeFragmentMember) {
+      if (!isInside(variable)) {
         myInputs.put(expression, variable);
       }
     }
+  }
+
+  private boolean isInside(@NotNull PsiElement element) {
+    PsiElement context = PsiTreeUtil.findFirstContext(element, false,
+                                                      e -> e == myCodeFragmentMember || ArrayUtil.find(myElements, e) >= 0);
+    return context != myCodeFragmentMember;
   }
 
   boolean showDialog() {
@@ -282,7 +325,7 @@ public class ExtractMethodWithResultObjectProcessor {
     LOG.warn("doRefactoring");
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
-    dumpTexts(myReturnValues.entrySet().stream().map(e -> e.getValue() + " " + e.getKey()), factory, "out");
+    dumpTexts(myExits.entrySet().stream().map(ExtractMethodWithResultObjectProcessor::getExitText), factory, "exit");
     dumpElements(myOutputVariables, factory, "out");
     dumpElements(new HashSet<>(myInputs.values()), factory, "in");
     dumpText(factory, "ins and outs");
@@ -304,6 +347,19 @@ public class ExtractMethodWithResultObjectProcessor {
     LOG.warn(text);
   }
 
+  private static String getExitText(Map.Entry<PsiStatement, Exit> e) {
+    Exit exit = e.getValue();
+    PsiStatement statement = e.getKey();
+    if (statement instanceof PsiReturnStatement) {
+      PsiExpression value = ((PsiReturnStatement)statement).getReturnValue();
+      return exit + "<-" + (value != null ? value.toString() : PsiKeyword.VOID);
+    }
+    if (statement != null) {
+      return exit + "<-" + statement;
+    }
+    return exit.toString();
+  }
+
   private void chooseTargetClass() {
     myTargetClass = myCodeFragmentMember instanceof PsiMember
                     ? ((PsiMember)myCodeFragmentMember).getContainingClass()
@@ -316,5 +372,4 @@ public class ExtractMethodWithResultObjectProcessor {
       myAnchor = myAnchor.getParent();
     }
   }
-
 }
