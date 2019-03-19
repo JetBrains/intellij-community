@@ -244,6 +244,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myWorkflow = workflow;
     myProject = myWorkflow.getProject();
     myVcsConfiguration = notNull(VcsConfiguration.getInstance(myProject));
+    Disposer.register(getDisposable(), this);
 
     List<? extends CommitExecutor> executors = myWorkflow.getExecutors();
     if (!isDefaultCommitEnabled() && ContainerUtil.isEmpty(executors)) {
