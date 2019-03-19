@@ -145,7 +145,7 @@ class VisiblePackBuilderTest {
     val tempDirectory = FileUtil.getTempDirectory()
     val filePath = object : LocalFilePath(tempDirectory, true) {
       override fun getVirtualFile(): VirtualFile? {
-        return MockVirtualFile("root")
+        return graph.providers.keys.first()
       }
     }
     val filters = VcsLogFilterObject.collection(VcsLogFilterObject.fromRange("master", "feature"),
