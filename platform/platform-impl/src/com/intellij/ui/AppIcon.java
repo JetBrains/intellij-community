@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,7 +46,7 @@ public abstract class AppIcon {
       if (SystemInfo.isMac) {
         ourIcon = new MacAppIcon();
       }
-      else if (SystemInfo.isWin7OrNewer) {
+      else if (SystemInfo.isWin7OrNewer && JnaLoader.isLoaded()) {
         ourIcon = new Win7AppIcon();
       }
       else {

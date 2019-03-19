@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.IdeFrame;
@@ -74,7 +73,7 @@ class Win7TaskBar {
   }
 
   private static boolean initialize() {
-    if (ApplicationManager.getApplication().isUnitTestMode() || !JnaLoader.isLoaded()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       return false;
     }
 
