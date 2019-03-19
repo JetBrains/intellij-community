@@ -1,112 +1,91 @@
-package org.editorconfig.settings;
+package org.editorconfig.settings
 
-import com.intellij.application.options.GeneralCodeStyleOptionsProvider;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
-import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import org.editorconfig.Utils;
-import org.editorconfig.language.messages.EditorConfigBundle;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.application.options.GeneralCodeStyleOptionsProvider
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.util.messages.MessageBus
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import org.editorconfig.Utils
+import org.editorconfig.language.messages.EditorConfigBundle
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.*
+import java.awt.*
 
 /**
  * @author Dennis.Ushakov
  */
-public class EditorConfigConfigurable extends CodeStyleSettingsProvider implements GeneralCodeStyleOptionsProvider {
-  private JBCheckBox myEnabled;
+class EditorConfigConfigurable : CodeStyleSettingsProvider(), GeneralCodeStyleOptionsProvider {
+  private var myEnabled: JBCheckBox? = null
 
-  @Nullable
-  @Override
-  public JComponent createComponent() {
-    myEnabled = new JBCheckBox(EditorConfigBundle.message("config.enable"));
-    final JPanel result = new JPanel();
-    result.setLayout(new BoxLayout(result, BoxLayout.LINE_AXIS));
-    final JPanel panel = new JPanel(new VerticalFlowLayout());
-    result.setBorder(IdeBorderFactory.createTitledBorder(EditorConfigBundle.message("config.title"), false));
-    panel.add(myEnabled);
-    final JLabel warning = new JLabel(EditorConfigBundle.message("config.warning"));
-    warning.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-    warning.setBorder(JBUI.Borders.emptyLeft(20));
-    panel.add(warning);
-    panel.setAlignmentY(Component.TOP_ALIGNMENT);
-    result.add(panel);
-    final JButton export = new JButton(EditorConfigBundle.message("config.export"));
+  override fun createComponent(): JComponent? {
+    myEnabled = JBCheckBox(EditorConfigBundle.message("config.enable"))
+    val result = JPanel()
+    result.layout = BoxLayout(result, BoxLayout.LINE_AXIS)
+    val panel = JPanel(VerticalFlowLayout())
+    result.border = IdeBorderFactory.createTitledBorder(EditorConfigBundle.message("config.title"), false)
+    panel.add(myEnabled)
+    val warning = JLabel(EditorConfigBundle.message("config.warning"))
+    warning.font = UIUtil.getLabelFont(UIUtil.FontSize.SMALL)
+    warning.border = JBUI.Borders.emptyLeft(20)
+    panel.add(warning)
+    panel.alignmentY = Component.TOP_ALIGNMENT
+    result.add(panel)
+    val export = JButton(EditorConfigBundle.message("config.export"))
     // export.setVisible(EditorConfigExportProviderEP.shouldShowExportButton());
-    export.addActionListener((event) -> {
-      final Component parent = UIUtil.findUltimateParent(result);
+    export.addActionListener { event ->
+      val parent = UIUtil.findUltimateParent(result)
 
-      if (parent instanceof IdeFrame) {
-        Project project = ((IdeFrame) parent).getProject();
+      if (parent is IdeFrame) {
+        val project = (parent as IdeFrame).project
         if (project != null) {
-          if (EditorConfigExportProviderEP.tryExportViaProviders(project)) return;
-          Utils.export(project);
+          if (EditorConfigExportProviderEP.tryExportViaProviders(project)) return@addActionListener
+          Utils.export(project)
         }
       }
-    });
-    export.setAlignmentY(Component.TOP_ALIGNMENT);
-    result.add(export);
-    return result;
+    }
+    export.alignmentY = Component.TOP_ALIGNMENT
+    result.add(export)
+    return result
   }
 
-  @Override
-  public boolean isModified(CodeStyleSettings settings) {
-    return myEnabled.isSelected() != settings.getCustomSettings(EditorConfigSettings.class).ENABLED;
+  override fun isModified(settings: CodeStyleSettings): Boolean {
+    return myEnabled!!.isSelected != settings.getCustomSettings(EditorConfigSettings::class.java).ENABLED
   }
 
-  @Override
-  public void apply(CodeStyleSettings settings) {
-    boolean newValue = myEnabled.isSelected();
-    settings.getCustomSettings(EditorConfigSettings.class).ENABLED = newValue;
-    MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-    bus.syncPublisher(EditorConfigSettings.EDITOR_CONFIG_ENABLED_TOPIC).valueChanged(newValue);
+  override fun apply(settings: CodeStyleSettings) {
+    val newValue = myEnabled!!.isSelected
+    settings.getCustomSettings(EditorConfigSettings::class.java).ENABLED = newValue
+    val bus = ApplicationManager.getApplication().messageBus
+    bus.syncPublisher(EditorConfigSettings.EDITOR_CONFIG_ENABLED_TOPIC).valueChanged(newValue)
   }
 
-  @Override
-  public void reset(CodeStyleSettings settings) {
-    myEnabled.setSelected(settings.getCustomSettings(EditorConfigSettings.class).ENABLED);
+  override fun reset(settings: CodeStyleSettings) {
+    myEnabled!!.isSelected = settings.getCustomSettings(EditorConfigSettings::class.java).ENABLED
   }
 
-  @Override
-  public void disposeUIResources() {
-    myEnabled = null;
+  override fun disposeUIResources() {
+    myEnabled = null
   }
 
-  @NotNull
-  @Override
-  public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings originalSettings) {
-    return null;
+  override fun isModified(): Boolean = false
+
+  @Throws(ConfigurationException::class)
+  override fun apply() {
   }
 
-  @Override
-  public boolean isModified() {
-    return false;
-  }
+  override fun hasSettingsPage(): Boolean = false
 
-  @Override
-  public void apply() throws ConfigurationException {}
-
-  @Override
-  public boolean hasSettingsPage() {
-    return false;
-  }
-
-  @Nullable
-  @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
-    return new EditorConfigSettings(settings);
+  override fun createCustomSettings(settings: CodeStyleSettings): CustomCodeStyleSettings? {
+    return EditorConfigSettings(settings)
   }
 }
