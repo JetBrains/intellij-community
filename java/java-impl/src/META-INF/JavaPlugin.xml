@@ -1278,6 +1278,10 @@
       <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.singlereturn.ConvertToSingleReturnAction</className>
+      <category>Java/Control Flow</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.WrapWithUnmodifiableAction</className>
       <category>Java/Other</category>
     </intentionAction>
