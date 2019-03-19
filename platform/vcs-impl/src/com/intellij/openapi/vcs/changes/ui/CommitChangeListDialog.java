@@ -96,6 +96,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final EventDispatcher<CommitExecutorListener> myExecutorEventDispatcher =
     EventDispatcher.create(CommitExecutorListener.class);
   @NotNull private final List<DataProvider> myDataProviders = newArrayList();
+  @NotNull private final EventDispatcher<InclusionListener> myInclusionEventDispatcher = EventDispatcher.create(InclusionListener.class);
 
   @NotNull private final String myCommitActionName;
 
@@ -282,13 +283,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @Override
-  protected void init() {
+  public boolean activate() {
     beforeInit();
-    super.init();
+    init();
     afterInit();
+
+    return showAndGet();
   }
 
   private void beforeInit() {
+    myBrowser.setInclusionChangedListener(() -> myInclusionEventDispatcher.getMulticaster().inclusionChanged());
+
+    addInclusionListener(() -> updateButtons(), this);
     myBrowser.getViewer().addSelectionListener(() -> changeDetails(myBrowser.getViewer().isModelUpdateInProgress()));
 
     myBrowserBottomPanel.add(myLegend.getComponent());
@@ -950,6 +956,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myBrowser.getViewer().includeChanges(items);
   }
 
+  @Override
+  public void addInclusionListener(@NotNull InclusionListener listener, @NotNull Disposable parent) {
+    myInclusionEventDispatcher.addListener(listener, parent);
+  }
+
   @NotNull
   @Override
   public String getCommitMessage() {
@@ -997,11 +1008,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   JComponent getBrowserBottomPanel() {
     return myBrowserBottomPanel;
-  }
-
-  void inclusionChanged() {
-    getHandlers().forEach(CheckinHandler::includedChangesChanged);
-    updateButtons();
   }
 
   void selectedChangeListChanged() {

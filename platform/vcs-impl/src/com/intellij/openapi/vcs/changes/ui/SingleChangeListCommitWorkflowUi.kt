@@ -10,6 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.util.*
 
 interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
+  fun activate(): Boolean
+
   fun addDataProvider(provider: DataProvider)
 
   fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable)
@@ -20,6 +22,8 @@ interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
 
   fun includeIntoCommit(items: Collection<*>)
 
+  fun addInclusionListener(listener: InclusionListener, parent: Disposable)
+
   fun getCommitMessage(): String
 
   fun confirmCommitWithEmptyMessage(): Boolean
@@ -27,4 +31,8 @@ interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
 
 interface CommitExecutorListener : EventListener {
   fun executorCalled(executor: CommitExecutor?)
+}
+
+interface InclusionListener : EventListener {
+  fun inclusionChanged()
 }

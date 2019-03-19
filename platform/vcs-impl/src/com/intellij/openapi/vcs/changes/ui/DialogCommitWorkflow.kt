@@ -47,7 +47,7 @@ open class DialogCommitWorkflow(val project: Project,
                                 val resultHandler: CommitResultHandler? = null) {
   val isPartialCommitEnabled: Boolean = affectedVcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || executors.any { it.supportsPartialCommit() })
 
-  protected val commitContext: CommitContext = CommitContext()
+  val commitContext: CommitContext = CommitContext()
 
   // TODO Probably unify with "CommitContext"
   private val _additionalData = PseudoMap<Any, Any>()
@@ -57,19 +57,16 @@ open class DialogCommitWorkflow(val project: Project,
   private val _commitHandlers = mutableListOf<CheckinHandler>()
   val commitHandlers: List<CheckinHandler> get() = newUnmodifiableList(_commitHandlers)
 
-  private fun initCommitHandlers(handlers: List<CheckinHandler>) {
+  internal fun initCommitHandlers(handlers: List<CheckinHandler>) {
     _commitHandlers.clear()
     _commitHandlers += handlers
   }
 
   fun showDialog(): Boolean {
     val dialog = CommitChangeListDialog(this)
-    SingleChangeListCommitWorkflowHandler(this, dialog)
+    val handler = SingleChangeListCommitWorkflowHandler(this, dialog)
 
-    initCommitHandlers(getCommitHandlers(dialog, commitContext))
-    initDialog(dialog)
-    dialog.init()
-    return dialog.showAndGet()
+    return handler.activate()
   }
 
   fun addUnversionedFiles(changeList: LocalChangeList, unversionedFiles: List<VirtualFile>, callback: (List<Change>) -> Unit): Boolean {
@@ -143,7 +140,7 @@ open class DialogCommitWorkflow(val project: Project,
       override fun createAdditionalRollbackActions() = affectedVcses.mapNotNull { it.rollbackEnvironment }.flatMap { it.createCustomRollbackActions() }
     }
 
-  protected open fun initDialog(dialog: CommitChangeListDialog) {
+  open fun initDialog(dialog: CommitChangeListDialog) {
     val browser = dialog.browser as MultipleLocalChangeListsBrowser
 
     LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
@@ -160,7 +157,6 @@ open class DialogCommitWorkflow(val project: Project,
     val commitMessageEditor = DiffCommitMessageEditor(project, dialog.commitMessageComponent)
     browser.setBottomDiffComponent(commitMessageEditor)
 
-    browser.setInclusionChangedListener { dialog.inclusionChanged() }
     browser.setSelectedListChangeListener { dialog.selectedChangeListChanged() }
   }
 
