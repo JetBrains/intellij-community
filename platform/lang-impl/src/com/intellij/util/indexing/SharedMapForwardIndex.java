@@ -19,7 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-class SharedMapForwardIndex implements ForwardIndex {
+public class SharedMapForwardIndex implements ForwardIndex {
   private static final Logger LOG = Logger.getInstance(SharedMapForwardIndex.class);
   private final ID<?, ?> myIndexId;
 
@@ -31,13 +31,13 @@ class SharedMapForwardIndex implements ForwardIndex {
   @Nullable
   private final AbstractForwardIndexAccessor<?, ?, ?, ?> myAccessor;
 
-  SharedMapForwardIndex(@NotNull IndexExtension<?, ?, ?> extension,
-                        @Nullable AbstractForwardIndexAccessor<?, ?, ?, ?> accessor) throws IOException {
+  public SharedMapForwardIndex(@NotNull IndexExtension<?, ?, ?> extension,
+                               @Nullable AbstractForwardIndexAccessor<?, ?, ?, ?> accessor,
+                               @NotNull File verificationIndexStorageFile) throws IOException {
     myIndexId = (ID<?, ?>)extension.getName();
     if (!SharedIndicesData.ourFileSharedIndicesEnabled || SharedIndicesData.DO_CHECKS) {
-      File sanityVerificationIndexFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "fileIdToHashId");
       try {
-        mySanityVerificationIndex = new PersistentMapBasedForwardIndex(sanityVerificationIndexFile) {
+        mySanityVerificationIndex = new PersistentMapBasedForwardIndex(verificationIndexStorageFile) {
           @NotNull
           @Override
           protected PersistentHashMap<Integer, ByteArraySequence> createMap(File file) throws IOException {
@@ -54,7 +54,7 @@ class SharedMapForwardIndex implements ForwardIndex {
         };
       }
       catch (IOException e) {
-        IOUtil.deleteAllFilesStartingWith(sanityVerificationIndexFile);
+        IOUtil.deleteAllFilesStartingWith(verificationIndexStorageFile);
         throw e;
       }
     }
