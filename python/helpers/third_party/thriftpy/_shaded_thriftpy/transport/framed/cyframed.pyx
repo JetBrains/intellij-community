@@ -2,7 +2,7 @@ from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy
 from libc.stdint cimport int32_t
 
-from thriftpy.transport.cybase cimport (
+from thriftpy2.transport.cybase cimport (
     TCyBuffer,
     CyTransportBase,
     DEFAULT_BUFFER,

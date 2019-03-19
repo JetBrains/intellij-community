@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # ply: lex.py
 #
-# Copyright (C) 2001-2015,
+# Copyright (C) 2001-2018
 # David M. Beazley (Dabeaz LLC)
 # All rights reserved.
 #
@@ -31,8 +31,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # -----------------------------------------------------------------------------
 
-__version__    = '3.8'
-__tabversion__ = '3.8'
+__version__    = '3.11'
+__tabversion__ = '3.10'
 
 import re
 import sys
@@ -179,12 +179,12 @@ class Lexer:
         with open(filename, 'w') as tf:
             tf.write('# %s.py. This file automatically created by PLY (version %s). Don\'t edit!\n' % (basetabmodule, __version__))
             tf.write('_tabversion   = %s\n' % repr(__tabversion__))
-            tf.write('_lextokens    = %s\n' % repr(self.lextokens))
-            tf.write('_lexreflags   = %s\n' % repr(self.lexreflags))
+            tf.write('_lextokens    = set(%s)\n' % repr(tuple(sorted(self.lextokens))))
+            tf.write('_lexreflags   = %s\n' % repr(int(self.lexreflags)))
             tf.write('_lexliterals  = %s\n' % repr(self.lexliterals))
             tf.write('_lexstateinfo = %s\n' % repr(self.lexstateinfo))
 
-            # Rewrite the lexstatere table, replacing function objects with function names 
+            # Rewrite the lexstatere table, replacing function objects with function names
             tabre = {}
             for statename, lre in self.lexstatere.items():
                 titem = []
@@ -230,7 +230,7 @@ class Lexer:
             titem = []
             txtitem = []
             for pat, func_name in lre:
-                titem.append((re.compile(pat, lextab._lexreflags | re.VERBOSE), _names_to_funcs(func_name, fdict)))
+                titem.append((re.compile(pat, lextab._lexreflags), _names_to_funcs(func_name, fdict)))
 
             self.lexstatere[statename] = titem
             self.lexstateretext[statename] = txtitem
@@ -495,7 +495,7 @@ def _form_master_re(relist, reflags, ldict, toknames):
         return []
     regex = '|'.join(relist)
     try:
-        lexre = re.compile(regex, re.VERBOSE | reflags)
+        lexre = re.compile(regex, reflags)
 
         # Build the index to function map for the matching engine
         lexindexfunc = [None] * (max(lexre.groupindex.values()) + 1)
@@ -531,12 +531,11 @@ def _form_master_re(relist, reflags, ldict, toknames):
 # calling this with s = "t_foo_bar_SPAM" might return (('foo','bar'),'SPAM')
 # -----------------------------------------------------------------------------
 def _statetoken(s, names):
-    nonstate = 1
     parts = s.split('_')
     for i, part in enumerate(parts[1:], 1):
         if part not in names and part != 'ANY':
             break
-    
+
     if i > 1:
         states = tuple(parts[1:i])
     else:
@@ -758,7 +757,7 @@ class LexerReflect(object):
                     continue
 
                 try:
-                    c = re.compile('(?P<%s>%s)' % (fname, _get_regex(f)), re.VERBOSE | self.reflags)
+                    c = re.compile('(?P<%s>%s)' % (fname, _get_regex(f)), self.reflags)
                     if c.match(''):
                         self.log.error("%s:%d: Regular expression for rule '%s' matches empty string", file, line, f.__name__)
                         self.error = True
@@ -782,7 +781,7 @@ class LexerReflect(object):
                     continue
 
                 try:
-                    c = re.compile('(?P<%s>%s)' % (name, r), re.VERBOSE | self.reflags)
+                    c = re.compile('(?P<%s>%s)' % (name, r), self.reflags)
                     if (c.match('')):
                         self.log.error("Regular expression for rule '%s' matches empty string", name)
                         self.error = True
@@ -830,7 +829,10 @@ class LexerReflect(object):
     # -----------------------------------------------------------------------------
 
     def validate_module(self, module):
-        lines, linen = inspect.getsourcelines(module)
+        try:
+            lines, linen = inspect.getsourcelines(module)
+        except IOError:
+            return
 
         fre = re.compile(r'\s*def\s+(t_[a-zA-Z_0-9]*)\(')
         sre = re.compile(r'\s*(t_[a-zA-Z_0-9]*)\s*=')
@@ -858,7 +860,7 @@ class LexerReflect(object):
 # Build all of the regular expression rules from definitions in the supplied module
 # -----------------------------------------------------------------------------
 def lex(module=None, object=None, debug=False, optimize=False, lextab='lextab',
-        reflags=0, nowarn=False, outputdir=None, debuglog=None, errorlog=None):
+        reflags=int(re.VERBOSE), nowarn=False, outputdir=None, debuglog=None, errorlog=None):
 
     if lextab is None:
         lextab = 'lextab'
@@ -946,8 +948,6 @@ def lex(module=None, object=None, debug=False, optimize=False, lextab='lextab',
 
         # Add rules defined by functions first
         for fname, f in linfo.funcsym[state]:
-            line = f.__code__.co_firstlineno
-            file = f.__code__.co_filename
             regex_list.append('(?P<%s>%s)' % (fname, _get_regex(f)))
             if debug:
                 debuglog.info("lex: Adding rule %s -> '%s' (state '%s')", fname, _get_regex(f), state)
@@ -1038,6 +1038,8 @@ def lex(module=None, object=None, debug=False, optimize=False, lextab='lextab',
             outputdir = os.path.dirname(srcfile)
         try:
             lexobj.writetab(lextab, outputdir)
+            if lextab in sys.modules:
+                del sys.modules[lextab]
         except IOError as e:
             errorlog.warning("Couldn't write lextab module %r. %s" % (lextab, e))
 
@@ -1094,4 +1096,3 @@ def TOKEN(r):
 
 # Alternative spelling of the TOKEN decorator
 Token = TOKEN
-

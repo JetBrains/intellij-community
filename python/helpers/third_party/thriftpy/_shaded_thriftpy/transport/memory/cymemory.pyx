@@ -1,17 +1,10 @@
 from libc.string cimport memcpy
 from libc.stdlib cimport malloc, free
-from thriftpy.transport.cybase cimport (
+from thriftpy2.transport.cybase cimport (
     TCyBuffer,
     CyTransportBase,
     DEFAULT_BUFFER,
 )
-
-
-def to_bytes(s):
-    try:
-        return s.encode("utf-8")
-    except Exception:
-        return s
 
 
 cdef class TCyMemoryBuffer(CyTransportBase):
@@ -64,7 +57,8 @@ cdef class TCyMemoryBuffer(CyTransportBase):
         return self.get_string(sz)
 
     def write(self, data):
-        data = to_bytes(data)
+        if isinstance(data, unicode):
+            data = (<unicode>data).encode('utf-8')
 
         cdef int sz = len(data)
         return self.c_write(data, sz)
@@ -88,5 +82,6 @@ cdef class TCyMemoryBuffer(CyTransportBase):
         return self._getvalue()
 
     def setvalue(self, value):
-        value = to_bytes(value)
+        if isinstance(value, unicode):
+            value = (<unicode>value).encode('utf-8')
         self._setvalue(len(value), value)

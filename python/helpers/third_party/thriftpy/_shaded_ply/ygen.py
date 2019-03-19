@@ -3,7 +3,7 @@
 # This is a support program that auto-generates different versions of the YACC parsing
 # function with different features removed for the purposes of performance.
 #
-# Users should edit the method LParser.parsedebug() in yacc.py.   The source code 
+# Users should edit the method LRParser.parsedebug() in yacc.py.   The source code
 # for that method is then used to create the other methods.   See the comments in
 # yacc.py for further details.
 
@@ -67,8 +67,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
-

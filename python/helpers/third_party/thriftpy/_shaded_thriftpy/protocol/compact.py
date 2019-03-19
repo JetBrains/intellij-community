@@ -58,12 +58,12 @@ def write_varint(trans, n):
         else:
             out.append((n & 0xff) | 0x80)
             n = n >> 7
-    data = array.array('B', out).tostring()
+    data = array.array('B', out)
 
     if PY3:
-        trans.write(data)
+        trans.write(data.tobytes())
     else:
-        trans.write(bytes(data))
+        trans.write(data.tostring())
 
 
 def read_varint(trans):
@@ -442,7 +442,7 @@ class TCompactProtocol(object):
                 f_container_spec = None
             else:
                 ftype, fname, f_container_spec, f_req = fspec
-            val = getattr(obj, fname)
+            val = getattr(obj, fname, None)
             if val is None:
                 continue
 

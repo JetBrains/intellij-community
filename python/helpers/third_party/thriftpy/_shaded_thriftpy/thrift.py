@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    thriftpy.thrift
+    thriftpy2.thrift
     ~~~~~~~~~~~~~~~~~~
 
     Thrift simplified.
@@ -10,8 +10,10 @@
 from __future__ import absolute_import
 
 import functools
+import linecache
+import types
 
-from ._compat import init_func_generator, with_metaclass
+from ._compat import with_metaclass
 
 
 def args2kwargs(thrift_spec, *args):
@@ -36,6 +38,41 @@ def parse_spec(ttype, spec=None):
 
     if ttype == TType.MAP:
         return "MAP<%s, %s>" % (_type(spec[0]), _type(spec[1]))
+
+
+def init_func_generator(cls, spec):
+    """Generate `__init__` function based on TPayload.default_spec
+
+    For example::
+
+        spec = [('name', 'Alice'), ('number', None)]
+
+    will generate a types.FunctionType object representing::
+
+        def __init__(self, name='Alice', number=None):
+            self.name = name
+            self.number = number
+    """
+    if not spec:
+        def __init__(self):
+            pass
+        return __init__
+
+    varnames, defaults = zip(*spec)
+
+    args = ', '.join(map('{0[0]}={0[1]!r}'.format, spec))
+    init = "def __init__(self, {}):\n".format(args)
+    init += "\n".join(map('    self.{0} = {0}'.format, varnames))
+
+    name = '<generated {}.__init__>'.format(cls.__name__)
+    code = compile(init, name, 'exec')
+    func = next(c for c in code.co_consts if isinstance(c, types.CodeType))
+
+    # Add a fake linecache entry so debuggers and the traceback module can
+    # better understand our generated code.
+    linecache.cache[name] = (len(init), None, init.splitlines(True), name)
+
+    return types.FunctionType(func, {}, argdefs=defaults)
 
 
 class TType(object):
@@ -91,7 +128,8 @@ class TPayloadMeta(type):
 
     def __new__(cls, name, bases, attrs):
         if "default_spec" in attrs:
-            attrs["__init__"] = init_func_generator(attrs.pop("default_spec"))
+            spec = attrs.pop("default_spec")
+            attrs["__init__"] = init_func_generator(cls, spec)
         return super(TPayloadMeta, cls).__new__(cls, name, bases, attrs)
 
 
@@ -100,7 +138,7 @@ def gen_init(cls, thrift_spec=None, default_spec=None):
         cls.thrift_spec = thrift_spec
 
     if default_spec is not None:
-        cls.__init__ = init_func_generator(default_spec)
+        cls.__init__ = init_func_generator(cls, default_spec)
     return cls
 
 
@@ -202,7 +240,7 @@ class TClient(object):
 
 
 class TProcessor(object):
-    """Base class for procsessor, which works on two streams."""
+    """Base class for processor, which works on two streams."""
 
     def __init__(self, service, handler):
         self._service = service
@@ -249,9 +287,8 @@ class TProcessor(object):
             _, exc_name, exc_cls, _ = result.thrift_spec[k]
             if isinstance(e, exc_cls):
                 setattr(result, exc_name, e)
-                break
-        else:
-            raise e
+                return True
+        return False
 
     def process(self, iprot, oprot):
         api, seqid, result, call = self.process_in(iprot)
@@ -263,7 +300,8 @@ class TProcessor(object):
             result.success = call()
         except Exception as e:
             # raise if api don't have throws
-            self.handle_exception(e, result)
+            if not self.handle_exception(e, result):
+                raise
 
         if not result.oneway:
             self.send_result(oprot, api, result, seqid)
@@ -279,14 +317,14 @@ class TMultiplexedProcessor(TProcessor):
         if service_name in self.processors:
             raise TApplicationException(
                 type=TApplicationException.INTERNAL_ERROR,
-                message='processor for `{0}` already registered'
+                message='processor for `{}` already registered'
                 .format(service_name))
         self.processors[service_name] = processor
 
     def process_in(self, iprot):
         api, type, seqid = iprot.read_message_begin()
         if type not in (TMessageType.CALL, TMessageType.ONEWAY):
-            raise TException("TMultiplex protocol only supports CALL & ONEWAY")
+            raise TException("TMultiplexed protocol only supports CALL & ONEWAY")
         if TMultiplexedProcessor.SEPARATOR not in api:
             raise TException("Service name not found in message. "
                              "You should use TMultiplexedProtocol in client.")

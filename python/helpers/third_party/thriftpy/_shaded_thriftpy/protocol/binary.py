@@ -151,7 +151,7 @@ def write_val(outbuf, ttype, val, spec=None):
             else:
                 f_type, f_name, f_container_spec, f_req = f_spec
 
-            v = getattr(val, f_name)
+            v = getattr(val, f_name, None)
             if v is None:
                 continue
 

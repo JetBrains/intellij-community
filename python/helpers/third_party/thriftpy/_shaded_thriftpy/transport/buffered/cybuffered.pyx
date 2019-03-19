@@ -1,4 +1,4 @@
-from thriftpy.transport.cybase cimport (
+from thriftpy2.transport.cybase cimport (
     TCyBuffer,
     CyTransportBase,
     DEFAULT_BUFFER

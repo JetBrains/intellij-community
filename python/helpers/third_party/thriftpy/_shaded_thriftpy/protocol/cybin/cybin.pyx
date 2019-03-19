@@ -2,7 +2,7 @@ from libc.stdlib cimport free, malloc
 from libc.stdint cimport int16_t, int32_t, int64_t
 from cpython cimport bool
 
-from thriftpy.transport.cybase cimport CyTransportBase, STACK_STRING_LEN
+from thriftpy2.transport.cybase cimport CyTransportBase, STACK_STRING_LEN
 
 from ..thrift import TDecodeException
 
@@ -202,7 +202,7 @@ cdef inline write_struct(CyTransportBase buf, obj):
         else:
             container_spec = field_spec[2]
 
-        v = getattr(obj, f_name)
+        v = getattr(obj, f_name, None)
         if v is None:
             continue
 
@@ -235,7 +235,7 @@ cdef inline c_read_binary(CyTransportBase buf, int32_t size):
 cdef inline c_read_string(CyTransportBase buf, int32_t size):
     py_data = c_read_binary(buf, size)
     try:
-        return py_data.decode("utf-8")
+        return (<char *>py_data)[:size].decode("utf-8")
     except:
         return py_data
 

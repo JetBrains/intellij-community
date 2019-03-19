@@ -43,7 +43,7 @@ class TSimpleServer(TServer):
 
     def serve(self):
         self.trans.listen()
-        while True:
+        while not self.closed:
             client = self.trans.accept()
             itrans = self.itrans_factory.get_transport(client)
             otrans = self.otrans_factory.get_transport(client)

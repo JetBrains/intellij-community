@@ -16,7 +16,7 @@ tokens = [
     'OR', 'AND', 'NOT', 'XOR', 'LSHIFT', 'RSHIFT',
     'LOR', 'LAND', 'LNOT',
     'LT', 'LE', 'GT', 'GE', 'EQ', 'NE',
-    
+
     # Assignment (=, *=, /=, %=, +=, -=, <<=, >>=, &=, ^=, |=)
     'EQUALS', 'TIMESEQUAL', 'DIVEQUAL', 'MODEQUAL', 'PLUSEQUAL', 'MINUSEQUAL',
     'LSHIFTEQUAL','RSHIFTEQUAL', 'ANDEQUAL', 'XOREQUAL', 'OREQUAL',
@@ -29,7 +29,7 @@ tokens = [
 
     # Ternary operator (?)
     'TERNARY',
-    
+
     # Delimeters ( ) [ ] { } , . ; :
     'LPAREN', 'RPAREN',
     'LBRACKET', 'RBRACKET',
@@ -39,7 +39,7 @@ tokens = [
     # Ellipsis (...)
     'ELLIPSIS',
 ]
-    
+
 # Operators
 t_PLUS             = r'\+'
 t_MINUS            = r'-'
@@ -125,9 +125,3 @@ def t_CPPCOMMENT(t):
     r'//.*\n'
     t.lexer.lineno += 1
     return t
-
-
-    
-
-
-

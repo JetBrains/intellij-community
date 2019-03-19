@@ -68,8 +68,6 @@ except ImportError:
     import sys
 
     class SSLContext(object):
-        supports_set_ciphers = ((2, 7) <= sys.version_info < (3,) or
-                                (3, 2) <= sys.version_info)
 
         def __init__(self, protocol_version):
             self.protocol = protocol_version
@@ -92,12 +90,6 @@ except ImportError:
             self.ca_certs = cafile
 
         def set_ciphers(self, cipher_suite):
-            if not self.supports_set_ciphers:
-                raise TypeError(
-                    "Your version of Python does not support setting "
-                    "a custom cipher suite. Please upgrade to Python "
-                    "2.7, 3.2, or later if you need this functionality."
-                )
             self.ciphers = cipher_suite
 
         def wrap_socket(self, socket, server_hostname=None, server_side=False):
@@ -116,12 +108,7 @@ except ImportError:
                 "server_side": server_side,
             }
 
-            if self.supports_set_ciphers:
-                # Platform-specific: Python 2.7+
-                return ssl.wrap_socket(socket, ciphers=self.ciphers, **kwargs)
-            else:
-                # Platform-specific: Python 2.6
-                return ssl.wrap_socket(socket, **kwargs)
+            return ssl.wrap_socket(socket, ciphers=self.ciphers, **kwargs)
 
 
 def create_thriftpy_context(server_side=False, ciphers=None):
@@ -130,7 +117,7 @@ def create_thriftpy_context(server_side=False, ciphers=None):
     The SSLContext has some default security options, you can disable them
     manually, for example::
 
-        from thriftpy.transport import _ssl
+        from thriftpy2.transport import _ssl
         context = _ssl.create_thriftpy_context()
         context.options &= ~_ssl.OP_NO_SSLv3
 
@@ -163,12 +150,7 @@ def create_thriftpy_context(server_side=False, ciphers=None):
                 "ssl check hostname support disabled, upgrade your python",
                 InsecurePlatformWarning)
 
-        # Platform-specific: Python 2.6
-        if getattr(context, 'supports_set_ciphers', True):
-            if ciphers:
-                context.set_ciphers(ciphers)
-        else:
-            warnings.warn("ssl ciphers support disabled, upgrade your python",
-                          InsecurePlatformWarning)
+        if ciphers:
+            context.set_ciphers(ciphers)
 
     return context
