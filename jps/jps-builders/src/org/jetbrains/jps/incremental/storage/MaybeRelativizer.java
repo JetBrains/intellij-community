@@ -13,7 +13,11 @@ public class MaybeRelativizer { // see PathMacroMap and friends around
   @Nullable private final String myProjectPath;
   private static final String PRJ = "$PROJECT_DIR$";
 
-  public MaybeRelativizer(JpsProject project) {
+  public MaybeRelativizer(@Nullable String projectPath) {
+    myProjectPath = projectPath;
+  }
+
+  public MaybeRelativizer(@NotNull JpsProject project) {
     File projectBaseDirectory = JpsModelSerializationDataService.getBaseDirectory(project);
     myProjectPath = projectBaseDirectory != null ? projectBaseDirectory.getAbsolutePath() : null;
   }

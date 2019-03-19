@@ -77,6 +77,10 @@ public class BuildDataManager implements StorageOwner {
     }
   };
 
+  public MaybeRelativizer getRelativizer() {
+    return myRelativizer;
+  }
+
   private final MaybeRelativizer myRelativizer;
 
   private interface LazyValueFactory<K, V> {

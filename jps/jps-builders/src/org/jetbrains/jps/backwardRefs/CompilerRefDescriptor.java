@@ -26,7 +26,7 @@ public final class CompilerRefDescriptor implements KeyDescriptor<CompilerRef>, 
   }
 
   @Override
-  public void save(@NotNull DataOutput out, CompilerRef value) throws IOException {
+  public void save(@NotNull DataOutput out, CompilerRef value) {
     value.save(out);
   }
 

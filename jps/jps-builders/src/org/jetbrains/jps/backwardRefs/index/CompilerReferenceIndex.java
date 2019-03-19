@@ -18,6 +18,7 @@ import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.incremental.storage.MaybeRelativizer;
 
 import java.io.DataOutputStream;
 import java.io.*;
@@ -58,7 +59,10 @@ public class CompilerReferenceIndex<Input> {
   private volatile Throwable myRebuildRequestCause;
 
   public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices,
-                                File buildDir, boolean readOnly, int version) {
+                                File buildDir,
+                                MaybeRelativizer relativizer,
+                                boolean readOnly,
+                                int version) {
     myBuildDir = buildDir;
     myIndicesDir = getIndexDir(buildDir);
     if (!myIndicesDir.exists() && !myIndicesDir.mkdirs()) {
@@ -70,8 +74,11 @@ public class CompilerReferenceIndex<Input> {
       }
       myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB)) {
         @Override
-        public int enumerate(String value) throws IOException {
-          return super.enumerate(SystemInfo.isFileSystemCaseSensitive ? value : value.toLowerCase(Locale.ROOT));
+        public int enumerate(String path) throws IOException {
+          String rel = relativizer.toRelative(path);
+          String s = SystemInfo.isFileSystemCaseSensitive ? rel : rel.toLowerCase(Locale.ROOT); // todo: lowercase kills $PROJECT_DIR$
+          LOG.debug(s);
+          return super.enumerate(s);
         }
       };
 
