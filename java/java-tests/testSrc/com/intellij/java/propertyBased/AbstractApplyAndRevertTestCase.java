@@ -13,9 +13,9 @@ import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +27,7 @@ import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataProvider;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
@@ -72,14 +72,14 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     oldMacroValue = pathMacros.getValue(PathMacrosImpl.MAVEN_REPOSITORY);
     pathMacros.setMacro(PathMacrosImpl.MAVEN_REPOSITORY, getDefaultMavenRepositoryPath());
 
-    myProject = ProjectUtil.openOrImport(getTestDataPath(), null, false);
-    WriteAction.run(() -> {
-      String sdkName = ProjectRootManager.getInstance(myProject).getProjectSdkName();
-      Sdk internalJdk = JavaSdk.getInstance().createJdk(sdkName, SystemProperties.getJavaHome());
-      ProjectJdkTable.getInstance().addJdk(internalJdk, getTestRootDisposable());
-    });
-
+    Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable()));
     CompilerTestUtil.saveApplicationSettings();
+
+    myProject = ProjectUtil.openOrImport(getTestDataPath(), null, false);
+
+    WriteAction.run(() -> ProjectRootManager.getInstance(myProject).setProjectSdk(jdk));
+
     InspectionProfileImpl.INIT_INSPECTIONS = true;
 
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
@@ -91,7 +91,7 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
       myCompilerTester = new CompilerTester(module);
     }
     catch (Throwable e) {
-      fail(e.getMessage());
+      ExceptionUtil.rethrowAllAsUnchecked(e);
     }
   }
 
