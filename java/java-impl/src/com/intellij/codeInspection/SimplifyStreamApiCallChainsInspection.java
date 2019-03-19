@@ -1390,7 +1390,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     private final String myQualifierText;
     private final boolean myParallel;
 
-    ReplaceStreamSupportWithCollectionStreamFix(PsiExpression qualifier, boolean parallel) {
+    ReplaceStreamSupportWithCollectionStreamFix(@NotNull PsiExpression qualifier, boolean parallel) {
       myQualifierText = PsiExpressionTrimRenderer.render(qualifier, 50);
       myParallel = parallel;
     }

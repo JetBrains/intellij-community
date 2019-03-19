@@ -17,8 +17,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
-import com.intellij.util.NotNullFunction;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.Function;
 
 public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisitor {
   private final StringBuilder myBuf;
@@ -251,7 +250,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   public static class RenderFunction implements NotNullFunction<PsiExpression, String> {
     @NotNull
     @Override
-    public String fun(PsiExpression psiExpression) {
+    public String fun(@NotNull PsiExpression psiExpression) {
       return render(psiExpression);
     }
   }
