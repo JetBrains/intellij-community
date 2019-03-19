@@ -1281,6 +1281,10 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static boolean isActionPopupShown() {
+    if (ApplicationManager.getApplication() == null) {
+      return false;
+    }
+
     ActionManager actionManager = ActionManager.getInstance();
     return actionManager instanceof ActionManagerImpl &&
            !((ActionManagerImpl)actionManager).isActionPopupStackEmpty() &&
