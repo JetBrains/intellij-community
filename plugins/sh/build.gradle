@@ -26,6 +26,7 @@ intellij {
     sameSinceUntilBuild Boolean.valueOf(isEAP)
     alternativeIdePath localIdePath
     updateSinceUntilBuild false
+    plugins 'terminal'
 }
 
 apply plugin: 'idea'

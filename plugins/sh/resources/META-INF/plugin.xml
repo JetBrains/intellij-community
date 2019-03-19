@@ -3,6 +3,7 @@
   <id>com.jetbrains.bash</id>
   <vendor email="ignatov@jetbrains.com">Sergey Ignatov</vendor>
   <depends>com.intellij.modules.lang</depends>
+  <depends>org.jetbrains.plugins.terminal</depends>
   <name>Bash</name>
   <description><![CDATA[
     <p>Bash support for IntelliJ IDEA, RubyMine, WebStorm, etc.</p>
@@ -21,5 +22,10 @@
     <completion.contributor language="Bash" implementationClass="com.intellij.bash.psi.BashCompletionContributor"/>
     <lang.braceMatcher language="Bash" implementationClass="com.intellij.bash.BashBraceMatcher"/>
     <lang.documentationProvider language="Bash" implementationClass="com.intellij.bash.BashDocumentationProvider"/>
+    <runLineMarkerContributor language="Bash" implementationClass="com.intellij.bash.run.BashRunLineMarkerContributor"/>
   </extensions>
+  <actions>
+    <action id="runShellFileAction" class="com.intellij.bash.run.BashRunFileAction" text="Run File"
+            description="Run current shell file in the terminal"/>
+  </actions>
 </idea-plugin>
