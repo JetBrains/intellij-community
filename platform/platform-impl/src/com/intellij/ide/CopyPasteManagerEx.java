@@ -1,25 +1,36 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretStateTransferableData;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ide.CutElementMarker;
 import com.intellij.openapi.ide.KillRingTransferable;
+import com.intellij.openapi.ide.Sizeable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.LinkedListWithSum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
 
 public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner {
-  private final List<Transferable> myData = new ArrayList<>();
+  private static final Logger LOG = Logger.getInstance(CopyPasteManagerEx.class);
+
+  private final LinkedListWithSum<Transferable> myData = new LinkedListWithSum<Transferable>() {
+    @Override
+    public int calculateValue(Transferable transferable) {
+      return getSize(transferable);
+    }
+  };
   private final EventDispatcher<ContentChangedListener> myDispatcher = EventDispatcher.create(ContentChangedListener.class);
   private boolean myOwnContent;
 
@@ -124,11 +135,12 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       }
 
       CaretStateTransferableData caretData = CaretStateTransferableData.getFrom(content);
-      for (int i = 0; i < myData.size(); i++) {
-        Transferable old = myData.get(i);
+      Iterator<Transferable> it = myData.iterator();
+      while (it.hasNext()) {
+        Transferable old = it.next();
         if (clipString.equals(getStringContent(old)) &&
             CaretStateTransferableData.areEquivalent(caretData, CaretStateTransferableData.getFrom(old))) {
-          myData.remove(i);
+          it.remove();
           myData.add(0, content);
           return content;
         }
@@ -204,9 +216,20 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   private void deleteAfterAllowedMaximum() {
-    int max = UISettings.getInstance().getMaxClipboardContents();
-    for (int i = myData.size() - 1; i >= max; i--) {
+    int maxCount = Math.max(1, Registry.intValue("clipboard.history.max.items"));
+    int maxMemory = Math.max(0, Registry.intValue("clipboard.history.max.memory"));
+    int smallItemSizeLimit = maxMemory / maxCount / 10;
+
+    for (int i = myData.size() - 1; i >= maxCount; i--) {
       myData.remove(i);
+    }
+
+    LinkedListWithSum<Transferable>.ListIterator it = myData.listIterator(myData.size());
+    while (myData.getSum() > maxMemory && it.hasPrevious() && it.previousIndex() > 0) {
+      it.previous();
+      if (it.getValue() > smallItemSizeLimit) {
+        it.set(createPurgedItem());
+      }
     }
   }
 
@@ -256,5 +279,28 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     else {
       setSystemClipboardContent(t);
     }
+  }
+
+  private static Transferable createPurgedItem() {
+    return new StringSelection(UIBundle.message("clipboard.history.purged.item"));
+  }
+
+  private static int getSize(Transferable t) {
+    if (t instanceof StringSelection) {
+      try {
+        return StringUtil.length((String)t.getTransferData(DataFlavor.stringFlavor));
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+    else if (t instanceof Sizeable) {
+      int size = ((Sizeable)t).getSize();
+      if (size >= 0) {
+        return size;
+      }
+      LOG.error("Got negative size (" + size + ") from " + t);
+    }
+    return 1000; // some value for an unknown type
   }
 }
