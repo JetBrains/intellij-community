@@ -205,8 +205,16 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
       if (component instanceof JRadioButton || component instanceof JCheckBox) {
         top = 0;
-        left = isMacDefault ? 26 : isWin10 ? 17 : 23;
         bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
+        if (component instanceof JCheckBox) {
+          left = UIUtil.getCheckBoxTextHorizontalOffset((JCheckBox)component); // the value returned from this method is already scaled
+
+          //noinspection UseDPIAwareInsets
+          return new Insets(top, left, JBUI.scale(bottom), 0);
+        }
+        else {
+          left = isMacDefault ? 26 : isWin10 ? 17 : 23;
+        }
       }
       else if (component instanceof JTextField || component instanceof EditorTextComponent ||
                component instanceof JComboBox || component instanceof ComponentWithBrowseButton) {
