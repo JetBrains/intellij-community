@@ -51,8 +51,10 @@ import java.util.*;
  * @author max
  * Key used by this index is the same as key of SingleEntryFileBasedIndexExtension
  */
-public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent>
-  implements PsiDependentIndex, CustomInputsIndexFileBasedIndexExtension<Integer> {
+public class StubUpdatingIndex extends FileBasedIndexExtension<Integer, SerializedStubTree>
+  implements PsiDependentIndex,
+             CustomInputsIndexFileBasedIndexExtension<Integer>,
+             CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree> {
   static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
   private static final int VERSION = 37 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0);
 
