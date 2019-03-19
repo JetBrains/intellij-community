@@ -7,6 +7,8 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.sdk.PySdkSettings
+import com.jetbrains.python.sdk.PySdkTypeComparator
+import com.jetbrains.python.sdk.PySdkTypeComparator.Companion.sortBySdkTypes
 import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
@@ -32,10 +34,7 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
     }
 
   // TODO: Introduce a method in PyAddSdkProvider or in a Python SDK Provider
-  private val panels = listOf(PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath),
-                              PyAddPipEnvPanel(null, null, existingSdks, newProjectPath),
-                              PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath))
-
+  private val panels = createPanels(existingSdks, newProjectPath)
   var selectedPanel: PyAddNewEnvPanel = panels.find { it.envName == preferredType ?: PySdkSettings.instance.preferredEnvironmentType } ?: panels[0]
 
   private val listeners = mutableListOf<Runnable>()
@@ -87,5 +86,15 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
       panel.addChangeListener(listener)
     }
     listeners += listener
+  }
+
+  private fun createPanels(existingSdks: List<Sdk>, newProjectPath: String?): List<PyAddNewEnvPanel> {
+    return mutableListOf(
+      PySdkTypeComparator.PySdkType.VirtualEnv to PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath),
+      PySdkTypeComparator.PySdkType.PipEnv to PyAddPipEnvPanel(null, null, existingSdks, newProjectPath),
+      PySdkTypeComparator.PySdkType.CondaEnv to PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath)
+    )
+      .sortBySdkTypes { it.first }
+      .map { it.second }
   }
 }
