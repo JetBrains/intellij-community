@@ -9,7 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.execution.ParametersListUtil;
-import icons.MavenIcons;
+import icons.OpenapiIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -33,6 +33,8 @@ import static java.util.stream.Collectors.toList;
  * @author ibessonov
  */
 public class MavenRunAnythingProvider extends RunAnythingProviderBase<String> {
+
+  public final static String HELP_COMMAND = "mvn";
 
   @NotNull
   @Override
@@ -141,15 +143,20 @@ public class MavenRunAnythingProvider extends RunAnythingProviderBase<String> {
   @NotNull
   @Override
   public String getHelpCommand() {
-    return "mvn";
+    return HELP_COMMAND;
   }
 
   @Nullable
   @Override
   public Icon getHelpIcon() {
-    return MavenIcons.MavenLogo;
+    return OpenapiIcons.RepositoryLibraryLogo;
   }
 
+  @Nullable
+  @Override
+  public Icon getIcon(@NotNull String value) {
+    return OpenapiIcons.RepositoryLibraryLogo;
+  }
 
   @NotNull
   @Override
