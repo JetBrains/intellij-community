@@ -9,7 +9,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import java.util.*
 
-interface SingleChangeListCommitWorkflowUi : DataProvider {
+interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
   fun addDataProvider(provider: DataProvider)
 
   fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable)

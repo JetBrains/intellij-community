@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.CommitExecutor
@@ -25,6 +26,8 @@ class SingleChangeListCommitWorkflowHandler(
   private fun getCommitMessage() = ui.commitMessage
 
   init {
+    Disposer.register(ui, this)
+
     ui.addExecutorListener(this, this)
     ui.addDataProvider(DataProvider { dataId ->
       if (dataId == COMMIT_WORKFLOW_HANDLER.name) this
