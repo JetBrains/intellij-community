@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
+import com.sun.jna.platform.win32.WinDef;
 import org.apache.commons.imaging.common.BinaryOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -518,7 +519,7 @@ public abstract class AppIcon {
         return;
       }
 
-      Object icon = null;
+      WinDef.HICON icon = null;
 
       if (text != null) {
         try {
@@ -564,7 +565,7 @@ public abstract class AppIcon {
       }
     }
 
-    private Object myOkIcon;
+    private WinDef.HICON myOkIcon;
 
     @Override
     public void _setOkBadge(IdeFrame frame, boolean visible) {
@@ -572,7 +573,7 @@ public abstract class AppIcon {
         return;
       }
 
-      Object icon = null;
+      WinDef.HICON icon = null;
 
       if (visible) {
         synchronized (Win7AppIcon.class) {
