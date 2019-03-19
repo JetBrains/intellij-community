@@ -43,6 +43,16 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightTestCase() {
   fun testBuilderChainWithArrayAccess() = doTest()
   fun testBuilderChainWithArrayAccessExpr() = doTest()
   fun testBuilderChainWithArrayAccessIf() = doTest()
+  fun testCallChainExpression() = doTest()
+  fun testCallOn2DimArrayElement() = doTest()
+  fun testCallOnArrayElement() = doTest()
+  fun testCallOnFieldArrayElement() = doTest()
+  fun testCantPassFieldAsParameter() = doTest()
+  fun testCast4ParamGeneration() = doTest()
+  fun testCastWhenDuplicateReplacement() = doTest()
+  fun testChainedConstructor() = doTest()
+  fun testChainedConstructorDuplicates() = doTest()
+  fun testChainedConstructorInvalidDuplicates() = doTest()
   fun test() = doTest()
 
   private fun doTest() {
