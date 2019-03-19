@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.FeedbackDescriptionProvider;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -31,12 +32,28 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SendFeedbackAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
-    e.getPresentation().setEnabledAndVisible(info != null && info.getFeedbackUrl() != null);
+    boolean isSupportedOS = SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isWindows;
+    if (info != null && info.getFeedbackUrl() != null && isSupportedOS) {
+      String feedbackSite = getFeedbackHost(info.getFeedbackUrl(), info.getCompanyName());
+      e.getPresentation().setDescription(ActionsBundle.message("action.SendFeedback.detailed.description", feedbackSite));
+      e.getPresentation().setEnabledAndVisible(true);
+    }
+    else {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+  }
+
+  private static String getFeedbackHost(String feedbackUrl, String companyName) {
+    Pattern uriPattern = Pattern.compile("[^:/?#]+://(?:www\\.)?([^/?#]*).*", Pattern.DOTALL);
+    Matcher matcher = uriPattern.matcher(feedbackUrl);
+    return matcher.matches() ? matcher.group(1) : companyName;
   }
 
   @Override
@@ -61,6 +78,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     String url = urlTemplate
       .replace("$BUILD", eap ? appInfo.getBuild().asStringWithoutProductCode() : appInfo.getBuild().asString())
       .replace("$TIMEZONE", System.getProperty("user.timezone"))
+      .replace("$VERSION", appInfo.getFullVersion())
       .replace("$EVAL", la != null && la.isEvaluationLicense() ? "true" : "false")
       .replace("$DESCR", description);
     BrowserUtil.browse(url, project);
