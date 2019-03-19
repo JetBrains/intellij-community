@@ -172,7 +172,7 @@ public class StartupUtil {
     }
 
     if (!Main.isHeadless()) {
-      AppUIUtil.showUserAgreementAndConsentsIfNeeded();
+      AppUIUtil.showUserAgreementAndConsentsIfNeeded(log);
     }
 
     if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
