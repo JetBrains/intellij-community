@@ -60,11 +60,12 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
     PropertyChecker.customized()
       .withIterationCount(30).checkScenarios(() -> env -> {
       long startModCount = tracker.getModificationCount();
-      if (rebuildStamp.getAndSet(startModCount) != startModCount) {
-        checkCompiles(myCompilerTester.rebuild());
-      }
 
       MadTestingUtil.changeAndRevert(myProject, () -> {
+        if (rebuildStamp.getAndSet(startModCount) != startModCount) {
+          checkCompiles(myCompilerTester.rebuild());
+        }
+
         env.executeCommands(Generator.constant(env1 -> {
           PsiJavaFile file = env1.generateValue(psiJavaFiles(), "Open %s in editor");
           env1.executeCommands(IntDistribution.uniform(1, 5), Generator.constant(new InvokeIntention(file, new JavaGreenIntentionPolicy())));
