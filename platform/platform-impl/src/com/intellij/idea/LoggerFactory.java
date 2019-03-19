@@ -24,23 +24,18 @@ public class LoggerFactory implements Logger.Factory {
   private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
   private static final String LOG_DIR_MACRO = "$LOG_DIR$";
 
-  private boolean myInitialized = false;
-
-  private LoggerFactory() { }
+  LoggerFactory() {
+    try {
+      init();
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
 
   @NotNull
   @Override
-  public synchronized Logger getLoggerInstance(@NotNull String name) {
-    if (!myInitialized) {
-      try {
-        init();
-        myInitialized = true;
-      }
-      catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-
+  public Logger getLoggerInstance(@NotNull String name) {
     return new IdeaLogger(org.apache.log4j.Logger.getLogger(name));
   }
 

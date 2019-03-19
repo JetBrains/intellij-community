@@ -198,7 +198,7 @@ public class StartupUtil {
     activity = activity.endAndStart("configure file logger");
 
     // the log initialization should happen only after locking the system directory
-    Logger.setFactory(LoggerFactory.class);
+    Logger.setFactory(new LoggerFactory());
     Logger log = Logger.getInstance(Main.class);
 
     activity = activity.endAndStart(Phases.START_LOGGING);
