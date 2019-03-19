@@ -33,6 +33,16 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightTestCase() {
   fun testArrayAccessWithDuplicates() = doTest()
   fun testArrayAccessWithLocalIndex() = doTest()
   fun testArrayAccessWithTopExpression() = doTest()
+  fun testArrayReturnType() = doTest()
+  fun testAvoidGenericArgumentCast() = doTest()
+  fun testAvoidGenericArgumentCastLocalClass() = doTest()
+  fun testBeforeCommentAfterSelectedFragment() = doTest()
+  fun testBooleanExpression() = doTest()
+  fun testBoxedConditionalReturn() = doTest()
+  fun testBuilderChainWith2DimArrayAccess() = doTest()
+  fun testBuilderChainWithArrayAccess() = doTest()
+  fun testBuilderChainWithArrayAccessExpr() = doTest()
+  fun testBuilderChainWithArrayAccessIf() = doTest()
   fun test() = doTest()
 
   private fun doTest() {
