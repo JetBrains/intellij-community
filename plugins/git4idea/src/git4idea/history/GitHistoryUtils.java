@@ -272,9 +272,9 @@ public class GitHistoryUtils {
 
   public static long getAuthorTime(@NotNull Project project, @NotNull VirtualFile root, @NotNull String commitsId) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.SHOW);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, AUTHOR_TIME);
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, AUTHOR_TIME);
     h.setSilent(true);
-    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters("-s", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(commitsId);
 
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
