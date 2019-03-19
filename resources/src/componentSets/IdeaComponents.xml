@@ -37,6 +37,12 @@
   <xi:include href="/componentSets/Execution.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/VCS.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.platform.PlatformProjectStarter</implementation-class>
+    </component>
+  </application-components>
+
   <project-components>
     <component>
       <implementation-class>com.intellij.openapi.vcs.impl.ModuleVcsDetector</implementation-class>
