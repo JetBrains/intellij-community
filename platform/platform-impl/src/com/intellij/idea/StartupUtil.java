@@ -133,7 +133,7 @@ public class StartupUtil {
     // this check must be performed before system directories are locked
     boolean newConfigFolder = !Main.isHeadless() && !new File(PathManager.getConfigPath()).exists();
 
-    final Logger log = lockDirsAndConfigureLogger(args);
+    Logger log = lockDirsAndConfigureLogger(args);
 
     futures.add(executorService.submit(() -> {
       Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.LOAD_SYSTEM_LIBS);
@@ -225,7 +225,10 @@ public class StartupUtil {
     return initLafTask;
   }
 
-  private static void addInitUiTasks(@NotNull List<Future<?>> futures, @NotNull ExecutorService executorService, @NotNull Logger log, @NotNull Future<?> initLafTask) {
+  private static void addInitUiTasks(@NotNull List<Future<?>> futures,
+                                     @NotNull ExecutorService executorService,
+                                     @NotNull Logger log,
+                                     @NotNull Future<?> initLafTask) {
     futures.add(executorService.submit(() -> {
       // UIUtil.initDefaultLaF must be called before this call
       try {
@@ -239,7 +242,6 @@ public class StartupUtil {
       }
 
       // updateWindowIcon must be after UIUtil.initSystemFontData because uses computed system font data for scale context
-
       if (!Main.isHeadless()) {
         // no need to wait - doesn't affect other functionality
         executorService.execute(() -> {
