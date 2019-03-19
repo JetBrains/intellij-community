@@ -38,4 +38,15 @@ class PyCharmBuildOptions {
   static File getTemporaryFolderForUnzip(BuildContext context) {
     return new File(context.paths.temp, "unzips")
   }
+
+  /**
+   * Build PyCharm with Anaconda plugin distributions together with regular PyCharm
+   */
+  static final String buildWithAnacondaEdition = SystemProperties.getBooleanProperty("intellij.build.pycharm.anaconda.edition", false)
+
+  /**
+   * Miniconda installer folder name
+   * The same folder should be specified at com.jetbrains.python.PythonMinicondaLocator#getMinicondaInstallerFolder()
+   * */
+  static final String minicondaInstallerFolderName = "minicondaInstaller"
 }
