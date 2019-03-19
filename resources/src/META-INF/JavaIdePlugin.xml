@@ -26,7 +26,9 @@
   <module value="com.intellij.modules.xdebugger"/>
   <module value="com.intellij.modules.externalSystem"/>
 
-  <xi:include href="/componentSets/IdeaComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/PlatformLangComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/ExternalSystemComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/Compiler.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
@@ -208,12 +210,18 @@
 
   <application-components>
     <component>
+      <implementation-class>com.intellij.internal.statistic.updater.StatisticsJobsScheduler</implementation-class>
+    </component>
+    <component>
       <implementation-class>com.intellij.openapi.projectRoots.impl.DefaultJdkConfigurator</implementation-class>
       <headless-implementation-class/>
     </component>
   </application-components>
 
   <project-components>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.impl.ModuleVcsDetector</implementation-class>
+    </component>
     <component>
       <implementation-class>com.intellij.framework.detection.impl.FrameworkDetectionManager</implementation-class>
     </component>
