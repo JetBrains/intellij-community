@@ -201,6 +201,9 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   private void collectDeclaredInsideUsedAfter() {
+    if (myExpression != null) {
+      return;
+    }
     Set<PsiLocalVariable> declaredInside = new HashSet<>();
     for (PsiElement element : myElements) {
       if (element instanceof PsiDeclarationStatement) {
@@ -233,6 +236,9 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   private void collectReturnedImmediatelyAfter(ControlFlowWrapper controlFlowWrapper) {
+    if (myExpression != null) {
+      return;
+    }
     try {
       controlFlowWrapper.prepareExitStatements(myElements, myCodeFragment);
       if (controlFlowWrapper.isGenerateConditionalExit()) {
