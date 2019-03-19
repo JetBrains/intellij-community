@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -24,7 +25,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class PyPathCompletionContributor extends CompletionContributor {
@@ -33,12 +33,9 @@ public class PyPathCompletionContributor extends CompletionContributor {
 
   public PyPathCompletionContributor() {
     extend(CompletionType.BASIC,
-           // Because very broad selection of strings can represent path and we want to avoid
-           // interactions with file system, we restrict strings set treated as paths to
-           // 1. relative paths containing "<file-separator>"
-           // 2. absolute paths.
-           // These two items can be summarized as 'contains file separator'.
-           pyStringLiteralMatches("[/\\\\]"),
+           // For relative paths in project we use PythonPathReferenceContributor
+           // This class is used only for absolute paths.
+           pyStringLiteralMatches("^((/)|([A-Z]:((\\\\)|(/))))", SystemInfo.isFileSystemCaseSensitive ? Pattern.CASE_INSENSITIVE : 0),
            new PathCompletionProvider());
   }
 
@@ -54,11 +51,6 @@ public class PyPathCompletionContributor extends CompletionContributor {
       Path path = Paths.get(pos.getStringValue());
       List<PyStringElement> stringElements = pos.getStringElements();
       stringElements.subList(0, stringElements.size() - 1);
-
-      if (!path.isAbsolute()) {
-        Path basePath = Paths.get(Objects.requireNonNull(parameters.getOriginalPosition().getProject().getBasePath()));
-        path = basePath.resolve(path);
-      }
 
       File f = path.toFile();
       final File dir = f.isDirectory() ? f : f.getParentFile();
@@ -91,8 +83,8 @@ public class PyPathCompletionContributor extends CompletionContributor {
     }
   }
 
-  public static PyElementPattern.Capture<PyStringLiteralExpression> pyStringLiteralMatches(final String regexp) {
-    final Pattern pattern = Pattern.compile(regexp, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+  public static PyElementPattern.Capture<PyStringLiteralExpression> pyStringLiteralMatches(final String regexp, int flags) {
+    final Pattern pattern = Pattern.compile(regexp, flags);
     return new PyElementPattern.Capture<>(new InitialPatternCondition<PyStringLiteralExpression>(PyStringLiteralExpression.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {

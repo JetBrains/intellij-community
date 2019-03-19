@@ -26,7 +26,11 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
@@ -66,6 +70,7 @@ public class FileReferenceSet {
   private boolean myEmptyPathAllowed;
   @Nullable private Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
   @Nullable private FileType[] mySuitableFileTypes;
+  private boolean myShouldCheckOutsideProject;
 
   public FileReferenceSet(String str,
                           @NotNull PsiElement element,
@@ -85,6 +90,18 @@ public class FileReferenceSet {
                           boolean endingSlashNotAllowed,
                           @Nullable FileType[] suitableFileTypes,
                           boolean init) {
+    this(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed, suitableFileTypes, init, false);
+  }
+
+  public FileReferenceSet(String str,
+                          @NotNull PsiElement element,
+                          int startInElement,
+                          PsiReferenceProvider provider,
+                          boolean caseSensitive,
+                          boolean endingSlashNotAllowed,
+                          @Nullable FileType[] suitableFileTypes,
+                          boolean init,
+                          boolean shouldCheckOutsideProject) {
     myElement = element;
     myStartInElement = startInElement;
     myCaseSensitive = caseSensitive;
@@ -94,6 +111,7 @@ public class FileReferenceSet {
     myEmptyPathAllowed = !endingSlashNotAllowed;
     myOptions = provider instanceof CustomizableReferenceProvider ? ((CustomizableReferenceProvider)provider).getOptions() : null;
     mySuitableFileTypes = suitableFileTypes;
+    myShouldCheckOutsideProject = shouldCheckOutsideProject;
 
     if (init) {
       reparse();
@@ -335,7 +353,7 @@ public class FileReferenceSet {
     }
 
     if (isAbsolutePathReference()) {
-      return getAbsoluteTopLevelDirLocations(file);
+      return getAbsoluteTopLevelDirLocations(file, myShouldCheckOutsideProject);
     }
 
     return getContextByFile(file);
@@ -435,8 +453,18 @@ public class FileReferenceSet {
     return myReferences == null || myReferences.length == 0 ? null : myReferences[myReferences.length - 1];
   }
 
+  //TODO: в HTML реализовано.
+  // Djano project -> TEMPLATES -> DIRS
+  // относительный -- относительно текущей папки + возможно, относительно WORKING_DIR
+  // подумать о том, чтобы резолвить по точке + разумный набор функций.
+
   @NotNull
   public static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(@NotNull final PsiFile file) {
+    return getAbsoluteTopLevelDirLocations(file, false);
+  }
+
+  @NotNull
+  public static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(@NotNull final PsiFile file, boolean shouldCheckOutsideProject) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return Collections.emptyList();
 
@@ -460,6 +488,12 @@ public class FileReferenceSet {
         list.addAll(roots);
       }
     }
+
+    if (shouldCheckOutsideProject) {
+      VirtualFile root = VirtualFileManager.getInstance().findFileByUrl("file:///");
+      list.add(PsiManager.getInstance(project).findDirectory(root));
+    }
+
     return list;
   }
 
