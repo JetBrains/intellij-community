@@ -22,6 +22,8 @@ import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.NotNull;
@@ -53,13 +55,15 @@ class FindPopupScopeUIImpl implements FindPopupScopeUI {
     myFindPopupPanel = panel;
     initComponents();
 
-    //noinspection unchecked
-    myComponents = (Pair<ScopeType, JComponent>[])new Pair[]{
-      new Pair<>(PROJECT, new JLabel()),
-      new Pair<>(MODULE, shrink(myModuleComboBox)),
-      new Pair<>(DIRECTORY, myDirectoryChooser),
-      new Pair<>(SCOPE, shrink(myScopeCombo)),
-    };
+    boolean fullVersion = !PlatformUtils.isDataGrip();
+    myComponents =
+      fullVersion
+      ? ContainerUtil.ar(new Pair<>(PROJECT, new JLabel()),
+                         new Pair<>(MODULE, shrink(myModuleComboBox)),
+                         new Pair<>(DIRECTORY, myDirectoryChooser),
+                         new Pair<>(SCOPE, shrink(myScopeCombo)))
+      : ContainerUtil.ar(new Pair<>(SCOPE, shrink(myScopeCombo)),
+                         new Pair<>(DIRECTORY, myDirectoryChooser));
   }
 
   public void initComponents() {
@@ -196,7 +200,10 @@ class FindPopupScopeUIImpl implements FindPopupScopeUI {
       }
     }
 
-    ScopeType selectedScope = getScope(findModel);
+    ScopeType scope = getScope(findModel);
+    ScopeType selectedScope = Arrays.stream(myComponents).filter(o -> o.first == scope).findFirst().orElse(null) == null
+                              ? myComponents[myComponents.length - 1].first
+                              : scope;
     if (selectedScope == MODULE) {
       myModuleComboBox.setSelectedItem(findModel.getModuleName());
     }
