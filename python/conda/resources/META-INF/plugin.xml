@@ -1,0 +1,17 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+  <name>Anaconda Support</name>
+  <id>org.jetbrains.plugins.anaconda</id>
+  <vendor>JetBrains</vendor>
+  <description>Facilitates using Сonda management system in PyCharm</description>
+
+  <depends>com.intellij.modules.python</depends>
+
+  <change-notes>
+    <![CDATA[
+    <ul>
+    <li>Establishes Conda as the default virtual environment for the newly created project in PyCharm.</li>
+    </ul>
+    ]]>
+  </change-notes>
+  <xi:include href="/META-INF/conda.xml" xpointer="xpointer(/idea-plugin/*)"/>
+</idea-plugin>
