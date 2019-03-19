@@ -386,6 +386,7 @@ public class GitLogUtil {
                                               boolean withFullMergeDiff,
                                               boolean preserverOrder,
                                               @NotNull DiffRenameLimit renameLimit) throws VcsException {
+    if (hashes.isEmpty()) return;
     GitLineHandler handler =
       createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit), lowPriorityProcess);
     sendHashesToStdin(vcs, hashes, handler);
