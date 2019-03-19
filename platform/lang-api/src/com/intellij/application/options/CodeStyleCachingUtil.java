@@ -69,6 +69,6 @@ class CodeStyleCachingUtil {
   private static void logCached(@NotNull PsiFile file, @NotNull CachedCodeStyleHolder holder) {
     CodeStyleSettings settings = holder.getCachedSettings();
     LOG.debug(String.format(
-      "File: %s, cached: %s, tracker: %d", file.getName(), settings, settings.getModificationTracker().getModificationCount()));
+      "File: %s (%s), cached: %s, tracker: %d", file.getName(), Integer.toHexString(file.hashCode()), settings, settings.getModificationTracker().getModificationCount()));
   }
 }
