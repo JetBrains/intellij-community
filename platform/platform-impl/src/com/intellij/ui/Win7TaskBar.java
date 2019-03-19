@@ -119,23 +119,21 @@ class Win7TaskBar {
     mySetProgressState.invokeInt(new Object[]{myInterfacePointer, getHandle(frame), TBPF_NOPROGRESS});
   }
 
-  static void setOverlayIcon(IdeFrame frame, Object icon, boolean dispose) {
+  static void setOverlayIcon(IdeFrame frame, WinDef.HICON icon, boolean dispose) {
     if (!ourInitialized) {
       return;
     }
 
-    if (icon == null) {
-      icon = Pointer.NULL;
-    }
     mySetOverlayIcon.invokeInt(new Object[]{myInterfacePointer, getHandle(frame), icon, Pointer.NULL});
+
     if (dispose) {
-      User32.INSTANCE.DestroyIcon((WinDef.HICON)icon);
+      User32.INSTANCE.DestroyIcon(icon);
     }
   }
 
-  static Object createIcon(byte[] ico) {
+  static WinDef.HICON createIcon(byte[] ico) {
     if (!ourInitialized) {
-      return new Object();
+      return null;
     }
 
     DisposableMemory memory = new DisposableMemory(ico.length);
@@ -148,6 +146,7 @@ class Win7TaskBar {
       if (offset != 0) {
         return User32Ex.INSTANCE.CreateIconFromResourceEx(memory.share(offset), DWORD_ZERO, true, ICO_VERSION, nSize, nSize, 0);
       }
+
       return null;
     }
     finally {
