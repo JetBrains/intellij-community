@@ -74,6 +74,9 @@ public class CodeStyle {
       CodeStyleSettings fileSettings = provider.getSettings(file);
       if (fileSettings != null) return fileSettings;
     }
+    if (!file.isPhysical()) {
+      return getSettings(file.getProject());
+    }
     return CodeStyleCachingUtil.getCachedCodeStyle(file);
   }
 
