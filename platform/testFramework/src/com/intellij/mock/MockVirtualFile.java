@@ -126,6 +126,16 @@ public class MockVirtualFile extends VirtualFile {
     return VfsUtilCore.toVirtualFileArray(myChildren);
   }
 
+  @Override
+  public final boolean equals(Object o) {
+    return super.equals(o);
+  }
+
+  @Override
+  public final int hashCode() {
+    return super.hashCode();
+  }
+
   @NotNull
   @Override
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
