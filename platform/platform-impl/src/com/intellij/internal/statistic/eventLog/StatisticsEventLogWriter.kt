@@ -10,7 +10,7 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
 
-interface FeatureUsageEventWriter {
+interface StatisticsEventLogWriter {
   fun log(message: String)
 
   fun getFiles(): List<File>
@@ -18,8 +18,8 @@ interface FeatureUsageEventWriter {
   fun cleanup()
 }
 
-class FeatureUsageLogEventWriter : FeatureUsageEventWriter {
-  private var fileAppender: FeatureUsageEventFileAppender? = null
+class StatisticsEventLogFileWriter : StatisticsEventLogWriter {
+  private var fileAppender: StatisticsEventLogFileAppender? = null
 
   private val eventLogger: Logger = Logger.getLogger("feature-usage-event-logger")
 
@@ -30,7 +30,7 @@ class FeatureUsageLogEventWriter : FeatureUsageEventWriter {
     val pattern = PatternLayout("%m\n")
     try {
       val dir = getEventLogDir()
-      fileAppender = FeatureUsageEventFileAppender.create(pattern, dir)
+      fileAppender = StatisticsEventLogFileAppender.create(pattern, dir)
       fileAppender?.let { appender ->
         appender.setMaxFileSize("200KB")
         eventLogger.addAppender(appender)

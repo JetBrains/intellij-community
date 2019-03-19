@@ -3,7 +3,7 @@ package com.intellij.configurationStore.statistics.eventLog
 
 import com.intellij.configurationStore.getStateSpec
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup
+import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.project.ProjectManager
@@ -353,7 +353,7 @@ class FeatureUsageSettingsEventsTest {
   private class TestFeatureUsageSettingsEventsPrinter(recordDefault: Boolean) : FeatureUsageSettingsEventPrinter(recordDefault) {
     val result: MutableList<LoggedComponentStateEvents> = ArrayList()
 
-    override fun logConfig(group: FeatureUsageGroup, eventId: String, data: Map<String, Any>) {
+    override fun logConfig(group: EventLogGroup, eventId: String, data: Map<String, Any>) {
       result.add(LoggedComponentStateEvents(group, eventId, data))
     }
 
@@ -376,7 +376,7 @@ class FeatureUsageSettingsEventsTest {
     }
   }
 
-  private class LoggedComponentStateEvents(val group: FeatureUsageGroup, val id: String, val data: Map<String, Any>)
+  private class LoggedComponentStateEvents(val group: EventLogGroup, val id: String, val data: Map<String, Any>)
 
   @State(name = "MyTestComponent", reportStatistic = true)
   private class TestComponent : PersistentStateComponent<ComponentState> {

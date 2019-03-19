@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistic.eventLog
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.internal.statistic.eventLog.fus
 
 import com.intellij.concurrency.JobScheduler
 import com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
@@ -10,8 +12,8 @@ import com.intellij.util.lang.JavaVersion
 import java.util.concurrent.TimeUnit
 
 class SystemStateMonitor : FeatureUsageStateEventTracker {
-  private val OS_GROUP = FeatureUsageGroup("system.os", 1)
-  private val JAVA_GROUP = FeatureUsageGroup("system.java", 1)
+  private val OS_GROUP = EventLogGroup("system.os", 1)
+  private val JAVA_GROUP = EventLogGroup("system.java", 1)
 
   private val INITIAL_DELAY = 0
   private val PERIOD_DELAY = 24 * 60

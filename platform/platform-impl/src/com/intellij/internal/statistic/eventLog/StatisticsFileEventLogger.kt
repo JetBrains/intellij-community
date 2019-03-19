@@ -9,26 +9,26 @@ import com.intellij.util.ConcurrencyUtil
 import java.io.File
 import java.util.*
 
-open class FeatureUsageFileEventLogger(private val sessionId: String,
-                                       private val build: String,
-                                       private val bucket: String,
-                                       private val recorderVersion: String,
-                                       private val writer: FeatureUsageEventWriter) : FeatureUsageEventLogger, Disposable {
+open class StatisticsFileEventLogger(private val sessionId: String,
+                                     private val build: String,
+                                     private val bucket: String,
+                                     private val recorderVersion: String,
+                                     private val writer: StatisticsEventLogWriter) : StatisticsEventLogger, Disposable {
   protected val myLogExecutor = ConcurrencyUtil.newSingleThreadExecutor(javaClass.simpleName)
 
   private var lastEvent: LogEvent? = null
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
 
-  override fun log(group: FeatureUsageGroup, action: String, isState: Boolean) {
-    log(group, action, Collections.emptyMap(), isState)
+  override fun log(group: EventLogGroup, eventId: String, isState: Boolean) {
+    log(group, eventId, Collections.emptyMap(), isState)
   }
 
-  override fun log(group: FeatureUsageGroup, action: String, data: Map<String, Any>, isState: Boolean) {
+  override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) {
     val eventTime = System.currentTimeMillis()
     myLogExecutor.execute(Runnable {
       val creationTime = System.currentTimeMillis()
-      val event = newLogEvent(sessionId, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion, action, isState)
+      val event = newLogEvent(sessionId, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion, eventId, isState)
       for (datum in data) {
         event.event.addData(datum.key, datum.value)
       }
@@ -36,7 +36,7 @@ open class FeatureUsageFileEventLogger(private val sessionId: String,
     })
   }
 
-  private fun log(writer: FeatureUsageEventWriter, event: LogEvent, createdTime: Long) {
+  private fun log(writer: StatisticsEventLogWriter, event: LogEvent, createdTime: Long) {
     if (lastEvent != null && event.time - lastEventTime <= 10000 && lastEvent!!.shouldMerge(event)) {
       lastEventTime = event.time
       lastEvent!!.event.increment()
@@ -49,7 +49,7 @@ open class FeatureUsageFileEventLogger(private val sessionId: String,
     }
   }
 
-  private fun logLastEvent(writer: FeatureUsageEventWriter) {
+  private fun logLastEvent(writer: StatisticsEventLogWriter) {
     lastEvent?.let {
       if (it.event.isEventGroup()) {
         it.event.addData("last", lastEventTime)
@@ -72,7 +72,7 @@ open class FeatureUsageFileEventLogger(private val sessionId: String,
     dispose(writer)
   }
 
-  private fun dispose(writer: FeatureUsageEventWriter) {
+  private fun dispose(writer: StatisticsEventLogWriter) {
     myLogExecutor.execute(Runnable {
       logLastEvent(writer)
     })

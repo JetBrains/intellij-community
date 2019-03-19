@@ -5,7 +5,7 @@ import com.intellij.application.Topics;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.*;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
