@@ -42,9 +42,6 @@
     <component>
       <implementation-class>com.intellij.lang.java.JavaModuleRenameListener</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationSearcher</implementation-class>
-    </component>
   </project-components>
 
   <extensionPoints>
