@@ -29,8 +29,6 @@ import org.jetbrains.annotations.NotNull;
 public class KeywordCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/keywords/";
 
-  private static final String[] FILE_SCOPE_KEYWORDS = {
-    "package", "public", "private", "import", "final", "class", "interface", "abstract", "enum", "default", null};
   private static final String[] CLASS_SCOPE_KEYWORDS = {
     "public", "private", "protected", "import", "final", "class", "interface", "abstract", "enum", "default", null};
   private static final String[] CLASS_SCOPE_KEYWORDS_2 = {
@@ -114,6 +112,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNullInMethodCall2() { doTest(); }
   public void testNewInMethodRefs() { doTest(1, "new", "null", "true", "false"); }
   public void testNewInCast() { doTest(2, "new", "null", "true", "false"); }
+  public void testNewInNegation() { doTest(1, "new", "null", "true", "false"); }
   public void testSpaceAfterInstanceof() { doTest(); }
   public void testInstanceofAfterUnresolved() { doTest(1, "instanceof"); }
   public void testInstanceofAfterStatementStart() { doTest(1, "instanceof"); }
