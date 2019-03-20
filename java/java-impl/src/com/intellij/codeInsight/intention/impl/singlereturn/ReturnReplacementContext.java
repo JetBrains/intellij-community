@@ -30,7 +30,7 @@ class ReturnReplacementContext {
   private final PsiCodeBlock myBlock;
   private final ExitContext myExitContext;
   private PsiReturnStatement myReturnStatement;
-  private final List<String> myReplacements = new ArrayList<>();
+  private final List<String> myReplacements = new ArrayList<>(3);
 
   private ReturnReplacementContext(Project project,
                            PsiCodeBlock block,
@@ -45,17 +45,18 @@ class ReturnReplacementContext {
 
   private void process() {
     PsiExpression value = myReturnStatement.getReturnValue();
+    PsiStatement currentContext = goUp();
+    if (currentContext == null) return;
     if (value != null) {
       myExitContext.registerReturnValue(value, myReplacements);
     }
-    PsiStatement currentContext = goUp();
     while (currentContext != null) {
       currentContext = advance(currentContext);
     }
     replace();
   }
 
-  @NotNull
+  @Nullable
   private PsiStatement goUp() {
     PsiElement parent = myReturnStatement.getParent();
     while (parent instanceof PsiCodeBlock) {
@@ -84,7 +85,11 @@ class ReturnReplacementContext {
       if (grandParent instanceof PsiStatement) {
         parent = grandParent;
       }
-      else if (parent != myBlock) {
+      else if (parent == myBlock) {
+        // May happen for incorrect code
+        return null;
+      }
+      else {
         throw new RuntimeExceptionWithAttachments("Unexpected structure: " + grandParent.getClass(),
                                                   new Attachment("body.txt", myBlock.getText()),
                                                   new Attachment("context.txt", grandParent.getText()));
