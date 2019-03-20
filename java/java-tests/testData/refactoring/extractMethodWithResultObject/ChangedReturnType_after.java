@@ -8,7 +8,7 @@ class X {
   }//ins and outs
 //in: PsiParameter:o
 //out: PsiLocalVariable:x
-//exit: CONTINUE PsiForeachStatement<-PsiContinueStatement
+//exit: CONTINUE PsiBlockStatement<-PsiContinueStatement
 //exit: SEQUENTIAL PsiDeclarationStatement
 
     private String bar(Object o) {

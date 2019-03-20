@@ -183,8 +183,8 @@ public class ExtractMethodWithResultObjectProcessor {
 
         if (!myExpressionsOnly) {
           PsiStatement continuedStatement = statement.findContinuedStatement();
-          if (continuedStatement != null && !isInside(continuedStatement)) {
-            myExits.put(statement, new Exit(ExitType.CONTINUE, continuedStatement));
+          if (continuedStatement instanceof PsiLoopStatement && !isInside(continuedStatement)) {
+            myExits.put(statement, new Exit(ExitType.CONTINUE, ((PsiLoopStatement)continuedStatement).getBody()));
           }
         }
       }
@@ -196,7 +196,23 @@ public class ExtractMethodWithResultObjectProcessor {
         if (!myExpressionsOnly) {
           PsiElement exitedElement = statement.findExitedElement();
           if (exitedElement != null && !isInside(exitedElement)) {
-            myExits.put(statement, new Exit(ExitType.BREAK, exitedElement));
+            PsiElement outermostExited = findOutermostExitedElement(statement);
+            myExits.put(statement, new Exit(ExitType.BREAK, outermostExited != null ? outermostExited : exitedElement));
+          }
+        }
+      }
+
+      @Override
+      public void visitThrowStatement(PsiThrowStatement statement) {
+        super.visitThrowStatement(statement);
+
+        if (!myExpressionsOnly) {
+          PsiTryStatement throwTarget = findThrowTarget(statement);
+          if (throwTarget == null) {
+            myExits.put(statement, new Exit(ExitType.THROW, myCodeFragmentMember));
+          }
+          else if (!isInside(throwTarget)) {
+            myExits.put(statement, new Exit(ExitType.THROW, throwTarget));
           }
         }
       }
@@ -268,7 +284,7 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   @Nullable("null means there's an error in the code")
-  private PsiElement findExitedElement(@NotNull PsiElement startLocation) {
+  private PsiElement findOutermostExitedElement(@NotNull PsiElement startLocation) {
     PsiElement location = startLocation;
     while (true) {
       if (location == null || location instanceof PsiParameterListOwner || location instanceof PsiClassInitializer) {
@@ -294,7 +310,7 @@ public class ExtractMethodWithResultObjectProcessor {
         continue;
       }
       if (location instanceof PsiThrowStatement) {
-        PsiTryStatement target = getThrowTarget((PsiThrowStatement)location);
+        PsiTryStatement target = findThrowTarget((PsiThrowStatement)location);
         return target != null ? target.getTryBlock() : myCodeFragmentMember;
       }
       if (location instanceof PsiSwitchLabelStatementBase) {
@@ -317,7 +333,7 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   @Nullable
-  private PsiTryStatement getThrowTarget(@NotNull PsiThrowStatement statement) {
+  private PsiTryStatement findThrowTarget(@NotNull PsiThrowStatement statement) {
     PsiExpression exception = PsiUtil.skipParenthesizedExprDown(statement.getException());
     if (exception == null) {
       return null;
@@ -371,7 +387,7 @@ public class ExtractMethodWithResultObjectProcessor {
       break;
     }
 
-    PsiElement exitedElement = findExitedElement(myElements[myElements.length - 1]);
+    PsiElement exitedElement = findOutermostExitedElement(myElements[myElements.length - 1]);
     if (exitedElement != null) {
       myExits.put(null, new Exit(ExitType.SEQUENTIAL, exitedElement));
     }else {

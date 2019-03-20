@@ -6,7 +6,7 @@ class C {
         }
     }//ins and outs
 //in: PsiLocalVariable:i
-//exit: CONTINUE PsiForStatement<-PsiContinueStatement
+//exit: CONTINUE PsiBlockStatement<-PsiContinueStatement
 //exit: SEQUENTIAL PsiIfStatement
 
     {
