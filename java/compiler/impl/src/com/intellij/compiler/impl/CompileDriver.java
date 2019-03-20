@@ -699,7 +699,7 @@ public class CompileDriver {
       return true;
     }
     catch (Throwable e) {
-      LOG.info(e);
+      LOG.error(e);
       return false;
     }
   }
