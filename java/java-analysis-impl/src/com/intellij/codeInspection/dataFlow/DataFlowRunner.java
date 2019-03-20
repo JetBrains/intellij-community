@@ -283,7 +283,7 @@ public class DataFlowRunner {
     catch (ProcessCanceledException ex) {
       throw ex;
     }
-    catch (RuntimeException e) {
+    catch (RuntimeException | AssertionError e) {
       reportDfaProblem(psiBlock, flow, lastInstructionState, e);
       return RunnerResult.ABORTED;
     }
@@ -329,7 +329,7 @@ public class DataFlowRunner {
 
   private static void reportDfaProblem(@NotNull PsiElement psiBlock,
                                        ControlFlow flow,
-                                       DfaInstructionState lastInstructionState, RuntimeException e) {
+                                       DfaInstructionState lastInstructionState, Throwable e) {
     Attachment[] attachments = {new Attachment("method_body.txt", psiBlock.getText())};
     if (flow != null) {
       String flowText = flow.toString();
