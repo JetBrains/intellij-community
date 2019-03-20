@@ -149,6 +149,13 @@
     <xi:fallback/>
   </xi:include>
 
+  <!-- Android Studio: enable reporting for highlighting stats. -->
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.HighlightingStats</implementation-class>
+    </component>
+  </application-components>
+
   <!-- Android Studio: disable until we adapt our embedded JDK configurator to use this mechanism.
   <application-components>
     <component>

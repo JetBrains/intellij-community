@@ -169,6 +169,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @Override
   protected void collectInformationWithProgress(@NotNull final ProgressIndicator progress) {
+    long start = System.nanoTime(); // Android Studio: collect metrics for syntax highlighting latency.
     final List<HighlightInfo> outsideResult = new ArrayList<>(100);
     final List<HighlightInfo> insideResult = new ArrayList<>(100);
 
@@ -232,6 +233,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         if (myUpdateAll) {
           daemonCodeAnalyzer.getFileStatusMap().setErrorFoundFlag(myProject, getDocument(), myErrorFound);
         }
+
+        // Android Studio: collect metrics for syntax highlighting latency.
+        long latencyMs = (System.nanoTime() - start) / 1_000_000;
+        HighlightingStats.INSTANCE.recordHighlightingLatency(getDocument(), latencyMs);
       }
       else {
         cancelAndRestartDaemonLater(progress, myProject);
