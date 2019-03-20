@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
@@ -12,7 +13,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
@@ -101,7 +101,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         }
       }
       else {
-        lookup = lookup.withIcon(JetgroovyIcons.Groovy.DynamicProperty);
+        lookup = lookup.withIcon(AllIcons.Nodes.Property);
       }
 
       LookupElement customized = entry.getValue().customizeLookupElement(lookup);
