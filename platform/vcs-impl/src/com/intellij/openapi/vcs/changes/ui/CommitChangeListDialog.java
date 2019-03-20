@@ -74,7 +74,7 @@ import static java.lang.Math.min;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.*;
 
-public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, SingleChangeListCommitWorkflowUi {
+public abstract class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, SingleChangeListCommitWorkflowUi {
   private static final Logger LOG = getInstance(CommitChangeListDialog.class);
 
   public static final String DIALOG_TITLE = message("commit.dialog.title");
@@ -105,7 +105,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull private final CommitOptionsPanel myCommitOptions;
   @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
-  @NotNull private final CommitDialogChangesBrowser myBrowser;
   @NotNull private final JComponent myBrowserBottomPanel = createHorizontalBox();
   @NotNull private final MyChangeProcessor myDiffDetails;
   @NotNull private final CommitMessage myCommitMessageArea;
@@ -227,7 +226,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     DialogCommitWorkflow workflow =
       new DialogCommitWorkflow(project, included, initialSelection, executors, showVcsCommit, forceCommitInVcs, affectedVcses,
                                isDefaultChangeListFullyIncluded, comment, customResultHandler);
-    return workflow.showDialog();
+    CommitChangeListDialog dialog = new DefaultCommitChangeListDialog(workflow);
+
+    return new SingleChangeListCommitWorkflowHandler(workflow, dialog).activate();
   }
 
   @NotNull
@@ -240,7 +241,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return result;
   }
 
-  CommitChangeListDialog(@NotNull DialogCommitWorkflow workflow) {
+  protected CommitChangeListDialog(@NotNull DialogCommitWorkflow workflow) {
     super(workflow.getProject(), true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
     myWorkflow = workflow;
     myProject = myWorkflow.getProject();
@@ -267,7 +268,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myDiffDetails = new MyChangeProcessor(myProject, myWorkflow.isPartialCommitEnabled());
     myCommitMessageArea = new CommitMessage(myProject, true, true, isDefaultCommitEnabled());
-    myBrowser = myWorkflow.createBrowser();
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     mySplitter = new Splitter(true);
@@ -282,6 +282,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myDetailsSplitter = createDetailsSplitter(rootPane);
   }
 
+  @NotNull
+  public abstract CommitDialogChangesBrowser getBrowser();
+
   @Override
   public boolean activate() {
     beforeInit();
@@ -292,13 +295,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void beforeInit() {
-    myBrowser.setInclusionChangedListener(() -> myInclusionEventDispatcher.getMulticaster().inclusionChanged());
+    getBrowser().setInclusionChangedListener(() -> myInclusionEventDispatcher.getMulticaster().inclusionChanged());
 
     addInclusionListener(() -> updateButtons(), this);
-    myBrowser.getViewer().addSelectionListener(() -> changeDetails(myBrowser.getViewer().isModelUpdateInProgress()));
+    getBrowser().getViewer().addSelectionListener(() -> changeDetails(getBrowser().getViewer().isModelUpdateInProgress()));
 
     myBrowserBottomPanel.add(myLegend.getComponent());
-    BorderLayoutPanel topPanel = JBUI.Panels.simplePanel().addToCenter(myBrowser).addToBottom(myBrowserBottomPanel);
+    BorderLayoutPanel topPanel = JBUI.Panels.simplePanel().addToCenter(getBrowser()).addToBottom(myBrowserBottomPanel);
 
     mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setFirstComponent(topPanel);
@@ -673,7 +676,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public void dispose() {
     myDisposed = true;
     Disposer.dispose(myCommitOptions);
-    Disposer.dispose(myBrowser);
+    Disposer.dispose(getBrowser());
     Disposer.dispose(myCommitMessageArea);
     Disposer.dispose(myOKButtonUpdateAlarm);
     super.dispose();
@@ -835,7 +838,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   public void refresh() {
     ChangeListManager.getInstance(myProject).invokeAfterUpdate(() -> {
-      myBrowser.updateDisplayedChangeLists();
+      getBrowser().updateDisplayedChangeLists();
       myCommitOptions.refresh();
     }, InvokeAfterUpdateMode.SILENT, "commit dialog", ModalityState.current());
   }
@@ -865,13 +868,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
     myExecutorActions.forEach(action -> action.updateEnabled(enabled));
     myOKButtonUpdateAlarm.cancelAllRequests();
-    myOKButtonUpdateAlarm.addRequest(myUpdateButtonsRunnable, 300, ModalityState.stateForComponent(myBrowser));
+    myOKButtonUpdateAlarm.addRequest(myUpdateButtonsRunnable, 300, ModalityState.stateForComponent(getBrowser()));
   }
 
   private void updateLegend() {
     if (myDisposed || myUpdateDisabled) return;
-    myChangesInfoCalculator.update(myBrowser.getDisplayedChanges(), getIncludedChanges(),
-                                   myBrowser.getDisplayedUnversionedFiles().size(),
+    myChangesInfoCalculator.update(getBrowser().getDisplayedChanges(), getIncludedChanges(),
+                                   getBrowser().getDisplayedUnversionedFiles().size(),
                                    getIncludedUnversionedFiles().size());
     myLegend.update();
   }
@@ -891,10 +894,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   private List<FilePath> getDisplayedPaths() {
     List<FilePath> paths = new ArrayList<>();
-    for (Change change : myBrowser.getDisplayedChanges()) {
+    for (Change change : getBrowser().getDisplayedChanges()) {
       paths.add(ChangesUtil.getFilePath(change));
     }
-    for (VirtualFile file : myBrowser.getDisplayedUnversionedFiles()) {
+    for (VirtualFile file : getBrowser().getDisplayedUnversionedFiles()) {
       paths.add(VcsUtil.getFilePath(file));
     }
     return paths;
@@ -920,7 +923,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       .map(provider -> provider.getData(dataId))
       .nonNull()
       .findFirst()
-      .orElseGet(() -> myBrowser.getData(dataId));
+      .orElseGet(() -> getBrowser().getData(dataId));
   }
 
   @Override
@@ -936,24 +939,24 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   @Override
   public LocalChangeList getChangeList() {
-    return myBrowser.getSelectedChangeList();
+    return getBrowser().getSelectedChangeList();
   }
 
   @NotNull
   @Override
   public List<Change> getIncludedChanges() {
-    return myBrowser.getIncludedChanges();
+    return getBrowser().getIncludedChanges();
   }
 
   @NotNull
   @Override
   public List<VirtualFile> getIncludedUnversionedFiles() {
-    return myBrowser.getIncludedUnversionedFiles();
+    return getBrowser().getIncludedUnversionedFiles();
   }
 
   @Override
   public void includeIntoCommit(@NotNull Collection<?> items) {
-    myBrowser.getViewer().includeChanges(items);
+    getBrowser().getViewer().includeChanges(items);
   }
 
   @Override
@@ -996,11 +999,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
-  public CommitDialogChangesBrowser getBrowser() {
-    return myBrowser;
-  }
-
-  @NotNull
   CommitMessage getCommitMessageComponent() {
     return myCommitMessageArea;
   }
@@ -1028,7 +1026,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void ensureDataIsActual(@NotNull Runnable runnable) {
     ChangeListManager.getInstance(myProject).invokeAfterUpdate(
       () -> {
-        myBrowser.updateDisplayedChangeLists();
+        getBrowser().updateDisplayedChangeLists();
         runnable.run();
       },
       InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Refreshing changelists...", ModalityState.current());
@@ -1082,18 +1080,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     @NotNull
     @Override
     protected List<Wrapper> getSelectedChanges() {
-      return wrap(myBrowser.getSelectedChanges(), myBrowser.getSelectedUnversionedFiles());
+      return wrap(getBrowser().getSelectedChanges(), getBrowser().getSelectedUnversionedFiles());
     }
 
     @NotNull
     @Override
     protected List<Wrapper> getAllChanges() {
-      return wrap(myBrowser.getDisplayedChanges(), myBrowser.getDisplayedUnversionedFiles());
+      return wrap(getBrowser().getDisplayedChanges(), getBrowser().getDisplayedUnversionedFiles());
     }
 
     @Override
     protected void selectChange(@NotNull Wrapper change) {
-      myBrowser.selectEntries(singletonList(change.getUserObject()));
+      getBrowser().selectEntries(singletonList(change.getUserObject()));
     }
 
     @NotNull
