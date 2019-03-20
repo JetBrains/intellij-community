@@ -1,20 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.imports;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.completion.PyCompletionUtilsKt;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -31,11 +28,13 @@ import java.util.List;
  */
 // visibility is intentionally package-level
 public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
+  private static final Logger LOG = Logger.getInstance(ImportCandidateHolder.class);
   @NotNull private final SmartPsiElementPointer<PsiElement> myImportable;
   @Nullable private final SmartPsiElementPointer<PyImportElement> myImportElement;
   @NotNull private final SmartPsiElementPointer<PsiFileSystemItem> myFile;
   @Nullable private final QualifiedName myPath;
   @Nullable private final String myAsName;
+  private final int myRelevance;
 
   /**
    * Creates new instance.
@@ -57,6 +56,9 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
     myImportElement = importElement != null ? pointerManager.createSmartPsiElementPointer(importElement) : null;
     myPath = path;
     myAsName = asName;
+    String name = importable instanceof PsiNamedElement ? ((PsiNamedElement)importable).getName() : null;
+    myRelevance = PyCompletionUtilsKt.computeCompletionWeight(importable, name, path, null, false);
+    LOG.debug("Computed relevance for import item ", name, ": ", myRelevance);
     assert importElement != null || path != null; // one of these must be present
   }
 
@@ -150,36 +152,16 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
 
   @Override
   public int compareTo(@NotNull ImportCandidateHolder other) {
-    final int lRelevance = getRelevance();
-    final int rRelevance = other.getRelevance();
-    if (rRelevance != lRelevance) {
-      return rRelevance - lRelevance;
-    }
-    if (myPath != null && other.myPath != null) {
-      // prefer shorter paths
-      final int lengthDiff = myPath.getComponentCount() - other.myPath.getComponentCount();
-      if (lengthDiff != 0) {
-        return lengthDiff;
-      }
-    }
-    return Comparing.compare(myPath, other.myPath);
+    if (myImportElement != null && other.myImportElement == null) return -1;
+    if (myImportElement == null && other.myImportElement != null) return 1;
+    return Comparator
+      .comparing(ImportCandidateHolder::getRelevance).reversed()
+      .thenComparing(ImportCandidateHolder::getPath)
+      .compare(this, other);
   }
 
-  int getRelevance() {
-    if (myImportElement != null) return 4;
-    final Project project = myImportable.getProject();
-    final PsiFile psiFile = myImportable.getContainingFile();
-    final VirtualFile vFile = psiFile == null ? null : psiFile.getVirtualFile();
-    if (vFile == null) return 0;
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    // files under project source are most relevant
-    final Module module = fileIndex.getModuleForFile(vFile);
-    if (module != null) return 3;
-    // then come files directly under Lib
-    if (vFile.getParent().getName().equals("Lib")) return 2;
-    // tests we don't want
-    if (vFile.getParent().getName().equals("test")) return 0;
-    return 1;
+  public int getRelevance() {
+    return myRelevance;
   }
 
   @Nullable

@@ -135,6 +135,50 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import 'mod.bar()'");
   }
 
+  // PY-20976
+  public void testCombinedElementOrdering() {
+    doTestProposedImportsOrdering("path", "path from sys", "first.path", "first.second.path()", "os.path", "first._third.path");
+  }
+
+  // PY-20976
+  public void testOrderingLocalBeforeStdlib() {
+    doTestProposedImportsOrdering("path", "pkg.path", "sys.path", "os.path");
+  }
+
+  // PY-20976
+  public void testOrderingUnderscoreInPath() {
+    doTestProposedImportsOrdering("path", "first.second.path", "sys.path", "os.path", "_private.path");
+  }
+
+  // PY-20976
+  public void testOrderingSymbolBeforeModule() {
+    doTestProposedImportsOrdering("foo", "first.module.foo()", "first.a.foo");
+  }
+
+  // PY-20976
+  public void testOrderingModuleBeforePackage() {
+    doTestProposedImportsOrdering("foo", "b.foo", "a.foo");
+  }
+
+  // PY-20976
+  public void testOrderingPathComponentsNumber() {
+    doTestProposedImportsOrdering("foo", "c.foo", "b.c.foo", "a.b.c.foo");
+  }
+
+  // PY-20976
+  public void testOrderingWithExistingImport() {
+    doTestProposedImportsOrdering("path", "path from sys", "src.path", "os.path");
+  }
+
+  private void doTestProposedImportsOrdering(@NotNull String text, @NotNull String... expected) {
+    doMultiFileAutoImportTest("Import", fix -> {
+      final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText(text));
+      assertNotNull(candidates);
+      assertContainsInRelativeOrder(candidates, expected);
+      return false;
+    });
+  }
+
   private void doMultiFileAutoImportTest(@NotNull String hintPrefix) {
     doMultiFileAutoImportTest(hintPrefix, null);
   }

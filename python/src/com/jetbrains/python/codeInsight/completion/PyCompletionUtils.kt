@@ -8,16 +8,24 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.TailTypeDecorator
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.codeInsight.imports.PythonImportUtils
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.sdk.PythonSdkType
 import icons.PythonIcons
 
 /**
@@ -96,4 +104,68 @@ fun createLookupElementBuilder(file: PsiFile, element: PsiFileSystemItem): Looku
   return LookupElementBuilder.create(element, name)
     .withTailText(tailText, true)
     .withIcon(element.getIcon(0))
+}
+
+
+private const val ELEMENT_TYPE = 10
+private const val LOCATION = 100
+private const val PRIVATE_API = 1_000
+private const val LOCATION_NOT_YET_IMPORTED = 10_000
+private const val UNDERSCORE_IN_NAME = 100_000
+const val FALLBACK_WEIGHT = -1_000_000
+
+
+/**
+ * Determines weight of suggested completion/import item.
+ * @param completionLocation file, in which the completion is taking place
+ * @param nameOnly indicates that we just need to check the name for underscores
+ */
+fun computeCompletionWeight(element: PsiElement, elementName: String?, path: QualifiedName?, completionLocation: PsiFile?, nameOnly: Boolean): Int {
+  var weight = 0
+  val name = elementName ?: return FALLBACK_WEIGHT
+
+  weight -= when {
+    name.startsWith("__") && name.endsWith("__") -> UNDERSCORE_IN_NAME * 3
+    name.startsWith("__") -> UNDERSCORE_IN_NAME * 2
+    name.startsWith("_") -> UNDERSCORE_IN_NAME
+    else -> 0
+  }
+
+  if (nameOnly) return weight
+
+  var vFile: VirtualFile? = null
+  var sdk: Sdk? = null
+  val containingFile = element.containingFile
+  if (element is PsiDirectory) {
+    vFile = element.virtualFile
+    sdk = PythonSdkType.findPythonSdk(element)
+  }
+  else if (containingFile != null) {
+    vFile = containingFile.virtualFile
+    sdk = PythonSdkType.findPythonSdk(containingFile)
+  }
+
+  val importPath = path ?: QualifiedNameFinder.findShortestImportableQName(element.containingFile) ?: return FALLBACK_WEIGHT
+  if (completionLocation != null && !PythonImportUtils.hasImportsFrom(completionLocation, importPath)) {
+    weight -= LOCATION_NOT_YET_IMPORTED
+  }
+
+  val privatePathComponents = importPath.components.count{ it.startsWith("_") } * PRIVATE_API
+  weight -= privatePathComponents + importPath.componentCount
+
+  if (vFile != null) {
+    weight -=  when {
+      PythonSdkType.isStdLib(vFile, sdk) -> LOCATION
+      ModuleUtilCore.findModuleForFile(vFile, element.project) == null -> LOCATION * 2
+      else -> 0
+    }
+  }
+
+  weight -= when(element) {
+    is PsiDirectory -> ELEMENT_TYPE * 2
+    is PyFile -> ELEMENT_TYPE
+    else -> 0
+  }
+
+  return weight
 }

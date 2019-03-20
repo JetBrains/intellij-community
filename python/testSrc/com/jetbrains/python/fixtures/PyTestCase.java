@@ -2,6 +2,7 @@
 package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
@@ -509,5 +510,21 @@ public abstract class PyTestCase extends UsefulTestCase {
     Disposer.register(myFixture.getProjectDisposable(), () -> PsiTestUtil.removeExcludedRoot(module, dir));
   }
 
+  public <T> void assertContainsInRelativeOrder(@NotNull final Iterable<T> actual, @Nullable final T... expected) {
+    final List<T> actualList = Lists.newArrayList(actual);
+    if (expected.length > 0) {
+      T prev = expected[0];
+      int prevIndex = actualList.indexOf(prev);
+      assertTrue(prevIndex >= 0);
+      for (int i = 1; i < expected.length; i++) {
+        final T next = expected[i];
+        final int nextIndex = actualList.indexOf(next);
+        assertTrue(next + " is not found in " + actualList, nextIndex >= 0);
+        assertTrue(prev + " should precede " + next + " in " + actualList, prevIndex < nextIndex);
+        prev = next;
+        prevIndex = nextIndex;
+      }
+    }
+  }
 }
 
