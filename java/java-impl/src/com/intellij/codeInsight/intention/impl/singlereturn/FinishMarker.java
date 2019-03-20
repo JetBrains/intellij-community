@@ -16,7 +16,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -45,10 +44,10 @@ class FinishMarker {
   /**
    * @param block method body (must be physical as CommonDataflow will be queried)
    * @param returnType method return type
+   * @param returns list of all method returns
    * @return a FinishMarker which is suitable for given method
    */
-  static FinishMarker defineFinishMarker(@NotNull PsiCodeBlock block, @NotNull PsiType returnType) {
-    List<PsiReturnStatement> returns = findReturns(block);
+  static FinishMarker defineFinishMarker(@NotNull PsiCodeBlock block, @NotNull PsiType returnType, List<PsiReturnStatement> returns) {
     boolean mayNeedMarker = mayNeedMarker(returns, block);
     return defineFinishMarker(block, returns, returnType, mayNeedMarker, JavaPsiFacade.getElementFactory(block.getProject()));
   }
@@ -233,27 +232,6 @@ class FinishMarker {
       }
     }
     return true;
-  }
-
-  private static List<PsiReturnStatement> findReturns(PsiCodeBlock block) {
-    List<PsiReturnStatement> result = new ArrayList<>();
-    block.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitReturnStatement(PsiReturnStatement statement) {
-        super.visitReturnStatement(statement);
-        result.add(statement);
-      }
-
-      @Override
-      public void visitExpression(PsiExpression expression) {}
-
-      @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {}
-
-      @Override
-      public void visitClass(PsiClass aClass) {}
-    });
-    return result;
   }
 
   /**
