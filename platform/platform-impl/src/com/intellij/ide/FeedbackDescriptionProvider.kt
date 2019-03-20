@@ -9,7 +9,8 @@ import com.intellij.openapi.project.Project
  */
 interface FeedbackDescriptionProvider {
   /**
-   * Return additional details which should be appended to the description of a created issue.
+   * Return additional details which should be appended to the description of a created issue. It's important to return `null` if your plugin
+   * isn't relevant for the passed `project` to avoid polluting created reports with unrelated data.
    */
   fun getDescription(project: Project?): String?
 }
