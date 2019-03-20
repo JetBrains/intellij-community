@@ -81,7 +81,7 @@ class ExitContext {
       myReturnVariableDefaultValue = (PsiExpression)value.copy();
     }
     else {
-      replacements.add(myReturnVariable + "=" + value.getText() + ";");
+      replacements.add(0, myReturnVariable + "=" + value.getText() + ";");
     }
   }
 
