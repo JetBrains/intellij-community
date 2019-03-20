@@ -1,15 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.IndentStatusBarUIContributor;
-import org.editorconfig.Utils;
-import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,13 +44,6 @@ public class EditorConfigIndentStatusBarUIContributor extends IndentStatusBarUIC
   public String getHint() {
     return myEditorConfigIndentOptions ? "EditorConfig" : null;
   }
-
-  @Nullable
-  @Override
-  public String getAdvertisementText(@NotNull PsiFile psiFile) {
-    return Utils.isShowAdvertisementText(psiFile.getProject()) ? EditorConfigBundle.message("advertisement.text") : null;
-  }
-
 
   @Override
   public boolean isShowFileIndentOptionsEnabled() {
