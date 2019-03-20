@@ -336,7 +336,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @NotNull
   public synchronized Project getDefaultProject() {
     LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Default project has been already disposed!");
-    return myDefaultProjectTimed.get();
+    Project defaultProject = myDefaultProjectTimed.get();
+    // disable "the only project" optimization since we have now more than one project.
+    // (even though the default project is not a real project, it can be used indirectly in e.g. "Settings|Code Style" code fragments PSI)
+    updateTheOnlyProjectField();
+    return defaultProject;
   }
 
   @Override
@@ -440,18 +444,22 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         return false;
       }
       myOpenProjects = ArrayUtil.append(myOpenProjects, project);
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? project : null;
+      updateTheOnlyProjectField();
       myOpenProjectByHash.put(project.getLocationHash(), project);
     }
     return true;
   }
 
+  void updateTheOnlyProjectField() {
+    synchronized (lock) {
+      ProjectCoreUtil.theProject = myOpenProjects.length == 1 && !isDefaultProjectInitialized() ? myOpenProjects[0] : null;
+    }
+  }
+
   private void removeFromOpened(@NotNull Project project) {
     synchronized (lock) {
       myOpenProjects = ArrayUtil.remove(myOpenProjects, project);
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? myOpenProjects[0] : null;
+      updateTheOnlyProjectField();
       myOpenProjectByHash.values().remove(project); // remove by value and not by key!
     }
   }
