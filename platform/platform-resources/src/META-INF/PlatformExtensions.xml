@@ -13,7 +13,6 @@
     <appStarter implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
 
     <applicationService serviceImplementation="com.intellij.execution.wsl.WSLDistributionService"/>
-    <postStartupActivity implementation="com.intellij.execution.wsl.WslInitializationStartupActivity"/>
     <experimentalFeature id="wsl.close.process.input" percentOfUsers="0">
       <description>Forces closing of WSL process input stream to prevent process zombification. See
         https://github.com/Microsoft/WSL/issues/2592
