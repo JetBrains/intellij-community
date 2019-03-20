@@ -33,34 +33,34 @@ public class BashRunFileAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     PsiFile file = e.getData(PlatformDataKeys.PSI_FILE);
-    if (file instanceof BashFile) {
-      Project project = file.getProject();
-      TerminalView terminalView = TerminalView.getInstance(project);
-      ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
-      if (window != null && window.isAvailable()) {
-        ((ToolWindowImpl) window).ensureContentInitialized();
-        window.activate(null);
-      }
-      terminalView.createNewSession(new LocalTerminalDirectRunner(project) {
-        @Override
-        protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
-          PtyProcess process = super.createProcess(directory, commandHistoryFilePath);
-          Pair<String, String> fileCommand = createCommandLine((BashFile) file);
-          if (fileCommand.first != null) {
-            try {
-              process.getOutputStream().write(fileCommand.first.getBytes(CharsetToolkit.UTF8_CHARSET));
-            }
-            catch (IOException ex) {
-              throw new ExecutionException("Fail to start " + fileCommand.first, ex);
-            }
-          }
-          else {
-            throw new ExecutionException(fileCommand.second, null);
-          }
-          return process;
-        }
-      });
+    if (!(file instanceof BashFile)) return;
+
+    Project project = file.getProject();
+    TerminalView terminalView = TerminalView.getInstance(project);
+    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+    if (window != null && window.isAvailable()) {
+      ((ToolWindowImpl) window).ensureContentInitialized();
+      window.activate(null);
     }
+    terminalView.createNewSession(new LocalTerminalDirectRunner(project) {
+      @Override
+      protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
+        PtyProcess process = super.createProcess(directory, commandHistoryFilePath);
+        Pair<String, String> fileCommand = createCommandLine((BashFile) file);
+        if (fileCommand.first != null) {
+          try {
+            process.getOutputStream().write(fileCommand.first.getBytes(CharsetToolkit.UTF8_CHARSET));
+          }
+          catch (IOException ex) {
+            throw new ExecutionException("Fail to start " + fileCommand.first, ex);
+          }
+        }
+        else {
+          throw new ExecutionException(fileCommand.second, null);
+        }
+        return process;
+      }
+    });
   }
 
   @NotNull
@@ -97,5 +97,4 @@ public class BashRunFileAction extends DumbAwareAction {
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
     return window != null && window.isAvailable();
   }
-
 }
