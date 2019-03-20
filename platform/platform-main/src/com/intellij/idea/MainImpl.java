@@ -13,6 +13,6 @@ public class MainImpl {
   protected static void start(final String[] args) throws Exception {
     System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtils.IDEA_CE_PREFIX));
 
-    StartupUtil.prepareAndStart(args, newConfigFolder -> IdeaApplication.initApplication(args));
+    StartupUtil.prepareAndStart(args, () -> IdeaApplication.initApplication(args));
   }
 }

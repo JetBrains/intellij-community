@@ -91,7 +91,7 @@ public class StartupUtil {
 
   @FunctionalInterface
   interface AppStarter {
-    void start(boolean newConfigFolder);
+    void start();
 
     default void beforeImportConfigs() {}
   }
@@ -186,7 +186,7 @@ public class StartupUtil {
       SwingUtilities.invokeAndWait(() -> runStartupWizard());
     }
 
-    appStarter.start(newConfigFolder);
+    appStarter.start();
   }
 
   @NotNull
