@@ -32,7 +32,6 @@ import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static com.intellij.util.containers.ContainerUtil.newLinkedHashSet;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
-
   @NotNull private final GitVcs myVcs;
   @NotNull private final GitRepositoryReader myReader;
   @NotNull private final VirtualFile myGitDir;
@@ -40,6 +39,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   @Nullable private final GitUntrackedFilesHolder myUntrackedFilesHolder;
   @Nullable private final GitRepositoryIgnoredFilesHolder myIgnoredRepositoryFilesHolder;
+  @Nullable private final GitConflictsHolder myConflictsHolder;
 
   @NotNull private volatile GitRepoInfo myInfo;
 
@@ -58,14 +58,19 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this, myRepositoryFiles);
       Disposer.register(this, myUntrackedFilesHolder);
+
       myIgnoredRepositoryFilesHolder =
         new GitRepositoryIgnoredFilesHolder(project, this, GitRepositoryManager.getInstance(project), Git.getInstance());
       Disposer.register(this, myIgnoredRepositoryFilesHolder);
       myIgnoredRepositoryFilesHolder.addUpdateStateListener(new MyRepositoryIgnoredHolderUpdateListener(getProject()));
+
+      myConflictsHolder = new GitConflictsHolder(this);
+      Disposer.register(this, myConflictsHolder);
     }
     else {
       myUntrackedFilesHolder = null;
       myIgnoredRepositoryFilesHolder = null;
+      myConflictsHolder = null;
     }
   }
 
@@ -119,6 +124,15 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
       throw new IllegalStateException("Using untracked files holder with light git repository instance " + this);
     }
     return myUntrackedFilesHolder;
+  }
+
+  @NotNull
+  @Override
+  public GitConflictsHolder getConflictsHolder() {
+    if (myConflictsHolder == null) {
+      throw new IllegalStateException("Using conflicts holder with light git repository instance " + this);
+    }
+    return myConflictsHolder;
   }
 
   @Override
