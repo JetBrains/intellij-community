@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -139,9 +138,6 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
   public synchronized void doSave() {
     if (!changed.compareAndSet(true, false)) {
       return;
-    }
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread(), "Should not be called on EDT");
     }
     try {
       doSave(myProject, myExternalRootProjects.values());
