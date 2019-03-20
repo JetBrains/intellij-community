@@ -23,6 +23,7 @@ public class PythonPathReferenceProvider extends PsiReferenceProvider {
                                 true,
                                 null,
                                 true,
+                                true,
                                 true).getAllReferences();
   }
 }

@@ -26,11 +26,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
@@ -70,7 +67,8 @@ public class FileReferenceSet {
   private boolean myEmptyPathAllowed;
   @Nullable private Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
   @Nullable private FileType[] mySuitableFileTypes;
-  private boolean myShouldCheckOutsideProject;
+  private boolean myRootIsCheckedOutsideOfproject;
+  private final boolean myIsSoft;
 
   public FileReferenceSet(String str,
                           @NotNull PsiElement element,
@@ -90,7 +88,7 @@ public class FileReferenceSet {
                           boolean endingSlashNotAllowed,
                           @Nullable FileType[] suitableFileTypes,
                           boolean init) {
-    this(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed, suitableFileTypes, init, false);
+    this(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed, suitableFileTypes, init, false, false);
   }
 
   public FileReferenceSet(String str,
@@ -101,7 +99,8 @@ public class FileReferenceSet {
                           boolean endingSlashNotAllowed,
                           @Nullable FileType[] suitableFileTypes,
                           boolean init,
-                          boolean shouldCheckOutsideProject) {
+                          boolean rootIsCheckedOutsideOfproject,
+                          boolean isSoft) {
     myElement = element;
     myStartInElement = startInElement;
     myCaseSensitive = caseSensitive;
@@ -111,7 +110,8 @@ public class FileReferenceSet {
     myEmptyPathAllowed = !endingSlashNotAllowed;
     myOptions = provider instanceof CustomizableReferenceProvider ? ((CustomizableReferenceProvider)provider).getOptions() : null;
     mySuitableFileTypes = suitableFileTypes;
-    myShouldCheckOutsideProject = shouldCheckOutsideProject;
+    myRootIsCheckedOutsideOfproject = rootIsCheckedOutsideOfproject;
+    myIsSoft = isSoft;
 
     if (init) {
       reparse();
@@ -197,6 +197,7 @@ public class FileReferenceSet {
     myPathString = myPathStringNonTrimmed.trim();
     myEndingSlashNotAllowed = true;
     myCaseSensitive = false;
+    myIsSoft = false;
 
     reparse();
   }
@@ -317,7 +318,7 @@ public class FileReferenceSet {
   }
 
   protected boolean isSoft() {
-    return false;
+    return myIsSoft;
   }
 
   protected boolean isUrlEncoded() {
@@ -353,7 +354,12 @@ public class FileReferenceSet {
     }
 
     if (isAbsolutePathReference()) {
-      return getAbsoluteTopLevelDirLocations(file, myShouldCheckOutsideProject);
+      if (myRootIsCheckedOutsideOfproject) {
+        VirtualFile root = VirtualFileManager.getInstance().findFileByUrl("file:///");
+        return Collections.singleton(file.getManager().findDirectory(root));
+      } else {
+        return getAbsoluteTopLevelDirLocations(file);
+      }
     }
 
     return getContextByFile(file);
@@ -487,11 +493,6 @@ public class FileReferenceSet {
         }
         list.addAll(roots);
       }
-    }
-
-    if (shouldCheckOutsideProject) {
-      VirtualFile root = VirtualFileManager.getInstance().findFileByUrl("file:///");
-      list.add(PsiManager.getInstance(project).findDirectory(root));
     }
 
     return list;
