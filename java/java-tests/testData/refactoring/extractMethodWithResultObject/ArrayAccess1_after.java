@@ -10,4 +10,5 @@ class Test {
 //in: PsiLocalVariable:i
 //in: PsiParameter:bb
 //in: PsiParameter:ss
+//exit: SEQUENTIAL PsiMethod:foo
 }

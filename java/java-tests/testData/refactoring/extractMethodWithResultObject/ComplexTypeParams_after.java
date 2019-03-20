@@ -6,5 +6,6 @@ public class Test
        tr.add(null);
    }//ins and outs
 //in: PsiParameter:tr
+//exit: SEQUENTIAL PsiMethod:foo
 
 }

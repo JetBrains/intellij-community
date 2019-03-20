@@ -16,4 +16,5 @@ class Test {
         // add to list2
         list2.add(true);
     }//ins and outs
+//exit: SEQUENTIAL PsiMethod:method2
 }

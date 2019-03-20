@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ public class ExtractMethodWithResultObjectProcessor {
     RETURN,
     BREAK,
     CONTINUE,
-    THROW, // todo
+    THROW,
     SEQUENTIAL,
     UNDEFINED
   }
@@ -115,7 +116,7 @@ public class ExtractMethodWithResultObjectProcessor {
 
     collectInputsAndOutputs();
     collectDeclaredInsideUsedAfter();
-    collectReturnedImmediatelyAfter();
+    findSequentialExit();
 
     chooseTargetClass();
     chooseAnchor();
@@ -266,27 +267,35 @@ public class ExtractMethodWithResultObjectProcessor {
     }
   }
 
-  private static PsiStatement findNextStatement(@Nullable PsiElement startLocation) {
+  @Nullable("null means there's an error in the code")
+  private PsiElement findExitedElement(@NotNull PsiElement startLocation) {
     PsiElement location = startLocation;
     while (true) {
-      if (location == null || location instanceof PsiParameterListOwner) {
-        return null;
+      if (location == null || location instanceof PsiParameterListOwner || location instanceof PsiClassInitializer) {
+        return location;
       }
-
       if (location instanceof PsiBreakStatement) {
-        location = ((PsiBreakStatement)location).findExitedElement();
+        PsiElement exited = ((PsiBreakStatement)location).findExitedElement();
+        if (exited == null) {
+          return null;
+        }
+        location = exited;
         continue;
       }
       if (location instanceof PsiContinueStatement) {
         PsiStatement continued = ((PsiContinueStatement)location).findContinuedStatement();
         if (continued instanceof PsiLoopStatement && !ControlFlowUtils.statementMayCompleteNormally(continued)) {
+          return ((PsiLoopStatement)continued).getBody();
+        }
+        if (continued == null) {
           return null;
         }
         location = continued;
         continue;
       }
       if (location instanceof PsiThrowStatement) {
-        // todo find target
+        PsiTryStatement target = getThrowTarget((PsiThrowStatement)location);
+        return target != null ? target.getTryBlock() : myCodeFragmentMember;
       }
       if (location instanceof PsiSwitchLabelStatementBase) {
         location = ((PsiSwitchLabelStatementBase)location).getEnclosingSwitchBlock();
@@ -295,19 +304,59 @@ public class ExtractMethodWithResultObjectProcessor {
 
       PsiElement parent = location.getParent();
       if (parent instanceof PsiLoopStatement && !ControlFlowUtils.statementMayCompleteNormally((PsiLoopStatement)parent)) {
-        return null;
+        return ((PsiLoopStatement)parent).getBody();
       }
       if (parent instanceof PsiCodeBlock) {
         PsiStatement next = PsiTreeUtil.getNextSiblingOfType(location, PsiStatement.class);
         if (next != null) {
-          return next;
+          return location;
         }
       }
       location = parent;
     }
   }
 
-  private void collectReturnedImmediatelyAfter() {
+  @Nullable
+  private PsiTryStatement getThrowTarget(@NotNull PsiThrowStatement statement) {
+    PsiExpression exception = PsiUtil.skipParenthesizedExprDown(statement.getException());
+    if (exception == null) {
+      return null;
+    }
+    PsiClassType exactType = null;
+    PsiClassType lowerBoundType = null;
+    if (exception instanceof PsiNewExpression) {
+      PsiType type = exception.getType();
+      if (type instanceof PsiClassType) {
+        PsiClass resolved = ((PsiClassType)type).resolve();
+        if (resolved != null && !(resolved instanceof PsiAnonymousClass)) {
+          exactType = lowerBoundType = (PsiClassType)type;
+        }
+      }
+    }
+    if (lowerBoundType == null) {
+      lowerBoundType = ObjectUtils.tryCast(exception.getType(), PsiClassType.class);
+    }
+    if (lowerBoundType == null) {
+      return null;
+    }
+    for (PsiElement element = statement; element != null && element != myCodeFragmentMember; element = element.getContext()) {
+      PsiElement parent = element.getContext();
+      if (parent instanceof PsiTryStatement && element == ((PsiTryStatement)parent).getTryBlock()) {
+        for (PsiParameter parameter : ((PsiTryStatement)parent).getCatchBlockParameters()) {
+          PsiType catchType = parameter.getType();
+          if (exactType != null && catchType.isAssignableFrom(exactType)) {
+            return ((PsiTryStatement)parent);
+          }
+          else if (exactType == null && ControlFlowUtil.isCaughtExceptionType(lowerBoundType, catchType)) {
+            return ((PsiTryStatement)parent);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private void findSequentialExit() {
     if (myExpression != null) {
       return;
     }
@@ -317,15 +366,16 @@ public class ExtractMethodWithResultObjectProcessor {
       }
       PsiStatement statement = (PsiStatement)myElements[i];
       if (!ControlFlowUtils.statementMayCompleteNormally(statement)) {
-        return; // don't need to look for the next statement
+        return; // sequential exit can't happen
       }
       break;
     }
 
-    PsiStatement nextStatement = findNextStatement(myElements[myElements.length - 1]);
-    if (nextStatement != null) {
-      PsiStatement exitedStatement = PsiTreeUtil.getPrevSiblingOfType(nextStatement, PsiStatement.class);
-      myExits.put(null, new Exit(ExitType.SEQUENTIAL, exitedStatement));
+    PsiElement exitedElement = findExitedElement(myElements[myElements.length - 1]);
+    if (exitedElement != null) {
+      myExits.put(null, new Exit(ExitType.SEQUENTIAL, exitedElement));
+    }else {
+      myExits.put(null, new Exit(ExitType.UNDEFINED, null));
     }
   }
 

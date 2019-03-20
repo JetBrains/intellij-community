@@ -10,6 +10,7 @@ class ArgumentFoldingWholeStatement {
             baz();
         }
     }//ins and outs
+//exit: SEQUENTIAL PsiMethod:foo
 
     private void bar() {
         for (int i = 0; ++i < 5; y.indexOf(str())) {

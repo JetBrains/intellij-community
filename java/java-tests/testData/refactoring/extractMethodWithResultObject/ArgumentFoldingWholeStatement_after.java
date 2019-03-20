@@ -8,6 +8,7 @@ class ArgumentFoldingWholeStatement {
         x.add(str());
         baz();
     }//ins and outs
+//exit: SEQUENTIAL PsiMethod:foo
 
     private void bar() {
         y.add(str());

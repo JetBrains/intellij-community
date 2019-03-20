@@ -3,4 +3,5 @@ class X {
   void foo() {
     int i = myI++;
   }//ins and outs
+//exit: SEQUENTIAL PsiMethod:foo
 }

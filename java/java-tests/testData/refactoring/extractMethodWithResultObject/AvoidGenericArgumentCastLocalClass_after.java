@@ -5,6 +5,7 @@ class C {
                 System.out.println(k);
             }//ins and outs
 //in: PsiParameter:k
+//exit: SEQUENTIAL PsiMethod:foo
 
             void bar() {
                 Object o = new Object();

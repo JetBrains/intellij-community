@@ -9,6 +9,7 @@ class Test {
         }
     }//ins and outs
 //in: PsiLocalVariable:a
+//exit: SEQUENTIAL PsiMethod:test
 
 
 }

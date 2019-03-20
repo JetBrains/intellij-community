@@ -7,4 +7,5 @@ class Test {
   }//ins and outs
 //in: PsiLocalVariable:doubles
 //in: PsiLocalVariable:i
+//exit: SEQUENTIAL PsiClassInitializer
 }

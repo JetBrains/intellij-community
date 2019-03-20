@@ -8,4 +8,5 @@ class Test {
   }//ins and outs
 //in: PsiLocalVariable:levels
 //in: PsiLocalVariable:nextWinNumber
+//exit: SEQUENTIAL PsiMethod:foo
 }

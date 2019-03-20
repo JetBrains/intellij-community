@@ -12,6 +12,7 @@ class C {
         baz();
     }//ins and outs
 //exit: RETURN PsiMethod:foo<-void
+//exit: SEQUENTIAL PsiMethod:foo
 
     private void bar() {
         if (y.isEmpty()) return;

@@ -5,6 +5,7 @@ public class Test {
     }
   }//ins and outs
 //in: PsiParameter:o
+//exit: SEQUENTIAL PsiMethod:foo
 }
 
 class A {

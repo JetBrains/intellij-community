@@ -13,6 +13,7 @@ class Foo {
             public void actionPerformed( int e ) {
                 setVisible( false );
             }//ins and outs
+//exit: SEQUENTIAL PsiMethod:actionPerformed
         };
     }
 }

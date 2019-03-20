@@ -4,6 +4,7 @@ class UseBuilder {
     }//ins and outs
 //in: PsiParameter:arr
 //in: PsiParameter:builder
+//exit: SEQUENTIAL PsiMethod:test
 
     static class Builder {
         Builder foo(String s) {

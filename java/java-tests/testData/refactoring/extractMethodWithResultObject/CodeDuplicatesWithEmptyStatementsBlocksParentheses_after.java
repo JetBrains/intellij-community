@@ -12,4 +12,5 @@ class Test {
     System.out.println(1);
     System.out.println(2);
   }//ins and outs
+//exit: SEQUENTIAL PsiMethod:method2
 }

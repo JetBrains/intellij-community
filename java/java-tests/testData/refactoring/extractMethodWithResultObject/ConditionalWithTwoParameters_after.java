@@ -13,6 +13,7 @@ class RenamedParameter {
     }//ins and outs
 //in: PsiLocalVariable:a
 //in: PsiLocalVariable:b
+//exit: SEQUENTIAL PsiMethod:foo
 
     public void bar() {
         String a = "t";
