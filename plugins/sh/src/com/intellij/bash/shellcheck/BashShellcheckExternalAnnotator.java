@@ -62,7 +62,7 @@ public class BashShellcheckExternalAnnotator extends ExternalAnnotator<String, C
       GeneralCommandLine commandLine = new GeneralCommandLine()
           .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
           .withExePath(shellcheckExecutable)
-          .withParameters("--color=never", "--format=json", "--severity=style", "--shell=bash", "-");
+          .withParameters("--color=never", "--format=json", "--severity=style", "--shell=bash", "--wiki-link-count=10", "-");
       Process process = commandLine.createProcess();
       writeFileContentToStdin(process, fileContent, commandLine.getCharset());
       if (process.waitFor(10, TimeUnit.SECONDS)) {
@@ -89,7 +89,13 @@ public class BashShellcheckExternalAnnotator extends ExternalAnnotator<String, C
       int startOffset = document.getLineStartOffset(result.line - 1) + result.column - 1;
       int endOffset = document.getLineStartOffset(result.endLine - 1) + result.endColumn - 1;
       TextRange range = TextRange.create(startOffset, endOffset == startOffset ? endOffset + 1 : endOffset);
-      holder.createAnnotation(severity(result.level), range, result.message);
+      long code = result.code;
+      String message = result.message;
+      holder.createAnnotation(severity(result.level), range,
+          message,
+          "<html>" + StringUtil.escapeXml(message) + " " +
+              "See <a href='https://github.com/koalaman/shellcheck/wiki/SC" + code + "'>SC" + code + "</a>." +
+              "</html>");
     }
   }
 
