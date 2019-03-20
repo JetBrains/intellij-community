@@ -3,9 +3,15 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
+import one.util.streamex.StreamEx;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -82,6 +88,24 @@ public class PyClassNameCompletionTest extends PyTestCase {
   // PY-25484
   public void testClassReexportedThroughDunderAll() {
     doTest();
+  }
+
+  // PY-31938
+  public void testProposedImportsOrdering() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> {
+      myFixture.copyDirectoryToProject("/completion/className/" + getTestName(true), "");
+      myFixture.configureByFile("a.py");
+      myFixture.complete(CompletionType.BASIC, 2);
+      final List<String> suggested = myFixture.getLookupElementStrings();
+      assertNotNull(suggested);
+      List<String> tails = StreamEx.of(myFixture.getLookupElements())
+        .filterBy(LookupElement::getLookupString, "path")
+        .map(LookupElementPresentation::renderElement)
+        .map(LookupElementPresentation::getTailText)
+        .distinct().nonNull().toList();
+      tails.forEach(System.out::println);
+      assertOrderedEquals(tails, " (a)", " (first.foo)", " (_second.bar)", " (sys)");
+    });
   }
 
   private void doTest() {

@@ -1,0 +1,3 @@
+path = "something"
+
+pat<caret>

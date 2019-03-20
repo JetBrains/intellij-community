@@ -41,6 +41,13 @@ public class PyStdlibUtil {
     return PACKAGES;
   }
 
+  public static boolean isInStdLib(@Nullable String packageName) {
+    if (PACKAGES != null && packageName != null) {
+      return PACKAGES.contains(packageName);
+    }
+    return false;
+  }
+
   @Nullable
   private static Set<String> loadStdlibPackagesList() {
     final Logger log = Logger.getInstance(PyStdlibUtil.class.getName());
