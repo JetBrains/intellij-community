@@ -23,7 +23,7 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
   fun `test map and description`() {
     val variants = test("""
     runConfigurations:
-      jvmMainMethod:
+      java:
         <caret>
     """.trimIndent())
 
