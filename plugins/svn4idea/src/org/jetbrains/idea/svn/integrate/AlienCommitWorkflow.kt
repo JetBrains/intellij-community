@@ -5,7 +5,6 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.DefaultCommitResultHandler
 import com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow
@@ -23,14 +22,5 @@ class AlienCommitWorkflow(val vcs: AbstractVcs<*>, changeListName: String, chang
 
     committer.addResultHandler(DefaultCommitResultHandler(committer))
     committer.runCommit(DIALOG_TITLE, false)
-  }
-
-  override fun createBrowser() = AlienChangeListBrowser(project, changeList)
-
-  override fun initDialog(dialog: CommitChangeListDialog) {
-    val browser = dialog.browser
-
-    browser.viewer.setIncludedChanges(initiallyIncluded)
-    browser.viewer.rebuildTree()
   }
 }
