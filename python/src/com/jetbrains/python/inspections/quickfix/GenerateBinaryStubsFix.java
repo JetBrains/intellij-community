@@ -67,7 +67,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
 
   /**
    * Generates pack of fixes available for some unresolved import statement.
-   * Be sure to call {@link #isApplicable(com.jetbrains.python.psi.PyImportStatementBase)} first to make sure this statement is supported
+   * Be sure to call {@link #isApplicable(PyImportStatementBase)} first to make sure this statement is supported
    *
    * @param importStatementBase statement to fix
    * @return pack of fixes
@@ -90,7 +90,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
 
   /**
    * @param importStatementBase statement to fix
-   * @param qualifiedName       name should be fixed (one of {@link com.jetbrains.python.psi.PyImportStatementBase#getFullyQualifiedObjectNames()})
+   * @param qualifiedName       name should be fixed (one of {@link PyImportStatementBase#getFullyQualifiedObjectNames()})
    */
   private GenerateBinaryStubsFix(@NotNull final PyImportStatementBase importStatementBase, @NotNull final String qualifiedName) {
     myQualifiedName = qualifiedName;
@@ -175,7 +175,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     GeneralCommandLine cmd = PythonHelper.EXTRA_SYSPATH.newCommandLine(homePath, Lists.newArrayList(myQualifiedName));
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd,
                                                                new File(homePath).getParent(),
-                                                               PythonSdkType.getVirtualEnvExtraEnv(homePath), 5000
+                                                               PythonSdkType.activateVirtualEnv(homePath), 5000
     );
     if (runResult.getExitCode() == 0 && !runResult.isTimeout()) {
       final String extraPath = runResult.getStdout();
