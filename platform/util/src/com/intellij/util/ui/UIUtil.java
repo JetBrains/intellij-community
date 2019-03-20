@@ -3254,7 +3254,7 @@ public class UIUtil {
     UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", JBHtmlEditorKit.createStyleSheet());
   }
 
-  public static void initSystemFontData() {
+  public static void initSystemFontData(@NotNull Logger log) {
     if (ourSystemFontData != null) return;
 
     // With JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
@@ -3267,13 +3267,13 @@ public class UIUtil {
 
     boolean isScaleVerbose = SCALE_VERBOSE;
     if (isScaleVerbose) {
-      getLogger().info(String.format("Label font: %s, %d", font.getFontName(), font.getSize()));
+      log.info(String.format("Label font: %s, %d", font.getFontName(), font.getSize()));
     }
 
     if (SystemInfo.isLinux) {
       Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
       if (isScaleVerbose) {
-        getLogger().info(String.format("gnome.Xft/DPI: %s", value));
+        log.info(String.format("gnome.Xft/DPI: %s", value));
       }
       if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
         // If the property is defined, then:
@@ -3284,7 +3284,7 @@ public class UIUtil {
         float scale = isJreHiDPIEnabled() ? 1f : JBUI.discreteScale(dpi / 96f); // no scaling in JRE-HiDPI mode
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
         if (isScaleVerbose) {
-          getLogger().info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE));
+          log.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE));
         }
       }
       else if (!SystemInfo.isJetBrainsJvm) {
@@ -3292,7 +3292,7 @@ public class UIUtil {
         float size = DEF_SYSTEM_FONT_SIZE * getScreenScale();
         font = font.deriveFont(size);
         if (isScaleVerbose) {
-          getLogger().info(String.format("(Not-JB JRE) reset font size: %.2f", size));
+          log.info(String.format("(Not-JB JRE) reset font size: %.2f", size));
         }
       }
     }
@@ -3302,13 +3302,13 @@ public class UIUtil {
       if (winFont != null) {
         font = winFont; // comes scaled
         if (isScaleVerbose) {
-          getLogger().info(String.format("Windows sys font: %s, %d", winFont.getFontName(), winFont.getSize()));
+          log.info(String.format("Windows sys font: %s, %d", winFont.getFontName(), winFont.getSize()));
         }
       }
     }
     ourSystemFontData = Pair.create(font.getName(), font.getSize());
     if (isScaleVerbose) {
-      getLogger().info(String.format("ourSystemFontData: %s, %d", ourSystemFontData.first, ourSystemFontData.second));
+      log.info(String.format("ourSystemFontData: %s, %d", ourSystemFontData.first, ourSystemFontData.second));
     }
   }
 

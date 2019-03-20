@@ -61,6 +61,7 @@ import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -118,17 +119,20 @@ public class StartupUtil {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     checkHiDPISettings();
 
-    boolean isParallelExecution = isStartParallel();
-    ExecutorService executorService = isParallelExecution ? AppExecutorUtil.getAppExecutorService() : new SameThreadExecutorService();
-
-    List<Future<?>> futures = new ArrayList<>();
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is ok, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
-    Future<?> initLafTask = addPrepareUiTasks(futures, executorService);
+
+    System.setProperty("idea.ui.util.static.init.enabled", "false");
+    CompletableFuture<Void> initLafTask = CompletableFuture.runAsync(() -> {
+      // see note about UIUtil static init - it is required even if headless
+      UIUtil.initDefaultLaF();
+    }, runnable -> {
+      PluginManager.installExceptionHandler();
+      EventQueue.invokeLater(runnable);
+    });
 
     configureLogging();
 
-    // uses showMessage, so, cannot be in a pooled thread
     if (!checkJdkVersion()) {
       System.exit(Main.JDK_CHECK_FAILED);
     }
@@ -138,6 +142,9 @@ public class StartupUtil {
 
     Logger log = lockDirsAndConfigureLogger(args);
 
+    boolean isParallelExecution = isStartParallel();
+    List<Future<?>> futures = new ArrayList<>();
+    ExecutorService executorService = isParallelExecution ? AppExecutorUtil.getAppExecutorService() : new SameThreadExecutorService();
     futures.add(executorService.submit(() -> {
       Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.LOAD_SYSTEM_LIBS);
       loadSystemLibraries(log);
@@ -154,7 +161,6 @@ public class StartupUtil {
         future.get();
       }
       activity.end();
-
       futures.clear();
     }
 
@@ -213,34 +219,18 @@ public class StartupUtil {
     return log;
   }
 
-  @NotNull
-  private static Future<?> addPrepareUiTasks(@NotNull List<Future<?>> futures, @NotNull ExecutorService executorService) {
-    System.setProperty("idea.ui.util.static.init.enabled", "false");
-
-    Future<?> initLafTask = executorService.submit(() -> {
-      // see note about UIUtil static init - it is required even if headless
-      UIUtil.initDefaultLaF();
-    });
-    futures.add(initLafTask);
-
+  private static void addInitUiTasks(@NotNull List<Future<?>> futures, @NotNull ExecutorService executorService, @NotNull Logger log, @NotNull Future<?> initLafTask) {
     if (!Main.isHeadless()) {
       // no need to wait - fonts required for editor, not for license window or splash
       executorService.execute(() -> AppUIUtil.registerBundledFonts());
     }
 
-    return initLafTask;
-  }
-
-  private static void addInitUiTasks(@NotNull List<Future<?>> futures,
-                                     @NotNull ExecutorService executorService,
-                                     @NotNull Logger log,
-                                     @NotNull Future<?> initLafTask) {
     futures.add(executorService.submit(() -> {
-      // UIUtil.initDefaultLaF must be called before this call
       try {
+        // UIUtil.initDefaultLaF must be called before this call
         initLafTask.get();
         Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init system font data");
-        UIUtil.initSystemFontData();
+        UIUtil.initSystemFontData(log);
         activity.end();
       }
       catch (Exception e) {

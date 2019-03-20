@@ -75,7 +75,9 @@ public class JBUI {
         }
         return 1f;
       }
-      UIUtil.initSystemFontData();
+
+      // in production initSystemFontData must be already called, probably only in a test mode will be not yet initialized
+      UIUtil.initSystemFontData(getLogger());
       Pair<String, Integer> fdata = UIUtil.getSystemFontData();
 
       int size = fdata == null ? Fonts.label().getSize() : fdata.getSecond();
