@@ -7,15 +7,24 @@ annotation class JsonBuilderDsl
 
 internal inline fun StringBuilder.json(build: JsonObjectBuilder.() -> Unit): StringBuilder {
   val builder = JsonObjectBuilder(this)
-  appendCommaIfNeed()
-  append('{')
-  builder.build()
-  append('}')
+  appendCommaIfNeeded()
+  builder.appendComplexValue('{', '}', isColonRequired = false) {
+    builder.build()
+  }
   return this
 }
 
 @JsonBuilderDsl
-internal class JsonObjectBuilder(private val builder: StringBuilder, private val isCompact: Boolean = false) {
+internal class JsonObjectBuilder(private val builder: StringBuilder, private var indentLevel: Int = 0, private val indent: String? = "  ") {
+  inline fun StringBuilder.json(build: JsonObjectBuilder.() -> Unit): StringBuilder {
+    val builder = JsonObjectBuilder(this, indentLevel = indentLevel + 1)
+    appendCommaIfNeeded()
+    builder.appendComplexValue('{', '}', isColonRequired = false) {
+      builder.build()
+    }
+    return this
+  }
+
   infix fun String.to(value: String) {
     appendNameAndValue(this) {
       builder.jsonEscapedString(value)
@@ -53,13 +62,11 @@ internal class JsonObjectBuilder(private val builder: StringBuilder, private val
   }
 
   fun map(key: CharSequence, build: JsonObjectBuilder.() -> Unit) {
-    builder
-      .appendCommaIfNeed()
-      .jsonEscapedString(key)
-
-    appendComplexValue('{', '}') {
+    indentLevel++
+    appendNameAndValue(key, '{', '}') {
       build()
     }
+    indentLevel--
   }
 
   fun rawMap(key: CharSequence, build: (StringBuilder) -> Unit) {
@@ -71,25 +78,21 @@ internal class JsonObjectBuilder(private val builder: StringBuilder, private val
   }
 
   private fun mapOrArray(openChar: Char, closeChar: Char, key: CharSequence, build: (StringBuilder) -> Unit) {
-    builder
-      .appendCommaIfNeed()
-      .jsonEscapedString(key)
-    appendComplexValue(openChar, closeChar) {
+    indentLevel++
+    appendNameAndValue(key, openChar, closeChar) {
       build(builder)
     }
+    indentLevel--
   }
 
   fun rawBuilder(key: CharSequence, child: JsonObjectBuilder) {
-    builder
-      .appendCommaIfNeed()
-      .jsonEscapedString(key)
-    appendComplexValue('{', '}') {
+    appendNameAndValue(key, '{', '}') {
       builder.append(child.builder)
     }
   }
 
   fun definitionReference(prefix: String, pointer: CharSequence, wrappingKey: String? = null) {
-    builder.appendCommaIfNeed()
+    builder.appendCommaIfNeeded()
 
     if (wrappingKey != null) {
       builder.append('"').append(wrappingKey).append('"').append(':').append(' ')
@@ -105,47 +108,70 @@ internal class JsonObjectBuilder(private val builder: StringBuilder, private val
 
   private fun appendColon() {
     builder.append(':')
-    if (!isCompact) {
+    if (indent != null) {
       builder.append(' ')
     }
   }
 
   private inline fun appendNameAndValue(name: CharSequence, valueAppender: () -> Unit) {
-    builder
-      .appendCommaIfNeed()
-      .jsonEscapedString(name)
+    appendCommaIfNeeded(builder)
+    builder.jsonEscapedString(name)
     appendColon()
     valueAppender()
   }
 
-  private inline fun appendComplexValue(openChar: Char, closeChar: Char, valueAppender: () -> Unit) {
-    appendColon()
+  private inline fun appendNameAndValue(key: CharSequence, openChar: Char, closeChar: Char, isColonRequired: Boolean = true, valueAppender: () -> Unit) {
+    if (appendCommaIfNeeded(builder) && indent != null) {
+      builder.append('\n')
+      for (i in 1..indentLevel) {
+        builder.append(indent)
+      }
+    }
+    builder.jsonEscapedString(key)
+    appendComplexValue(openChar, closeChar, isColonRequired, valueAppender)
+  }
+
+  internal inline fun appendComplexValue(openChar: Char, closeChar: Char, isColonRequired: Boolean = true, valueAppender: () -> Unit) {
+    if (isColonRequired) {
+      appendColon()
+    }
+
     builder.append(openChar)
-    if (!isCompact) {
-      builder
-        .append('\n')
-        .append(' ')
-        .append(' ')
+
+    if (indent != null) {
+      builder.append('\n')
+      for (i in 1..(indentLevel + 1)) {
+        builder.append(indent)
+      }
     }
 
     valueAppender()
 
-    if (!isCompact) {
+    if (indent != null) {
       builder.append('\n')
+      for (i in 1..indentLevel) {
+        builder.append(indent)
+      }
     }
     builder.append(closeChar)
   }
 }
 
-private fun StringBuilder.appendCommaIfNeed(): StringBuilder {
-  if (isEmpty()) {
-    return this
+private fun appendCommaIfNeeded(builder: StringBuilder): Boolean {
+  if (builder.isEmpty()) {
+    return false
   }
 
-  val lastChar = last()
+  val lastChar = builder.last()
   if (lastChar == '"' || lastChar == '}' || lastChar == ']' || lastChar == 'e' /* true or false */) {
-    append(',')
+    builder.append(',')
+    return true
   }
+  return false
+}
+
+private fun StringBuilder.appendCommaIfNeeded(): StringBuilder {
+  appendCommaIfNeeded(this)
   return this
 }
 
