@@ -85,7 +85,7 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
 
       if (!sourceQNames.contains(QualifiedName.fromDottedString(clsQName).removeLastComponent())) return le;
 
-      return PrioritizedLookupElement.withPriority(le, PythonCompletionWeigher.WEIGHT_DELTA);
+      return PrioritizedLookupElement.withPriority(le, PythonCompletionWeigher.PRIORITY_WEIGH);
     };
   }
 

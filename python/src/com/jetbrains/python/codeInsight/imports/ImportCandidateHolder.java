@@ -11,7 +11,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
 import com.jetbrains.python.psi.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +38,7 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
   @NotNull private final SmartPsiElementPointer<PsiFileSystemItem> myFile;
   @Nullable private final QualifiedName myPath;
   @Nullable private final String myAsName;
+  @NotNull private final String myInitialName;
 
   /**
    * Creates new instance.
@@ -49,7 +52,7 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
    *                      (empty for modules and packages located at source roots).
    *
    */
-  public ImportCandidateHolder(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
+  public ImportCandidateHolder(@NotNull String initialName, @NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
                                @Nullable PyImportElement importElement, @Nullable QualifiedName path, @Nullable String asName) {
     SmartPointerManager pointerManager = SmartPointerManager.getInstance(importable.getProject());
     myFile = pointerManager.createSmartPsiElementPointer(file);
@@ -57,12 +60,13 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
     myImportElement = importElement != null ? pointerManager.createSmartPsiElementPointer(importElement) : null;
     myPath = path;
     myAsName = asName;
+    myInitialName = initialName;
     assert importElement != null || path != null; // one of these must be present
   }
 
-  public ImportCandidateHolder(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
+  public ImportCandidateHolder(@NotNull String initialName, @NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
                                @Nullable PyImportElement importElement, @Nullable QualifiedName path) {
-    this(importable, file, importElement, path, null);
+    this(initialName, importable, file, importElement, path, null);
   }
 
   @Nullable
@@ -166,20 +170,23 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
   }
 
   int getRelevance() {
-    if (myImportElement != null) return 4;
+    if (myImportElement != null) return 13;
     final Project project = myImportable.getProject();
     final PsiFile psiFile = myImportable.getContainingFile();
     final VirtualFile vFile = psiFile == null ? null : psiFile.getVirtualFile();
     if (vFile == null) return 0;
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    // files under project source are most relevant
     final Module module = fileIndex.getModuleForFile(vFile);
-    if (module != null) return 3;
-    // then come files directly under Lib
-    if (vFile.getParent().getName().equals("Lib")) return 2;
-    // tests we don't want
-    if (vFile.getParent().getName().equals("test")) return 0;
-    return 1;
+    if (myPath != null) {
+      String rootName = myPath.getComponents().isEmpty() ? myInitialName : myPath.getFirstComponent();
+      int isPrivate = StreamEx.of(myPath.getComponents()).findAny(qName -> qName.startsWith("_")).map(qname -> 2).orElse(0);
+      PsiElement element = myImportable.getElement();
+      int isFile = element instanceof PyFile ? 1 : 0;
+      if (module != null) return 12 - isPrivate - isFile;
+      else if (PyStdlibUtil.isInStdLib(rootName)) return 8 - isPrivate - isFile;
+      return 4 - isPrivate - isFile;
+    }
+    return 0;
   }
 
   @Nullable

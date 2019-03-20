@@ -135,6 +135,17 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import 'mod.bar()'");
   }
 
+  // PY-20976
+  public void testElementOrdering() {
+    doMultiFileAutoImportTest("Import", fix -> {
+      final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText("path"));
+      assertNotNull(candidates);
+      assertOrderedEquals(candidates, "first.path", "first.second.path()", "sys.path", "os.path", "py.path");
+      return false;
+    });
+  }
+
+
   private void doMultiFileAutoImportTest(@NotNull String hintPrefix) {
     doMultiFileAutoImportTest(hintPrefix, null);
   }

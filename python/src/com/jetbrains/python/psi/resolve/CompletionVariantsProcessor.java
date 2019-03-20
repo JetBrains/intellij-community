@@ -118,7 +118,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     if (parent instanceof PyKeywordArgument) {
       final String keyword = ((PyKeywordArgument)parent).getKeyword();
       if (item.getLookupString().equals(keyword)) {
-        return PrioritizedLookupElement.withPriority(item, PythonCompletionWeigher.WEIGHT_DELTA);
+        return PrioritizedLookupElement.withPriority(item, PythonCompletionWeigher.PRIORITY_WEIGH);
       }
     }
 

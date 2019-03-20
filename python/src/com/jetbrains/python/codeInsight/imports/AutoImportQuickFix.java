@@ -78,7 +78,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
    * @param importElement an existing import element that can be a source for the importable.
    */
   public void addImport(@NotNull PsiElement importable, @NotNull PsiFile file, @Nullable PyImportElement importElement) {
-    myImports.add(new ImportCandidateHolder(importable, file, importElement, null));
+    myImports.add(new ImportCandidateHolder(myInitialName, importable, file, importElement, null));
   }
 
   /**
@@ -88,11 +88,11 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
    * @param path import path for the file, as a qualified name (a.b.c)
    */
   public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable QualifiedName path) {
-    myImports.add(new ImportCandidateHolder(importable, file, null, path));
+    myImports.add(new ImportCandidateHolder(myInitialName, importable, file, null, path));
   }
 
   public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable QualifiedName path, @Nullable String asName) {
-    myImports.add(new ImportCandidateHolder(importable, file, null, path, asName));
+    myImports.add(new ImportCandidateHolder(myInitialName, importable, file, null, path, asName));
   }
 
   @Override
