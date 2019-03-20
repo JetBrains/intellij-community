@@ -16,7 +16,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -40,10 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 
 import static com.intellij.openapi.application.JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY;
@@ -202,11 +200,16 @@ public class IdeaApplication {
     if (myArgs.length > 0) {
       PluginManagerCore.getPlugins();
 
-      ExtensionPoint<ApplicationStarter> point = ApplicationStarter.EP_NAME.getPoint(null);
+      Iterator<ApplicationStarter> iterator = ((ExtensionPointImpl<ApplicationStarter>)ApplicationStarter.EP_NAME.getPoint(null)).iterator();
       String key = myArgs[0];
-      for (ApplicationStarter o : point.getExtensionList()) {
-        if (Comparing.equal(o.getCommandName(), key)) {
-          return o;
+      while (iterator.hasNext()) {
+        ApplicationStarter starter = iterator.next();
+        if (starter == null) {
+          break;
+        }
+
+        if (Comparing.equal(starter.getCommandName(), key)) {
+          return starter;
         }
       }
     }

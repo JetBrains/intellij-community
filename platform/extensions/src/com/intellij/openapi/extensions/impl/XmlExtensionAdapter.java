@@ -20,7 +20,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
   @Nullable
   private final Element myExtensionElement;
 
-  protected Object myComponentInstance;
+  private Object myComponentInstance;
 
   XmlExtensionAdapter(@NotNull String implementationClassName,
                       @Nullable PluginDescriptor pluginDescriptor,
@@ -33,13 +33,13 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
   }
 
   @Override
-  boolean isInstanceCreated() {
+  synchronized boolean isInstanceCreated() {
     return myComponentInstance != null;
   }
 
   @NotNull
   @Override
-  public Object createInstance(@Nullable PicoContainer container) {
+  public synchronized Object createInstance(@Nullable PicoContainer container) {
     Object instance = myComponentInstance;
     if (instance != null) {
       // todo add assert that createInstance was already called
@@ -77,8 +77,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     @Override
     @NotNull
     public final Object getComponentInstance(@Nullable PicoContainer container) {
-      Object instance = myComponentInstance;
-      return instance == null ? createInstance(container) : instance;
+      return createInstance(container);
     }
 
     @Override

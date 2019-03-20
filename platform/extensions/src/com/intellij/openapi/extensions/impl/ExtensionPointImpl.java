@@ -15,6 +15,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -251,6 +252,66 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return array.length == 0 ? array : array.clone();
   }
 
+  /**
+   * Do not use it if there is any extension point listener, because in this case behaviour is not predictable -
+   * events will be fired during iteration and probably it will be not expected.
+   *
+   * Use only for interface extension points, not for bean.
+   *
+   * Due to internal reasons, there is no easy way to implement hasNext in a reliable manner,
+   * so, `next` may return `null` (in this case stop iteration).
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public Iterator<T> iterator() {
+    List<T> result = myExtensionsCache;
+    if (result == null) {
+      synchronized (this) {
+        result = myExtensionsCache;
+        if (result == null) {
+          return createIterator();
+        }
+      }
+    }
+    return result.iterator();
+  }
+
+  @NotNull
+  private synchronized Iterator<T> createIterator() {
+    assertBeforeProcessing();
+    CHECK_CANCELED.run();
+
+    List<ExtensionComponentAdapter> adapters = myAdapters;
+    LoadingOrder.sort(adapters);
+
+    int maxIndex = adapters.size() - 1;
+
+    // see method comment about listeners - to ensure that every client of this method doesn't introduce flaky tests/hard to reproduce bugs
+    LOG.assertTrue(myListeners.length == 0);
+
+    return new Iterator<T>() {
+      private int currentIndex = 0;
+
+      @Override
+      public boolean hasNext() {
+        return currentIndex <= maxIndex;
+      }
+
+      @Override
+      @Nullable
+      public T next() {
+        do {
+          T extension = processAdapter(adapters.get(currentIndex++), null /* don't even pass it */, null, null);
+          if (extension != null) {
+            return extension;
+          }
+        }
+        while (hasNext());
+        return null;
+      }
+    };
+  }
+
   @NotNull
   @Override
   public Stream<T> extensions() {
@@ -271,10 +332,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private boolean processingAdaptersNow; // guarded by this
   @NotNull
   private synchronized T[] processAdapters() {
-    if (processingAdaptersNow) {
-      throw new IllegalStateException("Recursive processAdapters() detected. You must have called 'getExtensions()' from within your extension constructor - don't. Either pass extension via constructor parameter or call getExtensions() later.");
-    }
-    assertNotReadOnlyMode();
+    assertBeforeProcessing();
 
     long startTime = StartUpMeasurer.getCurrentTime();
 
@@ -298,39 +356,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       int extensionIndex = 0;
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < adapters.size(); i++) {
-        ExtensionComponentAdapter adapter = adapters.get(i);
-        try {
-          boolean isNotifyThatAdded = listeners.length != 0 && !adapter.isInstanceCreated();
-          // do not call CHECK_CANCELED here in loop because it is called by createInstance()
-          @SuppressWarnings("unchecked") T extension = (T)adapter.createInstance(myPicoContainer);
-          if (!duplicates.add(extension)) {
-            T duplicate = duplicates.get(extension);
-            LOG.error("Duplicate extension found: " + extension + "; " +
-                      " Prev extension:  " + duplicate + ";\n" +
-                      " Adapter:         " + adapter + ";\n" +
-                      " Extension class: " + getExtensionClass() + ";\n" +
-                      " result:" + Arrays.asList(result));
-          }
-          else {
-            checkExtensionType(extension, adapter);
-            // registerExtension can throw error for not correct extension, so, add to result only if call successful
-            result[extensionIndex++] = extension;
-
-            if (isNotifyThatAdded) {
-              notifyListenersOnAdd(extension, adapter.getPluginDescriptor(), listeners);
-            }
-          }
-        }
-        catch (ExtensionNotApplicableException ignore) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(adapter + " not loaded because it reported that not applicable");
-          }
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error(e);
+        T extension = processAdapter(adapters.get(i), listeners, result, duplicates);
+        if (extension != null) {
+          result[extensionIndex++] = extension;
         }
       }
 
@@ -345,6 +373,57 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     finally {
       processingAdaptersNow = false;
     }
+  }
+
+  @Nullable
+  private T processAdapter(@NotNull ExtensionComponentAdapter adapter,
+                           @Nullable ExtensionPointListener<T>[] listeners,
+                           @Nullable T[] result,
+                           @Nullable OpenTHashSet<T> duplicates) {
+    try {
+      boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated();
+      // do not call CHECK_CANCELED here in loop because it is called by createInstance()
+      @SuppressWarnings("unchecked")
+      T extension = (T)adapter.createInstance(myPicoContainer);
+      if (duplicates != null && !duplicates.add(extension)) {
+        T duplicate = duplicates.get(extension);
+        assert result != null;
+        LOG.error("Duplicate extension found: " + extension + "; " +
+                  " Prev extension:  " + duplicate + ";\n" +
+                  " Adapter:         " + adapter + ";\n" +
+                  " Extension class: " + getExtensionClass() + ";\n" +
+                  " result:" + Arrays.asList(result));
+      }
+      else {
+        checkExtensionType(extension, adapter);
+
+        if (isNotifyThatAdded) {
+          notifyListenersOnAdd(extension, adapter.getPluginDescriptor(), listeners);
+        }
+
+        return extension;
+      }
+    }
+    catch (ExtensionNotApplicableException ignore) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(adapter + " not loaded because it reported that not applicable");
+      }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
+    return null;
+  }
+
+  private void assertBeforeProcessing() {
+    if (processingAdaptersNow) {
+      throw new IllegalStateException("Recursive processAdapters() detected. You must have called 'getExtensions()' from within your extension constructor - don't. " +
+                                      "Either pass extension via constructor parameter or call getExtensions() later.");
+    }
+    assertNotReadOnlyMode();
   }
 
   // used in upsource
