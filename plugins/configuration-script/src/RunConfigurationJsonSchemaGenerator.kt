@@ -33,13 +33,13 @@ private inline fun processFactories(factories: Array<ConfigurationFactory>,
 
 internal class RunConfigurationJsonSchemaGenerator {
   private val definitionBuilder = StringBuilder()
-  private val definitions = JsonObjectBuilder(definitionBuilder)
+  private val definitions = JsonObjectBuilder(definitionBuilder, indentLevel = 1)
 
   val definitionNodeKey = "runConfigurationDefinitions"
   val definitionPointerPrefix = "#/$definitionNodeKey/"
 
   fun generate(): CharSequence {
-    val properties = JsonObjectBuilder(StringBuilder())
+    val properties = JsonObjectBuilder(StringBuilder(), indentLevel = 1)
     addTemplatesNode(properties)
 
     processConfigurationTypes { type, typePropertyName, factories ->
@@ -47,7 +47,7 @@ internal class RunConfigurationJsonSchemaGenerator {
       val typeDefinitionId = generateTypeDefinitionId(typePropertyName)
       val typeDescription = getTypeDescription(type, typePropertyName)
 
-      addPropertyForConfigurationType(properties, typePropertyName, isMultiFactory, typeDefinitionId, typeDescription)
+      addPropertyForConfigurationType(properties, typePropertyName, isMultiFactory, typeDefinitionId)
 
       if (isMultiFactory) {
         processFactories(factories, typeDefinitionId) { factoryPropertyName, factoryDefinitionId, factory ->
@@ -100,7 +100,7 @@ internal class RunConfigurationJsonSchemaGenerator {
           val typeDefinitionId = generateTypeDefinitionId(typePropertyName)
           val typeDescription = getTypeDescription(type, typePropertyName)
           if (factories.size == 1) {
-            addPropertyForConfigurationType(this, typePropertyName, true, typeDefinitionId, typeDescription)
+            addPropertyForConfigurationType(this, typePropertyName, true, typeDefinitionId)
           }
           else {
             // for multi-factory RC type we cannot simply reference to definition because the only child is expected (RC type cannot have more than one template)
@@ -123,7 +123,7 @@ internal class RunConfigurationJsonSchemaGenerator {
     }
   }
 
-  private fun addPropertyForConfigurationType(properties: JsonObjectBuilder, typePropertyName: CharSequence, isSingleChildOnly: Boolean, definitionId: CharSequence, typeDescription: String?) {
+  private fun addPropertyForConfigurationType(properties: JsonObjectBuilder, typePropertyName: CharSequence, isSingleChildOnly: Boolean, definitionId: CharSequence) {
     properties.map(typePropertyName) {
       if (isSingleChildOnly) {
         "type" to "object"
