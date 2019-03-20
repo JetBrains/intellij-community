@@ -1574,9 +1574,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     @Nullable
     private ChooseRunConfigurationPopup.ItemWrapper getRunConfigurationByName(String name) {
-      final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers =
-        ChooseRunConfigurationPopup.createSettingsList(project, () -> ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG), false);
-
+      final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers = ChooseRunConfigurationPopup.createFlatSettingsList(project);
       for (ChooseRunConfigurationPopup.ItemWrapper wrapper : wrappers) {
         if (wrapper.getText().equals(name)) {
           return wrapper;
@@ -1606,8 +1604,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         return configurations;
       }
       final MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
-      final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers =
-        ChooseRunConfigurationPopup.createSettingsList(project, () -> ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG), false);
+      final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers = ChooseRunConfigurationPopup.createFlatSettingsList(project);
       check();
       for (ChooseRunConfigurationPopup.ItemWrapper wrapper : wrappers) {
         if (matcher.matches(wrapper.getText()) && !myListModel.contains(wrapper)) {

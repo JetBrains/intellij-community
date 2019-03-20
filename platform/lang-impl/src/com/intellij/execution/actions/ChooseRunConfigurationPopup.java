@@ -48,6 +48,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
@@ -974,6 +975,15 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
                                                      boolean isCreateEditAction) {
     //noinspection TestOnlyProblems
     return createSettingsList(RunManagerImpl.getInstanceImpl(project), executorProvider, isCreateEditAction, Registry.is("run.popup.move.folders.to.top", false));
+  }
+
+  public static List<ItemWrapper> createFlatSettingsList(@NotNull Project project) {
+    return RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(false)
+      .values()
+      .stream()
+      .flatMap(map -> map.values().stream().flatMap(settings -> settings.stream()))
+      .map(settings -> ItemWrapper.wrap(project, settings))
+      .collect(Collectors.toList());
   }
 
   @TestOnly
