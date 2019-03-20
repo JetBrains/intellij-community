@@ -20,6 +20,7 @@ import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
 import org.jetbrains.plugins.terminal.TerminalView;
 
@@ -72,18 +73,26 @@ public class BashRunFileAction extends DumbAwareAction {
     if (!virtualFile.exists()) {
       return Pair.create(null, "File " + virtualFile.getPath() + " doesn't exist");
     }
-    String defaultCommand = virtualFile.getPath() + "\n";
+    String filePath = virtualFile.getPath() + "\n";
+
     if (VfsUtil.virtualToIoFile(virtualFile).canExecute()) {
-      return Pair.create(defaultCommand, null);
+      return Pair.create(filePath, null);
     }
+
     ASTNode shebang = bashFile.getNode().findChildByType(BashTokenTypes.SHEBANG);
     if (shebang != null) {
       String shellPath = StringUtil.trimStart(shebang.getText(), "#!").trim();
       if (!shellPath.isEmpty() && new File(shellPath).canExecute()) {
-        return Pair.create(shellPath + " " + defaultCommand, null);
+        return Pair.create(shellPath + " " + filePath, null);
       }
     }
-    return Pair.create(defaultCommand, null);
+
+    String shellPath = TerminalOptionsProvider.Companion.getInstance().getShellPath();
+    if (StringUtil.isNotEmpty(shellPath)) {
+      return Pair.create(shellPath + " " + filePath, null);
+    }
+
+    return Pair.create(filePath, null);
   }
 
   public void update(@NotNull AnActionEvent e) {
