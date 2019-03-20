@@ -5,8 +5,12 @@ import com.intellij.application.Topics;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.*;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
+import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
+import com.intellij.internal.statistic.service.fus.collectors.LegacyApplicationUsageTriggers;
+import com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUsageTrigger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
@@ -27,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -68,11 +73,16 @@ public class StatisticsJobsScheduler implements BaseComponent {
   }
 
   private static void runEventLogStatisticsService() {
-    JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
-      if (FeatureUsageLogger.INSTANCE.isEnabled()) {
-        runStatisticsServiceWithDelay(StatisticsUploadAssistant.getEventLogStatisticsService(), SEND_STATISTICS_DELAY_IN_MIN);
+    JobScheduler.getScheduler().schedule(() -> {
+      final List<StatisticsEventLoggerProvider> providers = StatisticsEventLoggerKt.getEventLogProviders();
+      for (StatisticsEventLoggerProvider provider : providers) {
+        if (provider.isSendEnabled()) {
+          JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
+            //TODO: runStatisticsServiceWithDelay(StatisticsUploadAssistant.getEventLogStatisticsService(), SEND_STATISTICS_DELAY_IN_MIN);
+          }, SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, provider.getSendFrequencyMs(), TimeUnit.MILLISECONDS);
+        }
       }
-    }, SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, SEND_EVENT_LOG_DELAY_IN_MILLIS, TimeUnit.MILLISECONDS);
+    }, SEND_STATISTICS_DELAY_IN_MIN, TimeUnit.MINUTES);
   }
 
   private static void runStatesLogging() {

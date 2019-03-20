@@ -34,7 +34,7 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   public static StatisticsResult send(@NotNull EventLogSettingsService settings, @NotNull EventLogResultDecorator decorator) {
-    if (!FeatureUsageLogger.INSTANCE.isEnabled() || !StatisticsUploadAssistant.isSendAllowed()) {
+    if (FeatureUsageLogger.INSTANCE.getConfig().isSendEnabled()) {
       cleanupAllFiles();
       return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "Event Log collector is not enabled");
     }
