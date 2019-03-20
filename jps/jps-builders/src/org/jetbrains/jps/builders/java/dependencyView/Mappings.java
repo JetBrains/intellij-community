@@ -4,15 +4,16 @@ package org.jetbrains.jps.builders.java.dependencyView;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.incremental.storage.FileKeyDescriptor;
-import org.jetbrains.jps.incremental.storage.MaybeRelativeFileKeyDescriptor;
 import org.jetbrains.jps.incremental.storage.MaybeRelativizer;
+import org.jetbrains.jps.incremental.storage.PathStringDescriptor;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -66,8 +67,8 @@ public class Mappings {
   values: class names that use the class registered as the key
   */
   private IntIntMultiMaplet myClassToClassDependency;
-  private ObjectObjectMultiMaplet<File, ClassFileRepr> mySourceFileToClasses;
-  private IntObjectMultiMaplet<File> myClassToSourceFile;
+  private ObjectObjectMultiMaplet<String, ClassFileRepr> myRelativeSourceFilePathToClasses;
+  private IntObjectMultiMaplet<String> myClassToRelativeSourceFilePath;
   /**
    * [short className] -> list of FQ names
    */
@@ -128,18 +129,18 @@ public class Mappings {
     myRemovedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
     myAddedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
 
-    final CollectionFactory<File> fileCollectionFactory = new CollectionFactory<File>() {
+    final CollectionFactory<String> fileCollectionFactory = new CollectionFactory<String>() {
       @Override
-      public Collection<File> create() {
-        return new THashSet<>(FileUtil.FILE_HASHING_STRATEGY); // todo: do we really need set and not a list here?
+      public Collection<String> create() {
+        return new THashSet<>(FileUtil.PATH_HASHING_STRATEGY); // todo: do we really need set and not a list here?
       }
     };
     if (myIsDelta && myDeltaIsTransient) {
       myClassToSubclasses = new IntIntTransientMultiMaplet();
       myClassToClassDependency = new IntIntTransientMultiMaplet();
       myShortClassNameIndex = null;
-      mySourceFileToClasses = new ObjectObjectTransientMultiMaplet<>(FileUtil.FILE_HASHING_STRATEGY, () -> new THashSet<>(5, DEFAULT_SET_LOAD_FACTOR));
-      myClassToSourceFile = new IntObjectTransientMultiMaplet<>(fileCollectionFactory);
+      myRelativeSourceFilePathToClasses = new ObjectObjectTransientMultiMaplet<>(FileUtil.PATH_HASHING_STRATEGY, () -> new THashSet<>(5, DEFAULT_SET_LOAD_FACTOR));
+      myClassToRelativeSourceFilePath = new IntObjectTransientMultiMaplet<>(fileCollectionFactory);
     }
     else {
       if (myIsDelta) {
@@ -151,13 +152,19 @@ public class Mappings {
                                                                  EnumeratorIntegerDescriptor.INSTANCE);
       myShortClassNameIndex = myIsDelta? null : new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, SHORT_NAMES),
                                                                                 EnumeratorIntegerDescriptor.INSTANCE);
-      FileKeyDescriptor descriptor = new MaybeRelativeFileKeyDescriptor(myRelativizer);
-      mySourceFileToClasses = new ObjectObjectPersistentMultiMaplet<>(
-        DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), descriptor, new ClassFileReprExternalizer(myContext),
+      myRelativeSourceFilePathToClasses = new ObjectObjectPersistentMultiMaplet<String, ClassFileRepr>(
+        DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), PathStringDescriptor.INSTANCE, new ClassFileReprExternalizer(myContext),
         () -> new THashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
-      );
-      myClassToSourceFile = new IntObjectPersistentMultiMaplet<>(
-        DependencyContext.getTableFile(myRootDir, CLASS_TO_SOURCE), EnumeratorIntegerDescriptor.INSTANCE, descriptor, fileCollectionFactory
+      ) {
+        @NotNull
+        @Override
+        protected String debugString(String path) {
+          // on case-insensitive file systems save paths in normalized (lowercase) format in order to make tests run deterministically
+          return SystemInfo.isFileSystemCaseSensitive ? path : path.toLowerCase(Locale.US);
+        }
+      };
+      myClassToRelativeSourceFilePath = new IntObjectPersistentMultiMaplet<>(
+        DependencyContext.getTableFile(myRootDir, CLASS_TO_SOURCE), EnumeratorIntegerDescriptor.INSTANCE, PathStringDescriptor.INSTANCE, fileCollectionFactory
       );
     }
   }
@@ -183,8 +190,11 @@ public class Mappings {
 
   private void compensateRemovedContent(final @NotNull Collection<? extends File> compiled, final @NotNull Collection<? extends File> compiledWithErrors) {
     for (final File file : compiled) {
-      if (!compiledWithErrors.contains(file) && !mySourceFileToClasses.containsKey(file)) {
-        mySourceFileToClasses.put(file, new HashSet<>());
+      if (!compiledWithErrors.contains(file)) {
+        String relative = toRelative(file);
+        if (!myRelativeSourceFilePathToClasses.containsKey(relative)) {
+          myRelativeSourceFilePathToClasses.put(relative, new HashSet<>());
+        }
       }
     }
   }
@@ -197,10 +207,10 @@ public class Mappings {
 
   @Nullable
   private ClassFileRepr getReprByName(@Nullable File source, int qName) {
-    final Collection<File> sources = source != null? Collections.singleton(source) : myClassToSourceFile.get(qName);
+    final Collection<File> sources = source != null? Collections.singleton(source) : classToSourceFileGet(qName);
     if (sources != null) {
       for (File src : sources) {
-        final Collection<ClassFileRepr> reprs = mySourceFileToClasses.get(src);
+        final Collection<ClassFileRepr> reprs = sourceFileToClassesGet(src);
         if (reprs != null) {
           for (ClassFileRepr repr : reprs) {
             if (repr.name == qName) {
@@ -212,6 +222,26 @@ public class Mappings {
     }
 
     return null;
+  }
+
+  private Collection<ClassFileRepr> sourceFileToClassesGet(File unchangedSource) {
+    return myRelativeSourceFilePathToClasses.get(toRelative(unchangedSource));
+  }
+
+  @NotNull
+  private String toRelative(File file) {
+    return myRelativizer.toRelative(file.getPath());
+  }
+
+  @Nullable
+  private Collection<File> classToSourceFileGet(int qName) {
+    Collection<String> get = myClassToRelativeSourceFilePath.get(qName);
+    return get == null ? null : ContainerUtil.map(get, s -> toFull(s));
+  }
+
+  @NotNull
+  private File toFull(String relativePath) {
+    return new File(myRelativizer.toFull(relativePath));
   }
 
   public void clean() throws IOException {
@@ -239,7 +269,7 @@ public class Mappings {
     if (deleted != null) {
       for (Pair<ClassFileRepr, File> pair : deleted) {
         final int deletedClassName = pair.first.name;
-        final Collection<File> sources = myClassToSourceFile.get(deletedClassName);
+        final Collection<File> sources = classToSourceFileGet(deletedClassName);
         if (sources == null || sources.isEmpty()) { // if really deleted and not e.g. moved
           myChangedClasses.remove(deletedClassName);
         }
@@ -629,7 +659,7 @@ public class Mappings {
                           TIntHashSet visitedClasses) {
       debug("Affecting subclasses of class: ", className);
 
-      final Collection<File> allSources = myClassToSourceFile.get(className);
+      final Collection<File> allSources = classToSourceFileGet(className);
       if (allSources == null || allSources.isEmpty()) {
         debug("No source file detected for class ", className);
         debug("End of affectSubclasses");
@@ -738,9 +768,9 @@ public class Mappings {
     }
 
     void affectModule(ModuleRepr m, final Collection<? super File> affectedFiles) {
-      Collection<File> depFiles = myMappings != null? myMappings.myClassToSourceFile.get(m.name) : null;
+      Collection<File> depFiles = myMappings != null ? myMappings.classToSourceFileGet(m.name) : null;
       if (depFiles == null) {
-        depFiles = myClassToSourceFile.get(m.name);
+        depFiles = classToSourceFileGet(m.name);
       }
       if (depFiles != null) {
         debug("Affecting module ", m.name);
@@ -793,7 +823,7 @@ public class Mappings {
 
       @Override
       public boolean checkResidence(int residence) {
-        final Collection<File> fNames = myClassToSourceFile.get(residence);
+        final Collection<File> fNames = classToSourceFileGet(residence);
         if (fNames == null || fNames.isEmpty()) {
           return true;
         }
@@ -848,7 +878,7 @@ public class Mappings {
     final TIntHashSet dependants = myClassToClassDependency.get(className);
     if (dependants != null) {
       dependants.forEach(depClass -> {
-        final Collection<File> allSources = myClassToSourceFile.get(depClass);
+        final Collection<File> allSources = classToSourceFileGet(depClass);
         if (allSources == null || allSources.isEmpty()) {
           return true;
         }
@@ -930,7 +960,7 @@ public class Mappings {
 
       final TIntHashSet propagated = self.propagateFieldAccess(isField ? member.name : myEmptyName, owner);
       propagated.forEach(className -> {
-        final Collection<File> fileNames = myClassToSourceFile.get(className);
+        final Collection<File> fileNames = classToSourceFileGet(className);
         if (fileNames != null) {
           for (File fileName : fileNames) {
             debug("Adding ", fileName);
@@ -947,14 +977,15 @@ public class Mappings {
     debug("Package name: ", packageName);
 
     // Package-local branch
-    myClassToSourceFile.forEachEntry(new TIntObjectProcedure<Collection<File>>() {
+    myClassToRelativeSourceFilePath.forEachEntry(new TIntObjectProcedure<Collection<String>>() {
       @Override
-      public boolean execute(int className, Collection<File> fileNames) {
+      public boolean execute(int className, Collection<String> relFilePaths) {
         if (ClassRepr.getPackageName(myContext.getValue(className)).equals(packageName)) {
-          for (File fileName : fileNames) {
-            if (filter == null || filter.accept(fileName)) {
-              debug("Adding: ", fileName);
-              toRecompile.add(fileName);
+          for (String rel : relFilePaths) {
+            File file = toFull(rel);
+            if (filter == null || filter.accept(file)) {
+              debug("Adding: ", rel);
+              toRecompile.add(file);
             }
           }
         }
@@ -1197,7 +1228,7 @@ public class Mappings {
         if (removed != null) {
           for (final String file : removed) {
             final File sourceFile = new File(file);
-            final Collection<ClassFileRepr> classes = mySourceFileToClasses.get(sourceFile);
+            final Collection<ClassFileRepr> classes = sourceFileToClassesGet(sourceFile);
 
             if (classes != null) {
               for (ClassFileRepr c : classes) {
@@ -1288,7 +1319,7 @@ public class Mappings {
             if (overrides.satisfy(method) && isInheritor) {
               debug("Current method overrides that found");
 
-              final Collection<File> files = myClassToSourceFile.get(methodClass.name);
+              final Collection<File> files = classToSourceFileGet(methodClass.name);
               if (files != null) {
                 myAffectedFiles.addAll(files);
                 for (File file : files) {
@@ -1325,7 +1356,7 @@ public class Mappings {
             if (r == null) {
               return true;
             }
-            final Collection<File> sourceFileNames = myClassToSourceFile.get(subClass);
+            final Collection<File> sourceFileNames = classToSourceFileGet(subClass);
             if (sourceFileNames != null && !myCompiledFiles.containsAll(sourceFileNames)) {
               final int outerClass = r.getOuterClassName();
               if (!isEmpty(outerClass)) {
@@ -1394,7 +1425,7 @@ public class Mappings {
         myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods, null);
 
         for (final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
-          final Collection<File> fNames = myClassToSourceFile.get(p.second.name);
+          final Collection<File> fNames = classToSourceFileGet(p.second.name);
           if (fNames != null) {
             myAffectedFiles.addAll(fNames);
             for (File fName : fNames) {
@@ -1437,7 +1468,7 @@ public class Mappings {
                 }
 
                 if (allAbstract && visited) {
-                  final Collection<File> sources = myClassToSourceFile.get(p);
+                  final Collection<File> sources = classToSourceFileGet(p);
 
                   if (sources != null && !myCompiledFiles.containsAll(sources)) {
                     myAffectedFiles.addAll(sources);
@@ -1517,7 +1548,7 @@ public class Mappings {
                 final ClassRepr aClass = p.getSecond();
 
                 if (aClass != MOCK_CLASS) {
-                  final Collection<File> fileNames = myClassToSourceFile.get(aClass.name);
+                  final Collection<File> fileNames = classToSourceFileGet(aClass.name);
                   if (fileNames != null) {
                     myAffectedFiles.addAll(fileNames);
                   }
@@ -1643,7 +1674,7 @@ public class Mappings {
           subClasses.forEach(subClass -> {
             final ClassRepr r = myFuture.classReprByName(subClass);
             if (r != null) {
-              final Collection<File> sourceFileNames = myClassToSourceFile.get(subClass);
+              final Collection<File> sourceFileNames = classToSourceFileGet(subClass);
               if (sourceFileNames != null && !myCompiledFiles.containsAll(sourceFileNames)) {
                 if (r.isLocal()) {
                   for (File sourceFileName : sourceFileNames) {
@@ -2159,12 +2190,12 @@ public class Mappings {
         for (ClassRepr c : addedClasses) {
           if (!c.isLocal() && !c.isAnonymous() && isEmpty(c.getOuterClassName())) {
             final Set<File> candidates = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-            final Collection<File> currentlyMapped = myClassToSourceFile.get(c.name);
+            final Collection<File> currentlyMapped = classToSourceFileGet(c.name);
             if (currentlyMapped != null) {
               candidates.addAll(currentlyMapped);
             }
             candidates.removeAll(myCompiledFiles);
-            final Collection<File> newSources = myDelta.myClassToSourceFile.get(c.name);
+            final Collection<File> newSources = myDelta.classToSourceFileGet(c.name);
             if (newSources != null) {
               candidates.removeAll(newSources);
             }
@@ -2237,7 +2268,7 @@ public class Mappings {
       assert myAffectedFiles != null;
 
       toAffect.forEach(depClass -> {
-        final Collection<File> fNames = myClassToSourceFile.get(depClass);
+        final Collection<File> fNames = classToSourceFileGet(depClass);
         if (fNames != null) {
           for (File fName : fNames) {
             if (myFilter == null || myFilter.accept(fName)) {
@@ -2258,7 +2289,7 @@ public class Mappings {
       state.myDependants.forEach(new TIntProcedure() {
         @Override
         public boolean execute(final int depClass) {
-          final Collection<File> depFiles = myClassToSourceFile.get(depClass);
+          final Collection<File> depFiles = classToSourceFileGet(depClass);
           if (depFiles != null) {
             for (File depFile : depFiles) {
               processDependentFile(depClass, depFile);
@@ -2328,13 +2359,14 @@ public class Mappings {
           processDisappearedClasses();
 
           final List<FileClasses> newClasses = new ArrayList<>();
-          myDelta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassFileRepr>>() {
+          myDelta.myRelativeSourceFilePathToClasses.forEachEntry(new TObjectObjectProcedure<String, Collection<ClassFileRepr>>() {
             @Override
-            public boolean execute(File fileName, Collection<ClassFileRepr> content) {
-              if (myFilesToCompile == null || myFilesToCompile.contains(fileName)) {
+            public boolean execute(String relativeFilePath, Collection<ClassFileRepr> content) {
+              File file = toFull(relativeFilePath);
+              if (myFilesToCompile == null || myFilesToCompile.contains(file)) {
                 // Consider only files actually compiled in this round.
                 // For other sources the list of classes taken from this map will be possibly incomplete.
-                newClasses.add(new FileClasses(fileName, content));
+                newClasses.add(new FileClasses(file, content));
               }
               return true;
             }
@@ -2344,7 +2376,7 @@ public class Mappings {
             final File fileName = compiledFile.myFileName;
             final Set<ClassRepr> pastClasses = new THashSet<>();
             final Set<ModuleRepr> pastModules = new THashSet<>();
-            final Collection<ClassFileRepr> past = mySourceFileToClasses.get(fileName);
+            final Collection<ClassFileRepr> past = sourceFileToClassesGet(fileName);
             if (past != null) {
               for (ClassFileRepr repr : past) {
                 if (repr instanceof ClassRepr) {
@@ -2589,7 +2621,7 @@ public class Mappings {
     final int className = cr.name;
 
     // it is safe to cleanup class information if it is mapped to non-existing files only
-    final Collection<File> currentlyMapped = myClassToSourceFile.get(className);
+    final Collection<File> currentlyMapped = classToSourceFileGet(className);
     if (currentlyMapped == null || currentlyMapped.isEmpty()) {
       return;
     }
@@ -2619,7 +2651,7 @@ public class Mappings {
 
     myClassToClassDependency.remove(className);
     myClassToSubclasses.remove(className);
-    myClassToSourceFile.remove(className);
+    myClassToRelativeSourceFilePath.remove(className);
     if (cr instanceof ClassRepr) {
       final ClassRepr _cr = (ClassRepr)cr;
       if (!_cr.isLocal() && !_cr.isAnonymous()) {
@@ -2642,13 +2674,13 @@ public class Mappings {
         if (removed != null) {
           for (final String file : removed) {
             final File deletedFile = new File(file);
-            final Set<ClassFileRepr> fileClasses = (Set<ClassFileRepr>)mySourceFileToClasses.get(deletedFile);
+            final Set<ClassFileRepr> fileClasses = (Set<ClassFileRepr>)sourceFileToClassesGet(deletedFile);
 
             if (fileClasses != null) {
               for (final ClassFileRepr aClass : fileClasses) {
                 cleanupRemovedClass(delta, aClass, deletedFile, aClass.getUsages(), dependenciesTrashBin);
               }
-              mySourceFileToClasses.remove(deletedFile);
+              myRelativeSourceFilePathToClasses.remove(myRelativizer.toRelative(file));
             }
           }
         }
@@ -2709,8 +2741,8 @@ public class Mappings {
           });
 
           delta.getChangedClasses().forEach(className -> {
-            final Collection<File> sourceFiles = delta.myClassToSourceFile.get(className);
-            myClassToSourceFile.replace(className, sourceFiles);
+            final Collection<String> sourceFiles = delta.myClassToRelativeSourceFilePath.get(className);
+            myClassToRelativeSourceFilePath.replace(className, sourceFiles);
 
             cleanupBackDependency(className, null, dependenciesTrashBin);
 
@@ -2718,8 +2750,9 @@ public class Mappings {
           });
 
           delta.getChangedFiles().forEach(fileName -> {
-            final Collection<ClassFileRepr> classes = delta.mySourceFileToClasses.get(fileName);
-            mySourceFileToClasses.replace(fileName, classes);
+            String relative = toRelative(fileName);
+            final Collection<ClassFileRepr> classes = delta.myRelativeSourceFilePathToClasses.get(relative);
+            myRelativeSourceFilePathToClasses.replace(relative, classes);
             return true;
           });
 
@@ -2727,17 +2760,17 @@ public class Mappings {
           // In case some of these sources was not compiled, but the class was changed, we need to update
           // sourceToClasses mapping for such sources to include the updated ClassRepr version of the changed class
           final THashSet<File> unchangedSources = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-          delta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassFileRepr>>() {
+          delta.myRelativeSourceFilePathToClasses.forEachEntry(new TObjectObjectProcedure<String, Collection<ClassFileRepr>>() {
             @Override
-            public boolean execute(File source, Collection<ClassFileRepr> b) {
-              unchangedSources.add(source);
+            public boolean execute(String source, Collection<ClassFileRepr> b) {
+              unchangedSources.add(toFull(source));
               return true;
             }
           });
           unchangedSources.removeAll(delta.getChangedFiles());
           if (!unchangedSources.isEmpty()) {
             unchangedSources.forEach(unchangedSource -> {
-              final Collection<ClassFileRepr> updatedClasses = delta.mySourceFileToClasses.get(unchangedSource);
+              final Collection<ClassFileRepr> updatedClasses = delta.sourceFileToClassesGet(unchangedSource);
               if (updatedClasses != null && !updatedClasses.isEmpty()) {
                 final List<ClassFileRepr> classesToPut = new ArrayList<>();
                 final TIntHashSet updatedClassNames = new TIntHashSet();
@@ -2750,7 +2783,7 @@ public class Mappings {
                     updatedClassNames.add(aClass.name);
                   }
                 }
-                final Collection<ClassFileRepr> currentClasses = mySourceFileToClasses.get(unchangedSource);
+                final Collection<ClassFileRepr> currentClasses = sourceFileToClassesGet(unchangedSource);
                 if (currentClasses != null) {
                   for (ClassFileRepr aClass : currentClasses) {
                     if (!updatedClassNames.contains(aClass.name)) {
@@ -2758,7 +2791,7 @@ public class Mappings {
                     }
                   }
                 }
-                mySourceFileToClasses.replace(unchangedSource, classesToPut);
+                myRelativeSourceFilePathToClasses.replace(toRelative(unchangedSource), classesToPut);
               }
               return true;
             });
@@ -2766,11 +2799,11 @@ public class Mappings {
         }
         else {
           myClassToSubclasses.putAll(delta.myClassToSubclasses);
-          myClassToSourceFile.replaceAll(delta.myClassToSourceFile);
-          mySourceFileToClasses.replaceAll(delta.mySourceFileToClasses);
-          delta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassFileRepr>>() {
+          myClassToRelativeSourceFilePath.replaceAll(delta.myClassToRelativeSourceFilePath);
+          myRelativeSourceFilePathToClasses.replaceAll(delta.myRelativeSourceFilePathToClasses);
+          delta.myRelativeSourceFilePathToClasses.forEachEntry(new TObjectObjectProcedure<String, Collection<ClassFileRepr>>() {
             @Override
-            public boolean execute(File src, Collection<ClassFileRepr> classes) {
+            public boolean execute(String src, Collection<ClassFileRepr> classes) {
               for (ClassFileRepr repr : classes) {
                 if (repr instanceof ClassRepr) {
                   final ClassRepr clsRepr = (ClassRepr)repr;
@@ -2843,9 +2876,9 @@ public class Mappings {
             final int className = result.name;
 
             for (String sourceFileName : sources) {
-              final File sourceFile = new File(sourceFileName);
-              myClassToSourceFile.put(className, sourceFile);
-              mySourceFileToClasses.put(sourceFile, result);
+              String relative = myRelativizer.toRelative(sourceFileName);
+              myClassToRelativeSourceFilePath.put(className, relative);
+              myRelativeSourceFilePathToClasses.put(relative, result);
             }
 
             if (result instanceof ClassRepr) {
@@ -2874,8 +2907,8 @@ public class Mappings {
         if (!classImports.isEmpty() || !staticImports.isEmpty()) {
           myPostPasses.offer(() -> {
             final int rootClassName = myContext.get(className.replace(".", "/"));
-            final Collection<File> fileNames = myClassToSourceFile.get(rootClassName);
-            final ClassRepr repr = fileNames != null && !fileNames.isEmpty()? getClassReprByName(fileNames.iterator().next(), rootClassName) : null;
+            final Collection<File> files = classToSourceFileGet(rootClassName);
+            final ClassRepr repr = files != null && !files.isEmpty()? getClassReprByName(files.iterator().next(), rootClassName) : null;
             boolean usageAdded = false;
 
             for (final String anImport : classImports) {
@@ -2906,8 +2939,8 @@ public class Mappings {
             }
 
             if (usageAdded) {
-              for (File fileName : fileNames) {
-                mySourceFileToClasses.put(fileName, repr);
+              for (File file : files) {
+                myRelativeSourceFilePathToClasses.put(toRelative(file), repr);
               }
             }
           });
@@ -2920,7 +2953,7 @@ public class Mappings {
   public Set<ClassRepr> getClasses(final String sourceFileName) {
     final File f = new File(sourceFileName);
     synchronized (myLock) {
-      final Collection<ClassFileRepr> reprs = mySourceFileToClasses.get(f);
+      final Collection<ClassFileRepr> reprs = sourceFileToClassesGet(f);
       if (reprs == null || reprs.isEmpty()) {
         return null;
       }
@@ -2937,7 +2970,7 @@ public class Mappings {
   @Nullable
   public Collection<File> getClassSources(int className) {
     synchronized (myLock) {
-      return myClassToSourceFile.get(className);
+      return classToSourceFileGet(className);
     }
   }
 
@@ -2945,8 +2978,8 @@ public class Mappings {
     synchronized (myLock) {
       myClassToSubclasses.close();
       myClassToClassDependency.close();
-      mySourceFileToClasses.close();
-      myClassToSourceFile.close();
+      myRelativeSourceFilePathToClasses.close();
+      myClassToRelativeSourceFilePath.close();
 
       if (!myIsDelta) {
         myShortClassNameIndex.close();
@@ -2969,8 +3002,8 @@ public class Mappings {
     synchronized (myLock) {
       myClassToSubclasses.flush(memoryCachesOnly);
       myClassToClassDependency.flush(memoryCachesOnly);
-      mySourceFileToClasses.flush(memoryCachesOnly);
-      myClassToSourceFile.flush(memoryCachesOnly);
+      myRelativeSourceFilePathToClasses.flush(memoryCachesOnly);
+      myClassToRelativeSourceFilePath.flush(memoryCachesOnly);
 
       if (!myIsDelta) {
         myShortClassNameIndex.flush(memoryCachesOnly);
@@ -3048,7 +3081,7 @@ public class Mappings {
     assert (myChangedClasses != null && myChangedFiles != null);
     myChangedClasses.add(it);
 
-    final Collection<File> files = myClassToSourceFile.get(it);
+    final Collection<File> files = classToSourceFileGet(it);
 
     if (files != null) {
       myChangedFiles.addAll(files);
@@ -3097,8 +3130,8 @@ public class Mappings {
     final Streamable[] data = {
       myClassToSubclasses,
       myClassToClassDependency,
-      mySourceFileToClasses,
-      myClassToSourceFile,
+      myRelativeSourceFilePathToClasses,
+      myClassToRelativeSourceFilePath,
     };
 
     final String[] info = {
@@ -3125,8 +3158,8 @@ public class Mappings {
     final Streamable[] data = {
       myClassToSubclasses,
       myClassToClassDependency,
-      mySourceFileToClasses,
-      myClassToSourceFile,
+      myRelativeSourceFilePathToClasses,
+      myClassToRelativeSourceFilePath,
       myShortClassNameIndex
     };
 
