@@ -20,6 +20,7 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.NonTrivialActionGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
@@ -51,6 +52,9 @@ import java.util.function.Consumer;
  * @see SchemesModel
  */
 public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent extends JComponent> extends JPanel {
+  public static final ExtensionPointName<SchemePanelCustomizer> EP_NAME =
+    ExtensionPointName.create("com.intellij.schemesPanelCustomizer");
+
   private EditableSchemesCombo<T> mySchemesCombo;
   private AbstractSchemeActions<T> myActions;
   private JComponent myToolbar;
@@ -84,7 +88,11 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     final JPanel verticalContainer = rightCustomComponent != null ? createVerticalContainer() : this;
     JPanel controlsPanel = createControlsPanel();
     verticalContainer.add(controlsPanel);
-    IdeUICustomization.getInstance().customizeSchemePanel(this, verticalContainer);
+    for (SchemePanelCustomizer extension : EP_NAME.getExtensions()) {
+      JPanel customBanner = extension.getBannerToInsert(this);
+      if(customBanner != null)
+        verticalContainer.add(customBanner);
+    }
     verticalContainer.add(Box.createRigidArea(new JBDimension(0, 12)));
     if (rightCustomComponent != null) {
       JPanel horizontalContainer = new JPanel();
