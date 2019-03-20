@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.ide.codeStyleSettings.CodeStyleTestCase;
@@ -58,8 +59,11 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
   }
 
   public void testSettingsCloneNotReferencingOriginal() throws IllegalAccessException {
-    JavaCodeStyleSettings original = JavaCodeStyleSettings.getInstance(getProject());
-    JavaCodeStyleSettings copy = (JavaCodeStyleSettings)original.clone();
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    JavaCodeStyleSettings original = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    CodeStyleSettings clonedRoot = originalRoot.clone();
+    JavaCodeStyleSettings copy = clonedRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    assertSame(clonedRoot, copy.getContainer());
     for (Field field : copy.getClass().getDeclaredFields()) {
       if (!isPrimitiveOrString(field.getType()) && (field.getModifiers() & Modifier.PUBLIC) != 0) {
         assertNotSame("Fields '" + field.getName() + "' reference the same value", field.get(original), field.get(copy));
