@@ -9,7 +9,6 @@ import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.ClassUtilCore;
-import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManager;
@@ -55,9 +54,7 @@ import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.OpenOption;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
@@ -90,10 +87,20 @@ public class StartupUtil {
   }
 
   @FunctionalInterface
-  interface AppStarter {
+  public interface AppStarter {
     void start();
 
+    // not called in EDT
     default void beforeImportConfigs() {}
+
+    // called in EDT
+    default void beforeStartupWizard() {}
+
+    // called in EDT
+    default void startupWizardFinished() {}
+
+    // not called in EDT
+    default void importFinished(@NotNull Path newConfigDir) {}
   }
 
   static boolean isStartParallel() {
@@ -168,10 +175,12 @@ public class StartupUtil {
 
     if (newConfigFolder) {
       appStarter.beforeImportConfigs();
+      Path newConfigDir = Paths.get(PathManager.getConfigPath());
       SwingUtilities.invokeAndWait(() -> {
         PluginManager.installExceptionHandler();
-        ConfigImportHelper.importConfigsTo(PathManager.getConfigPath(), log);
+        ConfigImportHelper.importConfigsTo(newConfigDir, log);
       });
+      appStarter.importFinished(newConfigDir);
     }
     else {
       installPluginUpdates();
@@ -183,7 +192,7 @@ public class StartupUtil {
 
     if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
       // exception handler is already set by ConfigImportHelper
-      SwingUtilities.invokeAndWait(() -> runStartupWizard());
+      SwingUtilities.invokeAndWait(() -> runStartupWizard(appStarter));
     }
 
     appStarter.start();
@@ -525,13 +534,12 @@ public class StartupUtil {
     }
   }
 
-  static void runStartupWizard() {
+  private static void runStartupWizard(@NotNull AppStarter appStarter) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
 
     String stepsProviderName = appInfo.getCustomizeIDEWizardStepsProvider();
     if (stepsProviderName != null) {
       CustomizeIDEWizardStepsProvider provider;
-
       try {
         Class<?> providerClass = Class.forName(stepsProviderName);
         provider = (CustomizeIDEWizardStepsProvider)providerClass.newInstance();
@@ -541,18 +549,10 @@ public class StartupUtil {
         return;
       }
 
-      CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
-      if (configProvider != null) {
-        configProvider.beforeStartupWizard();
-      }
-
+      appStarter.beforeStartupWizard();
       new CustomizeIDEWizardDialog(provider).show();
-
       PluginManagerCore.invalidatePlugins();
-      if (configProvider != null) {
-        configProvider.startupWizardFinished();
-      }
-
+      appStarter.startupWizardFinished();
       return;
     }
 
