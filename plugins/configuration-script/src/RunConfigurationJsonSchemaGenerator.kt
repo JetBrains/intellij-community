@@ -9,8 +9,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
 
 internal inline fun processConfigurationTypes(processor: (configurationType: ConfigurationType, propertyName: CharSequence, factories: Array<ConfigurationFactory>) -> Unit) {
-  val configurationTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
-  for (type in configurationTypes) {
+  for (type in ConfigurationType.CONFIGURATION_TYPE_EP.extensionList) {
     val propertyName = rcTypeIdToPropertyName(type) ?: continue
     val factories = type.configurationFactories
     if (factories.isEmpty()) {
@@ -27,7 +26,7 @@ private inline fun processFactories(factories: Array<ConfigurationFactory>,
                                     processor: (factoryPropertyName: CharSequence, factoryDefinitionId: CharSequence, factory: ConfigurationFactory) -> Unit) {
   for (factory in factories) {
     val factoryPropertyName = rcFactoryIdToPropertyName(factory) ?: continue
-    val factoryDefinitionId = "${typeDefinitionId}-${factoryPropertyName}"
+    val factoryDefinitionId = "${typeDefinitionId}-${factoryPropertyName}Factory"
     processor(factoryPropertyName, factoryDefinitionId, factory)
   }
 }
@@ -44,18 +43,22 @@ internal class RunConfigurationJsonSchemaGenerator {
     addTemplatesNode(properties)
 
     processConfigurationTypes { type, typePropertyName, factories ->
-      @Suppress("UnnecessaryVariable")
-      val typeDefinitionId = typePropertyName
-
       val isMultiFactory = factories.size > 1
-      addPropertyForConfigurationType(properties, typePropertyName, isMultiFactory, typeDefinitionId)
+      val typeDefinitionId = generateTypeDefinitionId(typePropertyName)
+      val typeDescription = getTypeDescription(type, typePropertyName)
+
+      addPropertyForConfigurationType(properties, typePropertyName, isMultiFactory, typeDefinitionId, typeDescription)
 
       if (isMultiFactory) {
+        processFactories(factories, typeDefinitionId) { factoryPropertyName, factoryDefinitionId, factory ->
+          describeFactory(factory, factoryDefinitionId, if (StringUtil.equals(factoryPropertyName, factory.name)) null else factory.name)
+        }
+
         definitions.map(typeDefinitionId) {
           "type" to "object"
 
-          if (!StringUtil.equals(typePropertyName, type.configurationTypeDescription)) {
-            "description" toUnescaped type.configurationTypeDescription
+          if (typeDescription != null) {
+            "description" toUnescaped typeDescription
           }
 
           map("properties") {
@@ -64,15 +67,12 @@ internal class RunConfigurationJsonSchemaGenerator {
               // describeFactory cannot be here because JsonBuilder instance here equals to definitions - recursive building is not supported (to reuse StringBuilder instance)
             }
           }
-        }
 
-        processFactories(factories, typeDefinitionId) { factoryPropertyName, factoryDefinitionId, factory ->
-          describeFactory(factory, factoryDefinitionId, if (StringUtil.equals(factoryPropertyName, factory.name)) null else factory.name)
+          "additionalProperties" to false
         }
       }
       else {
-        val description = type.configurationTypeDescription
-        describeFactory(factories.first(), typeDefinitionId, if (typePropertyName == description) null else description)
+        describeFactory(factories.first(), typeDefinitionId, typeDescription)
       }
     }
 
@@ -97,20 +97,22 @@ internal class RunConfigurationJsonSchemaGenerator {
       "description" toUnescaped description
       map("properties") {
         processConfigurationTypes { type, typePropertyName, factories ->
+          val typeDefinitionId = generateTypeDefinitionId(typePropertyName)
+          val typeDescription = getTypeDescription(type, typePropertyName)
           if (factories.size == 1) {
-            addPropertyForConfigurationType(this, typePropertyName, true, typePropertyName)
+            addPropertyForConfigurationType(this, typePropertyName, true, typeDefinitionId, typeDescription)
           }
           else {
             // for multi-factory RC type we cannot simply reference to definition because the only child is expected (RC type cannot have more than one template)
             map(typePropertyName) {
               "type" to "object"
 
-              if (!StringUtil.equals(typePropertyName, type.configurationTypeDescription)) {
-                "description" toUnescaped type.configurationTypeDescription
+              if (typeDescription != null) {
+                "description" toUnescaped typeDescription
               }
 
               map("properties") {
-                processFactories(factories, typePropertyName) { factoryPropertyName, factoryDefinitionId, _ ->
+                processFactories(factories, typeDefinitionId) { factoryPropertyName, factoryDefinitionId, _ ->
                   addPropertyForFactory(factoryPropertyName, factoryDefinitionId, isSingleChildOnly = true)
                 }
               }
@@ -121,22 +123,26 @@ internal class RunConfigurationJsonSchemaGenerator {
     }
   }
 
-  private fun addPropertyForConfigurationType(properties: JsonObjectBuilder, typePropertyName: CharSequence, isSingleChildOnly: Boolean, definitionId: CharSequence) {
+  private fun addPropertyForConfigurationType(properties: JsonObjectBuilder, typePropertyName: CharSequence, isSingleChildOnly: Boolean, definitionId: CharSequence, typeDescription: String?) {
     properties.map(typePropertyName) {
       if (isSingleChildOnly) {
         "type" to "object"
+        definitionReference(definitionPointerPrefix, definitionId)
       }
       else {
-        "type" toRaw """["array", "object"]"""
-      }
-
-      if (!isSingleChildOnly) {
-        map("items") {
-          definitionReference(definitionPointerPrefix, definitionId)
+        rawArray("oneOf") {
+          it.json {
+            definitionReference(definitionPointerPrefix, definitionId)
+          }
+          it.json {
+            "type" to "array"
+            map("items") {
+              definitionReference(definitionPointerPrefix, definitionId)
+            }
+            "additionalProperties" to false
+          }
         }
       }
-
-      definitionReference(definitionPointerPrefix, definitionId)
     }
   }
 
@@ -299,4 +305,13 @@ private fun idToPropertyName(string: String, configurationType: ConfigurationTyp
   else {
     return builder ?: result
   }
+}
+
+private fun generateTypeDefinitionId(propertyName: CharSequence): String {
+  return "${propertyName[0].toUpperCase()}${propertyName.substring(1)}Type"
+}
+
+private fun getTypeDescription(type: ConfigurationType, typePropertyName: CharSequence): String? {
+  val description = type.configurationTypeDescription
+  return if (StringUtil.equals(typePropertyName, description)) null else description
 }
