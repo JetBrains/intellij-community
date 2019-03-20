@@ -12,7 +12,6 @@ import com.intellij.diff.merge.MergeUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diff.impl.mergeTool.MergeVersion
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -411,7 +410,7 @@ open class MultipleFileMergeDialog(
   }
 
   private fun checkMarkModifiedProject(file: VirtualFile) {
-    MergeVersion.MergeDocumentVersion.reportProjectFileChangeIfNeeded(project, file)
+    MergeUtil.reportProjectFileChangeIfNeeded(project, file)
   }
 
   override fun getPreferredFocusedComponent(): JComponent? = table
