@@ -144,7 +144,8 @@ public class VMOptions {
     }
 
     try {
-      String content = file.exists() ? FileUtil.loadFile(file) : read();
+      String content = file.exists() ? FileUtil.loadFile(file) :
+                       "# custom Android Studio VM options, see https://developer.android.com/studio/intro/studio-config.html\n";
       content = transformContent.apply(content);
 
       if (file.exists()) {
