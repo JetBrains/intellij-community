@@ -1,4 +1,4 @@
-package de.plushnikov.intellij.plugin.processor.clazz;
+package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -9,7 +9,7 @@ import com.intellij.psi.PsiModifierList;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
-import de.plushnikov.intellij.plugin.processor.handler.FieldNameConstantsHandler;
+import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
@@ -18,23 +18,17 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.experimental.FieldNameConstants;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
-/**
- * Inspect and validate @FieldNameConstants lombok annotation on a field
- * Creates Inner class containing string constants of the field name for each field of this class
- *
- * @author Plushnikov Michail
- */
-public class FieldNameConstantsProcessor extends AbstractClassProcessor {
+public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassProcessor {
 
   private static final String FIELD_NAME_CONSTANTS_INCLUDE = FieldNameConstants.Include.class.getName().replace("$", ".");
   private static final String FIELD_NAME_CONSTANTS_EXCLUDE = FieldNameConstants.Exclude.class.getName().replace("$", ".");
 
-  public FieldNameConstantsProcessor(@NotNull ConfigDiscovery configDiscovery) {
-    super(configDiscovery, PsiClass.class, FieldNameConstants.class);
+  protected AbstractFieldNameConstantsProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+    super(configDiscovery, supportedClass, supportedAnnotationClass);
   }
 
   @Override
@@ -50,18 +44,8 @@ public class FieldNameConstantsProcessor extends AbstractClassProcessor {
     return true;
   }
 
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final Collection<PsiField> psiFields = filterFields(psiClass, psiAnnotation);
-    if (!psiFields.isEmpty()) {
-      PsiClass innerClassOrEnum = FieldNameConstantsHandler.createInnerClassOrEnum(psiClass, psiAnnotation, psiFields);
-      if (innerClassOrEnum != null) {
-        target.add(innerClassOrEnum);
-      }
-    }
-  }
-
   @NotNull
-  private Collection<PsiField> filterFields(@NotNull PsiClass psiClass, PsiAnnotation psiAnnotation) {
+  Collection<PsiField> filterFields(@NotNull PsiClass psiClass, PsiAnnotation psiAnnotation) {
     final Collection<PsiField> psiFields = new ArrayList<>();
 
     final boolean onlyExplicitlyIncluded = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "onlyExplicitlyIncluded", false);

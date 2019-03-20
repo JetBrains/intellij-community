@@ -7,8 +7,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsPredefinedInnerClassFieldProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
+import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,17 +81,40 @@ public class DelombokHandler {
 
     ProjectSettings.setLombokEnabledInProject(project, false);
     try {
-      for (Object psiElement : psiElements) {
-        final PsiElement element = rebuildPsiElement(project, (PsiElement) psiElement);
-        if (null != element) {
-          psiClass.add(element);
-        }
+      if (lombokProcessor instanceof FieldNameConstantsPredefinedInnerClassFieldProcessor) {
+        rebuildElementsBeforeExistingFields(project, psiClass, psiElements);
+      } else {
+        rebuildElements(project, psiClass, psiElements);
       }
     } finally {
       ProjectSettings.setLombokEnabledInProject(project, true);
     }
 
     return psiAnnotations;
+  }
+
+  private void rebuildElementsBeforeExistingFields(Project project, PsiClass psiClass, List<? super PsiElement> psiElements) {
+    //add generated elements in generated/declaration order, but before existing Fields
+    if (!psiElements.isEmpty()) {
+      final PsiField existingField = PsiClassUtil.collectClassFieldsIntern(psiClass).stream().findFirst().orElse(null);
+      Iterator<? super PsiElement> iterator = psiElements.iterator();
+      PsiElement prev = psiClass.addBefore(rebuildPsiElement(project, (PsiElement) iterator.next()), existingField);
+      while (iterator.hasNext()) {
+        PsiElement curr = rebuildPsiElement(project, (PsiElement) iterator.next());
+        if (curr != null) {
+          prev = psiClass.addAfter(curr, prev);
+        }
+      }
+    }
+  }
+
+  private void rebuildElements(Project project, PsiClass psiClass, List<? super PsiElement> psiElements) {
+    for (Object psiElement : psiElements) {
+      final PsiElement element = rebuildPsiElement(project, (PsiElement) psiElement);
+      if (null != element) {
+        psiClass.add(element);
+      }
+    }
   }
 
   public Collection<PsiAnnotation> collectProcessableAnnotations(@NotNull PsiClass psiClass) {
@@ -128,13 +153,11 @@ public class DelombokHandler {
 
     if (!fields.isEmpty()) {
       final Iterator<PsiField> iterator = fields.iterator();
-      PsiField prev = iterator.next();
-      resultClass.add(rebuildField(project, prev));
+      PsiElement prev = resultClass.add(rebuildField(project, iterator.next()));
       while (iterator.hasNext()) {
         PsiField curr = iterator.next();
         //guarantees order of enum constants, should match declaration order
-        resultClass.addBefore(rebuildField(project, curr), prev);
-        prev = curr;
+        prev = resultClass.addAfter(rebuildField(project, curr), prev);
       }
     }
 

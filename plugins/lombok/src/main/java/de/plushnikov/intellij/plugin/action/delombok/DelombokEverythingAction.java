@@ -2,7 +2,8 @@ package de.plushnikov.intellij.plugin.action.delombok;
 
 import de.plushnikov.intellij.plugin.processor.clazz.DataProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.EqualsAndHashCodeProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.FieldNameConstantsProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsPredefinedInnerClassFieldProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.GetterProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.SetterProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
@@ -60,6 +61,7 @@ public class DelombokEverythingAction extends AbstractDelombokAction {
       findExtension(DelegateMethodProcessor.class),
 
       findExtension(FieldNameConstantsProcessor.class),
+      findExtension(FieldNameConstantsPredefinedInnerClassFieldProcessor.class),
 
       findExtension(BuilderPreDefinedInnerClassFieldProcessor.class),
       findExtension(BuilderPreDefinedInnerClassMethodProcessor.class),

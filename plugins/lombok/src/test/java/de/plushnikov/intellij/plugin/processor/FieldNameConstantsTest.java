@@ -15,4 +15,8 @@ public class FieldNameConstantsTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
+  public void testFieldnameconstants$FieldNameConstantsHandrolled() {
+    doTest(true);
+  }
+
 }

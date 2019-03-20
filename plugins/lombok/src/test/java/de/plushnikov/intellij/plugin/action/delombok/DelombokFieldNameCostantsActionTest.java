@@ -18,7 +18,15 @@ public class DelombokFieldNameCostantsActionTest extends LombokLightActionTestCa
     doTest();
   }
 
+  public void testFieldNameConstantsClassHandrolled() throws Exception {
+    doTest();
+  }
+
   public void testFieldNameConstantsEnumClass() throws Exception {
+    doTest();
+  }
+
+  public void testFieldNameConstantsEnumHandrolled() throws Exception {
     doTest();
   }
 
