@@ -31,9 +31,10 @@ import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.PotemkinProgress;
@@ -76,6 +77,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -441,21 +443,23 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       });
 
       Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
-      ExtensionPoint<ApplicationInitializedListener> initializedExtensionPoint = ApplicationInitializedListener.EP_NAME.getPoint(null);
-      for (ApplicationInitializedListener listener : initializedExtensionPoint.getExtensionList()) {
+      ExtensionPointImpl<ApplicationInitializedListener> point = ((ExtensionsAreaImpl)Extensions.getArea(null)).getExtensionPoint("com.intellij.applicationInitializedListener");
+      Iterator<ApplicationInitializedListener> iterator = point.iterator();
+      while (iterator.hasNext()) {
+        ApplicationInitializedListener listener = iterator.next();
+        if (listener == null) {
+          break;
+        }
+
         try {
           listener.componentsInitialized();
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (Throwable e) {
           LOG.error(e);
         }
-      }
-
-      try {
-        initializedExtensionPoint.reset();
-      }
-      catch (Throwable e) {
-        LOG.error(e);
       }
       activity.end();
     }
