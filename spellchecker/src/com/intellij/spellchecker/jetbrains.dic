@@ -179,6 +179,8 @@ dllexport
 dllimport
 dockerfile
 dojo
+dominator
+dominators
 draggable
 dtrace
 dumpfile
@@ -229,6 +231,7 @@ ftlvariable
 fulltext
 func
 functor
+functors
 functorial
 fxml
 gdata
@@ -428,6 +431,7 @@ monad
 mongodb
 monoidal
 monoid
+monoids
 monospaced
 msql
 mssql
@@ -581,6 +585,8 @@ println
 processlist
 profileable
 profiler
+profunctor
+profunctors
 progressbar
 projectreactor
 proto
@@ -659,6 +665,7 @@ scrollbar
 scrollbars
 securefile
 semigroup
+semigroups
 sendmail
 serializable
 serializer
@@ -753,6 +760,8 @@ subpackages
 subpartition
 subpartitions
 subscripting
+subsequence
+subsequences
 subst
 substring
 substrings
