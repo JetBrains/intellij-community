@@ -3,7 +3,9 @@ package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -128,7 +130,9 @@ final class WslDistributionDescriptor {
     }
     ProcessOutput pwdOutput;
     try {
-      pwdOutput = distribution.executeSimpleCommand(-1, "pwd");
+      pwdOutput = !ApplicationManager.getApplication().isDispatchThread() ? distribution.executeSimpleCommand(-1, "pwd") :
+                  ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                    () -> distribution.executeSimpleCommand(-1, "pwd"), "Detecting Windows Drives Mount Point", false, null);
     }
     catch (ExecutionException e) {
       LOG.warn("Error reading pwd output for " + getId(), e);
