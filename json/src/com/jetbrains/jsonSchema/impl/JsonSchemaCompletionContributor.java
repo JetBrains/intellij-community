@@ -160,7 +160,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       myResultConsumer = resultConsumer;
       myVariants = new HashSet<>();
       myWalker = JsonLikePsiWalker.getWalker(myPosition, myRootSchema);
-      myWrapInQuotes = myWalker != null && myWalker.requiresNameQuotes() && !(position.getParent() instanceof JsonStringLiteral);
+      myWrapInQuotes = !(position.getParent() instanceof JsonStringLiteral);
       myInsideStringLiteral = position.getParent() instanceof JsonStringLiteral;
     }
 
@@ -392,7 +392,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                  @SuppressWarnings("SameParameterValue") @Nullable final String description,
                                  @Nullable final String altText,
                                  @Nullable InsertHandler<LookupElement> handler) {
-      LookupElementBuilder builder = LookupElementBuilder.create(!myWrapInQuotes ? StringUtil.unquoteString(key) : key);
+      String unquoted = StringUtil.unquoteString(key);
+      LookupElementBuilder builder = LookupElementBuilder.create(!shouldWrapInQuotes(unquoted) ? unquoted : key);
       if (altText != null) {
         builder = builder.withPresentableText(altText);
       }
@@ -405,13 +406,17 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       myVariants.add(builder);
     }
 
+    private boolean shouldWrapInQuotes(String key) {
+      return myWrapInQuotes && myWalker != null && (myWalker.requiresNameQuotes() || !myWalker.isValidIdentifier(key, myProject));
+    }
+
     private void addPropertyVariant(@NotNull String key,
                                     @NotNull JsonSchemaObject jsonSchemaObject,
                                     boolean hasValue,
                                     boolean insertComma) {
       final Collection<JsonSchemaObject> variants = new JsonSchemaResolver(myProject, jsonSchemaObject).resolve();
       jsonSchemaObject = ObjectUtils.coalesce(ContainerUtil.getFirstItem(variants), jsonSchemaObject);
-      key = !myWrapInQuotes ? key : StringUtil.wrapWithDoubleQuote(key);
+      key = !shouldWrapInQuotes(key) ? key : StringUtil.wrapWithDoubleQuote(key);
       LookupElementBuilder builder = LookupElementBuilder.create(key);
 
       final String typeText = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject);
