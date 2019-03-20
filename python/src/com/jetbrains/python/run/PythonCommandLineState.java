@@ -369,14 +369,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
     if (sdk != null &&
         (Registry.is("python.activate.virtualenv.on.run") && PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isConda(sdk))) {
-      Map<String, String> environment = sdk.getUserData(PythonSdkType.ENVIRONMENT_KEY);
-
-      if (environment == null) {
-        environment = PythonSdkType.activateVirtualEnv(sdkHome);
-
-        sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY, environment);
-      }
-
+      Map<String, String> environment = PythonSdkType.activateVirtualEnv(sdk);
       env.putAll(environment);
 
       for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
