@@ -42,4 +42,15 @@ class C {
 }
 ''', GrGdkMethod
   }
+
+  @Test
+  void 'property within category with explicit method'() {
+    resolveTest '''\
+@Category(String)
+class C {
+  static def foo(String s) {}
+  def usage() { <caret>foo }
+}
+''', null
+  }
 }
