@@ -21,7 +21,7 @@ fun runConda(condaExecutable: String, arguments: List<String>): ProcessOutput {
 
 @Throws(PyExecutionException::class)
 fun runConda(sdk: Sdk, arguments: List<String>): ProcessOutput {
-  return findCondaExecutable(sdk).let { run(it, arguments, sdk.getUserData(PythonSdkType.ENVIRONMENT_KEY) ?: readCondaEnv(it)) }
+  return run(findCondaExecutable(sdk), arguments, PythonSdkType.activateVirtualEnv(sdk))
 }
 
 @Throws(PyExecutionException::class)

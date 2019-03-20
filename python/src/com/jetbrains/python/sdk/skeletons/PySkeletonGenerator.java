@@ -212,7 +212,7 @@ public class PySkeletonGenerator {
         "-d", mySkeletonsPath, // output dir
         "-b", // for builtins
       },
-      PythonSdkType.activateVirtualEnv(binaryPath), MINUTE * 5
+      PythonSdkType.activateVirtualEnv(sdk), MINUTE * 5
     );
     runResult.checkSuccess(LOG);
     LOG.info("Rebuilding builtin skeletons took " + (System.currentTimeMillis() - startTime) + " ms");
@@ -233,7 +233,7 @@ public class PySkeletonGenerator {
 
     final ProcessOutput process = getProcessOutput(parentDir,
                                                    ArrayUtil.toStringArray(cmd),
-                                                   PythonSdkType.activateVirtualEnv(homePath),
+                                                   PythonSdkType.activateVirtualEnv(sdk),
                                                    MINUTE * 4); // see PY-3898
 
     LOG.info("Retrieving binary module list took " + (System.currentTimeMillis() - startTime) + " ms");

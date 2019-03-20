@@ -175,7 +175,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     GeneralCommandLine cmd = PythonHelper.EXTRA_SYSPATH.newCommandLine(homePath, Lists.newArrayList(myQualifiedName));
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd,
                                                                new File(homePath).getParent(),
-                                                               PythonSdkType.activateVirtualEnv(homePath), 5000
+                                                               PythonSdkType.activateVirtualEnv(mySdk), 5000
     );
     if (runResult.getExitCode() == 0 && !runResult.isTimeout()) {
       final String extraPath = runResult.getStdout();
