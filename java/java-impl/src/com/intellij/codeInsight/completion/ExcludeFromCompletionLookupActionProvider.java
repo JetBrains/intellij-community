@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -65,7 +66,7 @@ public class ExcludeFromCompletionLookupActionProvider implements LookupActionPr
     private final Project myProject;
     private final String myToExclude;
 
-    ExcludeFromCompletionAction(Project project, String s) {
+    ExcludeFromCompletionAction(@NotNull Project project, @NotNull String s) {
       super(null, "Exclude '" + s + "' from completion");
       myProject = project;
       myToExclude = s;
