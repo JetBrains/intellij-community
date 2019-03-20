@@ -89,6 +89,7 @@ public class BuildViewMavenConsole extends MavenConsole {
       ApplicationManager.getApplication().invokeLater(() -> {
         DefaultActionGroup actions = new DefaultActionGroup();
         actions.addAll((myBuildView).getSwitchActions());
+        actions.add(new ShowExecutionErrorsOnlyAction(myBuildView));
         JComponent consolePanel = createConsolePanel(myBuildView, actions);
         RunContentDescriptor descriptor =
           new RunContentDescriptor(myBuildView, processHandler, consolePanel, myTitle, MavenIcons.MavenLogo);

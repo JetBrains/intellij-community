@@ -33,11 +33,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.Component;
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.intellij.util.ui.EmptyIcon.ICON_16;
 
@@ -82,6 +84,8 @@ public class ExecutionNode extends CachingSimpleNode {
   private NullableLazyValue<Icon> myPreferredIconValue;
   private final AtomicInteger myErrors = new AtomicInteger();
   private final AtomicInteger myWarnings = new AtomicInteger();
+  @Nullable
+  private Predicate<ExecutionNode> myFilter;
 
   public ExecutionNode(Project aProject, ExecutionNode parentNode) {
     super(aProject, parentNode);
@@ -89,7 +93,11 @@ public class ExecutionNode extends CachingSimpleNode {
 
   @Override
   protected SimpleNode[] buildChildren() {
-    return myChildrenList.toArray(NO_CHILDREN);
+    Stream<ExecutionNode> stream = myChildrenList.stream();
+    if (myFilter != null) {
+      stream = stream.filter(myFilter);
+    }
+    return stream.toArray(SimpleNode[]::new);
   }
 
   @Override
@@ -155,11 +163,13 @@ public class ExecutionNode extends CachingSimpleNode {
 
   public void add(ExecutionNode node) {
     myChildrenList.add(node);
+    node.setFilter(myFilter);
     cleanUpCache();
   }
 
   public void add(int index, ExecutionNode node) {
     myChildrenList.add(index, node);
+    node.setFilter(myFilter);
     cleanUpCache();
   }
 
@@ -201,6 +211,20 @@ public class ExecutionNode extends CachingSimpleNode {
     this.endTime = endTime;
   }
 
+  @Nullable
+  public Predicate<ExecutionNode> getFilter() {
+    return myFilter;
+  }
+
+  public void setFilter(@Nullable Predicate<ExecutionNode> filter) {
+    myFilter = filter;
+    for (ExecutionNode node : myChildrenList) {
+      node.setFilter(myFilter);
+      node.cleanUpCache();
+    }
+    cleanUpCache();
+  }
+
   public static boolean isFailed(@Nullable EventResult result) {
     return result instanceof FailureResult;
   }
@@ -213,8 +237,17 @@ public class ExecutionNode extends CachingSimpleNode {
     return endTime <= 0 && !isSkipped(myResult) && !isFailed(myResult);
   }
 
+  public boolean isFailed() {
+    return isFailed(myResult) ||
+           myErrors.get() > 0 ||
+           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.ERROR);
+  }
+
   public void setResult(@Nullable EventResult result) {
     myResult = result;
+    if (myFilter != null) {
+      cleanUpCache();
+    }
   }
 
   @Nullable

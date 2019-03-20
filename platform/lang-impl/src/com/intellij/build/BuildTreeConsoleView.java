@@ -68,6 +68,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.intellij.build.BuildView.CONSOLE_VIEW_NAME;
@@ -75,7 +76,7 @@ import static com.intellij.build.BuildView.CONSOLE_VIEW_NAME;
 /**
  * @author Vladislav.Soroka
  */
-public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildConsoleView {
+public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildConsoleView, Filterable<ExecutionNode> {
   private static final Logger LOG = Logger.getInstance(BuildTreeConsoleView.class);
 
   @NonNls private static final String TREE = "tree";
@@ -94,6 +95,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final TreeTableTree myTree;
   private final ExecutionNode myRootNode;
   private volatile int myTimeColumnWidth;
+  @Nullable
+  private volatile Predicate<ExecutionNode> myExecutionTreeFilter;
 
   public BuildTreeConsoleView(Project project,
                               BuildDescriptor buildDescriptor,
@@ -237,6 +240,25 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myTreeModel.invalidate();
   }
 
+  @Override
+  public boolean isFilteringEnabled() {
+    return true;
+  }
+
+  @Override
+  @Nullable
+  public Predicate<ExecutionNode> getFilter() {
+    return myExecutionTreeFilter;
+  }
+
+  @Override
+  public void setFilter(@Nullable Predicate<ExecutionNode> executionTreeFilter) {
+    myExecutionTreeFilter = executionTreeFilter;
+    ExecutionNode rootElement = getRootElement();
+    rootElement.setFilter(executionTreeFilter);
+    scheduleUpdate(rootElement);
+  }
+
   private ExecutionNode getRootElement() {
     return myRootNode;
   }
@@ -372,6 +394,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       EditSourceAction edit = new EditSourceAction();
       ActionUtil.copyFrom(edit, "EditSource");
       group.add(edit);
+      group.addSeparator();
+      group.add(new ShowExecutionErrorsOnlyAction(this));
 
       TreeTable treeTable = myTree.getTreeTable();
       PopupHandler.installPopupHandler(treeTable, group, "BuildView");
