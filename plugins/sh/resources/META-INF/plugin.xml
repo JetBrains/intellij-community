@@ -7,7 +7,7 @@
   <name>Bash</name>
   <description><![CDATA[
     <p>Bash support for IntelliJ IDEA, RubyMine, WebStorm, etc.</p>
-  ]]></description>
+    ]]></description>
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.bash.BashFileTypeFactory"/>
     <lang.parserDefinition language="Bash" implementationClass="com.intellij.bash.parser.BashParserDefinition"/>
@@ -23,6 +23,14 @@
     <lang.braceMatcher language="Bash" implementationClass="com.intellij.bash.BashBraceMatcher"/>
     <lang.documentationProvider language="Bash" implementationClass="com.intellij.bash.BashDocumentationProvider"/>
     <runLineMarkerContributor language="Bash" implementationClass="com.intellij.bash.run.BashRunLineMarkerContributor"/>
+
+    <externalAnnotator language="Bash"
+                       implementationClass="com.intellij.bash.shellcheck.BashShellcheckExternalAnnotator"/>
+    <registryKey key="bash.shellcheck.path"/>
+    <localInspection language="Bash" shortName="Shellcheck"
+                     enabledByDefault="true" level="ERROR" unfair="true"
+                     implementationClass="com.intellij.bash.shellcheck.BashShellcheckInspection"
+                     displayName="ShellCheck" groupName="Bash"/>
   </extensions>
   <actions>
     <action id="runShellFileAction" class="com.intellij.bash.run.BashRunFileAction" text="Run File"
