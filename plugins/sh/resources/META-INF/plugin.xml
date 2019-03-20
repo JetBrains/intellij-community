@@ -26,6 +26,6 @@
   </extensions>
   <actions>
     <action id="runShellFileAction" class="com.intellij.bash.run.BashRunFileAction" text="Run File"
-            description="Run current shell file in the terminal"/>
+            description="Run current shell file in the terminal" use-shortcut-of="RunClass"/>
   </actions>
 </idea-plugin>
