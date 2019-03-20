@@ -130,7 +130,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
             });
           }
 
-          return AddImportAction.getExcludesStep(PsiUtil.getMemberQualifiedName(selectedValue), project);
+          return AddImportAction.getExcludesStep(project, PsiUtil.getMemberQualifiedName(selectedValue));
         }
 
         @Override

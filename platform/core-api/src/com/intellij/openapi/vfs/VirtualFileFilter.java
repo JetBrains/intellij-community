@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs;
 
+@FunctionalInterface
 public interface VirtualFileFilter {
   boolean accept(VirtualFile file);
 
@@ -24,6 +25,7 @@ public interface VirtualFileFilter {
       return true;
     }
 
+    @Override
     public String toString() {
       return "ALL";
     }
@@ -35,6 +37,7 @@ public interface VirtualFileFilter {
       return false;
     }
 
+    @Override
     public String toString() {
       return "NONE";
     }
