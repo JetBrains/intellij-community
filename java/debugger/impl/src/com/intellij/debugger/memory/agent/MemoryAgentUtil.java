@@ -60,7 +60,9 @@ public class MemoryAgentUtil {
   private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
   private static final String MEMORY_AGENT_EXTRACT_DIRECTORY = "memory.agent.extract.dir";
   private static final Key<Boolean> LISTEN_MEMORY_AGENT_STARTUP_FAILED = Key.create("LISTEN_MEMORY_AGENT_STARTUP_FAILED");
-  private static final Key<Boolean> DEBUGGER_ATTACHED_WITH_MEMORY_AGENT = Key.create("DEBUGGER_ATTACHED_WITH_MEMORY_AGENT");
+  private static final Key<Boolean> IS_DEBUGGER_ATTACHED_KEY = Key.create("IS_DEBUGGER_ATTACHED_KEY");
+  private static final Key<Boolean> IS_JAVA_DEBUG_PROCESS_KEY = Key.create("IS_JAVA_DEBUG_PROCESS_KEY");
+
   private static final int ESTIMATE_OBJECTS_SIZE_LIMIT = 2000;
 
   public static void addMemoryAgent(@NotNull JavaParameters parameters) {
@@ -205,9 +207,15 @@ public class MemoryAgentUtil {
     return new File(FileUtil.getTempDirectory());
   }
 
+  /**
+   * Many things may go wrong when you are trying to start JVM with an attached native agent. Most of them happen on the VM startup.
+   * The purpose of this method is to try catch cases when VM failed to initialize because of memory agent and suggest user
+   * disable the agent.
+   */
   private static void listenIfStartupFailed() {
     Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     if (Boolean.TRUE.equals(project.getUserData(LISTEN_MEMORY_AGENT_STARTUP_FAILED))) return;
+    project.putUserData(LISTEN_MEMORY_AGENT_STARTUP_FAILED, true);
 
     project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
@@ -215,14 +223,15 @@ public class MemoryAgentUtil {
         if (executorId != DefaultDebugExecutor.EXECUTOR_ID) return;
         DebugProcess debugProcess = DebuggerManager.getInstance(env.getProject()).getDebugProcess(handler);
         if (debugProcess == null) return;
+        handler.putUserData(IS_JAVA_DEBUG_PROCESS_KEY, true);
         if (debugProcess.isAttached()) {
-          handler.putUserData(DEBUGGER_ATTACHED_WITH_MEMORY_AGENT, true);
+          handler.putUserData(IS_DEBUGGER_ATTACHED_KEY, true);
         }
         else {
           debugProcess.addDebugProcessListener(new DebugProcessListener() {
             @Override
             public void processAttached(@NotNull DebugProcess process) {
-              process.getProcessHandler().putUserData(DEBUGGER_ATTACHED_WITH_MEMORY_AGENT, true);
+              process.getProcessHandler().putUserData(IS_DEBUGGER_ATTACHED_KEY, true);
               process.removeDebugProcessListener(this);
             }
           });
@@ -234,7 +243,11 @@ public class MemoryAgentUtil {
                                     @NotNull ExecutionEnvironment env,
                                     @NotNull ProcessHandler handler,
                                     int exitCode) {
-        if (executorId != DefaultDebugExecutor.EXECUTOR_ID || exitCode == 0 || wasDebuggerAttached(handler)) return;
+        // make sure this is a JVM debug process and it has terminated abnormally
+        if (executorId != DefaultDebugExecutor.EXECUTOR_ID || exitCode == 0 || !isJvmDebugProcess(handler)) return;
+
+        // skip if the VM successfully started since the debugger had been attached
+        if (wasDebuggerAttached(handler)) return;
         RunContentDescriptor content = env.getContentToReuse();
         if (content == null) return;
 
@@ -269,12 +282,14 @@ public class MemoryAgentUtil {
         }, project.getDisposed());
       }
 
+      private boolean isJvmDebugProcess(@NotNull ProcessHandler handler) {
+        return Boolean.TRUE.equals(handler.getUserData(IS_JAVA_DEBUG_PROCESS_KEY));
+      }
+
       private boolean wasDebuggerAttached(@NotNull ProcessHandler handler) {
-        return Boolean.TRUE.equals(handler.getUserData(DEBUGGER_ATTACHED_WITH_MEMORY_AGENT));
+        return Boolean.TRUE.equals(handler.getUserData(IS_DEBUGGER_ATTACHED_KEY));
       }
     });
-
-    project.putUserData(LISTEN_MEMORY_AGENT_STARTUP_FAILED, true);
   }
 
   private static class DisablingMemoryAgentListener implements HyperlinkListener {
