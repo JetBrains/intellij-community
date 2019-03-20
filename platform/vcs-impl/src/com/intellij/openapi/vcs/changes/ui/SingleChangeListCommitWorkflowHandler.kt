@@ -40,7 +40,6 @@ class SingleChangeListCommitWorkflowHandler(
 
   fun activate(): Boolean {
     workflow.initCommitHandlers(getCommitHandlers(ui, workflow.commitContext))
-    workflow.initDialog(ui)
 
     ui.addInclusionListener(this, this)
 
