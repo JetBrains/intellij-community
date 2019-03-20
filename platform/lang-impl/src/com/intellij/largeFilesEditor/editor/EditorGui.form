@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.largeFilesEditor.editor.EditorGui">
+  <grid id="27dc6" binding="panelMain" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="20" y="20" width="1223" height="400"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="1461" binding="panelHeader" layout-manager="CardLayout" hgap="0" vgap="0">
+        <constraints border-constraint="North"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="c91b8" binding="panelNavigationCard" layout-manager="FlowLayout" hgap="0" vgap="0" flow-align="0">
+            <constraints>
+              <card name="panelNavigationCard"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <grid id="5e260" binding="panelNavigationBtns" layout-manager="FlowLayout" hgap="0" vgap="0" flow-align="1">
+                <constraints/>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
+              <grid id="e90c5" layout-manager="FlowLayout" hgap="0" vgap="0" flow-align="1">
+                <constraints/>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="a9c98" class="javax.swing.JLabel">
+                    <constraints/>
+                    <properties>
+                      <text value="Page"/>
+                    </properties>
+                  </component>
+                  <component id="344c4" class="javax.swing.JTextField" binding="txtbxCurPageNum">
+                    <constraints/>
+                    <properties>
+                      <horizontalAlignment value="11"/>
+                      <minimumSize width="128" height="54"/>
+                      <preferredSize width="128" height="27"/>
+                      <text value="&lt;none&gt;"/>
+                    </properties>
+                  </component>
+                  <component id="e25c0" class="javax.swing.JLabel" binding="lblTextAfterCurPageNum">
+                    <constraints/>
+                    <properties>
+                      <alignmentX value="0.5"/>
+                      <alignmentY value="0.5"/>
+                      <opaque value="false"/>
+                      <text value="&lt;none&gt;"/>
+                    </properties>
+                  </component>
+                  <component id="24599" class="javax.swing.JLabel" binding="lblPositionPercents">
+                    <constraints/>
+                    <properties>
+                      <text value="&lt;none&gt;"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+              <grid id="2a52f" binding="panelSaveActions" layout-manager="FlowLayout" hgap="0" vgap="0" flow-align="1">
+                <constraints/>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
+              <hspacer id="35d35">
+                <constraints/>
+              </hspacer>
+              <grid id="33862" binding="panelSavingStatus" layout-manager="FlowLayout" hgap="5" vgap="0" flow-align="1">
+                <constraints/>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="706ce" class="javax.swing.JProgressBar" binding="prbrSavingStatus">
+                    <constraints/>
+                    <properties>
+                      <indeterminate value="false"/>
+                      <inheritsPopupMenu value="false"/>
+                      <preferredSize width="100" height="23"/>
+                      <stringPainted value="true"/>
+                    </properties>
+                  </component>
+                  <component id="dfb46" class="javax.swing.JLabel" binding="lblSavingStatus">
+                    <constraints/>
+                    <properties>
+                      <opaque value="false"/>
+                      <text value="&lt;none&gt;"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+            </children>
+          </grid>
+          <grid id="baff7" binding="panelLoadingCard" layout-manager="GridBagLayout">
+            <constraints>
+              <card name="panelLoadingCard"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="19f13" class="javax.swing.JLabel" binding="lblMsgLoading">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag top="0" left="5" bottom="0" right="5" weightx="1.0" weighty="1.0"/>
+                </constraints>
+                <properties>
+                  <text value="Loading..."/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="a95be" binding="panelMsgErrorCard" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <card name="panelMsgErrorCard"/>
+            </constraints>
+            <properties>
+              <background color="-65525"/>
+              <enabled value="false"/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <grid id="aa399" binding="panelMsgError" layout-manager="GridBagLayout">
+                <constraints border-constraint="West"/>
+                <properties>
+                  <autoscrolls value="false"/>
+                  <background color="-65525"/>
+                  <enabled value="true"/>
+                </properties>
+                <border type="none"/>
+                <children>
+                  <component id="ef5a1" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag top="0" left="5" bottom="0" right="5" weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text value="Error opening file. Please, try to reopen it."/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+            </children>
+          </grid>
+        </children>
+      </grid>
+      <grid id="17e58" binding="panelEditor" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints border-constraint="Center"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="148cf" binding="panelEditorHeader" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints border-constraint="North"/>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </grid>
+          <grid id="debbb" binding="panelEditorBody" layout-manager="CardLayout" hgap="0" vgap="0">
+            <constraints border-constraint="Center"/>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <grid id="53403" binding="panelEditorPageViewCard" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints>
+                  <card name="panelEditorPageViewCard"/>
+                </constraints>
+                <properties>
+                  <font size="14"/>
+                </properties>
+                <border type="none"/>
+                <children>
+                  <grid id="55d70" binding="panelViewPage" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints border-constraint="Center"/>
+                    <properties/>
+                    <border type="none"/>
+                    <children/>
+                  </grid>
+                </children>
+              </grid>
+              <grid id="a8cb2" binding="panelEditorLoadingCard" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="0">
+                <constraints>
+                  <card name="panelEditorLoadingCard"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="842cd" class="javax.swing.JLabel" binding="lblEditorLoading">
+                    <constraints/>
+                    <properties>
+                      <text value="Loading..."/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+              <grid id="4933b" binding="panelEditorEmptyCard" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints>
+                  <card name="panelEditorEmptyCard"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
+            </children>
+          </grid>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>
