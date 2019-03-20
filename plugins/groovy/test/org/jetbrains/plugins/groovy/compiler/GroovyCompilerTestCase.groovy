@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.server.BuildManager
@@ -35,10 +35,11 @@ import com.intellij.util.io.PathKt
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
+import org.jetbrains.plugins.groovy.bundled.BundledGroovy
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
 import org.jetbrains.plugins.groovy.util.Slow
+
 /**
  * @author aalmiray
  * @author peter
@@ -83,7 +84,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
   }
 
   protected static void addGroovyLibrary(final Module to) {
-    File jar = GroovyFacetUtil.getBundledGroovyJar()
+    File jar = BundledGroovy.getBundledGroovyFile()
     PsiTestUtil.addLibrary(to, "groovy", jar.getParent(), jar.getName())
   }
 
