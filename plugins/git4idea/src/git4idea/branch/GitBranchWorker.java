@@ -31,6 +31,7 @@ import git4idea.GitLocalBranch;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.history.GitHistoryUtils;
+import git4idea.history.GitStringInterner;
 import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitCompareBranchesHelper;
@@ -153,15 +154,21 @@ public final class GitBranchWorker {
 
   @NotNull
   private CommitCompareInfo loadCommitsToCompare(List<GitRepository> repositories, String branchName) throws VcsException {
-    CommitCompareInfo compareInfo = new GitLocalCommitCompareInfo(myProject, branchName);
-    for (GitRepository repository: repositories) {
-      List<GitCommit> headToBranch = GitHistoryUtils.history(myProject, repository.getRoot(), ".." + branchName);
-      List<GitCommit> branchToHead = GitHistoryUtils.history(myProject, repository.getRoot(), branchName + "..");
-      compareInfo.put(repository, headToBranch, branchToHead);
+    GitStringInterner.clearAndEnable(); // Enable string interning to avoid creating a lot of duplicate String objects.
+    try {
+      CommitCompareInfo compareInfo = new GitLocalCommitCompareInfo(myProject, branchName);
+      for (GitRepository repository: repositories) {
+        List<GitCommit> headToBranch = GitHistoryUtils.history(myProject, repository.getRoot(), ".." + branchName);
+        List<GitCommit> branchToHead = GitHistoryUtils.history(myProject, repository.getRoot(), branchName + "..");
+        compareInfo.put(repository, headToBranch, branchToHead);
 
-      compareInfo.putTotalDiff(repository, loadTotalDiff(repository, branchName));
+        compareInfo.putTotalDiff(repository, loadTotalDiff(repository, branchName));
+      }
+      return compareInfo;
     }
-    return compareInfo;
+    finally {
+      GitStringInterner.clearAndDisable(); // Clear string interning cache.
+    }
   }
 
   @NotNull

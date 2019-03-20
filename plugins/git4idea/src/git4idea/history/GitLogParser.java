@@ -333,7 +333,7 @@ public class GitLogParser {
     private Map<GitLogOption, String> createOptions(@NotNull List<String> options) {
       Map<GitLogOption, String> optionsMap = new HashMap<>(options.size());
       for (int index = 0; index < options.size(); index++) {
-        optionsMap.put(myOptions[index], options.get(index));
+        optionsMap.put(myOptions[index], GitStringInterner.intern(options.get(index)));
       }
       return optionsMap;
     }
@@ -391,11 +391,11 @@ public class GitLogParser {
     private String tryUnescapePath(@Nullable String path) {
       if (path == null) return null;
       try {
-        return GitUtil.unescapePath(path);
+        return GitStringInterner.intern(GitUtil.unescapePath(path));
       }
       catch (VcsException e) {
         LOG.error(e);
-        return path;
+        return GitStringInterner.intern(path);
       }
     }
 
