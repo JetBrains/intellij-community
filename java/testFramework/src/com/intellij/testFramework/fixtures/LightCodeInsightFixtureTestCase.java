@@ -70,7 +70,13 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
     }
 
   };
-  @NotNull public static final LightProjectDescriptor JAVA_X = new ProjectDescriptor(LanguageLevel.JDK_X);
+  @NotNull public static final LightProjectDescriptor JAVA_X = new ProjectDescriptor(LanguageLevel.JDK_X) {
+    @Override
+    public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
+      AcceptedLanguageLevelsSettings.allowLevel(project, myLanguageLevel);
+      super.setUpProject(project, handler);
+    }
+  };
 
   public static final LightProjectDescriptor JAVA_LATEST = new ProjectDescriptor(LanguageLevel.HIGHEST) {
     @Override
