@@ -57,6 +57,12 @@ public class MockGitRepository implements GitRepository {
 
   @NotNull
   @Override
+  public GitConflictsHolder getConflictsHolder() {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
   public GitRepoInfo getInfo() {
     throw new UnsupportedOperationException();
   }

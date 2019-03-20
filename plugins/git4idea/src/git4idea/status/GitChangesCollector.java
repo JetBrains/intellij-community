@@ -34,6 +34,8 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
+import git4idea.repo.GitConflict;
+import git4idea.repo.GitConflict.Status;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +66,7 @@ class GitChangesCollector {
 
   private final Collection<Change> myChanges = new HashSet<>();
   private final Set<VirtualFile> myUnversionedFiles = new HashSet<>();
+  private final Collection<GitConflict> myConflicts = new HashSet<>();
 
   /**
    * Collects the changes from git command line and returns the instance of GitNewChangesCollector from which these changes can be retrieved.
@@ -88,6 +91,10 @@ class GitChangesCollector {
   @NotNull
   Collection<Change> getChanges() {
     return myChanges;
+  }
+
+  Collection<GitConflict> getConflicts() {
+    return myConflicts;
   }
 
   private GitChangesCollector(@NotNull Project project,
@@ -241,7 +248,7 @@ class GitChangesCollector {
           } else if (yStatus == 'T') {
             reportTypeChanged(filepath, head);
           } else if (yStatus == 'U') {
-            reportConflict(filepath, head);
+            reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
           } else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
@@ -268,7 +275,7 @@ class GitChangesCollector {
           } else if (yStatus == 'D') {
             // added + deleted => no change (from IDEA point of view).
           } else if (yStatus == 'U' || yStatus == 'A') { // AU - unmerged, added by us; AA - unmerged, both added
-            reportConflict(filepath, head);
+            reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
           }  else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
@@ -278,21 +285,22 @@ class GitChangesCollector {
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportDeleted(filepath, head);
           } else if (yStatus == 'U') { // DU - unmerged, deleted by us
-            reportConflict(filepath, head);
+            reportConflict(filepath, head, Status.DELETED, Status.MODIFIED);
           } else if (yStatus == 'D') { // DD - unmerged, both deleted
-            // TODO
-            // currently not displaying, because "both deleted" conflicts can't be handled by our conflict resolver.
-            // see IDEA-63156
+            reportConflict(filepath, head, Status.DELETED, Status.DELETED);
           } else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
 
         case 'U':
-          if (yStatus == 'U' || yStatus == 'A' || yStatus == 'D' || yStatus == 'T') {
-            // UU - unmerged, both modified; UD - unmerged, deleted by them; UA - unmerged, added by them
-            reportConflict(filepath, head);
-          } else {
+          if (yStatus == 'U' || yStatus == 'A' || yStatus == 'T') { // UU - unmerged, both modified; UA - unmerged, added by them
+            reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
+          }
+          else if (yStatus == 'D') { // UD - unmerged, deleted by them
+            reportConflict(filepath, head, Status.MODIFIED, Status.DELETED);
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -384,10 +392,15 @@ class GitChangesCollector {
     reportChange(FileStatus.MODIFIED, before, after);
   }
 
-  private void reportConflict(FilePath filepath, VcsRevisionNumber head) {
-    ContentRevision before = GitContentRevision.createRevision(filepath, head, myProject);
-    ContentRevision after = GitContentRevision.createRevision(filepath, null, myProject);
-    reportChange(FileStatus.MERGED_WITH_CONFLICTS, before, after);
+  private void reportConflict(FilePath filepath, VcsRevisionNumber head, Status oursStatus, Status theirsStatus) {
+    myConflicts.add(new GitConflict(myVcsRoot, filepath, oursStatus, theirsStatus));
+
+    // TODO: currently not displaying "both deleted" conflicts, because they can't be handled by GitMergeProvider (see IDEA-63156)
+    if (oursStatus != Status.DELETED || theirsStatus != Status.DELETED) {
+      ContentRevision before = GitContentRevision.createRevision(filepath, head, myProject);
+      ContentRevision after = GitContentRevision.createRevision(filepath, null, myProject);
+      reportChange(FileStatus.MERGED_WITH_CONFLICTS, before, after);
+    }
   }
 
   private void reportChange(FileStatus status, ContentRevision before, ContentRevision after) {
