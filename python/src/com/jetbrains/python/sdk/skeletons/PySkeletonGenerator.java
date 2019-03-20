@@ -151,8 +151,8 @@ public class PySkeletonGenerator {
     final String parent_dir = new File(binaryPath).getParent();
     List<String> commandLine = buildSkeletonGeneratorCommandLine(modname, modfilename, assemblyRefs, binaryPath, extraSyspath);
 
-    final Map<String, String> extraEnv = PythonSdkType.getVirtualEnvExtraEnv(binaryPath);
-    final Map<String, String> env = new HashMap<>(extraEnv != null ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv);
+    final Map<String, String> extraEnv = PythonSdkType.activateVirtualEnv(binaryPath);
+    final Map<String, String> env = new HashMap<>(!extraEnv.isEmpty() ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv);
 
     if (myPrebuilt) {
       env.put("IS_PREGENERATED_SKELETONS", "1");
@@ -212,7 +212,7 @@ public class PySkeletonGenerator {
         "-d", mySkeletonsPath, // output dir
         "-b", // for builtins
       },
-      PythonSdkType.getVirtualEnvExtraEnv(binaryPath), MINUTE * 5
+      PythonSdkType.activateVirtualEnv(binaryPath), MINUTE * 5
     );
     runResult.checkSuccess(LOG);
     LOG.info("Rebuilding builtin skeletons took " + (System.currentTimeMillis() - startTime) + " ms");
@@ -233,7 +233,7 @@ public class PySkeletonGenerator {
 
     final ProcessOutput process = getProcessOutput(parentDir,
                                                    ArrayUtil.toStringArray(cmd),
-                                                   PythonSdkType.getVirtualEnvExtraEnv(homePath),
+                                                   PythonSdkType.activateVirtualEnv(homePath),
                                                    MINUTE * 4); // see PY-3898
 
     LOG.info("Retrieving binary module list took " + (System.currentTimeMillis() - startTime) + " ms");
