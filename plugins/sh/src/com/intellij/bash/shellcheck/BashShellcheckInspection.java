@@ -1,5 +1,6 @@
 package com.intellij.bash.shellcheck;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection;
@@ -9,6 +10,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class BashShellcheckInspection extends LocalInspectionTool implements ExternalAnnotatorBatchInspection {
   static final String SHORT_NAME = "Shellcheck";
+
+  @NotNull
+  @Override
+  public HighlightDisplayLevel getDefaultLevel() {
+    return HighlightDisplayLevel.NON_SWITCHABLE_ERROR;
+  }
 
   @NotNull
   @Override
