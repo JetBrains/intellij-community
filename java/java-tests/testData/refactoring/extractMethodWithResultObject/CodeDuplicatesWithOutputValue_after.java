@@ -12,6 +12,7 @@ class C {
     }//ins and outs
 //in: PsiLocalVariable:array
 //out: PsiLocalVariable:l1
+//exit: SEQUENTIAL PsiDeclarationStatement
 
     String[] getObjects() {
     }

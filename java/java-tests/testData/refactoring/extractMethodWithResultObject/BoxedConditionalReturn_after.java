@@ -9,7 +9,7 @@ class Test {
     }//ins and outs
 //in: PsiParameter:a
 //exit: RETURN PsiMethod:foo<-PsiReferenceExpression:n
-//exit: UNDEFINED
+//exit: SEQUENTIAL PsiIfStatement
 
     public static Integer bar(Integer[] a) {
         if (a.length != 0) {

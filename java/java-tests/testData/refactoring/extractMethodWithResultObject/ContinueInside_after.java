@@ -11,5 +11,5 @@ class Test {
   }//ins and outs
 //in: PsiParameter:args
 //exit: RETURN PsiMethod:foo<-PsiLiteralExpression:null
-//exit: UNDEFINED
+//exit: SEQUENTIAL PsiIfStatement
 }

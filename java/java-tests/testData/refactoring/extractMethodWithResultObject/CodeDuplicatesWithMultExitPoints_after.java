@@ -6,5 +6,5 @@ class A {
    }//ins and outs
 //in: PsiParameter:o
 //exit: RETURN PsiMethod:foo<-PsiLiteralExpression:0
-//exit: UNDEFINED
+//exit: SEQUENTIAL PsiIfStatement
 }

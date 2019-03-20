@@ -20,5 +20,5 @@ class X {
   }//ins and outs
 //in: PsiParameter:b
 //exit: RETURN PsiMethod:fun2<-PsiMethodCallExpression:fun1(x)
-//exit: UNDEFINED
+//exit: SEQUENTIAL PsiIfStatement
 }

@@ -9,7 +9,7 @@ class X {
 //in: PsiParameter:o
 //out: PsiLocalVariable:x
 //exit: CONTINUE PsiForeachStatement<-PsiContinueStatement
-//exit: UNDEFINED
+//exit: SEQUENTIAL PsiDeclarationStatement
 
     private String bar(Object o) {
     return "";

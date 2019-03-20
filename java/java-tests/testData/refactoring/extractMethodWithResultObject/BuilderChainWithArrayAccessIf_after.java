@@ -9,5 +9,5 @@ class Foo {
 //in: PsiLocalVariable:i
 //in: PsiParameter:a
 //exit: RETURN PsiMethod:bar<-PsiLiteralExpression:true
-//exit: UNDEFINED
+//exit: SEQUENTIAL PsiForStatement
 }

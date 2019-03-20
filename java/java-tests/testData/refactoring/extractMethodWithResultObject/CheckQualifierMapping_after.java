@@ -12,4 +12,5 @@ class Test {
     listC.add("C");
   }//ins and outs
 //in: PsiLocalVariable:a
+//exit: SEQUENTIAL PsiExpressionStatement
 }

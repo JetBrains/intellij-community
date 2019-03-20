@@ -28,4 +28,5 @@ class C extends D {
         c1.myOtherField = 15;
     }//ins and outs
 //in: PsiLocalVariable:i
+//exit: SEQUENTIAL PsiExpressionStatement
 }

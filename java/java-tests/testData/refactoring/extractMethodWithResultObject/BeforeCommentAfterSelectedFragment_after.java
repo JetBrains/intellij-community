@@ -9,4 +9,5 @@ class CommentAfterSelectedFragment {
     }//ins and outs
 //in: PsiParameter:debugMode
 //out: PsiLocalVariable:i
+//exit: SEQUENTIAL PsiIfStatement
 }

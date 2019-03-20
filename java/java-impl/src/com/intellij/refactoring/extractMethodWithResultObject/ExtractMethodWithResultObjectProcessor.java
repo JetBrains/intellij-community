@@ -8,12 +8,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.extractMethod.ControlFlowWrapper;
-import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -28,7 +28,6 @@ public class ExtractMethodWithResultObjectProcessor {
   private final Editor myEditor;
   private final PsiElement[] myElements;
   private final PsiExpression myExpression;
-  private final PsiElement myCodeFragment;
   private final PsiElement myCodeFragmentMember;
   private final Map<PsiReferenceExpression, PsiVariable> myInputs = new HashMap<>();
   private final Set<PsiVariable> myOutputVariables = new HashSet<>();
@@ -44,7 +43,8 @@ public class ExtractMethodWithResultObjectProcessor {
     RETURN,
     BREAK,
     CONTINUE,
-    SEQUENTIAL, // todo support
+    THROW, // todo
+    SEQUENTIAL,
     UNDEFINED
   }
 
@@ -82,8 +82,8 @@ public class ExtractMethodWithResultObjectProcessor {
     myElements = elements;
     myExpression = expression;
 
-    myCodeFragment = ControlFlowUtil.findCodeFragment(elements[0]);
-    myCodeFragmentMember = getCodeFragmentMember(myCodeFragment);
+    PsiElement codeFragment = ControlFlowUtil.findCodeFragment(elements[0]);
+    myCodeFragmentMember = getCodeFragmentMember(codeFragment);
   }
 
   Project getProject() {
@@ -113,17 +113,9 @@ public class ExtractMethodWithResultObjectProcessor {
       return false;
     }
 
-    ControlFlowWrapper controlFlowWrapper;
-    try {
-      controlFlowWrapper = new ControlFlowWrapper(myProject, myCodeFragment, myElements);
-    }
-    catch (PrepareFailedException e) {
-      return false;
-    }
-
     collectInputsAndOutputs();
     collectDeclaredInsideUsedAfter();
-    collectReturnedImmediatelyAfter(controlFlowWrapper);
+    collectReturnedImmediatelyAfter();
 
     chooseTargetClass();
     chooseAnchor();
@@ -274,18 +266,66 @@ public class ExtractMethodWithResultObjectProcessor {
     }
   }
 
-  private void collectReturnedImmediatelyAfter(ControlFlowWrapper controlFlowWrapper) {
+  private static PsiStatement findNextStatement(@Nullable PsiElement startLocation) {
+    PsiElement location = startLocation;
+    while (true) {
+      if (location == null || location instanceof PsiParameterListOwner) {
+        return null;
+      }
+
+      if (location instanceof PsiBreakStatement) {
+        location = ((PsiBreakStatement)location).findExitedElement();
+        continue;
+      }
+      if (location instanceof PsiContinueStatement) {
+        PsiStatement continued = ((PsiContinueStatement)location).findContinuedStatement();
+        if (continued instanceof PsiLoopStatement && !ControlFlowUtils.statementMayCompleteNormally(continued)) {
+          return null;
+        }
+        location = continued;
+        continue;
+      }
+      if (location instanceof PsiThrowStatement) {
+        // todo find target
+      }
+      if (location instanceof PsiSwitchLabelStatementBase) {
+        location = ((PsiSwitchLabelStatementBase)location).getEnclosingSwitchBlock();
+        continue;
+      }
+
+      PsiElement parent = location.getParent();
+      if (parent instanceof PsiLoopStatement && !ControlFlowUtils.statementMayCompleteNormally((PsiLoopStatement)parent)) {
+        return null;
+      }
+      if (parent instanceof PsiCodeBlock) {
+        PsiStatement next = PsiTreeUtil.getNextSiblingOfType(location, PsiStatement.class);
+        if (next != null) {
+          return next;
+        }
+      }
+      location = parent;
+    }
+  }
+
+  private void collectReturnedImmediatelyAfter() {
     if (myExpression != null) {
       return;
     }
-    try {
-      controlFlowWrapper.prepareExitStatements(myElements, myCodeFragment);
-      if (controlFlowWrapper.isGenerateConditionalExit()) {
-        myExits.put(null, new Exit(ExitType.UNDEFINED, null));
+    for (int i = myElements.length - 1; i >= 0; i--) {
+      if (!(myElements[i] instanceof PsiStatement)) {
+        continue; // skip comments and white spaces
       }
+      PsiStatement statement = (PsiStatement)myElements[i];
+      if (!ControlFlowUtils.statementMayCompleteNormally(statement)) {
+        return; // don't need to look for the next statement
+      }
+      break;
     }
-    catch (ControlFlowWrapper.ExitStatementsNotSameException e) {
-      myExits.put(null, new Exit(ExitType.UNDEFINED, null));
+
+    PsiStatement nextStatement = findNextStatement(myElements[myElements.length - 1]);
+    if (nextStatement != null) {
+      PsiStatement exitedStatement = PsiTreeUtil.getPrevSiblingOfType(nextStatement, PsiStatement.class);
+      myExits.put(null, new Exit(ExitType.SEQUENTIAL, exitedStatement));
     }
   }
 

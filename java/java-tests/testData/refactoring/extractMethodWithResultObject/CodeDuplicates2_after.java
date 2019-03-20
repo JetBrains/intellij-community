@@ -13,4 +13,5 @@ class C {
         }
     }//ins and outs
 //in: PsiLocalVariable:array
+//exit: SEQUENTIAL PsiForStatement
 }

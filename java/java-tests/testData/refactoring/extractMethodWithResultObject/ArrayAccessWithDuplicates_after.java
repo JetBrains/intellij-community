@@ -4,4 +4,5 @@ class Test {
     System.out.println(ss[0]);
   }//ins and outs
 //in: PsiParameter:ss
+//exit: SEQUENTIAL PsiExpressionStatement
 }

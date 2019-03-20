@@ -8,6 +8,7 @@ class A {
         this.j = j;
     }//ins and outs
 //in: PsiParameter:i
+//exit: SEQUENTIAL PsiExpressionStatement
 
     public A(int i, String s) {
         this.s = s;
