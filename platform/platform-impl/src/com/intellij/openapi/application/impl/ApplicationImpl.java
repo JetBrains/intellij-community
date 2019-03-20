@@ -106,8 +106,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private volatile Thread myWriteActionThread;
 
   private final long myStartTime;
-  @Nullable
-  private Splash mySplash;
   private boolean mySaveAllowed;
   private volatile boolean myExitInProgress;
   private volatile boolean myDisposeInProgress;
@@ -124,8 +122,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                          boolean isUnitTestMode,
                          boolean isHeadless,
                          boolean isCommandLine,
-                         @NotNull String appName,
-                         @Nullable Splash splash) {
+                         @NotNull String appName) {
     super(null);
 
     ApplicationManager.setApplication(this, myLastDisposable); // reset back to null only when all components already disposed
@@ -142,7 +139,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     Disposer.setDebugMode(isInternal || isUnitTestMode || Disposer.isDebugDisposerOn());
 
     myStartTime = System.currentTimeMillis();
-    mySplash = splash;
     myName = appName;
 
     myIsInternal = isInternal;
@@ -392,9 +388,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void load(@Nullable final String configPath) {
+    load(configPath, null);
+  }
+
+  public void load(@Nullable final String configPath, @Nullable Splash splash) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      StartupProgress startupProgress = mySplash == null ? null : (message, progress) -> mySplash.showProgress("", progress);
+      StartupProgress startupProgress = splash == null ? null : (message, progress) -> splash.showProgress("", progress);
 
       // before totalMeasureToken to ensure that plugin loading is not part of this
       List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins(startupProgress);
@@ -409,10 +409,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         });
       }
 
-      ProgressIndicator indicator = mySplash == null ? null : new EmptyProgressIndicator() {
+      ProgressIndicator indicator = splash == null ? null : new EmptyProgressIndicator() {
         @Override
         public void setFraction(double fraction) {
-          mySplash.showProgress("", (float)fraction);
+          splash.showProgress("", (float)fraction);
         }
       };
       init(plugins, indicator, () -> {
@@ -463,7 +463,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       token.finish();
     }
     myLoaded = true;
-    mySplash = null;
 
     createLocatorFile();
   }

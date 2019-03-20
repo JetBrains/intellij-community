@@ -13,6 +13,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -69,6 +70,7 @@ public class IdeaApplication {
   public static void initApplication(@NotNull String[] args) {
     Activity activity = PluginManager.startupStart.endAndStart(Phases.INIT_APP);
     IdeaApplication app = new IdeaApplication(args);
+
     // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
     Activity placeOnEventQueueActivity = activity.startChild(Phases.PLACE_ON_EVENT_QUEUE);
     SwingUtilities.invokeLater(() -> {
@@ -109,12 +111,11 @@ public class IdeaApplication {
       }
     }
     else {
-      Splash splash = null;
       if (isShowSplash && myStarter instanceof IdeStarter) {
-        splash = ((IdeStarter)myStarter).showSplash();
+        ((IdeStarter)myStarter).showSplash();
       }
 
-      ApplicationManagerEx.createApplication(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash);
+      new ApplicationImpl(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION);
     }
 
     if (headless && myStarter instanceof ApplicationStarterEx && !((ApplicationStarterEx)myStarter).isHeadless()) {
@@ -214,16 +215,13 @@ public class IdeaApplication {
   }
 
   private void run() {
-    try {
-      ApplicationManagerEx.getApplicationEx().load(null);
-      myLoaded = true;
+    Splash splash = myStarter instanceof IdeStarter ? ((IdeStarter)myStarter).mySplash : null;
+    ((ApplicationImpl)ApplicationManager.getApplication()).load(null, splash);
+    myLoaded = true;
 
-      ((TransactionGuardImpl) TransactionGuard.getInstance()).performUserActivity(() -> myStarter.main(myArgs));
-      myStarter = null; //GC it
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> myStarter.main(myArgs));
+    // GC it
+    myStarter = null;
   }
 
   public static class IdeStarter extends ApplicationStarterEx {
