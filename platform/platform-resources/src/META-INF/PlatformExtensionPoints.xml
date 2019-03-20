@@ -233,6 +233,8 @@
 
     <extensionPoint name="colorPickerListenerFactory" interface="com.intellij.ui.ColorPickerListenerFactory"/>
 
+    <extensionPoint name="schemesPanelCustomizer" interface="com.intellij.application.options.schemes.SchemePanelCustomizer"/>
+
     <extensionPoint name="search.topHitProvider" interface="com.intellij.ide.SearchTopHitProvider"/>
     <extensionPoint name="search.projectOptionsTopHitProvider" interface="com.intellij.ide.ui.OptionsSearchTopHitProvider$ProjectLevelProvider"/>
 
