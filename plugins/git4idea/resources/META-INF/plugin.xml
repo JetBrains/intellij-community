@@ -265,6 +265,7 @@
     <ignoredFileContentProvider implementation="git4idea.ignore.GitIgnoredFileContentProvider"/>
     <openapi.vcs.changes.vcsPreservingExecutor implementation="git4idea.util.GitPreservingExecutor"/>
     <actionPromoter implementation="git4idea.actions.GitActionPromoter"/>
+    <editorNotificationProvider implementation="git4idea.conflicts.MergeConflictResolveUtil$NotificationProvider"/>
   </extensions>
 
   <extensionPoints>
