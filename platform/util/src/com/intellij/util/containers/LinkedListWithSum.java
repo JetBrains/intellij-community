@@ -3,17 +3,24 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Array;
 import java.util.*;
+import java.util.function.ToIntFunction;
 
-public abstract class LinkedListWithSum<E> implements List<E> {
-  private final LinkedList<ItemWithSum<E>> myList = new LinkedList<>();
+/**
+ * Linked list implementation, which maintains the sum of values associated with contained elements. The associated values are provided
+ * by evaluator passed to {@link #LinkedListWithSum(ToIntFunction) constructor}. Current sum can be obtained via {@link #getSum()}.
+ * <p>
+ * This class is not thread-safe.
+ */
+public class LinkedListWithSum<E> extends AbstractSequentialList<E> implements List<E> {
+  private final LinkedList<ItemWithValue<E>> myList = new LinkedList<>();
+  private final ToIntFunction<? super E> myEvaluator;
   private long mySum;
 
-  public abstract int calculateValue(E e);
+  public LinkedListWithSum(@NotNull ToIntFunction<? super E> evaluator) {myEvaluator = evaluator;}
 
-  private ItemWithSum<E> createItem(E e) {
-    return new ItemWithSum<>(e, calculateValue(e));
+  private ItemWithValue<E> createItem(E e) {
+    return new ItemWithValue<>(e, myEvaluator.applyAsInt(e));
   }
 
   public long getSum() {
@@ -25,177 +32,27 @@ public abstract class LinkedListWithSum<E> implements List<E> {
     return myList.size();
   }
 
-  @Override
-  public boolean isEmpty() {
-    return myList.isEmpty();
-  }
-
-  @Override
-  public boolean contains(Object o) {
-    return indexOf(o) >= 0;
-  }
-
-  @NotNull
-  @Override
-  public Iterator<E> iterator() {
-    return listIterator();
-  }
-
-  @NotNull
-  @Override
-  public Object[] toArray() {
-    int size = size();
-    Object[] result = new Object[size];
-    int i = 0;
-    for (ItemWithSum<E> item : myList) {
-      result[i++] = item.item;
-    }
-    return result;
-  }
-
-  @NotNull
-  @Override
-  public <T> T[] toArray(@NotNull T[] a) {
-    int size = size();
-    if (a.length < size) {
-      //noinspection unchecked
-      a = (T[])Array.newInstance(a.getClass().getComponentType(), size);
-    }
-    int i = 0;
-    for (ItemWithSum<E> item : myList) {
-      //noinspection unchecked
-      a[i++] = (T)item.item;
-    }
-    while (i < a.length) {
-      a[i++] = null;
-    }
-    return a;
-  }
-
-  @Override
-  public boolean add(E e) {
-    ItemWithSum<E> item = createItem(e);
-    myList.add(item);
-    mySum += item.value;
-    return true;
-  }
-
-  @Override
-  public boolean remove(Object o) {
-    Iterator<ItemWithSum<E>> it = myList.iterator();
-    while (it.hasNext()) {
-      ItemWithSum<E> item = it.next();
-      if (Objects.equals(o, item.item)) {
-        it.remove();
-        mySum -= item.value;
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public boolean containsAll(@NotNull Collection<?> c) {
-    throw new RuntimeException("Not implemented");
-  }
-
-  @Override
-  public boolean addAll(@NotNull Collection<? extends E> c) {
-    throw new RuntimeException("Not implemented");
-  }
-
-  @Override
-  public boolean addAll(int index, @NotNull Collection<? extends E> c) {
-    throw new RuntimeException("Not implemented");
-  }
-
-  @Override
-  public boolean removeAll(@NotNull Collection<?> c) {
-    throw new RuntimeException("Not implemented");
-  }
-
-  @Override
-  public boolean retainAll(@NotNull Collection<?> c) {
-    throw new RuntimeException("Not implemented");
-  }
-
-  @Override
-  public void clear() {
-    myList.clear();
-    mySum = 0;
-  }
-
-  @Override
-  public E get(int index) {
-    return myList.get(index).item;
-  }
-
-  @Override
-  public E set(int index, E element) {
-    ItemWithSum<E> newItem = createItem(element);
-    ItemWithSum<E> oldItem = myList.set(index, newItem);
-    mySum -= oldItem.value;
-    mySum += newItem.value;
-    return oldItem.item;
-  }
-
-  @Override
-  public void add(int index, E element) {
-    ItemWithSum<E> item = createItem(element);
-    myList.add(index, item);
-    mySum += item.value;
-  }
-
-  @Override
-  public E remove(int index) {
-    ItemWithSum<E> item = myList.remove(index);
-    mySum -= item.value;
-    return item.item;
-  }
-
-  @Override
-  public int indexOf(Object o) {
-    return ContainerUtil.indexOf(myList, is -> Objects.equals(is.item, o));
-  }
-
-  @Override
-  public int lastIndexOf(Object o) {
-    return ContainerUtil.lastIndexOf(myList, is -> Objects.equals(is.item, o));
-  }
-
-  @NotNull
-  @Override
-  public ListIterator listIterator() {
-    return listIterator(0);
-  }
-
   @NotNull
   @Override
   public ListIterator listIterator(int index) {
     return new ListIterator(myList.listIterator(index));
   }
 
-  @NotNull
-  @Override
-  public List<E> subList(int fromIndex, int toIndex) {
-    throw new RuntimeException("Not implemented");
-  }
-
-  private static class ItemWithSum<E> {
+  private static class ItemWithValue<E> {
     private final E item;
     private final int value;
 
-    private ItemWithSum(E item, int value) {
+    private ItemWithValue(E item, int value) {
       this.item = item;
       this.value = value;
     }
   }
 
   public class ListIterator implements java.util.ListIterator<E> {
-    private final java.util.ListIterator<ItemWithSum<E>> it;
-    private ItemWithSum<E> lastItem;
+    private final java.util.ListIterator<ItemWithValue<E>> it;
+    private ItemWithValue<E> lastItem;
 
-    private ListIterator(java.util.ListIterator<ItemWithSum<E>> it) {
+    private ListIterator(java.util.ListIterator<ItemWithValue<E>> it) {
       this.it = it;
     }
 
@@ -237,7 +94,7 @@ public abstract class LinkedListWithSum<E> implements List<E> {
 
     @Override
     public void set(E e) {
-      ItemWithSum<E> item = createItem(e);
+      ItemWithValue<E> item = createItem(e);
       it.set(item);
       mySum -= lastItem.value;
       mySum += item.value;
@@ -245,12 +102,14 @@ public abstract class LinkedListWithSum<E> implements List<E> {
 
     @Override
     public void add(E e) {
-      ItemWithSum<E> item = createItem(e);
+      ItemWithValue<E> item = createItem(e);
       it.add(item);
       mySum += item.value;
     }
 
-    // Returns the value associated with item last returned from 'previous' or 'next' call
+    /**
+     * Returns the value associated with item last returned from {@link #previous()} or {@link #next()} call.
+     */
     public int getValue() {
       return lastItem.value;
     }
