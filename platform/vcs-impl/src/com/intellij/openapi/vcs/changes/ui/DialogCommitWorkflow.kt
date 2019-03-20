@@ -20,24 +20,18 @@ import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
-import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.NullableFunction
 import com.intellij.util.PairConsumer
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBUI.Borders.emptyRight
-import com.intellij.util.ui.UIUtil.addBorder
-import java.awt.Dimension
 
 private val LOG = logger<DialogCommitWorkflow>()
 
 open class DialogCommitWorkflow(val project: Project,
                                 val initiallyIncluded: Collection<*>,
-                                private val initialChangeList: LocalChangeList? = null,
+                                val initialChangeList: LocalChangeList? = null,
                                 val executors: List<CommitExecutor> = emptyList(),
                                 val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
                                 val vcsToCommit: AbstractVcs<*>? = null,
@@ -60,13 +54,6 @@ open class DialogCommitWorkflow(val project: Project,
   internal fun initCommitHandlers(handlers: List<CheckinHandler>) {
     _commitHandlers.clear()
     _commitHandlers += handlers
-  }
-
-  fun showDialog(): Boolean {
-    val dialog = CommitChangeListDialog(this)
-    val handler = SingleChangeListCommitWorkflowHandler(this, dialog)
-
-    return handler.activate()
   }
 
   fun addUnversionedFiles(changeList: LocalChangeList, unversionedFiles: List<VirtualFile>, callback: (List<Change>) -> Unit): Boolean {
@@ -135,31 +122,6 @@ open class DialogCommitWorkflow(val project: Project,
     committer.runCommit(DIALOG_TITLE, false)
   }
 
-  protected open fun createBrowser(): CommitDialogChangesBrowser =
-    object : MultipleLocalChangeListsBrowser(project, true, true, isDefaultCommitEnabled, isPartialCommitEnabled) {
-      override fun createAdditionalRollbackActions() = affectedVcses.mapNotNull { it.rollbackEnvironment }.flatMap { it.createCustomRollbackActions() }
-    }
-
-  open fun initDialog(dialog: CommitChangeListDialog) {
-    val browser = dialog.browser as MultipleLocalChangeListsBrowser
-
-    LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
-
-    val branchComponent = CurrentBranchComponent(project, browser)
-    addBorder(branchComponent, emptyRight(16))
-    dialog.browserBottomPanel.add(branchComponent)
-
-    if (initialChangeList != null) browser.selectedChangeList = initialChangeList
-    browser.viewer.setIncludedChanges(initiallyIncluded)
-    browser.viewer.rebuildTree()
-    browser.viewer.setKeepTreeState(true)
-
-    val commitMessageEditor = DiffCommitMessageEditor(project, dialog.commitMessageComponent)
-    browser.setBottomDiffComponent(commitMessageEditor)
-
-    browser.setSelectedListChangeListener { dialog.selectedChangeListChanged() }
-  }
-
   companion object {
     @JvmStatic
     fun getCommitHandlerFactories(project: Project): List<BaseCheckinHandlerFactory> =
@@ -171,13 +133,4 @@ open class DialogCommitWorkflow(val project: Project,
         .map { it.createHandler(commitPanel, commitContext) }
         .filter { it != CheckinHandler.DUMMY }
   }
-}
-
-private class DiffCommitMessageEditor(project: Project, commitMessage: CommitMessage) : CommitMessage(project) {
-  init {
-    editorField.document = commitMessage.editorField.document
-  }
-
-  // we don't want to be squeezed to one line
-  override fun getPreferredSize(): Dimension = JBUI.size(400, 120)
 }
