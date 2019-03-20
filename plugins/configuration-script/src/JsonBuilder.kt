@@ -15,29 +15,23 @@ internal inline fun StringBuilder.json(build: JsonObjectBuilder.() -> Unit): Str
 }
 
 @JsonBuilderDsl
-internal class JsonObjectBuilder(private val builder: StringBuilder) {
+internal class JsonObjectBuilder(private val builder: StringBuilder, private val isCompact: Boolean = false) {
   infix fun String.to(value: String) {
-    builder
-      .appendCommaIfNeed()
-      .jsonEscapedString(this)
-      .append(':')
-      .jsonEscapedString(value)
+    appendNameAndValue(this) {
+      builder.jsonEscapedString(value)
+    }
   }
 
   infix fun String.toUnescaped(value: String) {
-    builder
-      .appendCommaIfNeed()
-      .jsonEscapedString(this)
-      .append(':')
-    JsonUtil.escape(value, builder)
+    appendNameAndValue(this) {
+      JsonUtil.escape(value, builder)
+    }
   }
 
   infix fun String.to(value: Boolean) {
-    builder
-      .appendCommaIfNeed()
-      .jsonEscapedString(this)
-      .append(':')
-      .append(value)
+    appendNameAndValue(this) {
+      builder.append(value)
+    }
   }
 
   infix fun String.to(value: StringBuilder) {
@@ -45,34 +39,27 @@ internal class JsonObjectBuilder(private val builder: StringBuilder) {
       return
     }
 
-    builder
-      .appendCommaIfNeed()
-      .jsonEscapedString(this)
-      .append(':')
+    appendNameAndValue(this) {
       // append as is
-      .append(value)
+      builder.append(value)
+    }
   }
 
   infix fun String.toRaw(value: String) {
-    builder
-      .appendCommaIfNeed()
-      .jsonEscapedString(this)
-      .append(':')
+    appendNameAndValue(this) {
       // append as is
-      .append(value)
+      builder.append(value)
+    }
   }
 
   fun map(key: CharSequence, build: JsonObjectBuilder.() -> Unit) {
     builder
       .appendCommaIfNeed()
       .jsonEscapedString(key)
-      .append(':')
-      .append('{')
-      .append('\n')
-    this.build()
-    builder
-      .append('\n')
-      .append('}')
+
+    appendComplexValue('{', '}') {
+      build()
+    }
   }
 
   fun rawMap(key: CharSequence, build: (StringBuilder) -> Unit) {
@@ -87,36 +74,66 @@ internal class JsonObjectBuilder(private val builder: StringBuilder) {
     builder
       .appendCommaIfNeed()
       .jsonEscapedString(key)
-      .append(':')
-      .append(openChar)
-      .append('\n')
-    build(builder)
-    builder
-      .append('\n')
-      .append(closeChar)
+    appendComplexValue(openChar, closeChar) {
+      build(builder)
+    }
   }
 
   fun rawBuilder(key: CharSequence, child: JsonObjectBuilder) {
     builder
       .appendCommaIfNeed()
       .jsonEscapedString(key)
-      .append(':')
-      .append('{')
-      .append('\n')
-      .append(child.builder)
-      .append('\n')
-      .append('}')
+    appendComplexValue('{', '}') {
+      builder.append(child.builder)
+    }
   }
 
-  fun definitionReference(prefix: String, pointer: CharSequence) {
-    builder
-      .appendCommaIfNeed()
-      .jsonEscapedString("\$ref")
-      .append(':')
-      .append('"')
+  fun definitionReference(prefix: String, pointer: CharSequence, wrappingKey: String? = null) {
+    builder.appendCommaIfNeed()
+
+    if (wrappingKey != null) {
+      builder.append('"').append(wrappingKey).append('"').append(':').append(' ')
+    }
+
+    builder.jsonEscapedString("\$ref")
+    appendColon()
+    builder.append('"')
       .append(prefix)
       .append(pointer)
       .append('"')
+  }
+
+  private fun appendColon() {
+    builder.append(':')
+    if (!isCompact) {
+      builder.append(' ')
+    }
+  }
+
+  private inline fun appendNameAndValue(name: CharSequence, valueAppender: () -> Unit) {
+    builder
+      .appendCommaIfNeed()
+      .jsonEscapedString(name)
+    appendColon()
+    valueAppender()
+  }
+
+  private inline fun appendComplexValue(openChar: Char, closeChar: Char, valueAppender: () -> Unit) {
+    appendColon()
+    builder.append(openChar)
+    if (!isCompact) {
+      builder
+        .append('\n')
+        .append(' ')
+        .append(' ')
+    }
+
+    valueAppender()
+
+    if (!isCompact) {
+      builder.append('\n')
+    }
+    builder.append(closeChar)
   }
 }
 

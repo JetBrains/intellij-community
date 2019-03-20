@@ -33,6 +33,20 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
     checkDescription(variants, "isShowConsoleOnStdOut", "Show console when a message is printed to standard output stream")
   }
 
+  fun `test array or object`() {
+    val variants = test("""
+    runConfigurations:
+      java: <caret>
+    """.trimIndent())
+
+    val texts = variants.map {
+      val presentation = LookupElementPresentation()
+      it.renderElement(presentation)
+      presentation.itemText
+    }
+    assertThat(texts).contains("{...}", "[...]")
+  }
+
   fun `test no isAllowRunningInParallel if singleton policy not configurable`() {
     val variants = test("""
     runConfigurations:
@@ -56,6 +70,7 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
     val position = EditorTestUtil.getCaretPosition(text)
     assertThat(position).isGreaterThan(0)
 
+    @Suppress("SpellCheckingInspection")
     val file = createFile(myModule, "intellij.yaml", text.replace("<caret>", "IntelliJIDEARulezzz"))
     val element = file.findElementAt(position)
     assertThat(element).isNotNull
