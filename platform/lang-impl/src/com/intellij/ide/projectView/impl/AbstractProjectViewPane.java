@@ -494,7 +494,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   public final void restoreExpandedPaths(){
     if (myTreeStateRestored.getAndSet(true)) return;
     TreeState treeState = myReadTreeState.get(getSubId());
-    if (treeState != null && !treeState.isEmpty()) {
+    if (myTree != null && treeState != null && !treeState.isEmpty()) {
       treeState.applyTo(myTree);
     }
   }
