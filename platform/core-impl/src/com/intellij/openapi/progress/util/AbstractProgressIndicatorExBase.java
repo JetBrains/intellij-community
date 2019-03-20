@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.progress.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
   private final boolean myReusable;
   private volatile ProgressIndicatorEx[] myStateDelegates;
   private volatile WeakList<TaskInfo> myFinished;
@@ -153,15 +151,18 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
 
   @Override
   public final void addStateDelegate(@NotNull ProgressIndicatorEx delegate) {
-    delegate.initStateFrom(this);
     synchronized (this) {
+      delegate.initStateFrom(this);
       ProgressIndicatorEx[] stateDelegates = myStateDelegates;
       if (stateDelegates == null) {
         myStateDelegates = stateDelegates = new ProgressIndicatorEx[1];
         stateDelegates[0] = delegate;
       }
       else {
-        LOG.assertTrue(!ArrayUtil.contains(delegate, stateDelegates), "Already registered: " + delegate);
+        // hard throw is essential for avoiding deadlocks
+        if (ArrayUtil.contains(delegate, stateDelegates)) {
+          throw new IllegalArgumentException("Already registered: " + delegate);
+        }
         myStateDelegates = ArrayUtil.append(stateDelegates, delegate, ProgressIndicatorEx.class);
       }
     }
