@@ -170,9 +170,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
       myCustomSettings.clear();
 
       for (final CustomCodeStyleSettings settings : from.getCustomSettingsValues()) {
-        CustomCodeStyleSettings clone = (CustomCodeStyleSettings)settings.clone();
-        clone.setContainer(this);
-        addCustomSettings(clone);
+        addCustomSettings(settings.copyWith(this));
       }
 
       FIELD_TYPE_TO_NAME.copyFrom(from.FIELD_TYPE_TO_NAME);
