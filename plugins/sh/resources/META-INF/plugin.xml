@@ -27,7 +27,7 @@
     <externalAnnotator language="Bash"
                        implementationClass="com.intellij.bash.shellcheck.BashShellcheckExternalAnnotator"/>
     <registryKey key="bash.shellcheck.path"/>
-    <localInspection language="Bash" shortName="Shellcheck"
+    <localInspection language="Bash" shortName="ShellCheck"
                      enabledByDefault="true" level="ERROR" unfair="true"
                      implementationClass="com.intellij.bash.shellcheck.BashShellcheckInspection"
                      displayName="ShellCheck" groupName="Bash"/>

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BashShellcheckInspection extends LocalInspectionTool implements ExternalAnnotatorBatchInspection {
-  static final String SHORT_NAME = "Shellcheck";
+  static final String SHORT_NAME = "ShellCheck";
 
   @NotNull
   @Override
