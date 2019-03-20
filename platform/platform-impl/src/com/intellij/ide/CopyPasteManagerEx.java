@@ -22,15 +22,15 @@ import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.Iterator;
 
+/**
+ * This implementation attempts to limit memory occupied by clipboard history. To make it work, {@link Transferable} instances passed to
+ * {@link #setContents(Transferable)} should implement {@link Sizeable} interface. See {@link #getSize(Transferable)} method for details on
+ * estimating the size of {@code Transferable} and {@link #deleteAfterAllowedMaximum()} method for history trimming logic.
+ */
 public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner {
   private static final Logger LOG = Logger.getInstance(CopyPasteManagerEx.class);
 
-  private final LinkedListWithSum<Transferable> myData = new LinkedListWithSum<Transferable>() {
-    @Override
-    public int calculateValue(Transferable transferable) {
-      return getSize(transferable);
-    }
-  };
+  private final LinkedListWithSum<Transferable> myData = new LinkedListWithSum<>(CopyPasteManagerEx::getSize);
   private final EventDispatcher<ContentChangedListener> myDispatcher = EventDispatcher.create(ContentChangedListener.class);
   private boolean myOwnContent;
 
