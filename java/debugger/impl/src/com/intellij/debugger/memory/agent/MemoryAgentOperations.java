@@ -99,33 +99,18 @@ class MemoryAgentOperations {
 
   private static ClassType getOrLoadProxyType(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
     ClassObjectReference classObjectReference = evaluationContext.computeAndKeep(() -> {
-      ReferenceType referenceType = findProxy(evaluationContext);
+      long start = System.currentTimeMillis();
+      ReferenceType referenceType = loadUtilityClass(evaluationContext);
       if (referenceType == null) {
-        long start = System.currentTimeMillis();
-        referenceType = loadUtilityClass(evaluationContext);
-        if (referenceType == null) {
-          throw EvaluateExceptionUtil.createEvaluateException("Could not load memory agent proxy class");
-        }
-        long duration = System.currentTimeMillis() - start;
-        LOG.info("Loading of agent proxy class took " + duration + " ms");
+        throw EvaluateExceptionUtil.createEvaluateException("Could not load memory agent proxy class");
       }
+      long duration = System.currentTimeMillis() - start;
+      LOG.info("Loading of agent proxy class took " + duration + " ms");
 
       return referenceType.classObject();
     });
 
     return (ClassType)classObjectReference.reflectedType();
-  }
-
-  @Nullable
-  private static ReferenceType findProxy(@NotNull EvaluationContextImpl evaluationContext) {
-    DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
-
-    // We should use here this code to find proxy, but it will return nothing each time since we use newly created class loaded for every class loading
-    //debugProcess.findClass(evaluationContext, MemoryAgentNames.PROXY_CLASS_NAME, evaluationContext.getClassLoader());
-
-    // But since we use only JDI to access static methods we do not bother about visibility issues
-    List<ReferenceType> types = debugProcess.getVirtualMachineProxy().classesByName(MemoryAgentNames.PROXY_CLASS_NAME);
-    return types.isEmpty() ? null : types.get(0);
   }
 
   private static boolean checkAgentCapability(@NotNull EvaluationContextImpl evaluationContext,
@@ -182,13 +167,18 @@ class MemoryAgentOperations {
   }
 
   @Nullable
-  private static ClassType loadUtilityClass(@NotNull EvaluationContextImpl context) throws EvaluateException {
+  private static ReferenceType loadUtilityClass(@NotNull EvaluationContextImpl context) throws EvaluateException {
     DebugProcessImpl debugProcess = context.getDebugProcess();
     byte[] bytes = readUtilityClass();
     context.setAutoLoadClasses(true);
     ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(context, debugProcess);
     ClassLoadingUtils.defineClass(MemoryAgentNames.PROXY_CLASS_NAME, bytes, context, debugProcess, classLoader);
-    return (ClassType)debugProcess.findClass(context, MemoryAgentNames.PROXY_CLASS_NAME, classLoader);
+    try {
+      return debugProcess.loadClass(context, MemoryAgentNames.PROXY_CLASS_NAME, classLoader);
+    }
+    catch (InvocationException | ClassNotLoadedException | IncompatibleThreadStateException | InvalidTypeException e) {
+      throw EvaluateExceptionUtil.createEvaluateException("Could not load proxy class", e);
+    }
   }
 
   @NotNull
