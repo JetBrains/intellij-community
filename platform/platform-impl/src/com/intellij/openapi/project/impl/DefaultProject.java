@@ -2,6 +2,8 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,10 +11,14 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 final class DefaultProject extends ProjectImpl {
+  private static final Logger LOG = Logger.getInstance(DefaultProject.class);
   private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
 
   DefaultProject(@NotNull String filePath) {
     super(filePath, TEMPLATE_PROJECT_NAME);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Created DefaultProject " + this, new Exception());
+    }
   }
 
   @Override
@@ -37,5 +43,14 @@ final class DefaultProject extends ProjectImpl {
   @Override
   protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
     return super.isComponentSuitable(componentConfig) && componentConfig.isLoadForDefaultProject();
+  }
+
+  @Override
+  public synchronized void dispose() {
+    super.dispose();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Disposed DefaultProject "+this);
+    }
+    ((ProjectManagerImpl)ProjectManager.getInstance()).updateTheOnlyProjectField();
   }
 }
