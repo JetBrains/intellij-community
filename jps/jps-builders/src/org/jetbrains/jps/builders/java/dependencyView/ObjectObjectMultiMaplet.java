@@ -2,11 +2,10 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import gnu.trove.TObjectObjectProcedure;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.PrintStream;
 import java.util.*;
 
@@ -45,11 +44,7 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
     forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
       @Override
       public boolean execute(final K a, final Collection<V> b) {
-        // on case-insensitive file systems save paths in normalized (lowercase) format in order to make tests run deterministically
-        final String keyStr = a instanceof File && !SystemInfo.isFileSystemCaseSensitive?
-                              ((File)a).getPath().toLowerCase(Locale.US) :
-                              a.toString();
-        keys.add(Pair.create(a, keyStr));
+        keys.add(Pair.create(a, debugString(a)));
         return true;
       }
     });
@@ -84,4 +79,8 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
     }
   }
 
+  @NotNull
+  protected String debugString(K k) {
+    return k.toString();
+  }
 }
