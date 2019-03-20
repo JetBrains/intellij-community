@@ -20,12 +20,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.NotNull;
 
 public class OpenAnotherLogTabAction extends DumbAwareAction {
@@ -54,6 +57,8 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLogManager logManager = e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER);
     VcsLogUi logUi = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    VcsProjectLog.getInstance(project).getTabsManager().openAnotherLogTab(logManager, logUi.getFilterUi().getFilters());
+    VcsLogFilterCollection filters = Registry.is("vcs.log.copy.filters.to.new.tab") ? logUi.getFilterUi().getFilters()
+                                                                                    : VcsLogFilterObject.collection();
+    VcsProjectLog.getInstance(project).getTabsManager().openAnotherLogTab(logManager, filters);
   }
 }
