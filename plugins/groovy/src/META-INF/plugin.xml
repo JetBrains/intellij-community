@@ -566,7 +566,7 @@
 
     <!--Run/debug-->
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
-    <configurationProducer implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationProducer"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.groovy.runner.ScriptRunConfigurationProducer"/>
 
     <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.editor.GroovyQuoteHandler"/>
 
