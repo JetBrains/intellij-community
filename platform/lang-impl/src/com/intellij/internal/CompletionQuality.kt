@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("DEPRECATION")
 
 package com.intellij.internal
@@ -60,6 +60,7 @@ import javax.swing.DefaultComboBoxModel
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JLabel
+import kotlin.collections.HashMap
 
 /**
  * @author traff
@@ -79,9 +80,11 @@ private data class CompletionParameters(
   val completionTime : CompletionTime = CompletionTime(0, 0))
 
 private const val RANK_EXCESS_LETTERS: Int = -2
-private const val RANK_NOT_FOUND: Int = -1
+private const val RANK_NOT_FOUND: Int = 1000000000
+private const val CAN_NOT_COMPLETE_WORD = 1000000000
 
 private val interestingRanks : IntArray = intArrayOf(0, 1, 3)
+private val interestingCharsToFirsts: IntArray = intArrayOf(1, 3)
 
 class CompletionQualityStatsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
@@ -206,7 +209,7 @@ class CompletionQualityStatsAction : AnAction() {
   private fun evalCompletionAt(params: CompletionParameters) {
     with(params) {
       // (typed letters, rank, total)
-      val ranks : ArrayList<Triple<Int, Int, Int>> = arrayListOf()
+      val ranks = arrayListOf<Triple<Int, Int, Int>>()
       for (charsTyped in interestingRanks) {
         val (rank, total) = findCorrectElementRank(charsTyped, params)
         ranks.add(Triple(charsTyped, rank, total))
@@ -219,14 +222,13 @@ class CompletionQualityStatsAction : AnAction() {
 
       val cache = arrayOfNulls<Pair<Int, Int>>(maxChars)
 
-      val charsToFirst = calcCharsToFirstN(ranks, 1, maxChars, cache, params)
-
-      val charsToFirst3 = calcCharsToFirstN(ranks, 3, maxChars, cache, params)
+      val charsToFirsts = arrayListOf<Pair<Int, Int>>()
+      for (n in interestingCharsToFirsts) {
+        charsToFirsts.add(Pair(n, calcCharsToFirstN(ranks, n, maxChars, cache, params)))
+      }
 
       stats.completions.add(
-        Completion(path, startIndex, word,
-                   ranks[0].second, ranks[0].third, ranks[1].second, ranks[1].third, ranks[2].second, ranks[2].third,
-                   charsToFirst, charsToFirst3, completionTime.cnt, completionTime.time))
+        getHashMapCompletionInfo(path, startIndex, word, ranks, charsToFirsts, completionTime.cnt, completionTime.time))
     }
   }
 
@@ -246,7 +248,7 @@ class CompletionQualityStatsAction : AnAction() {
         }
       }
       if (rank in 0 until N) {
-        return rank
+        return charsTyped
       }
       lastCharsTyped = charsTyped
     }
@@ -262,7 +264,7 @@ class CompletionQualityStatsAction : AnAction() {
     with (params) {
       for (mid in from until to) {
         if (indicator.isCanceled) {
-          return -1
+          return CAN_NOT_COMPLETE_WORD
         }
 
         val (rank, total) = cache[mid] ?: findCorrectElementRank(mid, params)
@@ -272,14 +274,14 @@ class CompletionQualityStatsAction : AnAction() {
         }
 
         if (rank == RANK_EXCESS_LETTERS) {
-          return -1
+          return CAN_NOT_COMPLETE_WORD
         }
 
         if (rank < N) {
           return mid
         }
       }
-      return -1
+      return CAN_NOT_COMPLETE_WORD
     }
 
   }
@@ -341,6 +343,9 @@ class CompletionQualityStatsAction : AnAction() {
           val lookupItems = getLookupItems()
           if (lookupItems != null) {
             result = lookupItems.indexOfFirst { it.lookupString == word }
+            if (result == -1) {
+              result = RANK_NOT_FOUND
+            }
             total = lookupItems.size
           }
 
@@ -428,25 +433,36 @@ class CompletionQualityDialog(project: Project, editor: Editor?) : DialogWrapper
   }
 }
 
-private data class Completion(val path: String,
-                              val offset: Int,
-                              val word: String,
-                              val rank0: Int,
-                              val total0: Int,
-                              val rank1: Int,
-                              val total1: Int,
-                              val rank3: Int,
-                              val total3: Int,
-                              val charsToFirst: Int,
-                              val charsToFirst3: Int,
-                              val callsCount: Int,
-                              val totalTime: Long) {
+private fun getHashMapCompletionInfo(path: String,
+                                     offset: Int,
+                                     word: String,
+                                     ranks: ArrayList<Triple<Int, Int, Int>>,
+                                     charsToFirsts: ArrayList<Pair<Int, Int>>,
+                                     callsCount: Int,
+                                     totalTime: Long) : HashMap<String, Any> {
   val id = "${path}:${offset}".hashCode()
+
+  val result = hashMapOf<String, Any>()
+  result["id"] = id
+  result["path"] = path
+  result["offset"] = offset
+  result["word"] = word
+  for ((chars, rank, total) in ranks) {
+    result["rank${chars}"] = rank
+    result["total${chars}"] = total
+  }
+  for ((n, chars) in charsToFirsts) {
+    result["charsToFirst${n}"] = chars
+  }
+  result["callsCount"] = callsCount
+  result["totalTime"] = totalTime
+
+  return result
 }
 
 private data class CompletionStats(val timestamp: Long) {
   var finished: Boolean = false
-  val completions = arrayListOf<Completion>()
+  val completions = arrayListOf<HashMap<String, Any>>()
   var totalFiles = 0
 }
 
