@@ -5,6 +5,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.build.BuildView;
 import com.intellij.build.DefaultBuildDescriptor;
+import com.intellij.build.ShowExecutionErrorsOnlyAction;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -18,6 +19,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
@@ -28,7 +30,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,10 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenConstants;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.project.MavenGeneralSettingsEditor;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -310,7 +314,9 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
       final ConsoleView console = createConsoleViewAndAttachToProcess(executor, processHandler);
 
-      DefaultExecutionResult res = new DefaultExecutionResult(console, processHandler, createActions(console, processHandler, executor));
+      AnAction[] actions = console instanceof BuildView ?
+                           new AnAction[]{new ShowExecutionErrorsOnlyAction((BuildView)console)} : AnAction.EMPTY_ARRAY;
+      DefaultExecutionResult res = new DefaultExecutionResult(console, processHandler, actions);
       if (MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
         MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment());
         res.setRestartActions(resumeAction);

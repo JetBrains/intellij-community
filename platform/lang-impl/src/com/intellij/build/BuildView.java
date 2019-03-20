@@ -48,13 +48,15 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-public class BuildView extends CompositeView<ExecutionConsole> implements BuildProgressListener, ConsoleView, DataProvider {
+public class BuildView extends CompositeView<ExecutionConsole>
+  implements BuildProgressListener, ConsoleView, DataProvider, Filterable<ExecutionNode> {
   public static final String CONSOLE_VIEW_NAME = "consoleView";
   private final AtomicReference<StartBuildEvent> myStartBuildEventRef = new AtomicReference<>();
   private final BuildDescriptor myBuildDescriptor;
@@ -111,8 +113,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
       }
     }
     else {
-      String eventViewName = BuildTreeConsoleView.class.getName();
-      BuildTreeConsoleView eventView = getView(eventViewName, BuildTreeConsoleView.class);
+      BuildTreeConsoleView eventView = getEventView();
       if (eventView != null) {
         EdtExecutorService.getInstance().execute(() -> eventView.onEvent(event));
       }
@@ -147,9 +148,9 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
 
     BuildTreeConsoleView eventView = null;
     if (!myViewSettingsProvider.isExecutionViewHidden()) {
-      String eventViewName = BuildTreeConsoleView.class.getName();
-      eventView = getView(eventViewName, BuildTreeConsoleView.class);
+      eventView = getEventView();
       if (eventView == null) {
+        String eventViewName = BuildTreeConsoleView.class.getName();
         eventView = new BuildTreeConsoleView(myProject, myBuildDescriptor,
                                              myExecutionConsole,
                                              myViewSettingsProvider);
@@ -185,6 +186,11 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
 
   private ExecutionConsole getConsoleView() {
     return myExecutionConsole;
+  }
+
+  @Nullable
+  private BuildTreeConsoleView getEventView() {
+    return getView(BuildTreeConsoleView.class.getName(), BuildTreeConsoleView.class);
   }
 
   @Override
@@ -352,5 +358,24 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
       return startBuildEvent.getExecutionEnvironment();
     }
     return null;
+  }
+
+  @Override
+  public boolean isFilteringEnabled() {
+    return getEventView() != null;
+  }
+
+  @Override
+  public Predicate<ExecutionNode> getFilter() {
+    BuildTreeConsoleView eventView = getEventView();
+    return eventView == null ? null : eventView.getFilter();
+  }
+
+  @Override
+  public void setFilter(Predicate<ExecutionNode> filter) {
+    BuildTreeConsoleView eventView = getEventView();
+    if (eventView != null) {
+      eventView.setFilter(filter);
+    }
   }
 }
