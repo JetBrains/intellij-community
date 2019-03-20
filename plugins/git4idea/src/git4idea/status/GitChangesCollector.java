@@ -15,7 +15,6 @@
  */
 package git4idea.status;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,28 +53,30 @@ import java.util.*;
  * @author Kirill Likhodedov
  */
 class GitChangesCollector {
-  private static final Logger LOG = Logger.getInstance(GitChangesCollector.class);
   @NotNull private final Project myProject;
-  @NotNull private final VirtualFile myVcsRoot;
-
-  @NotNull private final VcsDirtyScope myDirtyScope;
+  @NotNull private final Git myGit;
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final AbstractVcs myVcs;
-
+  @NotNull private final VcsDirtyScope myDirtyScope;
   @NotNull private final GitRepository myRepository;
+  @NotNull private final VirtualFile myVcsRoot;
+
   private final Collection<Change> myChanges = new HashSet<>();
   private final Set<VirtualFile> myUnversionedFiles = new HashSet<>();
-  @NotNull private final Git myGit;
 
   /**
    * Collects the changes from git command line and returns the instance of GitNewChangesCollector from which these changes can be retrieved.
    * This may be lengthy.
    */
   @NotNull
-  static GitChangesCollector collect(@NotNull Project project, @NotNull Git git, @NotNull ChangeListManager changeListManager,
-                                     @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
-                                     @NotNull VcsDirtyScope dirtyScope, @NotNull GitRepository repository) throws VcsException {
+  static GitChangesCollector collect(@NotNull Project project,
+                                     @NotNull Git git,
+                                     @NotNull ChangeListManager changeListManager,
+                                     @NotNull ProjectLevelVcsManager vcsManager,
+                                     @NotNull AbstractVcs vcs,
+                                     @NotNull VcsDirtyScope dirtyScope,
+                                     @NotNull GitRepository repository) throws VcsException {
     return new GitChangesCollector(project, git, changeListManager, vcsManager, vcs, dirtyScope, repository);
   }
 
@@ -89,17 +90,21 @@ class GitChangesCollector {
     return myChanges;
   }
 
-  private GitChangesCollector(@NotNull Project project, @NotNull Git git, @NotNull ChangeListManager changeListManager,
-                              @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
-                              @NotNull VcsDirtyScope dirtyScope, @NotNull GitRepository repository) throws VcsException {
+  private GitChangesCollector(@NotNull Project project,
+                              @NotNull Git git,
+                              @NotNull ChangeListManager changeListManager,
+                              @NotNull ProjectLevelVcsManager vcsManager,
+                              @NotNull AbstractVcs vcs,
+                              @NotNull VcsDirtyScope dirtyScope,
+                              @NotNull GitRepository repository) throws VcsException {
     myProject = project;
+    myGit = git;
     myChangeListManager = changeListManager;
     myVcsManager = vcsManager;
     myVcs = vcs;
     myDirtyScope = dirtyScope;
-    myVcsRoot = repository.getRoot();
-    myGit = git;
     myRepository = repository;
+    myVcsRoot = repository.getRoot();
 
     Collection<FilePath> dirtyPaths = dirtyPaths();
     if (!dirtyPaths.isEmpty()) {
