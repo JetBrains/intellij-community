@@ -95,19 +95,6 @@ public class JavaKeywordCompletion {
   private static final ElementPattern<PsiElement> CLASS_REFERENCE =
     psiElement().withParent(psiReferenceExpression().referencing(psiClass().andNot(psiElement(PsiTypeParameter.class))));
 
-  private static final ElementPattern<PsiElement> EXPR_KEYWORDS = and(
-    psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(
-      not(
-        or(
-           psiElement(PsiExpressionStatement.class),
-           psiElement(PsiPrefixExpression.class)
-        )
-      )
-    )),
-    not(psiElement().afterLeaf(".")),
-    not(JavaCompletionContributor.IN_SWITCH_LABEL)
-  );
-
   private final CompletionParameters myParameters;
   private final JavaCompletionSession mySession;
   private final PsiElement myPosition;
@@ -429,6 +416,9 @@ public class JavaKeywordCompletion {
     }
 
     if (isExpressionPosition(myPosition)) {
+      PsiElement parent = myPosition.getParent();
+      PsiElement grandParent = parent == null ? null : parent.getParent();
+      boolean allowExprKeywords = !(grandParent instanceof PsiExpressionStatement) && !(grandParent instanceof PsiUnaryExpression);
       if (PsiTreeUtil.getParentOfType(myPosition, PsiAnnotation.class) == null) {
         if (!statementPosition) {
           addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.NEW), TailType.INSERT_SPACE));
@@ -436,9 +426,11 @@ public class JavaKeywordCompletion {
             addKeyword(new OverridableSpace(createKeyword(PsiKeyword.SWITCH), TailTypes.SWITCH_LPARENTH));
           }
         }
-        addKeyword(createKeyword(PsiKeyword.NULL));
+        if (allowExprKeywords) {
+          addKeyword(createKeyword(PsiKeyword.NULL));
+        }
       }
-      if (mayExpectBoolean(myParameters)) {
+      if (allowExprKeywords && mayExpectBoolean(myParameters)) {
         addKeyword(createKeyword(PsiKeyword.TRUE));
         addKeyword(createKeyword(PsiKeyword.FALSE));
       }
@@ -597,8 +589,13 @@ public class JavaKeywordCompletion {
   }
 
   private static boolean isExpressionPosition(PsiElement position) {
-    return EXPR_KEYWORDS.accepts(position) && LabelReferenceCompletion.isBreakValueOrLabelPosition(position) != Boolean.FALSE ||
-           psiElement().insideStarting(psiElement(PsiClassObjectAccessExpression.class)).accepts(position);
+    if (psiElement().insideStarting(psiElement(PsiClassObjectAccessExpression.class)).accepts(position)) return true;
+
+    PsiElement parent = position.getParent();
+    return parent instanceof PsiReferenceExpression &&
+           !((PsiReferenceExpression)parent).isQualified() &&
+           !JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position) &&
+           LabelReferenceCompletion.isBreakValueOrLabelPosition(position) != Boolean.FALSE;
   }
 
   public static boolean isInstanceofPlace(PsiElement position) {
