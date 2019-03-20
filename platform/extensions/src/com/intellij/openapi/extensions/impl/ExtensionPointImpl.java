@@ -54,7 +54,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   // guarded by this
   @NotNull
-  List<ExtensionComponentAdapter> myAdapters = Collections.emptyList();
+  protected List<ExtensionComponentAdapter> myAdapters = Collections.emptyList();
 
   @SuppressWarnings("unchecked")
   @NotNull
