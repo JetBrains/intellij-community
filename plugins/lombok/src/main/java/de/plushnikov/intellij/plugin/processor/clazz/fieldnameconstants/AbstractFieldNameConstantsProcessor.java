@@ -27,7 +27,7 @@ public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassP
   private static final String FIELD_NAME_CONSTANTS_INCLUDE = FieldNameConstants.Include.class.getName().replace("$", ".");
   private static final String FIELD_NAME_CONSTANTS_EXCLUDE = FieldNameConstants.Exclude.class.getName().replace("$", ".");
 
-  protected AbstractFieldNameConstantsProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+  AbstractFieldNameConstantsProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass) {
     super(configDiscovery, supportedClass, supportedAnnotationClass);
   }
 

@@ -19,7 +19,7 @@ import java.util.Optional;
  * Inspect and validate @FieldNameConstants lombok annotation on a field
  * Creates Inner class containing string constants of the field name for each field of this class
  *
- * @author Plushnikov Michail
+ * @author alanachtenberg
  */
 public class FieldNameConstantsProcessor extends AbstractFieldNameConstantsProcessor {
 

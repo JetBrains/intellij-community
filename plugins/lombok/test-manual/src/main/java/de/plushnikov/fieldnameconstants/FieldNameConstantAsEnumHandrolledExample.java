@@ -3,7 +3,7 @@ package de.plushnikov.fieldnameconstants;
 import lombok.experimental.FieldNameConstants;
 
 @FieldNameConstants(asEnum = true, innerTypeName = "NAMES")
-public class FieldNameConstantAsEnumExample {
+public class FieldNameConstantAsEnumHandrolledExample {
   private String stringField;
   private int intField;
 
@@ -14,14 +14,14 @@ public class FieldNameConstantAsEnumExample {
     return 1;
   }
 
-  public enum NAMES{
+  public enum NAMES {
     existingField
   }
 
   public static void main(String[] args) {
-    System.out.println(FieldNameConstantAsEnumExample.NAMES.intField);
+    System.out.println(FieldNameConstantAsEnumHandrolledExample.NAMES.intField);
 
-    FieldNameConstantAsEnumExample.NAMES iAmAField = NAMES.stringField;
+    FieldNameConstantAsEnumHandrolledExample.NAMES iAmAField = NAMES.stringField;
     System.out.println(iAmAField);
 
     print(iAmAField);
@@ -40,7 +40,7 @@ public class FieldNameConstantAsEnumExample {
   }
 
   private static void print(NAMES iAmAField) {
-    switch(iAmAField) {
+    switch (iAmAField) {
       case stringField:
         System.out.println("stringField");
         break;

@@ -12,6 +12,6 @@ public class FieldNameConstantAsClassExample {
   public static void main(String[] args) {
     System.out.println(Fields.someInteger);
     System.out.println(Fields.stringField);
-    System.out.println(FieldNameConstantAsEnumExample.NAMES.stringField);
+    System.out.println(FieldNameConstantAsClassExample.Fields.stringField);
   }
 }
