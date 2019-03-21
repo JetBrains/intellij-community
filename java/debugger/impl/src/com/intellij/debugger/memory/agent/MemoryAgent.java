@@ -2,12 +2,11 @@
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -18,29 +17,21 @@ public interface MemoryAgent {
   int DEFAULT_GC_ROOTS_OBJECTS_LIMIT = 1000;
 
   @NotNull
-  static MemoryAgentCapabilities capabilities(@NotNull DebugProcessImpl debugProcess) {
-    return MemoryAgentCapabilities.get(debugProcess);
-  }
+  static MemoryAgent get(@NotNull DebugProcessImpl debugProcess) {
+    if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) return MemoryAgentImpl.DISABLED;
 
-  @NotNull
-  static MemoryAgent using(@NotNull EvaluationContextImpl evaluationContext) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    return new MemoryAgentImpl(evaluationContext);
-  }
-
-  @Nullable
-  static MemoryAgent using(@NotNull DebugProcessImpl debugProcess) {
-    EvaluationContextImpl context = debugProcess.getDebuggerContext().createEvaluationContext();
-    return context != null ? using(context) : null;
+    return MemoryAgentOperations.getAgent(debugProcess);
   }
 
   @NotNull
   MemoryAgentCapabilities capabilities();
 
-  long estimateObjectSize(@NotNull ObjectReference reference) throws EvaluateException;
+  long estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference) throws EvaluateException;
 
-  long[] estimateObjectsSizes(@NotNull List<ObjectReference> references) throws EvaluateException;
+  long[] estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ObjectReference> references)
+    throws EvaluateException;
 
   @NotNull
-  ReferringObjectsInfo findReferringObjects(@NotNull ObjectReference reference, int limit) throws EvaluateException;
+  ReferringObjectsInfo findReferringObjects(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference, int limit)
+    throws EvaluateException;
 }

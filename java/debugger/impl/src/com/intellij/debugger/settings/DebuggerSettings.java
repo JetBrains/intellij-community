@@ -65,7 +65,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public boolean DISABLE_JIT;
   public boolean SHOW_ALTERNATIVE_SOURCE = true;
   public boolean HOTSWAP_IN_BACKGROUND = true;
-  public boolean ENABLE_MEMORY_AGENT =
+  public volatile boolean ENABLE_MEMORY_AGENT =
     ApplicationManager.getApplication().isEAP() && !ApplicationManager.getApplication().isUnitTestMode();
   public boolean ALWAYS_SMART_STEP_INTO = true;
   public boolean SKIP_SYNTHETIC_METHODS = true;
