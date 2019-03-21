@@ -686,7 +686,7 @@ statement ::= if_statement
             | throw_statement
             | labeled_statement
             | type_definition | <<withProtectedLastVariantPos tuple_var_declaration>> | parse_block_declaration
-            | expression_or_application_except_zero_params_closure
+            | expression_statement
             | block_statement
 {
   elementType = ''
@@ -694,7 +694,9 @@ statement ::= if_statement
 
 private branch ::= <<extendedStatement>> | statement
 
-block_statement ::= lazy_block
+block_statement ::= !<<isParameterizedClosure>> lazy_block
+
+private expression_statement ::= expression_or_application_except_zero_params_closure
 
 if_statement ::= 'if' after_if_keyword { pin = 1 }
 private after_if_keyword ::= if_header mb_nl branch [mb_separators else_branch] { pin = 1 }
@@ -1137,7 +1139,9 @@ left application_call ::= call_argument_list (mb_nl lazy_closure)* | empty_argum
 left application_index ::= mb_question index_expression_argument_list
 
 private expression_or_application_except_zero_params_closure ::= <<isParameterizedClosure>> expression_or_application
-                                                                | expression_or_application !<<isAfterClosure>>
+                                                                | !double_block_statement expression_or_application !<<isAfterClosure>>
+
+private double_block_statement::= block_statement nl+ block_statement
 // endregion
 
 
