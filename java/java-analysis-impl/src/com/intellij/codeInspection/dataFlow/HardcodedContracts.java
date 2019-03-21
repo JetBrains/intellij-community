@@ -385,23 +385,49 @@ public class HardcodedContracts {
           return Collections.singletonList(new StandardMethodContract(constraints, fail()));
         }
       }
-      if (args.length == 1 && hasNotNullChainCall(call)) {
-        return failIfNull(0, 1, false);
+      if (args.length == 1) {
+        PsiType type = args[0].getType();
+        return SyntaxTraverser.psiApi().parents(call)
+          .skip(1)
+          .takeWhile(e -> !(e instanceof PsiStatement) && !(e instanceof PsiMember))
+          .filter(PsiMethodCallExpression.class)
+          .filterMap(c -> constraintFromAssertJMatcher(type, c))
+          .toList();
       }
     }
     return Collections.emptyList();
   }
 
-  private static boolean hasNotNullChainCall(PsiMethodCallExpression call) {
-    Iterable<PsiElement> exprParents = SyntaxTraverser.psiApi().parents(call).
-      takeWhile(e -> !(e instanceof PsiStatement) && !(e instanceof PsiMember));
-    return ContainerUtil.exists(exprParents, HardcodedContracts::isNotNullCall);
+  @Nullable
+  private static MethodContract constraintFromAssertJMatcher(PsiType type, PsiMethodCallExpression call) {
+    if (!call.getArgumentList().isEmpty()) return null;
+    String name = call.getMethodExpression().getReferenceName();
+    if (name == null) return null;
+    switch (name) {
+      case "isNotNull":
+        return new StandardMethodContract(new ValueConstraint[]{NULL_VALUE}, fail());
+      case "isNull":
+        return new StandardMethodContract(new ValueConstraint[]{NOT_NULL_VALUE}, fail());
+      case "isPresent":
+      case "isNotEmpty":
+        return emptyCheck(type, false);
+      case "isNotPresent":
+      case "isEmpty":
+        return emptyCheck(type, true);
+      case "isTrue":
+        return new StandardMethodContract(new ValueConstraint[]{FALSE_VALUE}, fail());
+      case "isFalse":
+        return new StandardMethodContract(new ValueConstraint[]{TRUE_VALUE}, fail());
+    }
+    return null;
   }
 
-  private static boolean isNotNullCall(PsiElement ref) {
-    return ref instanceof PsiReferenceExpression &&
-           "isNotNull".equals(((PsiReferenceExpression)ref).getReferenceName()) &&
-           ref.getParent() instanceof PsiMethodCallExpression;
+  @Nullable
+  private static MethodContract emptyCheck(PsiType type, boolean isEmpty) {
+    SpecialField field = SpecialField.fromQualifierType(type);
+    if (field == null) return null;
+    return singleConditionContract(ContractValue.argument(0).specialField(field), isEmpty ? RelationType.NE : RelationType.EQ,
+                                   field == SpecialField.OPTIONAL_VALUE ? ContractValue.nullValue() : ContractValue.zero(), fail());
   }
 
   @NotNull
