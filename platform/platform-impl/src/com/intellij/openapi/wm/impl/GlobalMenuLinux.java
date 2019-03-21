@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManager;
@@ -696,30 +694,12 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
   public static boolean isAvailable() { return ourLib != null; }
 
-  private static boolean _isUnderVMWare() {
-    // Workaround OC-18001 CLion crashes after opening Swift project on Linux
-    final GeneralCommandLine cmdLine = new GeneralCommandLine("lspci");
-    try {
-      final ProcessOutput out = ExecUtil.execAndGetOutput(cmdLine);
-      final String stdout = out.getStdout();
-      return stdout.toLowerCase().contains("vmware");
-    } catch (ExecutionException e) {
-      LOG.error(e);
-    }
-    return false;
-  }
-
   private static GlobalMenuLib _loadLibrary() {
-    try {
-      if (!SystemInfo.isLinux ||
-          Registry.is("linux.native.menu.force.disable") ||
-          !Experiments.isFeatureEnabled("linux.native.menu") ||
-          !JnaLoader.isLoaded() ||
-          (isCLionSwiftPluginInstalled() && _isUnderVMWare())) {
-        return null;
-      }
-    } catch (Throwable e) {
-      LOG.error(e);
+    if (!SystemInfo.isLinux ||
+        Registry.is("linux.native.menu.force.disable") ||
+        !Experiments.isFeatureEnabled("linux.native.menu") ||
+        !JnaLoader.isLoaded() ||
+        isUnderVMWareWithSwiftPluginInstalled()) {
       return null;
     }
 
@@ -744,9 +724,19 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     return null;
   }
 
-  private static boolean isCLionSwiftPluginInstalled() {
+  private static boolean isUnderVMWareWithSwiftPluginInstalled() {
     // Workaround OC-18001 CLion crashes after opening Swift project on Linux
-    return PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"));
+    if (PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"))) {
+      try {
+        String stdout = ExecUtil.execAndGetOutput(new GeneralCommandLine("lspci")).getStdout();
+        return stdout.toLowerCase(Locale.ENGLISH).contains("vmware");
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+
+    return false;
   }
 
   private static class MenuItemInternal {
