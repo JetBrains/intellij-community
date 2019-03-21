@@ -7,10 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo;
 
 import java.util.Collection;
 
 import static com.intellij.testFramework.UsefulTestCase.*;
+import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType;
+import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.getDelegatesToInfo;
 
 public interface ResolveTest extends BaseTest {
 
@@ -49,5 +53,13 @@ public interface ResolveTest extends BaseTest {
       PsiElement resolved = assertOneElement(results).getElement();
       return assertInstanceOf(resolved, clazz);
     }
+  }
+
+  default void closureDelegateTest(@NotNull String fqn, int strategy) {
+    GrClosableBlock closure = elementUnderCaret(GrClosableBlock.class);
+    DelegatesToInfo delegatesToInfo = getDelegatesToInfo(closure);
+    assertNotNull(delegatesToInfo);
+    assertType(fqn, delegatesToInfo.getTypeToDelegate());
+    assertEquals(strategy, delegatesToInfo.getStrategy());
   }
 }

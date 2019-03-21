@@ -3,12 +3,10 @@ package org.jetbrains.plugins.gradle.dsl
 
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.junit.Test
 
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DEPENDENCY_HANDLER
-import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.getDelegatesToInfo
 
 @CompileStatic
 class GradleDependenciesTest extends GradleHighlightingBaseTest implements ResolveTest {
@@ -26,10 +24,7 @@ class GradleDependenciesTest extends GradleHighlightingBaseTest implements Resol
 
   void 'dependencies closure delegate'() {
     doTest('dependencies { <caret> }') {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def delegatesToInfo = getDelegatesToInfo(closure)
-      assert delegatesToInfo.typeToDelegate.equalsToText(GRADLE_API_DEPENDENCY_HANDLER)
-      assert delegatesToInfo.strategy == 1
+      closureDelegateTest(GRADLE_API_DEPENDENCY_HANDLER, 1)
     }
   }
 }
