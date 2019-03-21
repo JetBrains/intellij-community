@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ui.CommitMessageUi;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -49,7 +50,7 @@ import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRightMargin;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
-public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {
+public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
   @NotNull private final EditorTextField myEditorField;
   @Nullable private final TitledSeparator mySeparator;
@@ -181,6 +182,13 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     return myEditorField;
   }
 
+  @NotNull
+  @Override
+  public String getText() {
+    return getComment();
+  }
+
+  @Override
   public void setText(@Nullable String initialMessage) {
     myEditorField.setText(initialMessage == null ? "" : convertLineSeparators(initialMessage));
   }

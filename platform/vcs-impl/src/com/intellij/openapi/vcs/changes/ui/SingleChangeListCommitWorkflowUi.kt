@@ -7,9 +7,12 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.TextAccessor
 import java.util.*
 
 interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
+  val commitMessageUi: CommitMessageUi
+
   fun activate(): Boolean
 
   fun addStateListener(listener: CommitWorkflowUiStateListener, parent: Disposable)
@@ -28,13 +31,17 @@ interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
 
   fun addChangeListListener(listener: ChangeListListener, parent: Disposable)
 
-  fun getCommitMessage(): String
-
   fun confirmCommitWithEmptyMessage(): Boolean
 
   interface ChangeListListener : EventListener {
     fun changeListChanged()
   }
+}
+
+//TODO Unify with CommitMessageI
+interface CommitMessageUi : TextAccessor {
+  override fun getText(): String
+  override fun setText(text: String?)
 }
 
 interface CommitExecutorListener : EventListener {
