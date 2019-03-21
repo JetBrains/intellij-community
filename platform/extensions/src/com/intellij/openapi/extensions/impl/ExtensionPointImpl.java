@@ -815,11 +815,11 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @NotNull
-  static ExtensionComponentAdapter doCreateAdapter(@NotNull String implementationClassName,
-                                                   @NotNull Element extensionElement,
-                                                   boolean isNeedToDeserialize,
-                                                   @NotNull PluginDescriptor pluginDescriptor,
-                                                   boolean isConstructorInjectionSupported) {
+  protected static ExtensionComponentAdapter doCreateAdapter(@NotNull String implementationClassName,
+                                                             @NotNull Element extensionElement,
+                                                             boolean isNeedToDeserialize,
+                                                             @NotNull PluginDescriptor pluginDescriptor,
+                                                             boolean isConstructorInjectionSupported) {
     String orderId = extensionElement.getAttributeValue("id");
     LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
     Element effectiveElement = isNeedToDeserialize ? extensionElement : null;
