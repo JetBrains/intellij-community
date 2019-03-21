@@ -259,19 +259,9 @@ public class ActionsTreeUtil {
 
   private static Group createEditorActionsGroup(Condition<? super AnAction> filtered) {
     ActionManager actionManager = ActionManager.getInstance();
-    DefaultActionGroup editorGroup = (DefaultActionGroup)actionManager.getActionOrStub(IdeActions.GROUP_EDITOR);
-    ArrayList<String> ids = new ArrayList<>();
-
-    addEditorActions(filtered, editorGroup, ids);
-
-    Collections.sort(ids);
-    Group group = new Group(KeyMapBundle.message("editor.actions.group.title"), IdeActions.GROUP_EDITOR, AllIcons.Nodes.KeymapEditor
-    );
-    for (String id : ids) {
-      group.addActionId(id);
-    }
-
-    return group;
+    return createGroup((ActionGroup)actionManager.getActionOrStub(IdeActions.GROUP_EDITOR),
+                       KeyMapBundle.message("editor.actions.group.title"),
+                       AllIcons.Nodes.KeymapEditor, null, false, filtered);
   }
 
   @Nullable
@@ -284,25 +274,6 @@ public class ActionsTreeUtil {
       result = KeymapManagerEx.getInstanceEx().getActionBinding(id);
     }
     return result;
-  }
-
-  private static void addEditorActions(final Condition<? super AnAction> filtered,
-                                       final DefaultActionGroup editorGroup,
-                                       final ArrayList<? super String> ids) {
-    AnAction[] editorActions = editorGroup.getChildActionsOrStubs();
-    final ActionManager actionManager = ActionManager.getInstance();
-    for (AnAction editorAction : editorActions) {
-      if (editorAction instanceof DefaultActionGroup) {
-        addEditorActions(filtered, (DefaultActionGroup) editorAction, ids);
-      }
-      else {
-        String actionId = editorAction instanceof ActionStub ? ((ActionStub)editorAction).getId() : actionManager.getId(editorAction);
-        if (actionId == null) continue;
-        if (filtered == null || filtered.value(editorAction)) {
-          ids.add(actionId);
-        }
-      }
-    }
   }
 
   private static Group createExtensionGroup(Condition<AnAction> filtered, final Project project, KeymapExtension provider) {
