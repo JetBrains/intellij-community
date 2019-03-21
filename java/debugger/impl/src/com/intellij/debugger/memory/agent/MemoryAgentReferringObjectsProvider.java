@@ -36,7 +36,7 @@ public class MemoryAgentReferringObjectsProvider implements ReferringObjectsProv
     }
 
     MemoryAgent memoryAgent = MemoryAgent.get(evaluationContext.getDebugProcess());
-    if (memoryAgent.capabilities().canGetReferringObjects()) {
+    if (!memoryAgent.capabilities().canGetReferringObjects()) {
       throw new UnsupportedOperationException();
     }
 
