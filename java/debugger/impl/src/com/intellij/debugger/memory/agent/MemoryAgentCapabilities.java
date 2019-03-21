@@ -3,20 +3,18 @@ package com.intellij.debugger.memory.agent;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
 public class MemoryAgentCapabilities {
-  static final MemoryAgentCapabilities DISABLED = new MemoryAgentCapabilities(false, Collections.emptySet());
+  static final MemoryAgentCapabilities DISABLED = new MemoryAgentCapabilities(false, EnumSet.noneOf(Capability.class));
 
   private final boolean myIsLoaded;
   private final Set<Capability> myCapabilities;
 
-  private MemoryAgentCapabilities(boolean isLoaded, @NotNull Set<Capability> capabilitySet) {
+  private MemoryAgentCapabilities(boolean isLoaded, @NotNull EnumSet<Capability> capabilitySet) {
     myIsLoaded = isLoaded;
-    myCapabilities = EnumSet.noneOf(Capability.class);
-    myCapabilities.addAll(capabilitySet);
+    myCapabilities = EnumSet.copyOf(capabilitySet);
   }
 
   public boolean isLoaded() {
@@ -51,7 +49,7 @@ public class MemoryAgentCapabilities {
   }
 
   static class Builder {
-    private final Set<Capability> myCapabilities = EnumSet.noneOf(Capability.class);
+    private final EnumSet<Capability> myCapabilities = EnumSet.noneOf(Capability.class);
 
     public Builder setCanFindGcRoots(boolean value) {
       return update(Capability.GC_ROOTS, value);
