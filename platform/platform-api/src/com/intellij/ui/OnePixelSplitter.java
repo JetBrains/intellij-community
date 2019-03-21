@@ -17,16 +17,16 @@ package com.intellij.ui;
 
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.OnePixelDivider;
-import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class OnePixelSplitter extends JBSplitter {
-  private Producer<Insets> myBlindZone;
+  private Supplier<Insets> myBlindZone;
 
   public OnePixelSplitter() {
     super();
@@ -73,12 +73,12 @@ public class OnePixelSplitter extends JBSplitter {
     return new OnePixelDivider(isVertical(), this);
   }
 
-  public void setBlindZone(Producer<Insets> blindZone) {
+  public void setBlindZone(Supplier<Insets> blindZone) {
     myDivider.setOpaque(blindZone == null);
     myBlindZone = blindZone;
   }
 
-  public Producer<Insets> getBlindZone() {
+  public Supplier<Insets> getBlindZone() {
     return myBlindZone;
   }
 }

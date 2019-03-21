@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class EditorModificationUtil {
   private static final Key<ReadOnlyHint> READ_ONLY_VIEW_HINT_KEY = Key.create("READ_ONLY_VIEW_MESSAGE_KEY");
@@ -126,7 +127,7 @@ public class EditorModificationUtil {
     return offset;
   }
 
-  public static void pasteTransferableAsBlock(Editor editor, @Nullable Producer<? extends Transferable> producer) {
+  public static void pasteTransferableAsBlock(Editor editor, @Nullable Supplier<? extends Transferable> producer) {
     Transferable content = getTransferable(producer);
     if (content == null) return;
     String text = getStringContent(content);
@@ -174,10 +175,10 @@ public class EditorModificationUtil {
     return null;
   }
 
-  private static Transferable getTransferable(Producer<? extends Transferable> producer) {
+  private static Transferable getTransferable(Supplier<? extends Transferable> producer) {
     Transferable content = null;
     if (producer != null) {
-      content = producer.produce();
+      content = producer.get();
     }
     else {
       CopyPasteManager manager = CopyPasteManager.getInstance();

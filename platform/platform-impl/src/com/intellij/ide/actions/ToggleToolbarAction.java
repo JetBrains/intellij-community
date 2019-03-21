@@ -27,7 +27,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
@@ -37,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author gregsh
@@ -52,7 +52,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
   @NotNull
   public static ToggleToolbarAction createAction(@NotNull String id,
                                                  @NotNull PropertiesComponent properties,
-                                                 @NotNull Producer<? extends Iterable<JComponent>> components) {
+                                                 @NotNull Supplier<? extends Iterable<JComponent>> components) {
     return new ToggleToolbarAction(properties, getShowToolbarProperty(id), components);
   }
 
@@ -111,11 +111,11 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
 
   private final PropertiesComponent myPropertiesComponent;
   private final String myProperty;
-  private final Producer<? extends Iterable<JComponent>> myProducer;
+  private final Supplier<? extends Iterable<JComponent>> myProducer;
 
   private ToggleToolbarAction(@NotNull PropertiesComponent propertiesComponent,
                               @NotNull String property,
-                              @NotNull Producer<? extends Iterable<JComponent>> producer) {
+                              @NotNull Supplier<? extends Iterable<JComponent>> producer) {
     super("Show Toolbar");
     myPropertiesComponent = propertiesComponent;
     myProperty = property;
@@ -125,7 +125,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    boolean hasToolbars = iterateToolbars(myProducer.produce()).iterator().hasNext();
+    boolean hasToolbars = iterateToolbars(myProducer.get()).iterator().hasNext();
     e.getPresentation().setVisible(hasToolbars);
   }
 
@@ -136,7 +136,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    setToolbarVisibleImpl(myProperty, myPropertiesComponent, myProducer.produce(), state);
+    setToolbarVisibleImpl(myProperty, myPropertiesComponent, myProducer.get(), state);
   }
 
   static void setToolbarVisibleImpl(@NotNull String property,
