@@ -178,7 +178,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
           if (configurationSettings != null) {
             RunConfigurationNode node = new RunConfigurationNode(myProject, Pair.create(configurationSettings, contentDescriptor),
                                                                  getContributor(configurationSettings.getType()));
-            ServiceViewManager.getInstance(myProject).selectNode(node);
+            ServiceViewManager.getInstance(myProject).selectNode(node, true, false);
           }
         }
       }
