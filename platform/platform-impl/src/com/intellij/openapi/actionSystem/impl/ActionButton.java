@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.*;
@@ -35,6 +36,13 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
+  /**
+   * By default button representing popup action group displays 'dropdown' icon.
+   * This key allows to avoid 'dropdown' icon painting, just put it in ActionButton's presentation or template presentation of ActionGroup like this:
+   * <code>presentaion.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE)</code>
+   */
+
+  public static final Key<Boolean> HIDE_DROPDOWN_ICON = Key.create("HIDE_DROPDOWN_ICON");
   private JBDimension myMinimumButtonSize;
   private PropertyChangeListener myPresentationListener;
   private Icon myDisabledIcon;
@@ -361,6 +369,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   private void paintDownArrowIfGroup(Graphics g) {
     if (!(myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup())) return;
+    if (Boolean.TRUE == myAction.getTemplatePresentation().getClientProperty(HIDE_DROPDOWN_ICON)) return;
+    if (Boolean.TRUE == myPresentation.getClientProperty(HIDE_DROPDOWN_ICON)) return;
     Container parent = getParent();
     boolean horizontal = !(parent instanceof ActionToolbarImpl) ||
                          ((ActionToolbarImpl)parent).getOrientation() == SwingConstants.HORIZONTAL;
@@ -593,17 +603,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         return true;
       }
       return false;
-    }
-  }
-
-  public static class Transparent extends ActionButton {
-    public Transparent(@NotNull AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
-      super(action, presentation, place, minimumSize);
-    }
-
-    @Override
-    public void paintComponent(Graphics g) {
-      paintButtonLook(g);
     }
   }
 }
