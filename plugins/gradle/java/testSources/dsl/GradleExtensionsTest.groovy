@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
+import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -23,9 +24,13 @@ class GradleExtensionsTest extends GradleHighlightingBaseTest implements Resolve
   @Test
   void extensionsTest() {
     importProject("")
-    "project level extension property"()
-    "project level extension call type"()
-    "project level extension closure delegate type"()
+    new RunAll().append {
+      "project level extension property"()
+    } append {
+      "project level extension call type"()
+    } append {
+      "project level extension closure delegate type"()
+    } run()
   }
 
   void "project level extension property"() {
