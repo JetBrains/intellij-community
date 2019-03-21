@@ -107,15 +107,15 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val libWebApplication = "Web Application"
     const val itemKotlinMppDeprecated = "Kotlin (Multiplatform - Deprecated)"
     const val itemKotlinMppExperimental = "Kotlin (Multiplatform - Experimental)"
-    const val itemKotlinMppLibrary = "Kotlin (Multiplatform Library)"
-    const val itemKotlinMppClientServer = "Kotlin (JS Client/JVM Server)"
-    const val itemKotlinMppMobileAndroidIos = "Kotlin (Mobile Android/iOS)"
-    const val itemKotlinMppMobileSharedLibrary = "Kotlin (Mobile Shared Library)"
+    const val itemKotlinMppLibrary = "Multiplatform Library | Gradle"
+    const val itemKotlinMppClientServer = "JS Client and JVM Server | Gradle"
+    const val itemKotlinMppMobileAndroidIos = "Mobile Android/iOS | Gradle"
+    const val itemKotlinMppMobileSharedLibrary = "Mobile Shared Library | Gradle"
     const val itemKotlinJvm = "Kotlin/JVM"
     const val itemKotlinJs = "Kotlin/JS"
-    const val itemKotlinNative = "Kotlin/Native"
-    const val itemGradleKotlinJvm = "Kotlin (Java)"
-    const val itemGradleKotlinJs = "Kotlin (JavaScript)"
+    const val itemKotlinNative = "Native | Gradle"
+    const val itemGradleKotlinJvm = "JVM | IDEA"
+    const val itemGradleKotlinJs = "JS | IDEA"
   }
 
   enum class Groups(private val title: String) {
