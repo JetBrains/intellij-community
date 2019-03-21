@@ -1,0 +1,22 @@
+(a) -> {} 1
+-----
+Groovy script
+  Call expression
+    Lambda expression
+      Parameter list
+        PsiElement(()('(')
+        Parameter
+          Modifiers
+            <empty list>
+          PsiElement(identifier)('a')
+        PsiElement())(')')
+      PsiWhiteSpace(' ')
+      PsiElement(->)('->')
+      PsiWhiteSpace(' ')
+      Lambda body block
+        PsiElement({)('{')
+        PsiElement(})('}')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Literal
+        PsiElement(Integer)('1')
