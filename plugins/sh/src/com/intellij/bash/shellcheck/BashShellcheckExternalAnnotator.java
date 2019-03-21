@@ -91,11 +91,12 @@ public class BashShellcheckExternalAnnotator extends ExternalAnnotator<String, C
       TextRange range = TextRange.create(startOffset, endOffset == startOffset ? endOffset + 1 : endOffset);
       long code = result.code;
       String message = result.message;
-      holder.createAnnotation(severity(result.level), range,
-          message,
-          "<html>" + StringUtil.escapeXml(message) + " " +
-              "See <a href='https://github.com/koalaman/shellcheck/wiki/SC" + code + "'>SC" + code + "</a>." +
-              "</html>");
+      String html =
+          "<html>" +
+          "<p>" + StringUtil.escapeXml(message) + "</p>" +
+          "<p>See <a href='https://github.com/koalaman/shellcheck/wiki/SC" + code + "'>SC" + code + "</a>.</p>" +
+          "</html>";
+      holder.createAnnotation(severity(result.level), range, message, html);
     }
   }
 
