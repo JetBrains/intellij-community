@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -93,6 +92,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   @NotNull private final Project myProject;
   @NotNull private final VcsConfiguration myVcsConfiguration;
   @NotNull private final DialogCommitWorkflow myWorkflow;
+  @NotNull private final EventDispatcher<CommitWorkflowUiStateListener> myStateEventDispatcher =
+    EventDispatcher.create(CommitWorkflowUiStateListener.class);
   @NotNull private final EventDispatcher<CommitExecutorListener> myExecutorEventDispatcher =
     EventDispatcher.create(CommitExecutorListener.class);
   @NotNull private final List<DataProvider> myDataProviders = newArrayList();
@@ -292,6 +293,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     afterInit();
 
     return showAndGet();
+  }
+
+  @Override
+  public void addStateListener(@NotNull CommitWorkflowUiStateListener listener, @NotNull Disposable parent) {
+    myStateEventDispatcher.addListener(listener, parent);
   }
 
   private void beforeInit() {
@@ -752,7 +758,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     }
   }
 
-  private void saveComments(boolean isOk) {
+  void saveChangeListCommitOptions() {
+    myCommitOptions.saveChangeListComponentsState();
+  }
+
+  void saveComments(boolean isOk) {
     saveCommentIntoChangeList();
     if (isOk) {
       myVcsConfiguration.saveCommitMessage(getCommitMessage());
@@ -769,9 +779,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
 
   @Override
   public void doCancelAction() {
-    myCommitOptions.saveChangeListComponentsState();
-    saveComments(false);
-    LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
+    myStateEventDispatcher.getMulticaster().cancelled();
     super.doCancelAction();
   }
 

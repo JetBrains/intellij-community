@@ -12,6 +12,8 @@ import java.util.*
 interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
   fun activate(): Boolean
 
+  fun addStateListener(listener: CommitWorkflowUiStateListener, parent: Disposable)
+
   fun addDataProvider(provider: DataProvider)
 
   fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable)
@@ -41,4 +43,9 @@ interface CommitExecutorListener : EventListener {
 
 interface InclusionListener : EventListener {
   fun inclusionChanged()
+}
+
+interface CommitWorkflowUiStateListener : EventListener {
+  //  TODO Probably rename to "cancelling"?
+  fun cancelled()
 }
