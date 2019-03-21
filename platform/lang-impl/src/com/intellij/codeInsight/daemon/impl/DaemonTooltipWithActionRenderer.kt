@@ -15,6 +15,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.TooltipAction
 import com.intellij.openapi.keymap.KeymapManager
@@ -262,14 +263,14 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                                       hasMore: Boolean): JComponent {
     val presentation = Presentation()
     presentation.icon = AllIcons.Actions.More
+    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
     val actions = mutableListOf<AnAction>()
     actions.add(ShowActionsAction(reloader, tooltipAction != null))
     val docAction = ShowDocAction(reloader, hasMore)
     actions.add(docAction)
     val actionGroup = SettingsActionGroup(actions)
 
-    val settingsButton = ActionButton.Transparent(actionGroup, presentation, ActionPlaces.UNKNOWN,
-                                                                                         Dimension(18, 18))
+    val settingsButton = ActionButton(actionGroup, presentation, ActionPlaces.UNKNOWN, Dimension(18, 18))
     settingsButton.setNoIconsInPopup(true)
     settingsButton.border = JBUI.Borders.empty()
     settingsButton.isOpaque = false

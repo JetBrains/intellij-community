@@ -470,16 +470,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
         super.processMouseMotionEvent(e);
       }
-
-      @NotNull
-      @Override
-      protected ActionButton createSecondaryButton(DefaultActionGroup secondaryActions,
-                                                   Presentation presentation,
-                                                   String place, final Dimension minimumSize) {
-        return new ActionButton.Transparent(secondaryActions, presentation, place, minimumSize);
-      }
     };
-    myToolBar.setSecondaryActionsIcon(AllIcons.Actions.More);
+    myToolBar.setSecondaryActionsIcon(AllIcons.Actions.More, true);
 
     JLayeredPane layeredPane = new JBLayeredPane() {
       @Override
@@ -520,7 +512,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     gearActions.addAll(actions);
     Presentation presentation = new Presentation();
     presentation.setIcon(AllIcons.Actions.More);
-    myCorner = new ActionButton.Transparent(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20));
+    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+    myCorner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20));
     myCorner.setNoIconsInPopup(true);
     layeredPane.add(myCorner);
     layeredPane.setLayer(myCorner, JLayeredPane.POPUP_LAYER);
