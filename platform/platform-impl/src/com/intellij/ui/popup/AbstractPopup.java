@@ -1139,13 +1139,6 @@ public class AbstractPopup implements JBPopup {
     myContent.addMouseListener(mouseAdapter);
     Disposer.register(this, () -> myContent.removeMouseListener(mouseAdapter));
 
-    myContent.registerKeyboardAction(__ -> {
-      if (myCancelKeyEnabled) {
-        cancel();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-
     myContent.addKeyListener(mySpeedSearch);
 
     if (myCancelOnMouseOutCallback != null || myCancelOnWindow) {
@@ -1879,8 +1872,8 @@ public class AbstractPopup implements JBPopup {
   @Override
   public boolean dispatchKeyEvent(@NotNull KeyEvent e) {
     BooleanFunction<KeyEvent> handler = myKeyEventHandler;
-    if (handler != null) {
-      return handler.fun(e);
+    if (handler != null && handler.fun(e)) {
+      return true;
     }
     if (isCloseRequest(e) && myCancelKeyEnabled && !mySpeedSearch.isHoldingFilter()) {
       cancel(e);
