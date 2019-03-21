@@ -11,11 +11,17 @@ import com.intellij.openapi.vcs.changes.CommitExecutorBase
 import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.vcs.changes.CommitWorkflowHandler
 import com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow.Companion.getCommitHandlers
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 
 class SingleChangeListCommitWorkflowHandler(
   private val workflow: DialogCommitWorkflow,
   private val ui: CommitChangeListDialog
-) : CommitWorkflowHandler, SingleChangeListCommitWorkflowUi.ChangeListListener, InclusionListener, CommitExecutorListener, Disposable {
+) : CommitWorkflowHandler,
+    CommitWorkflowUiStateListener,
+    SingleChangeListCommitWorkflowUi.ChangeListListener,
+    InclusionListener,
+    CommitExecutorListener,
+    Disposable {
 
   private val project get() = workflow.project
   private val vcsConfiguration = VcsConfiguration.getInstance(project)
@@ -31,6 +37,7 @@ class SingleChangeListCommitWorkflowHandler(
   init {
     Disposer.register(ui, this)
 
+    ui.addStateListener(this, this)
     ui.addExecutorListener(this, this)
     ui.addDataProvider(DataProvider { dataId ->
       if (dataId == COMMIT_WORKFLOW_HANDLER.name) this
@@ -45,6 +52,13 @@ class SingleChangeListCommitWorkflowHandler(
     ui.addInclusionListener(this, this)
 
     return ui.activate()
+  }
+
+  override fun cancelled() {
+    ui.saveChangeListCommitOptions()
+    ui.saveComments(false)
+
+    LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
   }
 
   override fun inclusionChanged() = commitHandlers.forEach { it.includedChangesChanged() }
