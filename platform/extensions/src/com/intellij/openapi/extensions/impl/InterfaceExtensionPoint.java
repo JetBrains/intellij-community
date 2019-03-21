@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
 
-public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
+public class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   public InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull MutablePicoContainer picoContainer) {
     super(name, clazz.getName(), picoContainer, new UndefinedPluginDescriptor());
 
@@ -23,19 +23,6 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   }
 
   @Override
-  public synchronized void reset() {
-    // we don't check myLoadedAdapters because programmatically loaded extensions are not registered in pico container
-    //noinspection NonPrivateFieldAccessedInSynchronizedContext
-    for (ExtensionComponentAdapter adapter : myAdapters) {
-      if (adapter instanceof ComponentAdapter) {
-        myPicoContainer.unregisterComponent(((ComponentAdapter)adapter).getComponentKey());
-      }
-    }
-
-    super.reset();
-  }
-
-  @Override
   @NotNull
   protected ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor, @NotNull MutablePicoContainer picoContainer) {
     String implementationClassName = extensionElement.getAttributeValue("implementation");
@@ -43,10 +30,7 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
       throw new RuntimeException("'implementation' attribute not specified for '" + getName() + "' extension in '"
                                  + pluginDescriptor.getPluginId() + "' plugin");
     }
-    ExtensionComponentAdapter adapter = doCreateAdapter(implementationClassName, extensionElement, shouldDeserializeInstance(extensionElement), pluginDescriptor, true);
-    // no need to register bean extension - only InterfaceExtensionPoint registers
-    picoContainer.registerComponent((ComponentAdapter)adapter);
-    return adapter;
+    return doCreateAdapter(implementationClassName, extensionElement, shouldDeserializeInstance(extensionElement), pluginDescriptor, true);
   }
 
   private static boolean shouldDeserializeInstance(@NotNull Element extensionElement) {
@@ -63,5 +47,36 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
       }
     }
     return false;
+  }
+
+  static final class PicoContainerAwareInterfaceExtensionPoint<T> extends InterfaceExtensionPoint<T> {
+    PicoContainerAwareInterfaceExtensionPoint(@NotNull String name,
+                                              @NotNull String className,
+                                              @NotNull MutablePicoContainer picoContainer,
+                                              @NotNull PluginDescriptor pluginDescriptor) {
+      super(name, className, picoContainer, pluginDescriptor);
+    }
+
+    @NotNull
+    @Override
+    protected ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement,
+                                                                                        @NotNull PluginDescriptor pluginDescriptor,
+                                                                                        @NotNull MutablePicoContainer picoContainer) {
+      ExtensionComponentAdapter adapter = super.createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, picoContainer);
+      picoContainer.registerComponent((ComponentAdapter)adapter);
+      return adapter;
+    }
+
+    @Override
+    public synchronized void reset() {
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
+      for (ExtensionComponentAdapter adapter : myAdapters) {
+        if (adapter instanceof ComponentAdapter) {
+          myPicoContainer.unregisterComponent(((ComponentAdapter)adapter).getComponentKey());
+        }
+      }
+
+      super.reset();
+    }
   }
 }

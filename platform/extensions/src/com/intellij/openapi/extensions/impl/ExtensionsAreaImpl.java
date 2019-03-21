@@ -4,6 +4,7 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint.PicoContainerAwareInterfaceExtensionPoint;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -118,7 +119,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       point = new BeanExtensionPoint<>(pointName, beanClassName, myPicoContainer, pluginDescriptor);
     }
     else {
-      point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, myPicoContainer, pluginDescriptor);
+      point = new PicoContainerAwareInterfaceExtensionPoint<>(pointName, interfaceClassName, myPicoContainer, pluginDescriptor);
     }
     registerExtensionPoint(point);
   }
@@ -259,7 +260,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     PluginDescriptor pluginDescriptor = new UndefinedPluginDescriptor();
     ExtensionPointImpl<Object> point;
     if (kind == ExtensionPoint.Kind.INTERFACE) {
-      point = new InterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor);
+      point = new PicoContainerAwareInterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor);
     }
     else {
       point = new BeanExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor);
