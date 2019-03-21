@@ -41,11 +41,11 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
 
   @Override
   public void start() {
-    synchronized (this) {
+    synchronized (getLock()) {
       super.start();
       delegateRunningChange(ProgressIndicator::start);
+      myWasStarted = true;
     }
-    myWasStarted = true;
   }
 
 
@@ -65,7 +65,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   public void finish(@NotNull final TaskInfo task) {
     WeakList<TaskInfo> finished = myFinished;
     if (finished == null) {
-      synchronized (this) {
+      synchronized (getLock()) {
         finished = myFinished;
         if (finished == null) {
           myFinished = finished = new WeakList<>();
@@ -124,17 +124,21 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   }
 
   @Override
-  public synchronized void pushState() {
-    super.pushState();
+  public void pushState() {
+    synchronized (getLock()) {
+      super.pushState();
 
-    delegateProgressChange(ProgressIndicator::pushState);
+      delegateProgressChange(ProgressIndicator::pushState);
+    }
   }
 
   @Override
-  public synchronized void popState() {
-    super.popState();
+  public void popState() {
+    synchronized (getLock()) {
+      super.popState();
 
-    delegateProgressChange(ProgressIndicator::popState);
+      delegateProgressChange(ProgressIndicator::popState);
+    }
   }
 
   @Override
@@ -151,7 +155,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
 
   @Override
   public final void addStateDelegate(@NotNull ProgressIndicatorEx delegate) {
-    synchronized (this) {
+    synchronized (getLock()) {
       delegate.initStateFrom(this);
       ProgressIndicatorEx[] stateDelegates = myStateDelegates;
       if (stateDelegates == null) {
