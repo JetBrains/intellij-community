@@ -195,7 +195,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   private void cacheChangedFileStatus(final VirtualFile virtualFile, final FileStatus fs) {
     myCachedStatuses.put(virtualFile, fs);
     if (FileStatus.NOT_CHANGED.equals(fs)) {
-      final ThreeState parentingStatus = myFileStatusProvider.getNotChangedDirectoryParentingStatus(virtualFile);
+      final ThreeState parentingStatus = myFileStatusProvider == null ? null : myFileStatusProvider.getNotChangedDirectoryParentingStatus(virtualFile);
       if (ThreeState.YES.equals(parentingStatus)) {
         myWhetherExactlyParentToChanged.put(virtualFile, true);
       }
