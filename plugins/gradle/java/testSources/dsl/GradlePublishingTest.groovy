@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiType
+import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -19,8 +20,11 @@ class GradlePublishingTest extends GradleHighlightingBaseTest implements Resolve
   @Test
   void repositoriesTest() {
     importProject("apply plugin: 'maven-publish'")
-    'publishing closure delegate'()
-    'publishing repositories maven url'()
+    new RunAll().append {
+      'publishing closure delegate'()
+    } append {
+      'publishing repositories maven url'()
+    } run()
   }
 
   @Override
