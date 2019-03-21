@@ -28,7 +28,7 @@
     <httpRequestHandler implementation="org.jetbrains.ide.OpenFileHttpService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.AboutHttpService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.StartUpMeasurementService"/>
-    <httpRequestHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer"/>
+    <httpRequestHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer" order="last"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <customPortServerManager implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$MyCustomPortServerManager"/>
