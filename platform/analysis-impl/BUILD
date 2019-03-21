@@ -45,5 +45,9 @@ iml_module(
         "//tools/idea/platform/indexing-impl:intellij.platform.indexing.impl[module]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/platform/external-system-api:intellij.platform.externalSystem[module]",
+        "//tools/idea/.idea/libraries:studio-analytics-proto",
+        "//tools/analytics-library/tracker:analytics-tracker[module]",
+        "//tools/idea/.idea/libraries:HdrHistogram",
+        "//tools/idea/.idea/libraries:protobuf",
     ],
 )

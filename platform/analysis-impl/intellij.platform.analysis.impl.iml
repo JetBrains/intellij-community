@@ -18,5 +18,9 @@
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
+    <orderEntry type="library" name="studio-analytics-proto" level="project" />
+    <orderEntry type="module" module-name="analytics-tracker" />
+    <orderEntry type="library" name="HdrHistogram" level="project" />
+    <orderEntry type="library" name="protobuf" level="project" />
   </component>
 </module>

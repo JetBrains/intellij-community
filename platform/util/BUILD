@@ -37,6 +37,8 @@ iml_module(
         "//tools/analytics-library/tracker:analytics-tracker[module]",
         "//tools/idea/.idea/libraries:studio-analytics-proto",
         "//tools/idea/.idea/libraries:protobuf",
+        "//tools/idea/.idea/libraries:HdrHistogram",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
     ],
 )
 
@@ -79,5 +81,8 @@ iml_module(
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
+        "//tools/idea/.idea/libraries:HdrHistogram[test]",
+        "//tools/idea/.idea/libraries:studio-analytics-proto[test]",
+        "//tools/idea/.idea/libraries:protobuf[test]",
     ],
 )

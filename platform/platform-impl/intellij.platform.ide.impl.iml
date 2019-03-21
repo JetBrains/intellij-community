@@ -64,8 +64,5 @@
     <orderEntry type="library" scope="RUNTIME" name="jaxb-api" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="javax.annotation-api" level="project" />
-    <orderEntry type="library" name="HdrHistogram" level="project" />
-    <orderEntry type="library" name="protobuf" level="project" />
-    <orderEntry type="library" name="studio-analytics-proto" level="project" />
   </component>
 </module>

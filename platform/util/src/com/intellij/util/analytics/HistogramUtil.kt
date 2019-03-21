@@ -15,7 +15,7 @@
  */
 @file:JvmName("HistogramUtil")
 
-package com.intellij.ide
+package com.intellij.util.analytics
 
 import com.google.wireless.android.sdk.stats.HistogramBin
 import org.HdrHistogram.Histogram
