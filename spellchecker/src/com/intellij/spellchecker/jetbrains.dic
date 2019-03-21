@@ -51,6 +51,7 @@ basename
 bashrc
 basicfile
 batis
+benchmarked
 bfile
 bigfile
 bigint
@@ -237,6 +238,7 @@ functor
 functors
 functorial
 fxml
+gbps
 gdata
 gemfire
 generification
@@ -411,6 +413,8 @@ maxlogmembers
 maxsize
 maxtrans
 maxvalue
+mbps
+mebibyte
 mediumblob
 mediumint
 mediumtext
@@ -533,6 +537,7 @@ overrider
 overriders
 pageable
 param
+parameterize
 parameterizable
 paramorphism
 params
@@ -636,6 +641,7 @@ reimport
 reindex
 reindexing
 renderer
+renderers
 repackager
 replacer
 repo
@@ -753,6 +759,7 @@ stmt
 strictfp
 stringifier
 stringify
+struct
 stylesheet
 stylesheets
 subexpression
