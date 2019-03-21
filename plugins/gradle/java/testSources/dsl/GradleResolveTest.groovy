@@ -7,11 +7,17 @@ import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.junit.Test
+import org.junit.runners.Parameterized
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_DATE
 
 @CompileStatic
 class GradleResolveTest extends GradleHighlightingBaseTest implements ResolveTest {
+
+  @Parameterized.Parameters(name = "with Gradle-{0}")
+  static Collection<Object[]> data() {
+    return [[BASE_GRADLE_VERSION] as Object[]]
+  }
 
   @Test
   void resolveTest() {
