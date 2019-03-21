@@ -347,30 +347,23 @@ public final class PythonSdkType extends SdkType {
    * @param passParentEnvironment iff true, include system paths in PATH
    */
   public static void patchCommandLineForVirtualenv(GeneralCommandLine commandLine, String sdkHome, boolean passParentEnvironment) {
-    File virtualEnvRoot = getVirtualEnvRoot(sdkHome);
-    if (virtualEnvRoot != null) {
-      @NonNls final String PATH = "PATH";
+    final Map<String, String> virtualEnv = activateVirtualEnv(sdkHome);
+    if (!virtualEnv.isEmpty()) {
+      final Map<String, String> environment = commandLine.getEnvironment();
 
-      // prepend virtualenv bin if it's not already on PATH
-      File bin = new File(virtualEnvRoot, "bin");
-      if (!bin.exists()) {
-        bin = new File(virtualEnvRoot, "Scripts");   // on Windows
-      }
-      String virtualenvBin = bin.getPath();
+      for (Map.Entry<String, String> entry : virtualEnv.entrySet()) {
+        final String key = entry.getKey();
+        final String value = entry.getValue();
 
-      Map<String, String> env = commandLine.getEnvironment();
-      String pathValue;
-      if (env.containsKey(PATH)) {
-        pathValue = PythonEnvUtil.addToPathEnvVar(env.get(PATH), virtualenvBin, true);
+        if (environment.containsKey(key)) {
+          if (key.equalsIgnoreCase(PySdkUtil.PATH_ENV_VARIABLE)) {
+            PythonEnvUtil.addToPathEnvVar(environment.get(key), value, false);
+          }
+        }
+        else {
+          environment.put(key,value);
+        }
       }
-      else if (passParentEnvironment) {
-        // append to PATH
-        pathValue = PythonEnvUtil.addToPathEnvVar(System.getenv(PATH), virtualenvBin, true);
-      }
-      else {
-        pathValue = virtualenvBin;
-      }
-      env.put(PATH, pathValue);
     }
   }
 
