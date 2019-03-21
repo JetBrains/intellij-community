@@ -2,9 +2,9 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivitySubNames;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.StartupProgress;
@@ -73,8 +73,10 @@ public class PluginManagerCore {
   public static final String PLUGIN_XML = "plugin.xml";
   public static final String PLUGIN_XML_PATH = META_INF + PLUGIN_XML;
 
-  public static final float PLUGINS_PROGRESS_PART = 0.3f;
-  public static final float LOADERS_PROGRESS_PART = 0.35f;
+  static final float PLUGINS_PROGRESS_PART = 0.3f;
+  private static final float LOADERS_PROGRESS_PART = 0.35f;
+
+  public static final float PROGRESS_PART = PLUGINS_PROGRESS_PART + LOADERS_PROGRESS_PART;
 
   /** @noinspection StaticNonFinalField*/
   public static String BUILD_NUMBER;
@@ -1190,7 +1192,7 @@ public class PluginManagerCore {
 
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
 
-    Activity activity = StartUpMeasurer.start(Phases.LOAD_PLUGIN_DESCRIPTORS);
+    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.LOAD_PLUGIN_DESCRIPTORS);
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(PluginManagerCore.class.getClassLoader(), urlsFromClassPath);
 
@@ -1591,7 +1593,7 @@ public class PluginManagerCore {
   }
 
   private static void initPlugins(@Nullable StartupProgress progress) {
-    Activity activity = StartUpMeasurer.start(Phases.INIT_PLUGINS);
+    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INIT_PLUGINS);
     try {
       initializePlugins(progress);
     }

@@ -189,6 +189,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
 
+    Activity activity = StartUpMeasurer.start("instantiate AppDelayQueue");
     Thread edt = UIUtil.invokeAndWaitIfNeeded(() -> {
       // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
       // that thread was chosen because we know for sure it's running
@@ -200,6 +201,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       });
       return Thread.currentThread();
     });
+    activity.end();
     myLock = new ReadMostlyRWLock(edt);
 
     NoSwingUnderWriteAction.watchForEvents(this);
@@ -390,16 +392,18 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void load(@Nullable final String configPath) {
-    load(configPath, null);
+    load(configPath, null, null);
   }
 
-  public void load(@Nullable final String configPath, @Nullable Splash splash) {
+  public void load(@Nullable final String configPath, @Nullable Splash splash, @Nullable List<IdeaPluginDescriptor> plugins) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
       StartupProgress startupProgress = splash == null ? null : (message, progress) -> splash.showProgress("", progress);
 
       // before totalMeasureToken to ensure that plugin loading is not part of this
-      List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins(startupProgress);
+      if (plugins == null) {
+        plugins = PluginManagerCore.getLoadedPlugins(startupProgress);
+      }
 
       if (!isHeadlessEnvironment()) {
         // wanted for UI, but should not affect start-up time,
@@ -493,7 +497,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
-    float start = PluginManagerCore.PLUGINS_PROGRESS_PART + PluginManagerCore.LOADERS_PROGRESS_PART;
+    float start = PluginManagerCore.PROGRESS_PART;
     indicator.setFraction(start + getPercentageOfComponentsLoaded() * (1 - start));
   }
 
