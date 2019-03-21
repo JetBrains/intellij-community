@@ -4,12 +4,10 @@ package org.jetbrains.plugins.gradle.dsl
 import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty
-import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt
 import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.junit.Test
 
@@ -51,10 +49,7 @@ class GradleExtensionsTest extends GradleHighlightingBaseTest implements Resolve
 
   void "project level extension closure delegate type"() {
     doTest("ext {<caret>}") {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def info = GrDelegatesToUtilKt.getDelegatesToInfo(closure)
-      assert info != null
-      assert info.typeToDelegate.equalsToText(getExtraPropertiesExtensionFqn())
+      closureDelegateTest(getExtraPropertiesExtensionFqn(), 1)
     }
   }
 
