@@ -4,14 +4,65 @@ package org.jetbrains.intellij.build.images.mappings
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.intellij.build.images.IconsClassGenerator
 import org.jetbrains.intellij.build.images.ImageCollector
+import org.jetbrains.intellij.build.images.isImage
+import org.jetbrains.intellij.build.images.sync.Context
+import org.jetbrains.intellij.build.images.sync.isAncestorOf
 import org.jetbrains.intellij.build.images.sync.isValidIcon
 import org.jetbrains.intellij.build.images.sync.protectStdErr
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import kotlin.streams.toList
 
-fun main() {
+fun main() = generateMappings()
+
+private fun generateMappings() {
+  val mappings = (loadIdeaGeneratedIcons() + loadNonGeneratedIcons("idea")).groupBy {
+    "${it.product}#${it.set}"
+  }.values.flatMap {
+    if (it.size > 1) {
+      System.err.println("Duplicates were generated $it\nRenaming")
+      it.subList(1, it.size).mapIndexed { i, duplicate ->
+        Mapping(duplicate.product, "${duplicate.set}${i + 1}", duplicate.path)
+      } + it.first()
+    }
+    else it
+  }
+  val mappingsJson = mappings.joinToString(separator = ",\n") {
+    it.toString().prependIndent("     ")
+  }
+  println("""
+    |{
+    |  "mappings": [
+    |$mappingsJson
+    |  ]
+    |}
+  """.trimMargin())
+}
+
+private class Mapping(val product: String, val set: String, val path: String) {
+  override fun toString(): String {
+    val productName = when (product) {
+      "kotlin", "mps" -> product
+      else -> "intellij-$product"
+    }
+    return """
+      |{
+      |   "product": "$productName",
+      |   "set": "$set",
+      |   "src": "../IntelliJIcons/$path",
+      |   "category": "icons"
+      |}
+    """.trimMargin()
+  }
+}
+
+private fun loadIdeaGeneratedIcons(): Collection<Mapping> {
   val homePath = PathManager.getHomePath()
   val home = File(homePath)
   val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
@@ -19,7 +70,7 @@ fun main() {
     it.name == "intellij.platform.util"
   } ?: throw error("Can't load module 'util'")
   val generator = IconsClassGenerator(home, util)
-  val mappings = protectStdErr {
+  return protectStdErr {
     project.modules.parallelStream().map { module ->
       val iconsClassInfo = generator.getIconsClassInfo(module) ?: return@map null
       val imageCollector = ImageCollector(home.toPath(), iconsOnly = true, className = iconsClassInfo.className)
@@ -31,25 +82,81 @@ fun main() {
         return@map when {
           icons.isEmpty() -> null
           icons.size > 1 -> error("${iconsClassInfo.className}: ${icons.joinToString()}")
-          else -> """
-            |{
-            |   "product": "intellij",
-            |   "set": "${iconsClassInfo.className}",
-            |   "src": "../IntelliJIcons/idea/${icons.first().toRelativeString(home)}",
-            |   "category": "icons"
-            |}
-          """.trimMargin().prependIndent("     ")
+          else -> Mapping("idea", iconsClassInfo.className, "idea/${icons.first().toRelativeString(home)}")
         }
-
       }
       else null
-    }.filter(Objects::nonNull).toList().joinToString(separator = ",\n")
+    }.filter(Objects::nonNull).map { it!! }.toList()
   }
-  println("""
-    |{
-    |  "mappings": [
-    |$mappings
-    |  ]
-    |}
-  """.trimMargin())
 }
+
+private fun loadNonGeneratedIcons(vararg skip: String): Collection<Mapping> {
+  val iconsRepo = Context().iconsRepoDir
+  val toSkip = sequenceOf(*skip)
+    .map(iconsRepo::resolve)
+    .map(File::toString)
+    .toList()
+  val iconsRoots = mutableSetOf<File>()
+  Files.walkFileTree(iconsRepo.toPath(), object : SimpleFileVisitor<Path>() {
+    override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes) =
+      if (toSkip.contains(dir.toString()) || dir.fileName.toString() == ".git") {
+        FileVisitResult.SKIP_SUBTREE
+      }
+      else super.preVisitDirectory(dir, attrs)
+
+    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+      if (isImage(file)) iconsRoots.add(file.parent.toFile())
+      return FileVisitResult.CONTINUE
+    }
+  })
+  return iconsRoots.groupBy { product(iconsRepo, it) }.flatMap { entry ->
+    val (product, roots) = entry
+    val rootSet = "${product.capitalize()}Icons"
+    if (roots.size == 1) {
+      val path = roots.single().toRelativeString(iconsRepo)
+      return@flatMap listOf(Mapping(product, rootSet, path))
+    }
+    roots.map { root ->
+      val path = root.toRelativeString(iconsRepo)
+      val set = set(root, roots, iconsRepo, product)
+        .takeIf(String::isNotBlank)
+        ?.let { "$rootSet.$it" }
+      Mapping(product, set ?: rootSet, path)
+    }.distinct()
+  }
+}
+
+private fun product(iconsRepo: File, iconsDir: File): String = when {
+  iconsRepo == iconsDir.parentFile -> iconsDir.name
+  iconsDir.parentFile != null -> product(iconsRepo, iconsDir.parentFile)
+  else -> error("Unable to determine product name for $iconsDir")
+}
+
+private val delimiters = arrayOf("/", ".", "-", "_")
+private val exclusions = setOf("icons", "images",
+                               "source", "src", "main", "resources",
+                               "org", "jetbrains", "plugins")
+
+private fun set(root: File, roots: Collection<File>, iconsRepo: File, product: String): String {
+  val ancestors = roots.filter { it.isAncestorOf(root) }
+  val parts = root.toRelativeString(iconsRepo)
+    .splitToSequence(*delimiters)
+    .filter(String::isNotBlank)
+    .filter { it.toLowerCase() != product }
+    .filter { !exclusions.contains(it.toLowerCase()) }
+    .toMutableList()
+  ancestors.forEach { parts -= it.toRelativeString(iconsRepo).split(*delimiters) }
+  val parentPrefix = parent(root, roots, iconsRepo)
+                       ?.let { set(it, roots, iconsRepo, product) }
+                       ?.takeIf(String::isNotBlank)
+                       ?.let { "$it." } ?: ""
+  return parentPrefix + parts.asSequence()
+    .distinct().filter(String::isNotBlank)
+    .joinToString(separator = ".", transform = String::capitalize)
+}
+
+private fun parent(root: File?, roots: Collection<File>, iconsRepo: File): File? =
+  if (root != null && root != iconsRepo) roots.firstOrNull {
+    it == root.parentFile
+  } ?: parent(root.parentFile, roots, iconsRepo)
+  else null
