@@ -729,6 +729,7 @@
     <extensionPoint qualifiedName="Pythonid.packageManagerProvider" interface="com.jetbrains.python.packaging.PyPackageManagerProvider"/>
     <extensionPoint qualifiedName="Pythonid.scientific.displayMessageHandler"
                     interface="com.jetbrains.scientific.extension.DisplayMessageHandler"/>
+    <extensionPoint qualifiedName="Pythonid.stringPathFilter" interface="com.jetbrains.python.codeInsight.completion.pathFilters.PyPathFilter"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -831,6 +832,8 @@
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
     <pyPregeneratedSkeletonsProvider id="default" implementation="com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider"/>
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyThirdPartyInspectionExtension"/>
+
+    <stringPathFilter implementation="com.jetbrains.python.codeInsight.completion.pathFilters.DefaultPyPathFilter"/>
   </extensions>
 
   <actions>

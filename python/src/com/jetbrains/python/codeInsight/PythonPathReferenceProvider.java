@@ -22,14 +22,6 @@ public class PythonPathReferenceProvider extends PsiReferenceProvider {
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     String text = ((PyStringLiteralExpression)element).getStringValue();
 
-    //if (text.startsWith(FILE_SCHEME)) {
-    //  if (text.length() > FILE_SCHEME_LENGTH) {
-    //    text = text.substring(FILE_SCHEME_LENGTH);
-    //  } else {
-    //    text = "";
-    //  }
-    //}
-
     String fsRootToCheck = getFsRoot(text);
     return new PythonStringFileReferenceSet(text,
                                             element,
