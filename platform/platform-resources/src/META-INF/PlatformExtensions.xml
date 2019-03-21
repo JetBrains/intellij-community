@@ -497,6 +497,8 @@
 
     <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
 
+    <fileEditorProvider implementation="com.intellij.largeFilesEditor.editor.EditorProvider"/>
+
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
