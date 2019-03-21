@@ -1855,6 +1855,9 @@ public class ContainerUtil extends ContainerUtilRt {
     return sorted(list, Comparator.naturalOrder());
   }
 
+  /**
+   * @apiNote this sort implementation is NOT stable for element.length < INSERTION_SORT_THRESHOLD 
+   */
   public static <T> void sort(@NotNull T[] a, @NotNull Comparator<? super T> comparator) {
     int size = a.length;
 
