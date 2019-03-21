@@ -24,9 +24,15 @@ interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
 
   fun addInclusionListener(listener: InclusionListener, parent: Disposable)
 
+  fun addChangeListListener(listener: ChangeListListener, parent: Disposable)
+
   fun getCommitMessage(): String
 
   fun confirmCommitWithEmptyMessage(): Boolean
+
+  interface ChangeListListener : EventListener {
+    fun changeListChanged()
+  }
 }
 
 interface CommitExecutorListener : EventListener {
