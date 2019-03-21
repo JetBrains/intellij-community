@@ -17,7 +17,8 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
-import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisitor {
   private final StringBuilder myBuf;
@@ -247,18 +248,19 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
     }
   }
 
-  public static class RenderFunction implements Function<PsiExpression, String> {
+  public static class RenderFunction implements NotNullFunction<PsiExpression, String> {
+    @NotNull
     @Override
     public String fun(PsiExpression psiExpression) {
       return render(psiExpression);
     }
   }
 
-  public static String render(PsiExpression expression) {
+  public static String render(@NotNull PsiExpression expression) {
     return render(expression, 100);
   }
 
-  public static String render(PsiExpression expression, int maxLength) {
+  public static String render(@NotNull PsiExpression expression, int maxLength) {
     StringBuilder buf = new StringBuilder();
     expression.accept(new PsiExpressionTrimRenderer(buf));
     final String text = buf.toString();
