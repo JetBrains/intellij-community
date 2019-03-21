@@ -171,9 +171,7 @@ public class StartupUtil {
       executorService.submit(() -> loadSystemLibraries(log));  /* no need to wait */
 
       Activity activity = StartUpMeasurer.start(Phases.WAIT_TASKS);
-      for (Future<?> future : futures) {
-        future.get();
-      }
+      for (Future<?> future : futures) future.get();
       activity.end();
       futures.clear();
     }
@@ -235,7 +233,10 @@ public class StartupUtil {
     return log;
   }
 
-  private static void addInitUiTasks(@NotNull List<Future<?>> futures, @NotNull ExecutorService executorService, @NotNull Logger log, @NotNull Future<?> initLafTask) {
+  private static void addInitUiTasks(@NotNull List<Future<?>> futures,
+                                     @NotNull ExecutorService executorService,
+                                     @NotNull Logger log,
+                                     @NotNull Future<?> initLafTask) {
     if (!Main.isHeadless()) {
       // no need to wait - fonts required for editor, not for license window or splash
       executorService.execute(() -> AppUIUtil.registerBundledFonts());
@@ -501,6 +502,7 @@ public class StartupUtil {
   private static void startLogging(@NotNull Logger log) {
     ShutDownTracker.getInstance().registerShutdownTask(() ->
         log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"));
+
     log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
 
     ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
