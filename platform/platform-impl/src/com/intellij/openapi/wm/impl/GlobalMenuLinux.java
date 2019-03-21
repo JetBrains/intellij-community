@@ -706,19 +706,13 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     try {
       NativeLibraryLoader.loadPlatformLibrary("dbm");
 
-      // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
-      // the way we tell CF to interpret our char*
-      // May be removed if we use toStringViaUTF16
-      System.setProperty("jna.encoding", "UTF8");
-
-      final Map<String, Object> options = new HashMap<>();
-      return Native.loadLibrary("dbm", GlobalMenuLib.class, options);
-    } catch (UnsatisfiedLinkError ule) {
+      return Native.loadLibrary("dbm", GlobalMenuLib.class, Collections.singletonMap("jna.encoding", "UTF8"));
+    }
+    catch (UnsatisfiedLinkError ule) {
       LOG.info("disable global-menu integration because some of shared libraries isn't installed: " + ule);
-    } catch (Throwable e) {
+    }
+    catch (Throwable e) {
       LOG.error(e);
-    } finally {
-      System.clearProperty("jna.encoding");
     }
 
     return null;
