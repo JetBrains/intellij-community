@@ -30,9 +30,11 @@ class SingleChangeListCommitWorkflowHandler(
   private fun getIncludedChanges() = ui.getIncludedChanges()
   private fun getIncludedUnversionedFiles() = ui.getIncludedUnversionedFiles()
 
-  private fun getCommitMessage() = ui.commitMessage
+  private fun getCommitMessage() = ui.commitMessageUi.text
+  private fun setCommitMessage(text: String?) = ui.commitMessageUi.setText(text)
 
   private val commitHandlers get() = workflow.commitHandlers
+  private val commitMessagePolicy get() = workflow.commitMessagePolicy
 
   init {
     Disposer.register(ui, this)
@@ -51,12 +53,14 @@ class SingleChangeListCommitWorkflowHandler(
 
     ui.addInclusionListener(this, this)
 
+    initCommitMessage()
+
     return ui.activate()
   }
 
   override fun cancelled() {
     ui.saveChangeListCommitOptions()
-    ui.saveComments(false)
+    saveCommitMessage(false)
 
     LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
   }
@@ -64,7 +68,7 @@ class SingleChangeListCommitWorkflowHandler(
   override fun inclusionChanged() = commitHandlers.forEach { it.includedChangesChanged() }
 
   override fun changeListChanged() {
-    ui.updateCommitMessage()
+    updateCommitMessage()
     ui.updateCommitOptions()
   }
 
@@ -89,6 +93,8 @@ class SingleChangeListCommitWorkflowHandler(
   private fun executeDefault(executor: CommitExecutor?) {
     if (!addUnversionedFiles()) return
     if (!checkEmptyCommitMessage()) return
+    if (!ui.saveCommitOptions()) return
+    saveCommitMessage(true)
 
     ui.executeDefaultCommitSession(executor)
   }
@@ -96,6 +102,8 @@ class SingleChangeListCommitWorkflowHandler(
   private fun executeCustom(executor: CommitExecutor, session: CommitSession) {
     if (!workflow.canExecute(executor, getIncludedChanges())) return
     if (!checkEmptyCommitMessage()) return
+    if (!ui.saveCommitOptions()) return
+    saveCommitMessage(true)
 
     ui.execute(executor, session)
   }
@@ -105,6 +113,19 @@ class SingleChangeListCommitWorkflowHandler(
 
   private fun checkEmptyCommitMessage(): Boolean =
     getCommitMessage().isNotEmpty() || !vcsConfiguration.FORCE_NON_EMPTY_COMMENT || ui.confirmCommitWithEmptyMessage()
+
+  private fun initCommitMessage() {
+    commitMessagePolicy.init(getChangeList(), getIncludedChanges())
+    setCommitMessage(commitMessagePolicy.commitMessage)
+  }
+
+  private fun updateCommitMessage() {
+    commitMessagePolicy.update(getChangeList(), getCommitMessage())
+    setCommitMessage(commitMessagePolicy.commitMessage)
+  }
+
+  private fun saveCommitMessage(success: Boolean) =
+    commitMessagePolicy.save(getChangeList(), getIncludedChanges(), getCommitMessage(), success)
 
   override fun dispose() = Unit
 }

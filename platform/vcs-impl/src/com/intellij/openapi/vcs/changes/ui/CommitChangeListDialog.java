@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -56,14 +55,12 @@ import java.util.*;
 
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
-import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.openapi.vcs.changes.ui.CommitOptionsPanel.*;
 import static com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow.getCommitHandlerFactories;
 import static com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter.moveToFailedList;
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
 import static com.intellij.util.ArrayUtil.isEmpty;
-import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.ui.SwingHelper.buildHtml;
@@ -90,7 +87,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   private static final boolean DETAILS_SHOW_OPTION_DEFAULT = true;
 
   @NotNull private final Project myProject;
-  @NotNull private final VcsConfiguration myVcsConfiguration;
   @NotNull private final DialogCommitWorkflow myWorkflow;
   @NotNull private final EventDispatcher<CommitWorkflowUiStateListener> myStateEventDispatcher =
     EventDispatcher.create(CommitWorkflowUiStateListener.class);
@@ -101,7 +97,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
 
   @NotNull private final String myCommitActionName;
 
-  @NotNull private final Map<String, String> myListComments = newHashMap();
   @NotNull private final List<CommitExecutorAction> myExecutorActions;
 
   @NotNull private final CommitOptionsPanel myCommitOptions;
@@ -126,9 +121,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
 
   private boolean myDisposed = false;
   private boolean myUpdateDisabled = false;
-
-  private String myLastKnownComment = "";
-  private String myLastSelectedListName;
 
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull Collection<? extends Change> changes,
@@ -246,7 +238,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     super(workflow.getProject(), true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
     myWorkflow = workflow;
     myProject = myWorkflow.getProject();
-    myVcsConfiguration = notNull(VcsConfiguration.getInstance(myProject));
     Disposer.register(getDisposable(), this);
 
     List<? extends CommitExecutor> executors = myWorkflow.getExecutors();
@@ -314,10 +305,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     mySplitter.setSecondComponent(myCommitMessageArea);
     mySplitter.setProportion(PropertiesComponent.getInstance().getFloat(SPLITTER_PROPORTION_OPTION, SPLITTER_PROPORTION_OPTION_DEFAULT));
 
-    if (!myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
-      initComment(myWorkflow.getInitialCommitMessage());
-    }
-
     initOptions();
 
     myWarningLabel.setForeground(JBColor.RED);
@@ -338,7 +325,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   private void afterInit() {
     updateButtons();
     updateLegend();
-    updateOnListSelection();
+    updateCommitOptions();
+    myCommitMessageArea.setChangeList(getChangeList());
     myCommitMessageArea.requestFocusInMessage();
 
     for (EditChangelistSupport support : EditChangelistSupport.EP_NAME.getExtensions(myProject)) {
@@ -421,43 +409,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     return StreamEx.of(executors).select(HelpIdProvider.class).map(HelpIdProvider::getHelpId).nonNull().findFirst().orElse(null);
   }
 
-  private void initComment(@Nullable String comment) {
-    LocalChangeList list = getChangeList();
-    myLastSelectedListName = list.getName();
-
-    if (comment == null) {
-      comment = getCommentFromChangelist(list);
-
-      if (isEmptyOrSpaces(comment)) {
-        myLastKnownComment = myVcsConfiguration.LAST_COMMIT_MESSAGE;
-        comment = chooseNotNull(getInitialMessageFromVcs(), myVcsConfiguration.LAST_COMMIT_MESSAGE);
-      }
-    }
-    else {
-      myLastKnownComment = comment;
-    }
-
-    myCommitMessageArea.setText(comment);
-  }
-
   private void showDetailsIfSaved() {
     boolean showDetails = PropertiesComponent.getInstance().getBoolean(DETAILS_SHOW_OPTION, DETAILS_SHOW_OPTION_DEFAULT);
     if (showDetails) {
       myDetailsSplitter.initOn();
     }
     changeDetails(false);
-  }
-
-  private void updateOnListSelection() {
-    updateCommitMessage();
-    myCommitMessageArea.setChangeList(getChangeList());
-    updateCommitOptions();
-  }
-
-  void updateCommitMessage() {
-    if (!myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
-      updateComment();
-    }
   }
 
   void updateCommitOptions() {
@@ -539,9 +496,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   }
 
   void executeDefaultCommitSession(@Nullable CommitExecutor executor) {
-    if (!saveCommitOptions()) return;
-    saveComments(true);
-
     ensureDataIsActual(() -> {
       try {
         DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
@@ -570,9 +524,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   }
 
   void execute(@NotNull CommitExecutor commitExecutor, @NotNull CommitSession session) {
-    if (!saveCommitOptions()) return;
-    saveComments(true);
-
     if (session instanceof CommitSessionContextAware) {
       ((CommitSessionContextAware)session).setContext(getCommitContext());
     }
@@ -641,51 +592,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     });
   }
 
-  @Nullable
-  private String getInitialMessageFromVcs() {
-    Ref<String> result = new Ref<>();
-    ChangesUtil.processChangesByVcs(myProject, getIncludedChanges(), (vcs, changes) -> {
-      if (result.isNull()) {
-        CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
-        if (checkinEnvironment != null) {
-          FilePath[] paths = ChangesUtil.getPaths(changes).toArray(new FilePath[0]);
-          result.set(checkinEnvironment.getDefaultMessageFor(paths));
-        }
-      }
-    });
-    return result.get();
-  }
-
-  private void saveCommentIntoChangeList() {
-    if (myLastSelectedListName != null) {
-      myListComments.put(myLastSelectedListName, myCommitMessageArea.getComment());
-    }
-  }
-
-  private void updateComment() {
-    LocalChangeList list = getChangeList();
-    if (!list.getName().equals(myLastSelectedListName)) {
-      saveCommentIntoChangeList();
-
-      myLastSelectedListName = list.getName();
-      myCommitMessageArea.setText(chooseNotNull(getCommentFromChangelist(list), myLastKnownComment));
-    }
-  }
-
-  @Nullable
-  private String getCommentFromChangelist(@NotNull LocalChangeList list) {
-    for (CommitMessageProvider provider : CommitMessageProvider.EXTENSION_POINT_NAME.getExtensionList()) {
-      String message = provider.getCommitMessage(list, getProject());
-      if (message != null) return message;
-    }
-
-    String changeListComment = list.getComment();
-    if (!isEmptyOrSpaces(changeListComment)) return changeListComment;
-
-    if (!list.hasDefaultName()) return list.getName();
-    return null;
-  }
-
   @Override
   public void dispose() {
     myDisposed = true;
@@ -730,7 +636,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     myUpdateButtonsRunnable.run();
   }
 
-  private boolean saveCommitOptions() {
+  boolean saveCommitOptions() {
     try {
       saveState();
       return true;
@@ -760,21 +666,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
 
   void saveChangeListCommitOptions() {
     myCommitOptions.saveChangeListComponentsState();
-  }
-
-  void saveComments(boolean isOk) {
-    saveCommentIntoChangeList();
-    if (isOk) {
-      myVcsConfiguration.saveCommitMessage(getCommitMessage());
-
-      int selectedSize = getIncludedChanges().size();
-      int totalSize = getChangeList().getChanges().size();
-      if (totalSize > selectedSize) {
-        myListComments.remove(myLastSelectedListName);
-      }
-    }
-    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    myListComments.forEach((changeListName, comment) -> changeListManager.editComment(changeListName, comment));
   }
 
   @Override
@@ -846,9 +737,16 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
 
   @Override
   public void setCommitMessage(@Nullable String commitMessage) {
-    myLastKnownComment = commitMessage;
+    myWorkflow.getCommitMessagePolicy().setDefaultNameChangeListMessage(commitMessage);
+
     myCommitMessageArea.setText(commitMessage);
     myCommitMessageArea.requestFocusInMessage();
+  }
+
+  @NotNull
+  @Override
+  public String getCommitMessage() {
+    return myCommitMessageArea.getText();
   }
 
   @Override
@@ -942,6 +840,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
       .orElseGet(() -> getBrowser().getData(dataId));
   }
 
+  @NotNull
+  @Override
+  public CommitMessageUi getCommitMessageUi() {
+    return myCommitMessageArea;
+  }
+
   @Override
   public void addDataProvider(@NotNull DataProvider provider) {
     myDataProviders.add(provider);
@@ -978,12 +882,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   @Override
   public void addInclusionListener(@NotNull InclusionListener listener, @NotNull Disposable parent) {
     myInclusionEventDispatcher.addListener(listener, parent);
-  }
-
-  @NotNull
-  @Override
-  public String getCommitMessage() {
-    return myCommitMessageArea.getComment();
   }
 
   @Override
