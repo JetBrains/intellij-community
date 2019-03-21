@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 /**
  * a ConcurrentMap which computes the value associated with the key (via {@link #create(Object)} method) on first {@link #get(Object)} access.
@@ -182,6 +183,11 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
       }
     };
   }
+
+  /**
+   * @deprecated use {@link #create(Function, Supplier)} instead
+   */
+  @Deprecated
   @NotNull
   public static <K, V> ConcurrentMap<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Producer<? extends ConcurrentMap<K, V>> mapCreator) {
     //noinspection deprecation
@@ -200,12 +206,29 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
     };
   }
 
+  @NotNull
+  public static <K, V> ConcurrentMap<K, V> create(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Supplier<? extends ConcurrentMap<K, V>> mapCreator) {
+    return new ConcurrentFactoryMap<K, V>() {
+      @Nullable
+      @Override
+      protected V create(K key) {
+        return computeValue.fun(key);
+      }
+
+      @NotNull
+      @Override
+      protected ConcurrentMap<K, V> createMap() {
+        return mapCreator.get();
+      }
+    };
+  }
+
   /**
    * @return Concurrent factory map with weak keys, strong values
    */
   @NotNull
   public static <T, V> ConcurrentMap<T, V> createWeakMap(@NotNull Function<? super T, ? extends V> compute) {
-    return createMap(compute, ContainerUtil::createConcurrentWeakMap);
+    return create(compute, ContainerUtil::createConcurrentWeakMap);
   }
 
   /**

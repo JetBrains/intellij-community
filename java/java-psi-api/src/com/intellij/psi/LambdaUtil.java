@@ -12,7 +12,6 @@ import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -839,7 +838,7 @@ public class LambdaUtil {
 
   public static <T> T performWithSubstitutedParameterBounds(final PsiTypeParameter[] typeParameters,
                                                             final PsiSubstitutor substitutor,
-                                                            final Producer<? extends T> producer) {
+                                                            final Supplier<? extends T> producer) {
     try {
       for (PsiTypeParameter parameter : typeParameters) {
         final PsiClassType[] types = parameter.getExtendsListTypes();
@@ -851,7 +850,7 @@ public class LambdaUtil {
           getFunctionalTypeMap().put(parameter, upperBound);
         }
       }
-      return producer.produce();
+      return producer.get();
     }
     finally {
       for (PsiTypeParameter parameter : typeParameters) {
@@ -860,10 +859,10 @@ public class LambdaUtil {
     }
   }
 
-  public static <T> T performWithLambdaTargetType(PsiLambdaExpression lambdaExpression, PsiType targetType, Producer<? extends T> producer) {
+  public static <T> T performWithLambdaTargetType(PsiLambdaExpression lambdaExpression, PsiType targetType, Supplier<? extends T> producer) {
     try {
       getFunctionalTypeMap().put(lambdaExpression, targetType);
-      return producer.produce();
+      return producer.get();
     }
     finally {
       getFunctionalTypeMap().remove(lambdaExpression);

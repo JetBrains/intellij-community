@@ -25,7 +25,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -304,9 +304,9 @@ public class InjectorUtils {
     }
     if (off2 - off1 > 2) {
       // ... there's no non-empty valid host in between comment and topmostElement
-      Producer<PsiElement> producer = prevWalker(topmostElement, commonParent);
+      Supplier<PsiElement> producer = prevWalker(topmostElement, commonParent);
       PsiElement e;
-      while ( (e = producer.produce()) != null && e != psiComment) {
+      while ( (e = producer.get()) != null && e != psiComment) {
         if (e instanceof PsiLanguageInjectionHost &&
             ((PsiLanguageInjectionHost)e).isValidHost() &&
             !StringUtil.isEmptyOrSpaces(e.getText())) {
@@ -383,13 +383,13 @@ public class InjectorUtils {
   }
 
   @NotNull
-  private static Producer<PsiElement> prevWalker(@NotNull PsiElement element, @NotNull PsiElement scope) {
-    return new Producer<PsiElement>() {
+  private static Supplier<PsiElement> prevWalker(@NotNull PsiElement element, @NotNull PsiElement scope) {
+    return new Supplier<PsiElement>() {
       PsiElement e = element;
 
       @Nullable
       @Override
-      public PsiElement produce() {
+      public PsiElement get() {
         if (e == null || e == scope) return null;
         PsiElement prev = e.getPrevSibling();
         if (prev != null) {
