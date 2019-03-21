@@ -19,16 +19,13 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Producer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractMap;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * a Map which computes the value associated with the key (via {@link #create(Object)} method) on first {@link #get(Object)} access.
@@ -195,7 +192,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   @NotNull
-  public static <K, V> Map<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Producer<? extends Map<K, V>> mapCreator) {
+  public static <K, V> Map<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Supplier<? extends Map<K, V>> mapCreator) {
     //noinspection deprecation
     return new FactoryMap<K, V>() {
       @Nullable
@@ -207,7 +204,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
       @NotNull
       @Override
       protected Map<K, V> createMap() {
-        return mapCreator.produce();
+        return mapCreator.get();
       }
     };
   }

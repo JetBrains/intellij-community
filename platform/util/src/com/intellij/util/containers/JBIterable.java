@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * An in-house and immutable version of {@code com.google.common.collect.FluentIterable}
@@ -71,13 +72,13 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * Lambda-friendly construction method.
    */
   @NotNull
-  public static <E> JBIterable<E> create(@Nullable final Producer<? extends Iterator<E>> producer) {
+  public static <E> JBIterable<E> create(@Nullable final Supplier<? extends Iterator<E>> producer) {
     if (producer == null) return empty();
     return new JBIterable<E>() {
       @NotNull
       @Override
       public Iterator<E> iterator() {
-        return producer.produce();
+        return producer.get();
       }
     };
   }
