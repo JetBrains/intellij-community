@@ -58,10 +58,7 @@ import java.nio.file.*;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 /**
  * @author yole
@@ -132,7 +129,15 @@ public class StartupUtil {
     System.setProperty("idea.ui.util.static.init.enabled", "false");
     CompletableFuture<Void> initLafTask = CompletableFuture.runAsync(() -> {
       // see note about UIUtil static init - it is required even if headless
-      UIUtil.initDefaultLaF();
+      try {
+        UIUtil.initDefaultLaF();
+      }
+      catch (RuntimeException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        throw new CompletionException(e);
+      }
     }, runnable -> {
       PluginManager.installExceptionHandler();
       EventQueue.invokeLater(runnable);
@@ -236,8 +241,14 @@ public class StartupUtil {
 
     futures.add(executorService.submit(() -> {
       try {
+        try {
+          initLafTask.get();
+        }
+        catch (Exception e) {
+          log.error("Cannot initialize default LaF", e);
+        }
+
         // UIUtil.initDefaultLaF must be called before this call
-        initLafTask.get();
         Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init system font data");
         UIUtil.initSystemFontData(log);
         activity.end();
