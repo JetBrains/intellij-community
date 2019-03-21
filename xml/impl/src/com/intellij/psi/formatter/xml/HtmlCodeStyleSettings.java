@@ -64,7 +64,7 @@ public class HtmlCodeStyleSettings extends CustomCodeStyleSettings {
   @Property(externalName = "inline_tags")
   @CommaSeparatedValues
   @NonNls public String HTML_INLINE_ELEMENTS =
-    "a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,span,strike,strong,sub,sup,textarea,tt,u,var";
+    "a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,small,span,strike,strong,sub,sup,textarea,tt,u,var";
 
   @Property(externalName = "do_not_break_if_inline_tags")
   @CommaSeparatedValues
