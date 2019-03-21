@@ -212,8 +212,7 @@ public class IdeaApplication {
 
     IconLoader.activate();
 
-    // isStartParallel doesn't affect this functionality, but isStartParallel flag is used as default value for this flag
-    if (SystemProperties.getBooleanProperty("idea.app.use.fake.frame", !StartupUtil.isStartParallel())) {
+    if (SystemProperties.getBooleanProperty("idea.app.use.fake.frame", false)) {
       // this peer will prevent shutting down our application
       new JFrame().pack();
     }

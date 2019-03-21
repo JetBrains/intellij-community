@@ -101,7 +101,7 @@ public class StartupUtil {
   }
 
   static boolean isStartParallel() {
-    return SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", false);
+    return SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", true);
   }
 
   private static void runPreAppClass(Logger log) {
