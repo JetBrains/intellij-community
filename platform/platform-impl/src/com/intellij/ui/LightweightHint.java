@@ -250,7 +250,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   protected void beforeShow() {
-
   }
 
   public boolean vetoesHiding() {
