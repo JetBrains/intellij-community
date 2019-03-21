@@ -172,7 +172,7 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     }
 
     @NotNull
-    private Pair<String, String> getUndoOrRedoActionNameAndDescription(boolean undo) {
+    private static Pair<String, String> getUndoOrRedoActionNameAndDescription(boolean undo) {
       String command = undo ? "undo" : "redo";
       return Pair.create(
         ActionsBundle.message("action." + command + ".text", "").trim(),
