@@ -20,10 +20,8 @@ import sun.awt.image.WritableRasterNative;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.*;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class NST {
   private static final Logger LOG = Logger.getInstance(NST.class);
@@ -94,13 +92,7 @@ public class NST {
   static NSTLibrary loadLibrary() {
     NativeLibraryLoader.loadPlatformLibrary("nst");
 
-    // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
-    // the way we tell CF to interpret our char*
-    // May be removed if we use toStringViaUTF16
-    System.setProperty("jna.encoding", "UTF8");
-
-    final Map<String, Object> nstOptions = new HashMap<>();
-    return ourNSTLibrary = Native.loadLibrary("nst", NSTLibrary.class, nstOptions);
+    return ourNSTLibrary = Native.loadLibrary("nst", NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
   }
 
   public static boolean isAvailable() { return ourNSTLibrary != null; }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,15 +22,7 @@ public class Foundation {
   private static final FoundationLibrary myFoundationLibrary;
 
   static {
-    // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
-    // the way we tell CF to interpret our char*
-    // May be removed if we use toStringViaUTF16
-    System.setProperty("jna.encoding", "UTF8");
-
-    Map<String, Object> foundationOptions = new HashMap<>();
-    //foundationOptions.put(Library.OPTION_TYPE_MAPPER, FoundationTypeMapper.INSTANCE);
-
-    myFoundationLibrary = Native.loadLibrary("Foundation", FoundationLibrary.class, foundationOptions);
+    myFoundationLibrary = Native.loadLibrary("Foundation", FoundationLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
   }
 
   public static void init() { /* fake method to init foundation */ }
