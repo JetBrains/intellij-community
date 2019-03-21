@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.dsl
 import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.util.ResolveTest
@@ -12,7 +11,6 @@ import org.junit.Test
 
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_SOURCE_SET
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER
-import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.getDelegatesToInfo
 
 @CompileStatic
 class GradleSourceSetsTest extends GradleHighlightingBaseTest implements ResolveTest {
@@ -48,10 +46,7 @@ class GradleSourceSetsTest extends GradleHighlightingBaseTest implements Resolve
 
   void 'sourceSets closure delegate'() {
     doTest('sourceSets { <caret> }') {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def delegatesToInfo = getDelegatesToInfo(closure)
-      assert delegatesToInfo.typeToDelegate.equalsToText(GRADLE_API_SOURCE_SET_CONTAINER)
-      assert delegatesToInfo.strategy == 1
+      closureDelegateTest(GRADLE_API_SOURCE_SET_CONTAINER, 1)
     }
   }
 
@@ -73,10 +68,7 @@ class GradleSourceSetsTest extends GradleHighlightingBaseTest implements Resolve
 
   void 'source set closure delegate in unqualified method call'() {
     doTest('sourceSets { main { <caret> } }') {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def delegatesToInfo = getDelegatesToInfo(closure)
-      assert delegatesToInfo.typeToDelegate.equalsToText(GRADLE_API_SOURCE_SET)
-      assert delegatesToInfo.strategy == 1
+      closureDelegateTest(GRADLE_API_SOURCE_SET, 1)
     }
   }
 
@@ -107,10 +99,7 @@ class GradleSourceSetsTest extends GradleHighlightingBaseTest implements Resolve
 
   void 'source set closure delegate in qualified method call'() {
     doTest('sourceSets.main { <caret> }') {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def delegatesToInfo = getDelegatesToInfo(closure)
-      assert delegatesToInfo.typeToDelegate.equalsToText(GRADLE_API_SOURCE_SET)
-      assert delegatesToInfo.strategy == 1
+      closureDelegateTest(GRADLE_API_SOURCE_SET, 1)
     }
   }
 

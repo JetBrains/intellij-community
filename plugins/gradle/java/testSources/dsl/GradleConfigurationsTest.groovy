@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.dsl
 import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.util.ResolveTest
@@ -12,7 +11,6 @@ import org.junit.Test
 
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_CONFIGURATION
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_CONFIGURATION_CONTAINER
-import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.getDelegatesToInfo
 
 @CompileStatic
 class GradleConfigurationsTest extends GradleHighlightingBaseTest implements ResolveTest {
@@ -48,10 +46,7 @@ class GradleConfigurationsTest extends GradleHighlightingBaseTest implements Res
 
   void 'configurations closure delegate'() {
     doTest('configurations { <caret> }') {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def delegatesToInfo = getDelegatesToInfo(closure)
-      assert delegatesToInfo.typeToDelegate.equalsToText(GRADLE_API_CONFIGURATION_CONTAINER)
-      assert delegatesToInfo.strategy == 1
+      closureDelegateTest(GRADLE_API_CONFIGURATION_CONTAINER, 1)
     }
   }
 
@@ -73,10 +68,7 @@ class GradleConfigurationsTest extends GradleHighlightingBaseTest implements Res
 
   void 'configuration closure delegate in unqualified method call'() {
     doTest('configurations { foo { <caret> } }') {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def delegatesToInfo = getDelegatesToInfo(closure)
-      assert delegatesToInfo.typeToDelegate.equalsToText(GRADLE_API_CONFIGURATION)
-      assert delegatesToInfo.strategy == 1
+      closureDelegateTest(GRADLE_API_CONFIGURATION, 1)
     }
   }
 
@@ -107,10 +99,7 @@ class GradleConfigurationsTest extends GradleHighlightingBaseTest implements Res
 
   void 'configuration closure delegate in qualified method call'() {
     doTest('configurations { foo }; configurations.foo { <caret> }') {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def delegatesToInfo = getDelegatesToInfo(closure)
-      assert delegatesToInfo.typeToDelegate.equalsToText(GRADLE_API_CONFIGURATION)
-      assert delegatesToInfo.strategy == 1
+      closureDelegateTest(GRADLE_API_CONFIGURATION, 1)
     }
   }
 

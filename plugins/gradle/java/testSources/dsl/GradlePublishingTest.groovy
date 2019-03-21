@@ -5,14 +5,12 @@ import com.intellij.psi.PsiType
 import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.junit.Test
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY
-import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.getDelegatesToInfo
 
 @CompileStatic
 class GradlePublishingTest extends GradleHighlightingBaseTest implements ResolveTest {
@@ -34,10 +32,7 @@ class GradlePublishingTest extends GradleHighlightingBaseTest implements Resolve
 
   void 'publishing closure delegate'() {
     doTest('publishing { <caret> }') {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def delegatesToInfo = getDelegatesToInfo(closure)
-      assert delegatesToInfo.typeToDelegate.equalsToText(getPublishingExtensionFqn())
-      assert delegatesToInfo.strategy == 1
+      closureDelegateTest(getPublishingExtensionFqn(), 1)
     }
   }
 
