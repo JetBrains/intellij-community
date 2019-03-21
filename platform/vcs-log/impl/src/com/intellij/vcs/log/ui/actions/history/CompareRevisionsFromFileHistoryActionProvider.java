@@ -53,7 +53,7 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES);
-    if (changes == null || changes.length > 1 || changes[0] == null) return;
+    if (changes == null || changes.length != 1 || changes[0] == null) return;
 
     ShowDiffAction.showDiffForChange(project, Arrays.asList(changes));
   }
