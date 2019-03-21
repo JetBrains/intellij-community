@@ -8,8 +8,7 @@
     <extensionPoint name="appStarter"
                     interface="com.intellij.openapi.application.ApplicationStarter"/>
 
-    <extensionPoint name="postStartupActivity"
-                    interface="com.intellij.openapi.startup.StartupActivity"/>
+    <extensionPoint name="postStartupActivity" interface="com.intellij.openapi.startup.StartupActivity" registerInPicoContainer="false"/>
 
     <extensionPoint name="defaultProjectTypeProvider"
                     beanClass="com.intellij.openapi.project.DefaultProjectTypeEP"/>
@@ -122,8 +121,8 @@
     <extensionPoint name="projectTemplate"
                     beanClass="com.intellij.platform.ProjectTemplateEP"/>
 
-    <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener"/>
-    <extensionPoint name="applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener"/>
+    <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener" registerInPicoContainer="false"/>
+    <extensionPoint name="applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" registerInPicoContainer="false"/>
 
     <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider"/>
     <extensionPoint name="editorTabColorProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabColorProvider"/>
