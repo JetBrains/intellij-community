@@ -50,4 +50,9 @@ class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTe
         myFixture.configureByFile(fileName)
         myFixture.testHighlighting(true, false, false, fileName)
     }
+
+    fun testLambdaInSuspendDeclaration() {
+        myFixture.configureByFile("LambdaAssignmentCheck.kt")
+        myFixture.testHighlighting(true, false, false, "LambdaAssignmentCheck.kt")
+    }
 }
