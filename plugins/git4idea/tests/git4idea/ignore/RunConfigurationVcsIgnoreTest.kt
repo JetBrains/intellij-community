@@ -20,9 +20,13 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
 
   override fun setUp() {
     super.setUp()
-    invokeAndWaitIfNeeded { saveComponentManager(project) } //will create .idea directory
     vcsIgnoreManager = project.service()
     gitIgnore = File("$projectPath/$GITIGNORE")
+  }
+
+  override fun setUpProject() {
+    super.setUpProject()
+    invokeAndWaitIfNeeded { saveComponentManager(project) } //will create .idea directory
   }
 
   override fun setUpModule() {
