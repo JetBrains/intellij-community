@@ -350,7 +350,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       List<ExtensionComponentAdapter> adapters = myAdapters;
       LoadingOrder.sort(adapters);
 
-      OpenTHashSet<T> duplicates = new OpenTHashSet<>(adapters.size());
+      OpenTHashSet<T> duplicates = this instanceof BeanExtensionPoint ? null : new OpenTHashSet<>(adapters.size());
 
       ExtensionPointListener<T>[] listeners = myListeners;
       int extensionIndex = 0;
@@ -388,11 +388,15 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       if (duplicates != null && !duplicates.add(extension)) {
         T duplicate = duplicates.get(extension);
         assert result != null;
-        LOG.error("Duplicate extension found: " + extension + "; " +
-                  " Prev extension:  " + duplicate + ";\n" +
-                  " Adapter:         " + adapter + ";\n" +
-                  " Extension class: " + getExtensionClass() + ";\n" +
-                  " result:" + Arrays.asList(result));
+
+        LOG.error("Duplicate extension found:\n" +
+                  "                   " + extension + ";\n" +
+                  "  prev extension:  " + duplicate + ";\n" +
+                  "  adapter:         " + adapter + ";\n" +
+                  "  extension class: " + getExtensionClass() + ";\n" +
+                  "  result:          " + Arrays.asList(result) + ";\n" +
+                  "  adapters:        " + myAdapters
+        );
       }
       else {
         checkExtensionType(extension, adapter);
