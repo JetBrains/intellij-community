@@ -118,8 +118,11 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     if (interfaceClassName == null) {
       point = new BeanExtensionPoint<>(pointName, beanClassName, myPicoContainer, pluginDescriptor);
     }
-    else {
+    else if (Boolean.parseBoolean(extensionPointElement.getAttributeValue("registerInPicoContainer", "true"))) {
       point = new PicoContainerAwareInterfaceExtensionPoint<>(pointName, interfaceClassName, myPicoContainer, pluginDescriptor);
+    }
+    else {
+      point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, myPicoContainer, pluginDescriptor);
     }
     registerExtensionPoint(point);
   }
