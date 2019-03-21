@@ -82,15 +82,16 @@ internal class DoNotSaveDefaultsTest {
       }
     }
 
-    val propertyComponent = PropertiesComponent.getInstance()
-    // <property name="file.gist.reindex.count" value="54" />
-    propertyComponent.unsetValue("file.gist.reindex.count")
-    propertyComponent.unsetValue("android-component-compatibility-check")
-    // <property name="CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2" value="1.0" />
-    propertyComponent.unsetValue("CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2")
-    propertyComponent.unsetValue("ts.lib.d.ts.version")
-    propertyComponent.unsetValue("nodejs_interpreter_path.stuck_in_default_project")
-    propertyComponent.unsetValue("android-component-compatibility-check")
+    if (componentManager !is Project) {
+      val propertyComponent = PropertiesComponent.getInstance()
+      // <property name="file.gist.reindex.count" value="54" />
+      propertyComponent.unsetValue("file.gist.reindex.count")
+      propertyComponent.unsetValue("android-component-compatibility-check")
+      // <property name="CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2" value="1.0" />
+      propertyComponent.unsetValue("CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2")
+      propertyComponent.unsetValue("ts.lib.d.ts.version")
+      propertyComponent.unsetValue("nodejs_interpreter_path.stuck_in_default_project")
+    }
 
     val useModCountOldValue = System.getProperty("store.save.use.modificationCount")
     try {
