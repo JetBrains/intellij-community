@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
+import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -19,15 +20,25 @@ class GradleConfigurationsTest extends GradleHighlightingBaseTest implements Res
   @Test
   void configurationsTest() {
     importProject("")
-    'configurations closure delegate'()
-    'configuration via unqualified property reference'()
-    'configuration via unqualified method call'()
-    'configuration closure delegate in unqualified method call'()
-    'configuration member via unqualified method call closure delegate'()
-    'configuration via qualified property reference'()
-    'configuration via qualified method call'()
-    'configuration closure delegate in qualified method call'()
-    'configuration member via qualified method call closure delegate'()
+    new RunAll().append {
+      'configurations closure delegate'()
+    } append {
+      'configuration via unqualified property reference'()
+    } append {
+      'configuration via unqualified method call'()
+    } append {
+      'configuration closure delegate in unqualified method call'()
+    } append {
+      'configuration member via unqualified method call closure delegate'()
+    } append {
+      'configuration via qualified property reference'()
+    } append {
+      'configuration via qualified method call'()
+    } append {
+      'configuration closure delegate in qualified method call'()
+    } append {
+      'configuration member via qualified method call closure delegate'()
+    } run()
   }
 
   @Override
