@@ -316,35 +316,6 @@ public class ConcurrentBitSet {
     return result;
   }
 
-  /**
-  * Returns the hash code value for this bit set. The hash code depends
-  * only on which bits are set.
-  * <p/>
-  * <p>The hash code is defined to be the result of the following
-  * calculation:
-  * <pre> {@code
-  * public int hashCode() {
-  *     long h = 1234;
-  *     for (int i = words.length; --i >= 0; )
-  *         h ^= words[i] * (i + 1);
-  *     return (int)((h >> 32) ^ h);
-  * }}</pre>
-  * Note that the hash code changes if the set of bits is altered.
-  *
-  * @return the hash code value for this bit set
-  */
-  @Override
-  public int hashCode() {
-    long h = 1234;
-    int[] array = this.array;
-    for (int i = 0; i < array.length; i++) {
-        long word = getVolatile(array, i);
-        h ^= word * (1+ i);
-      }
-
-    return (int)(h >> 32 ^ h);
-  }
-
 
   /**
   * Returns the number of bits of space actually in use
@@ -353,43 +324,6 @@ public class ConcurrentBitSet {
   */
   public int size() {
     return array.length*BITS_PER_WORD;
-  }
-
-  /**
-  * Compares this object against the specified object.
-  * The result is {@code true} if and only if the argument is
-  * not {@code null} and is a {@code ConcurrentBitSet} object that has
-  * exactly the same set of bits set to {@code true} as this bit
-  * set. That is, for every nonnegative {@code int} index {@code k},
-  * <pre>((ConcurrentBitSet)obj).get(k) == this.get(k)</pre>
-  * must be true. The current sizes of the two bit sets are not compared.
-  *
-  * @param obj the object to compare with
-  * @return {@code true} if the objects are the same;
-  * {@code false} otherwise
-  * @see #size()
-  */
-  @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof ConcurrentBitSet)) {
-      return false;
-    }
-    if (this == obj) {
-      return true;
-    }
-
-    ConcurrentBitSet set = (ConcurrentBitSet)obj;
-
-    int[] array1 = array;
-    int[] array2 = set.array;
-    int length = Math.max(array1.length, array2.length);
-    for (int k=0; k<length; k++) {
-      long word1 = k < array1.length ? getVolatile(array1, k) : 0;
-      long word2 = k < array2.length ? getVolatile(array2, k) : 0;
-      if (word1 != word2) return false;
-    }
-
-    return true;
   }
 
   /**

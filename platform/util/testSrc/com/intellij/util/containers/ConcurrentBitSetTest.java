@@ -25,9 +25,8 @@ import java.util.stream.IntStream;
 public class ConcurrentBitSetTest extends TestCase {
   public void test() {
     ConcurrentBitSet bitSet = new ConcurrentBitSet();
-    final ConcurrentBitSet emptySet = new ConcurrentBitSet();
     assertEquals(0, bitSet.nextClearBit(0));
-    assertEquals(bitSet, emptySet);
+    assertEquals(-1, bitSet.nextSetBit(0));
     int N = 3000;
     for (int i = 0; i < N; i++) {
       assertEquals(-1, bitSet.nextSetBit(i));
@@ -37,11 +36,11 @@ public class ConcurrentBitSetTest extends TestCase {
       assertTrue(bitSet.get(i));
       bitSet.clear(i);
       assertFalse(bitSet.get(i));
-      assertEquals(bitSet, emptySet);
+      assertEquals(-1, bitSet.nextSetBit(0));
     }
     bitSet = new ConcurrentBitSet();
     for (int b=0;b<N;b++) {
-      assertEquals(bitSet, emptySet);
+      assertEquals(-1, bitSet.nextSetBit(0));
       boolean set = bitSet.flip(b);
       assertTrue(set);
       assertEquals(b, bitSet.nextSetBit(0));
@@ -69,9 +68,10 @@ public class ConcurrentBitSetTest extends TestCase {
       }
     }
     bitSet.set(100, true);
-    assertFalse(bitSet.equals(emptySet));
+    assertEquals(100, bitSet.nextSetBit(0));
+
     bitSet.clear();
-    assertEquals(bitSet, emptySet);
+    assertEquals(-1, bitSet.nextSetBit(0));
   }
 
   public void testStressFineGrainedSmallSet() {
@@ -141,15 +141,15 @@ public class ConcurrentBitSetTest extends TestCase {
     int N = 10000;
 
     for (int i=0; i<10; i++) {
-      long el = PlatformTestUtil.measure(() -> {
+      long el = PlatformTestUtil.measure(() ->
         IntStream.range(0,N).parallel().forEach(__-> {
           int r = 0;
           for (int j = 0; j < len; j++) {
             r += set.get(j)?1:0;
           }
           assertEquals(sum, r);
-        });
-      });
+        })
+      );
 
       System.out.println("elapsed = " + el);
     }
