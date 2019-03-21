@@ -83,7 +83,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
 
     val checkResult = checkConfigurationVcsIgnored(project, configurationName)
 
-    if(checkResult is Ignored){
+    if (checkResult is Ignored) {
       val ignoreFile = checkResult.ignoreFile
       FileUtil.appendToFile(ignoreFile, ignoreContentProvider.buildUnignoreContent(checkResult.matchedPattern))
     }
@@ -97,7 +97,8 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
         .resolve("$configurationFileName*.xml")
       val vcsRootForIgnore = VcsUtil.getVcsRootFor(project, projectConfigDir) ?: return NotIgnored
 
-      getCheckerForFile(project, projectConfigDir)?.isFilePatternIgnored(vcsRootForIgnore, PathUtil.toSystemIndependentName(checkForIgnore.path)) ?: NotIgnored
+      getCheckerForFile(project, projectConfigDir)
+        ?.isFilePatternIgnored(vcsRootForIgnore, PathUtil.toSystemIndependentName(checkForIgnore.path)) ?: NotIgnored
     }
     else {
       val projectFile = project.projectFile!!
@@ -108,7 +109,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
     }
   }
 
-  private fun getCheckerForFile(project: Project, file: VirtualFile): VcsIgnoreChecker?{
+  private fun getCheckerForFile(project: Project, file: VirtualFile): VcsIgnoreChecker? {
     val vcs = VcsUtil.getVcsFor(project, file) ?: return null
     return VcsIgnoreChecker.EXTENSION_POINT_NAME.getExtensionList(project).find { checker -> checker.supportedVcs == vcs.keyInstanceMethod }
   }
@@ -117,7 +118,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
     return OLD_NAME_CONVERTER(configurationName)
   }
 
-  private fun checkProjectNotDefault(project: Project){
+  private fun checkProjectNotDefault(project: Project) {
     if (project.isDefault) {
       throw UnsupportedOperationException("Default project not supported")
     }
