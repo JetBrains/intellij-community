@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -52,29 +51,15 @@ public class MergeWindow {
   protected void init() {
     if (myWrapper != null) return;
 
-    myProcessor = new MergeRequestProcessor(myProject, myMergeRequest) {
-      @Override
-      public void closeDialog() {
-        myWrapper.close();
-      }
+    myProcessor = createProcessor();
 
-      @Override
-      protected void setWindowTitle(@NotNull String title) {
-        myWrapper.setTitle(title);
-      }
-
-      @Nullable
-      @Override
-      protected JRootPane getRootPane() {
-        RootPaneContainer container = ObjectUtils.tryCast(myWrapper.getWindow(), RootPaneContainer.class);
-        return container != null ? container.getRootPane() : null;
-      }
-    };
+    String dialogGroupKey = myProcessor.getContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY);
+    if (dialogGroupKey == null) dialogGroupKey = "MergeDialog";
 
     myWrapper = new WindowWrapperBuilder(DiffUtil.getWindowMode(myHints), new MyPanel(myProcessor.getComponent()))
       .setProject(myProject)
       .setParent(myHints.getParent())
-      .setDimensionServiceKey(StringUtil.notNullize(myProcessor.getContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY), "MergeDialog"))
+      .setDimensionServiceKey(dialogGroupKey)
       .setPreferredFocusedComponent(() -> myProcessor.getPreferredFocusedComponent())
       .setOnShowCallback(() -> myProcessor.init())
       .setOnCloseHandler(() -> myProcessor.checkCloseAction())
@@ -93,6 +78,28 @@ public class MergeWindow {
 
     init();
     myWrapper.show();
+  }
+
+  @NotNull
+  private MergeRequestProcessor createProcessor() {
+    return new MergeRequestProcessor(myProject, myMergeRequest) {
+      @Override
+      public void closeDialog() {
+        myWrapper.close();
+      }
+
+      @Override
+      protected void setWindowTitle(@NotNull String title) {
+        myWrapper.setTitle(title);
+      }
+
+      @Nullable
+      @Override
+      protected JRootPane getRootPane() {
+        RootPaneContainer container = ObjectUtils.tryCast(myWrapper.getWindow(), RootPaneContainer.class);
+        return container != null ? container.getRootPane() : null;
+      }
+    };
   }
 
   private static class MyPanel extends JPanel {
