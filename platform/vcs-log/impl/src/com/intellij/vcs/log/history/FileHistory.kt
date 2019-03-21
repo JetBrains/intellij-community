@@ -175,12 +175,12 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   private val paths = Stack<MaybeDeletedFilePath>()
   private val visibilityBuffer = BitSetFlags(permanentLinearGraph.nodesCount()) // a reusable buffer for bfs
   private val pathsForCommits = ContainerUtil.newHashMap<Int, MaybeDeletedFilePath>()
-  private val excluded = ContainerUtil.newHashSet<Int>()
 
   fun refine(row: Int, startPath: MaybeDeletedFilePath): Pair<HashMap<Int, MaybeDeletedFilePath>, HashSet<Int>> {
     paths.push(startPath)
     LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph).walk(row, this)
 
+    val excluded = ContainerUtil.newHashSet<Int>()
     pathsForCommits.forEach { commit, path ->
       if (path != null && !namesData.affects(commit, path, true)) {
         excluded.add(commit)
