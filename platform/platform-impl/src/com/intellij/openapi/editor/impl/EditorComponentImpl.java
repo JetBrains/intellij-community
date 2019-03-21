@@ -5,6 +5,7 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
+import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -96,6 +97,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         return myEditor.visualPositionToXY(magnificationPosition);
       }
     });
+    putClientProperty(UndoRedoAction.IGNORE_SWING_UNDO_MANAGER, Boolean.TRUE);
     myApplication = (ApplicationImpl)ApplicationManager.getApplication();
 
     // This editor extends JTextComponent rather than JComponent *only* for accessibility
