@@ -443,14 +443,22 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   }
 
   private void updateOnListSelection() {
+    updateCommitMessage();
+    myCommitMessageArea.setChangeList(getChangeList());
+    updateCommitOptions();
+  }
+
+  void updateCommitMessage() {
     if (!myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
       updateComment();
     }
-    myCommitMessageArea.setChangeList(getChangeList());
+  }
+
+  void updateCommitOptions() {
     myCommitOptions.onChangeListSelected(getChangeList(), ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles());
   }
 
-  private void updateWarning() {
+  protected void updateWarning() {
     // check for null since can be called from constructor before field initialization
     //noinspection ConstantConditions
     if (myWarningLabel != null) {
@@ -1006,11 +1014,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   @NotNull
   JComponent getBrowserBottomPanel() {
     return myBrowserBottomPanel;
-  }
-
-  void selectedChangeListChanged() {
-    updateOnListSelection();
-    updateWarning();
   }
 
   @NotNull

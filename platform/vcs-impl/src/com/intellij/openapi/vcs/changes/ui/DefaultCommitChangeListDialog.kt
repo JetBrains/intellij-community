@@ -1,15 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.UIUtil.addBorder
 import java.awt.Dimension
 
-class DefaultCommitChangeListDialog(workflow: DialogCommitWorkflow) : CommitChangeListDialog(workflow) {
+class DefaultCommitChangeListDialog(workflow: DialogCommitWorkflow) :
+  CommitChangeListDialog(workflow),
+  SingleChangeListCommitWorkflowUi.ChangeListListener {
+
+  private val changeListEventDispatcher = EventDispatcher.create(SingleChangeListCommitWorkflowUi.ChangeListListener::class.java)
+
   private val browser =
     object : MultipleLocalChangeListsBrowser(project, true, true, workflow.isDefaultCommitEnabled, workflow.isPartialCommitEnabled) {
       override fun createAdditionalRollbackActions() = workflow.affectedVcses.mapNotNull { it.rollbackEnvironment }.flatMap { it.createCustomRollbackActions() }
@@ -31,10 +38,20 @@ class DefaultCommitChangeListDialog(workflow: DialogCommitWorkflow) : CommitChan
     val commitMessageEditor = DiffCommitMessageEditor(project, commitMessageComponent)
     browser.setBottomDiffComponent(commitMessageEditor)
 
-    browser.setSelectedListChangeListener { selectedChangeListChanged() }
+    browser.setSelectedListChangeListener { changeListEventDispatcher.multicaster.changeListChanged() }
+
+    addChangeListListener(this, this)
   }
 
   override fun getBrowser(): CommitDialogChangesBrowser = browser
+
+  override fun changeListChanged() {
+    commitMessageComponent.setChangeList(getChangeList())
+    updateWarning()
+  }
+
+  override fun addChangeListListener(listener: SingleChangeListCommitWorkflowUi.ChangeListListener, parent: Disposable) =
+    changeListEventDispatcher.addListener(listener, parent)
 }
 
 private class DiffCommitMessageEditor(project: Project, commitMessage: CommitMessage) : CommitMessage(project) {
