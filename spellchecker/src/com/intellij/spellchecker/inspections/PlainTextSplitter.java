@@ -75,6 +75,7 @@ public class PlainTextSplitter extends BaseSplitter {
           TextRange found = matcherRange(range, matcher);
           till = found.getStartOffset();
           if (badSize(from, till)) {
+            from = found.getEndOffset();
             continue;
           }
           wRange = new TextRange(from, till);

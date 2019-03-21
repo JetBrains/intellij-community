@@ -18,7 +18,17 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.FoldRegion;
 
 class DisplayedFoldingAnchor {
-  enum Type {COLLAPSED, EXPANDED_TOP, EXPANDED_BOTTOM}
+  enum Type {
+    COLLAPSED(false),
+    COLLAPSED_SINGLE_LINE(true),
+    EXPANDED_TOP(false),
+    EXPANDED_BOTTOM(false),
+    EXPANDED_SINGLE_LINE(true);
+
+    public final boolean singleLine;
+
+    Type(boolean singleLine) {this.singleLine = singleLine;}
+  }
 
   public final FoldRegion foldRegion;
   public final int visualLine;

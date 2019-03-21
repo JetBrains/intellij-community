@@ -163,13 +163,13 @@ public class FileTypeAssocTable<T> {
       if (FileNameMatcherEx.acceptsCharSequence(mapping.getFirst(), fileName)) return mapping.getSecond();
     }
 
-    return myExtensionMappings.get(FileUtilRt.getExtension(fileName));
+    return findByExtension(FileUtilRt.getExtension(fileName));
   }
 
   @Nullable
   T findAssociatedFileType(@NotNull FileNameMatcher matcher) {
     if (matcher instanceof ExtensionFileNameMatcher) {
-      return myExtensionMappings.get(((ExtensionFileNameMatcher)matcher).getExtension());
+      return findByExtension(((ExtensionFileNameMatcher)matcher).getExtension());
     }
 
     if (matcher instanceof ExactFileNameMatcher) {
@@ -184,6 +184,10 @@ public class FileTypeAssocTable<T> {
     }
 
     return null;
+  }
+
+  T findByExtension(@NotNull CharSequence extension) {
+    return myExtensionMappings.get(extension);
   }
 
   @Deprecated

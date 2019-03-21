@@ -369,6 +369,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       myEditor.getCaretModel().moveToOffset(myCaretPosition);
       myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
+    String tooltip = getToolTipText();
+    if (StringUtil.isNotEmpty(tooltip)) {
+      myEditor.getContentComponent().setToolTipText(tooltip);
+    }
     add(myEditor.getComponent(), BorderLayout.CENTER);
   }
 

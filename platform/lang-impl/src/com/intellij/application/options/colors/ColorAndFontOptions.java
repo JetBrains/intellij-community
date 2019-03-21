@@ -1175,34 +1175,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     protected boolean apply() {
       Element scheme = new Element("scheme");
-      ((AbstractColorsScheme)getParentScheme()).writeExternal(scheme);
+      EditorColorsScheme parentScheme = getParentScheme();
+      ((AbstractColorsScheme)parentScheme).writeExternal(scheme);
       Element changes = new Element("scheme");
       writeExternal(changes);
       deepMerge(scheme, changes);
-      Path path = EditorColorsManagerImpl.getTempSchemeOriginalFilePath(getParentScheme());
-      if (path != null) {
-        try {
-          Element originalFile = JDOMUtil.load(path.toFile());
-          scheme.setName(originalFile.getName());
-          for (Attribute attribute : originalFile.getAttributes()) {
-            scheme.setAttribute(attribute.getName(), attribute.getValue());
-          }
-          getParentScheme().readExternal(scheme);
-
-          scheme.removeChild("metaInfo");
-          //save original metaInfo and don't add generated
-          Element metaInfo = originalFile.getChild("metaInfo");
-          if (metaInfo != null) {
-            metaInfo = JDOMUtil.load(JDOMUtil.writeElement(metaInfo));
-            scheme.addContent(0, metaInfo);
-          }
-          JDOMUtil.write(scheme, path.toFile());
-          VirtualFileManager.getInstance().syncRefresh();
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
-      }
+      writeTempScheme(scheme, parentScheme);
       return true;
     }
 
@@ -1242,6 +1220,39 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @NotNull
     private static Pair<String, String> indexKey(Element e) {
       return Pair.create(e.getName(), e.getAttributeValue("name"));
+    }
+  }
+
+  public static void writeTempScheme(EditorColorsScheme colorsScheme) {
+    Element scheme = new Element("scheme");
+    ((AbstractColorsScheme)colorsScheme).writeExternal(scheme);
+    writeTempScheme(scheme, colorsScheme);
+  }
+
+  public static void writeTempScheme(Element scheme, EditorColorsScheme parentScheme) {
+    Path path = EditorColorsManagerImpl.getTempSchemeOriginalFilePath(parentScheme);
+    if (path != null) {
+      try {
+        Element originalFile = JDOMUtil.load(path.toFile());
+        scheme.setName(originalFile.getName());
+        for (Attribute attribute : originalFile.getAttributes()) {
+          scheme.setAttribute(attribute.getName(), attribute.getValue());
+        }
+        parentScheme.readExternal(scheme);
+
+        scheme.removeChild("metaInfo");
+        //save original metaInfo and don't add generated
+        Element metaInfo = originalFile.getChild("metaInfo");
+        if (metaInfo != null) {
+          metaInfo = JDOMUtil.load(JDOMUtil.writeElement(metaInfo));
+          scheme.addContent(0, metaInfo);
+        }
+        JDOMUtil.write(scheme, path.toFile());
+        VirtualFileManager.getInstance().syncRefresh();
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+      }
     }
   }
 

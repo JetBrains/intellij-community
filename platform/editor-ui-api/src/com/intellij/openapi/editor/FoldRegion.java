@@ -54,4 +54,18 @@ public interface FoldRegion extends RangeMarker {
    * @see #setInnerHighlightersMuted(boolean)
    */
   default boolean areInnerHighlightersMuted() { return false; }
+
+  /**
+   * By default, gutter mark (for collapsing/expanding the region using mouse) is not shown for a folding region, if it's contained within
+   * a single document line. This method allows to change this behaviour for given fold region.
+   *
+   * @see #isGutterMarkEnabledForSingleLine()
+   * @see EditorSettings#setAllowSingleLogicalLineFolding(boolean)
+   */
+  default void setGutterMarkEnabledForSingleLine(boolean value) {}
+
+  /**
+   * @see #setGutterMarkEnabledForSingleLine(boolean)
+   */
+  default boolean isGutterMarkEnabledForSingleLine() { return false; }
 }

@@ -534,19 +534,6 @@ public class GradleProjectResolverUtil {
 
       DataNode<? extends ExternalEntityData> depOwnerDataNode = null;
       if (mergedDependency instanceof ExternalProjectDependency) {
-        class ProjectDependencyInfo {
-          @NotNull final ModuleData myModuleData;
-          @Nullable final ExternalSourceSet mySourceSet;
-          final Collection<File> dependencyArtifacts;
-
-          ProjectDependencyInfo(@NotNull ModuleData moduleData,
-                                       @Nullable ExternalSourceSet sourceSet,
-                                       Collection<File> dependencyArtifacts) {
-            this.myModuleData = moduleData;
-            this.mySourceSet = sourceSet;
-            this.dependencyArtifacts = dependencyArtifacts;
-          }
-        }
 
         final ExternalProjectDependency projectDependency = (ExternalProjectDependency)mergedDependency;
 
@@ -583,6 +570,19 @@ public class GradleProjectResolverUtil {
             projectDependencyInfos.add(new ProjectDependencyInfo(
               entry.getKey().first.getData(), entry.getKey().second, entry.getValue()));
           }
+
+          String moduleIdFromDependency = getModuleId(projectDependency);
+          Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> projectPairFromMap = sourceSetMap.get(moduleIdFromDependency);
+          if (projectPairFromMap != null) {
+            if (doesNotContainDependencyOn(projectDependencyInfos, projectPairFromMap.first.getData())) {
+              final Collection<File> artifacts = projectDependency.getProjectDependencyArtifacts();
+              artifacts.removeAll(collectProcessedArtifacts(projectDependencyInfos));
+              projectDependencyInfos.add(new ProjectDependencyInfo(projectPairFromMap.first.getData(),
+                                                                   projectPairFromMap.second,
+                                                                   artifacts));
+            }
+          }
+
         }
 
         if (projectDependencyInfos.isEmpty()) {
@@ -710,6 +710,14 @@ public class GradleProjectResolverUtil {
     }
   }
 
+  private static Collection<File> collectProcessedArtifacts(Collection<ProjectDependencyInfo> infos) {
+    return infos.stream().flatMap((info) -> info.dependencyArtifacts.stream()).collect(Collectors.toSet());
+  }
+
+  private static boolean doesNotContainDependencyOn(Collection<ProjectDependencyInfo> infos, GradleSourceSetData data) {
+    return infos.stream().noneMatch((info) -> info.myModuleData.equals(data));
+  }
+
   public static boolean linkProjectLibrary(@Nullable DataNode<ProjectData> ideProject, @NotNull final LibraryData library) {
     if (ideProject == null) return false;
 
@@ -766,5 +774,19 @@ public class GradleProjectResolverUtil {
       String name = node.getData().getName();
       return name.equals(taskName) || name.equals(taskPath);
     });
+  }
+
+  static class ProjectDependencyInfo {
+    @NotNull final ModuleData myModuleData;
+    @Nullable final ExternalSourceSet mySourceSet;
+    final Collection<File> dependencyArtifacts;
+
+    ProjectDependencyInfo(@NotNull ModuleData moduleData,
+                          @Nullable ExternalSourceSet sourceSet,
+                          Collection<File> dependencyArtifacts) {
+      this.myModuleData = moduleData;
+      this.mySourceSet = sourceSet;
+      this.dependencyArtifacts = dependencyArtifacts;
+    }
   }
 }

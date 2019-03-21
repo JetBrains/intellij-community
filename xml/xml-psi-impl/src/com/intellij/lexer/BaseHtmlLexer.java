@@ -123,7 +123,12 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
           return;
         }
 
-        pushScriptStyle(script, style);
+        // If we have seenAttribute and script is true it means that last attribute,
+        // which was supposed to contain script did not have a value.
+        // Do not push anything on stack!
+        if (!(seenAttribute && script)) {
+          pushScriptStyle(script, style);
+        }
 
         if (!isHtmlTagState(state)) {
           seenAttribute=true;

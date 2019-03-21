@@ -377,11 +377,17 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         else if (event instanceof VFileCreateEvent) {
           VFileCreateEvent createEvent = (VFileCreateEvent)event;
           String createdFileName = createEvent.getChildName();
-          FileType fileType = myFileTypeManager.getFileTypeByExtension(FileUtilRt.getExtension(createdFileName));
-          // when a new empty directory "/a/b" is created, there's no need to fire any deeper pointers like "/a/b/c/d.txt" - they're not created yet
-          // OTOH when refresh found a new directory "/a/b" which is non-empty, we must fire deeper pointers because they may exist already
-          boolean fireSubdirectoryPointers = createEvent.isDirectory() && !createEvent.isEmptyDirectory()
-                                             || fileType instanceof ArchiveFileType; // if the .jar file created, there may be many file hiding inside
+          boolean fireSubdirectoryPointers;
+          if (createEvent.isDirectory()) {
+            // when a new empty directory "/a/b" is created, there's no need to fire any deeper pointers like "/a/b/c/d.txt" - they're not created yet
+            // OTOH when refresh found a new directory "/a/b" which is non-empty, we must fire deeper pointers because they may exist already
+            fireSubdirectoryPointers = !createEvent.isEmptyDirectory();
+          }
+          else {
+            // if the .jar file created, there may be many files hiding inside
+            FileType fileType = myFileTypeManager.getFileTypeByExtension(FileUtilRt.getExtension(createdFileName));
+            fireSubdirectoryPointers = fileType instanceof ArchiveFileType;
+          }
           addRelevantPointers(createEvent.getParent(), true, createdFileName, toFireEvents, fireSubdirectoryPointers);
         }
         else if (event instanceof VFileCopyEvent) {
