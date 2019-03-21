@@ -89,4 +89,13 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
   public int getAsInt() {
     return myHeightInPixels;
   }
+
+  @Override
+  public String toString() {
+    return "[Block inlay, offset=" + getOffset() +
+           ", width=" + myWidthInPixels +
+           ", height=" + myHeightInPixels +
+           "renderer=" + myRenderer +
+           "]";
+  }
 }
