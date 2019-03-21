@@ -273,6 +273,6 @@ private class ConflictChangesBrowserNode(conflict: GitConflict) : ChangesBrowser
   }
 
   override fun compareUserObjects(o2: GitConflict): Int {
-    return getUserObject().filePath.path.compareTo(o2.filePath.path, ignoreCase = true)
+    return compareFilePaths(getUserObject().filePath, o2.filePath)
   }
 }
