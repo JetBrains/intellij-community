@@ -141,7 +141,7 @@
         key="inspection.space.in.header.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
-        level="WARNING"
+        level="WEAK WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigSpaceInHeaderInspection"/>
     <localInspection
         language="EditorConfig"
@@ -159,7 +159,7 @@
         key="inspection.header.many.wildcards.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
-        level="WARNING"
+        level="WEAK WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigNumerousWildcardsInspection"/>
     <localInspection
         language="EditorConfig"
@@ -177,6 +177,7 @@
         key="inspection.header.partially.overridden.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
+        level="WEAK WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigPartialOverrideInspection"/>
 
     <!-- Pattern inspections -->

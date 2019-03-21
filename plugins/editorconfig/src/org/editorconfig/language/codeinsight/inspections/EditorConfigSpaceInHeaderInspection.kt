@@ -2,7 +2,6 @@
 package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
@@ -22,7 +21,6 @@ class EditorConfigSpaceInHeaderInspection : LocalInspectionTool() {
       holder.registerProblem(
         header,
         message,
-        ProblemHighlightType.WEAK_WARNING,
         EditorConfigRemoveSpacesQuickFix(spaces)
       )
     }
