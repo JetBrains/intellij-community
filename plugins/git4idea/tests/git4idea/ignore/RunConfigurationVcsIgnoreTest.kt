@@ -29,56 +29,56 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
     myModule = createMainModule()
   }
 
-  fun `test run configuration not ignored`(){
+  fun `test run configuration not ignored`() {
     gitIgnore.writeText("!$configurationName")
 
-    assertFalse(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName))
+    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
 
     gitIgnore.writeText("!$configurationName*")
 
-    assertFalse(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName))
+    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
   }
 
   fun `test run configuration ignored`() {
     gitIgnore.writeText("$configurationName*")
 
-    assertTrue(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName))
+    assertTrue(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
   }
 
   fun `test remove run configuration from ignore`() {
     gitIgnore.writeText(".idea")
 
-    vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName)
-    assertFalse(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName))
+    invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
+    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
 
     gitIgnore.writeText(".idea/")
 
-    vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName)
-    assertFalse(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName))
+    invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
+    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
 
     gitIgnore.writeText(".id*")
 
-    vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName)
-    assertFalse(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName))
+    invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
+    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
 
     gitIgnore.writeText(".id*/")
 
-    vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName)
-    assertFalse(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName))
+    invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
+    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
 
     gitIgnore.writeText("*.xml")
 
-    vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName)
-    assertFalse(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName))
+    invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
+    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
 
     gitIgnore.writeText(".idea/*.xml")
 
-    vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName)
-    assertFalse(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName))
+    invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
+    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
 
     gitIgnore.writeText("$configurationName.xml")
 
-    vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName)
-    assertFalse(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName))
+    invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
+    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
   }
 }
