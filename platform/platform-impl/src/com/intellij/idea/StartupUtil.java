@@ -468,13 +468,10 @@ public class StartupUtil {
   }
 
   private static void loadSystemLibraries(final Logger log) {
-    // load JNA in own temp directory - to avoid collisions and work around no-exec /tmp
-    File ideTempDir = new File(PathManager.getTempPath());
-    if (!(ideTempDir.mkdirs() || ideTempDir.exists())) {
-      throw new RuntimeException("Unable to create temp directory '" + ideTempDir + "'");
-    }
+    String ideTempPath = PathManager.getTempPath();
+
     if (System.getProperty("jna.tmpdir") == null) {
-      System.setProperty("jna.tmpdir", ideTempDir.getPath());
+      System.setProperty("jna.tmpdir", ideTempPath);  // to avoid collisions and work around no-exec /tmp
     }
     if (System.getProperty("jna.nosys") == null) {
       System.setProperty("jna.nosys", "true");  // prefer bundled JNA dispatcher lib
@@ -487,10 +484,10 @@ public class StartupUtil {
     }
 
     if (SystemInfo.isWindows && System.getProperty("winp.folder.preferred") == null) {
-      System.setProperty("winp.folder.preferred", ideTempDir.getPath());
+      System.setProperty("winp.folder.preferred", ideTempPath);
     }
     if (System.getProperty("pty4j.tmpdir") == null) {
-      System.setProperty("pty4j.tmpdir", ideTempDir.getPath());
+      System.setProperty("pty4j.tmpdir", ideTempPath);
     }
     if (System.getProperty("pty4j.preferred.native.folder") == null) {
       System.setProperty("pty4j.preferred.native.folder", new File(PathManager.getLibPath(), "pty4j-native").getAbsolutePath());
