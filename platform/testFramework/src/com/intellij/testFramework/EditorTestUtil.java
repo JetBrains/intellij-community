@@ -362,6 +362,10 @@ public class EditorTestUtil {
                                 caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getStartOffset()),
                                 caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getEndOffset())));
     }
+    CaretState onlyState = ContainerUtil.getOnlyItem(states);
+    if (onlyState != null && onlyState.getCaretPosition() == null && onlyState.getSelectionEnd() != null) {
+      states.set(0, new CaretState(onlyState.getSelectionEnd(), onlyState.getSelectionStart(), onlyState.getSelectionEnd()));
+    }
     caretModel.setCaretsAndSelections(states);
     if (caretsState.blockSelection != null) {
       editor.getSelectionModel().setBlockSelection(editor.offsetToLogicalPosition(caretsState.blockSelection.getStartOffset()),
