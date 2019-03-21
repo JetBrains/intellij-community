@@ -48,12 +48,7 @@ public class ErrorMergeTool implements MergeTool {
       myMergeRequest = request;
 
       myPanel = new JPanel(new BorderLayout());
-      myPanel.add(createComponent(), BorderLayout.CENTER);
-    }
-
-    @NotNull
-    private JComponent createComponent() {
-      return DiffUtil.createMessagePanel("Can't show diff");
+      myPanel.add(DiffUtil.createMessagePanel("Can't show merge"), BorderLayout.CENTER);
     }
 
     @NotNull

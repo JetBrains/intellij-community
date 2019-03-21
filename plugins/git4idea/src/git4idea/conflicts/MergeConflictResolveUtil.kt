@@ -4,19 +4,23 @@ package git4idea.conflicts
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.DiffRequestFactory
-import com.intellij.diff.InvalidDiffRequestException
+import com.intellij.diff.chains.DiffRequestProducerException
+import com.intellij.diff.merge.MergeRequest
+import com.intellij.diff.merge.MergeRequestProducer
 import com.intellij.diff.merge.MergeResult
 import com.intellij.diff.merge.MergeUtil
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.WindowWrapper
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.io.FileTooBigException
-import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
@@ -34,52 +38,65 @@ object MergeConflictResolveUtil {
 
   @JvmStatic
   @CalledInAwt
-  fun showMergeWindow(project: Project, resolver: GitMergeHandler.Resolver) {
-    val file = resolver.virtualFile
+  fun showMergeWindow(project: Project, file: VirtualFile?, resolverComputer: () -> GitMergeHandler.Resolver) {
     if (focusActiveMergeWindow(file)) return
 
-    val resolveCallback = { result: MergeResult ->
-      val document = FileDocumentManager.getInstance().getCachedDocument(file)
-      if (document != null) FileDocumentManager.getInstance().saveDocument(document)
+    val title = if (file != null) MergeDialogCustomizer().getMergeWindowTitle(file) else "Merge"
 
-      MergeUtil.reportProjectFileChangeIfNeeded(project, file)
+    val windowHandler = Consumer<WindowWrapper> { wrapper -> putActiveWindowKey(project, wrapper, file) }
+    val hints = DiffDialogHints(WindowWrapper.Mode.FRAME, null, windowHandler)
 
-      if (result != MergeResult.CANCEL) {
-        runBackgroundableTask("Finishing Conflict Resolve", project, false) {
-          resolver.onConflictResolved()
-          VcsDirtyScopeManager.getInstance(project).filesDirty(listOf(file), emptyList())
+    val producer = MyProducer(project, title, resolverComputer)
+
+    // TODO: support non-modal external tools (notification?)
+    DiffManagerEx.getInstance().showMergeBuiltin(project, producer, hints)
+  }
+
+  private class MyProducer(val project: Project,
+                           val title: String,
+                           val resolverComputer: () -> GitMergeHandler.Resolver) : MergeRequestProducer {
+    override fun getName(): String = title
+
+    override fun process(context: UserDataHolder, indicator: ProgressIndicator): MergeRequest {
+      try {
+        val resolver = resolverComputer()
+        val file = resolver.virtualFile
+
+        val resolveCallback = { result: MergeResult ->
+          val document = FileDocumentManager.getInstance().getCachedDocument(file)
+          if (document != null) FileDocumentManager.getInstance().saveDocument(document)
+
+          MergeUtil.reportProjectFileChangeIfNeeded(project, file)
+
+          if (result != MergeResult.CANCEL) {
+            runBackgroundableTask("Finishing Conflict Resolve", project, false) {
+              resolver.onConflictResolved()
+              VcsDirtyScopeManager.getInstance(project).filesDirty(listOf(file), emptyList())
+            }
+          }
         }
+
+        val mergeData = resolver.mergeData
+        val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
+
+        val request = runReadAction {
+          DiffRequestFactory.getInstance().createMergeRequest(project, file, byteContents,
+                                                              resolver.windowTitle, resolver.contentTitles,
+                                                              resolveCallback)
+        }
+        MergeUtil.putRevisionInfos(request, mergeData)
+        // TODO: notify MergeRequestProcessor about conflict invalidation
+
+        return request
       }
-    }
-
-    try {
-      val mergeData = resolver.mergeData
-      val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
-
-      val request = DiffRequestFactory.getInstance().createMergeRequest(project, file, byteContents,
-                                                                        resolver.windowTitle, resolver.contentTitles,
-                                                                        resolveCallback)
-      MergeUtil.putRevisionInfos(request, mergeData)
-      // TODO: notify MergeRequestProcessor about conflict invalidation
-
-      val windowHandler = Consumer<WindowWrapper> { wrapper -> putActiveWindowKey(project, wrapper, file) }
-      val hints = DiffDialogHints(WindowWrapper.Mode.FRAME, null, windowHandler)
-
-      // TODO: support non-modal external tools (notification?)
-      DiffManagerEx.getInstance().showMergeBuiltin(project, request, hints)
-    }
-    catch (e: InvalidDiffRequestException) {
-      if (e.cause is FileTooBigException) {
-        VcsNotifier.getInstance(project).notifyError("Can't Show Merge Dialog", "File is too big to be loaded.")
-      }
-      else {
-        LOG.error(e)
-        VcsNotifier.getInstance(project).notifyError("Can't Show Merge Dialog", e.message!!)
+      catch (e: Throwable) {
+        throw DiffRequestProducerException(e)
       }
     }
   }
 
-  private fun putActiveWindowKey(project: Project, wrapper: WindowWrapper, file: VirtualFile) {
+  private fun putActiveWindowKey(project: Project, wrapper: WindowWrapper, file: VirtualFile?) {
+    if (file == null) return
     val window = wrapper.window
     if (window !is JFrame) return
 
@@ -95,7 +112,7 @@ object MergeConflictResolveUtil {
     })
   }
 
-  fun focusActiveMergeWindow(file: VirtualFile?): Boolean {
+  private fun focusActiveMergeWindow(file: VirtualFile?): Boolean {
     val wrapper = file?.getUserData(ACTIVE_MERGE_WINDOW) ?: return false
     UIUtil.toFront(wrapper.window)
     return true

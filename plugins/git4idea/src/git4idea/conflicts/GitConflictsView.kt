@@ -156,19 +156,14 @@ class GitConflictsView(private val project: Project) : Disposable {
 
   private fun showMergeWindow() {
     val conflicts = getSelectedConflicts().filter { mergeHandler.canResolveConflict(it) }.toMutableList()
-    conflicts.removeIf { MergeConflictResolveUtil.focusActiveMergeWindow(it.filePath.virtualFile) }
     if (conflicts.isEmpty()) return
 
     val reversed = HashSet(reversedRoots)
 
-    runBackgroundableTask(StringUtil.pluralize("Loading Conflict", conflicts.size), project, true) {
-      // TODO: Show window immediately and load merge contents later
-      val resolvers = conflicts.map { mergeHandler.resolveConflict(it, reversed.contains(it.root)) }
-
-      runInEdt {
-        for (resolver in resolvers) {
-          MergeConflictResolveUtil.showMergeWindow(project, resolver)
-        }
+    for (conflict in conflicts) {
+      val file = conflict.filePath.virtualFile
+      MergeConflictResolveUtil.showMergeWindow(project, file) {
+        mergeHandler.resolveConflict(conflict, reversed.contains(conflict.root))
       }
     }
   }
