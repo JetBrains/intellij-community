@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
@@ -67,8 +66,6 @@ public class FileReferenceSet {
   private boolean myEmptyPathAllowed;
   @Nullable private Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
   @Nullable private FileType[] mySuitableFileTypes;
-  private boolean myRootIsCheckedOutsideOfproject;
-  private final boolean myIsSoft;
 
   public FileReferenceSet(String str,
                           @NotNull PsiElement element,
@@ -88,19 +85,6 @@ public class FileReferenceSet {
                           boolean endingSlashNotAllowed,
                           @Nullable FileType[] suitableFileTypes,
                           boolean init) {
-    this(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed, suitableFileTypes, init, false, false);
-  }
-
-  public FileReferenceSet(String str,
-                          @NotNull PsiElement element,
-                          int startInElement,
-                          PsiReferenceProvider provider,
-                          boolean caseSensitive,
-                          boolean endingSlashNotAllowed,
-                          @Nullable FileType[] suitableFileTypes,
-                          boolean init,
-                          boolean rootIsCheckedOutsideOfproject,
-                          boolean isSoft) {
     myElement = element;
     myStartInElement = startInElement;
     myCaseSensitive = caseSensitive;
@@ -110,8 +94,6 @@ public class FileReferenceSet {
     myEmptyPathAllowed = !endingSlashNotAllowed;
     myOptions = provider instanceof CustomizableReferenceProvider ? ((CustomizableReferenceProvider)provider).getOptions() : null;
     mySuitableFileTypes = suitableFileTypes;
-    myRootIsCheckedOutsideOfproject = rootIsCheckedOutsideOfproject;
-    myIsSoft = isSoft;
 
     if (init) {
       reparse();
@@ -197,7 +179,6 @@ public class FileReferenceSet {
     myPathString = myPathStringNonTrimmed.trim();
     myEndingSlashNotAllowed = true;
     myCaseSensitive = false;
-    myIsSoft = false;
 
     reparse();
   }
@@ -254,11 +235,11 @@ public class FileReferenceSet {
       decoded = str;
       valueRange = TextRange.from(startInElement, decoded.length());
     }
+
     List<FileReference> referencesList = ContainerUtil.newArrayList();
 
-    for (int i = wsHead; i < decoded.length() && Character.isWhitespace(decoded.charAt(i)); i++) {
-      wsHead++;     // skip head white spaces
-    }
+    wsHead = skipIrrelevantStart(wsHead, decoded);
+
     for (int i = decoded.length() - 1; i >= 0 && Character.isWhitespace(decoded.charAt(i)); i--) {
       wsTail++;     // skip tail white spaces
     }
@@ -278,6 +259,7 @@ public class FileReferenceSet {
     curSep = curSep == wsHead ? curSep + sepLen : wsHead; // reset offsets & start again for simplicity
     sepLen = 0;
     System.out.println("======");
+
     while (curSep >= 0) {
       int nextSep = findSeparatorOffset(decoded, curSep + sepLen);
       int start = curSep + sepLen;
@@ -285,7 +267,7 @@ public class FileReferenceSet {
       // todo move ${placeholder} support (the str usage below) to a reference implementation
       // todo reference-set should be bound to exact range & text in a file, consider: ${slash}path${slash}file&amp;.txt
       String refText = index == 0 && nextSep < 0 && !StringUtil.contains(decoded, str) ? str :
-                                decoded.subSequence(start, endTrimmed).toString();
+                       decoded.subSequence(start, endTrimmed).toString();
       int refStart = offset(start, escaper, valueRange);
       int refEnd = offset(endTrimmed, escaper, valueRange);
       if (!(refStart <= refEnd && refStart >= 0)) {
@@ -304,6 +286,13 @@ public class FileReferenceSet {
     return referencesList;
   }
 
+  protected int skipIrrelevantStart(int wsHead, CharSequence decoded) {
+    for (int i = wsHead; i < decoded.length() && Character.isWhitespace(decoded.charAt(i)); i++) {
+      wsHead++;     // skip head white spaces
+    }
+    return wsHead;
+  }
+
   private static int offset(int offset, LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper, TextRange valueRange) {
     return escaper == null ? offset + valueRange.getStartOffset() : escaper.getOffsetInHost(offset, valueRange);
   }
@@ -318,7 +307,7 @@ public class FileReferenceSet {
   }
 
   protected boolean isSoft() {
-    return myIsSoft;
+    return false;
   }
 
   protected boolean isUrlEncoded() {
@@ -354,12 +343,7 @@ public class FileReferenceSet {
     }
 
     if (isAbsolutePathReference()) {
-      if (myRootIsCheckedOutsideOfproject) {
-        VirtualFile root = VirtualFileManager.getInstance().findFileByUrl("file:///");
-        return Collections.singleton(file.getManager().findDirectory(root));
-      } else {
-        return getAbsoluteTopLevelDirLocations(file);
-      }
+      return getAbsoluteTopLevelDirLocations(file);
     }
 
     return getContextByFile(file);
@@ -432,7 +416,7 @@ public class FileReferenceSet {
     PsiFile file = getContainingFile();
     VirtualFile virtualFile = file == null ? null : file.getOriginalFile().getVirtualFile();
     final VirtualFile parent = virtualFile == null ? null : virtualFile.getParent();
-    final PsiDirectory directory = parent == null ? null :file.getManager().findDirectory(parent);
+    final PsiDirectory directory = parent == null ? null : file.getManager().findDirectory(parent);
     return directory != null ? Collections.singleton(directory) : Collections.emptyList();
   }
 
@@ -470,7 +454,8 @@ public class FileReferenceSet {
   }
 
   @NotNull
-  public static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(@NotNull final PsiFile file, boolean shouldCheckOutsideProject) {
+  public static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(@NotNull final PsiFile file,
+                                                                              boolean shouldCheckOutsideProject) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return Collections.emptyList();
 
@@ -506,7 +491,9 @@ public class FileReferenceSet {
   @NotNull
   protected Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<VirtualFile> files) {
     final PsiManager manager = getElement().getManager();
-    return ContainerUtil.mapNotNull(files, (NullableFunction<VirtualFile, PsiFileSystemItem>)file -> file != null && file.isValid() ? manager.findDirectory(file) : null);
+    return ContainerUtil.mapNotNull(files,
+                                    (NullableFunction<VirtualFile, PsiFileSystemItem>)file -> file != null && file.isValid() ? manager
+                                      .findDirectory(file) : null);
   }
 
   protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
