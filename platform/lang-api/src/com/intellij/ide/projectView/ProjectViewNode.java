@@ -184,7 +184,9 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
   protected boolean hasProblemFileBeneath() {
     if (!Registry.is("projectView.showHierarchyErrors")) return false;
 
-    return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(virtualFile -> {
+    Project project = getProject();
+    WolfTheProblemSolver wolf = project == null ? null : WolfTheProblemSolver.getInstance(project);
+    return wolf != null && wolf.hasProblemFilesBeneath(virtualFile -> {
       Value value;
       return contains(virtualFile)
              // in case of flattened packages, when package node a.b.c contains error file, node a.b might not.
