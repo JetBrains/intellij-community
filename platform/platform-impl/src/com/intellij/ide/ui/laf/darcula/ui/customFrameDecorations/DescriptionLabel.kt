@@ -47,14 +47,14 @@ class DescriptionLabel : Disposable {
   fun getView(): JComponent = this.label
 
   fun getListenerBoundses(): List<Rectangle> {
-    val resizeGap = 2
+    val mouseInsets = 2
     val projectLabelRect = label.bounds
 
     return listOf(
-      Rectangle(projectLabelRect.x, projectLabelRect.y, resizeGap, projectLabelRect.height),
-      Rectangle(projectLabelRect.x, projectLabelRect.y, projectLabelRect.width, resizeGap),
-      Rectangle(projectLabelRect.x, projectLabelRect.maxY.toInt() - resizeGap, projectLabelRect.width, resizeGap),
-      Rectangle(projectLabelRect.maxX.toInt() - resizeGap, projectLabelRect.y, resizeGap, projectLabelRect.height)
+      Rectangle(projectLabelRect.x, projectLabelRect.y, mouseInsets, projectLabelRect.height),
+      Rectangle(projectLabelRect.x, projectLabelRect.y, projectLabelRect.width, mouseInsets),
+      Rectangle(projectLabelRect.x, projectLabelRect.maxY.toInt() - mouseInsets, projectLabelRect.width, mouseInsets),
+      Rectangle(projectLabelRect.maxX.toInt() - mouseInsets, projectLabelRect.y, mouseInsets, projectLabelRect.height)
     )
   }
 
@@ -101,7 +101,7 @@ class DescriptionLabel : Disposable {
   }
 
   private fun getProjectPath(): String? {
-    return guessCurrentProject(this.label).basePath
+    return guessCurrentProject(this.label).projectFilePath
   }
 
   private fun clipString(component: JComponent, string: String, maxWidth: Int): String {

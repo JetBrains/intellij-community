@@ -201,7 +201,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
         JPanel pane = new JPanel(new MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"));
         pane.setOpaque(false);
-        pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin 23");
+        pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin 24");
         pane.add(projectLabel.getView(), "center, growx, wmin 0, gapbefore " + menuBarGap + ", gapafter " + menuBarGap);
 
         add(pane, "wmin 0, growx");
@@ -515,7 +515,10 @@ public class DarculaTitlePane extends JPanel implements Disposable {
     @Override
     public void windowStateChanged(WindowEvent e) {
       //noinspection ConstantConditions
-      int state = getFrame().getExtendedState();
+      Frame frame = getFrame();
+      if(frame == null) return;
+
+      int state = frame.getExtendedState();
       if (state == MAXIMIZED_VERT || state == MAXIMIZED_BOTH) {
         setBorder(null);
       } else {

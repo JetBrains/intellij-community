@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.JBUI;
@@ -46,7 +47,7 @@ import java.util.List;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatcher, UISettingsListener {
+public class IdeMenuBar extends JMenuBar implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance(IdeMenuBar.class);
   private static final int COLLAPSED_HEIGHT = 2;
 
@@ -76,6 +77,14 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private boolean myActivated;
 
   private GlobalMenuLinux myGlobalMenuLinux;
+
+
+  private AWTEventListener listener = new AWTEventListener() {
+    @Override
+    public void eventDispatched(AWTEvent event) {
+      mouseMovedHandler(event);
+    }
+  };
 
   public IdeMenuBar(ActionManagerEx actionManager, DataManager dataManager) {
     myActionManager = actionManager;
@@ -196,8 +205,13 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         if (fullScreen) {
           setState(State.COLLAPSING);
           restartAnimator();
+
+          Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
+
         }
         else {
+          Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
+
           myAnimator.suspend();
           setState(State.EXPANDED);
           if (myClockPanel != null) {
@@ -248,7 +262,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     // Add updater for menus
     myActionManager.addTimerListener(1000, new WeakTimerListener(myActionManager, myTimerListener));
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
-    IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
   }
 
   @Override
@@ -268,26 +281,27 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     myPresentationFactory.reset();
   }
 
-  @Override
-  public boolean dispatch(@NotNull AWTEvent e) {
-    if (e instanceof MouseEvent) {
-      MouseEvent mouseEvent = (MouseEvent)e;
-      Component component = findActualComponent(mouseEvent);
+  private void mouseMovedHandler(@NotNull AWTEvent event) {
+    if (!(event instanceof MouseEvent)) {
+      return;
+    }
 
-      if (getState() != State.EXPANDED /*&& !myState.isInProgress()*/) {
-        boolean mouseInside = myActivated || UIUtil.isDescendingFrom(component, this);
-        if (e.getID() == MouseEvent.MOUSE_EXITED && e.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
-        if (mouseInside && getState() == State.COLLAPSED) {
-          setState(State.EXPANDING);
-          restartAnimator();
-        }
-        else if (!mouseInside && getState() != State.COLLAPSING && getState() != State.COLLAPSED) {
-          setState(State.COLLAPSING);
-          restartAnimator();
-        }
+    MouseEvent e = (MouseEvent) event;
+    RelativePoint point = new RelativePoint(e);
+
+    if (getState() != State.EXPANDED && !myState.isInProgress()) {
+      int y = point.getPoint(this).y;
+      boolean mouseInside = y < 25;
+      if (e.getID() == MouseEvent.MOUSE_EXITED && e.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
+      if (mouseInside && getState() == State.COLLAPSED) {
+        setState(State.EXPANDING);
+        restartAnimator();
+      }
+      else if (!mouseInside && getState() != State.COLLAPSING && getState() != State.COLLAPSED) {
+        setState(State.COLLAPSING);
+        restartAnimator();
       }
     }
-    return false;
   }
 
   @Nullable
