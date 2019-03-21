@@ -121,7 +121,7 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    getComponent().setMargin(JBUI.insets(0, 5));
+    getComponent().setMargin(JBUI.insets(2, 5));
   }
 
   @Override
