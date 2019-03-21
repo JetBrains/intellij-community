@@ -3222,7 +3222,8 @@ public class UIUtil {
     return systemLaFClassName = UIManager.getSystemLookAndFeelClassName();
   }
 
-  public static void initDefaultLaF() {
+  public static void initDefaultLaF()
+    throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
     blockATKWrapper();
 
     // separate activity to make clear that it is not our code takes time
@@ -3234,12 +3235,7 @@ public class UIUtil {
     configureHtmlKitStylesheet();
 
     activity = activity.endAndStart(ActivitySubNames.INIT_DEFAULT_LAF);
-    try {
-      UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
-    }
-    catch (Exception e) {
-      getLogger().error("Cannot initialize default LaF", e);
-    }
+    UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
     activity.end();
   }
 
