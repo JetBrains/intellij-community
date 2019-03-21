@@ -284,7 +284,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     List<ExtensionComponentAdapter> adapters = myAdapters;
     LoadingOrder.sort(adapters);
 
-    int maxIndex = adapters.size() - 1;
+    int size = adapters.size();
 
     // see method comment about listeners - to ensure that every client of this method doesn't introduce flaky tests/hard to reproduce bugs
     LOG.assertTrue(myListeners.length == 0);
@@ -294,7 +294,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
       @Override
       public boolean hasNext() {
-        return currentIndex <= maxIndex;
+        return currentIndex < size;
       }
 
       @Override
