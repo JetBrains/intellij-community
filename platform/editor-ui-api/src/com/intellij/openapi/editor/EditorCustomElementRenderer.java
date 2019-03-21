@@ -26,6 +26,7 @@ import java.awt.*;
  *
  * @see InlayModel#addInlineElement(int, boolean, EditorCustomElementRenderer)
  * @see InlayModel#addBlockElement(int, boolean, boolean, int, EditorCustomElementRenderer)
+ * @see InlayModel#addAfterLineEndElement(int, boolean, EditorCustomElementRenderer)
  * @see Inlay#getRenderer()
  */
 public interface EditorCustomElementRenderer {
