@@ -97,6 +97,9 @@ public abstract class IdeFrameDecorator implements Disposable {
       if (myFrame == null) return ActionCallback.REJECTED;
 
       Rectangle bounds = myFrame.getBounds();
+      if (state && myFrame.getExtendedState() == Frame.NORMAL) {
+        myFrame.getRootPane().putClientProperty("normalBounds", bounds);
+      }
       GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
       if (device == null) return ActionCallback.REJECTED;
       Rectangle defaultBounds = device.getDefaultConfiguration().getBounds();
@@ -106,9 +109,6 @@ public abstract class IdeFrameDecorator implements Disposable {
         //  return ActionCallback.DONE;
         //}
         myFrame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
-        if (state && !bounds.equals(defaultBounds)) {
-          myFrame.getRootPane().putClientProperty("oldBounds", bounds);
-        }
         myFrame.dispose();
         myFrame.setUndecorated(state);
       }
@@ -117,7 +117,7 @@ public abstract class IdeFrameDecorator implements Disposable {
           myFrame.setBounds(defaultBounds);
         }
         else {
-          Object o = myFrame.getRootPane().getClientProperty("oldBounds");
+          Object o = myFrame.getRootPane().getClientProperty("normalBounds");
           if (o instanceof Rectangle) {
             myFrame.setBounds((Rectangle)o);
           }

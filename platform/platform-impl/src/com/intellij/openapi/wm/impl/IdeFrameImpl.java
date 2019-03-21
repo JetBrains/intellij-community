@@ -259,6 +259,14 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     super.setMaximizedBounds(null);
   }
 
+  @Override
+  public void setExtendedState(int state) {
+    if (getExtendedState() == Frame.NORMAL && (state & Frame.MAXIMIZED_BOTH) != 0) {
+      getRootPane().putClientProperty("normalBounds", getBounds());
+    }
+    super.setExtendedState(state);
+  }
+
   private void setupCloseAction() {
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     CloseProjectWindowHelper helper = new CloseProjectWindowHelper();
