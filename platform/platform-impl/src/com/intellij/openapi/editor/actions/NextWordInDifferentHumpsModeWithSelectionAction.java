@@ -15,11 +15,23 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Denis Zhdanov
  */
 public class NextWordInDifferentHumpsModeWithSelectionAction extends TextComponentEditorAction {
-  public NextWordInDifferentHumpsModeWithSelectionAction() {
-    super(new NextPrevWordHandler(true, true, true));
+  NextWordInDifferentHumpsModeWithSelectionAction(@Nullable Boolean wordStart) {
+    super(new NextPrevWordHandler(true, wordStart, true, true));
+  }
+
+  public NextWordInDifferentHumpsModeWithSelectionAction() { this(null); }
+
+  public static class WordStart extends NextWordInDifferentHumpsModeWithSelectionAction {
+    public WordStart() { super(true); }
+  }
+
+  public static class WordEnd extends NextWordInDifferentHumpsModeWithSelectionAction {
+    public WordEnd() { super(false); }
   }
 }

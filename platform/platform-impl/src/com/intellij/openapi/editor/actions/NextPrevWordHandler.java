@@ -26,12 +26,17 @@ import org.jetbrains.annotations.Nullable;
 
 class NextPrevWordHandler extends EditorActionHandler {
   private final boolean myNext;
+  @Nullable private final Boolean myWordStart;
   private final boolean myWithSelection;
   private final boolean myInDifferentHumpsMode;
 
-  NextPrevWordHandler(boolean next, boolean withSelection, boolean inDifferentHumpsMode) {
+  NextPrevWordHandler(boolean next,
+                      @Nullable Boolean wordStart,
+                      boolean withSelection,
+                      boolean inDifferentHumpsMode) {
     super(true);
     myNext = next;
+    myWordStart = wordStart;
     myWithSelection = withSelection;
     myInDifferentHumpsMode = inDifferentHumpsMode;
   }

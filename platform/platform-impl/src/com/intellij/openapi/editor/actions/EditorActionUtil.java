@@ -596,6 +596,10 @@ public class EditorActionUtil {
   }
 
   public static void moveCaretToNextWord(@NotNull Editor editor, boolean isWithSelection, boolean camel) {
+    moveCaretToNextWord(editor, isWithSelection, camel, true);
+  }
+
+  public static void moveCaretToNextWord(@NotNull Editor editor, boolean isWithSelection, boolean camel, boolean toWordStart) {
     Document document = editor.getDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
@@ -625,7 +629,8 @@ public class EditorActionUtil {
         maxOffset = document.getLineEndOffset(lineNumber + 1);
       }
       for (; newOffset < maxOffset; newOffset++) {
-        if (isWordOrLexemeStart(editor, newOffset, camel)) {
+        if (toWordStart ? isWordOrLexemeStart(editor, newOffset, camel)
+                        : isWordOrLexemeEnd(editor, newOffset, camel)) {
           break;
         }
       }
@@ -695,6 +700,10 @@ public class EditorActionUtil {
   }
 
   public static void moveCaretToPreviousWord(@NotNull Editor editor, boolean isWithSelection, boolean camel) {
+    moveCaretToPreviousWord(editor, isWithSelection, camel, true);
+  }
+
+  public static void moveCaretToPreviousWord(@NotNull Editor editor, boolean isWithSelection, boolean camel, boolean toWordStart) {
     Document document = editor.getDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
@@ -715,7 +724,10 @@ public class EditorActionUtil {
       newOffset = offset - 1;
       int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
       for (; newOffset > minOffset; newOffset--) {
-        if (isWordOrLexemeStart(editor, newOffset, camel)) break;
+        if (toWordStart ? isWordOrLexemeStart(editor, newOffset, camel)
+                        : isWordOrLexemeEnd(editor, newOffset, camel)) {
+          break;
+        }
       }
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(newOffset);
       if (foldRegion != null && newOffset > foldRegion.getStartOffset()) {

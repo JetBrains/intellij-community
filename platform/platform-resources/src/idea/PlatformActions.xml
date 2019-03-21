@@ -342,17 +342,59 @@
       <action id="EditorLineEndWithSelection" class="com.intellij.openapi.editor.actions.LineEndWithSelectionAction"/>
       <action id="EditorTextStartWithSelection" class="com.intellij.openapi.editor.actions.TextStartWithSelectionAction"/>
       <action id="EditorTextEndWithSelection" class="com.intellij.openapi.editor.actions.TextEndWithSelectionAction"/>
-      <action id="EditorNextWord" class="com.intellij.openapi.editor.actions.NextWordAction"/>
-      <action id="EditorNextWordInDifferentHumpsMode" class="com.intellij.openapi.editor.actions.NextWordInDifferentHumpsModeAction"/>
-      <action id="EditorNextWordWithSelection" class="com.intellij.openapi.editor.actions.NextWordWithSelectionAction"/>
-      <action id="EditorNextWordInDifferentHumpsModeWithSelection"
-              class="com.intellij.openapi.editor.actions.NextWordInDifferentHumpsModeWithSelectionAction"/>
-      <action id="EditorPreviousWord" class="com.intellij.openapi.editor.actions.PreviousWordAction"/>
+      <separator/>
+      <action id="EditorNextWord"
+              class="com.intellij.openapi.editor.actions.NextWordAction"/>
+      <action id="EditorNextWordStart"
+              class="com.intellij.openapi.editor.actions.NextWordAction$WordStart"/>
+      <action id="EditorNextWordEnd"
+              class="com.intellij.openapi.editor.actions.NextWordAction$WordEnd"/>
+      <action id="EditorPreviousWord"
+              class="com.intellij.openapi.editor.actions.PreviousWordAction"/>
+      <action id="EditorPreviousWordStart"
+              class="com.intellij.openapi.editor.actions.PreviousWordAction$WordStart"/>
+      <action id="EditorPreviousWordEnd"
+              class="com.intellij.openapi.editor.actions.PreviousWordAction$WordEnd"/>
+      <separator/>
+      <action id="EditorNextWordInDifferentHumpsMode"
+              class="com.intellij.openapi.editor.actions.NextWordInDifferentHumpsModeAction"/>
+      <action id="EditorNextWordStartInDifferentHumpsMode"
+              class="com.intellij.openapi.editor.actions.NextWordInDifferentHumpsModeAction$WordStart"/>
+      <action id="EditorNextWordEndInDifferentHumpsMode"
+              class="com.intellij.openapi.editor.actions.NextWordInDifferentHumpsModeAction$WordEnd"/>
       <action id="EditorPreviousWordInDifferentHumpsMode"
               class="com.intellij.openapi.editor.actions.PreviousWordInDifferentHumpsModeAction"/>
-      <action id="EditorPreviousWordWithSelection" class="com.intellij.openapi.editor.actions.PreviousWordWithSelectionAction"/>
+      <action id="EditorPreviousWordStartInDifferentHumpsMode"
+              class="com.intellij.openapi.editor.actions.PreviousWordInDifferentHumpsModeAction$WordStart"/>
+      <action id="EditorPreviousWordEndInDifferentHumpsMode"
+              class="com.intellij.openapi.editor.actions.PreviousWordInDifferentHumpsModeAction$WordEnd"/>
+      <separator/>
+      <action id="EditorNextWordWithSelection"
+              class="com.intellij.openapi.editor.actions.NextWordWithSelectionAction"/>
+      <action id="EditorNextWordStartWithSelection"
+              class="com.intellij.openapi.editor.actions.NextWordWithSelectionAction$WordStart"/>
+      <action id="EditorNextWordEndWithSelection"
+              class="com.intellij.openapi.editor.actions.NextWordWithSelectionAction$WordEnd"/>
+      <action id="EditorPreviousWordWithSelection"
+              class="com.intellij.openapi.editor.actions.PreviousWordWithSelectionAction"/>
+      <action id="EditorPreviousWordStartWithSelection"
+              class="com.intellij.openapi.editor.actions.PreviousWordWithSelectionAction$WordStart"/>
+      <action id="EditorPreviousWordEndWithSelection"
+              class="com.intellij.openapi.editor.actions.PreviousWordWithSelectionAction$WordEnd"/>
+      <separator/>
+      <action id="EditorNextWordInDifferentHumpsModeWithSelection"
+              class="com.intellij.openapi.editor.actions.NextWordInDifferentHumpsModeWithSelectionAction"/>
+      <action id="EditorNextWordStartInDifferentHumpsModeWithSelection"
+              class="com.intellij.openapi.editor.actions.NextWordInDifferentHumpsModeWithSelectionAction$WordStart"/>
+      <action id="EditorNextWordEndInDifferentHumpsModeWithSelection"
+              class="com.intellij.openapi.editor.actions.NextWordInDifferentHumpsModeWithSelectionAction$WordEnd"/>
       <action id="EditorPreviousWordInDifferentHumpsModeWithSelection"
               class="com.intellij.openapi.editor.actions.PreviousWordInDifferentHumpsModeWithSelectionAction"/>
+      <action id="EditorPreviousWordStartInDifferentHumpsModeWithSelection"
+              class="com.intellij.openapi.editor.actions.PreviousWordInDifferentHumpsModeWithSelectionAction$WordStart"/>
+      <action id="EditorPreviousWordEndInDifferentHumpsModeWithSelection"
+              class="com.intellij.openapi.editor.actions.PreviousWordInDifferentHumpsModeWithSelectionAction$WordEnd"/>
+      <separator/>
       <action id="EditorDeleteToWordStart" class="com.intellij.openapi.editor.actions.DeleteToWordStartAction"/>
       <action id="EditorDeleteToWordStartInDifferentHumpsMode"
               class="com.intellij.openapi.editor.actions.DeleteToWordStartInDifferentHumpsModeAction"/>

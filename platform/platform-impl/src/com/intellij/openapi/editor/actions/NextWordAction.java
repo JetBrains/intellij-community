@@ -16,8 +16,20 @@
 
 package com.intellij.openapi.editor.actions;
 
+import org.jetbrains.annotations.Nullable;
+
 public class NextWordAction extends TextComponentEditorAction {
-  public NextWordAction() {
-    super(new NextPrevWordHandler(true, false, false));
+  NextWordAction(@Nullable Boolean wordStart) {
+    super(new NextPrevWordHandler(true, wordStart, false, false));
+  }
+
+  public NextWordAction() { this(null); }
+
+  public static class WordStart extends NextWordAction {
+    public WordStart() { super(true); }
+  }
+
+  public static class WordEnd extends NextWordAction {
+    public WordEnd() { super(false); }
   }
 }
