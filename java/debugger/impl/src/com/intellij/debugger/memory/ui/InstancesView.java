@@ -195,7 +195,7 @@ class InstancesView extends InstancesViewBase {
         }
 
         if (Registry.is("debugger.memory.agent.use.in.memory.view")) {
-          instances = MemoryAgentUtil.tryCalculateSizes(instances, MemoryAgent.using(evaluationContext));
+          instances = MemoryAgentUtil.tryCalculateSizes(evaluationContext, instances);
         }
 
         synchronized (myFilteringTaskLock) {

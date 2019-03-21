@@ -9,7 +9,7 @@ interface MemoryAgentNames {
 
     String CAN_FIND_GC_ROOTS = "canFindGcRoots";
     String CAN_ESTIMATE_OBJECT_SIZE = "canEstimateObjectSize";
-    String CAN_ESTIMATE_OBJECTS_SIZES = "canEstimateObjectSize";
+    String CAN_ESTIMATE_OBJECTS_SIZES = "canEstimateObjectsSizes";
 
     String ESTIMATE_OBJECT_SIZE = "size";
     String ESTIMATE_OBJECTS_SIZE = "estimateRetainedSize";

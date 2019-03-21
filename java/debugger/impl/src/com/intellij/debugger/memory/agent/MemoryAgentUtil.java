@@ -42,7 +42,6 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import javax.swing.event.HyperlinkEvent;
@@ -69,6 +68,11 @@ public class MemoryAgentUtil {
     if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) {
       return;
     }
+
+    //if(isOsSupported()) {
+    //  LOG.info(SystemInfo.);
+    //
+    //}
 
     if (isIbmJdk(parameters)) {
       LOG.info("Do not attach memory agent for IBM jdk");
@@ -119,14 +123,17 @@ public class MemoryAgentUtil {
     listenIfStartupFailed();
   }
 
-  public static List<JavaReferenceInfo> tryCalculateSizes(@NotNull List<JavaReferenceInfo> objects, @Nullable MemoryAgent agent) {
-    if (agent == null || !agent.capabilities().canEstimateObjectsSizes()) return objects;
+  @NotNull
+  public static List<JavaReferenceInfo> tryCalculateSizes(@NotNull EvaluationContextImpl context,
+                                                          @NotNull List<JavaReferenceInfo> objects) {
+    MemoryAgent agent = MemoryAgent.get(context.getDebugProcess());
+    if (!agent.capabilities().canEstimateObjectsSizes()) return objects;
     if (objects.size() > ESTIMATE_OBJECTS_SIZE_LIMIT) {
       LOG.info("Too many objects to estimate their sizes");
       return objects;
     }
     try {
-      long[] sizes = agent.estimateObjectsSizes(ContainerUtil.map(objects, x -> x.getObjectReference()));
+      long[] sizes = agent.estimateObjectsSizes(context, ContainerUtil.map(objects, x -> x.getObjectReference()));
       return IntStreamEx.range(0, objects.size())
         .mapToObj(i -> new SizedReferenceInfo(objects.get(i).getObjectReference(), sizes[i]))
         .reverseSorted(Comparator.comparing(x -> x.size()))
@@ -151,7 +158,7 @@ public class MemoryAgentUtil {
         if (context.isEvaluationPossible()) {
           if (isInitialized.compareAndSet(false, true)) {
             debugProcess.removeDebugProcessListener(this);
-            MemoryAgentOperations.initializeCapabilities(context);
+            MemoryAgentOperations.initializeAgent(context);
           }
         }
       }
