@@ -493,10 +493,14 @@ public class StartupUtil {
   }
 
   private static void loadSystemLibraries(Logger log) {
+    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.LOAD_SYSTEM_LIBS);
+
     JnaLoader.load(log);
 
     //noinspection ResultOfMethodCallIgnored
     IdeaWin32.isAvailable();
+
+    activity.end();
   }
 
   private static void startLogging(@NotNull Logger log) {
