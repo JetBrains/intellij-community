@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Ignored
@@ -33,8 +34,11 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
   override fun isRunConfigurationVcsIgnored(configurationName: String): Boolean {
     try {
       val configurationFileName = configurationNameToFileName(configurationName)
-
-      return checkConfigurationVcsIgnored(project, configurationFileName) is Ignored
+      val checkForIgnore = { checkConfigurationVcsIgnored(project, configurationFileName) is Ignored }
+      return ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously<Boolean, IOException>(checkForIgnore,
+                                                                   "Checking configuration $configurationName for ignore...",
+                                                                   false, project)
     }
     catch (e: IOException) {
       LOG.warn(e)
@@ -44,7 +48,11 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
 
   override fun removeRunConfigurationFromVcsIgnore(configurationName: String) {
     try {
-      removeConfigurationFromVcsIgnore(project, configurationName)
+      val removeFromIgnore = { removeConfigurationFromVcsIgnore(project, configurationName) }
+      ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously<Unit, IOException>(removeFromIgnore,
+                                                                "Removing configuration ${configurationName} from ignore...",
+                                                                false, project)
     }
     catch (io: IOException) {
       LOG.warn(io)
