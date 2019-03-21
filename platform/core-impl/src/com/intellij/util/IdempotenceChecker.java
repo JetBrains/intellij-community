@@ -44,7 +44,7 @@ public class IdempotenceChecker {
    *     {@code IdempotenceChecker.checkEquivalence()} for their results as well, localizing the error.</li>
    *   <li>
    *     If it's a test, you could try reproducing and debugging it. To increase the probability of failure,
-   *     you can temporarily add {@code Registry.getValue("platform.random.idempotence.check.rate").set(1, getTestRootDisposable())}
+   *     you can temporarily add {@code Registry.getValue("platform.random.idempotence.check.rate").setValue(1, getTestRootDisposable())}
    *     to perform the idempotence check on every cache access. Note that this can make your test much slower.
    *   </li>
    * </ul>
