@@ -564,7 +564,7 @@ public class ActionsTree {
         else if (userObject instanceof Separator) {
           // TODO[vova,anton]: beautify
           changed = false;
-          text = "-------------";
+          text = "————————————————";  // em dashes
         }
         else if (userObject instanceof Hyperlink) {
           getIpad().right = 0;
