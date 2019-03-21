@@ -15,7 +15,7 @@ import com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow.Companion.getCom
 class SingleChangeListCommitWorkflowHandler(
   private val workflow: DialogCommitWorkflow,
   private val ui: CommitChangeListDialog
-) : CommitWorkflowHandler, InclusionListener, CommitExecutorListener, Disposable {
+) : CommitWorkflowHandler, SingleChangeListCommitWorkflowUi.ChangeListListener, InclusionListener, CommitExecutorListener, Disposable {
 
   private val project get() = workflow.project
   private val vcsConfiguration = VcsConfiguration.getInstance(project)
@@ -36,6 +36,7 @@ class SingleChangeListCommitWorkflowHandler(
       if (dataId == COMMIT_WORKFLOW_HANDLER.name) this
       else null
     })
+    ui.addChangeListListener(this, this)
   }
 
   fun activate(): Boolean {
@@ -47,6 +48,11 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   override fun inclusionChanged() = commitHandlers.forEach { it.includedChangesChanged() }
+
+  override fun changeListChanged() {
+    ui.updateCommitMessage()
+    ui.updateCommitOptions()
+  }
 
   override fun executorCalled(executor: CommitExecutor?) = executor?.let { execute(it) } ?: executeDefault(null)
 
