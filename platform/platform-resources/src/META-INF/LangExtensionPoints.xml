@@ -401,8 +401,8 @@
     </extensionPoint>
 
     <!-- File-Based Index-->
-    <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension"/>
-    <extensionPoint name="stubIndex" interface="com.intellij.psi.stubs.StubIndexExtension"/>
+    <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension" registerInPicoContainer="false"/>
+    <extensionPoint name="stubIndex" interface="com.intellij.psi.stubs.StubIndexExtension" registerInPicoContainer="false"/>
     <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexableSetContributor"/>
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider"/>
     <extensionPoint name="globalIndexFilter" interface="com.intellij.util.indexing.GlobalIndexFilter"/>
@@ -426,7 +426,7 @@
       <with attribute="implementationClass" implements="com.intellij.lang.refactoring.InlineHandler"/>
     </extensionPoint>
 
-    <extensionPoint name="refactoring.safeDeleteProcessor" interface="com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate"/>
+    <extensionPoint name="refactoring.safeDeleteProcessor" interface="com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate" registerInPicoContainer="false"/>
 
     <extensionPoint name="refactoring.extractIncludeHandler"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
