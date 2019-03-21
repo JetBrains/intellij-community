@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.foundation;
 
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ImageLoader;
@@ -22,13 +23,13 @@ public class Foundation {
   private static final FoundationLibrary myFoundationLibrary;
 
   static {
+    assert JnaLoader.isLoaded() : "JNA library is not available";
     myFoundationLibrary = Native.loadLibrary("Foundation", FoundationLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
   }
 
   public static void init() { /* fake method to init foundation */ }
 
-  private Foundation() {
-  }
+  private Foundation() { }
 
   /**
    * Get the ID of the NSClass with className
