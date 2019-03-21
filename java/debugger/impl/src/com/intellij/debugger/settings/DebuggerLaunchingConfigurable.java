@@ -2,6 +2,7 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -106,7 +107,9 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     panel.add(myCbDisableJIT);
     panel.add(myCbShowAlternativeSource);
     panel.add(myCbKillImmediately);
-    panel.add(myCbEnableMemoryAgent);
+    if (MemoryAgentUtil.isPlatformSupported()) {
+      panel.add(myCbEnableMemoryAgent);
+    }
     if (Registry.is("execution.java.always.debug")) {
       panel.add(myCbAlwaysDebug);
     }

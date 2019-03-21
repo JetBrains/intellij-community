@@ -69,10 +69,11 @@ public class MemoryAgentUtil {
       return;
     }
 
-    //if(isOsSupported()) {
-    //  LOG.info(SystemInfo.);
-    //
-    //}
+    if (isPlatformSupported()) {
+      LOG.warn("Could not use memory agent on current OS.");
+      DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT = false;
+      return;
+    }
 
     if (isIbmJdk(parameters)) {
       LOG.info("Do not attach memory agent for IBM jdk");
@@ -165,6 +166,10 @@ public class MemoryAgentUtil {
     });
   }
 
+  public static boolean isPlatformSupported() {
+    return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux;
+  }
+
   private static boolean isIbmJdk(@NotNull JavaParameters parameters) {
     Sdk jdk = parameters.getJdk();
     String vendor = jdk == null ? null : JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VENDOR);
@@ -187,6 +192,7 @@ public class MemoryAgentUtil {
   }
 
   private static AgentExtractor.AgentLibraryType detectAgentKind(String jdkPath) {
+    LOG.assertTrue(isPlatformSupported());
     if (SystemInfo.isLinux) return AgentExtractor.AgentLibraryType.LINUX;
     if (SystemInfo.isMac) return AgentExtractor.AgentLibraryType.MACOS;
     JdkVersionDetector.JdkVersionInfo versionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkPath);
