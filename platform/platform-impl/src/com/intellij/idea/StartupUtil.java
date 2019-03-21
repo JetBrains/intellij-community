@@ -158,8 +158,8 @@ public class StartupUtil {
     List<Future<?>> futures = new ArrayList<>();
     ExecutorService executorService = isParallelExecution ? AppExecutorUtil.getAppExecutorService() : new SameThreadExecutorService();
     futures.add(executorService.submit(() -> {
-      Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.LOAD_SYSTEM_LIBS);
-      loadSystemLibraries(log);
+      Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.SETUP_SYSTEM_LIBS);
+      setupSystemLibraries();
       activity = activity.endAndStart(ActivitySubNames.FIX_PROCESS_ENV);
       fixProcessEnvironment(log);
       activity.end();
@@ -168,6 +168,8 @@ public class StartupUtil {
     addInitUiTasks(futures, executorService, log, initLafTask);
 
     if (isParallelExecution) {
+      executorService.submit(() -> loadSystemLibraries(log));  /* no need to wait */
+
       Activity activity = StartUpMeasurer.start(Phases.WAIT_TASKS);
       for (Future<?> future : futures) {
         future.get();
@@ -467,7 +469,7 @@ public class StartupUtil {
     }
   }
 
-  private static void loadSystemLibraries(final Logger log) {
+  private static void setupSystemLibraries() {
     String ideTempPath = PathManager.getTempPath();
 
     if (System.getProperty("jna.tmpdir") == null) {
@@ -476,22 +478,24 @@ public class StartupUtil {
     if (System.getProperty("jna.nosys") == null) {
       System.setProperty("jna.nosys", "true");  // prefer bundled JNA dispatcher lib
     }
-    JnaLoader.load(log);
-
-    if (SystemInfo.isWin2kOrNewer) {
-      //noinspection ResultOfMethodCallIgnored
-      IdeaWin32.isAvailable();  // logging is done there
-    }
 
     if (SystemInfo.isWindows && System.getProperty("winp.folder.preferred") == null) {
       System.setProperty("winp.folder.preferred", ideTempPath);
     }
+
     if (System.getProperty("pty4j.tmpdir") == null) {
       System.setProperty("pty4j.tmpdir", ideTempPath);
     }
     if (System.getProperty("pty4j.preferred.native.folder") == null) {
       System.setProperty("pty4j.preferred.native.folder", new File(PathManager.getLibPath(), "pty4j-native").getAbsolutePath());
     }
+  }
+
+  private static void loadSystemLibraries(Logger log) {
+    JnaLoader.load(log);
+
+    //noinspection ResultOfMethodCallIgnored
+    IdeaWin32.isAvailable();
   }
 
   private static void startLogging(@NotNull Logger log) {
