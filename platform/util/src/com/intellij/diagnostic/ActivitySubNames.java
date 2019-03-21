@@ -10,4 +10,7 @@ public final class ActivitySubNames {
 
   public static final String LOAD_SYSTEM_LIBS = "load system libs";
   public static final String FIX_PROCESS_ENV = "fix process env";
+
+  public static final String INIT_PLUGINS = "plugin initialization";
+  public static final String LOAD_PLUGIN_DESCRIPTORS = "plugin descriptors loading";
 }
