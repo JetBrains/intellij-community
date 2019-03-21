@@ -303,12 +303,12 @@ public class RootIndex {
     final Project myProject;
     final RootInfo myRootInfo;
     final Set<VirtualFile> myAllRoots;
-    Graph myGraph;
-    MultiMap<VirtualFile, Node> myRoots; // Map of roots to their root nodes, eg. library jar -> library node
+    final Graph myGraph;
+    final MultiMap<VirtualFile, Node> myRoots; // Map of roots to their root nodes, eg. library jar -> library node
     final SynchronizedSLRUCache<VirtualFile, List<OrderEntry>> myCache;
     final SynchronizedSLRUCache<Module, Set<String>> myDependentUnloadedModulesCache;
-    private MultiMap<VirtualFile, OrderEntry> myLibClassRootEntries;
-    private MultiMap<VirtualFile, OrderEntry> myLibSourceRootEntries;
+    private final MultiMap<VirtualFile, OrderEntry> myLibClassRootEntries;
+    private final MultiMap<VirtualFile, OrderEntry> myLibSourceRootEntries;
 
     OrderEntryGraph(@NotNull Project project, @NotNull RootInfo rootInfo) {
       myProject = project;
@@ -331,11 +331,15 @@ public class RootIndex {
             return collectDependentUnloadedModules(key);
           }
         };
-      initGraph();
-      initLibraryRoots();
+      Pair<Graph, MultiMap<VirtualFile, Node>> pair = initGraphRoots();
+      myGraph = pair.getFirst();
+      myRoots = pair.getSecond();
+      Pair<MultiMap<VirtualFile, OrderEntry>, MultiMap<VirtualFile, OrderEntry>> lpair = initLibraryClassSourceRoots();
+      myLibClassRootEntries = lpair.getFirst();
+      myLibSourceRootEntries = lpair.getSecond();
     }
 
-    private void initGraph() {
+    private Pair<Graph, MultiMap<VirtualFile, Node>> initGraphRoots() {
       Graph graph = new Graph();
 
       MultiMap<VirtualFile, Node> roots = MultiMap.createSmart();
@@ -390,11 +394,11 @@ public class RootIndex {
         }
       }
 
-      myGraph = graph;
-      myRoots = roots;
+      return Pair.create(graph, roots);
     }
 
-    private void initLibraryRoots() {
+    @NotNull
+    private Pair<MultiMap<VirtualFile, OrderEntry>, MultiMap<VirtualFile, OrderEntry>> initLibraryClassSourceRoots() {
       MultiMap<VirtualFile, OrderEntry> libClassRootEntries = MultiMap.createSmart();
       MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = MultiMap.createSmart();
 
@@ -413,8 +417,7 @@ public class RootIndex {
         }
       }
 
-      myLibClassRootEntries = libClassRootEntries;
-      myLibSourceRootEntries = libSourceRootEntries;
+      return Pair.create(libClassRootEntries, libSourceRootEntries);
     }
 
     @NotNull
@@ -600,26 +603,26 @@ public class RootIndex {
 
   private static class RootInfo {
     // getDirectoriesByPackageName used to be in this order, some clients might rely on that
-    @NotNull final LinkedHashSet<VirtualFile> classAndSourceRoots = ContainerUtil.newLinkedHashSet();
+    @NotNull final Set<VirtualFile> classAndSourceRoots = new LinkedHashSet<>();
 
-    @NotNull final Set<VirtualFile> libraryOrSdkSources = ContainerUtil.newHashSet();
-    @NotNull final Set<VirtualFile> libraryOrSdkClasses = ContainerUtil.newHashSet();
-    @NotNull final Map<VirtualFile, Module> contentRootOf = ContainerUtil.newHashMap();
-    @NotNull final Map<VirtualFile, String> contentRootOfUnloaded = ContainerUtil.newHashMap();
+    @NotNull final Set<VirtualFile> libraryOrSdkSources = new HashSet<>();
+    @NotNull final Set<VirtualFile> libraryOrSdkClasses = new HashSet<>();
+    @NotNull final Map<VirtualFile, Module> contentRootOf = new HashMap<>();
+    @NotNull final Map<VirtualFile, String> contentRootOfUnloaded = new HashMap<>();
     @NotNull final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
-    @NotNull final Map<VirtualFile, SourceFolder> sourceFolders = ContainerUtil.newHashMap();
+    @NotNull final Map<VirtualFile, SourceFolder> sourceFolders = new HashMap<>();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> excludedFromLibraries = MultiMap.createSmart();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> classOfLibraries = MultiMap.createSmart();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> sourceOfLibraries = MultiMap.createSmart();
-    @NotNull final Set<VirtualFile> excludedFromProject = ContainerUtil.newHashSet();
-    @NotNull final Set<VirtualFile> excludedFromSdkRoots = ContainerUtil.newHashSet();
-    @NotNull final Map<VirtualFile, Module> excludedFromModule = ContainerUtil.newHashMap();
-    @NotNull final Map<VirtualFile, FileTypeAssocTable<Boolean>> excludeFromContentRootTables = ContainerUtil.newHashMap();
-    @NotNull final Map<VirtualFile, String> packagePrefix = ContainerUtil.newHashMap();
+    @NotNull final Set<VirtualFile> excludedFromProject = new HashSet<>();
+    @NotNull final Set<VirtualFile> excludedFromSdkRoots = new HashSet<>();
+    @NotNull final Map<VirtualFile, Module> excludedFromModule = new HashMap<>();
+    @NotNull final Map<VirtualFile, FileTypeAssocTable<Boolean>> excludeFromContentRootTables = new HashMap<>();
+    @NotNull final Map<VirtualFile, String> packagePrefix = new HashMap<>();
 
     @NotNull
     Set<VirtualFile> getAllRoots() {
-      LinkedHashSet<VirtualFile> result = ContainerUtil.newLinkedHashSet();
+      Set<VirtualFile> result = new LinkedHashSet<>();
       result.addAll(classAndSourceRoots);
       result.addAll(contentRootOf.keySet());
       result.addAll(contentRootOfUnloaded.keySet());
