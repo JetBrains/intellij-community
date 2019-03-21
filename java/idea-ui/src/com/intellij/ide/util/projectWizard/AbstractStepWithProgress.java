@@ -148,9 +148,9 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
       return;
     }
 
-    UiNotifyConnector.doWhenFirstShown(myPanel, () -> new SwingWorker() {
+    UiNotifyConnector.doWhenFirstShown(myPanel, () -> new SwingWorker<Result>() {
       @Override
-      public Object construct() {
+      public Result construct() {
         LOG.debug("Start calculation in " + AbstractStepWithProgress.this + " using worker " + toString());
         final Ref<Result> result = Ref.create(null);
         ProgressManager.getInstance().runProcess(() -> result.set(calculate()), progress);
@@ -164,7 +164,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
         myProgressIndicator = null;
         ApplicationManager.getApplication().invokeLater(() -> {
           LOG.debug("Show results for " + AbstractStepWithProgress.this);
-          final Result result = (Result)get();
+          final Result result = get();
           onFinished(result, progress.isCanceled());
           showCard(RESULTS_PANEL);
         });
