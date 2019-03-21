@@ -809,6 +809,36 @@
     <editorActionHandler action="$SelectAll" implementationClass="com.intellij.codeInsight.template.impl.editorActions.SelectAllHandler"/>
     <typedHandler implementation="com.intellij.codeInsight.template.impl.editorActions.SpaceHandler"/>
 
+    <!-- LargeFileEditor -->
+    <editorActionHandler action="Find" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerFind"
+                         id="lfe.find" order="first"/>
+    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerEscape"
+                         id="lfe.editorEscape" order="first"/>
+    <editorActionHandler action="Replace" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerDisabled"
+                         id="lfe.replace" order="first"/>
+    <editorActionHandler action="FindWordAtCaret" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerDisabled"
+                         id="lfe.findWordAtCaret" order="first"/>
+    <editorActionHandler action="SelectAllOccurrences" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerDisabled"
+                         id="lfe.selectAllOccurrences" order="first"/>
+    <editorActionHandler action="SelectNextOccurrence" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerDisabled"
+                         id="lfe.selectNextOccurrence" order="first"/>
+    <editorActionHandler action="UnselectPreviousOccurrence" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerDisabled"
+                         id="lfe.unselectPreviousOccurrence" order="first"/>
+    <editorActionHandler action="GotoNextElementUnderCaretUsage" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerDisabled"
+                         id="lfe.gotoNextElementUnderCaretUsage" order="first"/>
+    <editorActionHandler action="GotoPrevElementUnderCaretUsage" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerDisabled"
+                         id="lfe.gotoPrevElementUnderCaretUsage" order="first"/>
+    <editorActionHandler action="FindUsages" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerDisabled"
+                         id="lfe.findUsages" order="first"/>
+    <editorActionHandler action="ShowSettingsAndFindUsages" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerDisabled"
+                         id="lfe.showSettingsAndFindUsages" order="first"/>
+    <editorActionHandler action="ShowUsages" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerDisabled"
+                         id="lfe.showUsages" order="first"/>
+    <editorActionHandler action="FindUsagesInFile" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerDisabled"
+                         id="lfe.findUsagesInFile" order="first"/>
+    <editorActionHandler action="ShowRecentFindUsagesGroup" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerDisabled"
+                         id="lfe.showRecentFindUsagesGroup" order="first"/>
+
     <!-- HighlightManagerActions -->
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.highlighting.EscapeHandler"
                          order="after hide-hints" id="hide-search"/>
