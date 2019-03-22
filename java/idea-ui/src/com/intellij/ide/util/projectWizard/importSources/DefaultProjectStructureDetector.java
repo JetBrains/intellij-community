@@ -16,7 +16,7 @@
 package com.intellij.ide.util.projectWizard.importSources;
 
 import com.intellij.ide.util.importProject.ProjectDescriptor;
-import com.intellij.openapi.module.WebModuleType;
+import com.intellij.openapi.module.WebModuleTypeBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -33,7 +33,7 @@ public class DefaultProjectStructureDetector extends ProjectStructureDetector {
                                                @NotNull File[] children,
                                                @NotNull File base,
                                                @NotNull List<DetectedProjectRoot> result) {
-    result.add(new DetectedContentRoot(dir, "Content", WebModuleType.getInstance()));
+    result.add(new DetectedContentRoot(dir, "Content", WebModuleTypeBase.getInstance()));
     return DirectoryProcessingResult.SKIP_CHILDREN;
   }
 
