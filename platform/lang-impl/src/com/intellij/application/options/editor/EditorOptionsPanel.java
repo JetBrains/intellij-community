@@ -104,7 +104,6 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
 
   private JComboBox<String> myStickToNextWordBoundaryComboBox;
   private JComboBox<String> myStickToPreviousWordBoundaryComboBox;
-  private JCheckBox myForceStickToCurrentWordWhenMultiCaretCheckBox;
 
   private static final String STICK_TO_CURRENT_WORD_START = ApplicationBundle.message("combobox.item.stick.to.current.word.start");
   private static final String STICK_TO_CURRENT_WORD_END = ApplicationBundle.message("combobox.item.stick.to.current.word.end");
