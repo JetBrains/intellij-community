@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.tree;
 
 import com.intellij.lang.*;
@@ -28,24 +14,19 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author gregsh
  */
 public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
-
   // load all parser definitions, instantiate all lexers & parsers to initialize all IElementType constants
   @SuppressWarnings("UnusedDeclaration")
   public void testCount() {
     int count = IElementType.getAllocatedTypesCount();
     LOG.debug("Preloaded: " + count +" element types");
-    LanguageExtensionPoint[] extensions = Extensions.getExtensions(LanguageParserDefinitions.INSTANCE.getName(), null);
-    LOG.debug("ParserDefinitions: " + extensions.length);
+    List<LanguageExtensionPoint> extensions = Extensions.getRootArea().<LanguageExtensionPoint>getExtensionPoint(LanguageParserDefinitions.INSTANCE.getName()).getExtensionList();
+    LOG.debug("ParserDefinitions: " + extensions.size());
 
     THashMap<Language, String> languageMap = new THashMap<>();
     languageMap.put(Language.ANY, "platform");
@@ -119,11 +100,10 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testManipulatorRegistered() {
-    LanguageExtensionPoint[] extensions = Extensions.getExtensions(LanguageParserDefinitions.INSTANCE.getName(), null);
     Set<String> classes = new HashSet<>();
     List<String> failures = new ArrayList<>();
     int total = 0;
-    for (LanguageExtensionPoint e : extensions) {
+    for (LanguageExtensionPoint e : Extensions.getRootArea().<LanguageExtensionPoint>getExtensionPoint(LanguageParserDefinitions.INSTANCE.getName()).getExtensionList()) {
       ParserDefinition definition = (ParserDefinition)e.getInstance();
 
       for (IElementType type : IElementType.enumerate(IElementType.TRUE)) {
