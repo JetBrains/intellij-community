@@ -152,17 +152,13 @@ static int add_watch(int path_len, watch_node* parent) {
       return ERR_ABORT;
     }
     else if (strcmp(node->path, path_buf) != 0) {
+      // This is probably a hard link to another file we are watching. Having identical inode is expected.
       char buf1[PATH_MAX], buf2[PATH_MAX];
       const char* normalized1 = realpath(node->path, buf1);
       const char* normalized2 = realpath(path_buf, buf2);
-      if (normalized1 == NULL || normalized2 == NULL || strcmp(normalized1, normalized2) != 0) {
-        userlog(LOG_ERR, "table error: collision at %d (new %s, existing %s)", wd, path_buf, node->path);
-        return ERR_ABORT;
-      }
-      else {
-        userlog(LOG_INFO, "intersection at %d: (new %s, existing %s, real %s)", wd, path_buf, node->path, normalized1);
-        return ERR_IGNORE;
-      }
+
+      userlog(LOG_INFO, "intersection at %d: (new %s, existing %s, real %s)", wd, path_buf, node->path, normalized1);
+      return ERR_IGNORE;
     }
 
     return wd;
