@@ -155,7 +155,6 @@ static int add_watch(int path_len, watch_node* parent) {
       // This is probably a hard link to another file we are watching. Having identical inode is expected.
       char buf1[PATH_MAX], buf2[PATH_MAX];
       const char* normalized1 = realpath(node->path, buf1);
-      const char* normalized2 = realpath(path_buf, buf2);
 
       userlog(LOG_INFO, "intersection at %d: (new %s, existing %s, real %s)", wd, path_buf, node->path, normalized1);
       return ERR_IGNORE;
