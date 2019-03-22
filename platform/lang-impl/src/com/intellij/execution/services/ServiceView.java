@@ -59,7 +59,6 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
-import static com.intellij.execution.services.ServiceViewManager.SERVICE_VIEW_MASTER_COMPONENT;
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
 class ServiceView extends JPanel implements Disposable {
@@ -155,7 +154,6 @@ class ServiceView extends JPanel implements Disposable {
     myTree.setLineStyleAngled();
     myTree.setCellRenderer(new MyTreeCellRenderer());
     UIUtil.putClientProperty(myTree, ANIMATION_IN_RENDERER_ALLOWED, true);
-    UIUtil.putClientProperty(myTree, SERVICE_VIEW_MASTER_COMPONENT, Boolean.TRUE);
 
     // listeners
     myTree.addTreeSelectionListener(e -> onSelectionChanged());
