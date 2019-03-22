@@ -65,6 +65,7 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
     checkCanBeReordered("y >= 0 && /*<*/str.charAt(x) == 'a'/*>*/", ThreeState.UNSURE);
     checkCanBeReordered("x < str.length() && /*<*/str.charAt(x) == 'a'/*>*/", ThreeState.NO);
     checkCanBeReordered("x <= str.length() && /*<*/str.substring(x) == 'a'/*>*/", ThreeState.NO);
+    checkCanBeReordered("x <= str.charAt(100) && /*<*/str.substring(x) == 'a'/*>*/", ThreeState.UNSURE);
     // Not supported
     checkCanBeReordered("x < str.length() && /*<*/str.substring(x) == 'a'/*>*/", ThreeState.UNSURE);
   }
