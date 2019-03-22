@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,7 +57,9 @@ public class ScratchFileActions {
 
     private static final String ACTION_ID = "NewScratchFile";
 
-    private String myActionText;
+    private NotNullLazyValue<String> myActionText = NotNullLazyValue.createValue(
+      () -> NewActionGroup.isActionInNewPopupMenu(this) ? ActionsBundle.actionText(ACTION_ID) : ActionsBundle.message("action.NewScratchFile.text.with.new")
+    );
 
     public NewFileAction() {
       getTemplatePresentation().setIcon(ICON);
@@ -64,7 +67,7 @@ public class ScratchFileActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      getTemplatePresentation().setText(getActionText());
+      getTemplatePresentation().setText(myActionText.getValue());
 
       Project project = e.getProject();
       String place = e.getPlace();
@@ -93,23 +96,16 @@ public class ScratchFileActions {
         consumer.consume(context.language);
       }
       else {
-        LRUPopupBuilder.forFileLanguages(project, "New " + ActionsBundle.actionText(ACTION_ID), null, consumer).showCenteredInCurrentWindow(project);
+        LRUPopupBuilder.forFileLanguages(project, ActionsBundle.message("action.NewScratchFile.text.with.new"), null, consumer).showCenteredInCurrentWindow(project);
       }
     }
 
     private void updatePresentationTextAndIcon(@NotNull AnActionEvent e, @NotNull Presentation presentation) {
-      presentation.setText(getActionText());
+      presentation.setText(myActionText.getValue());
       presentation.setIcon(ICON);
       if (ActionPlaces.MAIN_MENU.equals(e.getPlace()) && !NewActionGroup.isActionInNewPopupMenu(this)) {
         presentation.setIcon(null);
       }
-    }
-
-    private String getActionText() {
-      if (myActionText == null) {
-        myActionText = (NewActionGroup.isActionInNewPopupMenu(this) ? "" : "New ") + ActionsBundle.actionText(ACTION_ID);
-      }
-      return myActionText;
     }
   }
 
