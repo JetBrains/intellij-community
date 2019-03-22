@@ -176,7 +176,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                myConsoleExecuteActionHandler));
     toolbarActions.addAll(actions);
     // Attach Debugger
-    toolbarActions.add(new ConnectDebuggerAction());
+    ConnectDebuggerAction connectDebuggerAction = new ConnectDebuggerAction();
+    toolbarActions.add(connectDebuggerAction);
+    connectDebuggerAction.setSelected(true);
     // Settings
     DefaultActionGroup settings = new DefaultActionGroup("Settings", true);
     settings.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
@@ -863,6 +865,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      setSelected(state);
+    }
+
+    public void setSelected(boolean state) {
       mySelected = state;
 
       if (mySelected) {
