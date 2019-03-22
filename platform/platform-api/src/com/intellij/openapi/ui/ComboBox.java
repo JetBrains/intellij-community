@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -16,6 +17,7 @@ import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 
 /**
  * Due to many bugs and "features" in {@code JComboBox} implementation we provide
@@ -102,7 +104,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     if (!isSwingPopup()) {
       if (visible && (myJBPopup == null || myJBPopup.isDisposed())) {
         final JBList<E> list = createJBList(getModel());
-        myJBPopup = JBPopupFactory.getInstance()
+        myJBPopup = Objects.requireNonNull(getPopupFactory())
           .createListPopupBuilder(list)
           .setItemChoosenCallback(() -> {
             final Object value = list.getSelectedValue();
@@ -135,7 +137,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     }
 
     if (visible) {
-      JBPopupFactory jbPopupFactory = JBPopupFactory.getInstance();
+      JBPopupFactory jbPopupFactory = getPopupFactory();
       if (jbPopupFactory != null /* allow ComboBox on welcome wizard */ && jbPopupFactory.getChildFocusedPopup(this) != null) {
         return;
       }
@@ -156,6 +158,14 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     }
   }
 
+  @Nullable
+  private static JBPopupFactory getPopupFactory() {
+    if (ApplicationManager.getApplication() == null) {
+      return null;
+    }
+    return JBPopupFactory.getInstance();
+  }
+
   protected JBList<E> createJBList(ComboBoxModel<E> model) {
     return new JBList<>(model);
   }
@@ -166,7 +176,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
       return;
     }
 
-    JBPopupFactory jbPopupFactory = JBPopupFactory.getInstance();
+    JBPopupFactory jbPopupFactory = getPopupFactory();
     if (jbPopupFactory == null) {
       // allow ComboBox on welcome wizard
       return;
