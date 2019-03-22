@@ -1,19 +1,17 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.psi;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessorBase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author oleg
- */
 final class YAMLPsiManager extends PsiTreeChangePreprocessorBase {
-  YAMLPsiManager(@NotNull PsiManager psiManager) {
-    super(psiManager);
+  YAMLPsiManager(@NotNull Project project) {
+    super(project);
   }
 
   @Override
@@ -40,5 +38,4 @@ final class YAMLPsiManager extends PsiTreeChangePreprocessorBase {
       element = parent;
     }
   }
-
 }

@@ -57,13 +57,12 @@ import java.util.regex.Pattern;
  * It also tries to deal with the "glued token" problem by removing or adding whitespace to the prefix/suffix.
  */
 public final class XmlLanguageInjector implements MultiHostInjector {
-
   private final Configuration myConfiguration;
   private volatile Trinity<Long, Pattern, Collection<String>> myXmlIndex;
   private final LanguageInjectionSupport mySupport;
 
-  public XmlLanguageInjector(Configuration configuration) {
-    myConfiguration = configuration;
+  public XmlLanguageInjector() {
+    myConfiguration = Configuration.getInstance();
     mySupport = InjectorUtils.findNotNullInjectionSupport(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
   }
 
@@ -201,7 +200,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
     }
   }
 
-  // NOTE: local name of an xml entity or attribute value should match at least one string in the index 
+  // NOTE: local name of an xml entity or attribute value should match at least one string in the index
   private boolean isInIndex(XmlElement xmlElement) {
     final Trinity<Long, Pattern, Collection<String>> index = getXmlAnnotatedElementsValue();
     if (xmlElement instanceof XmlAttributeValue) xmlElement = (XmlElement)xmlElement.getParent();

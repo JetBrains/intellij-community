@@ -18,25 +18,24 @@ import java.util.HashSet;
 /**
  * @author Dmitry Avdeev
  */
-public class ChangelistConflictAccessProvider extends WritingAccessProvider {
+final class ChangelistConflictAccessProvider extends WritingAccessProvider {
   private final Project myProject;
-  private final ChangeListManagerImpl myManager;
 
-  public ChangelistConflictAccessProvider(Project project, ChangeListManagerImpl manager) {
+  ChangelistConflictAccessProvider(Project project) {
     myProject = project;
-    myManager = manager;
   }
 
   @NotNull
   @Override
   public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
-    ChangelistConflictTracker.Options options = myManager.getConflictTracker().getOptions();
+    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
+    ChangelistConflictTracker.Options options = changeListManager.getConflictTracker().getOptions();
     if (!options.SHOW_DIALOG) {
       return Collections.emptyList();
     }
     ArrayList<VirtualFile> denied = new ArrayList<>();
     for (VirtualFile file : files) {
-      if (file != null && !myManager.getConflictTracker().isWritingAllowed(file)) {
+      if (file != null && !changeListManager.getConflictTracker().isWritingAllowed(file)) {
         denied.add(file);
       }
     }
@@ -45,8 +44,8 @@ public class ChangelistConflictAccessProvider extends WritingAccessProvider {
       HashSet<ChangeList> changeLists = new HashSet<>();
       ArrayList<Change> changes = new ArrayList<>();
       for (VirtualFile file : denied) {
-        changeLists.add(myManager.getChangeList(file));
-        changes.add(myManager.getChange(file));
+        changeLists.add(changeListManager.getChangeList(file));
+        changes.add(changeListManager.getChange(file));
       }
 
       ChangelistConflictDialog dialog;
