@@ -9,7 +9,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -48,7 +47,7 @@ class ImportOldConfigsPanel extends JDialog {
   private JRadioButton myCustomButton;
   private JRadioButton myRbDoNotImport;
   private JButton myOkButton;
-  private ComboBox<Path> myComboBoxOldPaths;
+  private JComboBox<Path> myComboBoxOldPaths;
 
   private final List<Path> myGuessedOldConfigDirs;
   private final Function<? super Path, ? extends Pair<Path, Path>> myValidator;

@@ -55,7 +55,7 @@
               <text resource-bundle="messages/ApplicationBundle" key="radio.do.not.import"/>
             </properties>
           </component>
-          <component id="f949a" class="com.intellij.openapi.ui.ComboBox" binding="myComboBoxOldPaths" default-binding="true">
+          <component id="f949a" class="javax.swing.JComboBox" binding="myComboBoxOldPaths" default-binding="true">
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
