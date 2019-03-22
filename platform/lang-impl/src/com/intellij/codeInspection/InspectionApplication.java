@@ -55,6 +55,7 @@ public class InspectionApplication {
   public String myStubProfile;
   public String myProfileName;
   public String myProfilePath;
+  public String[] myInspectionNames;
   public boolean myRunWithEditorSettings;
   public boolean myRunGlobalToolsOnly;
   private Project myProject;
@@ -74,7 +75,7 @@ public class InspectionApplication {
       printHelp();
     }
 
-    if (myProfileName == null && myProfilePath == null && myStubProfile == null) {
+    if (myProfileName == null && myProfilePath == null && myStubProfile == null && myInspectionNames == null) {
       logError("Profile to inspect with is not defined");
       printHelp();
     }
@@ -303,6 +304,15 @@ public class InspectionApplication {
   @Nullable
   private InspectionProfileImpl loadInspectionProfile() throws IOException, JDOMException {
     InspectionProfileImpl inspectionProfile = null;
+
+    if (myInspectionNames != null) {
+      inspectionProfile = new InspectionProfileImpl("inspections");
+      inspectionProfile.disableAllTools(myProject);
+      for (String inspectionName : myInspectionNames) {
+        inspectionProfile.enableTool(inspectionName, myProject);
+      }
+      return inspectionProfile;
+    }
 
     //fetch profile by name from project file (project profiles can be disabled)
     if (myProfileName != null) {

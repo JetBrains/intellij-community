@@ -31,6 +31,8 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
   protected abstract Boolean getErrorCodeRequiredProperty();
   @Nullable
   protected abstract Boolean getRunWithEditorSettingsProperty();
+  @Nullable
+  protected abstract String[] getInspectionNames();
 
   @NotNull
   protected abstract String[] optionsBanner();
@@ -41,6 +43,7 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
     app.myProjectPath = determineProjectPath();
     app.myProfileName = getProfileNameOrPathProperty();
     app.myOutPath = determineOutputPath();
+    app.myInspectionNames = getInspectionNames();
     app.mySourceDirectory = determineDirectoryToInspect(app.myProjectPath);
     app.setVerboseLevel(getVerboseLevelProperty());
 
