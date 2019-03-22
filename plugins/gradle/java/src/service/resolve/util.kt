@@ -33,7 +33,8 @@ internal fun PsiClass?.isResolvedInGradleScript() = this is GroovyScriptClass &&
 
 internal fun PsiFile?.isGradleScript() = this?.originalFile?.virtualFile?.extension == EXTENSION
 
-@JvmField val RESOLVED_CODE: Key<Boolean?> = Key.create<Boolean?>("gradle.resolved")
+@JvmField
+val RESOLVED_CODE: Key<Boolean?> = Key.create("gradle.resolved")
 
 // TODO extract API for delegation
 fun processDelegatedDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, fqn: String): Boolean {
