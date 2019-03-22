@@ -47,6 +47,6 @@ public class RunAnythingRecentGroup extends RunAnythingGroupBase {
 
   @Override
   protected int getMaxInitialItems() {
-    return 15;
+    return 10;
   }
 }
