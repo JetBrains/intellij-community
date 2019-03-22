@@ -22,6 +22,8 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -36,6 +38,9 @@ public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Val
 
   @NotNull
   Lock getWriteLock();
+
+  @NotNull
+  Map<Key, Value> getIndexedFileData(int fileId) throws StorageException;
 
   void setIndexedStateForFile(int fileId, @NotNull VirtualFile file);
   void resetIndexedStateForFile(int fileId);

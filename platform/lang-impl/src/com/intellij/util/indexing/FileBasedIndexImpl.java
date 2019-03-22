@@ -654,6 +654,14 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     return false;
   }
 
+  @NotNull
+  @Override
+  public <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project) {
+    int fileId = getFileId(virtualFile);
+    Map<K, V> map = processExceptions(id, virtualFile, GlobalSearchScope.fileScope(project, virtualFile), index -> index.getIndexedFileData(fileId));
+    return ContainerUtil.notNullize(map);
+  }
+
   private static final ThreadLocal<Integer> myUpToDateCheckState = new ThreadLocal<>();
 
   public static <T,E extends Throwable> T disableUpToDateCheckIn(@NotNull ThrowableComputable<T, E> runnable) throws E {

@@ -7,11 +7,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.io.*;
 import gnu.trove.THashSet;
@@ -205,6 +208,46 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     finally {
       lock.unlock();
     }
+  }
+
+  @NotNull
+  @Override
+  public Map<Key, Value> getIndexedFileData(int fileId) throws StorageException {
+    try {
+      return Collections.unmodifiableMap(ContainerUtil.notNullize(getNullableIndexedData(fileId)));
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
+  }
+
+  @Nullable
+  private Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
+    if (myInMemoryMode.get()) {
+      Map<Key, Value> map = myInMemoryKeysAndValues.get(fileId);
+      if (map != null) return map;
+    }
+    if (myForwardIndex instanceof VfsAwareMapReduceIndex.MyMapBasedForwardIndex) {
+      return ((MyMapBasedForwardIndex<Key, Value>)myForwardIndex).getInput(fileId);
+    }
+    if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor) {
+      ByteArraySequence serializedInputData = getForwardIndexMap().get(fileId);
+      AbstractMapForwardIndexAccessor<Key, Value, ?, Input> forwardIndexAccessor = (AbstractMapForwardIndexAccessor<Key, Value, ?, Input>)getForwardIndexAccessor();
+      return forwardIndexAccessor.convertToInputDataMap(serializedInputData);
+    }
+    // in future we will get rid of forward index for SingleEntryFileBasedIndexExtension
+    if (myExtension instanceof SingleEntryFileBasedIndexExtension) {
+      Key key = (Key)(Object)fileId;
+      final Map<Key, Value>[] result = new Map[]{Collections.emptyMap()};
+      ValueContainer<Value> container = getData(key);
+      container.forEach((id, value) -> {
+        result[0] = Collections.singletonMap(key, value);
+        return false;
+      });
+      return result[0];
+    }
+    LOG.error("Can't fetch indexed data for index " + myIndexId.getName());
+    return null;
   }
 
   @Override
