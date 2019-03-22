@@ -95,10 +95,6 @@ public abstract class AttachOSHandler {
       GeneralCommandLine getOsCommandLine = new GeneralCommandLine("uname", "-s");
       final String osString = host.getProcessOutput(getOsCommandLine).getStdout().trim();
 
-      if(osString.startsWith("MSYS")) {
-        return OSType.WINDOWS;
-      }
-
       OSType osType;
 
       switch (osString) {
@@ -122,7 +118,6 @@ public abstract class AttachOSHandler {
   public enum OSType {
     LINUX,
     MACOSX,
-    WINDOWS,
     UNKNOWN
   }
 }
