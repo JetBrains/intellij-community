@@ -79,11 +79,6 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
         if (!processor.execute(wrappedBase, state)) return false
       }
     }
-    if (psiElement().inside(dependencyClosure).accepts(place)) {
-      if (GradleResolverUtil.processDeclarations(processor, state, place,
-                                                 GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY,
-                                                 GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY)) return false
-    }
     return true
   }
 }
