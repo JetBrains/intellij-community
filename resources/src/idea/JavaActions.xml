@@ -35,6 +35,36 @@
       <add-to-group group-id="FileMainSettingsGroup" anchor="last"/>
     </action>
 
+    <action id="ShowProjectStructureSettings" class="com.intellij.ide.actions.ShowStructureSettingsAction"
+            icon="AllIcons.General.ProjectStructure">
+      <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>
+      <add-to-group group-id="MainToolBarSettings" anchor="after" relative-to-action="ShowSettings"/>
+      <add-to-group group-id="NavBarToolBar" relative-to-action="RunAnything" anchor="before"/>
+    </action>
+    <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
+      <add-to-group group-id="FileSettingsGroup" anchor="last"/>
+    </action>
+    <action id="ShowSiblings" class="com.intellij.codeInsight.hint.actions.ShowSiblingsAction">
+      <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickImplementations"/>
+    </action>
+    <action id="ShowRecentTests" class="com.intellij.testIntegration.ShowRecentTests">
+      <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
+    </action>
+
+    <action class="com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction" id="ShowDiscoveredTests"
+            text="Show Affected Tests">
+      <add-to-group group-id="RunMenu" anchor="before" relative-to-action="DebugMainMenu"/>
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
+    </action>
+
+    <action class="com.intellij.execution.testDiscovery.actions.FindUnusedTestDataAction" id="FindUsedTestData"
+            text="Find Unused Test Data" internal="true"/>
+
+    <action id="JShell.Console"
+            class="com.intellij.execution.jshell.LaunchJShellConsoleAction"
+            text="JShell Console..." description="Launch JShell Console">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
 
     <!-- View -->
     <reference ref="DelegateMethods">
