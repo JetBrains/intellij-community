@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction.addUnv
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.getExecutorPresentableText
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
+import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
@@ -30,6 +31,19 @@ import com.intellij.util.PairConsumer
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 
 private val LOG = logger<DialogCommitWorkflow>()
+
+internal fun CommitOptions.saveState() = allOptions.forEach { it.saveState() }
+internal fun CommitOptions.restoreState() = allOptions.forEach { it.restoreState() }
+internal fun CommitOptions.refresh() = allOptions.forEach { it.refresh() }
+
+internal val CommitOptions.changeListSpecificOptions: Sequence<CheckinChangeListSpecificComponent>
+  get() = allOptions.filterIsInstance<CheckinChangeListSpecificComponent>()
+
+internal fun CommitOptions.changeListChanged(changeList: LocalChangeList) = changeListSpecificOptions.forEach {
+  it.onChangeListSelected(changeList)
+}
+
+internal fun CommitOptions.saveChangeListSpecificOptions() = changeListSpecificOptions.forEach { it.saveState() }
 
 open class DialogCommitWorkflow(val project: Project,
                                 val initiallyIncluded: Collection<*>,
@@ -47,17 +61,25 @@ open class DialogCommitWorkflow(val project: Project,
 
   // TODO Probably unify with "CommitContext"
   private val _additionalData = PseudoMap<Any, Any>()
-  protected val additionalDataConsumer: PairConsumer<Any, Any> get() = _additionalData
+  val additionalDataConsumer: PairConsumer<Any, Any> get() = _additionalData
   protected val additionalData: NullableFunction<Any, Any> get() = _additionalData
 
   private val _commitHandlers = mutableListOf<CheckinHandler>()
   val commitHandlers: List<CheckinHandler> get() = newUnmodifiableList(_commitHandlers)
+
+  private val _commitOptions = MutableCommitOptions()
+  val commitOptions: CommitOptions get() = _commitOptions.toUnmodifiableOptions()
 
   val commitMessagePolicy: CommitMessagePolicy = CommitMessagePolicy(project, initialCommitMessage)
 
   internal fun initCommitHandlers(handlers: List<CheckinHandler>) {
     _commitHandlers.clear()
     _commitHandlers += handlers
+  }
+
+  internal fun initCommitOptions(options: CommitOptions) {
+    _commitOptions.clear()
+    _commitOptions.add(options)
   }
 
   fun addUnversionedFiles(changeList: LocalChangeList, unversionedFiles: List<VirtualFile>, callback: (List<Change>) -> Unit): Boolean {
