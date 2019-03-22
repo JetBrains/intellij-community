@@ -51,8 +51,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     if (annos == null) {
       annos = new ArrayList<>();
       Collections.addAll(annos, STANDARD_ANNOS);
-      final EntryPoint[] extensions = Extensions.getExtensions(ToolExtensionPoints.DEAD_CODE_TOOL, null);
-      for (EntryPoint extension : extensions) {
+      for (EntryPoint extension : Extensions.getRootArea().<EntryPoint>getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL).getExtensionList()) {
         final String[] ignoredAnnotations = extension.getIgnoreAnnotations();
         if (ignoredAnnotations != null) {
           ContainerUtil.addAll(annos, ignoredAnnotations);
