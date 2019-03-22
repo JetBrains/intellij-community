@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ignore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -73,21 +74,30 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
       if (StringUtil.isEmptyOrSpaces(ignoreFileContent)) return;
 
       File ignoreFile = getIgnoreFile(ignoreFileRoot, ignoreFileName);
-      boolean append = ignoreFile.exists();
 
       if (notify && needAskToManageIgnoreFiles(myProject)) {
-        notifyVcsIgnoreFileManage(myProject, () -> writeToFile(append, ignoreFileContent, ignoreFile, true));
+        notifyVcsIgnoreFileManage(myProject, () -> writeToFile(ignoreFileRoot, ignoreFile, ignoreFileContent, true));
       }
       else {
-        writeToFile(append, ignoreFileContent, ignoreFile, false);
+        writeToFile(ignoreFileRoot, ignoreFile, ignoreFileContent, false);
       }
     }
   }
 
-  private void writeToFile(boolean append, @NotNull String ignoreFileContent, @NotNull File ignoreFile, boolean openFile) {
+  private void writeToFile(@NotNull VirtualFile ignoreFileRoot, @NotNull File ignoreFile, @NotNull String ignoreFileContent, boolean openFile) {
+    boolean append = ignoreFile.exists();
     String projectCharsetName = EncodingProjectManager.getInstance(myProject).getDefaultCharsetName();
     try {
-      FileUtil.writeToFile(ignoreFile, ignoreFileContent.getBytes(projectCharsetName), append);
+      if (append) {
+        FileUtil.writeToFile(ignoreFile, ignoreFileContent.getBytes(projectCharsetName), true);
+      }
+      else {
+        //create ignore file with VFS to prevent externally added files detection
+        WriteAction.runAndWait(() -> {
+          VirtualFile newIgnoreFile = ignoreFileRoot.createChildData(ignoreFileRoot, ignoreFile.getName());
+          VfsUtil.saveText(newIgnoreFile, ignoreFileContent);
+        });
+      }
     }
     catch (IOException e) {
       LOG.warn("Cannot write to file " + ignoreFile.getPath());
