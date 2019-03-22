@@ -62,7 +62,9 @@ class GitLogUtilTest : GitSingleRepoTest() {
     git("mv fileToRename.txt renamedFile.txt")
     repo.addCommit("Rename fileToRename.txt")
 
-    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details), true, true, true, false, false)
+    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details),
+                               GitCommitRequirements(diffRenameLimit = GitCommitRequirements.DiffRenameLimit.NO_RENAMES),
+                               false)
     val lastCommit = ContainerUtil.getFirstItem(details)
     assertNotNull(lastCommit)
     assertTrue(lastCommit!!.changes.all { !it.isRenamed })
@@ -91,7 +93,8 @@ class GitLogUtilTest : GitSingleRepoTest() {
     }
 
     val details = ContainerUtil.newArrayList<VcsFullCommitDetails>()
-    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details), true, true, true, true, withMergeDiff)
+    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details),
+                               GitCommitRequirements(diffToParentsInMerges = withMergeDiff), false)
     val lastCommit = ContainerUtil.getFirstItem(details)
 
     assertNotNull(lastCommit)

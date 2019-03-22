@@ -33,6 +33,7 @@ import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.history.GitCommitRequirements;
 import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -293,7 +294,8 @@ public class GitLogProvider implements VcsLogProvider {
 
   @Override
   @NotNull
-  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull final Consumer<? super TimedVcsCommit> commitConsumer) throws VcsException {
+  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull final Consumer<? super TimedVcsCommit> commitConsumer)
+    throws VcsException {
     if (!isRepositoryReady(root)) {
       return LogDataImpl.empty();
     }
@@ -310,13 +312,16 @@ public class GitLogProvider implements VcsLogProvider {
   }
 
   @Override
-  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer) throws VcsException {
+  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer)
+    throws VcsException {
     if (!isRepositoryReady(root)) {
       return;
     }
 
-    GitLogUtil.readFullDetails(myProject, root, commitConsumer, shouldIncludeRootChanges(root), false, true, true, true,
-                               ArrayUtil.toStringArray(GitLogUtil.LOG_ALL));
+    GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(root),
+                                                                   GitCommitRequirements.DiffRenameLimit.REGISTRY,
+                                                                   true, false);
+    GitLogUtil.readFullDetails(myProject, root, commitConsumer, requirements, true, ArrayUtil.toStringArray(GitLogUtil.LOG_ALL));
   }
 
   @Override
@@ -328,8 +333,10 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, shouldIncludeRootChanges(root),
-                                        false, true, true, GitLogUtil.DiffRenameLimit.GIT_CONFIG);
+    GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(root),
+                                                                   GitCommitRequirements.DiffRenameLimit.GIT_CONFIG,
+                                                                   true, true);
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, hashes, requirements, false, commitConsumer);
   }
 
   @Override
@@ -341,9 +348,10 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitLogUtil.DiffRenameLimit renameLimit = isForIndexing ? GitLogUtil.DiffRenameLimit.REGISTRY : GitLogUtil.DiffRenameLimit.INFINITY;
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, shouldIncludeRootChanges(root),
-                                        isForIndexing, true, false, renameLimit);
+    GitCommitRequirements.DiffRenameLimit renameLimit = isForIndexing ? GitCommitRequirements.DiffRenameLimit.REGISTRY : GitCommitRequirements.DiffRenameLimit.INFINITY;
+    GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(root), renameLimit,
+                                                                   true, false);
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, hashes, requirements, isForIndexing, commitConsumer);
   }
 
   private boolean shouldIncludeRootChanges(@NotNull VirtualFile root) {
