@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig
 
 import com.intellij.openapi.project.Project
@@ -13,15 +13,15 @@ import org.jetbrains.idea.svn.SvnVcs
 
 private fun join(s1: String, s2: String?) = listOfNotNull(s1, s2.nullize()).joinToString("/")
 
-class SvnBranchStateProvider(val project: Project, val vcsManager: ProjectLevelVcsManager) : BranchStateProvider {
-  // do not inject in constructor as SvnBranchConfigurationManager.getInstance() has custom logic
-  private val branchManager = SvnBranchConfigurationManager.getInstance(project)
-
+class SvnBranchStateProvider(val project: Project) : BranchStateProvider {
   override fun getCurrentBranch(path: FilePath): BranchData? {
-    if (!vcsManager.checkVcsIsActive(SvnVcs.VCS_NAME)) return null
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    if (!vcsManager.checkVcsIsActive(SvnVcs.VCS_NAME)) {
+      return null
+    }
 
     val wcRoot = (vcsManager.getVcsFor(path) as? SvnVcs)?.svnFileUrlMapping?.getWcRootForFilePath(path) ?: return null
-    val configuration = branchManager.svnBranchConfigManager.getConfigOrNull(wcRoot.virtualFile) ?: return null
+    val configuration = SvnBranchConfigurationManager.getInstance(project).svnBranchConfigManager.getConfigOrNull(wcRoot.virtualFile) ?: return null
     val branchUrl = configuration.getWorkingBranch(wcRoot.url) ?: return null
     val presentableRootName = join(wcRoot.root.presentableName, getRelativePath(wcRoot.virtualFile, wcRoot.root))
 
