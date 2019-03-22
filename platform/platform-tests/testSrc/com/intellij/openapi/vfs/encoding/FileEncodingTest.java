@@ -337,7 +337,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     VirtualFile file = createTempFile("txt", NO_BOM, text.toString(), WINDOWS_1251);
     File ioFile = new File(file.getPath());
 
-    EncodingManager.getInstance().setEncoding(file, WINDOWS_1251);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(file, WINDOWS_1251);
 
     final Document document = getDocument(file);
     final boolean[] changed = {false};
@@ -348,7 +348,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
       }
     });
 
-    EncodingManager.getInstance().setEncoding(file, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(file, CharsetToolkit.UTF8_CHARSET);
     //text in editor changed
     assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
     UIUtil.dispatchAllInvocationEvents();
@@ -367,7 +367,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
 
     assertTrue(changed[0]);
     changed[0] = false;
-    EncodingManager.getInstance().setEncoding(file, US_ASCII);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(file, US_ASCII);
     assertEquals(US_ASCII, file.getCharset());
     UIUtil.dispatchAllInvocationEvents();
     assertTrue(changed[0]); //reloaded again
@@ -388,8 +388,8 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     assertNotNull(dir1.getPath(), vdir1);
     assertNotNull(dir2.getPath(), vdir2);
 
-    EncodingManager.getInstance().setEncoding(vdir1, WINDOWS_1251);
-    EncodingManager.getInstance().setEncoding(vdir2, US_ASCII);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(vdir1, WINDOWS_1251);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(vdir2, US_ASCII);
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
       VirtualFile xxx = vdir1.createChildData(this, "xxx.txt");
       setFileText(xxx, THREE_RUSSIAN_LETTERS);
@@ -417,8 +417,8 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     assertNotNull(dir1.getPath(), vdir1);
     assertNotNull(dir2.getPath(), vdir2);
 
-    EncodingManager.getInstance().setEncoding(vdir1, WINDOWS_1251);
-    EncodingManager.getInstance().setEncoding(vdir2, US_ASCII);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(vdir1, WINDOWS_1251);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(vdir2, US_ASCII);
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
       VirtualFile winf = vdir1.createChildData(this, "xxx.txt");
 
@@ -429,8 +429,8 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
         ObjectUtils.assertNotNull(psidir2.getVirtualFile().findFileByRelativePath(psidir1.getName() + "/" + winf.getName()));
       assertEquals(WINDOWS_1251, winfCopy.getCharset());
       VirtualFile dir1Copy = psidir2.getVirtualFile().findChild(psidir1.getName());
-      assertEquals(WINDOWS_1251, EncodingManager.getInstance().getEncoding(dir1Copy, false));
-      assertNull(EncodingManager.getInstance().getEncoding(winfCopy, false));
+      assertEquals(WINDOWS_1251, EncodingProjectManager.getInstance(getProject()).getEncoding(dir1Copy, false));
+      assertNull(EncodingProjectManager.getInstance(getProject()).getEncoding(winfCopy, false));
     });
   }
 
@@ -706,7 +706,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     Document document = ObjectUtils.assertNotNull(FileDocumentManager.getInstance().getDocument(file));
     assertEquals(THREE_RUSSIAN_LETTERS, document.getText());
     assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
-    EncodingManager.getInstance().setEncoding(file, CharsetToolkit.UTF_16LE_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(file, CharsetToolkit.UTF_16LE_CHARSET);
     UIUtil.dispatchAllInvocationEvents();
 
     assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
@@ -745,7 +745,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
       PsiFile psiFile = createFile("x.txt", "xx");
       VirtualFile file = psiFile.getVirtualFile();
 
-      assertEquals(EncodingManager.getInstance().getDefaultCharset(), file.getCharset());
+      assertEquals(EncodingProjectManager.getInstance(getProject()).getDefaultCharset(), file.getCharset());
     });
   }
 
@@ -799,7 +799,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     VirtualFile file = ObjectUtils.assertNotNull(dir.findFileByRelativePath("src/xxx.txt"));
 
     Document document = ObjectUtils.assertNotNull(FileDocumentManager.getInstance().getDocument(file));
-    ObjectUtils.assertNotNull(document.getText());
+    assertNotNull(document.getText());
     UIUtil.dispatchAllInvocationEvents();
 
     Project newEncodingProject = ObjectUtils.assertNotNull(ProjectUtil.openProject(dir.getPath(), null, false));

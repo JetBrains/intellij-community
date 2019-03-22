@@ -26,7 +26,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
@@ -64,7 +63,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     Charset ascii = CharsetToolkit.forName("US-ASCII");
     VirtualFile myVFile = myFile.getVirtualFile();
     FileDocumentManager.getInstance().saveAllDocuments();
-    EncodingManager.getInstance().setEncoding(myVFile, ascii);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(myVFile, ascii);
     UIUtil.dispatchAllInvocationEvents(); // wait for reload requests to bubble up
     assertEquals(ascii, myVFile.getCharset());
     int start = myEditor.getCaretModel().getOffset();
