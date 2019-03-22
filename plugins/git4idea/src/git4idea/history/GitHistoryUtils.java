@@ -59,7 +59,7 @@ public class GitHistoryUtils {
                                  @NotNull VirtualFile root,
                                  @NotNull Consumer<? super GitCommit> commitConsumer,
                                  @NotNull String... parameters) throws VcsException {
-    GitLogUtil.readFullDetails(project, root, commitConsumer, true, true, false, parameters);
+    GitLogUtil.readFullDetails(project, root, commitConsumer, parameters);
   }
 
   /**
@@ -141,7 +141,7 @@ public class GitHistoryUtils {
 
     List<GitCommit> commits = ContainerUtil.newArrayList();
     try {
-      GitLogUtil.readFullDetails(project, root, commits::add, true, true, false, parameters);
+      GitLogUtil.readFullDetails(project, root, commits::add, parameters);
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {

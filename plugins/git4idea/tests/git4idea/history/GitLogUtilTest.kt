@@ -50,8 +50,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
     expected.reverse()
 
     val actualHashes = mutableListOf<String>()
-    GitLogUtil.readFullDetails(project, repo.root, Consumer<GitCommit> { actualHashes.add(it.id.asString()) },
-                               true, true, false, "--max-count=$commitCount")
+    GitLogUtil.readFullDetails(project, repo.root, Consumer<GitCommit> { actualHashes.add(it.id.asString()) }, "--max-count=$commitCount")
     assertEquals(expected, actualHashes)
   }
 
