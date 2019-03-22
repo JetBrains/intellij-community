@@ -19,6 +19,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.EditorHighlighterCache;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileTypes.*;
@@ -113,6 +114,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   private final Set<ID<?, ?>> myRequiringContentIndices = new THashSet<>();
   private final Set<ID<?, ?>> myPsiDependentIndices = new THashSet<>();
   private final Set<FileType> myNoLimitCheckTypes = new THashSet<>();
+
+  private volatile boolean myExtensionsRelatedDataWasLoaded;
 
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
   @NotNull private final ChangedFilesCollector myChangedFilesCollector;
@@ -313,14 +316,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   @Override
   public void initComponent() {
-    long started = System.nanoTime();
-    List<FileBasedIndexExtension> extensions = IndexInfrastructure.hasIndices() ?
-                                               FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList() : Collections.emptyList();
-    LOG.info("Index exts enumerated:" + (System.nanoTime() - started) / 1000000 + ", number of extensions:" + extensions.size());
-    started = System.nanoTime();
+    Iterator<FileBasedIndexExtension> indexExtensionsIterator = IndexInfrastructure.hasIndices() ?
+      ((ExtensionPointImpl<FileBasedIndexExtension>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint(null)).iterator() :
+      Collections.emptyIterator();
 
-    myStateFuture = IndexInfrastructure.submitGenesisTask(new FileIndexDataInitialization(extensions));
-    LOG.info("Index scheduled:" + (System.nanoTime() - started) / 1000000);
+    myStateFuture = IndexInfrastructure.submitGenesisTask(new FileIndexDataInitialization(indexExtensionsIterator));
+    
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
       waitUntilIndicesAreInitialized();
     }
@@ -696,6 +697,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
    */
   @Override
   public <K> void ensureUpToDate(@NotNull final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter) {
+    waitUntilIndicesAreInitialized();
     ensureUpToDate(indexId, project, filter, null);
   }
 
@@ -1437,6 +1439,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   @Override
   public void requestRebuild(@NotNull final ID<?, ?> indexId, final Throwable throwable) {
     cleanupProcessedFlag();
+    if (!myExtensionsRelatedDataWasLoaded) reportUnexpectedAsyncInitState();
+    
     if (RebuildStatus.requestRebuild(indexId)) {
       String message = "Rebuild requested for index " + indexId;
       Application app = ApplicationManager.getApplication();
@@ -1463,6 +1467,10 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         TransactionGuard.getInstance().submitTransactionLater(app, rebuildRunnable);
       }
     }
+  }
+
+  private static void reportUnexpectedAsyncInitState() {
+    LOG.error("Unexpected async indices initialization problem");
   }
 
   public <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
@@ -1641,6 +1649,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   }
 
   private void updateSingleIndex(@NotNull ID<?, ?> indexId, VirtualFile file, final int inputId, @Nullable FileContent currentFC) {
+    if (!myExtensionsRelatedDataWasLoaded) reportUnexpectedAsyncInitState();
     if (!RebuildStatus.isOk(indexId) && !myIsUnitTestMode) {
       return; // the index is scheduled for rebuild, no need to update
     }
@@ -2347,14 +2356,18 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     private final AtomicBoolean versionChanged = new AtomicBoolean();
     private boolean currentVersionCorrupted;
     private SerializationManagerEx mySerializationManagerEx;
+    private final Iterator<? extends FileBasedIndexExtension> myIndexExtensions;
 
-    FileIndexDataInitialization(@NotNull List<? extends FileBasedIndexExtension> extensions) {
-      // init contentless indices first
-      if (!extensions.isEmpty()) {
-        extensions = ContainerUtil.copyList(extensions);
-        extensions.sort(Comparator.comparingInt(o -> o.dependsOnFileContent() ? 1 : 0));
-      }
-      for (FileBasedIndexExtension<?, ?> extension : extensions) {
+    FileIndexDataInitialization(Iterator<? extends FileBasedIndexExtension> extensions) {
+      myIndexExtensions = extensions;
+    }
+
+    private void initAssociatedDataForExtensions(@NotNull Iterator<? extends FileBasedIndexExtension> extensions) {
+      long started = System.nanoTime();
+      // todo: init contentless indices first ?
+      while (extensions.hasNext()) {
+        FileBasedIndexExtension<?, ?> extension = extensions.next();
+        if (extension == null) break;
         ID<?, ?> name = extension.getName();
         RebuildStatus.registerIndex(name);
 
@@ -2383,10 +2396,15 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           }
         });
       }
+
+      myExtensionsRelatedDataWasLoaded = true;
+      LOG.info("File index extensions iterated:" + (System.nanoTime() - started) / 1000000);
     }
 
     @Override
     protected void prepare() {
+      initAssociatedDataForExtensions(myIndexExtensions);
+      
       mySerializationManagerEx = SerializationManagerEx.getInstanceEx();
       File indexRoot = PathManager.getIndexRoot();
 
