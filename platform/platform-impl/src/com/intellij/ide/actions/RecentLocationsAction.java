@@ -19,11 +19,13 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,6 +43,7 @@ import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,9 +60,9 @@ public class RecentLocationsAction extends DumbAwareAction {
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
   private static final int DEFAULT_WIDTH = JBUI.scale(700);
-  private static final int DEFAULT_HEIGHT = JBUI.scale(530);
-  private static final int MINIMUM_WIDTH = JBUI.scale(600);
-  private static final int MINIMUM_HEIGHT = JBUI.scale(450);
+  private static final int DEFAULT_HEIGHT = JBUI.scale(500);
+  private static final int MINIMUM_WIDTH = JBUI.scale(200);
+  private static final int MINIMUM_HEIGHT = JBUI.scale(100);
   private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
   public static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
                                                                 SHORTCUT_FOREGROUND_COLOR.getRed(),
@@ -86,7 +89,7 @@ public class RecentLocationsAction extends DumbAwareAction {
 
     ListWithFilter<RecentLocationItem> listWithFilter = (ListWithFilter<RecentLocationItem>)ListWithFilter
       .wrap(list, scrollPane, getNamer(project, model), true);
-    listWithFilter.setAutoPackHeight(false);
+
     listWithFilter.setBorder(BorderFactory.createEmptyBorder());
 
     final SpeedSearch speedSearch = listWithFilter.getSpeedSearch();
@@ -133,7 +136,7 @@ public class RecentLocationsAction extends DumbAwareAction {
       .setMovable(true)
       .setBorderColor(borderColor)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
-      .setMinSize(new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT))
+      .setMinSize(new Dimension(DEFAULT_WIDTH, MINIMUM_HEIGHT))
       .setLocateWithinScreenBounds(false)
       .createPopup();
 
@@ -149,8 +152,15 @@ public class RecentLocationsAction extends DumbAwareAction {
       }
     });
 
-    if (DimensionService.getInstance().getSize(LOCATION_SETTINGS_KEY, project) == null) {
-      popup.setSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+    Disposer.register(popup, () -> {
+      Dimension scrollPaneSize = calcScrollPaneSize(scrollPane, listWithFilter, topPanel, popup.getContent());
+      //save scrollPane size
+      DimensionService.getInstance().setSize(LOCATION_SETTINGS_KEY, scrollPaneSize, project);
+    });
+
+    Dimension scrollPaneSize = DimensionService.getInstance().getSize(LOCATION_SETTINGS_KEY, project);
+    if (scrollPaneSize == null) {
+      scrollPaneSize = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
 
     list.addMouseListener(new MouseAdapter() {
@@ -165,6 +175,19 @@ public class RecentLocationsAction extends DumbAwareAction {
             navigateToSelected(project, list, popup, navigationRef);
           }
         }
+      }
+    });
+
+    scrollPane.setMinimumSize(new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT));
+
+    scrollPane.setPreferredSize(scrollPaneSize);
+    popup.setSize(mainPanel.getPreferredSize());
+
+    popup.getContent().addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        scrollPane.setPreferredSize(calcScrollPaneSize(scrollPane, listWithFilter, topPanel, popup.getContent()));
+        scrollPane.revalidate();
       }
     });
 
@@ -205,7 +228,7 @@ public class RecentLocationsAction extends DumbAwareAction {
 
     FocusManagerImpl.getInstance().requestFocus(listWithFilter, false);
 
-    popup.pack(false, false);
+    popup.pack(false, true);
   }
 
   @NotNull
@@ -221,6 +244,18 @@ public class RecentLocationsAction extends DumbAwareAction {
     checkBox.setOpaque(false);
 
     return checkBox;
+  }
+
+  @NotNull
+  private static Dimension calcScrollPaneSize(@NotNull JScrollPane scrollPane,
+                                              @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
+                                              @NotNull JPanel topPanel,
+                                              @NotNull JComponent content) {
+    Dimension contentSize = content.getSize();
+    int speedSearchHeight = listWithFilter.getSize().height - scrollPane.getSize().height;
+    Dimension dimension = new Dimension(contentSize.width, contentSize.height - topPanel.getSize().height - speedSearchHeight);
+    JBInsets.removeFrom(dimension, content.getInsets());
+    return dimension;
   }
 
   @Override
@@ -257,9 +292,9 @@ public class RecentLocationsAction extends DumbAwareAction {
 
   @NotNull
   private static JPanel createMainPanel(@NotNull ListWithFilter listWithFilter, @NotNull JPanel topPanel) {
-    JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.add(topPanel, BorderLayout.NORTH);
-    mainPanel.add(listWithFilter, BorderLayout.CENTER);
+    JPanel mainPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
+    mainPanel.add(topPanel);
+    mainPanel.add(listWithFilter);
     return mainPanel;
   }
 
