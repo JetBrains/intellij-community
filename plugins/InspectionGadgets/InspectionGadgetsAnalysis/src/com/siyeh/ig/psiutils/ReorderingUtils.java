@@ -344,6 +344,7 @@ public class ReorderingUtils {
           PsiExpression right = binOp.getROperand();
           DfaValue leftVal = myFactory.createValue(left);
           DfaValue rightVal = myFactory.createValue(right);
+          if (leftVal == null || rightVal == null) return false;
           DfaValue value1 = myFactory.createCondition(leftVal, relationType, rightVal);
           DfaValue value2 = myFactory.createCondition(rightVal, relationType.getFlipped(), leftVal);
           if (value1 instanceof DfaRelationValue) {
