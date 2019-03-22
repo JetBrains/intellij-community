@@ -4,6 +4,7 @@ package git4idea.history
 import com.intellij.openapi.vcs.Executor.echo
 import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.util.CollectConsumer
+import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.GitCommit
@@ -47,10 +48,9 @@ class GitLogUtilTest : GitSingleRepoTest() {
     }
     expected.reverse()
 
-    val actualHashes = ContainerUtil.map<GitCommit, String>(GitLogUtil.collectFullDetails(myProject, repo.root,
-                                                                                          "--max-count=$commitCount")
-    ) { detail -> detail.id.asString() }
-
+    val actualHashes = mutableListOf<String>()
+    GitLogUtil.readFullDetails(project, repo.root, Consumer<GitCommit> { actualHashes.add(it.id.asString()) },
+                               true, true, false, "--max-count=$commitCount")
     assertEquals(expected, actualHashes)
   }
 
