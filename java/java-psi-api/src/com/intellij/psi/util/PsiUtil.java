@@ -2,6 +2,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -1083,7 +1084,7 @@ public final class PsiUtil extends PsiUtilCore {
       }
     }
 
-    PsiResolveHelper instance = PsiResolveHelper.SERVICE.getInstance(element.getProject());
+    PsiResolveHelper instance = ServiceManager.getService(element.getProject(), PsiResolveHelper.class);
     return instance != null ? instance.getEffectiveLanguageLevel(getVirtualFile(file)) : LanguageLevel.HIGHEST;
   }
 
