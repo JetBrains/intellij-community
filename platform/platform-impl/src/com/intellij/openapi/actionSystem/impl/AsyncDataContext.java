@@ -16,25 +16,20 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
 
 class AsyncDataContext extends DataManagerImpl.MyDataContext {
   private static final Logger LOG = Logger.getInstance(AsyncDataContext.class);
   private final List<WeakReference<Component>> myHierarchy;
-  @SuppressWarnings("deprecation")
-  private final Map<Component, DataProvider> myProviders = new ConcurrentFactoryMap<Component, DataProvider>() {
-    @Nullable
-    @Override
-    protected DataProvider create(Component key) {
-      return ActionUpdateEdtExecutor.computeOnEdt(() -> {
+
+  private final Map<Component, DataProvider> myProviders = ConcurrentFactoryMap.create(key->
+      ActionUpdateEdtExecutor.computeOnEdt(() -> {
         DataProvider provider = getDataProviderEx(key);
         if (provider == null) return null;
 
@@ -57,15 +52,10 @@ class AsyncDataContext extends DataManagerImpl.MyDataContext {
             }
           });
         };
-      });
-    }
+      }),
 
-    @NotNull
-    @Override
-    protected ConcurrentMap<Component, DataProvider> createMap() {
-      return ContainerUtil.createConcurrentWeakKeySoftValueMap();
-    }
-  };
+      ContainerUtil::createConcurrentWeakKeySoftValueMap
+    );
 
   AsyncDataContext(DataContext syncContext) {
     super(syncContext.getData(PlatformDataKeys.CONTEXT_COMPONENT));
