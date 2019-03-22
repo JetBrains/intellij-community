@@ -128,7 +128,7 @@ internal class CodeStyleTest {
   @Test fun `reset deprecations`() {
     val settings = CodeStyleSettings()
     val initial = """
-    <code_scheme name="testSchemeName">
+    <code_scheme name="testSchemeName" version="${CodeStyleSettings.CURR_VERSION}">
       <option name="RIGHT_MARGIN" value="64" />
       <option name="USE_FQ_CLASS_NAMES_IN_JAVADOC" value="false" />
     </code_scheme>""".trimIndent()
