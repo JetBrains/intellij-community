@@ -19,20 +19,21 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.content.Content;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import javax.swing.*;
 
 import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getTargets;
-import static com.intellij.execution.services.ServiceViewManager.SERVICE_VIEW_MASTER_COMPONENT;
 
 /**
  * @author konstantin.aleev
@@ -46,15 +47,21 @@ public class RemoveConfigurationAction extends AnAction {
       return;
     }
 
-    Component contextComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    if (!Boolean.TRUE.equals(UIUtil.getClientProperty(contextComponent, SERVICE_VIEW_MASTER_COMPONENT))) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
-
     JBIterable<RunDashboardRunConfigurationNode> targets = getTargets(e);
     RunManager runManager = RunManager.getInstance(project);
     boolean enabled = targets.isNotEmpty() && targets.filter(node -> !runManager.hasSettings(node.getConfigurationSettings())).isEmpty();
+
+    if (enabled) {
+      RunDashboardRunConfigurationNode node = targets.single();
+      Content content = node == null ? null : node.getContent();
+      JComponent contentComponent = content == null ? null : content.getComponent();
+      if (contentComponent != null && ActionPlaces.MAIN_MENU.equals(e.getPlace()) &&
+          UIUtil.isAncestor(content.getComponent(), e.getData(PlatformDataKeys.CONTEXT_COMPONENT))) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+    }
+
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(targets.isNotEmpty());
   }

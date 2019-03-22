@@ -43,7 +43,6 @@ import com.intellij.ui.content.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +59,6 @@ import java.util.*;
 
 import static com.intellij.execution.dashboard.RunDashboardManagerImpl.getRunnerLayoutUi;
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
-import static com.intellij.execution.services.ServiceViewManager.SERVICE_VIEW_MASTER_COMPONENT;
 
 /**
  * @author konstantin.aleev
@@ -215,7 +213,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       }
       return null;
     });
-    UIUtil.putClientProperty(myTree, SERVICE_VIEW_MASTER_COMPONENT, Boolean.TRUE);
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
