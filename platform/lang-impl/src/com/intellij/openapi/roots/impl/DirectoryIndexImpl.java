@@ -3,9 +3,6 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeEvent;
-import com.intellij.openapi.fileTypes.FileTypeListener;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
@@ -59,13 +56,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   private void subscribeToFileChanges() {
-    myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
-      @Override
-      public void fileTypesChanged(@NotNull FileTypeEvent event) {
-        myRootIndex = null;
-      }
-    });
-
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void beforeRootsChange(@NotNull ModuleRootEvent event) {
