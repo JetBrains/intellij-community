@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.patch;
 
@@ -17,7 +17,6 @@ import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -235,8 +234,8 @@ public class ApplyPatchAction extends DumbAwareAction {
     return WriteAction.compute(() -> {
       try {
         return patch.apply(file, context, project, VcsUtil.getFilePath(file), () -> {
-          final BaseRevisionTextPatchEP baseRevisionTextPatchEP =
-            Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class);
+          assert project != null;
+          final BaseRevisionTextPatchEP baseRevisionTextPatchEP = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class, project);
           final String path = ObjectUtils.chooseNotNull(patchBase.getBeforeName(), patchBase.getAfterName());
           return baseRevisionTextPatchEP.provideContent(path, commitContext);
         }, commitContext);
