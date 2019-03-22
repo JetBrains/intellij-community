@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.AppUIUtil;
@@ -378,6 +379,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         RunContentManager manager = ExecutionManager.getInstance(myProject).getContentManager();
         ToolWindow toolWindow = manager.getToolWindowByDescriptor(myRunContentDescriptor);
         if (toolWindow != null) {
+          toolWindow.setAnchor(ToolWindowAnchor.RIGHT, null); //TODO: dside
+          toolWindow.setSplitMode(true, null);
           if (!toolWindow.isVisible()) {
             toolWindow.show(() -> {
               if (onShowCallback != null) {
