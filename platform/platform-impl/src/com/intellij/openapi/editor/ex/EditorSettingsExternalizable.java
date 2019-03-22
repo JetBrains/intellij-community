@@ -85,6 +85,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
 
+    public boolean STOP_AT_CURRENT_WORD_START_ON_MOVE_TO_PREVIOUS_WORD = true;
+    public boolean STOP_AT_CURRENT_WORD_END_ON_MOVE_TO_NEXT_WORD = false;
+    public boolean FORCE_STICK_TO_CURRENT_WORD_WHEN_MULTI_CARET = true;
+
     public BidiTextDirection BIDI_TEXT_DIRECTION = BidiTextDirection.CONTENT_BASED;
 
     public boolean SHOW_PARAMETER_NAME_HINTS = true;
@@ -648,5 +652,33 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setSoftWrapFileMasks(@NotNull String value) {
     myOptions.SOFT_WRAP_FILE_MASKS = value;
+  }
+
+  /**
+   * "Move to Previous Word" action behavior.
+   *
+   * @return true if it stops at current word start,
+   * false if it stops at previous word end.
+   */
+  public boolean isStopAtCurrentWordStartOnMoveToPreviousWord() {
+    return myOptions.STOP_AT_CURRENT_WORD_START_ON_MOVE_TO_PREVIOUS_WORD;
+  }
+
+  public void setStopAtCurrentWordStartOnMoveToPreviousWord(boolean value) {
+    myOptions.STOP_AT_CURRENT_WORD_START_ON_MOVE_TO_PREVIOUS_WORD = value;
+  }
+
+  /**
+   * "Move to Next Word" action behavior.
+   *
+   * @return true if it stops at current word end,
+   * false if it stops at pext word start.
+   */
+  public boolean isStopAtCurrentWordEndOnMoveToNextWord() {
+    return myOptions.STOP_AT_CURRENT_WORD_END_ON_MOVE_TO_NEXT_WORD;
+  }
+
+  public void setStopAtCurrentWordEndOnMoveToNextWord(boolean value) {
+    myOptions.STOP_AT_CURRENT_WORD_END_ON_MOVE_TO_NEXT_WORD = value;
   }
 }

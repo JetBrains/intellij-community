@@ -102,6 +102,15 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
   private JBTextField  mySoftWrapFileMasks;
   private JLabel       mySoftWrapFileMasksHint;
 
+  private JComboBox<String> myStickToNextWordBoundaryComboBox;
+  private JComboBox<String> myStickToPreviousWordBoundaryComboBox;
+  private JCheckBox myForceStickToCurrentWordWhenMultiCaretCheckBox;
+
+  private static final String STICK_TO_CURRENT_WORD_START = ApplicationBundle.message("combobox.item.stick.to.current.word.start");
+  private static final String STICK_TO_CURRENT_WORD_END = ApplicationBundle.message("combobox.item.stick.to.current.word.end");
+  private static final String STICK_TO_NEXT_WORD_START = ApplicationBundle.message("combobox.item.stick.to.next.word.start");
+  private static final String STICK_TO_PREVIOUS_WORD_END = ApplicationBundle.message("combobox.item.stick.to.previous.word.end");
+
   private static final String ACTIVE_COLOR_SCHEME = ApplicationBundle.message("combobox.richcopy.color.scheme.active");
   private static final UINumericRange RECENT_FILES_RANGE = new UINumericRange(50, 1, 500);
   private static final UINumericRange RECENT_LOCATIONS_RANGE = new UINumericRange(10, 1, 100);
@@ -147,6 +156,12 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
       }
     });
 
+    myStickToNextWordBoundaryComboBox.addItem(STICK_TO_CURRENT_WORD_END);
+    myStickToNextWordBoundaryComboBox.addItem(STICK_TO_NEXT_WORD_START);
+
+    myStickToPreviousWordBoundaryComboBox.addItem(STICK_TO_CURRENT_WORD_START);
+    myStickToPreviousWordBoundaryComboBox.addItem(STICK_TO_PREVIOUS_WORD_END);
+
     initQuickDocProcessing();
     initSoftWrapsSettingsProcessing();
     initVcsSettingsProcessing();
@@ -161,8 +176,15 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
 
     // Display
 
-
     myCbSmoothScrolling.setSelected(editorSettings.isSmoothScrolling());
+
+    // Caret Movement
+    myStickToNextWordBoundaryComboBox.setSelectedItem(
+      editorSettings.isStopAtCurrentWordStartOnMoveToPreviousWord() ? STICK_TO_CURRENT_WORD_START
+                                                                    : STICK_TO_NEXT_WORD_START);
+    myStickToPreviousWordBoundaryComboBox.setSelectedItem(
+      editorSettings.isStopAtCurrentWordEndOnMoveToNextWord() ? STICK_TO_CURRENT_WORD_END
+                                                              : STICK_TO_PREVIOUS_WORD_END);
 
     // Brace highlighting
 
@@ -254,6 +276,11 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
 
     editorSettings.setSmoothScrolling(myCbSmoothScrolling.isSelected());
 
+    // Caret Movement
+    editorSettings.setStopAtCurrentWordStartOnMoveToPreviousWord(STICK_TO_CURRENT_WORD_START
+                                                                   .equals(myStickToNextWordBoundaryComboBox.getSelectedItem()));
+    editorSettings.setStopAtCurrentWordEndOnMoveToNextWord(STICK_TO_CURRENT_WORD_END
+                                                             .equals(myStickToPreviousWordBoundaryComboBox.getSelectedItem()));
 
     // Brace Highlighting
 
@@ -426,6 +453,12 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
 
     // Display
     boolean isModified = isModified(myCbSmoothScrolling, editorSettings.isSmoothScrolling());
+
+    // Caret Movement
+    isModified |= editorSettings.isStopAtCurrentWordStartOnMoveToPreviousWord() ==
+                  STICK_TO_CURRENT_WORD_START.equals(myStickToNextWordBoundaryComboBox.getSelectedItem());
+    isModified |= editorSettings.isStopAtCurrentWordEndOnMoveToNextWord() ==
+                  STICK_TO_CURRENT_WORD_END.equals(myStickToPreviousWordBoundaryComboBox.getSelectedItem());
 
     // Brace highlighting
     isModified |= isModified(myCbHighlightBraces, codeInsightSettings.HIGHLIGHT_BRACES);
