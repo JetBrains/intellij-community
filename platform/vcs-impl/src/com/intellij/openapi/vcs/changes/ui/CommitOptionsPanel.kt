@@ -27,7 +27,7 @@ import kotlin.collections.set
 
 private val VCS_COMPARATOR = compareBy<AbstractVcs<*>, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
 
-class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel) : BorderLayoutPanel(), Disposable {
+class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel) : BorderLayoutPanel() {
   private val perVcsOptionsPanels = mutableMapOf<AbstractVcs<*>, JPanel>()
   private val vcsOptionsPanel = simplePanel()
   private val beforeOptionsPanel = simplePanel()
@@ -63,9 +63,6 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel) : Borde
   }
 
   fun saveChangeListComponentsState() = changeListSpecificOptions.forEach { it.saveState() }
-
-  override fun dispose() {
-  }
 
   private fun buildLayout() {
     val optionsBox = Box.createVerticalBox().apply {
