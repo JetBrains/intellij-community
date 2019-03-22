@@ -26,7 +26,7 @@ import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import git4idea.history.GitChangesParser;
-import git4idea.history.GitLogUtil;
+import git4idea.history.GitCommitRequirements;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
@@ -38,13 +38,13 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public final class GitCommit extends VcsChangesLazilyParsedDetails {
-  @NotNull private final GitLogUtil.DiffRenameLimit myRenameLimit;
+  @NotNull private final GitCommitRequirements.DiffRenameLimit myRenameLimit;
 
   public GitCommit(Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
                    @NotNull String subject, @NotNull VcsUser author, @NotNull String message, @NotNull VcsUser committer,
                    long authorTime,
                    @NotNull List<List<VcsFileStatusInfo>> reportedChanges,
-                   @NotNull GitLogUtil.DiffRenameLimit renameLimit) {
+                   @NotNull GitCommitRequirements.DiffRenameLimit renameLimit) {
     super(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
     myRenameLimit = renameLimit;
     myChanges.set(reportedChanges.isEmpty() ? EMPTY_CHANGES : new UnparsedChanges(project, reportedChanges));
