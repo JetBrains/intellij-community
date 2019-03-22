@@ -124,7 +124,7 @@ public class NST {
                                 Icon icon,
                                 NSTLibrary.Action action) {
     final BufferedImage img = _getImg4ByteRGBA(icon);
-    final byte[] raster4ByteRGBA = _getRaster(img);
+    final Memory raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
     final int h = _getImgH(img);
     return ourNSTLibrary.createButton(uid, buttWidth, buttFlags, text, raster4ByteRGBA, w, h, action); // called from AppKit, uses per-event autorelease-pool
@@ -137,7 +137,7 @@ public class NST {
                                  ID tbObjExpand,
                                  ID tbObjTapAndHold) {
     final BufferedImage img = _getImg4ByteRGBA(icon);
-    final byte[] raster4ByteRGBA = _getRaster(img);
+    final Memory raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
     final int h = _getImgH(img);
     return ourNSTLibrary.createPopover(uid, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // called from AppKit, uses per-event autorelease-pool
@@ -161,7 +161,7 @@ public class NST {
                                   Icon icon,
                                   NSTLibrary.Action action) {
     final BufferedImage img = _getImg4ByteRGBA(icon);
-    final byte[] raster4ByteRGBA = _getRaster(img);
+    final Memory raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
     final int h = _getImgH(img);
     ourNSTLibrary.updateButton(buttonObj, updateOptions, buttWidth, buttonFlags, text, raster4ByteRGBA, w, h, action); // creates autorelease-pool internally
@@ -169,7 +169,7 @@ public class NST {
 
   public static void setArrowImage(ID buttObj, @Nullable Icon arrow) {
     final BufferedImage img = _getImg4ByteRGBA(arrow);
-    final byte[] raster4ByteRGBA = _getRaster(img);
+    final Memory raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
     final int h = _getImgH(img);
     ourNSTLibrary.setArrowImage(buttObj, raster4ByteRGBA, w, h); // creates autorelease-pool internally
@@ -181,14 +181,14 @@ public class NST {
                                    Icon icon,
                                    ID tbObjExpand, ID tbObjTapAndHold) {
     final BufferedImage img = _getImg4ByteRGBA(icon);
-    final byte[] raster4ByteRGBA = _getRaster(img);
+    final Memory raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
     final int h = _getImgH(img);
     ourNSTLibrary.updatePopover(popoverObj, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // creates autorelease-pool internally
   }
 
   public static void updateScrubber(ID scrubObj, int itemWidth, List<TBItemScrubber.ItemData> items) {
-    LOG.error("updateScrubber masn't be called");
+    LOG.error("updateScrubber musn't be called");
   }
 
   private static Memory _makeIndices(Collection<Integer> indices) {
@@ -267,7 +267,7 @@ public class NST {
     }
 
     if (from.myIcon != null) {
-      offset += _writeIconRaster(from.myIcon, from.fMulX, out, offset, DataBuffer.TYPE_BYTE);
+      offset += _writeIconRaster(from.myIcon, from.fMulX, out, offset);
     } else {
       out.setInt(offset, 0);
       out.setInt(offset +4, 0);
@@ -277,11 +277,13 @@ public class NST {
     return offset;
   }
 
-  private static byte[] _getRaster(BufferedImage img) {
+  private static Memory _getRaster(BufferedImage img) {
     if (img == null)
       return null;
 
-    return ((DataBufferByte)img.getRaster().getDataBuffer()).getData();
+    final DataBuffer db = img.getRaster().getDataBuffer();
+    DirectDataBufferInt dbb = (DirectDataBufferInt)db;
+    return dbb.myMemory;
   }
 
   private static int _getImgW(BufferedImage img) { return img == null ? 0 : img.getWidth(); }
@@ -293,18 +295,9 @@ public class NST {
 
     final int w = Math.round(icon.getIconWidth()*scale);
     final int h = Math.round(icon.getIconHeight()*scale);
-    final WritableRaster
-      raster = Raster.createInterleavedRaster(new DataBufferByte(w * h * 4), w, h, 4 * w, 4, new int[]{0, 1, 2, 3}, null);
-    final ColorModel
-      colorModel = new ComponentColorModel(ColorModel.getRGBdefault().getColorSpace(), true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_BYTE);
-    final BufferedImage image = new BufferedImage(colorModel, raster, false, null);
-    final Graphics2D g = image.createGraphics();
-    g.scale(scale, scale);
-    g.setComposite(AlphaComposite.SrcOver);
-    icon.paintIcon(null, g, 0, 0);
-    g.dispose();
 
-    return image;
+    Memory memory = new Memory(w*h*4);
+    return _drawIconIntoMemory(icon, scale, memory, 0);
   }
 
   private static BufferedImage _getImg4ByteRGBA(Icon icon) {
@@ -322,12 +315,12 @@ public class NST {
   }
 
   // returns count of written bytes
-  private static int _writeIconRaster(@NotNull Icon icon, float scale, @NotNull Memory memory, int offset, int dataBufferType) {
+  private static int _writeIconRaster(@NotNull Icon icon, float scale, @NotNull Memory memory, int offset) {
     final int w = Math.round(icon.getIconWidth()*scale);
     final int h = Math.round(icon.getIconHeight()*scale);
 
-    final int sizeInBytes = w * h * 4;
-    final int totalSize = sizeInBytes + 8;
+    final int rasterSizeInBytes = w * h * 4;
+    final int totalSize = rasterSizeInBytes + 8;
     if (memory.size() - offset < totalSize) {
       LOG.error("insufficient size of allocated memory: avail " + (memory.size() - offset) + ", needs " + totalSize);
       return 0;
@@ -338,22 +331,24 @@ public class NST {
     memory.setInt(offset, h);
     offset += 4;
 
-    memory.setMemory(offset, sizeInBytes, (byte)0);
+    _drawIconIntoMemory(icon, scale, memory, offset);
 
-    final BufferedImage image;
-    if (dataBufferType == DataBuffer.TYPE_BYTE) {
-      DataBuffer dataBuffer = new DirectDataBufferByte(memory, offset);
-      final ComponentColorModel colorModel = new ComponentColorModel(ColorModel.getRGBdefault().getColorSpace(), true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_BYTE);
-      final SampleModel sm = colorModel.createCompatibleSampleModel(w, h);
-      final WritableRaster raster = WritableRasterNative.createNativeRaster(sm, dataBuffer);
-      image = new BufferedImage(colorModel, raster, false, null);
-    } else {
-      DataBuffer dataBuffer = new DirectDataBufferInt(memory, offset);
-      final DirectColorModel colorModel = new DirectColorModel(ColorModel.getRGBdefault().getColorSpace(), 32, 0x00FF0000, 0xFF00, 0xFF, 0xff000000/*alpha*/, false, DataBuffer.TYPE_BYTE);
-      final SampleModel sm = colorModel.createCompatibleSampleModel(w, h);
-      final WritableRaster raster = WritableRasterNative.createNativeRaster(sm, dataBuffer);
-      image = new BufferedImage(colorModel, raster, false, null);
-    }
+    return totalSize;
+  }
+
+  // returns count of written bytes
+  private static BufferedImage _drawIconIntoMemory(@NotNull Icon icon, float scale, @NotNull Memory memory, int offset) {
+    final int w = Math.round(icon.getIconWidth()*scale);
+    final int h = Math.round(icon.getIconHeight()*scale);
+    final int rasterSizeInBytes = w * h * 4;
+
+    memory.setMemory(offset, rasterSizeInBytes, (byte)0);
+
+    DataBuffer dataBuffer = new DirectDataBufferInt(memory, offset);
+    final DirectColorModel colorModel = new DirectColorModel(ColorModel.getRGBdefault().getColorSpace(), 32, 0xFF, 0xFF00, 0x00FF0000, 0xff000000/*alpha*/, false, DataBuffer.TYPE_INT);
+    final SampleModel sm = colorModel.createCompatibleSampleModel(w, h);
+    final WritableRaster raster = WritableRasterNative.createNativeRaster(sm, dataBuffer);
+    final BufferedImage image = new BufferedImage(colorModel, raster, false, null);
 
     final Graphics2D g = image.createGraphics();
     g.scale(scale, scale);
@@ -361,7 +356,7 @@ public class NST {
     icon.paintIcon(null, g, 0, 0);
     g.dispose();
 
-    return totalSize;
+    return image;
   }
 }
 
@@ -375,10 +370,10 @@ class DirectDataBufferInt extends DataBuffer {
     this.myOffset = offset;
   }
   public int getElem(int bank, int i) {
-    return myMemory.getInt(myOffset + i / 4);
+    return myMemory.getInt(myOffset + i*4); // same as: *((jint *)((char *)Pointer + offset))
   }
   public void setElem(int bank, int i, int val) {
-    myMemory.setInt(myOffset + i / 4, val);
+    myMemory.setInt(myOffset + i*4, val); // same as: *((jint *)((char *)Pointer + offset)) = value
   }
 }
 
@@ -392,9 +387,9 @@ class DirectDataBufferByte extends DataBuffer {
     this.myOffset = offset;
   }
   public int getElem(int bank, int i) {
-    return myMemory.getByte(myOffset + i);
+    return myMemory.getByte(myOffset + i); // same as: *((jbyte *)((char *)Pointer + offset))
   }
   public void setElem(int bank, int i, int val) {
-    myMemory.setByte(myOffset + i, (byte)val);
+    myMemory.setByte(myOffset + i, (byte)val); // same as: *((jbyte *)((char *)Pointer + offset)) = value
   }
 }
