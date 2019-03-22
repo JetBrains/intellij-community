@@ -2,9 +2,9 @@
 package com.intellij.openapi.vfs;
 
 /**
- * Marker interface for ArchiveFileSystem implementations that support virtual file pointers to entries.
+ * Marker interface for {@link VirtualFileSystem} implementations that support virtual file pointers to its files.
  *
  * @author yole
  */
-public interface VfpCapableArchiveFileSystem {
+public interface VirtualFilePointerCapableFileSystem {
 }
