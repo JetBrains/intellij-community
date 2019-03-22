@@ -309,6 +309,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     ToolWindow toolwindow = PythonConsoleToolWindow.getToolWindow(myProject);
     if (toolwindow != null) {
       toolwindow.getComponent().putClientProperty(STARTED_BY_RUNNER, "true");
+      PythonConsoleToolWindow.getInstance(myProject).setConsoleRunner(this); //TODO: dside
       PythonConsoleToolWindow.getInstance(myProject).init(toolwindow, contentDescriptor);
     }
     else {

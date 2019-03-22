@@ -129,6 +129,13 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
+  public void showVariables() {
+    ConsoleCommunication c = getFile().getCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY);
+    if (isShowVars && c instanceof PydevConsoleCommunication) {
+      showVariables((PydevConsoleCommunication)c);
+    }
+  }
+
   /**
    * Add folding to Console view
    *

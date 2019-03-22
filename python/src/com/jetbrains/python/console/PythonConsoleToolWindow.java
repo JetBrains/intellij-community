@@ -36,6 +36,7 @@ public class PythonConsoleToolWindow {
   private final Project myProject;
 
   private boolean myInitialized = false;
+  private PydevConsoleRunner myConsoleRunner;
 
   public PythonConsoleToolWindow(Project project) {
     myProject = project;
@@ -76,8 +77,8 @@ public class PythonConsoleToolWindow {
         if (window != null) {
           boolean visible = window.isVisible();
           if (visible && toolWindow.getContentManager().getContentCount() == 0) {
-            PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(myProject, null);
-            runner.run(true);
+            myConsoleRunner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(myProject, null); //TODO: dside
+            myConsoleRunner.run(true);
           }
         }
       }
@@ -166,5 +167,13 @@ public class PythonConsoleToolWindow {
   @Nullable
   public RunContentDescriptor getSelectedContentDescriptor() {
     return CONTENT_TO_DESCRIPTOR_FUNCTION.apply(getToolWindow(myProject).getContentManager().getSelectedContent());
+  }
+
+  public PydevConsoleRunner getConsoleRunner() {
+    return myConsoleRunner;
+  }
+
+  public void setConsoleRunner(PydevConsoleRunner consoleRunner) {
+    myConsoleRunner = consoleRunner;
   }
 }

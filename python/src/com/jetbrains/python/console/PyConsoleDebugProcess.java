@@ -22,11 +22,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.remote.RemoteProcessControl;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
+import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,6 +57,8 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
       public void sessionResumed() {
         UIUtil.invokeLaterIfNeeded(() -> {
           getDebugToolWindow(session).hide(null);
+
+          PythonConsoleToolWindow.getInstance(session.getProject()).getConsoleRunner().getConsoleView().showVariables();
         });
       }
 
@@ -59,6 +66,16 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
       public void sessionPaused() {
         UIUtil.invokeLaterIfNeeded(() -> {
           getDebugToolWindow(session).show(null);
+
+          //substituteVariables
+
+          ContentManager contentManager = ToolWindowManager.getInstance(getProject()).getToolWindow("Variables").getContentManager();
+          Content consoleVars = contentManager.getContent(0);
+          contentManager.removeContent(consoleVars, false);
+
+          contentManager.addContent(new ContentImpl(
+            new XStandaloneVariablesView(session.getProject(), new PyDebuggerEditorsProvider(), session.getCurrentStackFrame()).getPanel(),
+            "", true));
         });
       }
     });
