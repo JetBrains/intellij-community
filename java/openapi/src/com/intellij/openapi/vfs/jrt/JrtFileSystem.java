@@ -2,13 +2,13 @@
 package com.intellij.openapi.vfs.jrt;
 
 import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfpCapableArchiveFileSystem;
+import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class JrtFileSystem extends ArchiveFileSystem implements VfpCapableArchiveFileSystem {
+public abstract class JrtFileSystem extends ArchiveFileSystem implements VirtualFilePointerCapableFileSystem {
   public static final String PROTOCOL = StandardFileSystems.JRT_PROTOCOL;
   public static final String PROTOCOL_PREFIX = StandardFileSystems.JRT_PROTOCOL_PREFIX;
   public static final String SEPARATOR = URLUtil.JAR_SEPARATOR;
