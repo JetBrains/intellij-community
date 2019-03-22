@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -6,7 +6,6 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.*;
-import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapperImpl;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil;
 import com.intellij.openapi.externalSystem.util.Order;
@@ -23,7 +22,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class ProjectDataManagerImplTest extends PlatformTestCase {
-
   public void testDataServiceIsCalledIfNoNodes() {
     final List<String> callTrace = new ArrayList<>();
 
@@ -79,10 +77,7 @@ public class ProjectDataManagerImplTest extends PlatformTestCase {
         }
       };
 
-    new ProjectDataManagerImpl(
-      new LibraryDependencyDataService(
-        new LibraryDataService(
-          new ExternalLibraryPathTypeMapperImpl())))
+    new ProjectDataManagerImpl(new LibraryDependencyDataService())
       .ensureTheDataIsReadyToUse(badNode);
   }
 

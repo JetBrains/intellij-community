@@ -711,6 +711,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myHelpSets;
   }
 
+  @Nullable
   @Override
   public PluginId getPluginId() {
     return myId;

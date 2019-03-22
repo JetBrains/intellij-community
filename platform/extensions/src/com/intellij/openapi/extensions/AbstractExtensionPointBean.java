@@ -47,7 +47,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
       return findClass(className);
     }
     catch (ClassNotFoundException e) {
-      LOG.error("Problem loading class " + className + " from plugin " + myPluginDescriptor.getPluginId().getIdString(), e);
+      LOG.error("Problem loading class " + className + " from plugin " + myPluginDescriptor, e);
       return null;
     }
   }
