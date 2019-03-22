@@ -86,6 +86,6 @@ class GitLogUtilTest : GitSingleRepoTest() {
     val lastCommit = ContainerUtil.getFirstItem(details)
 
     assertNotNull(lastCommit)
-    assertTrue(lastCommit!!.changes.isEmpty())
+    assertTrue(lastCommit!!.getChanges(0).isEmpty())
   }
 }
