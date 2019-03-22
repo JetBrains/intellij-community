@@ -116,4 +116,20 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
         .getComponentInstance(Objects.requireNonNull(container));
     }
   }
+
+  static final class SimpleConstructorInjectionAdapter extends XmlExtensionAdapter {
+    SimpleConstructorInjectionAdapter(@NotNull String implementationClassName,
+                                      @Nullable PluginDescriptor pluginDescriptor,
+                                      @Nullable String orderId,
+                                      @NotNull LoadingOrder order, @Nullable Element extensionElement) {
+      super(implementationClassName, pluginDescriptor, orderId, order, extensionElement);
+    }
+
+    @NotNull
+    @Override
+    protected Object instantiateClass(@NotNull Class<?> clazz, @Nullable PicoContainer container) {
+      return new CachingConstructorInjectionComponentAdapter(this, clazz, null, true)
+        .getComponentInstance(Objects.requireNonNull(container));
+    }
+  }
 }
