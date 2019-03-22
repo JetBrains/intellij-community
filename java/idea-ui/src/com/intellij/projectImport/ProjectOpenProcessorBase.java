@@ -36,10 +36,26 @@ import java.io.IOException;
  * @author anna
  */
 public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> extends ProjectOpenProcessor {
+  @Nullable
   private final T myBuilder;
 
+  /**
+   * @deprecated Override {@link #doGetBuilder()} and use <code>ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(yourClass.class)</code>.
+   * @param builder
+   */
+  @Deprecated
   protected ProjectOpenProcessorBase(@NotNull final T builder) {
     myBuilder = builder;
+  }
+
+  protected ProjectOpenProcessorBase() {
+    myBuilder = null;
+  }
+
+  @NotNull
+  protected T doGetBuilder() {
+    assert myBuilder != null;
+    return myBuilder;
   }
 
   @Override
@@ -89,7 +105,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
 
   @NotNull
   public T getBuilder() {
-    return myBuilder;
+    return doGetBuilder();
   }
 
   @Nullable

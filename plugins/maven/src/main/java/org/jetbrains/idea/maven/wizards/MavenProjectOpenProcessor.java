@@ -4,9 +4,9 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -15,13 +15,15 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase<MavenProjectBuilder> {
-  public MavenProjectOpenProcessor(@NotNull MavenProjectBuilder builder) {
-    super(builder);
+final class MavenProjectOpenProcessor extends ProjectOpenProcessorBase<MavenProjectBuilder> {
+  @NotNull
+  @Override
+  protected MavenProjectBuilder doGetBuilder() {
+    return ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(MavenProjectBuilder.class);
   }
 
+  @NotNull
   @Override
-  @Nullable
   public String[] getSupportedExtensions() {
     return MavenConstants.POM_NAMES;
   }

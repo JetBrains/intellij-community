@@ -6,6 +6,8 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.XmlExtensionAdapter.ConstructorInjectionAdapter;
+import com.intellij.openapi.extensions.impl.XmlExtensionAdapter.SimpleConstructorInjectionAdapter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -86,7 +88,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   public String getClassName() {
     return myClassName;
   }
-
 
   @Override
   public void registerExtension(@NotNull T extension) {
@@ -823,14 +824,20 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
                                                              @NotNull Element extensionElement,
                                                              boolean isNeedToDeserialize,
                                                              @NotNull PluginDescriptor pluginDescriptor,
-                                                             boolean isConstructorInjectionSupported) {
+                                                             boolean isConstructorInjectionSupported,
+                                                             boolean isUsePicoComponentAdapter) {
     String orderId = extensionElement.getAttributeValue("id");
     LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
     Element effectiveElement = isNeedToDeserialize ? extensionElement : null;
-    if (isConstructorInjectionSupported) {
-      return new XmlExtensionAdapter.ConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    if (isUsePicoComponentAdapter) {
+      return new ConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
     }
-    return new XmlExtensionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    else if (isConstructorInjectionSupported) {
+      return new SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    }
+    else {
+      return new XmlExtensionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    }
   }
 
   @TestOnly
@@ -840,6 +847,26 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         ((ExtensionPointAndAreaListener)listener).areaReplaced(oldArea);
       }
     }
+  }
+
+  @Nullable
+  public synchronized T findExtension(@NotNull Class<T> instanceOf, boolean isRequired) {
+    Iterator<T> iterator = myListeners.length == 0 ? iterator() : getExtensionList().iterator();
+    while (iterator.hasNext()) {
+      T object = iterator.next();
+      if (object != null && instanceOf.isInstance(object)) {
+        return object;
+      }
+    }
+
+    if (isRequired) {
+      String message = "could not find extension implementation " + instanceOf;
+      if (isInReadOnlyMode()) {
+        message += " (point in read-only mode)";
+      }
+      throw new IllegalArgumentException(message);
+    }
+    return null;
   }
 
   private static final class ObjectComponentAdapter<T> extends ExtensionComponentAdapter {
@@ -863,7 +890,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
-  public synchronized boolean isInReadOnlyMode() {
+  protected synchronized boolean isInReadOnlyMode() {
     return POINTS_IN_READONLY_MODE != null && POINTS_IN_READONLY_MODE.contains(this);
   }
 

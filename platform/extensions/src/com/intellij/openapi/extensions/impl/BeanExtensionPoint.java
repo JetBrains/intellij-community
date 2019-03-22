@@ -21,6 +21,6 @@ final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
                                                                                       @NotNull PluginDescriptor pluginDescriptor,
                                                                                       @NotNull MutablePicoContainer picoContainer) {
     // project level extensions requires Project as constructor argument, so, for now constructor injection disabled only for app level
-    return doCreateAdapter(getClassName(), extensionElement, !JDOMUtil.isEmpty(extensionElement), pluginDescriptor, picoContainer.getParent() != null);
+    return doCreateAdapter(getClassName(), extensionElement, !JDOMUtil.isEmpty(extensionElement), pluginDescriptor, picoContainer.getParent() != null, false);
   }
 }

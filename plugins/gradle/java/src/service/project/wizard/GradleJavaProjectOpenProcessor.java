@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.project.wizard.SelectExternal
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectOpenProcessor;
@@ -26,9 +27,10 @@ import static org.jetbrains.plugins.gradle.util.GradleEnvironment.Headless.*;
  * @author Denis Zhdanov
  */
 public class GradleJavaProjectOpenProcessor extends ProjectOpenProcessorBase<GradleProjectImportBuilder> {
-
-  public GradleJavaProjectOpenProcessor(@NotNull GradleProjectImportBuilder builder) {
-    super(builder);
+  @NotNull
+  @Override
+  protected GradleProjectImportBuilder doGetBuilder() {
+    return ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(GradleProjectImportBuilder.class);
   }
 
   @NotNull

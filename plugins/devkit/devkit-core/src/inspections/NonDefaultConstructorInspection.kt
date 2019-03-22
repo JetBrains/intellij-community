@@ -15,7 +15,7 @@ import com.intellij.util.Processor
 import com.intellij.util.SmartList
 import gnu.trove.THashSet
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
-import org.jetbrains.idea.devkit.util.processExtensionsByClassName
+import org.jetbrains.idea.devkit.util.processExtensionDeclarations
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.convert
@@ -66,7 +66,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
         else -> aClass.getLanguagePlugin().convert<UMethod>(method, aClass).sourcePsi ?: continue@loop
       }
       errors.add(manager.createProblemDescriptor(anchorElement,
-                                                 "Bean extension class should not have constructor with parameters", true,
+                                                 "Extension class should not have constructor with parameters", true,
                                                  ProblemHighlightType.ERROR, isOnTheFly))
     }
     return errors?.toTypedArray()
@@ -76,19 +76,22 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
 private fun findExtensionPoint(clazz: UClass, project: Project): ExtensionPoint? {
   var result: ExtensionPoint? = null
   val qualifiedNamed = clazz.qualifiedName ?: return null
-  processExtensionsByClassName(project, qualifiedNamed) { tag, point ->
-    // check only bean extensions
-    if (point.beanClass.value == null) {
-      return@processExtensionsByClassName true
-    }
-
-    if (tag.name == "className" || tag.subTags.any { it.name == "className" } || checkAttributes(tag, qualifiedNamed)) {
-      result = point
-      false
+  processExtensionDeclarations(qualifiedNamed, project) { extension, tag ->
+    val point = extension.extensionPoint ?: return@processExtensionDeclarations true
+    if (point.beanClass.stringValue == null) {
+      if (tag.attributes.any { it.name == "implementation" && it.value == qualifiedNamed }) {
+        result = point
+        return@processExtensionDeclarations false
+      }
     }
     else {
-      true
+      // bean EP
+      if (tag.name == "className" || tag.subTags.any { it.name == "className" } || checkAttributes(tag, qualifiedNamed)) {
+        result = point
+        return@processExtensionDeclarations false
+      }
     }
+    true
   }
   return result
 }

@@ -26,7 +26,7 @@ fun locateExtensionsByExtensionPointAndId(extensionPoint: ExtensionPoint, extens
   return ExtensionByExtensionPointLocator(extensionPoint.xmlTag.project, extensionPoint, extensionId)
 }
 
-private fun processExtensionDeclarations(name: String, project: Project, strictMatch: Boolean, callback: (Extension, XmlTag) -> Boolean) {
+internal fun processExtensionDeclarations(name: String, project: Project, strictMatch: Boolean = true, callback: (Extension, XmlTag) -> Boolean) {
   val scope = PluginRelatedLocatorsUtils.getCandidatesScope(project)
   PsiSearchHelper.getInstance(project).processElementsWithWord(
     { element, offsetInElement ->
@@ -63,7 +63,7 @@ private fun findExtensionsByClassName(project: Project, className: String): List
 }
 
 internal inline fun processExtensionsByClassName(project: Project, className: String, crossinline processor: (XmlTag, ExtensionPoint) -> Boolean) {
-  processExtensionDeclarations(className, project, true) { extension, tag ->
+  processExtensionDeclarations(className, project) { extension, tag ->
     extension.extensionPoint?.let { processor(tag, it) } ?: true
   }
 }

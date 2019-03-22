@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet;
 
@@ -40,7 +26,7 @@ import javax.swing.*;
  * @author nik
  */
 public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
-  public static final ExtensionPointName<FacetType> EP_NAME = ExtensionPointName.create("com.intellij.facetType"); 
+  public static final ExtensionPointName<FacetType> EP_NAME = ExtensionPointName.create("com.intellij.facetType");
 
   private final @NotNull FacetTypeId<F> myId;
   private final @NotNull String myStringId;
@@ -66,7 +52,6 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
     myPresentableName = presentableName;
     myUnderlyingFacetType = underlyingFacetType;
   }
-
 
   /**
    * @param id unique instance of {@link FacetTypeId}
@@ -102,7 +87,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   }
 
   @Nullable
-  public final FacetTypeId<?> getUnderlyingFacetType() {
+  public FacetTypeId<?> getUnderlyingFacetType() {
     return myUnderlyingFacetType;
   }
 
@@ -125,7 +110,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
    * @param module parent module for facet. Must be passed to {@link Facet} constructor
    * @param name name of facet. Must be passed to {@link Facet} constructor
    * @param configuration facet configuration. Must be passed to {@link Facet} constructor
-   * @param underlyingFacet underlying facet. Must be passed to {@link Facet} constructor 
+   * @param underlyingFacet underlying facet. Must be passed to {@link Facet} constructor
    * @return a created facet
    */
   public abstract F createFacet(@NotNull Module module, final String name, @NotNull C configuration, @Nullable Facet underlyingFacet);
