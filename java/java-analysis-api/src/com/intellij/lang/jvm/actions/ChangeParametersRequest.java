@@ -12,6 +12,10 @@ public interface ChangeParametersRequest extends ActionRequest {
 
   List<ExpectedParameter> getExpectedParameters();
 
+  /**
+   * Designed to be used inside {@link JvmElementActionsFactory} implementations.
+   * From the API calling side use {@link MethodRequestsKt#updateMethodParametersRequest(kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function1)}
+   */
   class ExistingParameterWrapper implements ExpectedParameter {
 
     private final JvmParameter myExistingParameter;
