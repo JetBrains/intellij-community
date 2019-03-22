@@ -829,7 +829,16 @@ public class LambdaUtil {
       anEnum.add(resolveMethod);
       return  (PsiCall)anEnum.add(call);
     }
-    PsiType type = PsiTypesUtil.getExpectedTypeByParent(call);
+    PsiElement expressionForType = call;
+    while (true) {
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(expressionForType.getParent());
+      if (!(parent instanceof PsiConditionalExpression) ||
+          PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), expressionForType, false)) {
+        break;
+      }
+      expressionForType = parent;
+    }
+    PsiType type = PsiTypesUtil.getExpectedTypeByParent(expressionForType);
     if (type != null && PsiTypesUtil.isDenotableType(type, call)) {
       return (PsiCall)copyWithExpectedType(call, type);
     }
