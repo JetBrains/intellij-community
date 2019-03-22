@@ -69,7 +69,7 @@ public class MemoryAgentUtil {
       return;
     }
 
-    if (isPlatformSupported()) {
+    if (!isPlatformSupported()) {
       LOG.warn("Could not use memory agent on current OS.");
       DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT = false;
       return;
