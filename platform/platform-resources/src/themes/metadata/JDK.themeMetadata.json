@@ -1333,8 +1333,12 @@
       "key": "Tree.foreground"
     },
     {
+      "key": "Tree.paintLines",
+      "description": "Indicating whether to paint lines to highlight a tree structure"
+    },
+    {
       "key": "Tree.hash",
-      "deprecated": true
+      "description": "Color used to paint lines to highlight a tree structure"
     },
     {
       "key": "Tree.line",
