@@ -36,8 +36,9 @@ public interface PsiFileSystemItem extends PsiCheckedRenameElement, NavigatableP
   VirtualFile getVirtualFile();
 
   @Override
-  @NotNull @NonNls
+  @NotNull
+  @NonNls
   String getName();
 
-  boolean processChildren(PsiElementProcessor<PsiFileSystemItem> processor);
+  boolean processChildren(@NotNull PsiElementProcessor<PsiFileSystemItem> processor);
 }
