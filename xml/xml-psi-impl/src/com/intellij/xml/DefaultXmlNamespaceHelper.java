@@ -212,7 +212,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
     final Collection<VirtualFile> files = XmlTagNamesIndex.getFilesByTagName(tagName, project);
     final Set<String> possibleUris = new LinkedHashSet<>(files.size());
     for (VirtualFile virtualFile : files) {
-      final String namespace = XmlNamespaceIndex.getNamespace(virtualFile, project, file);
+      final String namespace = XmlNamespaceIndex.getNamespace(virtualFile, project);
       if (namespace != null) {
         possibleUris.add(namespace);
       }
