@@ -17,7 +17,8 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
-import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisitor {
   private final StringBuilder myBuf;
