@@ -55,6 +55,8 @@ task setupGradleApiDeps(dependsOn: configurations.gradleApiDeps, type: Sync) {
   include 'META-INF/native/**'
   include 'META-INF/gradle-plugins/**'
   include 'META-INF/services/org.gradle.*'
+  
+  exclude 'org/gradle/internal/impldep/META-INF/versions/**'
 }
 """
     }
