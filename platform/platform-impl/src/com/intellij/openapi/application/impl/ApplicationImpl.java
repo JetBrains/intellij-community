@@ -105,7 +105,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final Stack<Class> myWriteActionsStack = new Stack<>(); // contents modified in write action, read in read action
   private final TransactionGuardImpl myTransactionGuard = new TransactionGuardImpl();
   private int myWriteStackBase;
-  private volatile Thread myWriteActionThread;
 
   private final long myStartTime;
   private boolean mySaveAllowed;
@@ -701,10 +700,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @NotNull
   public ModalityState getCurrentModalityState() {
-    if (Thread.currentThread() == myWriteActionThread) {
-      return getDefaultModalityState();
-    }
-
     return LaterInvocator.getCurrentModalityState();
   }
 
@@ -1037,28 +1032,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
   }
 
-  @ApiStatus.Experimental
-  public boolean runWriteActionWithProgressInBackgroundThread(@NotNull String title,
-                                                              @Nullable Project project,
-                                                              @Nullable JComponent parentComponent,
-                                                              @Nullable String cancelText,
-                                                              @NotNull Consumer<? super ProgressIndicator> action) {
-    Class<?> clazz = action.getClass();
-    return runWriteActionWithClass(clazz, ()->{
-      PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
-      indicator.runInBackground(() -> {
-        assert myWriteActionThread == null;
-        myWriteActionThread = Thread.currentThread();
-        try {
-          action.consume(indicator);
-        } finally {
-          myWriteActionThread = null;
-        }
-      });
-      return !indicator.isCanceled();
-    });
-  }
-
   @Override
   public void runWriteAction(@NotNull final Runnable action) {
     Class<? extends Runnable> clazz = action.getClass();
@@ -1360,7 +1333,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isWriteAccessAllowed() {
-    return isDispatchThread() && myLock.isWriteLocked() || myWriteActionThread == Thread.currentThread();
+    return isDispatchThread() && myLock.isWriteLocked();
   }
 
   @Override

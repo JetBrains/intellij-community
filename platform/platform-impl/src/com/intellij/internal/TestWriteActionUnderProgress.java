@@ -23,8 +23,8 @@ public class TestWriteActionUnderProgress extends DumbAwareAction {
       "Progress", null, null, TestWriteActionUnderProgress::runIndeterminateProgress);
     assert success;
 
-    success = app.runWriteActionWithProgressInBackgroundThread(
-      "Cancellable Progress", null, null, "Stop", TestWriteActionUnderProgress::runDeterminateProgress);
+    success = app.runWriteActionWithCancellableProgressInDispatchThread(
+      "Cancellable Progress", null, null, TestWriteActionUnderProgress::runDeterminateProgress);
     assert success;
   }
 
