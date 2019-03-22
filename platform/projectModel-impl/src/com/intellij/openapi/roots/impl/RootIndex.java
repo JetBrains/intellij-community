@@ -35,7 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.*;
 
-public class RootIndex {
+class RootIndex {
   static final Comparator<OrderEntry> BY_OWNER_MODULE = (o1, o2) -> {
     String name1 = o1.getOwnerModule().getName();
     String name2 = o2.getOwnerModule().getName();
@@ -53,7 +53,7 @@ public class RootIndex {
   final PackageDirectoryCache myPackageDirectoryCache;
   private OrderEntryGraph myOrderEntryGraph;
 
-  public RootIndex(@NotNull Project project) {
+  RootIndex(@NotNull Project project) {
     myProject = project;
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -79,7 +79,7 @@ public class RootIndex {
     };
   }
 
-  public void onLowMemory() {
+  void onLowMemory() {
     myPackageDirectoryCache.onLowMemory();
   }
 
@@ -522,7 +522,7 @@ public class RootIndex {
 
 
   @NotNull
-  public DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
+  DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
     if (!file.isValid() || !(file instanceof VirtualFileWithId)) {
       return NonProjectDirectoryInfo.INVALID;
     }
@@ -546,7 +546,7 @@ public class RootIndex {
   }
 
   @NotNull
-  public Query<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName, final boolean includeLibrarySources) {
+  Query<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName, final boolean includeLibrarySources) {
     // Note that this method is used in upsource as well, hence, don't reduce this method's visibility.
     List<VirtualFile> result = myPackageDirectoryCache.getDirectoriesByPackageName(packageName);
     if (!includeLibrarySources) {
@@ -559,7 +559,7 @@ public class RootIndex {
   }
 
   @Nullable
-  public String getPackageName(@NotNull final VirtualFile dir) {
+  String getPackageName(@NotNull final VirtualFile dir) {
     if (dir.isDirectory()) {
       if (ourFileTypes.isFileIgnored(dir)) {
         return null;
@@ -888,7 +888,7 @@ public class RootIndex {
   }
 
   @NotNull
-  public List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info) {
+  List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info) {
     if (!(info instanceof DirectoryInfoImpl)) return Collections.emptyList();
     return getOrderEntryGraph().getOrderEntries(((DirectoryInfoImpl)info).getRoot());
   }
