@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.openapi.roots.impl;
+package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -9,13 +9,10 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.DirectoryIndexTestCase;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
-import com.intellij.openapi.roots.impl.ModuleFileIndexImpl;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -158,7 +155,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
       // fill roots of module2
       {
         VirtualFile moduleFile = createChildData(myModule2Dir, "module2.iml");
-        myModule2 = moduleManager.newModule(moduleFile.getPath(), StdModuleTypes.JAVA.getId());
+        myModule2 = moduleManager.newModule(moduleFile.getPath(), ModuleTypeId.JAVA_MODULE);
 
         PsiTestUtil.addContentRoot(myModule2, myModule2Dir);
         mySrcDir2Folder = PsiTestUtil.addSourceRoot(myModule2, mySrcDir2);
@@ -186,7 +183,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
       // fill roots of module3
       {
         VirtualFile moduleFile = createChildData(myModule3Dir, "module3.iml");
-        myModule3 = moduleManager.newModule(moduleFile.getPath(), StdModuleTypes.JAVA.getId());
+        myModule3 = moduleManager.newModule(moduleFile.getPath(), ModuleTypeId.JAVA_MODULE);
 
         PsiTestUtil.addContentRoot(myModule3, myModule3Dir);
         ModuleRootModificationUtil.addDependency(myModule3, myModule2);
@@ -384,7 +381,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
       VirtualFile newModuleContent = createChildDirectory(myRootVFile, "newModule");
       createChildDirectory(newModuleContent, "subDir");
       ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
+      Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", ModuleTypeId.JAVA_MODULE);
       PsiTestUtil.addContentRoot(module, newModuleContent);
     });
   }
@@ -401,7 +398,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
       ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
+      Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", ModuleTypeId.JAVA_MODULE);
       PsiTestUtil.addContentRoot(module, module4);
       assertNotInProject(ignored);
       checkInfo(module4, module, false, false, null, null, null);
@@ -419,7 +416,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
       model.disposeModule(myModule2);
       model.disposeModule(myModule3);
       model.commit();
-      Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
+      Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", ModuleTypeId.JAVA_MODULE);
       PsiTestUtil.addContentRoot(module, ignored);
       checkInfo(ignored, module, false, false, null, null, null);
     });
