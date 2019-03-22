@@ -69,8 +69,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NotNull
   public List<NamedScope> getPredefinedScopes() {
     final List<NamedScope> predefinedScopes = new ArrayList<>();
-    final CustomScopesProvider[] scopesProviders = CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject);
-    for (CustomScopesProvider scopesProvider : scopesProviders) {
+    for (CustomScopesProvider scopesProvider : CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject)) {
       List<NamedScope> customScopes = scopesProvider.getFilteredScopes();
       if (ArrayUtil.contains(null, customScopes)) {
         throw new IllegalStateException("Provider.getFilteredScopes() must not return null scopes, got: " + customScopes+"; provider: "+scopesProvider + " ("+scopesProvider.getClass()+")");
