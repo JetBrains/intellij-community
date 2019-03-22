@@ -348,17 +348,6 @@ public class GitLogUtil {
                                               @NotNull List<String> hashes,
                                               boolean includeRootChanges,
                                               boolean lowPriorityProcess,
-                                              @NotNull DiffRenameLimit renameLimit) throws VcsException {
-    readFullDetailsForHashes(project, root, vcs, commitConsumer, hashes, includeRootChanges, lowPriorityProcess, true, false, renameLimit);
-  }
-
-  public static void readFullDetailsForHashes(@NotNull Project project,
-                                              @NotNull VirtualFile root,
-                                              @NotNull GitVcs vcs,
-                                              @NotNull Consumer<? super GitCommit> commitConsumer,
-                                              @NotNull List<String> hashes,
-                                              boolean includeRootChanges,
-                                              boolean lowPriorityProcess,
                                               boolean withFullMergeDiff,
                                               boolean preserveOrder,
                                               @NotNull DiffRenameLimit renameLimit) throws VcsException {

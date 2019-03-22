@@ -328,8 +328,8 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, shouldIncludeRootChanges(root), false,
-                                        GitLogUtil.DiffRenameLimit.GIT_CONFIG);
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, shouldIncludeRootChanges(root),
+                                        false, true, false, GitLogUtil.DiffRenameLimit.GIT_CONFIG);
   }
 
   @Override
@@ -341,8 +341,9 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, shouldIncludeRootChanges(root), isForIndexing,
-                                        isForIndexing ? GitLogUtil.DiffRenameLimit.REGISTRY : GitLogUtil.DiffRenameLimit.INFINITY);
+    GitLogUtil.DiffRenameLimit renameLimit = isForIndexing ? GitLogUtil.DiffRenameLimit.REGISTRY : GitLogUtil.DiffRenameLimit.INFINITY;
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, shouldIncludeRootChanges(root),
+                                        isForIndexing, true, false, renameLimit);
   }
 
   private boolean shouldIncludeRootChanges(@NotNull VirtualFile root) {
@@ -399,7 +400,8 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public Disposable subscribeToRootRefreshEvents(@NotNull final Collection<? extends VirtualFile> roots, @NotNull final VcsLogRefresher refresher) {
+  public Disposable subscribeToRootRefreshEvents(@NotNull final Collection<? extends VirtualFile> roots,
+                                                 @NotNull final VcsLogRefresher refresher) {
     MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, repository -> {
       VirtualFile root = repository.getRoot();
