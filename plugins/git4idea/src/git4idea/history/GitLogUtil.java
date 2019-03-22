@@ -225,6 +225,10 @@ public class GitLogUtil {
     return ContainerUtil.map(record.getParentsHashes(), factory::createHash);
   }
 
+  /**
+   * @deprecated use {@link GitHistoryUtils#history(Project, VirtualFile, String...)} instead.
+   */
+  @Deprecated
   @NotNull
   public static List<GitCommit> collectFullDetails(@NotNull Project project,
                                                    @NotNull VirtualFile root,
