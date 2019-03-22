@@ -508,6 +508,7 @@ iml_project(
         "//tools/vendor/google/firebase",
         "//tools/vendor/google/games",
         "//tools/vendor/google/lldb-integration-tests",
+        "//tools/vendor/google/real-world-integration-test:real-world-integration-tests",
         "//tools/vendor/google/url-assistant",
         "//tools/vendor/intellij/cidr/cidr-common-testFramework:intellij.cidr.common.testFramework",
         "//tools/vendor/intellij/cidr/cidr-debugger:intellij.cidr.debugger",

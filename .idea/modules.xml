@@ -800,6 +800,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/native-symbolizer/native-symbolizer.iml" filepath="$PROJECT_DIR$/../adt/idea/native-symbolizer/native-symbolizer.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable-demo/observable-demo.iml" filepath="$PROJECT_DIR$/../adt/idea/observable-demo/observable-demo.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/perf-logger/perf-logger.iml" filepath="$PROJECT_DIR$/../base/perf-logger/perf-logger.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/google/real-world-integration-test/real-world-integration-tests.iml" filepath="$PROJECT_DIR$/../vendor/google/real-world-integration-test/real-world-integration-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../studio/google/cloud/testing/test-recorder/test-recorder.iml" filepath="$PROJECT_DIR$/../studio/google/cloud/testing/test-recorder/test-recorder.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/testutils/testutils-tests.iml" filepath="$PROJECT_DIR$/../base/testutils/testutils-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/url-assistant/url-assistant.iml" filepath="$PROJECT_DIR$/../vendor/google/url-assistant/url-assistant.iml" />
