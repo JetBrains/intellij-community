@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class Extensions {
+public final class Extensions {
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<>("com.intellij.arealistener");
   private static final Map<AreaInstance, ExtensionsAreaImpl> ourAreaInstance2area = ContainerUtil.newConcurrentMap();
   private static final Map<String, AreaClassConfiguration> ourAreaClass2Configuration = ContainerUtil.newConcurrentMap();
@@ -73,8 +73,9 @@ public class Extensions {
   }
 
   @NotNull
+  @Deprecated
   public static Object[] getExtensions(@NonNls @NotNull String extensionPointName) {
-    return getExtensions(extensionPointName, null);
+    return getRootArea().getExtensionPoint(extensionPointName).getExtensions();
   }
 
   /**
@@ -223,5 +224,4 @@ public class Extensions {
   public enum OS {
     mac, linux, windows, unix, freebsd
   }
-
 }
