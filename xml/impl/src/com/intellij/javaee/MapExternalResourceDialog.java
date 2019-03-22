@@ -94,7 +94,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
     ConfigFileSearcher searcher = new ConfigFileSearcher(file == null ? null : ModuleUtilCore.findModuleForPsiElement(file), project) {
       @Override
       public Set<PsiFile> search(@Nullable Module module, @NotNull Project project) {
-        List<IndexedRelevantResource<String, XsdNamespaceBuilder>> resources = XmlNamespaceIndex.getAllResources(module, project, null);
+        List<IndexedRelevantResource<String, XsdNamespaceBuilder>> resources = XmlNamespaceIndex.getAllResources(module, project);
 
         HashSet<PsiFile> files = new HashSet<>();
         PsiManager psiManager = PsiManager.getInstance(project);
