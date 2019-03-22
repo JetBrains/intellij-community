@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
@@ -104,7 +103,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       myUi.addContent(createThreadsContent(), 0, PlaceInGrid.right, true);
     }
 
-    addVariablesAndWatches(session);
+    //addVariablesAndWatches(session); TODO: dside
 
     attachToSession(session);
 
@@ -246,11 +245,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     XDebugTabLayouter layouter = session.getDebugProcess().createTabLayouter();
-    Content consoleContent = layouter.registerConsoleContent(myUi, myConsole);
-    attachNotificationTo(consoleContent);
+    //Content consoleContent = layouter.registerConsoleContent(myUi, myConsole); TODO: dside
+    //attachNotificationTo(consoleContent);
 
     layouter.registerAdditionalContent(myUi);
-    RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
+    //RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
@@ -258,7 +257,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
     final Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
-    consoleContent.setHelpId(debugExecutor.getHelpId());
+    //consoleContent.setHelpId(debugExecutor.getHelpId());
     if (myEnvironment != null) {
       leftToolbar.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
       List<AnAction> additionalRestartActions = session.getRestartActions();
@@ -296,9 +295,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
     myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
 
-    if (myEnvironment != null) {
-      initLogConsoles(myEnvironment.getRunProfile(), myRunContentDescriptor, myConsole);
-    }
+    //if (myEnvironment != null) {
+    //  initLogConsoles(myEnvironment.getRunProfile(), myRunContentDescriptor, myConsole);
+    //}
   }
 
   private static void attachViewToSession(@NotNull XDebugSessionImpl session, @Nullable XDebugView view) {
