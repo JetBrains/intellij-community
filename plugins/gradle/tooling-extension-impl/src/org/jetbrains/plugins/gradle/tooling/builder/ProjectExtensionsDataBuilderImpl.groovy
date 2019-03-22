@@ -19,6 +19,7 @@ import groovy.transform.CompileStatic
 import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionContainer
+import org.gradle.api.reflect.HasPublicType
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.*
@@ -30,6 +31,8 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
  */
 @CompileStatic
 class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
+  private static is35_OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("3.5")
+
   @Override
   boolean canBuild(String modelName) {
     modelName == GradleExtensions.name
@@ -47,25 +50,29 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible, true))
     }
 
-    def conventions = project.extensions
-    conventions.extraProperties.properties.each { name, value ->
+    def convention = project.convention
+    convention.plugins.each { key, value ->
+      result.conventions.add(new DefaultGradleConvention(key, getType(value)))
+    }
+    def extensions = project.extensions
+    extensions.extraProperties.properties.each { name, value ->
       if(name == 'extraModelBuilder' || name.contains('.')) return
       String typeFqn = getType(value)
       result.gradleProperties.add(new DefaultGradleProperty(
         name, typeFqn, value.toString()))
     }
 
-    for (it in conventions.findAll()) {
-      def convention = it as ExtensionContainer
+    for (it in extensions.findAll()) {
+      def extension = it as ExtensionContainer
       List<String> keyList =
         GradleVersion.current() >= GradleVersion.version("4.5")
-          ? convention.extensionsSchema.collect { it["name"] as String }
-          : GradleVersion.current() >= GradleVersion.version("3.5")
-            ? convention.schema.keySet().asList() as List<String>
-            : extractKeysViaReflection(convention)
+          ? extension.extensionsSchema.collect { it["name"] as String }
+          : is35_OrBetter
+          ? extension.schema.keySet().asList() as List<String>
+          : extractKeysViaReflection(extension)
 
       for (name in keyList) {
-        def value = convention.findByName(name)
+        def value = extension.findByName(name)
 
         if (value == null) continue
         if (name == 'idea') continue
@@ -98,6 +105,14 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
   }
 
   static String getType(object) {
+    if (is35_OrBetter && object instanceof HasPublicType) {
+      def publicType = object.publicType
+      if (publicType.hasProperty('concreteClass')) {
+        return publicType.concreteClass.canonicalName
+      } else {
+        publicType.toString()
+      }
+    }
     def clazz = object?.getClass()?.canonicalName
     def decorIndex = clazz?.lastIndexOf('_Decorated')
     def result = !decorIndex || decorIndex == -1 ? clazz : clazz.substring(0, decorIndex)

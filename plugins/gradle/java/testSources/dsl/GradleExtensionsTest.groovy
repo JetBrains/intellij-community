@@ -52,9 +52,4 @@ class GradleExtensionsTest extends GradleHighlightingBaseTest implements Resolve
       closureDelegateTest(getExtraPropertiesExtensionFqn(), 1)
     }
   }
-
-  private String getExtraPropertiesExtensionFqn() {
-    isGradleOlderThen_5_2() ? "org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension"
-                            : "org.gradle.internal.extensibility.DefaultExtraPropertiesExtension"
-  }
 }
