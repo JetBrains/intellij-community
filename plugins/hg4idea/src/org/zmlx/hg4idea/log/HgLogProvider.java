@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
@@ -53,20 +39,17 @@ import static org.zmlx.hg4idea.log.HgHistoryUtil.getOriginalHgFile;
 import static org.zmlx.hg4idea.util.HgUtil.HEAD_REFERENCE;
 import static org.zmlx.hg4idea.util.HgUtil.TIP_REFERENCE;
 
-public class HgLogProvider implements VcsLogProvider {
-
+public final class HgLogProvider implements VcsLogProvider {
   private static final Logger LOG = Logger.getInstance(HgLogProvider.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final HgRepositoryManager myRepositoryManager;
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
 
-  public HgLogProvider(@NotNull Project project, @NotNull HgRepositoryManager repositoryManager, @NotNull VcsLogObjectsFactory factory) {
+  public HgLogProvider(@NotNull Project project) {
     myProject = project;
-    myRepositoryManager = repositoryManager;
-    myRefSorter = new HgRefManager(project, repositoryManager);
-    myVcsObjectsFactory = factory;
+    myRefSorter = new HgRefManager(project, getHgRepoManager(project));
+    myVcsObjectsFactory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
   }
 
   @NotNull
@@ -137,7 +120,7 @@ public class HgLogProvider implements VcsLogProvider {
     if (myProject.isDisposed()) {
       return Collections.emptySet();
     }
-    HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    HgRepository repository = getHgRepoManager(myProject).getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);
       return Collections.emptySet();
@@ -218,13 +201,13 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
                                                        @NotNull VcsLogFilterCollection filterCollection,
-                                                       int maxCount) throws VcsException {
+                                                       int maxCount) {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
     // branch filter and user filter may be used several times without delimiter
     VcsLogBranchFilter branchFilter = filterCollection.get(VcsLogFilterCollection.BRANCH_FILTER);
     if (branchFilter != null) {
-      HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+      HgRepository repository = getHgRepoManager(myProject).getRepositoryForRoot(root);
       if (repository == null) {
         LOG.error("Repository not found for root " + root);
         return Collections.emptyList();
@@ -338,9 +321,14 @@ public class HgLogProvider implements VcsLogProvider {
   @Nullable
   @Override
   public String getCurrentBranch(@NotNull VirtualFile root) {
-    HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    HgRepository repository = getHgRepoManager(myProject).getRepositoryForRoot(root);
     if (repository == null) return null;
     return repository.getCurrentBranchName();
+  }
+
+  @NotNull
+  private static HgRepositoryManager getHgRepoManager(@NotNull Project project) {
+    return ServiceManager.getService(project, HgRepositoryManager.class);
   }
 
   @Nullable
