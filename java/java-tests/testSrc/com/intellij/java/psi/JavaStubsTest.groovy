@@ -28,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -376,6 +377,23 @@ class A {
   void "test identifier dot before class"() {
     def file = myFixture.addFileToProject('a.java', 'class A {{ public id.class B {}}}')
     PsiTestUtil.checkStubsMatchText(file)
+  }
+
+  void "test removing orphan annotation"() {
+    String text = """\
+public class Foo {
+    public Foo() {
+    }
+
+    @Override
+  public void initSteps {
+  }
+}"""
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
+    WriteCommandAction.runWriteCommandAction(project) {
+      PsiTreeUtil.findChildOfType(psiFile, PsiAnnotation).delete()
+    }
+    PsiTestUtil.checkStubsMatchText(psiFile)
   }
 
 }
