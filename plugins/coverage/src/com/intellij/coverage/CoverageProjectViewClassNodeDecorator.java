@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -12,16 +13,13 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
-  public CoverageProjectViewClassNodeDecorator(final CoverageDataManager coverageDataManager) {
-    super(coverageDataManager);
+final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
+  CoverageProjectViewClassNodeDecorator(@NotNull Project project) {
+    super(project);
   }
-
 
   @Override
   public void decorate(PackageDependenciesNode node, ColoredTreeCellRenderer cellRenderer) {

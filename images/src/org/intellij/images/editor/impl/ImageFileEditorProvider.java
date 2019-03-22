@@ -37,15 +37,9 @@ import org.jetbrains.annotations.NotNull;
 final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
   @NonNls private static final String EDITOR_TYPE_ID = "images";
 
-  private final ImageFileTypeManager typeManager;
-
-  ImageFileEditorProvider(ImageFileTypeManager typeManager) {
-    this.typeManager = typeManager;
-  }
-
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    return typeManager.isImage(file);
+    return ImageFileTypeManager.getInstance().isImage(file);
   }
 
   @Override
