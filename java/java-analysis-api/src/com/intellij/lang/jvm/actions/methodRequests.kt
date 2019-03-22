@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.actions
 
+import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmParameter
 import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.project.Project
@@ -55,9 +57,26 @@ fun constructorRequest(project: Project, parameters: List<JBPair<String, PsiType
 fun setMethodParametersRequest(parameters: Iterable<Map.Entry<String, JvmType>>): ChangeParametersRequest =
   SimpleChangeParametersRequest(parameters.map { expectedParameter(it.value, it.key) })
 
+fun updateMethodParametersRequest(parametersOwnerPointer: () -> JvmMethod?,
+                                  updateFunction: (List<ExpectedParameter>) -> List<ExpectedParameter>): ChangeParametersRequest =
+  UpdateParametersRequest(parametersOwnerPointer, updateFunction)
+
 private class SimpleChangeParametersRequest(private val parameters: List<ExpectedParameter>) : ChangeParametersRequest {
   override fun getExpectedParameters(): List<ExpectedParameter> = parameters
 
   override fun isValid(): Boolean = true
+
+}
+
+private class UpdateParametersRequest(val parametersOwnerPointer: () -> JvmMethod?,
+                                      val updateFunction: (List<ExpectedParameter>) -> List<ExpectedParameter>) : ChangeParametersRequest {
+
+  override fun getExpectedParameters(): List<ExpectedParameter> {
+    val jvmMethod = parametersOwnerPointer()
+                    ?: throw IllegalStateException("parametersOwnerPointer is invalid, please check isValid() before calling this method")
+    return updateFunction(jvmMethod.parameters.map { ChangeParametersRequest.ExistingParameterWrapper(it) })
+  }
+
+  override fun isValid(): Boolean = parametersOwnerPointer() != null
 
 }
