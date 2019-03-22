@@ -248,6 +248,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                               "}}";
     assertEquals("Find 2 dimensional array", 1, findMatchesCount(multiDimensional, "new String[][]{}"));
     assertEquals("Find 1 dimensional arrays", 2, findMatchesCount(multiDimensional, "new String[]{}"));
+    assertEquals("Find empty 1 dimensional arrays", 2, findMatchesCount(multiDimensional, "new String[0]"));
+
+    String singleDimensional = "class X {{" +
+                               "  String[] ss1 = new String[0];" +
+                               "  String[][] ss2 = new String[0][];" +
+                               "}}";
+    assertEquals("Find empty array", 1, findMatchesCount(singleDimensional, "new String[0]"));
   }
 
   public void testLiteral() {
