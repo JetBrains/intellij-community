@@ -3,7 +3,6 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.Value;
@@ -11,9 +10,9 @@ import com.sun.jdi.Value;
 /**
  * @author egor
  */
-public class ByteArrayAsStringRenderer extends CompoundReferenceRenderer {
-  public ByteArrayAsStringRenderer(final NodeRendererSettings rendererSettings) {
-    super(rendererSettings, "String", null, null);
+final class ByteArrayAsStringRenderer extends CompoundReferenceRenderer {
+  ByteArrayAsStringRenderer() {
+    super("String", null, null);
     setClassName("byte[]");
     LabelRenderer labelRenderer = new LabelRenderer() {
       @Override
