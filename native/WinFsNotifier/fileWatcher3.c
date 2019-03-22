@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include <ctype.h>
 #include <stdbool.h>
@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
-#include <windows.h>
+#include <Windows.h>
 
 typedef struct {
     char rootPath[4];
@@ -89,7 +89,7 @@ static bool IsPathWatchable(const char *pathToWatch) {
     wchar_t *path = (wchar_t *)calloc((size_t)pathLen + 1, sizeof(wchar_t));
     MultiByteToWideChar(CP_UTF8, 0, pathToWatch, -1, path, pathLen);
     wchar_t buffer[1024];
-    const int bufferSize = 1024;
+    const unsigned int bufferSize = 1024;
 
     wchar_t *pSlash;
     while ((pSlash = wcsrchr(path, L'\\')) != NULL) {
@@ -137,7 +137,7 @@ static void PrintUnwatchablePaths(PrintBuffer *buffer, UINT32 unwatchable) {
         const char *path = root->path;
         int drive = toupper(*path);
         if (drive < 'A' || drive > 'Z' ||
-            !IS_SET(unwatchable, 1 << (drive - 'A')) && !IsPathWatchable(path)) {
+            (!IS_SET(unwatchable, 1 << (drive - 'A')) && !IsPathWatchable(path))) {
             AppendString(buffer, path);
             AppendString(buffer, "\n");
         }
