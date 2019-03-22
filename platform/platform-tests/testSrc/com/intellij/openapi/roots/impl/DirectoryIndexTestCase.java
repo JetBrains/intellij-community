@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashSet;
@@ -35,7 +35,7 @@ import java.util.Set;
 /**
  * @author nik
  */
-public abstract class DirectoryIndexTestCase extends IdeaTestCase {
+public abstract class DirectoryIndexTestCase extends PlatformTestCase {
   protected DirectoryIndexImpl myIndex;
   protected ProjectFileIndex myFileIndex;
 
