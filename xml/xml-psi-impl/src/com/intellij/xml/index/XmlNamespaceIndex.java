@@ -45,8 +45,8 @@ import java.util.*;
 public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
   @Nullable
-  public static String getNamespace(@NotNull VirtualFile file, final Project project, PsiFile context) {
-    if (DumbService.isDumb(project) || (context != null && XmlUtil.isStubBuilding())) {
+  public static String getNamespace(@NotNull VirtualFile file, final Project project) {
+    if (DumbService.isDumb(project) || XmlUtil.isStubBuilding()) {
       return computeNamespace(file);
     }
     final List<XsdNamespaceBuilder> list = FileBasedIndex.getInstance().getValues(NAME, file.getUrl(), createFilter(project));
