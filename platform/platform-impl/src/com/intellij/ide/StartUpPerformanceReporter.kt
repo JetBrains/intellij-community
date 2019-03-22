@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.util.SystemProperties
 import gnu.trove.THashMap
 import java.io.StringWriter
 import java.util.concurrent.TimeUnit
@@ -89,7 +90,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     val items = mutableListOf<ActivityImpl>()
     val activities = THashMap<String, MutableList<ActivityImpl>>()
 
-    StartUpMeasurer.processAndClear(Consumer { item ->
+    StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false), Consumer { item ->
       val parallelActivity = item.parallelActivity
       if (parallelActivity == null) {
         items.add(item)
@@ -104,7 +105,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
       }
     })
 
-    if (items.isEmpty() || (ApplicationManager.getApplication().isUnitTestMode && activationNumber > 2)) {
+    if (items.isEmpty()) {
       return
     }
 
@@ -156,7 +157,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     stringWriter.write("\n=== Stop: StartUp Measurement ===")
     var string = stringWriter.toString()
     // to make output more compact (quite a lot slow components) - should we write own JSON encoder? well, for now potentially slow RegExp is ok
-    string = string.replace(Regex(",\\s+(\"start\"|\"end\"|\\{)"), ", $1")
+    string = string.replace(Regex(",\\s+(\"start\"|\"end\"|\"thread\"|\\{)"), ", $1")
     LOG.info(string)
   }
 }
