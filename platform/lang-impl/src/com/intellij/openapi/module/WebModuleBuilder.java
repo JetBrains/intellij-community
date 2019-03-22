@@ -46,7 +46,7 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
 
   @Override
   public ModuleType getModuleType() {
-    return WebModuleType.getInstance();
+    return WebModuleTypeBase.getInstance();
   }
 
   @Override
