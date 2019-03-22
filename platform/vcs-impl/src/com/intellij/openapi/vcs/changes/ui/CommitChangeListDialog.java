@@ -596,7 +596,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   @Override
   public void dispose() {
     myDisposed = true;
-    Disposer.dispose(myCommitOptions);
     Disposer.dispose(getBrowser());
     Disposer.dispose(myCommitMessageArea);
     Disposer.dispose(myOKButtonUpdateAlarm);
