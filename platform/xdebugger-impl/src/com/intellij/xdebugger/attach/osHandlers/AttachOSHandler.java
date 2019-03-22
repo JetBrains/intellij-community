@@ -82,6 +82,10 @@ public abstract class AttachOSHandler {
       return OSType.MACOSX;
     }
 
+    if(SystemInfo.isWindows) {
+      return OSType.WINDOWS;
+    }
+
     return OSType.UNKNOWN;
   }
 
@@ -95,12 +99,9 @@ public abstract class AttachOSHandler {
       GeneralCommandLine getOsCommandLine = new GeneralCommandLine("uname", "-s");
       final String osString = host.getProcessOutput(getOsCommandLine).getStdout().trim();
 
-      if(osString.startsWith("MSYS")) {
-        return OSType.WINDOWS;
-      }
-
       OSType osType;
 
+      //TODO [viuginick] handle remote windows
       switch (osString) {
         case "Linux":
           osType = OSType.LINUX;
