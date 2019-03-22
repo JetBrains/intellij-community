@@ -969,10 +969,21 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   private void matchArrayOrArguments(final PsiNewExpression new1, final PsiNewExpression new2) {
+    final PsiType type1 = new1.getType();
+    final PsiType type2 = new2.getType();
+    if (!myMatchingVisitor.setResult(type1 != null && type2 != null && type1.getArrayDimensions() == type2.getArrayDimensions())) return;
+    final PsiArrayInitializerExpression initializer1 = new1.getArrayInitializer();
+    final PsiArrayInitializerExpression initializer2 = new2.getArrayInitializer();
+    if (initializer1 != null) {
+      if (!myMatchingVisitor.setResult(myMatchingVisitor.matchSons(initializer1, initializer2))) return;
+    }
+    else if (initializer2 != null) {
+      myMatchingVisitor.setResult(areZeroLiterals(new1.getArrayDimensions()) && initializer2.getInitializers().length == 0);
+      return;
+    }
+
     final PsiExpression[] dimensions1 = new1.getArrayDimensions();
     final PsiExpression[] dimensions2 = new2.getArrayDimensions();
-
-    if (!myMatchingVisitor.setResult(myMatchingVisitor.matchSons(new1.getArrayInitializer(), new2.getArrayInitializer()))) return;
     if (!myMatchingVisitor.setResult(dimensions1.length == dimensions2.length)) return;
     if (dimensions1.length != 0) {
       for (int i = 0; i < dimensions1.length; ++i) {
@@ -980,12 +991,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
     }
     else {
-      final PsiType type1 = new1.getType();
-      final PsiType type2 = new2.getType();
-      myMatchingVisitor.setResult(type1 != null && type2 != null && type1.getArrayDimensions() == type2.getArrayDimensions() &&
-                                  myMatchingVisitor.matchSons(new1.getArgumentList(), new2.getArgumentList()) &&
+      myMatchingVisitor.setResult(myMatchingVisitor.matchSons(new1.getArgumentList(), new2.getArgumentList()) &&
                                   myMatchingVisitor.setResult(matchTypeParameters(new1, new2)));
     }
+  }
+
+  private static boolean areZeroLiterals(PsiExpression[] expressions) {
+    for (PsiExpression expression : expressions) {
+      if (!(expression instanceof PsiLiteralExpression) || !expression.getText().equals("0")) return false;
+    }
+    return true;
   }
 
   private static boolean matchImplicitQualifier(PsiExpression qualifier, PsiElement reference, MatchContext context) {
@@ -1431,9 +1446,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiJavaCodeReferenceElement classReference = new1.getClassReference();
     if (other instanceof PsiArrayInitializerExpression &&
         other.getParent() instanceof PsiVariable &&
-        new1.getArrayDimensions().length == 0 &&
-        new1.getArrayInitializer() != null
-      ) {
+        areZeroLiterals(new1.getArrayDimensions())
+    ) {
       final MatchContext matchContext = myMatchingVisitor.getMatchContext();
       final CompiledPattern pattern = matchContext.getPattern();
       final boolean isTypedVar = pattern.isTypedVar(classReference);
@@ -1456,7 +1470,13 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         myMatchingVisitor.setResult(type != null && type.equals(otherType));
       }
       if (myMatchingVisitor.getResult()) {
-        myMatchingVisitor.matchSons(new1.getArrayInitializer(), other);
+        PsiArrayInitializerExpression initializer = new1.getArrayInitializer();
+        if (initializer != null) {
+          myMatchingVisitor.matchSons(initializer, other);
+        }
+        else {
+          myMatchingVisitor.setResult(((PsiArrayInitializerExpression)other).getInitializers().length == 0);
+        }
       }
       return;
     }
