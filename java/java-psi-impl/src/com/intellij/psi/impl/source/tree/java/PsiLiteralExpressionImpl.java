@@ -6,7 +6,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.impl.PsiLiteralStub;
@@ -67,8 +66,9 @@ public class PsiLiteralExpressionImpl
       return PsiType.CHAR;
     }
     if (type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.RAW_STRING_LITERAL) {
-      PsiManagerEx manager = getManager();
-      GlobalSearchScope resolveScope = ResolveScopeManager.getElementResolveScope(this);
+      PsiFile file = getContainingFile();
+      PsiManager manager = file.getManager();
+      GlobalSearchScope resolveScope = ResolveScopeManager.getElementResolveScope(file);
       return PsiType.getJavaLangString(manager, resolveScope);
     }
     if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD) {
