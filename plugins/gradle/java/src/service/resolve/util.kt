@@ -37,11 +37,16 @@ internal fun PsiFile?.isGradleScript() = this?.originalFile?.virtualFile?.extens
 val RESOLVED_CODE: Key<Boolean?> = Key.create("gradle.resolved")
 
 // TODO extract API for delegation
-fun processDelegatedDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, fqn: String): Boolean {
+fun processDelegatedDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, vararg fqns: String): Boolean {
   val javaPsiFacade = JavaPsiFacade.getInstance(place.project)
-  val clazz = javaPsiFacade.findClass(fqn, place.resolveScope) ?: return true
-  val type = javaPsiFacade.elementFactory.createType(clazz)
-  return type.processReceiverType(processor, state, place)
+  for (fqn in fqns) {
+    val clazz = javaPsiFacade.findClass(fqn, place.resolveScope) ?: continue
+    val type = javaPsiFacade.elementFactory.createType(clazz)
+    if (!type.processReceiverType(processor, state, place)) {
+      return false
+    }
+  }
+  return true
 }
 
 fun processDeclarations(aClass: PsiClass,

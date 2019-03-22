@@ -96,7 +96,9 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
       extensionsData.findProperty(propCandidate)?.let(processVariable)
     }
     else {
-      processDeclarations(aClass, processor, state, place)
+      if (aClass.qualifiedName !in GradleConventionsContributor.conventions) {
+        processDeclarations(aClass, processor, state, place)
+      }
       val propCandidate = place.references.singleOrNull()?.canonicalText ?: return
       val domainObjectType = (qualifierType.superTypes.firstOrNull { it is PsiClassType } as? PsiClassType)?.parameters?.singleOrNull()
                              ?: return
