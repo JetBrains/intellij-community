@@ -19,6 +19,7 @@ package org.intellij.plugins.intelliLang.inject.xml;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -61,8 +62,8 @@ public final class XmlLanguageInjector implements MultiHostInjector {
   private volatile Trinity<Long, Pattern, Collection<String>> myXmlIndex;
   private final LanguageInjectionSupport mySupport;
 
-  public XmlLanguageInjector() {
-    myConfiguration = Configuration.getInstance();
+  public XmlLanguageInjector(@NotNull Project project) {
+    myConfiguration = Configuration.getProjectInstance(project);
     mySupport = InjectorUtils.findNotNullInjectionSupport(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
   }
 
