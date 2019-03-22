@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -47,7 +48,6 @@ import java.util.*;
 import static com.intellij.vcs.log.VcsLogFilterCollection.*;
 
 public class GitLogProvider implements VcsLogProvider {
-
   private static final Logger LOG = Logger.getInstance(GitLogProvider.class);
   public static final Function<VcsRef, String> GET_TAG_NAME = ref -> ref.getType() == GitRefManager.TAG ? ref.getName() : null;
   public static final TObjectHashingStrategy<VcsRef> DONT_CONSIDER_SHA = new TObjectHashingStrategy<VcsRef>() {
@@ -65,19 +65,14 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull private final Project myProject;
   @NotNull private final GitVcs myVcs;
   @NotNull private final GitRepositoryManager myRepositoryManager;
-  @NotNull private final GitUserRegistry myUserRegistry;
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
 
-  public GitLogProvider(@NotNull Project project,
-                        @NotNull GitRepositoryManager repositoryManager,
-                        @NotNull VcsLogObjectsFactory factory,
-                        @NotNull GitUserRegistry userRegistry) {
+  public GitLogProvider(@NotNull Project project) {
     myProject = project;
-    myRepositoryManager = repositoryManager;
-    myUserRegistry = userRegistry;
+    myRepositoryManager = GitRepositoryManager.getInstance(project);
     myRefSorter = new GitRefManager(myProject, myRepositoryManager);
-    myVcsObjectsFactory = factory;
+    myVcsObjectsFactory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
     myVcs = GitVcs.getInstance(project);
   }
 
@@ -567,7 +562,7 @@ public class GitLogProvider implements VcsLogProvider {
   @Nullable
   @Override
   public VcsUser getCurrentUser(@NotNull VirtualFile root) {
-    return myUserRegistry.getOrReadUser(root);
+    return GitUserRegistry.getInstance(myProject).getOrReadUser(root);
   }
 
   @NotNull

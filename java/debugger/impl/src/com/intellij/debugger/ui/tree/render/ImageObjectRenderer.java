@@ -9,12 +9,13 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.ClassLoadingUtils;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.debugger.ImageSerializer;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Method;
+import com.sun.jdi.Value;
 import org.intellij.images.editor.impl.ImageEditorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +29,8 @@ import java.util.List;
 class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
   private static final Logger LOG = Logger.getInstance(ImageObjectRenderer.class);
 
-  ImageObjectRenderer(final NodeRendererSettings rendererSettings) {
-    super(rendererSettings, "Image", null, null);
+  ImageObjectRenderer() {
+    super("Image", null, null);
     setClassName("java.awt.Image");
     setEnabled(true);
   }
