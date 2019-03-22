@@ -121,6 +121,12 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
           gradleExtension.namedObjectTypeFqn = extension.getNamedObjectTypeFqn();
           extensionsData.extensions.add(gradleExtension);
         }
+        for (org.jetbrains.plugins.gradle.model.GradleConvention convention : gradleExtensions.getConventions()) {
+          GradleConvention gradleConvention = new GradleConvention();
+          gradleConvention.name = convention.getName();
+          gradleConvention.typeFqn = convention.getTypeFqn();
+          extensionsData.conventions.add(gradleConvention);
+        }
         for (GradleProperty property : gradleExtensions.getGradleProperties()) {
           GradleProp gradleProp = new GradleProp();
           gradleProp.name = property.getName();
@@ -214,6 +220,9 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     public List<GradleExtension> extensions = new SmartList<>();
     @Property(surroundWithTag = false)
     @XCollection
+    public List<GradleConvention> conventions = new SmartList<>();
+    @Property(surroundWithTag = false)
+    @XCollection
     public List<GradleProp> properties = new SmartList<>();
     @Property(surroundWithTag = false)
     @XCollection
@@ -283,6 +292,19 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     @Override
     public String getTypeFqn() {
       return rootTypeFqn;
+    }
+  }
+
+  @Tag("convention")
+  public static class GradleConvention implements TypeAware {
+    @Attribute("name")
+    public String name;
+    @Attribute("type")
+    public String typeFqn = CommonClassNames.JAVA_LANG_OBJECT_SHORT;
+
+    @Override
+    public String getTypeFqn() {
+      return typeFqn;
     }
   }
 
