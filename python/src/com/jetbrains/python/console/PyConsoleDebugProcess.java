@@ -19,6 +19,7 @@ import com.google.common.collect.Maps;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.ui.UIUtil;
@@ -49,9 +50,22 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
     session.addSessionListener(new XDebugSessionListener() { //TODO: dside
       @Override
       public void sessionResumed() {
-        ToolWindowManager.getInstance(session.getProject()).getToolWindow("Debug").hide(null);
+        UIUtil.invokeLaterIfNeeded(() -> {
+          getDebugToolWindow(session).hide(null);
+        });
+      }
+
+      @Override
+      public void sessionPaused() {
+        UIUtil.invokeLaterIfNeeded(() -> {
+          getDebugToolWindow(session).show(null);
+        });
       }
     });
+  }
+
+  private ToolWindow getDebugToolWindow(@NotNull XDebugSession session) {
+    return ToolWindowManager.getInstance(session.getProject()).getToolWindow("Debug");
   }
 
   @Override
