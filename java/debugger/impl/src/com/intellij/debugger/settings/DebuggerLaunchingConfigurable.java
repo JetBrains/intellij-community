@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -32,7 +32,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
       myRbShmem.setEnabled(false);
     }
     else {
-      if (settings.DEBUGGER_TRANSPORT == DebuggerSettings.SHMEM_TRANSPORT) {
+      if (settings.getTransport() == DebuggerSettings.SHMEM_TRANSPORT) {
         myRbShmem.setSelected(true);
       }
       else {
@@ -54,12 +54,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
   }
 
   private void getSettingsTo(DebuggerSettings settings) {
-    if (myRbShmem.isSelected()) {
-      settings.DEBUGGER_TRANSPORT = DebuggerSettings.SHMEM_TRANSPORT;
-    }
-    else {
-      settings.DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
-    }
+    settings.setTransport(myRbShmem.isSelected() ? DebuggerSettings.SHMEM_TRANSPORT : DebuggerSettings.SOCKET_TRANSPORT);
     settings.FORCE_CLASSIC_VM = myCbForceClassicVM.isSelectedWhenSelectable();
     settings.DISABLE_JIT = myCbDisableJIT.isSelected();
     settings.SHOW_ALTERNATIVE_SOURCE = myCbShowAlternativeSource.isSelected();

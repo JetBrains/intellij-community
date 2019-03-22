@@ -9,12 +9,14 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
@@ -60,7 +62,10 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   };
 
   public boolean TRACING_FILTERS_ENABLED = true;
-  public int DEBUGGER_TRANSPORT;
+
+  @OptionTag("DEBUGGER_TRANSPORT")
+  private int DEBUGGER_TRANSPORT;
+
   public boolean FORCE_CLASSIC_VM = true;
   public boolean DISABLE_JIT;
   public boolean SHOW_ALTERNATIVE_SOURCE = true;
@@ -328,5 +333,18 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   public interface CapturePointsSettingsListener extends EventListener{
     void capturePointsChanged();
+  }
+
+  @Transient
+  public int getTransport() {
+    if (!SystemInfo.isWindows) {
+      return SOCKET_TRANSPORT;
+    }
+    return DEBUGGER_TRANSPORT;
+  }
+
+  @Transient
+  public void setTransport(int transport) {
+    DEBUGGER_TRANSPORT = transport;
   }
 }

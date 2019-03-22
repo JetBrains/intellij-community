@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.build.BuildView;
@@ -216,7 +214,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         // there's no easy and reliable way to know the version of target JRE, but without it there won't be any debugger agent settings
         parameters.setJdk(JavaParametersUtil.createProjectJdk(project, null));
         connection = DebuggerManagerImpl.createDebugParameters(
-          parameters, false, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
+          parameters, false, DebuggerSettings.getInstance().getTransport(), "", false);
       }
       catch (ExecutionException e) {
         throw new RuntimeException("Cannot create debug connection", e);
