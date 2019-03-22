@@ -166,6 +166,10 @@ public class DfaValueFactory {
 
   @Nullable
   private DfaConstValue tryEvaluate(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
+    DfaConstValue sentinel = getConstFactory().getSentinel();
+    if ((dfaLeft == sentinel) != (dfaRight == sentinel)) {
+      return getBoolean(relationType == RelationType.NE);
+    }
     if (dfaRight instanceof DfaFactMapValue && dfaLeft == getConstFactory().getNull()) {
       return tryEvaluate(dfaRight, relationType, dfaLeft);
     }
