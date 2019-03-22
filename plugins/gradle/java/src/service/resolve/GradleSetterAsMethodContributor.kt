@@ -7,6 +7,9 @@ import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.ProcessorWithHints
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.util.text.nullize
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrMethodWrapper
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
 import org.jetbrains.plugins.groovy.lang.resolve.getName
@@ -14,7 +17,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 
 class GradleSetterAsMethodContributor : NonCodeMembersContributor() {
 
-  override fun getParentClassName(): String? = GradleCommonClassNames.GRADLE_API_PROJECT
+  override fun getClassNames(): Collection<String> = listOf(
+    GRADLE_API_PROJECT,
+    GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY
+  )
 
   override fun processDynamicElements(qualifierType: PsiType,
                                       aClass: PsiClass?,
@@ -42,17 +48,14 @@ class GradleSetterAsMethodContributor : NonCodeMembersContributor() {
 
     override fun execute(element: PsiElement, state: ResolveState): Boolean {
       val method = element as? PsiMethod ?: return true
-      val propertyName = checkAndExtractPropertyName(method) ?: return true
+      val propertyName = extractPropertyName(method) ?: return true
       return delegate.execute(GrMethodWrapper.wrap(method, propertyName), state)
     }
 
-    private fun checkAndExtractPropertyName(method: PsiMethod): String? {
+    private fun extractPropertyName(method: PsiMethod): String? {
       val methodName = method.name
       if (!methodName.startsWith(PropertyKind.SETTER.prefix)) return null
-      val propertyName = methodName.removePrefix(PropertyKind.SETTER.prefix).decapitalize()
-      if (propertyName.isEmpty()) return null
-      if (method.returnType != PsiType.VOID) return null
-      return propertyName
+      return methodName.removePrefix(PropertyKind.SETTER.prefix).decapitalize().nullize()
     }
   }
 }
