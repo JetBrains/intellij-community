@@ -18,7 +18,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUt
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.map;
@@ -52,16 +54,28 @@ public abstract class NonCodeMembersContributor {
     return null;
   }
 
+  @NotNull
+  protected Collection<String> getClassNames() {
+    String className = getParentClassName();
+    return className == null ? Collections.emptyList() : Collections.singletonList(className);
+  }
+
   private static void ensureInit() {
     if (ourClassSpecifiedContributors != null) return;
 
-    MultiMap<String, NonCodeMembersContributor> contributorMap = new MultiMap<>();
-
+    final Collection<NonCodeMembersContributor> allTypeContributors = new ArrayList<>();
+    final MultiMap<String, NonCodeMembersContributor> contributorMap = new MultiMap<>();
     for (final NonCodeMembersContributor contributor : EP_NAME.getExtensions()) {
-      contributorMap.putValue(contributor.getParentClassName(), contributor);
+      Collection<String> fqns = contributor.getClassNames();
+      if (fqns.isEmpty()) {
+        allTypeContributors.add(contributor);
+      }
+      else {
+        for (String fqn : fqns) {
+          contributorMap.putValue(fqn, contributor);
+        }
+      }
     }
-
-    Collection<NonCodeMembersContributor> allTypeContributors = contributorMap.remove(null);
     ourAllTypeContributors = allTypeContributors.toArray(new NonCodeMembersContributor[0]);
     ourClassSpecifiedContributors = contributorMap;
   }
