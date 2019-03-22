@@ -15,8 +15,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
@@ -127,7 +127,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     checkAvailability();
     dispatchPendingEvents();
 
-    if (!(file instanceof NewVirtualFile)) return NonProjectDirectoryInfo.NOT_SUPPORTED_VIRTUAL_FILE_IMPLEMENTATION;
+    if (!(file instanceof VirtualFileWithId)) return NonProjectDirectoryInfo.NOT_SUPPORTED_VIRTUAL_FILE_IMPLEMENTATION;
 
     return getRootIndex().getInfoForFile(file);
   }
@@ -152,7 +152,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   public String getPackageName(@NotNull VirtualFile dir) {
     checkAvailability();
-    if (!(dir instanceof NewVirtualFile)) return null;
+    if (!(dir instanceof VirtualFileWithId)) return null;
 
     return getRootIndex().getPackageName(dir);
   }
