@@ -196,12 +196,12 @@ public class GitLogUtil {
   @NotNull
   private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<GitLogRecord> records,
                                         @NotNull VcsLogObjectsFactory factory) {
-    return createCommit(project, root, records, factory, DiffRenameLimit.GIT_CONFIG);
+    return createCommit(project, root, records, factory, GitCommitRequirements.DiffRenameLimit.GIT_CONFIG);
   }
 
   @NotNull
   private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<GitLogRecord> records,
-                                        @NotNull VcsLogObjectsFactory factory, @NotNull DiffRenameLimit renameLimit) {
+                                        @NotNull VcsLogObjectsFactory factory, @NotNull GitCommitRequirements.DiffRenameLimit renameLimit) {
     GitLogRecord record = notNull(ContainerUtil.getLastItem(records));
     List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), factory::createHash);
 
@@ -237,39 +237,34 @@ public class GitLogUtil {
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
                                      @NotNull String... parameters) throws VcsException {
-    readFullDetails(project, root, commitConsumer, true, true, false, true, true, parameters);
+    GitCommitRequirements requirements = new GitCommitRequirements(true, GitCommitRequirements.DiffRenameLimit.REGISTRY, false, true);
+    readFullDetails(project, root, commitConsumer, requirements, false, parameters);
   }
 
   public static void readFullDetails(@NotNull Project project,
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
-                                     boolean includeRootChanges,
-                                     boolean preserveOrder,
+                                     @NotNull GitCommitRequirements requirements,
                                      boolean lowPriorityProcess,
-                                     boolean withRenames,
-                                     boolean withFullMergeDiff,
                                      @NotNull String... parameters) throws VcsException {
-    DiffRenameLimit renameLimit = withRenames ? DiffRenameLimit.REGISTRY : DiffRenameLimit.NO_RENAMES;
-    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(includeRootChanges, renameLimit), lowPriorityProcess);
-    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, preserveOrder, withFullMergeDiff,
-                               parameters);
+    List<String> configParameters = createConfigParameters(requirements);
+    GitLineHandler handler = createGitHandler(project, root, configParameters, lowPriorityProcess);
+    readFullDetailsFromHandler(project, root, commitConsumer, handler, requirements, parameters);
   }
 
   private static void readFullDetailsFromHandler(@NotNull Project project,
                                                  @NotNull VirtualFile root,
                                                  @NotNull Consumer<? super GitCommit> commitConsumer,
-                                                 @NotNull DiffRenameLimit renameLimit,
                                                  @NotNull GitLineHandler handler,
-                                                 boolean preserveOrder,
-                                                 boolean withFullMergeDiff,
+                                                 @NotNull GitCommitRequirements requirements,
                                                  @NotNull String... parameters) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return;
     }
-    boolean withRenames = renameLimit != DiffRenameLimit.NO_RENAMES;
+    boolean withRenames = requirements.getDiffRenameLimit() != GitCommitRequirements.DiffRenameLimit.NO_RENAMES;
 
-    if (withFullMergeDiff) {
+    if (requirements.getDiffToParentsInMerges()) {
       Consumer<List<GitLogRecord>> consumer = records -> {
         GitLogRecord firstRecord = notNull(getFirstItem(records));
         String[] parents = firstRecord.getParentsHashes();
@@ -281,17 +276,18 @@ public class GitLogUtil {
                                                                                 " records, but got " +
                                                                                 records.size());
 
-        commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
+        commitConsumer.consume(createCommit(project, root, records, factory, requirements.getDiffRenameLimit()));
       };
-      GitLogRecordCollector recordCollector = preserveOrder ? new GitLogRecordCollector(project, root, consumer)
-                                                            : new GitLogUnorderedRecordCollector(project, root, consumer);
+      GitLogRecordCollector recordCollector = requirements.getPreserveOrder() ? new GitLogRecordCollector(project, root, consumer)
+                                                                              : new GitLogUnorderedRecordCollector(project, root, consumer);
 
       readRecordsFromHandler(project, root, false, true, withRenames, true, recordCollector, handler, parameters);
       recordCollector.finish();
     }
     else {
-      Consumer<GitLogRecord> consumer =
-        record -> commitConsumer.consume(createCommit(project, root, ContainerUtil.newArrayList(record), factory, renameLimit));
+      Consumer<GitLogRecord> consumer = record -> commitConsumer.consume(createCommit(project, root,
+                                                                                      ContainerUtil.newArrayList(record), factory,
+                                                                                      requirements.getDiffRenameLimit()));
 
       readRecordsFromHandler(project, root, false, true, withRenames, false, consumer, handler, parameters);
     }
@@ -341,19 +337,15 @@ public class GitLogUtil {
   public static void readFullDetailsForHashes(@NotNull Project project,
                                               @NotNull VirtualFile root,
                                               @NotNull GitVcs vcs,
-                                              @NotNull Consumer<? super GitCommit> commitConsumer,
                                               @NotNull List<String> hashes,
-                                              boolean includeRootChanges,
+                                              @NotNull GitCommitRequirements requirements,
                                               boolean lowPriorityProcess,
-                                              boolean withFullMergeDiff,
-                                              boolean preserveOrder,
-                                              @NotNull DiffRenameLimit renameLimit) throws VcsException {
+                                              @NotNull Consumer<? super GitCommit> commitConsumer) throws VcsException {
     if (hashes.isEmpty()) return;
-    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(includeRootChanges, renameLimit), lowPriorityProcess);
+    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(requirements), lowPriorityProcess);
     sendHashesToStdin(vcs, hashes, handler);
 
-    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, preserveOrder, withFullMergeDiff,
-                               getNoWalkParameter(vcs), STDIN);
+    readFullDetailsFromHandler(project, root, commitConsumer, handler, requirements, getNoWalkParameter(vcs), STDIN);
   }
 
   static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
@@ -388,9 +380,9 @@ public class GitLogUtil {
   }
 
   @NotNull
-  private static List<String> createConfigParameters(boolean includeRootChanges, @NotNull DiffRenameLimit renameLimit) {
+  private static List<String> createConfigParameters(@NotNull GitCommitRequirements requirements) {
     List<String> result = ContainerUtil.newArrayList();
-    switch (renameLimit) {
+    switch (requirements.getDiffRenameLimit()) {
       case INFINITY:
         result.add(renameLimit(0));
         break;
@@ -403,7 +395,7 @@ public class GitLogUtil {
       case GIT_CONFIG:
     }
 
-    if (!includeRootChanges) {
+    if (!requirements.getIncludeRootChanges()) {
       result.add("log.showRoot=false");
     }
     return result;
@@ -412,24 +404,5 @@ public class GitLogUtil {
   @NotNull
   private static String renameLimit(int limit) {
     return "diff.renameLimit=" + limit;
-  }
-
-  public enum DiffRenameLimit {
-    /**
-     * Use zero value
-     */
-    INFINITY,
-    /**
-     * Use value set in registry (usually 1000)
-     */
-    REGISTRY,
-    /**
-     * Use value set in users git.config
-     */
-    GIT_CONFIG,
-    /**
-     * Disable renames detection
-     */
-    NO_RENAMES
   }
 }

@@ -15,6 +15,7 @@ import com.jetbrains.changeReminder.predict.PredictedFilePath
 import git4idea.GitCommit
 import git4idea.GitVcs
 import git4idea.checkin.GitCheckinEnvironment
+import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
 
 fun CheckinProjectPanel.isAmend(): Boolean {
@@ -43,21 +44,14 @@ fun CheckinProjectPanel.getGitRootFiles(project: Project): Map<VirtualFile, Coll
   return rootFiles
 }
 
-fun processCommitsFromHashes(project: Project, root: VirtualFile, hashes: List<String>, commitConsumer: (GitCommit) -> Unit): Unit =
-  GitLogUtil.readFullDetailsForHashes(
-    project,
-    root,
-    GitVcs.getInstance(project),
-    Consumer<GitCommit> {
-      commitConsumer(it)
-    },
-    hashes.toList(),
-    true,
-    false,
-    false,
-    false,
-    GitLogUtil.DiffRenameLimit.NO_RENAMES
-  )
+fun processCommitsFromHashes(project: Project, root: VirtualFile, hashes: List<String>, commitConsumer: (GitCommit) -> Unit) {
+  val requirements = GitCommitRequirements(diffRenameLimit = GitCommitRequirements.DiffRenameLimit.NO_RENAMES,
+                                           preserveOrder = false)
+  GitLogUtil.readFullDetailsForHashes(project, root, GitVcs.getInstance(project), hashes.toList(),
+                                      requirements, false, Consumer<GitCommit> {
+    commitConsumer(it)
+  })
+}
 
 fun GitCommit.changedFilePaths(): List<FilePath> = this.changes.mapNotNull { it.afterRevision?.file ?: it.beforeRevision?.file }
 
