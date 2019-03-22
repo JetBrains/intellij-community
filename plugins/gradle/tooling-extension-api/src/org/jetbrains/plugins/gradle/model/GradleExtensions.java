@@ -33,6 +33,9 @@ public interface GradleExtensions extends Serializable {
   List<GradleExtension> getExtensions();
 
   @NotNull
+  List<GradleConvention> getConventions();
+
+  @NotNull
   List<GradleProperty> getGradleProperties();
 
   @NotNull
