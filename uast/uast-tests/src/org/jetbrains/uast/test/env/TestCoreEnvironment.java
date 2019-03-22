@@ -196,7 +196,7 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
 
       //noinspection TestOnlyProblems
       PsiElementFinder.EP
-        .getPoint(null).registerExtension(new PsiElementFinderImpl(myProject, ServiceManager.getService(myProject, JavaFileManager.class)), mDisposable);
+        .getPoint(null).registerExtension(new PsiElementFinderImpl(myProject), mDisposable);
     }
   }
 }
