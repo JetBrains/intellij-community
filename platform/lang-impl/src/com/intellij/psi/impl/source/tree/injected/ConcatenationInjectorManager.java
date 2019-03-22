@@ -76,8 +76,8 @@ public final class ConcatenationInjectorManager extends SimpleModificationTracke
   public abstract static class BaseConcatenation2InjectorAdapter implements MultiHostInjector {
     private final ConcatenationInjectorManager myManager;
 
-    public BaseConcatenation2InjectorAdapter(ConcatenationInjectorManager manager) {
-      myManager = manager;
+    public BaseConcatenation2InjectorAdapter(@NotNull Project project) {
+      myManager = getInstance(project);
     }
 
     @Override
