@@ -277,7 +277,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       public void ancestorRemoved(AncestorEvent event) {}
     };
     addAncestorListener(ancestorListener);
-    Disposer.register(myProject, () -> removeAncestorListener(ancestorListener));
+    Disposer.register(myHeader, () -> removeAncestorListener(ancestorListener));
   }
 
   public void setTitleActions(@NotNull AnAction[] actions) {
