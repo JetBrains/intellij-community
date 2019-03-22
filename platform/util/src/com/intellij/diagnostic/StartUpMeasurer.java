@@ -70,6 +70,8 @@ public final class StartUpMeasurer {
 
   private static final ConcurrentLinkedQueue<ActivityImpl> items = new ConcurrentLinkedQueue<>();
 
+  private static boolean isEnabled = true;
+
   public static long getCurrentTime() {
     return System.nanoTime();
   }
@@ -89,7 +91,9 @@ public final class StartUpMeasurer {
     return new ActivityImpl(name, null, level);
   }
 
-  public static void processAndClear(@NotNull Consumer<ActivityImpl> consumer) {
+  public static void processAndClear(boolean isContinueToCollect, @NotNull Consumer<ActivityImpl> consumer) {
+    isEnabled = isContinueToCollect;
+
     while (true) {
       ActivityImpl item = items.poll();
       if (item == null) {
@@ -108,6 +112,8 @@ public final class StartUpMeasurer {
   }
 
   static void add(@NotNull ActivityImpl activity) {
-    items.add(activity);
+    if (isEnabled) {
+      items.add(activity);
+    }
   }
 }
