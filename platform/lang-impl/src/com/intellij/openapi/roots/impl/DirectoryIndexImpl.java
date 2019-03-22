@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -86,9 +85,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         if (rootIndex != null && shouldResetOnEvents(events)) {
           rootIndex.myPackageDirectoryCache.clear();
           for (VFileEvent event : events) {
-            // TempFileSystem doesn't properly support virtual file pointers, so reset unconditionally
-            if (event.getFileSystem() instanceof TempFileSystem ||
-                isIgnoredFileCreated(event)) {
+            if (isIgnoredFileCreated(event)) {
               myRootIndex = null;
               break;
             }
