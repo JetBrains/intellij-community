@@ -126,7 +126,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testNativeEncoding() throws Exception {
-    EncodingManager.getInstance().setNative2AsciiForPropertiesFiles(null, true);
+    EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
     UIUtil.dispatchAllInvocationEvents();
     configureByFile(BASE_PATH + "/" + "NativeEncoding.properties");
 
