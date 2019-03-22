@@ -329,7 +329,7 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, shouldIncludeRootChanges(root),
-                                        false, true, false, GitLogUtil.DiffRenameLimit.GIT_CONFIG);
+                                        false, true, true, GitLogUtil.DiffRenameLimit.GIT_CONFIG);
   }
 
   @Override
