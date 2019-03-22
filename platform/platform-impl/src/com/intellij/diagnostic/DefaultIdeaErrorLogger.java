@@ -4,6 +4,8 @@ package com.intellij.diagnostic;
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -66,7 +68,10 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       else {
         pluginIdToReport = null;
       }
-      LifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed, pluginIdToReport);
+      PluginInfo throwableLocation = PluginInfoDetectorKt.getPluginInfo(t.getClass());
+      String throwableClass = (throwableLocation.getType().isSafeToReport()) ? t.getClass().getSimpleName() : null;
+
+      LifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed, pluginIdToReport, throwableClass);
 
       return notificationEnabled ||
              showPluginError ||

@@ -58,13 +58,14 @@ public class LifecycleUsageTriggerCollector {
     FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "ide.freeze", data);
   }
 
-  public static void onError(boolean isOOM, boolean isMappingFailed, @Nullable String pluginId) {
+  public static void onError(boolean isOOM, boolean isMappingFailed, @Nullable String pluginId, @Nullable String throwableClass) {
     try {
       final FeatureUsageData data =
         new FeatureUsageData().
           addData("oom", isOOM).
           addData("mapping_failed", isMappingFailed).
-          addData("plugin", StringUtil.notNullize(pluginId, "unknown"));
+          addData("plugin", StringUtil.notNullize(pluginId, "unknown")).
+          addData("class", StringUtil.notNullize(throwableClass, "unknown"));
       FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "ide.error", data);
     }
     catch (Exception e) {
