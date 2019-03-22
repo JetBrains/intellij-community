@@ -41,6 +41,7 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcsUtil.VcsUtil;
+import kotlin.sequences.SequencesKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +57,6 @@ import java.util.*;
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsBundle.message;
-import static com.intellij.openapi.vcs.changes.ui.CommitOptionsPanel.*;
 import static com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow.getCommitHandlerFactories;
 import static com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter.moveToFailedList;
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
@@ -305,27 +305,14 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     mySplitter.setSecondComponent(myCommitMessageArea);
     mySplitter.setProportion(PropertiesComponent.getInstance().getFloat(SPLITTER_PROPORTION_OPTION, SPLITTER_PROPORTION_OPTION_DEFAULT));
 
-    initOptions();
-
     myWarningLabel.setForeground(JBColor.RED);
     myWarningLabel.setBorder(JBUI.Borders.empty(5, 5, 0, 5));
     updateWarning();
   }
 
-  private void initOptions() {
-    if (isDefaultCommitEnabled()) {
-      myCommitOptions.setVcsOptions(getVcsOptions(this, getWorkflowVcses(), myWorkflow.getAdditionalDataConsumer()));
-    }
-    myCommitOptions.setBeforeOptions(getBeforeOptions(getHandlers()));
-    myCommitOptions.setAfterOptions(getAfterOptions(getHandlers(), getDisposable()));
-
-    restoreState();
-  }
-
   private void afterInit() {
     updateButtons();
     updateLegend();
-    updateCommitOptions();
     myCommitMessageArea.setChangeList(getChangeList());
     myCommitMessageArea.requestFocusInMessage();
 
@@ -416,10 +403,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
       runWhenWindowOpened(getWindow(), () -> myDetailsSplitter.setInitialProportion());
     }
     changeDetails(false);
-  }
-
-  void updateCommitOptions() {
-    myCommitOptions.onChangeListSelected(getChangeList(), ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles());
   }
 
   protected void updateWarning() {
@@ -636,17 +619,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     myUpdateButtonsRunnable.run();
   }
 
-  boolean saveCommitOptions() {
-    try {
-      saveState();
-      return true;
-    }
-    catch(InputException ex) {
-      ex.show();
-      return false;
-    }
-  }
-
   private class DefaultListCleaner {
     private final boolean myToClean;
 
@@ -662,10 +634,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
         ChangeListManager.getInstance(myProject).editComment(LocalChangeList.DEFAULT_NAME, "");
       }
     }
-  }
-
-  void saveChangeListCommitOptions() {
-    myCommitOptions.saveChangeListComponentsState();
   }
 
   @Override
@@ -753,25 +721,25 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   public void refresh() {
     ChangeListManager.getInstance(myProject).invokeAfterUpdate(() -> {
       getBrowser().updateDisplayedChangeLists();
-      myCommitOptions.refresh();
+      DialogCommitWorkflowKt.refresh(getCommitOptions());
     }, InvokeAfterUpdateMode.SILENT, "commit dialog", ModalityState.current());
   }
 
   @Override
   public void saveState() {
-    myCommitOptions.saveState();
+    DialogCommitWorkflowKt.saveState(getCommitOptions());
   }
 
   @Override
   public void restoreState() {
-    myCommitOptions.restoreState();
+    DialogCommitWorkflowKt.restoreState(getCommitOptions());
   }
 
   // Used in plugins
   @SuppressWarnings("unused")
   @NotNull
   public List<RefreshableOnComponent> getAdditionalComponents() {
-    return myCommitOptions.getAdditionalComponents();
+    return SequencesKt.toList(CommitOptionsKt.getAllOptions(getCommitOptions()));
   }
 
   private void updateButtons() {
@@ -846,6 +814,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     return myCommitMessageArea;
   }
 
+  @NotNull
+  @Override
+  public CommitOptionsUi getCommitOptionsUi() {
+    return myCommitOptions;
+  }
+
   @Override
   public void addDataProvider(@NotNull DataProvider provider) {
     myDataProviders.add(provider);
@@ -901,6 +875,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   @NotNull
   private List<CheckinHandler> getHandlers() {
     return myWorkflow.getCommitHandlers();
+  }
+
+  @NotNull
+  private CommitOptions getCommitOptions() {
+    return myWorkflow.getCommitOptions();
   }
 
   private boolean isDefaultCommitEnabled() {

@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.LocalChangeList
@@ -12,6 +13,7 @@ import java.util.*
 
 interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
   val commitMessageUi: CommitMessageUi
+  val commitOptionsUi: CommitOptionsUi
 
   fun activate(): Boolean
 
@@ -42,6 +44,12 @@ interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
 interface CommitMessageUi : TextAccessor {
   override fun getText(): String
   override fun setText(text: String?)
+}
+
+interface CommitOptionsUi {
+  fun setOptions(options: CommitOptions)
+
+  fun setVisible(vcses: Collection<AbstractVcs<*>>)
 }
 
 interface CommitExecutorListener : EventListener {
