@@ -315,8 +315,8 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitLogUtil.readFullDetails(myProject, root, commitConsumer, shouldIncludeRootChanges(root),
-                               false, true, ArrayUtil.toStringArray(GitLogUtil.LOG_ALL));
+    GitLogUtil.readFullDetails(myProject, root, commitConsumer, shouldIncludeRootChanges(root), false, true, true, true,
+                               ArrayUtil.toStringArray(GitLogUtil.LOG_ALL));
   }
 
   @Override

@@ -222,7 +222,7 @@ public class GitLogUtil {
 
     List<GitCommit> commits = ContainerUtil.newArrayList();
     try {
-      readFullDetails(project, root, commits::add, true, true, false, parameters);
+      readFullDetails(project, root, commits::add, parameters);
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -236,11 +236,8 @@ public class GitLogUtil {
   public static void readFullDetails(@NotNull Project project,
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
-                                     boolean includeRootChanges,
-                                     boolean preserveOrder,
-                                     boolean lowPriorityProcess,
                                      @NotNull String... parameters) throws VcsException {
-    readFullDetails(project, root, commitConsumer, includeRootChanges, preserveOrder, lowPriorityProcess, true, true, parameters);
+    readFullDetails(project, root, commitConsumer, true, true, false, true, true, parameters);
   }
 
   public static void readFullDetails(@NotNull Project project,
