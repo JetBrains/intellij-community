@@ -17,10 +17,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.OperatorExpressionConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
@@ -93,8 +95,14 @@ internal class InferMethodArgumentsIntention : Intention() {
   private fun collectInnerMethodCalls(method: GrMethod,
                                       resolveSession: GroovyInferenceSession) {
     val visitor = object : GroovyRecursiveElementVisitor() {
+
       override fun visitExpression(expression: GrExpression) {
-        resolveSession.addConstraint(ExpressionConstraint(null, expression))
+        if (expression is GrOperatorExpression) {
+          resolveSession.addConstraint(OperatorExpressionConstraint(expression))
+        }
+        else {
+          resolveSession.addConstraint(ExpressionConstraint(null, expression))
+        }
         super.visitExpression(expression)
       }
     }
@@ -108,7 +116,6 @@ internal class InferMethodArgumentsIntention : Intention() {
                                       resolveSession: GroovyInferenceSession) {
     val references = ReferencesSearch.search(method).findAll()
     for (occurrence in references) {
-
       if (occurrence is GrReferenceExpression) {
         val call = occurrence.parent
         if (call is GrCall) {

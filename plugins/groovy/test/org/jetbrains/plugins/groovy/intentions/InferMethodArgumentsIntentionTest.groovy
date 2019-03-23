@@ -47,4 +47,13 @@ class InferMethodArgumentsIntentionTest extends GrIntentionTestCase {
   void testDependencyOnTypeParameter() {
     doTest(true)
   }
+
+  void testOperatorInference() {
+    doTest(true)
+  }
+
+  void testSearchEverywhere() {
+    doTest(true)
+  }
+
 }
