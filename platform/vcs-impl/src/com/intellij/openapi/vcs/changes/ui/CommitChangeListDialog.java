@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.Refreshable;
@@ -61,7 +60,6 @@ import static com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow.getCommit
 import static com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter.moveToFailedList;
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
 import static com.intellij.util.ArrayUtil.isEmpty;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.ui.SwingHelper.buildHtml;
 import static com.intellij.util.ui.UIUtil.*;
@@ -95,9 +93,9 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   @NotNull private final List<DataProvider> myDataProviders = newArrayList();
   @NotNull private final EventDispatcher<InclusionListener> myInclusionEventDispatcher = EventDispatcher.create(InclusionListener.class);
 
-  @NotNull private final String myCommitActionName;
-
-  @NotNull private final List<CommitExecutorAction> myExecutorActions;
+  @NotNull private String myDefaultCommitActionName = "";
+  @Nullable private CommitAction myCommitAction;
+  @NotNull private final List<CommitExecutorAction> myExecutorActions = newArrayList();
 
   @NotNull private final CommitOptionsPanel myCommitOptions;
   @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
@@ -111,7 +109,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   @NotNull private final JBLabel myWarningLabel;
 
   @Nullable private final String myHelpId;
-  @Nullable private final CommitAction myCommitAction;
 
   @NotNull private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   @NotNull private final Runnable myUpdateButtonsRunnable = () -> {
@@ -246,16 +243,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     }
 
     setTitle(isDefaultCommitEnabled() ? DIALOG_TITLE : getExecutorPresentableText(executors.get(0)));
-    myCommitActionName = getCommitActionName(getWorkflowVcses());
-    myExecutorActions = createExecutorActions(executors);
-    if (isDefaultCommitEnabled()) {
-      myCommitAction = new CommitAction(myCommitActionName);
-      myCommitAction.setOptions(myExecutorActions);
-    }
-    else {
-      myCommitAction = null;
-      myExecutorActions.get(0).putValue(DEFAULT_ACTION, Boolean.TRUE);
-    }
     myHelpId = isDefaultCommitEnabled() ? HELP_ID : getHelpId(executors);
 
     myDiffDetails = new MyChangeProcessor(myProject, myWorkflow.isPartialCommitEnabled());
@@ -263,7 +250,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     mySplitter = new Splitter(true);
-    myCommitOptions = new CommitOptionsPanel(() -> getCommitActionName());
+    myCommitOptions = new CommitOptionsPanel(() -> getDefaultCommitActionName());
     myWarningLabel = new JBLabel();
 
     JPanel mainPanel = new JPanel(new MyOptionsLayout(mySplitter, myCommitOptions, JBUI.scale(150), JBUI.scale(400)));
@@ -296,6 +283,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
 
     addInclusionListener(() -> updateButtons(), this);
     getBrowser().getViewer().addSelectionListener(() -> changeDetails(getBrowser().getViewer().isModelUpdateInProgress()));
+
+    initCommitActions(myWorkflow.getExecutors());
 
     myBrowserBottomPanel.add(myLegend.getComponent());
     BorderLayoutPanel topPanel = JBUI.Panels.simplePanel().addToCenter(getBrowser()).addToBottom(myBrowserBottomPanel);
@@ -371,6 +360,18 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
         return value <= 0.05 || value >= 0.95 ? DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT : value;
       }
     };
+  }
+
+  private void initCommitActions(@NotNull List<? extends CommitExecutor> executors) {
+    myExecutorActions.addAll(createExecutorActions(executors));
+    if (isDefaultCommitEnabled()) {
+      myCommitAction = new CommitAction(getDefaultCommitActionName());
+      myCommitAction.setOptions(myExecutorActions);
+    }
+    else {
+      myCommitAction = null;
+      myExecutorActions.get(0).putValue(DEFAULT_ACTION, Boolean.TRUE);
+    }
   }
 
   @NotNull
@@ -594,19 +595,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   @NotNull
   @Override
   public String getCommitActionName() {
-    return myCommitActionName;
-  }
-
-  @NotNull
-  private static String getCommitActionName(@NotNull Collection<? extends AbstractVcs<?>> affectedVcses) {
-    Set<String> names = map2SetNotNull(affectedVcses, vcs -> {
-      CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
-      return checkinEnvironment != null ? checkinEnvironment.getCheckinOperationName() : null;
-    });
-    if (names.size() == 1) {
-      return notNull(getFirstItem(names));
-    }
-    return VcsBundle.getString("commit.dialog.default.commit.operation.name");
+    return getDefaultCommitActionName();
   }
 
   private void stopUpdate() {
@@ -817,6 +806,17 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
   @Override
   public CommitOptionsUi getCommitOptionsUi() {
     return myCommitOptions;
+  }
+
+  @NotNull
+  @Override
+  public String getDefaultCommitActionName() {
+    return myDefaultCommitActionName;
+  }
+
+  @Override
+  public void setDefaultCommitActionName(@NotNull String defaultCommitActionName) {
+    myDefaultCommitActionName = defaultCommitActionName;
   }
 
   @Override
