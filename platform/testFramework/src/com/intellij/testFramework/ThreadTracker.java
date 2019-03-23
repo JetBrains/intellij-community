@@ -172,7 +172,14 @@ public class ThreadTracker {
         String trace = PerformanceWatcher.printStacktrace("", thread, stackTrace);
         String traceBefore = PerformanceWatcher.printStacktrace("", thread, traceBeforeWait);
 
+        String internalDiagnostic = stackTrace.length < 5 ? null : "(diagnostic: " +
+              "0: "+ stackTrace[0].getClassName() + " : "+ stackTrace[0].getClassName().equals("sun.misc.Unsafe")
+              + " . " +stackTrace[0].getMethodName() +" : "+ stackTrace[0].getMethodName().equals("unpark")
+              + " 2: "+ stackTrace[2].getClassName() +" : "+ stackTrace[2].getClassName().equals("java.util.concurrent.FutureTask")
+              + " . " + stackTrace[2].getMethodName() +" : " +stackTrace[2].getMethodName().equals("finishCompletion") + ")";
+
         Assert.fail("Thread leaked: " +traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after "+WAIT_SEC+" seconds wait:) "+trace)+
+                    internalDiagnostic +
                     "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, stackTraces) +
                     "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces));
       }
