@@ -1,4 +1,4 @@
-def foo<caret>(Integer a, String b, Long c, Object d) {
+def void foo<caret>(Integer a, String b, Long c, Object d) {
 
 }
 

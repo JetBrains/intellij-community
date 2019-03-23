@@ -10,7 +10,7 @@ class Derived2 extends Base {
 
 }
 
-vo<caret>id foo(Base a, Integer b) {
+def vo<caret>id foo(Base a, Integer b) {
 
 }
 

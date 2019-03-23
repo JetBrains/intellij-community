@@ -1,4 +1,4 @@
-def fo<caret>o(String a) {
+def void fo<caret>o(String a) {
 
 }
 
