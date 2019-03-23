@@ -558,12 +558,14 @@ public class ContainerUtil extends ContainerUtilRt {
   public static class ImmutableMapBuilder<K, V> {
     private final Map<K, V> myMap = new THashMap<>();
 
+    @NotNull
     public ImmutableMapBuilder<K, V> put(K key, V value) {
       myMap.put(key, value);
       return this;
     }
 
     @Contract(pure=true)
+    @NotNull
     public Map<K, V> build() {
       return Collections.unmodifiableMap(myMap);
     }
