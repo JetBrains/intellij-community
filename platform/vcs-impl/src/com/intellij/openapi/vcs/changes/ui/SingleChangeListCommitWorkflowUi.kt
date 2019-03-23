@@ -15,6 +15,8 @@ interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
   val commitMessageUi: CommitMessageUi
   val commitOptionsUi: CommitOptionsUi
 
+  var defaultCommitActionName: String
+
   fun activate(): Boolean
 
   fun addStateListener(listener: CommitWorkflowUiStateListener, parent: Disposable)
