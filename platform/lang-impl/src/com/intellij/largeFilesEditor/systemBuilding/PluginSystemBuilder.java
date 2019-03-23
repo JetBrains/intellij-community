@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public class PluginSystemBuilder {
-  private static PluginSystemBuilder instance = new PluginSystemBuilder();
+  private static final PluginSystemBuilder instance = new PluginSystemBuilder();
 
   public static PluginSystemBuilder getInstance() {
     return instance;

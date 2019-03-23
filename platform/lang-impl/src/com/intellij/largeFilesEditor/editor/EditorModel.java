@@ -37,10 +37,10 @@ class EditorModel {
   private final DataProvider dataProvider;
   private final EventsHandler eventsHandler;
 
-  private EditorGui gui;
-  private Editor editor;
+  private final EditorGui gui;
+  private final Editor editor;
   private Page currentShowingPage;
-  private Collection<RangeHighlighter> pageRangeHighlighters;
+  private final Collection<RangeHighlighter> pageRangeHighlighters;
   private ActionToolbar toolbarNavigationActions;
   private ActionToolbar toolbarSaveAction;
   private ActionToolbar toolbarCancelSavingAction;

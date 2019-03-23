@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangesManagerImpl implements ChangesManager {
-  private static Logger LOG = Logger.getInstance(ChangesManagerImpl.class);
+  private static final Logger LOG = Logger.getInstance(ChangesManagerImpl.class);
   private static final Key<Boolean> REGISTER_DOCUMENT_CHANGES_ENABLED =
     Key.create("LFE.ChangesManagerImpl.REGISTER_DOCUMENT_CHANGES_ENABLED");
 

@@ -3,6 +3,7 @@ package com.intellij.largeFilesEditor.actions;
 
 import com.intellij.largeFilesEditor.editor.EditorManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -32,6 +33,6 @@ class Utils {
   }
 
   private static Editor getEditor(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.EDITOR);
+    return e.getData(CommonDataKeys.EDITOR);
   }
 }

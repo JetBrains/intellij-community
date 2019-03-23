@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 
 public class LargeFileAppInitializedListener implements ApplicationInitializedListener {
 
-  private static Logger logger = Logger.getInstance(LargeFileAppInitializedListener.class);
+  private static final Logger logger = Logger.getInstance(LargeFileAppInitializedListener.class);
 
   @Override
   public void componentsInitialized() {

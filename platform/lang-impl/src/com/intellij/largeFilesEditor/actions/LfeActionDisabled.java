@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class LfeActionDisabled extends LfeBaseProxyAction {
 
-  private static Logger logger = Logger.getInstance(LfeActionDisabled.class);
+  private static final Logger logger = Logger.getInstance(LfeActionDisabled.class);
 
   public LfeActionDisabled(AnAction originalAction) {
     super(originalAction);

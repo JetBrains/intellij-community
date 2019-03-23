@@ -21,7 +21,7 @@ import java.nio.charset.Charset;
 
 public class ChangeFileEncodingAction extends com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction {
 
-  private static Logger logger = Logger.getInstance(ChangeFileEncodingAction.class);
+  private static final Logger logger = Logger.getInstance(ChangeFileEncodingAction.class);
 
   private final EditorManagerAccessor editorManagerAccessor;
   private final Project project;

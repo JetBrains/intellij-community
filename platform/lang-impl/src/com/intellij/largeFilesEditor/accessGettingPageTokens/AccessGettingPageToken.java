@@ -4,8 +4,8 @@ package com.intellij.largeFilesEditor.accessGettingPageTokens;
 import com.intellij.openapi.util.UserDataHolderBase;
 
 public class AccessGettingPageToken extends UserDataHolderBase {
-  private Reason reason;
-  private long pageNumber;
+  private final Reason reason;
+  private final long pageNumber;
 
   public AccessGettingPageToken(Reason reason, long pageNumber) {
     this.reason = reason;

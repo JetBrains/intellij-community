@@ -2,8 +2,8 @@
 package com.intellij.largeFilesEditor.editor;
 
 public class Page {
-  private String text;
-  private long pageNumber;
+  private final String text;
+  private final long pageNumber;
 
 
   public Page(String text, long pageNumber) {

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class LfeEditorActionHandlerDisabled extends LfeBaseEditorActionHandler {
 
-  private static Logger logger = Logger.getInstance(LfeEditorActionHandlerDisabled.class);
+  private static final Logger logger = Logger.getInstance(LfeEditorActionHandlerDisabled.class);
 
   public LfeEditorActionHandlerDisabled(EditorActionHandler originalHandler) {
     super(originalHandler);

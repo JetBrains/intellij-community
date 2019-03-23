@@ -57,16 +57,16 @@ public class EditorManagerImpl extends UserDataHolderBase
 
   private static final int DEFAULT_HIDE_SAVING_PANEL_AFTER_FINISHING_DELAY_MS = 1000;
 
-  private static Logger logger = Logger.getInstance(EditorManagerImpl.class);
-  private boolean isExperimentalModeOn;
-  private Project project;
+  private static final Logger logger = Logger.getInstance(EditorManagerImpl.class);
+  private final boolean isExperimentalModeOn;
+  private final Project project;
   private FileManager fileManager;
-  private EditorModel editorModel;
-  private DocumentEx document;
-  private VirtualFile vFile;
-  private int changePageDelay;
+  private final EditorModel editorModel;
+  private final DocumentEx document;
+  private final VirtualFile vFile;
+  private final int changePageDelay;
   private SearchManager searchManager;
-  private ChangesManager changesManager;
+  private final ChangesManager changesManager;
 
   private boolean isDisposed = false;
 

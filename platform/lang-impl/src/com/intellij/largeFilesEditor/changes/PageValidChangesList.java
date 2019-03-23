@@ -8,7 +8,7 @@ import java.util.Iterator;
 
 public class PageValidChangesList<E extends Change> implements Iterable<E> {
 
-  private MarkedLinkedList<E> list;
+  private final MarkedLinkedList<E> list;
 
   PageValidChangesList(MarkedLinkedList<E> list) {
     this.list = list;

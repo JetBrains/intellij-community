@@ -16,15 +16,15 @@ import java.util.Arrays;
 import java.util.concurrent.locks.ReentrantLock;
 
 class FileAdapter {
-  private static Logger logger = Logger.getInstance(FileAdapter.class);
+  private static final Logger logger = Logger.getInstance(FileAdapter.class);
   private static final int UNDEFINED = -1;
 
   private final VirtualFile vFile;
   private final RandomAccessFile randomAccessFile;
   private final ReentrantLock randomAccessFileLock = new ReentrantLock();
 
-  private int pageSize; // in bytes
-  private int maxPageBorderShift; // in bytes
+  private final int pageSize; // in bytes
+  private final int maxPageBorderShift; // in bytes
 
   volatile private long cashedFileSize = UNDEFINED; // in bytes
 

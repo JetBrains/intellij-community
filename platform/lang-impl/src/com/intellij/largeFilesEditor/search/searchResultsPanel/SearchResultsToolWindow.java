@@ -49,22 +49,22 @@ public class SearchResultsToolWindow extends SimpleToolWindowPanel {
   private static final String ACTION_TOOLBAR_PLACE_ID = "lfe.searchResultsToolWindow.actionToolbar";
   private static final long UNDEFINED = -1;
 
-  private Project myProject;
-  private VirtualFile myVirtualFile;
-  private EditorManagerAccessor myEditorManagerAccessor;
+  private final Project myProject;
+  private final VirtualFile myVirtualFile;
+  private final EditorManagerAccessor myEditorManagerAccessor;
 
   private Content myRelativeTab = null;
   private SearchTaskOptions mySearchTaskOptions = null;
   private long myLeftBorderPageNumber = UNDEFINED;
   private long myRightBorderPageNumber = UNDEFINED;
-  private CollectionListModel<SearchResult> myResultsListModel;
-  private ShowingListModel myShowingListModel;
+  private final CollectionListModel<SearchResult> myResultsListModel;
+  private final ShowingListModel myShowingListModel;
 
-  private JBList<ListElementWrapper> myShowingResultsList;
-  private SimpleColoredComponent lblSearchStatusLeft;
-  private SimpleColoredComponent lblSearchStatusCenter;
-  private AnimatedProgressIcon progressIcon;
-  private ActionToolbar myActionToolbar;
+  private final JBList<ListElementWrapper> myShowingResultsList;
+  private final SimpleColoredComponent lblSearchStatusLeft;
+  private final SimpleColoredComponent lblSearchStatusCenter;
+  private final AnimatedProgressIcon progressIcon;
+  private final ActionToolbar myActionToolbar;
 
   public boolean isButtonFindFurtherEnabled(boolean directionForward) {
     if (directionForward) {
@@ -509,9 +509,9 @@ public class SearchResultsToolWindow extends SimpleToolWindowPanel {
 
   class ShowingListModel implements ListModel<ListElementWrapper> {
 
-    private CollectionListModel<SearchResult> mySearchResultsListModel;
-    private SearchFurtherBtnWrapper btnSearchBackwardWrapper = new SearchFurtherBtnWrapper(false);
-    private SearchFurtherBtnWrapper btnSearchForwardWrapper = new SearchFurtherBtnWrapper(true);
+    private final CollectionListModel<SearchResult> mySearchResultsListModel;
+    private final SearchFurtherBtnWrapper btnSearchBackwardWrapper = new SearchFurtherBtnWrapper(false);
+    private final SearchFurtherBtnWrapper btnSearchForwardWrapper = new SearchFurtherBtnWrapper(true);
 
     ShowingListModel(CollectionListModel<SearchResult> model) {
       mySearchResultsListModel = model;

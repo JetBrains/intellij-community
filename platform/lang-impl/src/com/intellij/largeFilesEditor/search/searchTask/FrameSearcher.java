@@ -23,11 +23,11 @@ class FrameSearcher {
 
   private final SmartStringSearcher smartStringSearcher;
 
-  private SearchTaskOptions options;
+  private final SearchTaskOptions options;
 
-  private FindModel ijFindModel;
-  private Position resultStartPos;
-  private Position resultEndPos;
+  private final FindModel ijFindModel;
+  private final Position resultStartPos;
+  private final Position resultEndPos;
 
   private long curPageNumber;
   private String curPageText;

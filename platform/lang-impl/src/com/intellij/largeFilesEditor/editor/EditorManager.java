@@ -43,6 +43,7 @@ public interface EditorManager extends FileEditor {
 
   EditorGui.SearchPanelsViewState getSearchPanelsViewState();
 
+  @Override
   @Nullable
   VirtualFile getFile();
 

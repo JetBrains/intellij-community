@@ -25,7 +25,7 @@ import java.util.Queue;
 import java.util.concurrent.*;
 
 public class FileManagerImpl implements FileManager {
-  private static Logger logger = Logger.getInstance(FileManagerImpl.class);
+  private static final Logger logger = Logger.getInstance(FileManagerImpl.class);
   private static final int MAX_SIZE_OF_PAGE_CASH = 3;
 
   private final LoadPageCallback loadPageCallback;
@@ -33,11 +33,11 @@ public class FileManagerImpl implements FileManager {
   private final ChangesManager changesManager;
 
   private FileAdapter fileAdapter;
-  private Queue<Page> notUpdatedPagesCash;
+  private final Queue<Page> notUpdatedPagesCash;
 
-  private ExecutorService needToOpenNewPageExecutor = new ThreadPoolExecutor(
+  private final ExecutorService needToOpenNewPageExecutor = new ThreadPoolExecutor(
     1, 1, 0L, TimeUnit.MILLISECONDS, new OnePlacePushingQueue<>());
-  private ExecutorService savingFileExecutor = Executors.newSingleThreadExecutor();
+  private final ExecutorService savingFileExecutor = Executors.newSingleThreadExecutor();
   private SavingFileTask lastExecutedSavingFileTask;
 
 
@@ -177,7 +177,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   private class NeedToOpenNewPageTask implements Runnable {
-    private AccessGettingPageToken token;
+    private final AccessGettingPageToken token;
 
     NeedToOpenNewPageTask(AccessGettingPageToken token) {
       this.token = token;
@@ -243,7 +243,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   private class SavingFileTask implements Runnable {
-    private TaskState taskState;
+    private final TaskState taskState;
     private volatile boolean shouldCancel = false;
 
     SavingFileTask() {

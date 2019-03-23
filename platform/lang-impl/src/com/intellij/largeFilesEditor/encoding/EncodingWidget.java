@@ -27,7 +27,7 @@ import java.awt.event.MouseEvent;
 public class EncodingWidget extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
   public static final String WIDGET_ID = "lfeEncoding";
 
-  private static Logger logger = Logger.getInstance(EncodingWidget.class);
+  private static final Logger logger = Logger.getInstance(EncodingWidget.class);
 
   private final TextPanel myComponent;
   private final Alarm myUpdate;

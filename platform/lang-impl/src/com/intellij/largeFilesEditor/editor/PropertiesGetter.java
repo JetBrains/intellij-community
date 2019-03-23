@@ -4,7 +4,7 @@ package com.intellij.largeFilesEditor.editor;
 import com.intellij.openapi.diagnostic.Logger;
 
 public class PropertiesGetter {
-  private static Logger logger = Logger.getInstance(PropertiesGetter.class);
+  private static final Logger logger = Logger.getInstance(PropertiesGetter.class);
 
   private static final String[] PAGE_SIZE_PROPERTY_NAMES = {"lfe.pageSize", "lfe.ps"};
   private static final String[] MAX_PAGE_BORDER_SHIFT_PROPERTY_NAMES = {"lfe.maxPageBorderShift", "lfe.mpbs"};

@@ -50,7 +50,7 @@ public class SearchManagerImpl implements SearchManager, SearchTaskCallback {
   private final FileDataProviderForSearch fileDataProviderForSearch;
   private final SearchResultsPanelManagerAccessor searchResultsPanelManagerAccessor;
 
-  private JBList<SearchResult> closeSearchResultsList;
+  private final JBList<SearchResult> closeSearchResultsList;
 
   private SearchTaskBase lastExecutedSearchTask;
   private boolean notFoundState;
