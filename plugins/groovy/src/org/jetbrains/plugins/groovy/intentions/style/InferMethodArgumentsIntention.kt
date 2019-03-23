@@ -17,11 +17,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
 /**
@@ -55,7 +55,8 @@ internal class InferMethodArgumentsIntention : Intention() {
     }
     if (defaultTypeParameterList == null) {
       method.typeParameterList?.delete()
-    } else {
+    }
+    else {
       method.typeParameterList?.replace(defaultTypeParameterList)
     }
   }
@@ -77,6 +78,12 @@ internal class InferMethodArgumentsIntention : Intention() {
     val resolveSession = GroovyInferenceSession(method.typeParameters, PsiSubstitutor.EMPTY, method)
     collectOuterMethodCalls(method, resolveSession)
     collectInnerMethodCalls(method, resolveSession)
+    for (typeParam in method.typeParameters) {
+      if (!typeIndex.values.contains(typeParam)) {
+        val inferenceVariable = resolveSession.getInferenceVariable(resolveSession.substituteWithInferenceVariables(typeParam.type()))
+        inferenceVariable.instantiation = typeParam.type()
+      }
+    }
     return resolveSession
   }
 
