@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.vcs.AbstractVcs
-import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.IdeBorderFactory.createTitledBorder
@@ -16,13 +15,13 @@ import javax.swing.Box
 import javax.swing.JPanel
 import kotlin.collections.set
 
-class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel) : BorderLayoutPanel(), CommitOptionsUi {
+class CommitOptionsPanel(private val actionNameSupplier: () -> String) : BorderLayoutPanel(), CommitOptionsUi {
   private val perVcsOptionsPanels = mutableMapOf<AbstractVcs<*>, JPanel>()
   private val vcsOptionsPanel = simplePanel()
   private val beforeOptionsPanel = simplePanel()
   private val afterOptionsPanel = simplePanel()
 
-  private val actionName get() = removeMnemonic(myCommitPanel.commitActionName)
+  private val actionName get() = removeMnemonic(actionNameSupplier())
 
   private val options = MutableCommitOptions()
   private val vcsOptions get() = options.vcsOptions

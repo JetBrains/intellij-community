@@ -263,7 +263,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     mySplitter = new Splitter(true);
-    myCommitOptions = new CommitOptionsPanel(this);
+    myCommitOptions = new CommitOptionsPanel(() -> getCommitActionName());
     myWarningLabel = new JBLabel();
 
     JPanel mainPanel = new JPanel(new MyOptionsLayout(mySplitter, myCommitOptions, JBUI.scale(150), JBUI.scale(400)));
