@@ -1,23 +1,25 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.largeFilesEditor;
 
+import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.largeFilesEditor.actions.LfeActionDisabled;
 import com.intellij.largeFilesEditor.actions.LfeActionNextOccurence;
 import com.intellij.largeFilesEditor.actions.LfeActionPrevOccurrence;
 import com.intellij.largeFilesEditor.actions.LfeBaseProxyAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 
-public class LargeFileEditorAppComponent implements ApplicationComponent {
+public class LargeFileAppInitializedListener implements ApplicationInitializedListener {
 
-  private static Logger logger = Logger.getInstance(LargeFileEditorAppComponent.class);
+  private static Logger logger = Logger.getInstance(LargeFileAppInitializedListener.class);
 
-  public LargeFileEditorAppComponent() {
+  @Override
+  public void componentsInitialized() {
     replaceActionByProxy("FindNext", LfeActionNextOccurence::new);
     replaceActionByProxy("FindPrevious", LfeActionPrevOccurrence::new);
     disableActionForLfe("FindUsagesInFile");
+    logger.warn("LFE: actions replaced by proxies");
   }
 
   private void disableActionForLfe(String actionId) {
