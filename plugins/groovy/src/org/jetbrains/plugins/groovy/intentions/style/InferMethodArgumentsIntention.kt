@@ -8,19 +8,20 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
 
 
 /**
@@ -75,7 +76,7 @@ internal class InferMethodArgumentsIntention : Intention() {
     }
     val resolveSession = GroovyInferenceSession(method.typeParameters, PsiSubstitutor.EMPTY, method)
     collectOuterMethodCalls(method, resolveSession)
-    collectInnerMethodCalls(method, typeIndex, resolveSession)
+    collectInnerMethodCalls(method, resolveSession)
     return resolveSession
   }
 
@@ -83,19 +84,14 @@ internal class InferMethodArgumentsIntention : Intention() {
    * Searches for method calls in [method] body and tries to infer arguments for [typeIndex] parameters.
    */
   private fun collectInnerMethodCalls(method: GrMethod,
-                                      typeIndex: HashMap<Int, PsiTypeParameter>,
                                       resolveSession: GroovyInferenceSession) {
-    for (i in typeIndex.keys) {
-      val usages = ReferencesSearch.search(method.parameterList.parameters[i] ?: continue, method.useScope)
-      for (usage in usages) {
-        if (usage is GrReferenceExpression) {
-          val contextCall = PsiTreeUtil.getParentOfType(usage, GrMethodCall::class.java, true) ?: continue
-          val trs = contextCall.advancedResolve() as GroovyMethodResult
-          val cand = trs.candidate
-          resolveSession.initArgumentConstraints(cand?.argumentMapping)
-        }
+    val visitor = object : GroovyRecursiveElementVisitor() {
+      override fun visitExpression(expression: GrExpression) {
+        resolveSession.addConstraint(ExpressionConstraint(null, expression))
+        super.visitExpression(expression)
       }
     }
+    method.accept(visitor)
   }
 
   /**
