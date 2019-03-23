@@ -57,12 +57,15 @@ public abstract class AttachOSHandler {
     try {
       final OSType osType = computeOsType(host);
 
-      if (osType == OSType.LINUX) {
-        return new LinuxAttachOSHandler(host);
-      }
-
-      if (osType == OSType.MACOSX) {
-        return new MacAttachOSHandler(host);
+      switch(osType) {
+        case LINUX:
+          return new LinuxAttachOSHandler(host);
+        case MACOSX:
+          return new MacAttachOSHandler(host);
+        case WINDOWS:
+          return new WindowsAttachOSHandler(host);
+        case UNKNOWN:
+          return new GenericAttachOSHandler(host);
       }
     }
     catch (ExecutionException e) {
