@@ -18,9 +18,9 @@ package com.intellij.xml.impl;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.XmlAwareBraceMatcher;
 import com.intellij.lang.BracePair;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageBraceMatching;
 import com.intellij.lang.PairedBraceMatcher;
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -31,7 +31,6 @@ import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.xml.util.HtmlUtil;
-import com.intellij.ide.highlighter.XmlLikeFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -157,10 +156,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
             pair.isStructural()) return true;
       }
     }
-    if (fileType instanceof XmlLikeFileType) {
-      return isXmlStructuralBrace(iterator, text, fileType, tokenType);
-    }
-    return false;
+    return isXmlStructuralBrace(iterator, text, fileType, tokenType);
   }
 
   protected boolean isXmlStructuralBrace(HighlighterIterator iterator, CharSequence text, FileType fileType, IElementType tokenType) {
