@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFiles
 import com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import com.intellij.openapi.vcs.ui.Refreshable
 import com.intellij.util.PairConsumer
 
 private val VCS_COMPARATOR = compareBy<AbstractVcs<*>, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
@@ -25,8 +26,8 @@ private fun getDefaultCommitActionName(vcses: Collection<AbstractVcs<*>>) =
   ?: VcsBundle.getString("commit.dialog.default.commit.operation.name")
 
 class SingleChangeListCommitWorkflowHandler(
-  private val workflow: DialogCommitWorkflow,
-  private val ui: CommitChangeListDialog
+  internal val workflow: DialogCommitWorkflow,
+  internal val ui: CommitChangeListDialog
 ) : CommitWorkflowHandler,
     CommitWorkflowUiStateListener,
     SingleChangeListCommitWorkflowUi.ChangeListListener,
@@ -36,6 +37,14 @@ class SingleChangeListCommitWorkflowHandler(
 
   private val project get() = workflow.project
   private val vcsConfiguration = VcsConfiguration.getInstance(project)
+
+  private val commitPanel: CheckinProjectPanel = object : CommitProjectPanelAdapter(this) {
+    override fun setCommitMessage(currentDescription: String?) {
+      commitMessagePolicy.defaultNameChangeListMessage = currentDescription
+
+      super.setCommitMessage(currentDescription)
+    }
+  }
 
   private fun getChangeList() = ui.getChangeList()
   private fun getIncludedChanges() = ui.getIncludedChanges()
@@ -54,14 +63,17 @@ class SingleChangeListCommitWorkflowHandler(
     ui.addStateListener(this, this)
     ui.addExecutorListener(this, this)
     ui.addDataProvider(DataProvider { dataId ->
-      if (dataId == COMMIT_WORKFLOW_HANDLER.name) this
-      else null
+      when (dataId) {
+        COMMIT_WORKFLOW_HANDLER.name -> this
+        Refreshable.PANEL_KEY.name -> commitPanel
+        else -> null
+      }
     })
     ui.addChangeListListener(this, this)
   }
 
   fun activate(): Boolean {
-    workflow.initCommitHandlers(getCommitHandlers(ui, workflow.commitContext))
+    workflow.initCommitHandlers(getCommitHandlers(commitPanel, workflow.commitContext))
 
     ui.addInclusionListener(this, this)
     ui.defaultCommitActionName = getDefaultCommitActionName(workflow.affectedVcses)
@@ -142,7 +154,8 @@ class SingleChangeListCommitWorkflowHandler(
 
   private fun initCommitOptions() {
     workflow.initCommitOptions(CommitOptionsImpl(
-      if (workflow.isDefaultCommitEnabled) getVcsOptions(ui, workflow.affectedVcses, workflow.additionalDataConsumer) else emptyMap(),
+      if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.affectedVcses, workflow.additionalDataConsumer)
+      else emptyMap(),
       getBeforeOptions(workflow.commitHandlers),
       getAfterOptions(workflow.commitHandlers, this)
     ))

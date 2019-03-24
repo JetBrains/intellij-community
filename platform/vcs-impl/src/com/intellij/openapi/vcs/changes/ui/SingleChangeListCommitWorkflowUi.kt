@@ -25,8 +25,12 @@ interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
 
   fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable)
 
+  fun refreshData()
+
   fun getChangeList(): LocalChangeList
+  fun getDisplayedChanges(): List<Change>
   fun getIncludedChanges(): List<Change>
+  fun getDisplayedUnversionedFiles(): List<VirtualFile>
   fun getIncludedUnversionedFiles(): List<VirtualFile>
 
   fun includeIntoCommit(items: Collection<*>)
@@ -46,6 +50,8 @@ interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
 interface CommitMessageUi : TextAccessor {
   override fun getText(): String
   override fun setText(text: String?)
+
+  fun focus()
 }
 
 interface CommitOptionsUi {

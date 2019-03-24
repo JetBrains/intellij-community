@@ -16,18 +16,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.ui.CommitMessage;
-import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
@@ -39,7 +38,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.vcsUtil.VcsUtil;
 import kotlin.sequences.SequencesKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
@@ -49,9 +47,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.File;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
@@ -68,7 +67,7 @@ import static java.lang.Math.min;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.*;
 
-public abstract class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, SingleChangeListCommitWorkflowUi {
+public abstract class CommitChangeListDialog extends DialogWrapper implements SingleChangeListCommitWorkflowUi, ComponentContainer {
   private static final Logger LOG = getInstance(CommitChangeListDialog.class);
 
   public static final String DIALOG_TITLE = message("commit.dialog.title");
@@ -592,12 +591,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     PropertiesComponent.getInstance().setValue(DETAILS_SHOW_OPTION, myDetailsSplitter.isOn(), DETAILS_SHOW_OPTION_DEFAULT);
   }
 
-  @NotNull
-  @Override
-  public String getCommitActionName() {
-    return getDefaultCommitActionName();
-  }
-
   private void stopUpdate() {
     myUpdateDisabled = true;
   }
@@ -642,85 +635,22 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     return isDefaultCommitEnabled() ? getWorkflowVcses() : emptySet();
   }
 
-  @NotNull
-  @Override
-  public Collection<VirtualFile> getRoots() {
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-
-    return map2SetNotNull(getDisplayedPaths(), filePath -> vcsManager.getVcsRootFor(filePath));
-  }
-
-  @NotNull
-  @Override
-  public JComponent getComponent() {
-    return mySplitter;
-  }
-
-  @Override
   public boolean hasDiffs() {
     return !getIncludedChanges().isEmpty() || !getIncludedUnversionedFiles().isEmpty();
   }
 
   @NotNull
-  @Override
-  public Collection<VirtualFile> getVirtualFiles() {
-    return mapNotNull(getIncludedPaths(), filePath -> filePath.getVirtualFile());
-  }
-
-  @NotNull
-  @Override
-  public Collection<Change> getSelectedChanges() {
-    return newArrayList(getIncludedChanges());
-  }
-
-  @NotNull
-  @Override
-  public Collection<File> getFiles() {
-    return map(getIncludedPaths(), filePath -> filePath.getIOFile());
-  }
-
-  @NotNull
-  @Override
   public Project getProject() {
     return myProject;
   }
 
-  @Override
-  public boolean vcsIsAffected(String name) {
-    return ProjectLevelVcsManager.getInstance(myProject).checkVcsIsActive(name) &&
-           exists(getWorkflowVcses(), vcs -> Comparing.equal(vcs.getName(), name));
-  }
-
-  @Override
-  public void setCommitMessage(@Nullable String commitMessage) {
-    myWorkflow.getCommitMessagePolicy().setDefaultNameChangeListMessage(commitMessage);
-
-    myCommitMessageArea.setText(commitMessage);
-    myCommitMessageArea.requestFocusInMessage();
-  }
+  @SuppressWarnings("unused")
+  @Deprecated
+  public void setCommitMessage(@Nullable String commitMessage) {}
 
   @NotNull
-  @Override
   public String getCommitMessage() {
     return myCommitMessageArea.getText();
-  }
-
-  @Override
-  public void refresh() {
-    ChangeListManager.getInstance(myProject).invokeAfterUpdate(() -> {
-      getBrowser().updateDisplayedChangeLists();
-      DialogCommitWorkflowKt.refresh(getCommitOptions());
-    }, InvokeAfterUpdateMode.SILENT, "commit dialog", ModalityState.current());
-  }
-
-  @Override
-  public void saveState() {
-    DialogCommitWorkflowKt.saveState(getCommitOptions());
-  }
-
-  @Override
-  public void restoreState() {
-    DialogCommitWorkflowKt.restoreState(getCommitOptions());
   }
 
   // Used in plugins
@@ -743,34 +673,9 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
 
   private void updateLegend() {
     if (myDisposed || myUpdateDisabled) return;
-    myChangesInfoCalculator.update(getBrowser().getDisplayedChanges(), getIncludedChanges(),
-                                   getBrowser().getDisplayedUnversionedFiles().size(),
-                                   getIncludedUnversionedFiles().size());
+    myChangesInfoCalculator
+      .update(getDisplayedChanges(), getIncludedChanges(), getDisplayedUnversionedFiles().size(), getIncludedUnversionedFiles().size());
     myLegend.update();
-  }
-
-  @NotNull
-  private List<FilePath> getIncludedPaths() {
-    List<FilePath> paths = new ArrayList<>();
-    for (Change change : getIncludedChanges()) {
-      paths.add(ChangesUtil.getFilePath(change));
-    }
-    for (VirtualFile file : getIncludedUnversionedFiles()) {
-      paths.add(VcsUtil.getFilePath(file));
-    }
-    return paths;
-  }
-
-  @NotNull
-  private List<FilePath> getDisplayedPaths() {
-    List<FilePath> paths = new ArrayList<>();
-    for (Change change : getBrowser().getDisplayedChanges()) {
-      paths.add(ChangesUtil.getFilePath(change));
-    }
-    for (VirtualFile file : getBrowser().getDisplayedUnversionedFiles()) {
-      paths.add(VcsUtil.getFilePath(file));
-    }
-    return paths;
   }
 
   @Override
@@ -784,11 +689,19 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     return myCommitMessageArea.getEditorField();
   }
 
+  @Override
+  public JComponent getComponent() {
+    return mySplitter;
+  }
+
+  @Override
+  public JComponent getPreferredFocusableComponent() {
+    return getPreferredFocusedComponent();
+  }
+
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    if (Refreshable.PANEL_KEY.is(dataId)) return this;
-
     return StreamEx.of(myDataProviders)
       .map(provider -> provider.getData(dataId))
       .nonNull()
@@ -829,6 +742,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     myExecutorEventDispatcher.addListener(listener, parent);
   }
 
+  @Override
+  public void refreshData() {
+    getBrowser().updateDisplayedChangeLists();
+  }
+
   @NotNull
   @Override
   public LocalChangeList getChangeList() {
@@ -837,8 +755,20 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
 
   @NotNull
   @Override
+  public List<Change> getDisplayedChanges() {
+    return getBrowser().getDisplayedChanges();
+  }
+
+  @NotNull
+  @Override
   public List<Change> getIncludedChanges() {
     return getBrowser().getIncludedChanges();
+  }
+
+  @NotNull
+  @Override
+  public List<VirtualFile> getDisplayedUnversionedFiles() {
+    return getBrowser().getDisplayedUnversionedFiles();
   }
 
   @NotNull
@@ -973,7 +903,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Ch
     @NotNull
     @Override
     protected List<Wrapper> getAllChanges() {
-      return wrap(getBrowser().getDisplayedChanges(), getBrowser().getDisplayedUnversionedFiles());
+      return wrap(getDisplayedChanges(), getDisplayedUnversionedFiles());
     }
 
     @Override
