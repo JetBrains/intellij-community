@@ -193,6 +193,11 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     myEditorField.setText(initialMessage == null ? "" : convertLineSeparators(initialMessage));
   }
 
+  @Override
+  public void focus() {
+    requestFocusInMessage();
+  }
+
   @NotNull
   public String getComment() {
     return trimTrailing(myEditorField.getDocument().getCharsSequence().toString());
