@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.TextAccessor
 import java.util.*
@@ -40,6 +41,9 @@ interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
   fun addChangeListListener(listener: ChangeListListener, parent: Disposable)
 
   fun confirmCommitWithEmptyMessage(): Boolean
+
+  fun startBeforeCommitChecks()
+  fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult)
 
   interface ChangeListListener : EventListener {
     fun changeListChanged()
