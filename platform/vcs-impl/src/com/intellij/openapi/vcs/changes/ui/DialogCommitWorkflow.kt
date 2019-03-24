@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.CommonBundle.getCancelButtonText
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -18,6 +19,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.processChangesByVcs
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction.addUnversionedFilesToVcs
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.getExecutorPresentableText
+import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter.Companion.moveToFailedList
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinHandler
@@ -26,9 +28,11 @@ import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.EventDispatcher
 import com.intellij.util.NullableFunction
 import com.intellij.util.PairConsumer
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
+import java.util.*
 
 private val LOG = logger<DialogCommitWorkflow>()
 
@@ -44,6 +48,11 @@ internal fun CommitOptions.changeListChanged(changeList: LocalChangeList) = chan
 }
 
 internal fun CommitOptions.saveChangeListSpecificOptions() = changeListSpecificOptions.forEach { it.saveState() }
+
+interface CommitWorkflowListener : EventListener {
+  fun beforeCommitChecksStarted()
+  fun beforeCommitChecksEnded(result: CheckinHandler.ReturnResult)
+}
 
 open class DialogCommitWorkflow(val project: Project,
                                 val initiallyIncluded: Collection<*>,
@@ -72,6 +81,10 @@ open class DialogCommitWorkflow(val project: Project,
 
   val commitMessagePolicy: CommitMessagePolicy = CommitMessagePolicy(project, initialCommitMessage)
 
+  private val eventDispatcher = EventDispatcher.create(CommitWorkflowListener::class.java)
+
+  fun addListener(listener: CommitWorkflowListener, parent: Disposable) = eventDispatcher.addListener(listener, parent)
+
   internal fun initCommitHandlers(handlers: List<CheckinHandler>) {
     _commitHandlers.clear()
     _commitHandlers += handlers
@@ -87,6 +100,26 @@ open class DialogCommitWorkflow(val project: Project,
 
     FileDocumentManager.getInstance().saveAllDocuments()
     return addUnversionedFilesToVcs(project, changeList, unversionedFiles, callback, null)
+  }
+
+  fun executeDefault(executor: CommitExecutor?, changeList: LocalChangeList, changes: List<Change>, commitMessage: String) {
+    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(executor, changeList)
+    @Suppress("NON_EXHAUSTIVE_WHEN")
+    when (beforeCommitChecksResult) {
+      CheckinHandler.ReturnResult.COMMIT -> DefaultNameChangeListCleaner(project, changeList, changes).use {
+        doCommit(changeList, changes, commitMessage)
+      }
+      CheckinHandler.ReturnResult.CLOSE_WINDOW ->
+        moveToFailedList(project, changeList, commitMessage, changes, message("commit.dialog.rejected.commit.template", changeList.name))
+    }
+  }
+
+  private fun runBeforeCommitChecksWithEvents(executor: CommitExecutor?, changeList: LocalChangeList): CheckinHandler.ReturnResult {
+    eventDispatcher.multicaster.beforeCommitChecksStarted()
+    val result = runBeforeCommitChecks(executor, changeList)
+    eventDispatcher.multicaster.beforeCommitChecksEnded(result)
+
+    return result
   }
 
   fun runBeforeCommitChecks(executor: CommitExecutor?, changeList: LocalChangeList): CheckinHandler.ReturnResult {
@@ -158,6 +191,22 @@ open class DialogCommitWorkflow(val project: Project,
       getCommitHandlerFactories(commitPanel.project)
         .map { it.createHandler(commitPanel, commitContext) }
         .filter { it != CheckinHandler.DUMMY }
+  }
+}
+
+private class DefaultNameChangeListCleaner(val project: Project, changeList: LocalChangeList, changes: List<Change>) {
+  private val isChangeListFullyIncluded = changeList.changes.size == changes.size
+  private val isDefaultNameChangeList = changeList.hasDefaultName()
+
+  fun use(block: () -> Unit) {
+    block()
+    clean()
+  }
+
+  fun clean() {
+    if (isDefaultNameChangeList && isChangeListFullyIncluded) {
+      ChangeListManager.getInstance(project).editComment(LocalChangeList.DEFAULT_NAME, "")
+    }
   }
 }
 
