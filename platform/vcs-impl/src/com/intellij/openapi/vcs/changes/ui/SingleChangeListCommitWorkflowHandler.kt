@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.ui.InputException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcs
@@ -29,6 +30,7 @@ class SingleChangeListCommitWorkflowHandler(
   internal val workflow: DialogCommitWorkflow,
   internal val ui: CommitChangeListDialog
 ) : CommitWorkflowHandler,
+    CommitWorkflowListener,
     CommitWorkflowUiStateListener,
     SingleChangeListCommitWorkflowUi.ChangeListListener,
     InclusionListener,
@@ -59,6 +61,8 @@ class SingleChangeListCommitWorkflowHandler(
 
   init {
     Disposer.register(ui, this)
+
+    workflow.addListener(this, this)
 
     ui.addStateListener(this, this)
     ui.addExecutorListener(this, this)
@@ -115,13 +119,23 @@ class SingleChangeListCommitWorkflowHandler(
     }
   }
 
+  override fun beforeCommitChecksStarted() = ui.startBeforeCommitChecks()
+  override fun beforeCommitChecksEnded(result: CheckinHandler.ReturnResult) = ui.endBeforeCommitChecks(result)
+
   private fun executeDefault(executor: CommitExecutor?) {
     if (!addUnversionedFiles()) return
     if (!checkEmptyCommitMessage()) return
     if (!saveCommitOptions()) return
     saveCommitMessage(true)
 
-    ui.executeDefaultCommitSession(executor)
+    refreshChanges { doExecuteDefault(executor) }
+  }
+
+  private fun doExecuteDefault(executor: CommitExecutor?) = try {
+    workflow.executeDefault(executor, getChangeList(), getIncludedChanges(), getCommitMessage())
+  }
+  catch (e: InputException) { // TODO Looks like this catch is unnecessary - check
+    e.show()
   }
 
   private fun executeCustom(executor: CommitExecutor, session: CommitSession) {
@@ -196,6 +210,15 @@ class SingleChangeListCommitWorkflowHandler(
 
   private fun getAfterOptions(handlers: Collection<CheckinHandler>, parent: Disposable) =
     handlers.mapNotNull { it.getAfterCheckinConfigurationPanel(parent) }
+
+  private fun refreshChanges(callback: () -> Unit) =
+    ChangeListManager.getInstance(project).invokeAfterUpdate(
+      {
+        ui.refreshData()
+        callback()
+      },
+      InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Commit", ModalityState.current()
+    )
 
   override fun dispose() = Unit
 }

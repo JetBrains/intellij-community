@@ -478,34 +478,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return result.toArray(new Action[0]);
   }
 
-  void executeDefaultCommitSession(@Nullable CommitExecutor executor) {
-    ensureDataIsActual(() -> {
-      try {
-        DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-        stopUpdate();
-        CheckinHandler.ReturnResult result = myWorkflow.runBeforeCommitChecks(executor, getChangeList());
-        if (result == CheckinHandler.ReturnResult.CANCEL) {
-          restartUpdate();
-        }
-        else if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
-          ChangeList changeList = getChangeList();
-          moveToFailedList(myProject, changeList, getCommitMessage(), getIncludedChanges(),
-                           message("commit.dialog.rejected.commit.template", changeList.getName()));
-          doCancelAction();
-        }
-        else if (result == CheckinHandler.ReturnResult.COMMIT) {
-          close(OK_EXIT_CODE);
-          myWorkflow.doCommit(getChangeList(), getIncludedChanges(), getCommitMessage());
-
-          defaultListCleaner.clean();
-        }
-      }
-      catch (InputException ex) {
-        ex.show();
-      }
-    });
-  }
-
   void execute(@NotNull CommitExecutor commitExecutor, @NotNull CommitSession session) {
     if (session instanceof CommitSessionContextAware) {
       ((CommitSessionContextAware)session).setContext(getCommitContext());
@@ -794,6 +766,24 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       message("confirmation.title.check.in.with.empty.comment"),
       Messages.getWarningIcon()
     );
+  }
+
+  @Override
+  public void startBeforeCommitChecks() {
+    stopUpdate();
+  }
+
+  @Override
+  public void endBeforeCommitChecks(@NotNull CheckinHandler.ReturnResult result) {
+    if (result == CheckinHandler.ReturnResult.COMMIT) {
+      close(OK_EXIT_CODE);
+    }
+    else if (result == CheckinHandler.ReturnResult.CANCEL) {
+      restartUpdate();
+    }
+    else if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
+      doCancelAction();
+    }
   }
 
   @NotNull
