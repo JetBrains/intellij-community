@@ -323,7 +323,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                   @Override
                   public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
                     Rectangle alloc = (Rectangle)a;
-                    if (x < alloc.x + (alloc.width / 2)) {
+                    if (x < alloc.x + (alloc.width / 2f)) {
                       bias[0] = Position.Bias.Forward;
                       return getStartOffset();
                     }
