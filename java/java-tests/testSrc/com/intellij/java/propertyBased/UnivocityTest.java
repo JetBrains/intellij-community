@@ -53,7 +53,11 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
   }
 
   public void testCompilabilityAfterIntentions() {
-    Assume.assumeTrue("Maven import failed", JavaPsiFacade.getInstance(myProject).findClass("org.testng.Assert", GlobalSearchScope.allScope(myProject)) != null);
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
+    GlobalSearchScope allScope = GlobalSearchScope.allScope(myProject);
+    Assume.assumeTrue("Maven import failed",
+                      facade.findClass("org.testng.Assert", allScope) != null &&
+                      facade.findClass("com.univocity.test.OutputTester", allScope) != null);
 
     initCompiler();
     PsiModificationTracker tracker = PsiManager.getInstance(myProject).getModificationTracker();
@@ -73,9 +77,9 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
           PsiJavaFile file = env1.generateValue(psiJavaFiles(), null);
           env1.logMessage("Open " + file.getVirtualFile().getPath() + " in editor");
           if ("Example.java".equals(file.getName())) {
-            env1.logMessage("OutputTester class: " + JavaPsiFacade.getInstance(myProject).findClass("com.univocity.test.OutputTester", GlobalSearchScope.allScope(myProject)));
+            env1.logMessage("OutputTester class: " + facade.findClass("com.univocity.test.OutputTester", allScope));
             env1.logMessage("OutputTester files: " + Arrays.toString(
-                                FilenameIndex.getFilesByName(myProject, "OutputTester.java", GlobalSearchScope.allScope(myProject))));
+              FilenameIndex.getFilesByName(myProject, "OutputTester.java", allScope)));
             env1.logMessage("content roots: " + Arrays.toString(
               ModuleRootManager.getInstance(ModuleManager.getInstance(myProject).getModules()[0]).getSourceRoots(true)));
           }
