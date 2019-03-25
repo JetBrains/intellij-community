@@ -745,12 +745,7 @@ class RootIndex {
       return null;
     }
 
-    private String calcPackagePrefix(@NotNull VirtualFile root,
-                                     @NotNull List<? extends VirtualFile> hierarchy,
-                                     VirtualFile moduleContentRoot,
-                                     VirtualFile libraryClassRoot,
-                                     VirtualFile librarySourceRoot) {
-      VirtualFile packageRoot = findPackageRootInfo(hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
+    private String calcPackagePrefix(@NotNull VirtualFile root, VirtualFile packageRoot) {
       String prefix = packagePrefix.get(packageRoot);
       if (prefix != null && !root.equals(packageRoot)) {
         assert packageRoot != null;
@@ -846,8 +841,8 @@ class RootIndex {
     }
 
     VirtualFile sourceRoot = info.findPackageRootInfo(hierarchy, moduleContentRoot, null, librarySourceRoot);
-
-    VirtualFile moduleSourceRoot = info.findPackageRootInfo(hierarchy, moduleContentRoot, null, null);
+    VirtualFile moduleSourceRoot = librarySourceRoot == null ? sourceRoot :
+                                   info.findPackageRootInfo(hierarchy, moduleContentRoot, null, null);
     boolean inModuleSources = moduleSourceRoot != null;
     boolean inLibrarySource = librarySourceRoot != null;
     SourceFolder sourceFolder = moduleSourceRoot != null ? info.sourceFolders.get(moduleSourceRoot) : null;
@@ -866,7 +861,9 @@ class RootIndex {
                                                           libraryClassRoot, inModuleSources, inLibrarySource,
                                                           !inProject, unloadedModuleName);
 
-    String packagePrefix = info.calcPackagePrefix(root, hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
+    VirtualFile packageRoot = libraryClassRoot == null ? sourceRoot :
+                              info.findPackageRootInfo(hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
+    String packagePrefix = info.calcPackagePrefix(root, packageRoot);
 
     return Pair.create(directoryInfo, packagePrefix);
   }
