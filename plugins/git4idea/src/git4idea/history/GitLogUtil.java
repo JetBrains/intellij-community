@@ -251,8 +251,7 @@ public class GitLogUtil {
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
                                      @NotNull String... parameters) throws VcsException {
-    GitCommitRequirements requirements = new GitCommitRequirements(true, GitCommitRequirements.DiffRenameLimit.REGISTRY, false, true);
-    readFullDetails(project, root, commitConsumer, requirements, false, parameters);
+    readFullDetails(project, root, commitConsumer, GitCommitRequirements.DEFAULT, false, parameters);
   }
 
   public static void readFullDetails(@NotNull Project project,
