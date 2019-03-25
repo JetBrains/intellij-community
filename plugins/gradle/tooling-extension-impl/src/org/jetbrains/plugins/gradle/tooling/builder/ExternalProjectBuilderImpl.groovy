@@ -129,7 +129,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     def configurationsByName = project.getConfigurations().getAsMap()
     Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>()
     for (Map.Entry<String, Configuration> configurationEntry : configurationsByName.entrySet()) {
-      Set<File> files = configurationEntry.getValue().getAllArtifacts().getFiles().getFiles()
+      Set<File> files = configurationEntry.getValue().getArtifacts().getFiles().getFiles()
       artifactsByConfiguration.put(configurationEntry.getKey(), new LinkedHashSet<>(files))
     }
     externalProject.setArtifactsByConfiguration(artifactsByConfiguration)
