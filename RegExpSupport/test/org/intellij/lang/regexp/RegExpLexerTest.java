@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp;
 
 import com.intellij.lexer.Lexer;
@@ -490,6 +476,42 @@ public class RegExpLexerTest extends LexerTestCase {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
     doTest("\\%\\ä", "REDUNDANT_ESCAPE ('\\%')\n" +
                      "REDUNDANT_ESCAPE ('\\ä')", lexer);
+
+    RegExpLexer lexer2 = new RegExpLexer(EnumSet.of(DANGLING_METACHARACTERS));
+    doTest("{\\}{33,34\\}{1\\}{1,\\}{,\\}{,2\\}", "CHARACTER ('{')\n" +
+                                                  "REDUNDANT_ESCAPE ('\\}')\n" +
+                                                  "CHARACTER ('{')\n" +
+                                                  "CHARACTER ('3')\n" +
+                                                  "CHARACTER ('3')\n" +
+                                                  "CHARACTER (',')\n" +
+                                                  "CHARACTER ('3')\n" +
+                                                  "CHARACTER ('4')\n" +
+                                                  "ESC_CHARACTER ('\\}')\n" +
+                                                  "CHARACTER ('{')\n" +
+                                                  "CHARACTER ('1')\n" +
+                                                  "ESC_CHARACTER ('\\}')\n" +
+                                                  "CHARACTER ('{')\n" +
+                                                  "CHARACTER ('1')\n" +
+                                                  "CHARACTER (',')\n" +
+                                                  "ESC_CHARACTER ('\\}')\n" +
+                                                  "CHARACTER ('{')\n" +
+                                                  "CHARACTER (',')\n" +
+                                                  "REDUNDANT_ESCAPE ('\\}')\n" +
+                                                  "CHARACTER ('{')\n" +
+                                                  "CHARACTER (',')\n" +
+                                                  "CHARACTER ('2')\n" +
+                                                  "REDUNDANT_ESCAPE ('\\}')", lexer2);
+
+    RegExpLexer lexer3 = new RegExpLexer(EnumSet.of(DANGLING_METACHARACTERS, OMIT_NUMBERS_IN_QUANTIFIERS, OMIT_BOTH_NUMBERS_IN_QUANTIFIERS));
+    doTest("{\\}{,\\}{,2\\}", "CHARACTER ('{')\n" +
+                              "REDUNDANT_ESCAPE ('\\}')\n" +
+                              "CHARACTER ('{')\n" +
+                              "CHARACTER (',')\n" +
+                              "ESC_CHARACTER ('\\}')\n" +
+                              "CHARACTER ('{')\n" +
+                              "CHARACTER (',')\n" +
+                              "CHARACTER ('2')\n" +
+                              "ESC_CHARACTER ('\\}')", lexer3);
   }
 
   public void testEscapesInsideCharClass() {

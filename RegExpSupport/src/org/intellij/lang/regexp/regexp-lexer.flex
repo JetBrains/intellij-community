@@ -8,6 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.IntArrayList;
 import java.util.EnumSet;
 
+import static java.lang.Boolean.*;
 import static org.intellij.lang.regexp.RegExpCapability.*;
 
 @SuppressWarnings("ALL")
@@ -49,8 +50,8 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
       this.xmlSchemaMode = capabilities.contains(XML_SCHEMA_MODE);
-      if (capabilities.contains(DANGLING_METACHARACTERS)) this.allowDanglingMetacharacters = Boolean.TRUE;
-      if (capabilities.contains(NO_DANGLING_METACHARACTERS)) this.allowDanglingMetacharacters = Boolean.FALSE;
+      if (capabilities.contains(DANGLING_METACHARACTERS)) this.allowDanglingMetacharacters = TRUE;
+      if (capabilities.contains(NO_DANGLING_METACHARACTERS)) this.allowDanglingMetacharacters = FALSE;
       this.allowOmitNumbersInQuantifiers = capabilities.contains(OMIT_NUMBERS_IN_QUANTIFIERS);
       this.allowOmitBothNumbersInQuantifiers = capabilities.contains(OMIT_BOTH_NUMBERS_IN_QUANTIFIERS);
       this.allowNestedCharacterClasses = capabilities.contains(NESTED_CHARACTER_CLASSES);
@@ -104,6 +105,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
 %xstate QUOTED
 %xstate EMBRACED
 %xstate QUANTIFIER
+%xstate NON_QUANTIFIER
 %xstate NEGATED_CLASS
 %xstate QUOTED_CLASS1
 %xstate CLASS1
@@ -243,8 +245,8 @@ HEX_CHAR=[0-9a-fA-F]
   {ESCAPE}  {LBRACE} / "," [:digit:]+ {RBRACE}            { return allowOmitNumbersInQuantifiers ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
   {ESCAPE}  {LBRACE} / "," {RBRACE}                       { return allowOmitBothNumbersInQuantifiers ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 
-  {ESCAPE}  {LBRACE}            { return (allowDanglingMetacharacters != Boolean.TRUE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
-  {ESCAPE}  {RBRACE}            { return (allowDanglingMetacharacters == Boolean.FALSE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+  {ESCAPE}  {LBRACE}            { return (allowDanglingMetacharacters != TRUE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+  {ESCAPE}  {RBRACE}            { return (allowDanglingMetacharacters == FALSE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
   {ESCAPE}  {META2}             { return RegExpTT.ESC_CHARACTER; }
 }
 {ESCAPE}  {META1}             { return RegExpTT.ESC_CHARACTER; }
@@ -287,9 +289,19 @@ HEX_CHAR=[0-9a-fA-F]
   /* "}" outside counted quantifier is treated as regular character */
   {LBRACE} / [:digit:]+ {RBRACE}                { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
   {LBRACE} / [:digit:]+ "," [:digit:]* {RBRACE} { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
-  {LBRACE} / "," [:digit:]+ {RBRACE}            { if (allowOmitNumbersInQuantifiers || allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } else return RegExpTT.CHARACTER; }
-  {LBRACE} / "," {RBRACE}                       { if (allowOmitBothNumbersInQuantifiers || allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } else return RegExpTT.CHARACTER; }
-  {LBRACE}  { if (allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;  }
+  {LBRACE} / "," [:digit:]+ {RBRACE}            { if (allowOmitNumbersInQuantifiers || allowDanglingMetacharacters != TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } else return RegExpTT.CHARACTER; }
+  {LBRACE} / "," [:digit:]+ {ESCAPE} {RBRACE}   { if (allowDanglingMetacharacters != TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } else if (allowOmitNumbersInQuantifiers) yypushstate(NON_QUANTIFIER); return RegExpTT.CHARACTER; }
+  {LBRACE} / "," {RBRACE}                       { if (allowOmitBothNumbersInQuantifiers || allowDanglingMetacharacters != TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } else return RegExpTT.CHARACTER; }
+  {LBRACE} / "," {ESCAPE} {RBRACE}              { if (allowDanglingMetacharacters == TRUE) { if (allowOmitBothNumbersInQuantifiers) yypushstate(NON_QUANTIFIER); return RegExpTT.CHARACTER; } else { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }}
+  {LBRACE} / {ESCAPE} {RBRACE}                  { return (allowDanglingMetacharacters != TRUE) ? RegExpTT.LBRACE : RegExpTT.CHARACTER; }
+  {LBRACE} / [:digit:]* ","? [:digit:]* {ESCAPE} {RBRACE}  { if (allowDanglingMetacharacters != TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } else { yypushstate(NON_QUANTIFIER); return RegExpTT.CHARACTER; }}
+  {LBRACE}  { if (allowDanglingMetacharacters != TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;  }
+}
+
+<NON_QUANTIFIER> {
+  [:digit:]         { return RegExpTT.CHARACTER; }
+  ","               { return RegExpTT.CHARACTER; }
+  {ESCAPE} {RBRACE} { yypopstate(); return RegExpTT.ESC_CHARACTER; }
 }
 
 <QUANTIFIER> {
@@ -391,7 +403,7 @@ HEX_CHAR=[0-9a-fA-F]
 <YYINITIAL> {
   {LPAREN}      { capturingGroupCount++; return RegExpTT.GROUP_BEGIN; }
   {RPAREN}      { return RegExpTT.GROUP_END;   }
-  {RBRACE}      { return (allowDanglingMetacharacters != Boolean.FALSE) ? RegExpTT.CHARACTER : RegExpTT.RBRACE;  }
+  {RBRACE}      { return (allowDanglingMetacharacters != FALSE) ? RegExpTT.CHARACTER : RegExpTT.RBRACE;  }
 
   "|"           { return RegExpTT.UNION;  }
   "?"           { return RegExpTT.QUEST;  }
@@ -456,7 +468,7 @@ HEX_CHAR=[0-9a-fA-F]
 "-"                   { return RegExpTT.CHARACTER; }
 
 /* "dangling ]" */
-<YYINITIAL> {RBRACKET}    { return allowDanglingMetacharacters == Boolean.FALSE ? RegExpTT.CLASS_END : RegExpTT.CHARACTER; }
+<YYINITIAL> {RBRACKET}    { return allowDanglingMetacharacters == FALSE ? RegExpTT.CLASS_END : RegExpTT.CHARACTER; }
 
 
 "#"           { if (commentMode) { yypushstate(COMMENT); } else return RegExpTT.CHARACTER; }
