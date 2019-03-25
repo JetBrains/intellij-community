@@ -5,6 +5,7 @@ import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.getWarningIcon
@@ -13,10 +14,10 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction.addUnversionedFilesToVcs
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.getExecutorPresentableText
 import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter.Companion.moveToFailedList
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
@@ -30,6 +31,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.NullableFunction
 import com.intellij.util.PairConsumer
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
+import com.intellij.util.ui.UIUtil.removeMnemonic
 import java.util.*
 
 private val LOG = logger<DialogCommitWorkflow>()
@@ -47,9 +49,14 @@ internal fun CommitOptions.changeListChanged(changeList: LocalChangeList) = chan
 
 internal fun CommitOptions.saveChangeListSpecificOptions() = changeListSpecificOptions.forEach { it.saveState() }
 
+internal fun removeEllipsisSuffix(s: String) = s.removeSuffix("...").removeSuffix("\u2026")
+internal fun CommitExecutor.getPresentableText() = removeEllipsisSuffix(removeMnemonic(actionText))
+
 interface CommitWorkflowListener : EventListener {
   fun beforeCommitChecksStarted()
-  fun beforeCommitChecksEnded(result: CheckinHandler.ReturnResult)
+  fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult)
+
+  fun customCommitSucceeded()
 }
 
 open class DialogCommitWorkflow(val project: Project,
@@ -61,7 +68,7 @@ open class DialogCommitWorkflow(val project: Project,
                                 val affectedVcses: Set<AbstractVcs<*>> = if (vcsToCommit != null) setOf(vcsToCommit) else emptySet(),
                                 private val isDefaultChangeListFullyIncluded: Boolean = true,
                                 val initialCommitMessage: String? = null,
-                                val resultHandler: CommitResultHandler? = null) {
+                                private val resultHandler: CommitResultHandler? = null) {
   val isPartialCommitEnabled: Boolean = affectedVcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || executors.any { it.supportsPartialCommit() })
 
   val commitContext: CommitContext = CommitContext()
@@ -101,7 +108,7 @@ open class DialogCommitWorkflow(val project: Project,
   }
 
   fun executeDefault(executor: CommitExecutor?, changeList: LocalChangeList, changes: List<Change>, commitMessage: String) {
-    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(executor, changeList)
+    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(true, executor, changeList)
     @Suppress("NON_EXHAUSTIVE_WHEN")
     when (beforeCommitChecksResult) {
       CheckinHandler.ReturnResult.COMMIT -> DefaultNameChangeListCleaner(project, changeList, changes).use {
@@ -112,15 +119,50 @@ open class DialogCommitWorkflow(val project: Project,
     }
   }
 
-  private fun runBeforeCommitChecksWithEvents(executor: CommitExecutor?, changeList: LocalChangeList): CheckinHandler.ReturnResult {
+  fun executeCustom(executor: CommitExecutor,
+                    session: CommitSession,
+                    changeList: LocalChangeList,
+                    changes: List<Change>,
+                    commitMessage: String) {
+    if (!configureCommitSession(executor, session, changes, commitMessage)) return
+
+    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(false, executor, changeList)
+    @Suppress("NON_EXHAUSTIVE_WHEN")
+    when (beforeCommitChecksResult) {
+      CheckinHandler.ReturnResult.COMMIT -> {
+        val success = doCommitCustom(executor, session, changeList, changes, commitMessage)
+        if (success) eventDispatcher.multicaster.customCommitSucceeded()
+      }
+      CheckinHandler.ReturnResult.CLOSE_WINDOW ->
+        moveToFailedList(project, changeList, commitMessage, changes, message("commit.dialog.rejected.commit.template", changeList.name))
+    }
+  }
+
+  private fun configureCommitSession(executor: CommitExecutor,
+                                     session: CommitSession,
+                                     changes: List<Change>,
+                                     commitMessage: String): Boolean {
+    val sessionConfigurationUi = SessionDialog.createConfigurationUI(session, changes, commitMessage) ?: return true
+    val sessionDialog = SessionDialog(executor.getPresentableText(), project, session, changes, commitMessage, sessionConfigurationUi)
+
+    if (sessionDialog.showAndGet()) return true
+    else {
+      session.executionCanceled()
+      return false
+    }
+  }
+
+  private fun runBeforeCommitChecksWithEvents(isDefaultCommit: Boolean,
+                                              executor: CommitExecutor?,
+                                              changeList: LocalChangeList): CheckinHandler.ReturnResult {
     eventDispatcher.multicaster.beforeCommitChecksStarted()
     val result = runBeforeCommitChecks(executor, changeList)
-    eventDispatcher.multicaster.beforeCommitChecksEnded(result)
+    eventDispatcher.multicaster.beforeCommitChecksEnded(isDefaultCommit, result)
 
     return result
   }
 
-  fun runBeforeCommitChecks(executor: CommitExecutor?, changeList: LocalChangeList): CheckinHandler.ReturnResult {
+  private fun runBeforeCommitChecks(executor: CommitExecutor?, changeList: LocalChangeList): CheckinHandler.ReturnResult {
     var result: CheckinHandler.ReturnResult? = null
     val checks = Runnable {
       FileDocumentManager.getInstance().saveAllDocuments()
@@ -163,7 +205,7 @@ open class DialogCommitWorkflow(val project: Project,
       val hasPartialChanges = changes.any { getPartialTracker(project, it)?.hasPartialChangesToCommit() ?: false }
       if (hasPartialChanges) {
         return Messages.YES == showYesNoDialog(
-          project, message("commit.dialog.partial.commit.warning.body", getExecutorPresentableText(executor)),
+          project, message("commit.dialog.partial.commit.warning.body", executor.getPresentableText()),
           message("commit.dialog.partial.commit.warning.title"), executor.actionText, getCancelButtonText(), getWarningIcon())
       }
     }
@@ -178,6 +220,43 @@ open class DialogCommitWorkflow(val project: Project,
     committer.addResultHandler(resultHandler ?: DefaultCommitResultHandler(committer))
     committer.runCommit(DIALOG_TITLE, false)
   }
+
+  private fun doCommitCustom(executor: CommitExecutor,
+                             session: CommitSession,
+                             changeList: LocalChangeList,
+                             changes: List<Change>,
+                             commitMessage: String): Boolean {
+    var success = false
+    val cleaner = DefaultNameChangeListCleaner(project, changeList, changes)
+    try {
+      val completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        { session.execute(changes, commitMessage) }, executor.actionText, true, project)
+
+      if (completed) {
+        LOG.debug("Commit successful")
+        commitHandlers.forEach { it.checkinSuccessful() }
+        success = true
+        cleaner.clean()
+      }
+      else {
+        LOG.debug("Commit canceled")
+        session.executionCanceled()
+      }
+    }
+    catch (e: Throwable) {
+      Messages.showErrorDialog(message("error.executing.commit", executor.actionText, e.localizedMessage), executor.actionText)
+
+      val errors = listOf(VcsException(e))
+      commitHandlers.forEach { it.checkinFailed(errors) }
+    }
+    finally {
+      finishCustom(commitMessage, success)
+    }
+    return success
+  }
+
+  private fun finishCustom(commitMessage: String, success: Boolean) =
+    resultHandler?.let { if (success) it.onSuccess(commitMessage) else it.onFailure() }
 
   companion object {
     @JvmStatic

@@ -120,7 +120,12 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   override fun beforeCommitChecksStarted() = ui.startBeforeCommitChecks()
-  override fun beforeCommitChecksEnded(result: CheckinHandler.ReturnResult) = ui.endBeforeCommitChecks(result)
+  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {
+    ui.endBeforeCommitChecks(result)
+    if (isDefaultCommit && result == CheckinHandler.ReturnResult.COMMIT) ui.deactivate()
+  }
+
+  override fun customCommitSucceeded() = ui.deactivate()
 
   private fun executeDefault(executor: CommitExecutor?) {
     if (!addUnversionedFiles()) return
@@ -144,7 +149,8 @@ class SingleChangeListCommitWorkflowHandler(
     if (!saveCommitOptions()) return
     saveCommitMessage(true)
 
-    ui.execute(executor, session)
+    (session as? CommitSessionContextAware)?.setContext(workflow.commitContext)
+    refreshChanges { workflow.executeCustom(executor, session, getChangeList(), getIncludedChanges(), getCommitMessage()) }
   }
 
   private fun addUnversionedFiles(): Boolean =
