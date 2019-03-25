@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.history.LocalHistory
@@ -25,17 +25,19 @@ import com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress
 import com.intellij.util.ui.ConfirmationDialog.requestForConfirmation
 import org.jetbrains.annotations.CalledInAwt
 
+class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<Change>, val commitMessage: String)
+
 class SingleChangeListCommitter(
   project: Project,
-  private val changeList: LocalChangeList,
-  changes: List<Change>,
-  commitMessage: String,
+  private val commitState: ChangeListCommitState,
   handlers: List<CheckinHandler>,
   additionalData: NullableFunction<Any, Any>,
   private val vcsToCommit: AbstractVcs<*>?,
   private val localHistoryActionName: String,
   private val isDefaultChangeListFullyIncluded: Boolean
-) : AbstractCommitter(project, changes, commitMessage, handlers, additionalData) {
+) : AbstractCommitter(project, commitState.changes, commitState.commitMessage, handlers, additionalData) {
+
+  private val changeList get() = commitState.changeList
 
   private var myAction = LocalHistoryAction.NULL
   private var isSuccess = false
@@ -59,8 +61,8 @@ class SingleChangeListCommitter(
 
   override fun onFailure() {
     getApplication().invokeLater(Runnable {
-      moveToFailedList(project, changeList, commitMessage, failedToCommitChanges,
-                       message("commit.dialog.failed.commit.template", changeList.name))
+      val failedCommitState = ChangeListCommitState(changeList, failedToCommitChanges, commitMessage)
+      moveToFailedList(project, failedCommitState, message("commit.dialog.failed.commit.template", changeList.name))
     }, ModalityState.defaultModalityState(), project.disposed)
   }
 
@@ -129,13 +131,10 @@ class SingleChangeListCommitter(
   companion object {
     @JvmStatic
     @CalledInAwt
-    fun moveToFailedList(project: Project,
-                         changeList: ChangeList,
-                         commitMessage: String,
-                         failedChanges: List<Change>,
-                         newChangeListName: String) {
+    fun moveToFailedList(project: Project, commitState: ChangeListCommitState, newChangeListName: String) {
       // No need to move since we'll get exactly the same changelist.
-      if (failedChanges.containsAll(changeList.changes)) return
+      val failedChanges = commitState.changes
+      if (failedChanges.containsAll(commitState.changeList.changes)) return
 
       val configuration = VcsConfiguration.getInstance(project)
       if (configuration.MOVE_TO_FAILED_COMMIT_CHANGELIST != VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
@@ -161,7 +160,7 @@ class SingleChangeListCommitter(
         failedListName = "$newChangeListName ($index)"
       }
 
-      val failedList = changeListManager.addChangeList(failedListName, commitMessage)
+      val failedList = changeListManager.addChangeList(failedListName, commitState.commitMessage)
       changeListManager.moveChangesTo(failedList, *failedChanges.toTypedArray())
     }
   }
