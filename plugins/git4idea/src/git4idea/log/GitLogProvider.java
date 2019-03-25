@@ -355,7 +355,7 @@ public class GitLogProvider implements VcsLogProvider {
   }
 
   private boolean shouldIncludeRootChanges(@NotNull VirtualFile root) {
-    GitRepository repository = getRepository(root);
+    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) return true;
     return !repository.getInfo().isShallow();
   }
@@ -464,7 +464,7 @@ public class GitLogProvider implements VcsLogProvider {
       boolean atLeastOneBranchExists = false;
 
       if (branchFilter != null) {
-        GitRepository repository = getRepository(root);
+        GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
         assert repository != null : "repository is null for root " + root + " but was previously reported as 'ready'";
 
         Collection<GitBranch> branches = ContainerUtil
@@ -636,13 +636,8 @@ public class GitLogProvider implements VcsLogProvider {
     return "--" + paramName + "=" + value; // no value quoting needed, because the parameter itself will be quoted by GeneralCommandLine
   }
 
-  @Nullable
-  private GitRepository getRepository(@NotNull VirtualFile root) {
-    return myRepositoryManager.getRepositoryForRoot(root);
-  }
-
   private boolean isRepositoryReady(@NotNull VirtualFile root) {
-    GitRepository repository = getRepository(root);
+    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);
       return false;
