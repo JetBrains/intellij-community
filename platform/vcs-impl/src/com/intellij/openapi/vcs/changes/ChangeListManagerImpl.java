@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation;
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.vcs.changes.ui.ChangeListCommitState;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
 import com.intellij.openapi.vcs.changes.ui.DefaultCommitResultHandler;
 import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter;
@@ -1226,9 +1227,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     FileDocumentManager.getInstance().saveAllDocuments();
 
     String commitMessage = StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment();
+    ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
     SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(myProject, changeList, changes, commitMessage, emptyList(), FunctionUtil.nullConstant(), null,
-                                    changeList.getName(), false);
+      new SingleChangeListCommitter(myProject, commitState, emptyList(), FunctionUtil.nullConstant(), null, changeList.getName(), false);
 
     committer.addResultHandler(new DefaultCommitResultHandler(committer));
     committer.runCommit(changeList.getName(), synchronously);
