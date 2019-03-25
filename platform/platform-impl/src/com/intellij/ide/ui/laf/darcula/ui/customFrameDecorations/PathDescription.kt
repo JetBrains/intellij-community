@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.guessCurrentProject
+import com.intellij.openapi.util.Disposer
 import sun.swing.SwingUtilities2
 import java.awt.*
 import java.awt.event.*
@@ -15,7 +16,7 @@ import javax.swing.JLabel
 import javax.swing.UIManager
 
 
-class DescriptionLabel : Disposable {
+class PathDescription(disposable: Disposable) {
   companion object {
     const val fileSeparatorChar = '/'
     const val ellipsisSymbol = "\u2026"
@@ -69,17 +70,14 @@ class DescriptionLabel : Disposable {
   }
 
   init {
-    ApplicationManager.getApplication().messageBus.connect(this)
+    ApplicationManager.getApplication().messageBus.connect(disposable)
       .subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
         override fun projectOpened(project: Project) {
           update()
         }
       })
     this.label.addComponentListener(resizedListener)
-  }
-
-  override fun dispose() {
-    this.label.removeComponentListener(resizedListener)
+    Disposer.register(disposable, Disposable { this.label.removeComponentListener(resizedListener) })
   }
 
   private fun update() {

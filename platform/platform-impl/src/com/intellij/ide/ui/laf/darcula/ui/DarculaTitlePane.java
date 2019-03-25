@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.CustomFrameIdeMenuBar;
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.CustomFrameTitleButtons;
-import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.DescriptionLabel;
+import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.PathDescription;
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.ResizableCustomFrameTitleButtons;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
@@ -55,7 +55,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
   private CustomFrameTitleButtons buttonPanes;
   private final JLabel titleLabel = new JLabel();
-  private final DescriptionLabel projectLabel = new DescriptionLabel();
+  private final PathDescription myPathDescription = new PathDescription(this);
 
   private final Color myInactiveForeground = UIManager.getColor("inactiveCaptionText");
   private Color myActiveForeground = null;
@@ -167,7 +167,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
     }
 
     hitTestSpots.add(menuRect);
-    hitTestSpots.addAll(projectLabel.getListenerBoundses());
+    hitTestSpots.addAll(myPathDescription.getListenerBoundses());
     hitTestSpots.add(iconRect);
     hitTestSpots.add(buttonsRect);
 
@@ -176,7 +176,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
   @Override
   public void dispose() {
-    Disposer.dispose(projectLabel);
+
   }
 
   @Override
@@ -204,7 +204,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
         JPanel pane = new JPanel(new MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"));
         pane.setOpaque(false);
         pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin "+minMenuHeight);
-        pane.add(projectLabel.getView(), "center, growx, wmin 0, gapbefore " + menuBarGap + ", gapafter " + menuBarGap);
+        pane.add(myPathDescription.getView(), "center, growx, wmin 0, gapbefore " + menuBarGap + ", gapafter " + menuBarGap);
 
         add(pane, "wmin 0, growx");
       }
