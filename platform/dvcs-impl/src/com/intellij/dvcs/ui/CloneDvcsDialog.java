@@ -7,7 +7,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.hosting.RepositoryHostingService;
 import com.intellij.dvcs.hosting.RepositoryListLoader;
 import com.intellij.dvcs.hosting.RepositoryListLoadingException;
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.dvcs.repo.ClonePathProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBOptionButton;
@@ -51,11 +50,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
 import java.nio.file.*;
 import java.util.List;
 import java.util.*;
@@ -181,8 +178,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   }
 
   private void initComponents(@Nullable String defaultUrl) {
-    String parentDirectory = getRememberedInputs().getCloneParentDir();
-
     myRepositoryUrlComboboxModel = new CollectionComboBoxModel<>();
     myRepositoryUrlField = TextFieldWithAutoCompletion.create(myProject,
                                                               myRepositoryUrlComboboxModel.getItems(),
@@ -220,9 +215,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
     fcd.setHideIgnored(false);
-    myDirectoryField = new MyTextFieldWithBrowseButton(StringUtil.isEmptyOrSpaces(parentDirectory)
-                                                       ? ProjectUtil.getBaseDir()
-                                                       : parentDirectory);
+    myDirectoryField = new MyTextFieldWithBrowseButton(ClonePathProvider.defaultDirectoryToClone(myProject, getRememberedInputs()));
     myDirectoryField.addBrowseFolderListener(DvcsBundle.getString("clone.destination.directory.browser.title"),
                                              DvcsBundle.getString("clone.destination.directory.browser.description"),
                                              myProject,
@@ -517,16 +510,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     rememberedInputs.setCloneParentDir(getParentDirectory());
   }
 
-  @NotNull
-  private static String safeUrlDecode(@NotNull String encoded) {
-    try {
-      return URLDecoder.decode(encoded, CharsetToolkit.UTF8);
-    }
-    catch (Exception e) {
-      return encoded;
-    }
-  }
-
   /**
    * Get default name for checked out directory
    *
@@ -535,29 +518,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
    */
   @NotNull
   private String defaultDirectoryName(@NotNull final String url) {
-    return stripSuffix(safeUrlDecode(getLastPathFragment(url)));
-  }
-
-  @NotNull
-  private String stripSuffix(@NotNull String directoryName) {
-    return directoryName.endsWith(myVcsDirectoryName)
-           ? directoryName.substring(0, directoryName.length() - myVcsDirectoryName.length())
-           : directoryName;
-  }
-
-  @NotNull
-  private static String getLastPathFragment(@NotNull final String url) {
-    // Suppose it's a URL
-    int i = url.lastIndexOf('/');
-
-    // No? Maybe win-style path?
-    if (i == -1 && File.separatorChar != '/') i = url.lastIndexOf(File.separatorChar);
-
-    if (i < 0) return "";
-
-    if (i == url.length() - 1) return getLastPathFragment(url.substring(0, i));
-
-    return url.substring(i + 1);
+    return StringUtil.trimEnd(ClonePathProvider.directoryPathToCloneForUrl(myProject, url), myVcsDirectoryName);
   }
 
   @Nullable
