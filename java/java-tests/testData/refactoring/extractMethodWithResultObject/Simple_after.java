@@ -5,9 +5,12 @@ class C {
 //exit: SEQUENTIAL PsiClassInitializer
 
     public NewMethodResult newMethod() {
+        int i = 1;
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 }

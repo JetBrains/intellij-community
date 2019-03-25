@@ -9,10 +9,13 @@ class C {
 //exit: RETURN PsiMethod:foo<-PsiMethodCallExpression:A.getInstance()
 
     public NewMethodResult newMethod() {
+        return A.getInstance(); // todo
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 }
 class A {

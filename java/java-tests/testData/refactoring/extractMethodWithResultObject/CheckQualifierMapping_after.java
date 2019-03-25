@@ -15,9 +15,13 @@ class Test {
 //exit: SEQUENTIAL PsiExpressionStatement
 
     public NewMethodResult newMethod(String a) {
+        ArrayList<String> listA = new ArrayList<String>();
+        listA.add(a);
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 }

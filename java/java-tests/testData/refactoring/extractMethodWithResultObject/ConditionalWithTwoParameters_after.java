@@ -16,10 +16,18 @@ class RenamedParameter {
 //exit: SEQUENTIAL PsiMethod:foo
 
     public NewMethodResult newMethod(String b, String a) {
+        if (c) {
+            String t = b;
+            x(t);
+        } else if (!b.equals(a)) {
+            x(b);
+        }
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 
     public void bar() {

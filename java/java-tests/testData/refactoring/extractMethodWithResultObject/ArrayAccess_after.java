@@ -10,9 +10,13 @@ class Test {
 //exit: SEQUENTIAL PsiMethod:foo
 
     public NewMethodResult newMethod(String[] ss, int i) {
+        System.out.println(ss[i]);
+        System.out.println(ss[i] + ss[i]);
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 }

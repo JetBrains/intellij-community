@@ -6,9 +6,12 @@ class X {
 //exit: SEQUENTIAL PsiMethod:foo
 
     public NewMethodResult newMethod() {
+        int i = myI++;
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 }

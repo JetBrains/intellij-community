@@ -7,9 +7,12 @@ class Test {
 //exit: SEQUENTIAL PsiExpressionStatement
 
     public NewMethodResult newMethod(String[] ss) {
+        System.out.println(ss[0]);
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 }

@@ -8,10 +8,13 @@ public class Test {
 //exit: SEQUENTIAL PsiMethod:foo
 
     public NewMethodResult newMethod(Object o) {
+        ((A)o).bar();
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 }
 

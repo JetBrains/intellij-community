@@ -7,9 +7,14 @@ class Test {
 //exit: EXPRESSION PsiReferenceExpression:f
 
     public NewMethodResult newMethod(String f) {
-        return new NewMethodResult();
+        return new NewMethodResult(f);
     }
 
     public class NewMethodResult {
+        private String expressionResult;
+
+        public NewMethodResult(String expressionResult) {
+            this.expressionResult = expressionResult;
+        }
     }
 }

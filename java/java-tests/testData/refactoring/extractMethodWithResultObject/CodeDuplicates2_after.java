@@ -16,9 +16,14 @@ class C {
 //exit: SEQUENTIAL PsiForStatement
 
     public NewMethodResult newMethod(Object[] array) {
+        for (int i = 0; i < array.length; i++) {
+            System.out.println(array[i]);
+        }
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 }

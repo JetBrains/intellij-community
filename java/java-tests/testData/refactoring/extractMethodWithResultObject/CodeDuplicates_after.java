@@ -9,9 +9,12 @@ class C {
 //exit: SEQUENTIAL PsiExpressionStatement
 
     public NewMethodResult newMethod(int i) {
+        System.out.println(i);
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 }

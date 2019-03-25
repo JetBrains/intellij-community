@@ -7,10 +7,15 @@ class UseBuilder {
 //exit: EXPRESSION PsiMethodCallExpression:builder.foo("xyz").bar(arr[0])
 
     public NewMethodResult newMethod(Builder builder, int[] arr) {
-        return new NewMethodResult();
+        return new NewMethodResult(builder.foo("xyz").bar(arr[0]));
     }
 
     public class NewMethodResult {
+        private Builder expressionResult;
+
+        public NewMethodResult(Builder expressionResult) {
+            this.expressionResult = expressionResult;
+        }
     }
 
     static class Builder {

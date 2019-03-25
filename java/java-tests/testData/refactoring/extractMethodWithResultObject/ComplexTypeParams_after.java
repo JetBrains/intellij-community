@@ -9,10 +9,13 @@ public class Test
 //exit: SEQUENTIAL PsiMethod:foo
 
     public NewMethodResult newMethod(List<? extends List<T>> tr) {
+        tr.add(null);
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 
 }

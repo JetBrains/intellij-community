@@ -12,9 +12,17 @@ class CommentAfterSelectedFragment {
 //exit: SEQUENTIAL PsiIfStatement
 
     public NewMethodResult newMethod(boolean debugMode) {
-        return new NewMethodResult();
+        if (debugMode) {
+            i = 1;
+        } /* comment */
+        return new NewMethodResult(i);
     }
 
     public class NewMethodResult {
+        private int i;
+
+        public NewMethodResult(int i) {
+            this.i = i;
+        }
     }
 }

@@ -19,9 +19,14 @@ class Test {
 //exit: SEQUENTIAL PsiMethod:method2
 
     public NewMethodResult newMethod() {
+        list1.add(null);
+        // add to list2
+        list2.add(true);
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 }

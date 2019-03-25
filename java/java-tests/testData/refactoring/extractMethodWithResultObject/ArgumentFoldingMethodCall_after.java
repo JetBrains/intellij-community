@@ -15,10 +15,16 @@ class C {
 //exit: SEQUENTIAL PsiMethod:foo
 
     public NewMethodResult newMethod() {
+        if (x.isEmpty()) return;
+        x.remove(0);
+        y.add(str());
+        baz();
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 
     private void bar() {

@@ -7,12 +7,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -454,8 +457,7 @@ public class ExtractMethodWithResultObjectProcessor {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
     Set<PsiElement> exited = myExits.values().stream().map(Exit::getExitedElement).collect(Collectors.toSet());
     if (exited.size() == 1) {
-      PsiClass resultClass = factory.createClass("NewMethodResult");
-      myAnchor.getParent().addAfter(resultClass, myAnchor);
+      PsiClass resultClass = (PsiClass)myAnchor.getParent().addAfter(factory.createClass("NewMethodResult"), myAnchor);
 
       PsiMethod method = factory.createMethod("newMethod", factory.createType(resultClass), myAnchor);
       PsiParameterList parameterList = method.getParameterList();
@@ -484,7 +486,48 @@ public class ExtractMethodWithResultObjectProcessor {
 
       PsiCodeBlock body = method.getBody();
       assert body != null;
-      body.add(factory.createStatementFromText("return new NewMethodResult();", body.getRBrace()));
+      if (myExpression == null) {
+        body.addRange(myElements[0], myElements[myElements.length - 1]);
+      }
+      PsiReturnStatement returnStatement = (PsiReturnStatement)body.add(factory.createStatementFromText("return 0;", body.getRBrace()));
+      PsiNewExpression returnExpression = (PsiNewExpression)notNull(returnStatement.getReturnValue())
+        .replace(factory.createExpressionFromText("new NewMethodResult()", returnStatement));
+      PsiExpressionList returnArgumentList = notNull(returnExpression.getArgumentList());
+
+      TreeMap<String, PsiVariable> outputMap = StreamEx.of(myOutputVariables)
+        .mapToEntry(v -> v.getName(), v -> v)
+        .toCustomMap(TreeMap::new);
+
+      PsiMethod constructor = (PsiMethod)resultClass.add(factory.createConstructor(notNull(resultClass.getName())));
+      PsiParameterList constructorParameterList = notNull(constructor.getParameterList());
+      PsiCodeBlock constructorBody = notNull(constructor.getBody());
+
+      if (myExpression != null) {
+        PsiType expressionType = RefactoringUtil.getTypeByExpressionWithExpectedType(myExpression);
+        if (expressionType == null) {
+          expressionType = PsiType.getJavaLangObject(myExpression.getManager(), GlobalSearchScope.allScope(myProject));
+        }
+
+        PsiField field = (PsiField)resultClass.addAfter(factory.createField("expressionResult", expressionType), resultClass.getLBrace());
+        notNull(field.getModifierList()).setModifierProperty(PsiModifier.PRIVATE, true);
+
+        constructorParameterList.add(factory.createParameter("expressionResult", expressionType));
+        constructorBody.add(factory.createStatementFromText("this.expressionResult = expressionResult;", constructorBody.getRBrace()));
+
+        returnArgumentList.add(myExpression);
+      }
+
+      outputMap.forEach((name, variable) -> {
+        PsiType type = variable.getType();
+        PsiField field = (PsiField)resultClass.addAfter(factory.createField(name, type), resultClass.getLBrace());
+        notNull(field.getModifierList()).setModifierProperty(PsiModifier.PRIVATE, true);
+
+        constructorParameterList.add(factory.createParameter(name, type));
+        constructorBody.add(factory.createStatementFromText("this." + name + " = " + name + ";", constructorBody.getRBrace()));
+
+        returnArgumentList.add(factory.createExpressionFromText(name, returnStatement));
+      });
+
       myAnchor.getParent().addAfter(method, myAnchor);
     }
     else {

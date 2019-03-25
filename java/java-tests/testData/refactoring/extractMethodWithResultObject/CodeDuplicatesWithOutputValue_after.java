@@ -15,10 +15,16 @@ class C {
 //exit: SEQUENTIAL PsiDeclarationStatement
 
     public NewMethodResult newMethod(Object[] array) {
-        return new NewMethodResult();
+        List l1 = new ArrayList(Arrays.asList(array));
+        return new NewMethodResult(l1);
     }
 
     public class NewMethodResult {
+        private List l1;
+
+        public NewMethodResult(List l1) {
+            this.l1 = l1;
+        }
     }
 
     String[] getObjects() {

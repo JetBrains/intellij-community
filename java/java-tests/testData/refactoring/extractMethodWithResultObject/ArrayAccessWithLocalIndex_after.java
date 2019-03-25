@@ -11,9 +11,14 @@ class Test {
 //exit: SEQUENTIAL PsiMethod:foo
 
     public NewMethodResult newMethod(Integer[] levels, Integer[] nextWinNumber) {
+        for (Integer level : levels) {
+          Integer nextWinNum = nextWinNumber[level - 1];
+        }
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 }

@@ -8,10 +8,14 @@ class C {
 //exit: RETURN PsiMethod:method<-PsiMethodCallExpression:i.toString()
 
     public NewMethodResult newMethod(Object o) {
+        Integer i = new Integer(o.hashCode());
+        return i.toString(); // todo
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 
     {

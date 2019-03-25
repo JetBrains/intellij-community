@@ -11,10 +11,14 @@ class ArgumentFoldingWholeStatement {
 //exit: SEQUENTIAL PsiMethod:foo
 
     public NewMethodResult newMethod() {
+        x.add(str());
+        baz();
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 
     private void bar() {

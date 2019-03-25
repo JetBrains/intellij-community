@@ -7,10 +7,15 @@ class CallChainExpression {
 //exit: EXPRESSION PsiReferenceExpression:A.a().b().c
 
     public NewMethodResult newMethod() {
-        return new NewMethodResult();
+        return new NewMethodResult(A.a().b().c);
     }
 
     public class NewMethodResult {
+        private String expressionResult;
+
+        public NewMethodResult(String expressionResult) {
+            this.expressionResult = expressionResult;
+        }
     }
 
     static class A {

@@ -5,10 +5,13 @@ public class Test {
 //exit: SEQUENTIAL PsiMethod:fe
 
         public NewMethodResult newMethod() {
+            System.out.println("");
             return new NewMethodResult();
         }
 
         public class NewMethodResult {
+            public NewMethodResult() {
+            }
         }
     }
   }

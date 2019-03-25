@@ -6,10 +6,13 @@ class C {
 //exit: SEQUENTIAL PsiMethod:f
 
     public NewMethodResult newMethod(K k) {
+        System.out.println(k);
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 
     void g() {

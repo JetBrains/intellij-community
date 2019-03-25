@@ -11,9 +11,17 @@ public /*abstract*/ class WillWorkTest {
 //exit: RETURN PsiMethod:opera<-PsiReferenceExpression:k
 
     public NewMethodResult newMethod(int i) {
-        return new NewMethodResult();
+        int k;
+        if (true) k = i;
+        return k; //todo
+        return new NewMethodResult(k);
     }
 
     public class NewMethodResult {
+        private int k;
+
+        public NewMethodResult(int k) {
+            this.k = k;
+        }
     }
 }

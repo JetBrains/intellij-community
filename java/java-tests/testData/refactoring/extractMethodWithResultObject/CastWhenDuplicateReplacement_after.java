@@ -8,9 +8,14 @@ class Test {
 //exit: EXPRESSION PsiMethodCallExpression:((String)x).substring(1)
 
     public NewMethodResult newMethod(Object x) {
-        return new NewMethodResult();
+        return new NewMethodResult(((String)x).substring(1));
     }
 
     public class NewMethodResult {
+        private String expressionResult;
+
+        public NewMethodResult(String expressionResult) {
+            this.expressionResult = expressionResult;
+        }
     }
 }

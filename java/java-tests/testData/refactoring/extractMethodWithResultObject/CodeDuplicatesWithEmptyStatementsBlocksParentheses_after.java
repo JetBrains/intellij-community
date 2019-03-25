@@ -15,9 +15,13 @@ class Test {
 //exit: SEQUENTIAL PsiMethod:method2
 
     public NewMethodResult newMethod() {
+        System.out.println(1);
+        System.out.println(2);
         return new NewMethodResult();
     }
 
     public class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 }

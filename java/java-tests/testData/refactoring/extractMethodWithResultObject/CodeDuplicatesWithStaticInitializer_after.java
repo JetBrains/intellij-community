@@ -11,9 +11,14 @@ class C {
 //exit: EXPRESSION PsiReferenceExpression:c
 
     public NewMethodResult newMethod() {
-        return new NewMethodResult();
+        return new NewMethodResult(c);
     }
 
     public class NewMethodResult {
+        private C expressionResult;
+
+        public NewMethodResult(C expressionResult) {
+            this.expressionResult = expressionResult;
+        }
     }
 }
