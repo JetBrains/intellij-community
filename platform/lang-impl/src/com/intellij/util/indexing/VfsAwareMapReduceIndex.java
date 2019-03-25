@@ -337,10 +337,4 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       });
     }
   }
-
-  protected static <K> DataExternalizer<Collection<K>> createInputsIndexExternalizer(IndexExtension<K, ?, ?> extension) {
-    return extension instanceof CustomInputsIndexFileBasedIndexExtension
-           ? ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer()
-           : new InputIndexDataExternalizer<>(extension.getKeyDescriptor(), extension.getName());
-  }
 }
