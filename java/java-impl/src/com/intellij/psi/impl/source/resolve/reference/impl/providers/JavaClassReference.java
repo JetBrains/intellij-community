@@ -632,4 +632,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     }
   }
 
+  @Override
+  public String toString() {
+    return getClass().getName() + "(" + getRangeInElement() + ", provider=" + myJavaClassReferenceSet.getProvider() + "}";
+  }
 }
