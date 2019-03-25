@@ -498,7 +498,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
                                                      final PsiMethod psiMethod,
                                                      final PsiSubstitutor substitutor) {
 
-    final PsiExpression qualifierExpression = methodCall.getMethodExpression().getQualifierExpression();
+    final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(methodCall.getMethodExpression().getQualifierExpression());
 
     final PsiClass containingClass = psiMethod.getContainingClass();
     LOG.assertTrue(containingClass != null);
