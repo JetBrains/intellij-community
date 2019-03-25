@@ -156,10 +156,15 @@ public class GitLogUtil {
     if (factory == null) {
       return LogDataImpl.empty();
     }
+
     Set<VcsRef> refs = new OpenTHashSet<>(GitLogProvider.DONT_CONSIDER_SHA);
-    List<VcsCommitMetadata> commits =
-      collectMetadata(project, root, lowPriorityProcess, record -> {
+    List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
+
+    try {
+      GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), lowPriorityProcess);
+      readRecordsFromHandler(project, root, true, false, false, false, record -> {
         GitCommit commit = createCommit(project, root, Collections.singletonList(record), factory);
+        commits.add(commit);
         Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
         for (VcsRef ref : refsInRecord) {
           if (!refs.add(ref)) {
@@ -167,23 +172,7 @@ public class GitLogUtil {
             LOG.error("Adding duplicate element " + ref + " to the set containing " + otherRef);
           }
         }
-        return commit;
-      }, params);
-    return new LogDataImpl(refs, commits);
-  }
-
-  @NotNull
-  private static List<VcsCommitMetadata> collectMetadata(@NotNull Project project,
-                                                         @NotNull VirtualFile root,
-                                                         boolean lowPriorityProcess,
-                                                         @NotNull NullableFunction<GitLogRecord, VcsCommitMetadata> converter,
-                                                         String... parameters) throws VcsException {
-
-    List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
-
-    try {
-      GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), lowPriorityProcess);
-      readRecordsFromHandler(project, root, true, false, false, false, record -> commits.add(converter.fun(record)), handler, parameters);
+      }, handler, params);
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -192,9 +181,9 @@ public class GitLogUtil {
       LOG.warn("Error during loading details, returning partially loaded commits\n", e);
     }
 
-    return commits;
+    return new LogDataImpl(refs, commits);
   }
-
+  
   @Nullable
   public static VcsLogObjectsFactory getObjectsFactoryWithDisposeCheck(@NotNull Project project) {
     return ReadAction.compute(() -> {
