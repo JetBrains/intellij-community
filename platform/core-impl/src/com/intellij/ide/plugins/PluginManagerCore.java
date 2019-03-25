@@ -983,6 +983,12 @@ public class PluginManagerCore {
             result.set(oldIndex, descriptor);
           }
         }
+        else { // We again prefer the older compatible version
+          if (isIncompatible(oldDescriptor) && isCompatible(descriptor)) {
+            getLogger().info("newer plugin is incompatible, ignoring: " + oldDescriptor.getPath());
+            result.set(oldIndex, descriptor);
+          }
+        }
       }
     }
   }
