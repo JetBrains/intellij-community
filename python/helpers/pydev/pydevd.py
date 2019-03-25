@@ -173,10 +173,22 @@ class CheckOutputThread(PyDBDaemonThread):
                 except:
                     traceback.print_exc()
 
+                self.wait_pydb_threads_to_finish()
+
                 self.killReceived = True
 
             self.py_db.check_output_redirect()
 
+    def wait_pydb_threads_to_finish(self, timeout=0.5):
+        pydev_log.debug("Waiting for pydb daemon threads to finish")
+        pydb_daemon_threads = self.created_pydb_daemon_threads
+        started_at = time.time()
+        while time.time() < started_at + timeout:
+            if len(pydb_daemon_threads) == 1 and pydb_daemon_threads.get(self, None):
+                return
+            time.sleep(0.01)
+        pydev_log.debug("The following pydb threads may not finished correctly: %s"
+                        % ', '.join([t.getName() for t in pydb_daemon_threads if t is not self]))
 
     def do_kill_pydev_thread(self):
         self.killReceived = True
@@ -1310,6 +1322,9 @@ def _locked_settrace(
     global connected
     global bufferStdOutToServer
     global bufferStdErrToServer
+
+    # Reset created PyDB daemon threads after fork - parent threads don't exist in a child process.
+    PyDBDaemonThread.created_pydb_daemon_threads = {}
 
     if not connected:
         pydevd_vm_type.setup_type()
