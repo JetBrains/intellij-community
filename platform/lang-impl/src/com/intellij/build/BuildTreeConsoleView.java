@@ -266,8 +266,11 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   @Override
   public void setFilter(@Nullable Predicate<ExecutionNode> executionTreeFilter) {
     myExecutionTreeFilter = executionTreeFilter;
+    ExecutionNode buildProgressRootNode = getBuildProgressRootNode();
     ExecutionNode rootElement = getRootElement();
-    rootElement.setFilter(executionTreeFilter);
+    Predicate<ExecutionNode> predicate = executionTreeFilter == null ? null :
+                                         node -> node == buildProgressRootNode || executionTreeFilter.test(node);
+    rootElement.setFilter(predicate);
     scheduleUpdate(rootElement);
   }
 
