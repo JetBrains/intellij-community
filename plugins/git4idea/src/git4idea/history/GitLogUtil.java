@@ -295,7 +295,7 @@ public class GitLogUtil {
       GitLogRecordCollector recordCollector = requirements.getPreserveOrder() ? new GitLogRecordCollector(project, root, consumer)
                                                                               : new GitLogUnorderedRecordCollector(project, root, consumer);
 
-      readRecordsFromHandler(project, root, withRenames, true, recordCollector, handler, parameters);
+      readRecordsFromHandler(project, root, handler, recordCollector, withRenames, true, parameters);
       recordCollector.finish();
     }
     else {
@@ -303,16 +303,16 @@ public class GitLogUtil {
                                                                                       ContainerUtil.newArrayList(record), factory,
                                                                                       requirements.getDiffRenameLimit()));
 
-      readRecordsFromHandler(project, root, withRenames, false, consumer, handler, parameters);
+      readRecordsFromHandler(project, root, handler, consumer, withRenames, false, parameters);
     }
   }
 
   private static void readRecordsFromHandler(@NotNull Project project,
                                              @NotNull VirtualFile root,
+                                             @NotNull GitLineHandler handler,
+                                             @NotNull Consumer<GitLogRecord> converter,
                                              boolean withRenames,
                                              boolean withFullMergeDiff,
-                                             @NotNull Consumer<GitLogRecord> converter,
-                                             @NotNull GitLineHandler handler,
                                              @NotNull String... parameters)
     throws VcsException {
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, COMMIT_METADATA_OPTIONS);
