@@ -15,19 +15,24 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.codeInsight.daemon.impl.HintRenderer;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,10 +42,12 @@ import java.awt.geom.AffineTransform;
 public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSeparatorRenderer {
   @NotNull private final Editor myEditor;
   @NotNull private final BooleanGetter myCondition;
+  @Nullable private final String myDescription;
 
-  public DiffLineSeparatorRenderer(@NotNull Editor editor, @NotNull BooleanGetter condition) {
+  public DiffLineSeparatorRenderer(@NotNull Editor editor, @NotNull BooleanGetter condition, @Nullable String description) {
     myEditor = editor;
     myCondition = condition;
+    myDescription = description;
   }
 
   /*
@@ -108,7 +115,39 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
       shiftX += -gutterWidth % interval - interval;
     }
 
-    draw(g, shiftX, y, lineHeight, myEditor.getColorsScheme());
+    if (myDescription != null && myEditor instanceof EditorImpl) {
+      drawWithDescription((Graphics2D)g, x1, y, shiftX, lineHeight, (EditorImpl)myEditor, myDescription);
+    }
+    else {
+      draw(g, shiftX, y, lineHeight, myEditor.getColorsScheme());
+    }
+  }
+
+  private static void drawWithDescription(Graphics2D g,
+                                          int x,
+                                          int y,
+                                          int shiftX,
+                                          int lineHeight,
+                                          @NotNull EditorImpl editor,
+                                          @NotNull String description) {
+    EditorColorsScheme scheme = editor.getColorsScheme();
+    int rectX = x + JBUI.scale(5);
+    int rectWidth = HintRenderer.calcWidthInPixels(editor, description, null);
+
+    Shape oldClip = g.getClip();
+    g.clip(new Rectangle(0, 0, rectX, Integer.MAX_VALUE));
+    draw(g, shiftX, y, lineHeight, editor.getColorsScheme());
+    g.setClip(oldClip);
+
+    g.clip(new Rectangle(rectX + rectWidth, 0, Integer.MAX_VALUE, Integer.MAX_VALUE));
+    draw(g, shiftX, y, lineHeight, editor.getColorsScheme());
+    g.setClip(oldClip);
+
+    HintRenderer.paintHint(g, editor,
+                           new Rectangle(rectX, y, rectWidth, lineHeight),
+                           description,
+                           scheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT),
+                           scheme.getAttributes(HighlighterColors.TEXT), null);
   }
 
   @NotNull
@@ -121,7 +160,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
                            int shiftX,
                            int shiftY,
                            int lineHeight,
-                           @Nullable EditorColorsScheme scheme) {
+                           @NotNull EditorColorsScheme scheme) {
     int step = getStepSize(lineHeight);
     int height = getHeight(lineHeight);
 
@@ -167,9 +206,8 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
   private static void paintLine(@NotNull Graphics g,
                                 @NotNull int[] xPoints, @NotNull int[] yPoints,
                                 int lineHeight,
-                                @Nullable EditorColorsScheme scheme) {
+                                @NotNull EditorColorsScheme scheme) {
     int height = getHeight(lineHeight);
-    if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
 
     g.setColor(getBackgroundColor(scheme));
 
