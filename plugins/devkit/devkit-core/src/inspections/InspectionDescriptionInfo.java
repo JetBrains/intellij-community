@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import java.util.Set;
 
 public class InspectionDescriptionInfo {
   private static final Logger LOG = Logger.getInstance(InspectionDescriptionInfo.class);
+
   private final String myFilename;
   private final PsiMethod myMethod;
   private final PsiFile myDescriptionFile;
@@ -72,9 +73,9 @@ public class InspectionDescriptionInfo {
     if (method == null) {
       shortNameInXml = true;
       String className = psiClass.getQualifiedName();
-      if(className != null) {
+      if (className != null) {
         Extension extension = findExtension(module, psiClass);
-        if(extension != null) {
+        if (extension != null) {
           filename = extension.getXmlTag().getAttributeValue("shortName");
         }
       }
@@ -84,7 +85,7 @@ public class InspectionDescriptionInfo {
       filename = PsiUtil.getReturnedLiteral(method, psiClass);
     }
 
-    if(filename == null) {
+    if (filename == null) {
       final String className = psiClass.getName();
       LOG.assertTrue(className != null, psiClass);
       filename = InspectionProfileEntry.getShortName(className);
@@ -108,7 +109,7 @@ public class InspectionDescriptionInfo {
     // Try search in narrow scopes first
     Project project = module.getProject();
     Set<DomFileElement<IdeaPlugin>> processed = new HashSet<>();
-    for(GlobalSearchScope scope : DescriptionCheckerUtil.searchScopes(module)) {
+    for (GlobalSearchScope scope : DescriptionCheckerUtil.searchScopes(module)) {
       List<DomFileElement<IdeaPlugin>> origElements = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
       origElements.removeAll(processed);
       List<DomFileElement<IdeaPlugin>> elements = PluginDescriptorChooser.findAppropriateIntelliJModule(module.getName(), origElements);
@@ -119,15 +120,15 @@ public class InspectionDescriptionInfo {
       Ref<Extension> result = Ref.create(null);
       query.forEach(ref -> {
         PsiElement element = ref.getElement();
-        if(element instanceof XmlAttributeValue) {
+        if (element instanceof XmlAttributeValue) {
           PsiElement parent = element.getParent();
-          if(parent instanceof XmlAttribute && "implementationClass".equals(((XmlAttribute)parent).getName())) {
+          if (parent instanceof XmlAttribute && "implementationClass".equals(((XmlAttribute)parent).getName())) {
             DomElement domElement = DomUtil.getDomElement(parent.getParent());
-            if(domElement instanceof Extension) {
+            if (domElement instanceof Extension) {
               Extension extension = (Extension)domElement;
               ExtensionPoint extensionPoint = extension.getExtensionPoint();
-              if(extensionPoint != null &&
-                 InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), InspectionEP.class.getName())) {
+              if (extensionPoint != null &&
+                  InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), InspectionEP.class.getName())) {
                 result.set(extension);
                 return false;
               }
@@ -137,7 +138,7 @@ public class InspectionDescriptionInfo {
         return true;
       });
       Extension extension = result.get();
-      if(extension != null) return extension;
+      if (extension != null) return extension;
       processed.addAll(origElements);
     }
     return null;
