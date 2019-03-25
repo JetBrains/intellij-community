@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -17,6 +17,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflowKt.removeEllipsisSuffix;
 
 public class SessionDialog extends DialogWrapper {
 
@@ -44,8 +46,7 @@ public class SessionDialog extends DialogWrapper {
       configurationComponent == null ? createConfigurationUI(mySession, myChanges, myCommitMessage) : configurationComponent;
     String configurationComponentName =
       myConfigurationComponent != null ? (String)myConfigurationComponent.getClientProperty(VCS_CONFIGURATION_UI_TITLE) : null;
-    setTitle(StringUtil.isEmptyOrSpaces(configurationComponentName)
-             ? CommitChangeListDialog.trimEllipsis(title) : configurationComponentName);
+    setTitle(StringUtil.isEmptyOrSpaces(configurationComponentName) ? removeEllipsisSuffix(title) : configurationComponentName);
     init();
     initValidation();
   }

@@ -12,13 +12,10 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
@@ -52,11 +49,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow.getCommitHandlerFactories;
-import static com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter.moveToFailedList;
+import static com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflowKt.getPresentableText;
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
 import static com.intellij.util.ArrayUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -68,8 +64,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.*;
 
 public abstract class CommitChangeListDialog extends DialogWrapper implements SingleChangeListCommitWorkflowUi, ComponentContainer {
-  private static final Logger LOG = getInstance(CommitChangeListDialog.class);
-
   public static final String DIALOG_TITLE = message("commit.dialog.title");
 
   private static final String HELP_ID = "reference.dialogs.vcs.commit";
@@ -241,7 +235,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       throw new IllegalArgumentException("nothing found to execute commit with");
     }
 
-    setTitle(isDefaultCommitEnabled() ? DIALOG_TITLE : getExecutorPresentableText(executors.get(0)));
+    setTitle(isDefaultCommitEnabled() ? DIALOG_TITLE : getPresentableText(executors.get(0)));
     myHelpId = isDefaultCommitEnabled() ? HELP_ID : getHelpId(executors);
 
     myDiffDetails = new MyChangeProcessor(myProject, myWorkflow.isPartialCommitEnabled());
@@ -270,6 +264,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     afterInit();
 
     return showAndGet();
+  }
+
+  @Override
+  public void deactivate() {
+    close(OK_EXIT_CODE);
   }
 
   @Override
@@ -478,75 +477,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return result.toArray(new Action[0]);
   }
 
-  void execute(@NotNull CommitExecutor commitExecutor, @NotNull CommitSession session) {
-    if (session instanceof CommitSessionContextAware) {
-      ((CommitSessionContextAware)session).setContext(getCommitContext());
-    }
-
-    ensureDataIsActual(() -> {
-      JComponent configurationUI = SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage());
-      if (configurationUI != null) {
-        DialogWrapper sessionDialog =
-          new SessionDialog(getExecutorPresentableText(commitExecutor), getProject(), session, getIncludedChanges(), getCommitMessage(),
-                            configurationUI);
-        if (!sessionDialog.showAndGet()) {
-          session.executionCanceled();
-          return;
-        }
-      }
-
-      DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-      stopUpdate();
-      CheckinHandler.ReturnResult result = myWorkflow.runBeforeCommitChecks(commitExecutor, getChangeList());
-      if (result == CheckinHandler.ReturnResult.CANCEL) {
-        restartUpdate();
-      }
-      else if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
-        ChangeList changeList = getChangeList();
-        moveToFailedList(myProject, changeList, getCommitMessage(), getIncludedChanges(),
-                         message("commit.dialog.rejected.commit.template", changeList.getName()));
-        doCancelAction();
-      }
-      else if (result == CheckinHandler.ReturnResult.COMMIT) {
-        boolean success = false;
-        try {
-          boolean completed = ProgressManager.getInstance()
-            .runProcessWithProgressSynchronously(() -> session.execute(getIncludedChanges(), getCommitMessage()),
-                                                 commitExecutor.getActionText(), true, getProject());
-
-          if (completed) {
-            LOG.debug("Commit successful");
-            getHandlers().forEach(CheckinHandler::checkinSuccessful);
-            success = true;
-            defaultListCleaner.clean();
-            close(OK_EXIT_CODE);
-          }
-          else {
-            LOG.debug("Commit canceled");
-            session.executionCanceled();
-          }
-        }
-        catch (Throwable e) {
-          Messages.showErrorDialog(message("error.executing.commit", commitExecutor.getActionText(), e.getLocalizedMessage()),
-                                   commitExecutor.getActionText());
-
-          getHandlers().forEach(handler -> handler.checkinFailed(singletonList(new VcsException(e))));
-        }
-        finally {
-          CommitResultHandler resultHandler = myWorkflow.getResultHandler();
-          if (resultHandler != null) {
-            if (success) {
-              resultHandler.onSuccess(getCommitMessage());
-            }
-            else {
-              resultHandler.onFailure();
-            }
-          }
-        }
-      }
-    });
-  }
-
   @Override
   public void dispose() {
     myDisposed = true;
@@ -570,23 +500,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   private void restartUpdate() {
     myUpdateDisabled = false;
     myUpdateButtonsRunnable.run();
-  }
-
-  private class DefaultListCleaner {
-    private final boolean myToClean;
-
-    private DefaultListCleaner() {
-      int selectedSize = getIncludedChanges().size();
-      LocalChangeList selectedList = getChangeList();
-      int totalSize = selectedList.getChanges().size();
-      myToClean = totalSize == selectedSize && selectedList.hasDefaultName();
-    }
-
-    void clean() {
-      if (myToClean) {
-        ChangeListManager.getInstance(myProject).editComment(LocalChangeList.DEFAULT_NAME, "");
-      }
-    }
   }
 
   @Override
@@ -620,6 +533,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   @Deprecated
   public void setCommitMessage(@Nullable String commitMessage) {}
 
+  @Deprecated
   @NotNull
   public String getCommitMessage() {
     return myCommitMessageArea.getText();
@@ -775,25 +689,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @Override
   public void endBeforeCommitChecks(@NotNull CheckinHandler.ReturnResult result) {
-    if (result == CheckinHandler.ReturnResult.COMMIT) {
-      close(OK_EXIT_CODE);
-    }
-    else if (result == CheckinHandler.ReturnResult.CANCEL) {
+    if (result == CheckinHandler.ReturnResult.CANCEL) {
       restartUpdate();
     }
     else if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
       doCancelAction();
     }
-  }
-
-  @NotNull
-  private CommitContext getCommitContext() {
-    return myWorkflow.getCommitContext();
-  }
-
-  @NotNull
-  private List<CheckinHandler> getHandlers() {
-    return myWorkflow.getCommitHandlers();
   }
 
   @NotNull
@@ -818,25 +719,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   @NotNull
   JComponent getBrowserBottomPanel() {
     return myBrowserBottomPanel;
-  }
-
-  @NotNull
-  static String getExecutorPresentableText(@NotNull CommitExecutor executor) {
-    return trimEllipsis(removeMnemonic(executor.getActionText()));
-  }
-
-  @NotNull
-  static String trimEllipsis(@NotNull String title) {
-    return StringUtil.trimEnd(StringUtil.trimEnd(title, "..."), "\u2026");
-  }
-
-  private void ensureDataIsActual(@NotNull Runnable runnable) {
-    ChangeListManager.getInstance(myProject).invokeAfterUpdate(
-      () -> {
-        getBrowser().updateDisplayedChangeLists();
-        runnable.run();
-      },
-      InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Refreshing changelists...", ModalityState.current());
   }
 
   private class CommitExecutorAction extends AbstractAction {
