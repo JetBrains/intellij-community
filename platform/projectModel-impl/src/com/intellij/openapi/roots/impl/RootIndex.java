@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Function;
 import com.intellij.util.Query;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +66,7 @@ class RootIndex {
     for (VirtualFile root : allRoots) {
       List<VirtualFile> hierarchy = getHierarchy(root, allRoots, info);
       Pair<DirectoryInfo, String> pair = hierarchy != null
-                                         ? calcDirectoryInfo(root, hierarchy, info)
+                                         ? calcDirectoryInfoAndPackagePrefix(root, hierarchy, info)
                                          : new Pair<>(NonProjectDirectoryInfo.IGNORED, null);
       myRootInfos.put(root, pair.first);
       rootsByPackagePrefix.putValue(pair.second, root);
@@ -466,8 +467,8 @@ class RootIndex {
         }
       }
 
-      @Nullable Pair<VirtualFile, Collection<?>> libraryClassRootInfo = myRootInfo.findLibraryRootInfo(roots, false);
-      @Nullable Pair<VirtualFile, Collection<?>> librarySourceRootInfo = myRootInfo.findLibraryRootInfo(roots, true);
+      @Nullable Pair<VirtualFile, List<Condition<? super VirtualFile>>> libraryClassRootInfo = myRootInfo.findLibraryRootInfo(roots, false);
+      @Nullable Pair<VirtualFile, List<Condition<? super VirtualFile>>> librarySourceRootInfo = myRootInfo.findLibraryRootInfo(roots, true);
       result.addAll(myRootInfo.getLibraryOrderEntries(roots,
                                                       Pair.getFirst(libraryClassRootInfo),
                                                       Pair.getFirst(librarySourceRootInfo),
@@ -671,7 +672,9 @@ class RootIndex {
       return null;
     }
 
-    private static boolean isExcludedByPattern(@NotNull VirtualFile contentRoot, List<? extends VirtualFile> hierarchy, @NotNull FileTypeAssocTable<Boolean> table) {
+    private static boolean isExcludedByPattern(@NotNull VirtualFile contentRoot,
+                                               List<? extends VirtualFile> hierarchy,
+                                               @NotNull FileTypeAssocTable<Boolean> table) {
       for (VirtualFile file : hierarchy) {
         if (table.findAssociatedFileType(file.getNameSequence()) != null) {
           return true;
@@ -697,48 +700,49 @@ class RootIndex {
      * @return root and set of libraries that provided it
      */
     @Nullable
-    private Pair<VirtualFile, Collection<?>> findLibraryRootInfo(@NotNull List<? extends VirtualFile> hierarchy, boolean source) {
-      Set<Object> librariesToIgnore = ContainerUtil.newHashSet();
+    private Pair<VirtualFile, List<Condition<? super VirtualFile>>> findLibraryRootInfo(@NotNull List<? extends VirtualFile> hierarchy,
+                                                                                        boolean source) {
+      Set</*Library|SyntheticLibrary*/ Object> librariesToIgnore = ContainerUtil.newHashSet();
       for (VirtualFile root : hierarchy) {
         librariesToIgnore.addAll(excludedFromLibraries.get(root));
         if (source && libraryOrSdkSources.contains(root)) {
-          if (!sourceOfLibraries.containsKey(root)) {
-            return Pair.create(root, Collections.emptySet());
-          }
-          Collection<Object> rootProducers = findLibraryRootProducers(sourceOfLibraries.get(root), root, librariesToIgnore);
-          if (!rootProducers.isEmpty()) {
-            return Pair.create(root, rootProducers);
-          }
+          List<Condition<? super VirtualFile>> found = findInLibraryProducers(root, sourceOfLibraries, librariesToIgnore);
+          if (found != null) return Pair.create(root, found);
         }
         else if (!source && libraryOrSdkClasses.contains(root)) {
-          if (!classOfLibraries.containsKey(root)) {
-            return Pair.create(root, Collections.emptySet());
-          }
-          Collection<Object> rootProducers = findLibraryRootProducers(classOfLibraries.get(root), root, librariesToIgnore);
-          if (!rootProducers.isEmpty()) {
-            return Pair.create(root, rootProducers);
-          }
+          List<Condition<? super VirtualFile>> found = findInLibraryProducers(root, classOfLibraries, librariesToIgnore);
+          if (found != null) return Pair.create(root, found);
         }
       }
       return null;
     }
 
-    @NotNull
-    private static Collection<Object> findLibraryRootProducers(@NotNull Collection<?> producers,
-                                                               @NotNull VirtualFile root,
-                                                               @NotNull Set<?> librariesToIgnore) {
-      Set<Object> libraries = ContainerUtil.newHashSet();
+    private static List<Condition<? super VirtualFile>> findInLibraryProducers(@NotNull VirtualFile root,
+                                                                               @NotNull MultiMap<VirtualFile, Object> libraryRoots,
+                                                                               @NotNull Set<Object> librariesToIgnore) {
+      if (!libraryRoots.containsKey(root)) {
+        return Collections.emptyList();
+      }
+      Collection<Object> producers = libraryRoots.get(root);
+      Set</*Library|SyntheticLibrary*/ Object> libraries = ContainerUtil.newHashSet();
+      List<Condition<? super VirtualFile>> exclusions = new SmartList<>();
       for (Object library : producers) {
         if (librariesToIgnore.contains(library)) continue;
         if (library instanceof SyntheticLibrary) {
           Condition<VirtualFile> exclusion = ((SyntheticLibrary)library).getExcludeFileCondition();
-          if (exclusion != null && exclusion.value(root)) {
-            continue;
+          if (exclusion != null) {
+            exclusions.add(exclusion);
+            if (exclusion.value(root)) {
+              continue;
+            }
           }
         }
         libraries.add(library);
       }
-      return libraries;
+      if (!libraries.isEmpty()) {
+        return exclusions;
+      }
+      return null;
     }
 
     private String calcPackagePrefix(@NotNull VirtualFile root,
@@ -817,14 +821,14 @@ class RootIndex {
   }
 
   @NotNull
-  private static Pair<DirectoryInfo, String> calcDirectoryInfo(@NotNull final VirtualFile root,
-                                                               @NotNull final List<? extends VirtualFile> hierarchy,
-                                                               @NotNull RootInfo info) {
+  private static Pair<DirectoryInfo, String> calcDirectoryInfoAndPackagePrefix(@NotNull final VirtualFile root,
+                                                                               @NotNull final List<? extends VirtualFile> hierarchy,
+                                                                               @NotNull RootInfo info) {
     VirtualFile moduleContentRoot = info.findNearestContentRoot(hierarchy);
-    Pair<VirtualFile, Collection<?>> librarySourceRootInfo = info.findLibraryRootInfo(hierarchy, true);
+    Pair<VirtualFile, List<Condition<? super VirtualFile>>> librarySourceRootInfo = info.findLibraryRootInfo(hierarchy, true);
     VirtualFile librarySourceRoot = Pair.getFirst(librarySourceRootInfo);
 
-    Pair<VirtualFile, Collection<?>> libraryClassRootInfo = info.findLibraryRootInfo(hierarchy, false);
+    Pair<VirtualFile, List<Condition<? super VirtualFile>>> libraryClassRootInfo = info.findLibraryRootInfo(hierarchy, false);
     VirtualFile libraryClassRoot = Pair.getFirst(libraryClassRootInfo);
 
     boolean inProject = moduleContentRoot != null ||
@@ -852,7 +856,7 @@ class RootIndex {
     String unloadedModuleName = info.contentRootOfUnloaded.get(nearestContentRoot);
     FileTypeAssocTable<Boolean> contentExcludePatterns =
       moduleContentRoot != null ? info.excludeFromContentRootTables.get(moduleContentRoot) : null;
-    Condition<VirtualFile> libraryExclusionPredicate = getLibraryExclusionPredicate(librarySourceRootInfo);
+    Condition<? super VirtualFile> libraryExclusionPredicate = getLibraryExclusionPredicate(Pair.getSecond(librarySourceRootInfo));
 
     DirectoryInfo directoryInfo = contentExcludePatterns != null || libraryExclusionPredicate != null
                                   ? new DirectoryInfoWithExcludePatterns(root, module, nearestContentRoot, sourceRoot, sourceFolder,
@@ -868,17 +872,15 @@ class RootIndex {
   }
 
   @Nullable
-  private static Condition<VirtualFile> getLibraryExclusionPredicate(@Nullable Pair<VirtualFile, Collection<?>> libraryRootInfo) {
-    Condition<VirtualFile> result = Conditions.alwaysFalse();
-    if (libraryRootInfo != null) {
-      for (Object library : libraryRootInfo.second) {
-        Condition<VirtualFile> exclusionPredicate =
-          library instanceof SyntheticLibrary ? ((SyntheticLibrary)library).getExcludeFileCondition() : null;
-        if (exclusionPredicate == null) continue;
-        result = Conditions.or(result, exclusionPredicate);
+  private static Condition<? super VirtualFile> getLibraryExclusionPredicate(@Nullable List<? extends Condition<? super VirtualFile>> exclusions) {
+    if (exclusions != null) {
+      Condition<VirtualFile> result = Conditions.alwaysFalse();
+      for (Condition<? super VirtualFile> exclusion : exclusions) {
+        result = Conditions.or(result, exclusion);
       }
+      return result == Conditions.<VirtualFile>alwaysFalse() ? null : result;
     }
-    return result != Conditions.<VirtualFile>alwaysFalse() ? result : null;
+    return null;
   }
 
   @NotNull
