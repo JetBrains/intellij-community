@@ -191,7 +191,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         annotateAddToGroup((AddToGroup)element, holder);
       }
       else if (element instanceof Action) {
-        annotateAction((Action)element, holder);
+        annotateAction((Action)element, holder, componentModuleRegistrationChecker);
       }
       else if (element instanceof Group) {
         annotateGroup((Group)element, holder);
@@ -703,10 +703,16 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
-  private static void annotateAction(Action action, DomElementAnnotationHolder holder) {
+  private static void annotateAction(Action action,
+                                     DomElementAnnotationHolder holder,
+                                     ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
     final GenericAttributeValue<String> iconAttribute = action.getIcon();
     if (DomUtil.hasXml(iconAttribute)) {
       annotateResolveProblems(holder, iconAttribute);
+    }
+    Module module = action.getModule();
+    if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
+      componentModuleRegistrationChecker.checkProperXmlFileForClass(action, action.getClazz().getValue());
     }
   }
 

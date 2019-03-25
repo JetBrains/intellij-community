@@ -15,4 +15,6 @@
     <myPlugin.myMainModuleClassEp implementation="MainModuleClass"/>
   </extensions>
 
+  <actions>
+  </actions>
 </idea-plugin>
