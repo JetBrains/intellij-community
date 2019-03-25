@@ -72,7 +72,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     final List<NamedScope> predefinedScopes = new ArrayList<>();
     for (CustomScopesProvider scopesProvider : CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject)) {
       List<NamedScope> customScopes = scopesProvider.getFilteredScopes();
-      if (ArrayUtil.contains(null, customScopes)) {
+      if (customScopes.contains(null)) {
         throw PluginException.createByClass("Provider.getFilteredScopes() must not return null scopes, got: " + customScopes + "; provider: " + scopesProvider + " (" + scopesProvider.getClass() + ")", null, scopesProvider.getClass());
       }
 
