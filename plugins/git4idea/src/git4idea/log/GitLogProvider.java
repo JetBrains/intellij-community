@@ -93,7 +93,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     boolean refresh = requirements instanceof VcsLogProviderRequirementsEx && ((VcsLogProviderRequirementsEx)requirements).isRefresh();
 
-    DetailedLogData data = GitLogUtil.collectMetadata(myProject, root, false, params);
+    DetailedLogData data = GitLogUtil.collectMetadata(myProject, root, params);
 
     Set<VcsRef> safeRefs = data.getRefs();
     Set<VcsRef> allRefs = new OpenTHashSet<>(safeRefs, DONT_CONSIDER_SHA);
@@ -282,7 +282,7 @@ public class GitLogProvider implements VcsLogProvider {
     Set<VcsCommitMetadata> commits = ContainerUtil.newHashSet();
     VcsFileUtil.foreachChunk(new ArrayList<>(unmatchedTags), 1, tagsChunk -> {
       String[] parameters = ArrayUtil.toStringArray(ContainerUtil.concat(params, tagsChunk));
-      DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, false, parameters);
+      DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, parameters);
       refs.addAll(logData.getRefs());
       commits.addAll(logData.getCommits());
     });
