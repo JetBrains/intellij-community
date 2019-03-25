@@ -63,6 +63,7 @@
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSetterAsMethodContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleConventionsContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactHandlerContributor"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDelegatesToProvider"/>
     <referenceTypeEnhancer implementation="org.jetbrains.plugins.gradle.service.resolve.NamedDomainObjectCollectionTypeEnhancer"/>
     <unresolvedHighlightFilter implementation="org.jetbrains.plugins.gradle.service.resolve.GradleUnresolvedReferenceFilter"/>
