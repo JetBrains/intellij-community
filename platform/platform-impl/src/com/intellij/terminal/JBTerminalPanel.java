@@ -76,6 +76,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   };
 
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
+  private final TerminalEscapeKeyListener myEscapeKeyListener;
 
   private List<AnAction> myActionsToSkip;
 
@@ -91,6 +92,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     addFocusListener(this);
 
     mySettingsProvider.addListener(this);
+    myEscapeKeyListener = new TerminalEscapeKeyListener(this);
   }
 
   private static void registerKeymapActions(final TerminalPanel terminalPanel) {
@@ -157,6 +159,11 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     return false;
   }
 
+  @Override
+  public void handleKeyEvent(@NotNull KeyEvent e) {
+    myEscapeKeyListener.handleKeyEvent(e);
+    super.handleKeyEvent(e);
+  }
 
   @Override
   protected void setupAntialiasing(Graphics graphics) {
