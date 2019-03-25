@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -260,7 +259,7 @@ public class GitLogUtil {
                                      @NotNull GitCommitRequirements requirements,
                                      boolean lowPriorityProcess,
                                      @NotNull String... parameters) throws VcsException {
-    List<String> configParameters = createConfigParameters(requirements);
+    List<String> configParameters = requirements.configParameters();
     GitLineHandler handler = createGitHandler(project, root, configParameters, lowPriorityProcess);
     readFullDetailsFromHandler(project, root, commitConsumer, handler, requirements, parameters);
   }
@@ -275,8 +274,8 @@ public class GitLogUtil {
     if (factory == null) {
       return;
     }
-    boolean withRenames = requirements.getDiffRenameLimit() != GitCommitRequirements.DiffRenameLimit.NO_RENAMES;
 
+    String[] commandParameters = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(requirements.commandParameters()), parameters);
     if (requirements.getDiffToParentsInMerges()) {
       Consumer<List<GitLogRecord>> consumer = records -> {
         GitLogRecord firstRecord = notNull(getFirstItem(records));
@@ -294,7 +293,7 @@ public class GitLogUtil {
       GitLogRecordCollector recordCollector = requirements.getPreserveOrder() ? new GitLogRecordCollector(project, root, consumer)
                                                                               : new GitLogUnorderedRecordCollector(project, root, consumer);
 
-      readRecordsFromHandler(project, root, handler, recordCollector, withRenames, true, parameters);
+      readRecordsFromHandler(project, root, handler, recordCollector, commandParameters);
       recordCollector.finish();
     }
     else {
@@ -302,7 +301,7 @@ public class GitLogUtil {
                                                                                       ContainerUtil.newArrayList(record), factory,
                                                                                       requirements.getDiffRenameLimit()));
 
-      readRecordsFromHandler(project, root, handler, consumer, withRenames, false, parameters);
+      readRecordsFromHandler(project, root, handler, consumer, commandParameters);
     }
   }
 
@@ -310,8 +309,6 @@ public class GitLogUtil {
                                              @NotNull VirtualFile root,
                                              @NotNull GitLineHandler handler,
                                              @NotNull Consumer<GitLogRecord> converter,
-                                             boolean withRenames,
-                                             boolean withFullMergeDiff,
                                              @NotNull String... parameters)
     throws VcsException {
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, COMMIT_METADATA_OPTIONS);
@@ -319,12 +316,6 @@ public class GitLogUtil {
     handler.addParameters(parameters);
     handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
     handler.addParameters("--name-status");
-    if (withRenames) {
-      handler.addParameters("-M");
-    }
-    if (withFullMergeDiff) {
-      handler.addParameters("-m");
-    }
     handler.endOptions();
 
     StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
@@ -344,7 +335,7 @@ public class GitLogUtil {
                                               boolean lowPriorityProcess,
                                               @NotNull Consumer<? super GitCommit> commitConsumer) throws VcsException {
     if (hashes.isEmpty()) return;
-    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(requirements), lowPriorityProcess);
+    GitLineHandler handler = createGitHandler(project, root, requirements.configParameters(), lowPriorityProcess);
     sendHashesToStdin(vcs, hashes, handler);
 
     readFullDetailsFromHandler(project, root, commitConsumer, handler, requirements, getNoWalkParameter(vcs), STDIN);
@@ -379,32 +370,5 @@ public class GitLogUtil {
     if (lowPriorityProcess) handler.withLowPriority();
     handler.setWithMediator(false);
     return handler;
-  }
-
-  @NotNull
-  private static List<String> createConfigParameters(@NotNull GitCommitRequirements requirements) {
-    List<String> result = ContainerUtil.newArrayList();
-    switch (requirements.getDiffRenameLimit()) {
-      case INFINITY:
-        result.add(renameLimit(0));
-        break;
-      case REGISTRY:
-        result.add(renameLimit(Registry.intValue("git.diff.renameLimit")));
-        break;
-      case NO_RENAMES:
-        result.add("diff.renames=false");
-        break;
-      case GIT_CONFIG:
-    }
-
-    if (!requirements.getIncludeRootChanges()) {
-      result.add("log.showRoot=false");
-    }
-    return result;
-  }
-
-  @NotNull
-  private static String renameLimit(int limit) {
-    return "diff.renameLimit=" + limit;
   }
 }
