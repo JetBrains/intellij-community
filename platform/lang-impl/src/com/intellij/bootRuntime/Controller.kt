@@ -79,7 +79,7 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
   fun restart() {
     SwingUtilities.invokeLater {
       SwingUtilities.getWindowAncestor(actionPanel).dispose()
-      ApplicationManagerEx.getApplicationEx().restart()
+      ApplicationManagerEx.getApplicationEx().restart(true)
     }
   }
 
