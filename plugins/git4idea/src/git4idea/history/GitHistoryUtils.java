@@ -112,8 +112,8 @@ public class GitHistoryUtils {
                                                                          @NotNull VirtualFile root,
                                                                          @NotNull String... hashes)
     throws VcsException {
-    List<? extends VcsCommitMetadata> result = GitLogUtil.collectShortDetails(project, GitVcs.getInstance(project), root,
-                                                                              Arrays.asList(hashes));
+    List<? extends VcsCommitMetadata> result = GitLogUtil.collectMetadata(project, GitVcs.getInstance(project), root,
+                                                                          Arrays.asList(hashes));
     if (result.size() != hashes.length) return null;
     return result;
   }
