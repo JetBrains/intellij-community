@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
@@ -158,20 +157,35 @@ public class GitLogUtil {
 
     Set<VcsRef> refs = new OpenTHashSet<>(GitLogProvider.DONT_CONSIDER_SHA);
     List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
+    Consumer<GitLogRecord> recordConsumer = record -> {
+      GitCommit commit = createCommit(project, root, Collections.singletonList(record), factory);
+      commits.add(commit);
+      Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
+      for (VcsRef ref : refsInRecord) {
+        if (!refs.add(ref)) {
+          VcsRef otherRef = ContainerUtil.find(refs, r -> GitLogProvider.DONT_CONSIDER_SHA.equals(r, ref));
+          LOG.error("Adding duplicate element " + ref + " to the set containing " + otherRef);
+        }
+      }
+    };
 
     try {
       GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), false);
-      readRecordsFromHandler(project, root, true, false, false, false, record -> {
-        GitCommit commit = createCommit(project, root, Collections.singletonList(record), factory);
-        commits.add(commit);
-        Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
-        for (VcsRef ref : refsInRecord) {
-          if (!refs.add(ref)) {
-            VcsRef otherRef = ContainerUtil.find(refs, r -> GitLogProvider.DONT_CONSIDER_SHA.equals(r, ref));
-            LOG.error("Adding duplicate element " + ref + " to the set containing " + otherRef);
-          }
-        }
-      }, handler, params);
+      GitLogParser.GitLogOption[] options = ArrayUtil.append(COMMIT_METADATA_OPTIONS, REF_NAMES);
+      GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, options);
+      handler.setStdoutSuppressed(true);
+      handler.addParameters(params);
+      handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
+      handler.addParameters("--decorate=full");
+      handler.endOptions();
+
+      StopWatch sw = StopWatch.start("loading commit metadata in [" + root.getName() + "]");
+
+      GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, recordConsumer);
+      Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError();
+      handlerListener.reportErrors();
+
+      sw.report();
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -281,7 +295,7 @@ public class GitLogUtil {
       GitLogRecordCollector recordCollector = requirements.getPreserveOrder() ? new GitLogRecordCollector(project, root, consumer)
                                                                               : new GitLogUnorderedRecordCollector(project, root, consumer);
 
-      readRecordsFromHandler(project, root, false, true, withRenames, true, recordCollector, handler, parameters);
+      readRecordsFromHandler(project, root, withRenames, true, recordCollector, handler, parameters);
       recordCollector.finish();
     }
     else {
@@ -289,34 +303,23 @@ public class GitLogUtil {
                                                                                       ContainerUtil.newArrayList(record), factory,
                                                                                       requirements.getDiffRenameLimit()));
 
-      readRecordsFromHandler(project, root, false, true, withRenames, false, consumer, handler, parameters);
+      readRecordsFromHandler(project, root, withRenames, false, consumer, handler, parameters);
     }
   }
 
   private static void readRecordsFromHandler(@NotNull Project project,
                                              @NotNull VirtualFile root,
-                                             boolean withRefs,
-                                             boolean withChanges,
                                              boolean withRenames,
                                              boolean withFullMergeDiff,
                                              @NotNull Consumer<GitLogRecord> converter,
                                              @NotNull GitLineHandler handler,
                                              @NotNull String... parameters)
     throws VcsException {
-    GitLogParser.GitLogOption[] options = COMMIT_METADATA_OPTIONS;
-    if (withRefs) {
-      options = ArrayUtil.append(options, REF_NAMES);
-    }
-    GitLogParser parser = new GitLogParser(project, withChanges ? GitLogParser.NameStatus.STATUS : GitLogParser.NameStatus.NONE, options);
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, COMMIT_METADATA_OPTIONS);
     handler.setStdoutSuppressed(true);
     handler.addParameters(parameters);
     handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    if (withRefs) {
-      handler.addParameters("--decorate=full");
-    }
-    if (withChanges) {
-      handler.addParameters("--name-status");
-    }
+    handler.addParameters("--name-status");
     if (withRenames) {
       handler.addParameters("-M");
     }
