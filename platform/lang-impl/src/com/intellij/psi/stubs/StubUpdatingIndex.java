@@ -278,7 +278,6 @@ public class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<Serial
                                                           false,
                                                           false),
             new StubUpdatingForwardIndexAccessor(),
-            null,
             null);
       checkNameStorage();
     }
