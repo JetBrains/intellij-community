@@ -150,7 +150,7 @@ class GitRewordOperation(private val repository: GitRepository,
 
   private fun findNewHashOfRewordedCommit(newHead: String): Hash? {
     val newCommitsRange = "${commit.parents.first().asString()}..$newHead"
-    val newCommits = GitLogUtil.collectMetadata(project, repository.root, false, newCommitsRange).commits
+    val newCommits = GitLogUtil.collectMetadata(project, repository.root, newCommitsRange).commits
     if (newCommits.isEmpty()) {
       LOG.error("Couldn't find commits after reword in range $newCommitsRange")
       return null

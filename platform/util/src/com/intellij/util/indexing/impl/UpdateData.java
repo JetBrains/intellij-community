@@ -62,7 +62,7 @@ public class UpdateData<Key, Value> {
   }
 
   @NotNull
-  protected Map<Key, Value> getNewData() {
+  public Map<Key, Value> getNewData() {
     return myNewData;
   }
 

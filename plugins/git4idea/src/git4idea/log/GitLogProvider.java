@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,7 @@ import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
@@ -42,10 +44,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static com.intellij.vcs.log.VcsLogFilterCollection.*;
 
 public class GitLogProvider implements VcsLogProvider {
-
   private static final Logger LOG = Logger.getInstance(GitLogProvider.class);
   public static final Function<VcsRef, String> GET_TAG_NAME = ref -> ref.getType() == GitRefManager.TAG ? ref.getName() : null;
   public static final TObjectHashingStrategy<VcsRef> DONT_CONSIDER_SHA = new TObjectHashingStrategy<VcsRef>() {
@@ -63,19 +65,14 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull private final Project myProject;
   @NotNull private final GitVcs myVcs;
   @NotNull private final GitRepositoryManager myRepositoryManager;
-  @NotNull private final GitUserRegistry myUserRegistry;
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
 
-  public GitLogProvider(@NotNull Project project,
-                        @NotNull GitRepositoryManager repositoryManager,
-                        @NotNull VcsLogObjectsFactory factory,
-                        @NotNull GitUserRegistry userRegistry) {
+  public GitLogProvider(@NotNull Project project) {
     myProject = project;
-    myRepositoryManager = repositoryManager;
-    myUserRegistry = userRegistry;
+    myRepositoryManager = GitRepositoryManager.getInstance(project);
     myRefSorter = new GitRefManager(myProject, myRepositoryManager);
-    myVcsObjectsFactory = factory;
+    myVcsObjectsFactory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
     myVcs = GitVcs.getInstance(project);
   }
 
@@ -96,7 +93,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     boolean refresh = requirements instanceof VcsLogProviderRequirementsEx && ((VcsLogProviderRequirementsEx)requirements).isRefresh();
 
-    DetailedLogData data = GitLogUtil.collectMetadata(myProject, root, false, params);
+    DetailedLogData data = GitLogUtil.collectMetadata(myProject, root, params);
 
     Set<VcsRef> safeRefs = data.getRefs();
     Set<VcsRef> allRefs = new OpenTHashSet<>(safeRefs, DONT_CONSIDER_SHA);
@@ -285,7 +282,7 @@ public class GitLogProvider implements VcsLogProvider {
     Set<VcsCommitMetadata> commits = ContainerUtil.newHashSet();
     VcsFileUtil.foreachChunk(new ArrayList<>(unmatchedTags), 1, tagsChunk -> {
       String[] parameters = ArrayUtil.toStringArray(ContainerUtil.concat(params, tagsChunk));
-      DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, false, parameters);
+      DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, parameters);
       refs.addAll(logData.getRefs());
       commits.addAll(logData.getCommits());
     });
@@ -358,7 +355,7 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public List<? extends VcsCommitMetadata> readMetadata(@NotNull final VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
-    return GitLogUtil.collectShortDetails(myProject, myVcs, root, hashes);
+    return GitLogUtil.collectMetadata(myProject, myVcs, root, hashes);
   }
 
   @NotNull
@@ -418,15 +415,42 @@ public class GitLogProvider implements VcsLogProvider {
   public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
                                                        @NotNull VcsLogFilterCollection filterCollection,
                                                        int maxCount) throws VcsException {
+    VcsLogRangeFilter rangeFilter = filterCollection.get(RANGE_FILTER);
+    if (rangeFilter == null) {
+      return getCommitsMatchingFilter(root, filterCollection, null, maxCount);
+    }
+
+     /*
+       We expect a "branch + range" combined filter to display the union of commits reachable from the branch,
+       and commits belonging to the range. But Git intersects results for such parameters.
+       => to solve this, we make a query for branch filters, and then separate queries for each of the ranges.
+     */
+    Set<TimedVcsCommit> commits = new LinkedHashSet<>();
+    if (filterCollection.get(BRANCH_FILTER) != null || filterCollection.get(REVISION_FILTER) != null) {
+      commits.addAll(getCommitsMatchingFilter(root, filterCollection, null, maxCount));
+      filterCollection = VcsLogFiltersKt.without(VcsLogFiltersKt.without(filterCollection, BRANCH_FILTER), REVISION_FILTER);
+    }
+    for (VcsLogRangeFilter.RefRange range : rangeFilter.getRanges()) {
+      commits.addAll(getCommitsMatchingFilter(root, filterCollection, range, maxCount));
+    }
+    return new ArrayList<>(commits);
+  }
+
+  @NotNull
+  private List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
+                                                        @NotNull VcsLogFilterCollection filterCollection,
+                                                        @Nullable VcsLogRangeFilter.RefRange range,
+                                                        int maxCount) throws VcsException {
+
     if (!isRepositoryReady(root)) {
       return Collections.emptyList();
     }
 
     List<String> filterParameters = ContainerUtil.newArrayList();
 
-    VcsLogBranchFilter branchFilter = filterCollection.get(VcsLogFilterCollection.BRANCH_FILTER);
-    VcsLogRevisionFilter revisionFilter = filterCollection.get(VcsLogFilterCollection.REVISION_FILTER);
-    if (branchFilter != null || revisionFilter != null) {
+    VcsLogBranchFilter branchFilter = filterCollection.get(BRANCH_FILTER);
+    VcsLogRevisionFilter revisionFilter = filterCollection.get(REVISION_FILTER);
+    if (branchFilter != null || revisionFilter != null || range != null) {
       boolean atLeastOneBranchExists = false;
 
       if (branchFilter != null) {
@@ -454,7 +478,11 @@ public class GitLogProvider implements VcsLogProvider {
         }
       }
 
-      if (!atLeastOneBranchExists) { // no such branches in this repository => filter matches nothing
+      if (range != null) {
+        filterParameters.add(range.getExclusiveRef() + ".." + range.getInclusiveRef());
+      }
+
+      if (range == null && !atLeastOneBranchExists) { // no such branches in this repository => filter matches nothing
         return Collections.emptyList();
       }
     }
@@ -462,7 +490,7 @@ public class GitLogProvider implements VcsLogProvider {
       filterParameters.addAll(GitLogUtil.LOG_ALL);
     }
 
-    VcsLogDateFilter dateFilter = filterCollection.get(VcsLogFilterCollection.DATE_FILTER);
+    VcsLogDateFilter dateFilter = filterCollection.get(DATE_FILTER);
     if (dateFilter != null) {
       // assuming there is only one date filter, until filter expressions are defined
       if (dateFilter.getAfter() != null) {
@@ -473,13 +501,13 @@ public class GitLogProvider implements VcsLogProvider {
       }
     }
 
-    VcsLogTextFilter textFilter = filterCollection.get(VcsLogFilterCollection.TEXT_FILTER);
+    VcsLogTextFilter textFilter = filterCollection.get(TEXT_FILTER);
     String text = textFilter != null ? textFilter.getText() : null;
     boolean regexp = textFilter == null || textFilter.isRegex();
     boolean caseSensitive = textFilter != null && textFilter.matchesCase();
     appendTextFilterParameters(text, regexp, caseSensitive, filterParameters);
 
-    VcsLogUserFilter userFilter = filterCollection.get(VcsLogFilterCollection.USER_FILTER);
+    VcsLogUserFilter userFilter = filterCollection.get(USER_FILTER);
     if (userFilter != null) {
       Collection<String> names = ContainerUtil.map(userFilter.getUsers(root), VcsUserUtil::toExactString);
       if (regexp) {
@@ -501,7 +529,7 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     // note: structure filter must be the last parameter, because it uses "--" which separates parameters from paths
-    VcsLogStructureFilter structureFilter = filterCollection.get(VcsLogFilterCollection.STRUCTURE_FILTER);
+    VcsLogStructureFilter structureFilter = filterCollection.get(STRUCTURE_FILTER);
     if (structureFilter != null) {
       Collection<FilePath> files = structureFilter.getFiles();
       if (!files.isEmpty()) {
@@ -534,7 +562,7 @@ public class GitLogProvider implements VcsLogProvider {
   @Nullable
   @Override
   public VcsUser getCurrentUser(@NotNull VirtualFile root) {
-    return myUserRegistry.getOrReadUser(root);
+    return GitUserRegistry.getInstance(myProject).getOrReadUser(root);
   }
 
   @NotNull

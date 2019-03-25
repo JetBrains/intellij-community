@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -189,7 +190,8 @@ public class IdeEventQueue extends EventQueue {
     });
 
     addDispatcher(new WindowsAltSuppressor(), null);
-    if (Registry.is("keymap.windows.up.to.maximize.dialogs") && SystemInfo.isWin7OrNewer) {
+    if (SystemInfo.isWin7OrNewer && SystemProperties.getBooleanProperty("keymap.windows.up.to.maximize.dialogs", true)) {
+      // 'Windows+Up' shortcut would maximize active dialog under Win 7+
       addDispatcher(new WindowsUpMaximizer(), null);
     }
     addDispatcher(new EditingCanceller(), null);
@@ -198,7 +200,7 @@ public class IdeEventQueue extends EventQueue {
 
     IdeKeyEventDispatcher.addDumbModeWarningListener(() -> flushDelayedKeyEvents());
 
-    if (Registry.is("skip.move.resize.events")) {
+    if (SystemProperties.getBooleanProperty("skip.move.resize.events", true)) {
       myPostEventListeners.addListener(IdeEventQueue::skipMoveResizeEvents);
     }
 
@@ -369,6 +371,11 @@ public class IdeEventQueue extends EventQueue {
       e = metaEvent;
     }
     if (JAVA_11_OR_LATER && (SystemInfo.isMac || SystemInfo.isWindows)) {
+      if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH) {
+        if (!Registry.is("actionSystem.force.alt.gr") && Registry.is("actionSystem.fix.alt.gr")) {
+          ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
+        }
+      }
       if (e instanceof InputEvent && ((InputEvent)e).isAltGraphDown()) {
         if (!Registry.is("actionSystem.force.alt.gr") && Registry.is("actionSystem.fix.alt.gr")) {
           try {
@@ -1281,6 +1288,10 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static boolean isActionPopupShown() {
+    if (ApplicationManager.getApplication() == null) {
+      return false;
+    }
+
     ActionManager actionManager = ActionManager.getInstance();
     return actionManager instanceof ActionManagerImpl &&
            !((ActionManagerImpl)actionManager).isActionPopupStackEmpty() &&

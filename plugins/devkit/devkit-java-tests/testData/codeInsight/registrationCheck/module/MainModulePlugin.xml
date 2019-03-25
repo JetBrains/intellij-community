@@ -17,4 +17,7 @@
     <<error descr="Element should be registered in 'anotherModule' module where its class 'DependencyModuleClass' is defined">myPlugin.myDependencyModuleClassEp</error> implementation="DependencyModuleClass"/>
   </extensions>
 
+  <actions>
+    <<error descr="Element should be registered in 'anotherModule' module where its class 'DependencyModuleAction' is defined">action</error> class="DependencyModuleAction"/>
+  </actions>
 </idea-plugin>

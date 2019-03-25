@@ -66,7 +66,6 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   
   private boolean myIsEnabledInTest;
   private final Map<VirtualFile,IndentOptions> myDiscardedOptions = ContainerUtil.createWeakMap();
-  private boolean hasBeenAdvertised;
 
   @Nullable
   @Override
@@ -294,19 +293,6 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       return
         areDetected(getIndentOptions()) ||
         myDiscardedOptions.containsKey(file);
-    }
-
-    @Nullable
-    @Override
-    public String getAdvertisementText(@NotNull PsiFile psiFile) {
-      if (areDetected(getIndentOptions()) && !hasBeenAdvertised) {
-        String actualOptionsHint = IndentStatusBarUIContributor.getIndentInfo(getIndentOptions());
-        IndentOptions projectOptions = CodeStyle.getSettings(psiFile.getProject()).getIndentOptions(psiFile.getFileType());
-        String projectOptionsHint = IndentStatusBarUIContributor.getIndentInfo(projectOptions);
-        hasBeenAdvertised = true;
-        return ApplicationBundle.message("code.style.different.indent.size.detected", actualOptionsHint, projectOptionsHint);
-      }
-      return null;
     }
 
 

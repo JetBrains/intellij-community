@@ -21,6 +21,9 @@ public class TitledSeparator extends JPanel {
   public static final int SEPARATOR_LEFT_INSET = 6;
   public static final int SEPARATOR_RIGHT_INSET = 3;
 
+  private static final Color ENABLED_SEPARATOR_FOREGROUND = JBColor.namedColor("Group.separatorColor", new JBColor(Gray.xCD, Gray.x51));
+  private static final Color DISABLED_SEPARATOR_FOREGROUND = JBColor.namedColor("Group.disabledSeparatorColor", ENABLED_SEPARATOR_FOREGROUND);
+
   @NotNull
   public static Border createEmptyBorder() {
     return JBUI.Borders.empty(TOP_INSET, 0, BOTTOM_INSET, 0);
@@ -44,7 +47,7 @@ public class TitledSeparator extends JPanel {
   }
 
   public TitledSeparator(String text, @Nullable JComponent labelFor) {
-    mySeparator.setForeground(JBColor.namedColor("Group.separatorColor", new JBColor(Gray.xCD, Gray.x51)));
+    mySeparator.setForeground(ENABLED_SEPARATOR_FOREGROUND);
 
     setLayout(new GridBagLayout());
     add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
@@ -95,5 +98,7 @@ public class TitledSeparator extends JPanel {
     super.setEnabled(enabled);
     myLabel.setEnabled(enabled);
     mySeparator.setEnabled(enabled);
+
+    mySeparator.setForeground(enabled ? ENABLED_SEPARATOR_FOREGROUND : DISABLED_SEPARATOR_FOREGROUND);
   }
 }

@@ -1,0 +1,14 @@
+{a->a}
+-----
+Groovy script
+  Closable block
+    PsiElement({)('{')
+    Parameter list
+      Parameter
+        Modifiers
+          <empty list>
+        PsiElement(identifier)('a')
+    PsiElement(->)('->')
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiElement(})('}')

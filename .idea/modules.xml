@@ -498,6 +498,7 @@
       <module fileurl="file://$PROJECT_DIR$/jps/javac-ref-scanner-8/intellij.java.jps.javacRefScanner8.iml" filepath="$PROJECT_DIR$/jps/javac-ref-scanner-8/intellij.java.jps.javacRefScanner8.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/jshell-frontend/intellij.java.jshell.frontend.iml" filepath="$PROJECT_DIR$/java/execution/jshell-frontend/intellij.java.jshell.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/jshell-protocol/intellij.java.jshell.protocol.iml" filepath="$PROJECT_DIR$/java/execution/jshell-protocol/intellij.java.jshell.protocol.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/java-knownAnnotations/intellij.java.knownAnnotations.iml" filepath="$PROJECT_DIR$/plugins/java-knownAnnotations/intellij.java.knownAnnotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/intellij.java.langInjection.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/intellij.java.langInjection.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/intellilang-jps-plugin/intellij.java.langInjection.jps.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/intellilang-jps-plugin/intellij.java.langInjection.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/manifest/intellij.java.manifest.iml" filepath="$PROJECT_DIR$/java/manifest/intellij.java.manifest.iml" />

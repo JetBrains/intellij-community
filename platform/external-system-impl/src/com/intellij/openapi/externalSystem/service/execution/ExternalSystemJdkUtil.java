@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,52 +29,79 @@ public class ExternalSystemJdkUtil {
   public static final String USE_JAVA_HOME = "#JAVA_HOME";
 
   @Nullable
+  @Contract("_, null -> null")
   public static Sdk getJdk(@Nullable Project project, @Nullable String jdkName) throws ExternalSystemJdkException {
     if (jdkName == null) return null;
-
     if (USE_INTERNAL_JAVA.equals(jdkName)) {
       return getInternalJdk();
     }
+    else if (USE_PROJECT_JDK.equals(jdkName)) {
+      return getProjectJdk(project);
+    }
+    else if (USE_JAVA_HOME.equals(jdkName)) {
+      return getJavaHomeJdk();
+    }
+    return getJdk(jdkName);
+  }
 
-    if (USE_PROJECT_JDK.equals(jdkName)) {
-      if (project != null) {
-        Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
-        if (res != null) return res;
-
-        Module[] modules = ModuleManager.getInstance(project).getModules();
-        for (Module module : modules) {
-          Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-          if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) return sdk;
-        }
-      }
-
-      if (project == null || project.isDefault()) {
-        SdkType javaSdk = getJavaSdk();
-        Sdk recent = javaSdk == null ? null : ProjectJdkTable.getInstance().findMostRecentSdkOfType(javaSdk);
-        return recent != null ? recent : getInternalJdk();
-      }
-
+  @Nullable
+  @Contract("_, null -> null")
+  public static Sdk resolveJdkName(@Nullable Sdk projectSdk, @Nullable String jdkName) throws ExternalSystemJdkException {
+    if (jdkName == null) return null;
+    if (USE_INTERNAL_JAVA.equals(jdkName)) {
+      return getInternalJdk();
+    }
+    else if (USE_PROJECT_JDK.equals(jdkName)) {
+      if (projectSdk != null) return projectSdk;
       throw new ProjectJdkNotFoundException();
     }
+    else if (USE_JAVA_HOME.equals(jdkName)) {
+      return getJavaHomeJdk();
+    }
+    return getJdk(jdkName);
+  }
 
-    if (USE_JAVA_HOME.equals(jdkName)) {
-      String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
-      if (StringUtil.isEmptyOrSpaces(javaHome)) throw new UndefinedJavaHomeException();
-      if (!isValidJdk(javaHome)) throw new InvalidJavaHomeException(javaHome);
+  @NotNull
+  private static Sdk getProjectJdk(@Nullable Project project) {
+    if (project != null) {
+      Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (res != null) return res;
 
-      SimpleJavaSdkType sdkType = SimpleJavaSdkType.getInstance();
-      String sdkName = sdkType.suggestSdkName(null, javaHome);
-      return sdkType.createJdk(sdkName, javaHome);
+      Module[] modules = ModuleManager.getInstance(project).getModules();
+      for (Module module : modules) {
+        Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+        if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) return sdk;
+      }
     }
 
-    Sdk projectJdk = ProjectJdkTable.getInstance().findJdk(jdkName);
-    if (projectJdk != null) {
-      String homePath = projectJdk.getHomePath();
-      if (!isValidJdk(homePath)) throw new InvalidSdkException(homePath);
-      return projectJdk;
-    }
+    // Workaround for projects without project Jdk
+    SdkType jdkType = getJavaSdk();
+    if (jdkType == null) return getInternalJdk();
+    return ProjectJdkTable.getInstance()
+      .getSdksOfType(jdkType).stream()
+      .filter(it -> isValidJdk(it.getHomePath()))
+      .max(jdkType.versionComparator())
+      .orElseGet(ExternalSystemJdkUtil::getInternalJdk);
+  }
 
-    return null;
+  @NotNull
+  private static Sdk getJavaHomeJdk() {
+    String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
+    if (StringUtil.isEmptyOrSpaces(javaHome)) throw new UndefinedJavaHomeException();
+    if (!isValidJdk(javaHome)) throw new InvalidJavaHomeException(javaHome);
+
+    SimpleJavaSdkType sdkType = SimpleJavaSdkType.getInstance();
+    String sdkName = sdkType.suggestSdkName(null, javaHome);
+    return sdkType.createJdk(sdkName, javaHome);
+  }
+
+  @Nullable
+  private static Sdk getJdk(@NotNull String jdkName) {
+    Sdk jdk = ProjectJdkTable.getInstance().findJdk(jdkName);
+    if (jdk == null) return null;
+    String homePath = jdk.getHomePath();
+    if (!isValidJdk(homePath)) throw new InvalidSdkException(homePath);
+    return jdk;
   }
 
   @NotNull

@@ -204,7 +204,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     GitVcs gitVcs = GitVcs.getInstance(project);
 
     String[] hashParameters = GitHistoryUtils.formHashParameters(gitVcs, Collections.singleton(number.asString()));
-    List<GitCommit> gitCommits = GitLogUtil.collectFullDetails(project, root, hashParameters);
+    List<GitCommit> gitCommits = GitHistoryUtils.history(project, root, hashParameters);
     if (gitCommits.size() != 1) return null;
 
     return gitCommits.get(0);

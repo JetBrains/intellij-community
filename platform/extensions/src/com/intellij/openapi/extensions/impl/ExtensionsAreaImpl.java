@@ -4,7 +4,9 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint.PicoContainerAwareInterfaceExtensionPoint;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
@@ -118,7 +120,24 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       point = new BeanExtensionPoint<>(pointName, beanClassName, myPicoContainer, pluginDescriptor);
     }
     else {
-      point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, myPicoContainer, pluginDescriptor);
+      boolean registerInPicoContainer;
+      String registerInPicoContainerValue = extensionPointElement.getAttributeValue("registerInPicoContainer");
+      if (registerInPicoContainerValue == null) {
+        String pluginId = pluginDescriptor.getPluginId().getIdString();
+        // https://github.com/mplushnikov/lombok-intellij-plugin/blob/master/src/main/resources/META-INF/plugin.xml (processor)
+        //noinspection SpellCheckingInspection
+        registerInPicoContainer = SystemProperties.getBooleanProperty("idea.register.ep.in.pico.container", !pluginId.equals("com.intellij")) || pluginId.equals("Lombook Plugin");
+      }
+      else {
+        registerInPicoContainer = Boolean.parseBoolean(registerInPicoContainerValue);
+      }
+
+      if (registerInPicoContainer) {
+        point = new PicoContainerAwareInterfaceExtensionPoint<>(pointName, interfaceClassName, myPicoContainer, pluginDescriptor);
+      }
+      else {
+        point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, myPicoContainer, pluginDescriptor);
+      }
     }
     registerExtensionPoint(point);
   }
@@ -259,7 +278,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     PluginDescriptor pluginDescriptor = new UndefinedPluginDescriptor();
     ExtensionPointImpl<Object> point;
     if (kind == ExtensionPoint.Kind.INTERFACE) {
-      point = new InterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor);
+      point = new PicoContainerAwareInterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor);
     }
     else {
       point = new BeanExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor);

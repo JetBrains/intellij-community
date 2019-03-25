@@ -38,7 +38,7 @@ class UISettingsState : BaseState() {
   var recentFilesLimit by property(50)
 
   @get:OptionTag("RECENT_LOCATIONS_LIMIT")
-  var recentLocationsLimit by property(10)
+  var recentLocationsLimit by property(25)
 
   @get:OptionTag("CONSOLE_COMMAND_HISTORY_LIMIT")
   var consoleCommandHistoryLimit by property(300)
@@ -123,8 +123,6 @@ class UISettingsState : BaseState() {
   var alphaModeDelay by property(1500)
   @get:OptionTag("ALPHA_MODE_RATIO")
   var alphaModeRatio by property(0.5f)
-  @get:OptionTag("MAX_CLIPBOARD_CONTENTS")
-  var maxClipboardContents by property(5)
   @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS")
   var overrideLafFonts by property(false)
   @get:OptionTag("SHOW_ICONS_IN_MENUS")

@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Map;
 
 public class SerializedStubTree {
   private final byte[] myBytes;
@@ -36,6 +37,7 @@ public class SerializedStubTree {
   private final long myByteContentLength;
   private final int myCharContentLength;
   private Stub myStubElement;
+  private IndexedStubs myIndexedStubs;
 
   public SerializedStubTree(final byte[] bytes, int length, @Nullable Stub stubElement, long byteContentLength, int charContentLength) {
     myBytes = bytes;
@@ -93,6 +95,30 @@ public class SerializedStubTree {
       if (willIndexStub) return stubElement;
     }
     return serializationManager.deserialize(new UnsyncByteArrayInputStream(myBytes));
+  }
+
+  void indexTree(int fileId) throws SerializerNotFoundException {
+    ObjectStubBase root = (ObjectStubBase)getStub(true);
+    ObjectStubTree objectStubTree = root instanceof PsiFileStub ? new StubTree((PsiFileStub)root, false) :
+                                    new ObjectStubTree(root, false);
+    Map<StubIndexKey, Map<Object, int[]>> map = objectStubTree.indexStubTree();
+
+    // xxx:fix refs inplace
+    for (StubIndexKey key : map.keySet()) {
+      Map<Object, int[]> value = map.get(key);
+      for (Object k : value.keySet()) {
+        int[] ints = value.get(k);
+        StubIdList stubList = ints.length == 1 ? new StubIdList(ints[0]) : new StubIdList(ints, ints.length);
+        ((Map<Object, StubIdList>)(Map)value).put(k, stubList);
+      }
+    }
+
+    myIndexedStubs = new IndexedStubs(fileId, (Map)map);
+  }
+
+  @NotNull
+  IndexedStubs getIndexedStubs() {
+    return myIndexedStubs;
   }
 
   public boolean contentLengthMatches(long byteContentLength, int charContentLength) {

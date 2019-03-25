@@ -293,9 +293,9 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @NotNull
-  protected UpdateData<Key, Value> createUpdateData(@NotNull Map<Key, Value> data,
-                                                    @NotNull ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> keys,
-                                                    @NotNull ThrowableRunnable<IOException> forwardIndexUpdate) {
+  private UpdateData<Key, Value> createUpdateData(@NotNull Map<Key, Value> data,
+                                                  @NotNull ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> keys,
+                                                  @NotNull ThrowableRunnable<IOException> forwardIndexUpdate) {
     return new UpdateData<>(data, keys, myIndexId, forwardIndexUpdate);
   }
 
@@ -348,6 +348,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
                                @NotNull UpdateData<Key, Value> updateData) throws StorageException {
     getWriteLock().lock();
     try {
+      IndexId oldIndexId = ValueContainerImpl.ourDebugIndexInfo.get();
       try {
         ValueContainerImpl.ourDebugIndexInfo.set(myIndexId);
         boolean hasDifference = updateData.iterateKeys(myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);
@@ -360,7 +361,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         throw new StorageException(e);
       }
       finally {
-        ValueContainerImpl.ourDebugIndexInfo.set(null);
+        ValueContainerImpl.ourDebugIndexInfo.set(oldIndexId);
       }
     }
     finally {

@@ -79,7 +79,7 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
     }
     Set<String> set = new HashSet<>(ExternalResourceManagerEx.getInstanceEx().getUrlsByNamespace(myElement.getProject()).keySet());
     Set<String> fromIndex =
-      XmlNamespaceIndex.getAllResources(null, myElement.getProject(), null).stream()
+      XmlNamespaceIndex.getAllResources(null, myElement.getProject()).stream()
         .filter(resource -> "xsd".equals(resource.getFile().getExtension())).map(resource -> resource.getValue().getNamespace())
         .collect(Collectors.toSet());
     ContainerUtil.addAllNotNull(set, fromIndex);

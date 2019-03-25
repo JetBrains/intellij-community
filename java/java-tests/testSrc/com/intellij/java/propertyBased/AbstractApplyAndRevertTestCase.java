@@ -14,6 +14,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +27,7 @@ import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataProvider;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
@@ -70,13 +72,13 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     oldMacroValue = pathMacros.getValue(PathMacrosImpl.MAVEN_REPOSITORY);
     pathMacros.setMacro(PathMacrosImpl.MAVEN_REPOSITORY, getDefaultMavenRepositoryPath());
 
-    WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), getTestRootDisposable()));
+    Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable()));
     CompilerTestUtil.saveApplicationSettings();
 
     myProject = ProjectUtil.openOrImport(getTestDataPath(), null, false);
 
-    WriteAction.run(
-      () -> ProjectRootManager.getInstance(myProject).setProjectSdk(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk()));
+    WriteAction.run(() -> ProjectRootManager.getInstance(myProject).setProjectSdk(jdk));
 
     InspectionProfileImpl.INIT_INSPECTIONS = true;
 
@@ -89,7 +91,7 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
       myCompilerTester = new CompilerTester(module);
     }
     catch (Throwable e) {
-      fail(e.getMessage());
+      ExceptionUtil.rethrowAllAsUnchecked(e);
     }
   }
 
@@ -105,8 +107,9 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
         myCompilerTester.tearDown();
       }
       PathMacros.getInstance().setMacro(PathMacrosImpl.MAVEN_REPOSITORY, oldMacroValue);
-      PlatformTestUtil.forceCloseProjectWithoutSaving(myProject);
+      Project project = myProject;
       myProject = null;
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project);
       InspectionProfileImpl.INIT_INSPECTIONS = false;
     }
     catch (Throwable e) {

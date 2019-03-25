@@ -1,20 +1,23 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
-  public CoverageProjectViewDirectoryNodeDecorator(final CoverageDataManager coverageDataManager) {
-    super(coverageDataManager);
+final class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
+  CoverageProjectViewDirectoryNodeDecorator(@NotNull Project project) {
+    super(project);
   }
 
   @Override
@@ -75,5 +78,4 @@ public class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoverageP
       data.setLocationString(informationString);
     }
   }
-
 }

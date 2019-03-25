@@ -55,6 +55,10 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
     return myHashIdForwardIndexAccessor;
   }
 
+  File getInputIndexStorageFile() {
+    return new File(IndexInfrastructure.getIndexRootDir(myIndexId), "fileIdToHashId");
+  }
+
   @NotNull
   @Override
   public Map<Key, Value> readData(int hashId) throws IOException {
@@ -149,36 +153,6 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
   @Override
   public int getHashId(@Nullable Input content) throws IOException {
     return content == null ? 0 : getHashOfContent((FileContent) content);
-  }
-
-  static class Snapshot<Key, Value> {
-    private final Map<Key, Value> myData;
-    private final int hashId;
-
-    private Snapshot(@NotNull Map<Key, Value> data, int id) {
-      myData = data;
-      hashId = id;
-    }
-
-    @NotNull
-    Map<Key, Value> getData() {
-      return myData;
-    }
-
-    int getHashId() {
-      return hashId;
-    }
-  }
-
-  @NotNull
-  Snapshot<Key, Value> readPersistentDataOrMap(@Nullable Input content) {
-    try {
-      if (content == null) return new Snapshot<>(Collections.emptyMap(), 0);
-      return new Snapshot<>(readDataOrMap(content), getHashId(content));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Override

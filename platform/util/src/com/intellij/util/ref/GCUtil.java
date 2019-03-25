@@ -16,6 +16,7 @@
 package com.intellij.util.ref;
 
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.TestOnly;
 
 import java.beans.Introspector;
@@ -40,7 +41,7 @@ public class GCUtil {
     //long started = System.nanoTime();
     ReferenceQueue<Object> q = new ReferenceQueue<>();
     SoftReference<Object> ref = new SoftReference<>(new Object(), q);
-    reachabilityFence(ref.get());
+    ObjectUtils.reachabilityFence(ref.get());
 
     System.gc();
 
@@ -52,7 +53,7 @@ public class GCUtil {
 
     // using ref is important as to loop to finish with several iterations: long runs of the method (~80 run of PsiModificationTrackerTest)
     // discovered 'ref' being collected and loop iterated 100 times taking a lot of time
-    reachabilityFence(ref.get());
+    ObjectUtils.reachabilityFence(ref.get());
 
     //System.out.println("Done gc'ing refs:" + ((System.nanoTime() - started) / 1000000));
   }
@@ -101,10 +102,6 @@ public class GCUtil {
     }
     return until.getAsBoolean();
   }
-
-  // They promise in http://mail.openjdk.java.net/pipermail/core-libs-dev/2018-February/051312.html that
-  // the object reference won't be removed by JIT and GC-ed until this call
-  private static void reachabilityFence(@SuppressWarnings("unused") Object o) {}
 
   /**
    * Using java beans (e.g. Groovy does it) results in all referenced class infos being cached in ThreadGroupContext. A valid fix

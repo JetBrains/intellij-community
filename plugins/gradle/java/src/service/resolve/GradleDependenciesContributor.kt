@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.patterns.PsiJavaPatterns.psiElement
@@ -26,36 +26,34 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
  * @author Vladislav.Soroka
  */
 class GradleDependenciesContributor : GradleMethodContextContributor {
+
   companion object {
-    val dependenciesClosure: GroovyClosurePattern = groovyClosure().inMethod(or(psiMethod(GRADLE_API_PROJECT, "dependencies"),
-                                                                                psiMethod(GRADLE_API_SCRIPT_HANDLER, "dependencies")))
-    val dependencyConfigurationClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "add"))
-    val moduleDependencyConfigurationClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "module"))
-    val modulesClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "modules"))
+    val dependenciesClosure: GroovyClosurePattern = groovyClosure().inMethod(or(
+      psiMethod(GRADLE_API_PROJECT, "dependencies"),
+      psiMethod(GRADLE_API_SCRIPT_HANDLER, "dependencies")
+    ))
+
+    val dependencyClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "add"))
+    val moduleClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "module"))
     val componentsClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "components"))
-    val moduleClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER, "module"))
+    val modulesClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "modules"))
+
+    val modulesModuleClosure: GroovyClosurePattern = groovyClosure().inMethod(
+      psiMethod(GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER, "module")
+    )
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
-    if (dependencyConfigurationClosure.accepts(closure)) {
-      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY, closure), Closure.DELEGATE_FIRST)
+    val fqn = when {
+      dependenciesClosure.accepts(closure) -> GRADLE_API_DEPENDENCY_HANDLER
+      dependencyClosure.accepts(closure) -> GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY
+      moduleClosure.accepts(closure) -> GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY
+      componentsClosure.accepts(closure) -> GRADLE_API_COMPONENT_METADATA_HANDLER
+      modulesClosure.accepts(closure) -> GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER
+      modulesModuleClosure.accepts(closure) -> GRADLE_API_COMPONENT_MODULE_METADATA_DETAILS
+      else -> return null
     }
-    if (moduleDependencyConfigurationClosure.accepts(closure)) {
-      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY, closure), Closure.DELEGATE_FIRST)
-    }
-    if (dependenciesClosure.accepts(closure)) {
-      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_DEPENDENCY_HANDLER, closure), Closure.DELEGATE_FIRST)
-    }
-    if (modulesClosure.accepts(closure)) {
-      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER, closure), Closure.DELEGATE_FIRST)
-    }
-    if (moduleClosure.accepts(closure)) {
-      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_COMPONENT_MODULE_METADATA_DETAILS, closure), Closure.DELEGATE_FIRST)
-    }
-    if (componentsClosure.accepts(closure)) {
-      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_COMPONENT_METADATA_HANDLER, closure), Closure.DELEGATE_FIRST)
-    }
-    return null
+    return DelegatesToInfo(TypesUtil.createType(fqn, closure), Closure.DELEGATE_FIRST)
   }
 
   override fun process(methodCallInfo: List<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
@@ -72,7 +70,7 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
           return true
         }
 
-        val returnClass = groovyPsiManager.createTypeByFQClassName(GRADLE_API_ARTIFACTS_DEPENDENCY, resolveScope) ?: return true
+        val returnClass = groovyPsiManager.createTypeByFQClassName(GRADLE_API_ARTIFACTS_DEPENDENCY, resolveScope)
         val wrappedBase = GrLightMethodBuilder(place.manager, methodName).apply {
           returnType = returnClass
           containingClass = psiClass
@@ -80,11 +78,6 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
         wrappedBase.addParameter("dependencyNotation", TypesUtil.getJavaLangObject(place).createArrayType())
         if (!processor.execute(wrappedBase, state)) return false
       }
-    }
-    if (psiElement().inside(dependencyConfigurationClosure).accepts(place)) {
-      if (GradleResolverUtil.processDeclarations(processor, state, place,
-                                                 GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY,
-                                                 GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY)) return false
     }
     return true
   }

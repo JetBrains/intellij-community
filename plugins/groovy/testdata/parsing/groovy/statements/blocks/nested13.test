@@ -1,0 +1,19 @@
+{}
+{}
+{}
+-----
+Groovy script
+  Block statement
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')
+  Block statement
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')
+  Block statement
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

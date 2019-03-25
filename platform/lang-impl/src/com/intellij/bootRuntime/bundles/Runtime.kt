@@ -2,10 +2,10 @@
 package com.intellij.bootRuntime.bundles
 
 import com.intellij.bootRuntime.BinTrayUtil
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.SystemInfo
 import java.io.File
 
@@ -42,15 +42,22 @@ abstract class Runtime(initialLocation:File) {
   }
 
   protected fun fetchVersion (): String {
-    val javaFile = installationPath.walk().filter { file -> file.name == JAVA_FILE_NAME }.first()
-    try {
-      val output = ExecUtil.execAndGetOutput(GeneralCommandLine(javaFile.path, "-version"))
-      val matchResult: MatchResult? = "version \"(\\d?(.\\d)*(.\\d)*_*\\d*\\d*-*(ea|release|internal)*)\"".toRegex().find(output.stderr)
-      return matchResult?.groups?.get(1)?.value.orEmpty()
-    }
-    catch (e: ExecutionException) {
-      print("Error: ${e}")
-    }
-    return "Undefined"
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously<String, RuntimeException>(
+      {
+        installationPath.walk().filter { file -> file.name == JAVA_FILE_NAME }.firstOrNull()?.let { javaFile ->
+          try {
+            val output = ExecUtil.execAndGetOutput(GeneralCommandLine(javaFile.path, "-version"))
+            //val matchResult: MatchResult? = "version \"(\\d?(.\\d)*(.\\d)*_*\\d*\\d*-*(ea|release|internal)*)\"".toRegex().find(output.stderr)
+            val matchResult: MatchResult? = "\\((build [\\d.+-w]*)\\)".toRegex().find(output.stderr)
+            return@runProcessWithProgressSynchronously matchResult?.groups?.get(1)?.value
+          }
+          catch (e: Exception) {
+            println("tried to execute : ${javaFile.path}, \"-version\")")
+            println("Error: ${e}")
+            return@runProcessWithProgressSynchronously "Undefined"
+          }
+        }
+      },
+      "Fetching Runtime Version", false, null)
   }
 }

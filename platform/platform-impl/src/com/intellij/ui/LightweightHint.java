@@ -209,7 +209,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         .setTitle(myTitle)
         .setModalContext(false)
         .setShowShadow(isRealPopup() && !isForceHideShadow())
-        .setCancelKeyEnabled(true)
+        .setCancelKeyEnabled(false)
         .setCancelOnClickOutside(myCancelOnClickOutside)
         .setCancelCallback(() -> {
           onPopupCancel();
@@ -224,7 +224,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   protected void onPopupCancel() {
-    hide();
   }
 
   private void fixActualPoint(Point actualPoint) {
@@ -251,7 +250,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   protected void beforeShow() {
-
   }
 
   public boolean vetoesHiding() {

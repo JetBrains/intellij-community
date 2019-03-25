@@ -957,7 +957,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (right instanceof DfaVariableValue) {
         // a+b (rel) c && a == c => b (rel) 0 
         if (areEqual(sum.getLeft(), right)) {
-          RelationType finalRelation = op == DfaBinOpValue.BinOp.MINUS ? correctedRelation.getFlipped() : correctedRelation;
+          RelationType finalRelation = op == DfaBinOpValue.BinOp.MINUS ? 
+                                       Objects.requireNonNull(correctedRelation.getFlipped()) : correctedRelation;
           if (!applyCondition(myFactory.createCondition(sum.getRight(), finalRelation, myFactory.getInt(0)))) return false;
         }
         // a+b (rel) c && b == c => a (rel) 0 
@@ -1365,6 +1366,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return state.myFactMap;
       }
       value = resolveVariableValue((DfaVariableValue)value);
+      if (value instanceof DfaVariableValue) {
+        return getDefaultState((DfaVariableValue)value).myFactMap;
+      }
     }
     if (value instanceof DfaBinOpValue) {
       return DfaFactMap.EMPTY.with(DfaFactType.RANGE, getValueFact(value, DfaFactType.RANGE));

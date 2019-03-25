@@ -671,7 +671,7 @@ public class PsiUtilCore {
     }
 
     @Override
-    public boolean processChildren(PsiElementProcessor<PsiFileSystemItem> processor) {
+    public boolean processChildren(@NotNull PsiElementProcessor<PsiFileSystemItem> processor) {
       throw createException();
     }
 

@@ -3,7 +3,9 @@ package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -13,7 +15,10 @@ import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.JBUIScale.*;
+import com.intellij.util.ui.JBUIScale.DerivedScaleType;
+import com.intellij.util.ui.JBUIScale.Scale;
+import com.intellij.util.ui.JBUIScale.ScaleType;
+import com.intellij.util.ui.JBUIScale.UserScaleContext;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +34,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
 
-import static com.intellij.util.ui.JBUIScale.DerivedScaleType.*;
-import static com.intellij.util.ui.JBUIScale.ScaleType.*;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.SYS_SCALE;
 
 /**
  * @author Konstantin Bulenkov
@@ -38,15 +43,17 @@ import static com.intellij.util.ui.JBUIScale.ScaleType.*;
  */
 @SuppressWarnings("UseJBColor")
 public class JBUI {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.JBUI");
-
   public static final String USER_SCALE_FACTOR_PROPERTY = "JBUI.userScaleFactor";
 
   private static final PropertyChangeSupport PCS = new PropertyChangeSupport(new JBUI());
 
   private static final float DISCRETE_SCALE_RESOLUTION = 0.25f;
 
-  public static final boolean SCALE_VERBOSE = Boolean.getBoolean("ide.ui.scale.verbose");
+  @NotNull
+  // cannot be static because logging maybe not configured yet
+  private static Logger getLogger() {
+    return Logger.getInstance("#com.intellij.util.ui.JBUI");
+  }
 
   /**
    * The system scale factor, corresponding to the default monitor device.
@@ -68,7 +75,9 @@ public class JBUI {
         }
         return 1f;
       }
-      UIUtil.initSystemFontData();
+
+      // in production initSystemFontData must be already called, probably only in a test mode will be not yet initialized
+      UIUtil.initSystemFontData(getLogger());
       Pair<String, Integer> fdata = UIUtil.getSystemFontData();
 
       int size = fdata == null ? Fonts.label().getSize() : fdata.getSecond();
@@ -77,7 +86,7 @@ public class JBUI {
 
     @Override
     protected void onInitialized(@NotNull Float scale) {
-      LOG.info("System scale factor: " + scale + " (" + (UIUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
+      getLogger().info("System scale factor: " + scale + " (" + (UIUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
     }
 
     @TestOnly
@@ -105,7 +114,7 @@ public class JBUI {
           return Float.parseFloat(prop);
         }
         catch (NumberFormatException e) {
-          LOG.error("ide.ui.scale system property is not a float value: " + prop);
+          getLogger().error("ide.ui.scale system property is not a float value: " + prop);
         }
       }
       else if (Registry.is("ide.ui.scale.override")) {
@@ -249,7 +258,7 @@ public class JBUI {
   private static void setUserScaleFactorProperty(float scale) {
     if (userScaleFactor == scale) return;
     PCS.firePropertyChange(USER_SCALE_FACTOR_PROPERTY, userScaleFactor, userScaleFactor = scale);
-    LOG.info("User scale factor: " + userScaleFactor);
+    getLogger().info("User scale factor: " + userScaleFactor);
   }
 
   /**
@@ -655,8 +664,6 @@ public class JBUI {
         return JBColor.namedColor("DefaultTabs.underlineColor", new JBColor(0x4083C9, 0x4A88C7));
       }
 
-
-      @NotNull
       public static int underlineHeight() {
         return getInt("DefaultTabs.underlineHeight", scale(2));
       }
@@ -697,7 +704,6 @@ public class JBUI {
                                               ColorUtil.withAlpha(Color.BLACK, .13)));
 
       }
-
     }
 
     public static class EditorTabs {
@@ -706,7 +712,6 @@ public class JBUI {
         return JBColor.namedColor("EditorTabs.underlineColor", DefaultTabs.underlineColor());
       }
 
-      @NotNull
       public static int underlineHeight() {
         return getInt("EditorTabs.underlineHeight", scale(3));
       }
@@ -823,7 +828,6 @@ public class JBUI {
         return getBorder("ToolWindow.HeaderTab.tabHeaderBorder", Borders.empty(1, 0));
       }
 
-      @NotNull
       public static int underlineHeight() {
         return getInt("ToolWindow.HeaderTab.underlineHeight", scale(3));
       }

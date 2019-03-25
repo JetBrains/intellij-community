@@ -21,7 +21,7 @@ class PropertyValueReaderTest {
   fun `enum`() {
     val result = readRunConfigurations("""
     runConfigurations:
-      jvmMainMethod:
+      java:
         shortenClasspath: MANIFEST
     """)
     val options = JvmMainMethodRunConfigurationOptions()
@@ -33,7 +33,7 @@ class PropertyValueReaderTest {
   fun map() {
     val result = readRunConfigurations("""
     runConfigurations:
-      jvmMainMethod:
+      java:
         env:
           foo: bar
           answer: 42

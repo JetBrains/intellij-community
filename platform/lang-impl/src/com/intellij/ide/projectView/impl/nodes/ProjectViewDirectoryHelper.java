@@ -247,11 +247,10 @@ public class ProjectViewDirectoryHelper {
   public List<VirtualFile> getTopLevelRoots() {
     List<VirtualFile> topLevelContentRoots = new ArrayList<>();
     ProjectRootManager prm = ProjectRootManager.getInstance(myProject);
-    DirectoryIndex index = DirectoryIndex.getInstance(myProject);
 
     for (VirtualFile root : prm.getContentRoots()) {
       VirtualFile parent = root.getParent();
-      if (!isFileUnderContentRoot(index, parent)) {
+      if (!isFileUnderContentRoot(myIndex, parent)) {
         topLevelContentRoots.add(root);
       }
     }
@@ -261,7 +260,7 @@ public class ProjectViewDirectoryHelper {
         VirtualFile root = pointer.getFile();
         if (root != null) {
           VirtualFile parent = root.getParent();
-          if (!isFileUnderContentRoot(index, parent)) {
+          if (!isFileUnderContentRoot(myIndex, parent)) {
             topLevelContentRoots.add(root);
           }
         }

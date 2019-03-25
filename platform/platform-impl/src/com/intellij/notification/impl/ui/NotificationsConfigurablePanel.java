@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl.ui;
 
 import com.intellij.notification.NotificationDisplayType;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SystemNotifications;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
@@ -64,7 +63,6 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
     mySystemNotifications = new JCheckBox("Enable system notifications");
     mySystemNotifications.setMnemonic('s');
-    mySystemNotifications.setVisible(SystemNotifications.getInstance().isAvailable());
 
     JPanel boxes = new JPanel();
     boxes.setLayout(new BoxLayout(boxes, BoxLayout.Y_AXIS));

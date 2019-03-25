@@ -297,8 +297,10 @@ public class CommonDataflow {
    * @param expression expression to get its range
    * @return long range set
    */
+  @Contract("null -> null")
   @Nullable
   public static LongRangeSet getExpressionRange(@Nullable PsiExpression expression) {
+    if (expression == null) return null;
     Object value = ExpressionUtils.computeConstantExpression(expression);
     LongRangeSet rangeSet = LongRangeSet.fromConstant(value);
     if (rangeSet != null) return rangeSet;

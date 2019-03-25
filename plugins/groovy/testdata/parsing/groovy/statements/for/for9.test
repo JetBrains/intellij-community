@@ -37,8 +37,7 @@ Groovy script
     PsiElement(++)('++')
   PsiErrorElement:')' unexpected
     PsiElement())(')')
-  Closable block
-    PsiElement({)('{')
-    Parameter list
-      <empty list>
-    PsiElement(})('}')
+  Block statement
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

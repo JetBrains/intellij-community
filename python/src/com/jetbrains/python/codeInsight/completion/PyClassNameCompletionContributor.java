@@ -8,6 +8,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -16,6 +17,8 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -41,13 +44,15 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
     final PsiFile originalFile = parameters.getOriginalFile();
     final PsiElement element = parameters.getPosition();
     final PsiElement parent = element.getParent();
+    final ScopeOwner originalScope = ScopeUtil.getScopeOwner(parameters.getOriginalPosition());
+    final Condition<PsiElement> fromAnotherScope = e -> ScopeUtil.getScopeOwner(e) != originalScope;
 
     addVariantsFromIndex(result,
                          originalFile,
                          PyClassNameIndex.KEY,
                          parent instanceof PyStringLiteralExpression ? getStringLiteralInsertHandler() : getImportingInsertHandler(),
                          // TODO: implement autocompletion for inner classes
-                         PyUtil::isTopLevel,
+                         Conditions.and(fromAnotherScope, PyUtil::isTopLevel),
                          PyClass.class,
                          createClassElementHandler(originalFile));
 
@@ -55,7 +60,7 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
                          originalFile,
                          PyFunctionNameIndex.KEY,
                          getFunctionInsertHandler(parent),
-                         PyUtil::isTopLevel,
+                         Conditions.and(fromAnotherScope, PyUtil::isTopLevel),
                          PyFunction.class,
                          Function.identity());
 
@@ -63,7 +68,7 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
                          originalFile,
                          PyVariableNameIndex.KEY,
                          parent instanceof PyStringLiteralExpression ? getStringLiteralInsertHandler() : getImportingInsertHandler(),
-                         PyUtil::isTopLevel,
+                         Conditions.and(fromAnotherScope, PyUtil::isTopLevel),
                          PyTargetExpression.class,
                          Function.identity());
   }

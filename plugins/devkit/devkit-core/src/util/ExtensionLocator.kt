@@ -13,6 +13,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.xml.DomUtil
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
+import java.util.*
 
 fun locateExtensionsByPsiClass(psiClass: PsiClass): List<ExtensionCandidate> {
   return findExtensionsByClassName(psiClass.project, ClassUtil.getJVMClassName(psiClass) ?: return emptyList())
@@ -26,7 +27,7 @@ fun locateExtensionsByExtensionPointAndId(extensionPoint: ExtensionPoint, extens
   return ExtensionByExtensionPointLocator(extensionPoint.xmlTag.project, extensionPoint, extensionId)
 }
 
-private fun processExtensionDeclarations(name: String, project: Project, strictMatch: Boolean, callback: (Extension, XmlTag) -> Boolean) {
+internal fun processExtensionDeclarations(name: String, project: Project, strictMatch: Boolean = true, callback: (Extension, XmlTag) -> Boolean) {
   val scope = PluginRelatedLocatorsUtils.getCandidatesScope(project)
   PsiSearchHelper.getInstance(project).processElementsWithWord(
     { element, offsetInElement ->
@@ -53,7 +54,7 @@ private fun processExtensionDeclarations(name: String, project: Project, strictM
 }
 
 private fun findExtensionsByClassName(project: Project, className: String): List<ExtensionCandidate> {
-  val result = SmartList<ExtensionCandidate>()
+  val result = Collections.synchronizedList(SmartList<ExtensionCandidate>())
   val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
   processExtensionsByClassName(project, className) { tag, _ ->
     result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(tag)))
@@ -63,7 +64,7 @@ private fun findExtensionsByClassName(project: Project, className: String): List
 }
 
 internal inline fun processExtensionsByClassName(project: Project, className: String, crossinline processor: (XmlTag, ExtensionPoint) -> Boolean) {
-  processExtensionDeclarations(className, project, true) { extension, tag ->
+  processExtensionDeclarations(className, project) { extension, tag ->
     extension.extensionPoint?.let { processor(tag, it) } ?: true
   }
 }
@@ -90,7 +91,7 @@ internal class ExtensionByExtensionPointLocator(private val project: Project,
   }
 
   override fun findCandidates(): List<ExtensionCandidate> {
-    val result = SmartList<ExtensionCandidate>()
+    val result = Collections.synchronizedList(SmartList<ExtensionCandidate>())
     val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
     processCandidates {
       result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(it)))

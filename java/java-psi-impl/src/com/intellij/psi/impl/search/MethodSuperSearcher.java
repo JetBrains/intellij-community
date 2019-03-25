@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
@@ -9,7 +9,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -17,27 +16,28 @@ import java.util.List;
 /**
  * @author ven
  */
-public class MethodSuperSearcher implements QueryExecutor<MethodSignatureBackedByPsiMethod, SuperMethodsSearch.SearchParameters> {
+public class MethodSuperSearcher extends QueryExecutorBase<MethodSignatureBackedByPsiMethod, SuperMethodsSearch.SearchParameters> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.MethodSuperSearcher");
 
+  public MethodSuperSearcher() {
+    super(true);
+  }
+
   @Override
-  public boolean execute(@NotNull final SuperMethodsSearch.SearchParameters queryParameters, @NotNull final Processor<? super MethodSignatureBackedByPsiMethod> consumer) {
-    final PsiClass parentClass = queryParameters.getPsiClass();
-    final PsiMethod method = queryParameters.getMethod();
-    return ReadAction.compute(() -> {
-      HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
+  public void processQuery(@NotNull SuperMethodsSearch.SearchParameters queryParameters,
+                           @NotNull Processor<? super MethodSignatureBackedByPsiMethod> consumer) {
+    PsiClass parentClass = queryParameters.getPsiClass();
+    PsiMethod method = queryParameters.getMethod();
+    HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
 
-      final boolean checkBases = queryParameters.isCheckBases();
-      final boolean allowStaticMethod = queryParameters.isAllowStaticMethod();
-      final List<HierarchicalMethodSignature> supers = signature.getSuperSignatures();
-      for (HierarchicalMethodSignature superSignature : supers) {
-        if (MethodSignatureUtil.isSubsignature(superSignature, signature)) {
-          if (!addSuperMethods(superSignature, method, parentClass, allowStaticMethod, checkBases, consumer)) return false;
-        }
+    boolean checkBases = queryParameters.isCheckBases();
+    boolean allowStaticMethod = queryParameters.isAllowStaticMethod();
+    List<HierarchicalMethodSignature> supers = signature.getSuperSignatures();
+    for (HierarchicalMethodSignature superSignature : supers) {
+      if (MethodSignatureUtil.isSubsignature(superSignature, signature)) {
+        if (!addSuperMethods(superSignature, method, parentClass, allowStaticMethod, checkBases, consumer)) return;
       }
-
-      return true;
-    });
+    }
   }
 
   private static boolean addSuperMethods(final HierarchicalMethodSignature signature,

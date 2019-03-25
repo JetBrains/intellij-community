@@ -558,12 +558,14 @@ public class ContainerUtil extends ContainerUtilRt {
   public static class ImmutableMapBuilder<K, V> {
     private final Map<K, V> myMap = new THashMap<>();
 
+    @NotNull
     public ImmutableMapBuilder<K, V> put(K key, V value) {
       myMap.put(key, value);
       return this;
     }
 
     @Contract(pure=true)
+    @NotNull
     public Map<K, V> build() {
       return Collections.unmodifiableMap(myMap);
     }
@@ -1855,6 +1857,9 @@ public class ContainerUtil extends ContainerUtilRt {
     return sorted(list, Comparator.naturalOrder());
   }
 
+  /**
+   * @apiNote this sort implementation is NOT stable for element.length < INSERTION_SORT_THRESHOLD 
+   */
   public static <T> void sort(@NotNull T[] a, @NotNull Comparator<? super T> comparator) {
     int size = a.length;
 

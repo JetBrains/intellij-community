@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -41,7 +40,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
@@ -871,8 +870,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     return file.getViewProvider().getDocument();
   }
 
-  private static void assertLargeFileContentLimited(@NotNull String content, @NotNull VirtualFile vFile, @NotNull Document document) {
-    Charset charset = EncodingManager.getInstance().getEncoding(vFile, false);
+  private void assertLargeFileContentLimited(@NotNull String content, @NotNull VirtualFile vFile, @NotNull Document document) {
+    Charset charset = EncodingProjectManager.getInstance(getProject()).getEncoding(vFile, false);
     float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
     int contentSize = (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
     String substring = content.substring(0, contentSize);

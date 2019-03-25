@@ -29,7 +29,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -271,7 +270,7 @@ public class AbstractPopup implements JBPopup {
 
       if (pinCallback != null) {
         myCaption.setButtonComponent(new InplaceButton(
-          new IconButton("Open as Tool Window", 
+          new IconButton("Open as Tool Window",
                          AllIcons.General.Pin_tab, AllIcons.General.Pin_tab,
                          IconLoader.getDisabledIcon(AllIcons.General.Pin_tab)),
           e -> pinCallback.process(this)
@@ -377,7 +376,6 @@ public class AbstractPopup implements JBPopup {
       myAdComponent = HintUtil.createAdComponent(s, JBUI.CurrentTheme.Advertiser.border(), alignment);
       JPanel wrapper = new JPanel(new BorderLayout());
       wrapper.setOpaque(false);
-      wrapper.setBorder(new CustomLineBorder(JBUI.CurrentTheme.Advertiser.borderColor(), JBUI.insetsTop(1)));
       wrapper.add(myAdComponent, BorderLayout.CENTER);
       myContent.add(wrapper, BorderLayout.SOUTH);
       pack(false, true);
@@ -1153,13 +1151,6 @@ public class AbstractPopup implements JBPopup {
     myContent.addMouseListener(mouseAdapter);
     Disposer.register(this, () -> myContent.removeMouseListener(mouseAdapter));
 
-    myContent.registerKeyboardAction(__ -> {
-      if (myCancelKeyEnabled) {
-        cancel();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-
     myContent.addKeyListener(mySpeedSearch);
 
     if (myCancelOnMouseOutCallback != null || myCancelOnWindow) {
@@ -1873,7 +1864,7 @@ public class AbstractPopup implements JBPopup {
       myWindow.setMinimumSize(new Dimension(width, height));
     }
   }
-  
+
   public void setOkHandler(Runnable okHandler) {
     myOkHandler = okHandler;
   }

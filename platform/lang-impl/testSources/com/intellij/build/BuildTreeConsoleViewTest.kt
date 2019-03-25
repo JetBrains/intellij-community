@@ -33,8 +33,10 @@ class BuildTreeConsoleViewTest: LightPlatformTestCase() {
                                                  "test descriptor",
                                                  "fake path",
                                                  1L)
-
-    treeConsoleView = BuildTreeConsoleView(getProject(), buildDescriptor)
+    treeConsoleView = BuildTreeConsoleView(getProject(), buildDescriptor, null, object : BuildViewSettingsProvider {
+      override fun isExecutionViewHidden(): Boolean = false
+      override fun isSideBySideView(): Boolean = true
+    })
   }
 
   @Test

@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,6 +71,21 @@ public class VcsImplUtil {
 
   public static boolean isNonModalCommit() {
     return Registry.is("vcs.non.modal.commit");
+  }
+
+  @Nullable
+  public static IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull Project project,
+                                                                           AbstractVcs vcs) {
+    IgnoredFileContentProvider ignoreContentProvider = IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(project)
+      .filter((provider) -> provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod()))
+      .findFirst()
+      .orElse(null);
+
+    if (ignoreContentProvider == null) {
+      LOG.debug("Cannot get ignore content provider for vcs " + vcs.getName());
+      return null;
+    }
+    return ignoreContentProvider;
   }
 
   public static void proposeUpdateIgnoreFile(@NotNull Project project,

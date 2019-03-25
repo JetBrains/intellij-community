@@ -37,6 +37,7 @@ public interface JsonLikePsiWalker {
   boolean requiresNameQuotes();
   default boolean requiresValueQuotes() { return true; }
   boolean allowsSingleQuotes();
+  default boolean isValidIdentifier(String string, Project project) { return true; }
 
   boolean hasMissingCommaAfter(@NotNull PsiElement element);
 

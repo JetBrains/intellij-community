@@ -169,11 +169,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     return true;
   }
 
-  void addExcludePackage(String packageName) {
-    if (packageName == null) {
-      return;
-    }
-
+  void addExcludePackage(@NotNull String packageName) {
     int index = 0;
     while (index < getTableView().getListTableModel().getRowCount()) {
       if (getTableView().getListTableModel().getItem(index).exclude.compareTo(packageName) > 0) {

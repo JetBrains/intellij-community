@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -21,13 +21,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author kosyakov
- */
-public class PsiElementFinderImpl extends PsiElementFinder implements DumbAware {
+public final class PsiElementFinderImpl extends PsiElementFinder implements DumbAware {
   private final Project myProject;
   private final JavaFileManager myFileManager;
 
+  public PsiElementFinderImpl(Project project) {
+    myProject = project;
+    myFileManager = JavaFileManager.getInstance(project);
+  }
+
+  @Deprecated
   public PsiElementFinderImpl(Project project, JavaFileManager javaFileManager) {
     myProject = project;
     myFileManager = javaFileManager;

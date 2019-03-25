@@ -9,31 +9,47 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 class MemoryAgentImpl implements MemoryAgent {
-  private final EvaluationContextImpl myEvaluationContext;
+  static final MemoryAgent DISABLED = new MemoryAgentImpl(MemoryAgentCapabilities.DISABLED);
+  private final MemoryAgentCapabilities myCapabilities;
 
-  MemoryAgentImpl(@NotNull EvaluationContextImpl evaluationContext) {
-    myEvaluationContext = evaluationContext;
+  MemoryAgentImpl(@NotNull MemoryAgentCapabilities capabilities) {
+    myCapabilities = capabilities;
   }
 
   @Override
-  public long estimateObjectSize(@NotNull ObjectReference reference) throws EvaluateException {
-    return MemoryAgentOperations.estimateObjectSize(myEvaluationContext, reference);
+  public long estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference)
+    throws EvaluateException {
+    if (!myCapabilities.canEstimateObjectSize()) {
+      throw new UnsupportedOperationException("Memory agent can't estimate object size");
+    }
+    return MemoryAgentOperations.estimateObjectSize(evaluationContext, reference);
   }
 
   @Override
-  public long[] estimateObjectsSizes(@NotNull List<ObjectReference> references) throws EvaluateException {
-    return MemoryAgentOperations.estimateObjectsSizes(myEvaluationContext, references);
+  public long[] estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ObjectReference> references)
+    throws EvaluateException {
+    if (!myCapabilities.canEstimateObjectsSizes()) {
+      throw new UnsupportedOperationException("Memory agent can't estimate objects sizes");
+    }
+
+    return MemoryAgentOperations.estimateObjectsSizes(evaluationContext, references);
   }
 
   @NotNull
   @Override
-  public ReferringObjectsInfo findReferringObjects(@NotNull ObjectReference reference, int limit) throws EvaluateException {
-    return MemoryAgentOperations.findReferringObjects(myEvaluationContext, reference, limit);
+  public ReferringObjectsInfo findReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
+                                                   @NotNull ObjectReference reference,
+                                                   int limit) throws EvaluateException {
+    if (!myCapabilities.canGetReferringObjects()) {
+      throw new UnsupportedOperationException("Memory agent can't provide referring objects");
+    }
+
+    return MemoryAgentOperations.findReferringObjects(evaluationContext, reference, limit);
   }
 
   @NotNull
   @Override
   public MemoryAgentCapabilities capabilities() {
-    return MemoryAgent.capabilities(myEvaluationContext.getDebugProcess());
+    return myCapabilities;
   }
 }

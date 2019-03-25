@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger;
 
 import com.intellij.JavaTestUtil;
@@ -93,7 +93,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected void initApplication() throws Exception {
     super.initApplication();
     JavaTestUtil.setupTestJDK(getTestRootDisposable());
-    DebuggerSettings.getInstance().DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
+    DebuggerSettings.getInstance().setTransport(DebuggerSettings.SOCKET_TRANSPORT);
     DebuggerSettings.getInstance().SKIP_CONSTRUCTORS = false;
     DebuggerSettings.getInstance().SKIP_GETTERS      = false;
     NodeRendererSettings.getInstance().getClassRenderer().SHOW_DECLARED_TYPE = true;
@@ -163,7 +163,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
   protected DebuggerSession createLocalSession(final JavaParameters javaParameters) throws ExecutionException {
     createBreakpoints(javaParameters.getMainClass());
-    DebuggerSettings.getInstance().DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
+    DebuggerSettings.getInstance().setTransport(DebuggerSettings.SOCKET_TRANSPORT);
 
     GenericDebuggerRunnerSettings debuggerRunnerSettings = new GenericDebuggerRunnerSettings();
     debuggerRunnerSettings.LOCAL = true;
@@ -224,7 +224,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected DebuggerSession createLocalProcess(int transport, final JavaParameters javaParameters) throws ExecutionException {
     createBreakpoints(javaParameters.getMainClass());
 
-    DebuggerSettings.getInstance().DEBUGGER_TRANSPORT = transport;
+    DebuggerSettings.getInstance().setTransport(transport);
 
     GenericDebuggerRunnerSettings debuggerRunnerSettings = new GenericDebuggerRunnerSettings();
     debuggerRunnerSettings.setLocal(true);

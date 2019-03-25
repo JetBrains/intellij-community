@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.FindUtil;
 import com.intellij.icons.AllIcons;
@@ -346,6 +347,12 @@ public class ImplementationViewComponent extends JPanel {
 
       fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), newText);
       fragmentDoc.setReadOnly(true);
+
+      PsiElement element = elt.getElementForShowUsages();
+      PsiFile file = element == null ? null : element.getContainingFile();
+      myEditor.getSettings().setTabSize(file != null ? CodeStyle.getIndentOptions(file).TAB_SIZE
+                                                     : CodeStyle.getSettings(elt.getProject()).getTabSize(null));
+
       myEditor.getCaretModel().moveToOffset(0);
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     });

@@ -82,6 +82,10 @@ public abstract class AttachOSHandler {
       return OSType.MACOSX;
     }
 
+    if(SystemInfo.isWindows) {
+      return OSType.WINDOWS;
+    }
+
     return OSType.UNKNOWN;
   }
 
@@ -97,6 +101,7 @@ public abstract class AttachOSHandler {
 
       OSType osType;
 
+      //TODO [viuginick] handle remote windows
       switch (osString) {
         case "Linux":
           osType = OSType.LINUX;
@@ -118,6 +123,7 @@ public abstract class AttachOSHandler {
   public enum OSType {
     LINUX,
     MACOSX,
+    WINDOWS,
     UNKNOWN
   }
 }

@@ -15,11 +15,12 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("UnsafeReturnStatementVisitor")
 class VariableValueUsedVisitor extends JavaRecursiveElementWalkingVisitor {
 
   @NotNull
@@ -32,163 +33,17 @@ class VariableValueUsedVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitElement(@NotNull PsiElement element) {
-    if (read || written) {
-      return;
-    }
-    super.visitElement(element);
-  }
-
-  @Override
-  public void visitAssignmentExpression(
-    @NotNull PsiAssignmentExpression assignment) {
-    if (read || written) {
-      return;
-    }
-    super.visitAssignmentExpression(assignment);
-    final PsiExpression lhs = assignment.getLExpression();
-    if (lhs instanceof PsiReferenceExpression) {
-      PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)lhs;
-      final PsiElement target = referenceExpression.resolve();
-      if (variable.equals(target)) {
+  public void visitReferenceExpression(PsiReferenceExpression expression) {
+    if (read || written) return;
+    super.visitReferenceExpression(expression);
+    if (ExpressionUtils.isReferenceTo(expression, variable)) {
+      if (PsiUtil.isAccessedForReading(expression)) {
+        read = true;
+      }
+      else if (PsiUtil.isAccessedForWriting(expression)) {
         written = true;
-        return;
       }
     }
-    final PsiExpression rhs = assignment.getRExpression();
-    if (rhs == null) {
-      return;
-    }
-    read = VariableUsedVisitor.isVariableUsedIn(variable, rhs);
-  }
-
-  @Override
-  public void visitUnaryExpression(
-    @NotNull PsiUnaryExpression unaryExpression) {
-    if (read || written) {
-      return;
-    }
-    super.visitUnaryExpression(unaryExpression);
-    final IElementType tokenType = unaryExpression.getOperationTokenType();
-    if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-        !tokenType.equals(JavaTokenType.MINUSMINUS)) {
-      return;
-    }
-    final PsiExpression operand = unaryExpression.getOperand();
-    if (!(operand instanceof PsiReferenceExpression)) {
-      return;
-    }
-    final PsiReferenceExpression referenceExpression =
-      (PsiReferenceExpression)operand;
-    final PsiElement target = referenceExpression.resolve();
-    if (!variable.equals(target)) {
-      return;
-    }
-    written = true;
-  }
-
-  @Override
-  public void visitVariable(@NotNull PsiVariable variable) {
-    if (read || written) {
-      return;
-    }
-    super.visitVariable(variable);
-    final PsiExpression initalizer = variable.getInitializer();
-    if (initalizer == null) {
-      return;
-    }
-    read = VariableUsedVisitor.isVariableUsedIn(variable, initalizer);
-  }
-
-  @Override
-  public void visitMethodCallExpression(
-    @NotNull PsiMethodCallExpression call) {
-    if (read || written) {
-      return;
-    }
-    super.visitMethodCallExpression(call);
-    final PsiReferenceExpression methodExpression =
-      call.getMethodExpression();
-    final PsiExpression qualifier =
-      methodExpression.getQualifierExpression();
-    if (qualifier != null) {
-      if (VariableUsedVisitor.isVariableUsedIn(variable, qualifier)) {
-        read = true;
-        return;
-      }
-    }
-    final PsiExpressionList argumentList = call.getArgumentList();
-    final PsiExpression[] arguments = argumentList.getExpressions();
-    for (final PsiExpression argument : arguments) {
-      if (VariableUsedVisitor.isVariableUsedIn(variable, argument)) {
-        read = true;
-        return;
-      }
-    }
-  }
-
-  @Override
-  public void visitNewExpression(
-    @NotNull PsiNewExpression newExpression) {
-    if (read || written) {
-      return;
-    }
-    super.visitNewExpression(newExpression);
-    final PsiExpressionList argumentList =
-      newExpression.getArgumentList();
-    if (argumentList == null) {
-      return;
-    }
-    final PsiExpression[] arguments = argumentList.getExpressions();
-    for (final PsiExpression argument : arguments) {
-      if (VariableUsedVisitor.isVariableUsedIn(variable, argument)) {
-        read = true;
-        return;
-      }
-    }
-  }
-
-  @Override
-  public void visitArrayInitializerExpression(
-    PsiArrayInitializerExpression expression) {
-    if (read || written) {
-      return;
-    }
-    super.visitArrayInitializerExpression(expression);
-    final PsiExpression[] arguments = expression.getInitializers();
-    for (final PsiExpression argument : arguments) {
-      if (VariableUsedVisitor.isVariableUsedIn(variable, argument)) {
-        read = true;
-        return;
-      }
-    }
-  }
-
-  @Override
-  public void visitReturnStatement(
-    @NotNull PsiReturnStatement returnStatement) {
-    if (read || written) {
-      return;
-    }
-    super.visitReturnStatement(returnStatement);
-    final PsiExpression returnValue = returnStatement.getReturnValue();
-    if (returnValue == null) {
-      return;
-    }
-    read = VariableUsedVisitor.isVariableUsedIn(variable, returnValue);
-  }
-
-  /**
-   * check if variable is used in nested/inner class.
-   */
-  @Override
-  public void visitClass(PsiClass aClass) {
-    if (read || written) {
-      return;
-    }
-    super.visitClass(aClass);
-    read = VariableUsedVisitor.isVariableUsedIn(variable, aClass);
   }
 
   boolean isVariableValueUsed() {

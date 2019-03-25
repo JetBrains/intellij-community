@@ -28,6 +28,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -350,6 +351,9 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
             if (progressListener != null) {
               long eventTime = System.currentTimeMillis();
               AnAction rerunTaskAction = new MyTaskRerunAction(progressListener, myEnv, myContentDescriptor);
+              BuildViewSettingsProvider viewSettingsProvider =
+                consoleView instanceof BuildViewSettingsProvider ?
+                new BuildViewSettingsProviderAdapter((BuildViewSettingsProvider)consoleView) : null;
               progressListener.onEvent(
                 new StartBuildEventImpl(new DefaultBuildDescriptor(id, executionName, workingDir, eventTime), "running...")
                   .withProcessHandler(processHandler, view -> {
@@ -360,6 +364,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
                   .withRestartAction(rerunTaskAction)
                   .withRestartActions(restartActions)
                   .withExecutionEnvironment(myEnv)
+                  .withBuildViewSettingsProvider(viewSettingsProvider)
               );
             }
           }
@@ -430,11 +435,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
       });
       ExecutionConsole executionConsole = progressListener instanceof ExecutionConsole ? (ExecutionConsole)progressListener : consoleView;
-      AnAction[] actions = AnAction.EMPTY_ARRAY;
+      DefaultActionGroup actionGroup = new DefaultActionGroup();
       if (executionConsole instanceof BuildView) {
-        actions = ((BuildView)executionConsole).getSwitchActions();
+        actionGroup.addAll(((BuildView)executionConsole).getSwitchActions());
+        actionGroup.add(new ShowExecutionErrorsOnlyAction((BuildView)executionConsole));
+        actionGroup.add(new GroupByActionGroup((BuildView)executionConsole));
       }
-      DefaultExecutionResult executionResult = new DefaultExecutionResult(executionConsole, processHandler, actions);
+      DefaultExecutionResult executionResult =
+        new DefaultExecutionResult(executionConsole, processHandler, actionGroup.getChildren(null));
       executionResult.setRestartActions(restartActions);
       return executionResult;
     }

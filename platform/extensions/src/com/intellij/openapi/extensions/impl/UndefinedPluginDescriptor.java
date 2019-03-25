@@ -3,11 +3,10 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Alexander Kireyev
- */
 final class UndefinedPluginDescriptor implements PluginDescriptor {
+  @NotNull
   @Override
   public PluginId getPluginId() {
     throw new UnsupportedOperationException("This method should not be called on this object");

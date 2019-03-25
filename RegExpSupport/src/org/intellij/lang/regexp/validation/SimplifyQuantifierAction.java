@@ -19,11 +19,13 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpFileType;
+import org.intellij.lang.regexp.inspection.RegExpReplacementUtil;
 import org.intellij.lang.regexp.psi.RegExpClosure;
 import org.intellij.lang.regexp.psi.RegExpPattern;
 import org.intellij.lang.regexp.psi.RegExpQuantifier;
@@ -41,13 +43,13 @@ class SimplifyQuantifierAction implements IntentionAction {
     @Override
     @NotNull
     public String getText() {
-        return myReplacement == null ? "Simplify" : "Replace with '" + myReplacement + "'";
+        return myReplacement == null ? "Remove '{1,1}'" : "Replace with '" + myReplacement + "'";
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-        return "Simplify Quantifier";
+        return "Simplify quantifier";
     }
 
     @Override
@@ -58,7 +60,12 @@ class SimplifyQuantifierAction implements IntentionAction {
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         if (myReplacement == null) {
-            myQuantifier.delete();
+            PsiElement parent = myQuantifier.getParent();
+            if (!(parent instanceof RegExpClosure)) {
+                return;
+            }
+            RegExpClosure closure = (RegExpClosure)parent;
+            RegExpReplacementUtil.replaceInContext(closure, closure.getAtom().getUnescapedText());
         } else {
             final PsiFileFactory factory = PsiFileFactory.getInstance(project);
 

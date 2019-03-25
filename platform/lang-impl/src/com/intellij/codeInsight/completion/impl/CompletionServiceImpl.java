@@ -4,11 +4,8 @@ package com.intellij.codeInsight.completion.impl;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -82,20 +79,6 @@ public final class CompletionServiceImpl extends CompletionService {
     if (completion != null) {
       completion.addAdvertisement(text, null);
     }
-  }
-
-  @Override
-  public CompletionParameters createCompletionParameters(@NotNull Project project,
-                                                         @NotNull Editor editor,
-                                                         @NotNull Caret caret,
-                                                         int invocationCount,
-                                                         CompletionType completionType,
-                                                         @NotNull Disposable parentDisposable) {
-    CompletionInitializationContext context = CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret,
-                                                                                                                     invocationCount, completionType);
-    CompletionProcessBase progress = new CompletionProcessBase(context);
-    Disposer.register(parentDisposable, progress);
-    return CompletionInitializationUtil.prepareCompletionParameters(context, progress);
   }
 
   @Override

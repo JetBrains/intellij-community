@@ -43,29 +43,25 @@ public class FindUsagesOptions implements Cloneable {
   }
 
   public FindUsagesOptions(@NotNull Project project, @Nullable final DataContext dataContext) {
-    this(calcScope(project, dataContext));
-  }
-
-  @NotNull
-  private static SearchScope calcScope(@NotNull Project project, @Nullable DataContext dataContext) {
-    String defaultScopeName = FindSettings.getInstance().getDefaultScopeName();
-    List<SearchScope> predefined = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(project, dataContext, true, false, false,
-                                                                                                   false);
-    SearchScope resultScope = null;
-    for (SearchScope scope : predefined) {
-      if (scope.getDisplayName().equals(defaultScopeName)) {
-        resultScope = scope;
-        break;
-      }
-    }
-    if (resultScope == null) {
-      resultScope = ProjectScope.getProjectScope(project);
-    }
-    return resultScope;
+    this(findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName()));
   }
 
   public FindUsagesOptions(@NotNull SearchScope searchScope) {
     this.searchScope = searchScope;
+  }
+
+  @NotNull
+  private static SearchScope findScopeByName(@NotNull Project project,
+                                             @Nullable DataContext dataContext,
+                                             @Nullable String scopeName) {
+    List<SearchScope> predefined = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
+      project, dataContext, true, false, false, false, false);
+    for (SearchScope scope : predefined) {
+      if (scope.getDisplayName().equals(scopeName)) {
+        return scope;
+      }
+    }
+    return ProjectScope.getProjectScope(project);
   }
 
   @Override

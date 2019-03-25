@@ -1,0 +1,50 @@
+layoutConstraints:
+  fillX: true
+  gridGapX:
+    min: &id001 {horizontal: true, unit: 0, value: 0.0}
+    preferred: *id001
+  gridGapY:
+    min: &id002 {horizontal: false, value: 10.0}
+    preferred: *id002
+  hideMode: 2
+  insets:
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+rowConstraints:
+  constraints:
+  - align: &id003 {horizontal: false, unit: -1, value: 0.0}
+  - align: *id003
+  count: 2
+columnConstraints:
+  constraints:
+  - gapAfter:
+      max: &id004 {horizontal: true, value: 6.0}
+      min: *id004
+      preferred: *id004
+    grow: 0.0
+  - gapAfter:
+      max: &id005 {horizontal: true, value: 8.0}
+      min: *id005
+      preferred: *id005
+  - {}
+  count: 3
+componentConstrains:
+  Thread dump capture delay (ms) [label]: {}
+  'JBIntSpinner #1': {spanX: 2097051, wrap: true}
+  Create: {}
+  'JBIntSpinner #3': {}
+  files to start background indexing [label]: {spanX: 2097051, wrap: true}
+cellBounds:
+- [0, 0, 204, 21]
+- [210, 0, 332, 21]
+- [0, 31, 204, 21]
+- [210, 31, 111, 21]
+- [329, 31, 213, 21]
+componentBounds:
+  Thread dump capture delay (ms) [label]: [0, 3, 204, 15]
+  'JBIntSpinner #1': [207, -3, 81, 27]
+  Create: [-4, 30, 65, 22]
+  'JBIntSpinner #3': [207, 28, 117, 27]
+  files to start background indexing [label]: [329, 34, 213, 15]

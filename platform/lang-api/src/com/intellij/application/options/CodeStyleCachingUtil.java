@@ -14,34 +14,34 @@ import org.jetbrains.annotations.NotNull;
 
 class CodeStyleCachingUtil {
   private final static Logger LOG = Logger.getInstance(CodeStyleCachingUtil.class);
+  private final static Object COMPUTATION_LOCK = new Object();
 
   private final static ExtensionPointName<CodeStyleSettingsModifier> CODE_STYLE_SETTINGS_MODIFIER_EP_NAME =
     ExtensionPointName.create("com.intellij.codeStyleSettingsModifier");
 
   @NotNull
   static CodeStyleSettings getCachedCodeStyle(@NotNull PsiFile file) {
-    CachedCodeStyleHolder cachedCodeStyleHolder = CachedValuesManager.getCachedValue(
-      file,
-      () -> {
-        CachedCodeStyleHolder holder = new CachedCodeStyleHolder(file);
-        if (LOG.isDebugEnabled()) {
-          logCached(file, holder);
-        }
-        return new CachedValueProvider.Result<>(holder, holder.getDependencies());
-      });
+    CachedCodeStyleHolder cachedCodeStyleHolder = CachedValuesManager.getCachedValue(file, () -> createHolder(file).getCachedResult());
     return cachedCodeStyleHolder.getCachedSettings();
   }
 
-  static class CachedCodeStyleHolder {
-    private @NotNull CodeStyleSettings myCachedSettings;
+  private static CachedCodeStyleHolder createHolder(@NotNull PsiFile file) {
+    CachedCodeStyleHolder holder = new CachedCodeStyleHolder();
+    synchronized (COMPUTATION_LOCK) {
+      holder.compute(file);
+    }
+    if (LOG.isDebugEnabled()) {
+      logCached(file, holder);
+    }
+    return holder;
+  }
 
-    CachedCodeStyleHolder(@NotNull PsiFile file) {
+  static class CachedCodeStyleHolder {
+    private @NotNull CodeStyleSettings myCachedSettings = CodeStyle.getDefaultSettings();
+
+    private void compute(@NotNull PsiFile file) {
       //noinspection deprecation
       myCachedSettings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
-      updateFor(file);
-    }
-
-    private void updateFor(@NotNull PsiFile file) {
       TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(file, myCachedSettings);
       for (CodeStyleSettingsModifier modifier : CODE_STYLE_SETTINGS_MODIFIER_EP_NAME.getExtensionList()) {
         if (modifier.modifySettings(modifiableSettings, file)) {
@@ -64,11 +64,15 @@ class CodeStyleCachingUtil {
     CodeStyleSettings getCachedSettings() {
       return myCachedSettings;
     }
+
+    CachedValueProvider.Result<CachedCodeStyleHolder> getCachedResult() {
+      return new CachedValueProvider.Result<>(this, this.getDependencies());
+    }
   }
 
   private static void logCached(@NotNull PsiFile file, @NotNull CachedCodeStyleHolder holder) {
     CodeStyleSettings settings = holder.getCachedSettings();
     LOG.debug(String.format(
-      "File: %s, cached: %s, tracker: %d", file.getName(), settings, settings.getModificationTracker().getModificationCount()));
+      "File: %s (%s), cached: %s, tracker: %d", file.getName(), Integer.toHexString(file.hashCode()), settings, settings.getModificationTracker().getModificationCount()));
   }
 }

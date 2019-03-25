@@ -4,7 +4,9 @@ package com.intellij.refactoring.introduceVariable;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
@@ -45,7 +47,7 @@ class VariableExtractor {
   private final Editor myEditor;
   private final IntroduceVariableSettings mySettings;
   private final PsiExpression myExpression;
-  private PsiElement myAnchor;
+  private @NotNull PsiElement myAnchor;
   private final PsiElement myContainer;
   private final PsiExpression[] myOccurrences;
   private final boolean myReplaceSelf;
@@ -125,7 +127,19 @@ class VariableExtractor {
       myAnchor = BlockUtils.expandSingleStatementToBlockStatement((PsiStatement)myAnchor);
     }
     if (myAnchor instanceof PsiExpression) {
-      myAnchor = RefactoringUtil.getParentStatement(RefactoringUtil.ensureCodeBlock(((PsiExpression)myAnchor)), false);
+      PsiExpression place = RefactoringUtil.ensureCodeBlock(((PsiExpression)myAnchor));
+      if (place == null) {
+        throw new RuntimeExceptionWithAttachments(
+          "Cannot ensure code block: myAnchor type is " + myAnchor.getClass() + "; parent type is " + myAnchor.getParent().getClass(),
+          new Attachment("context.txt", myContainer.getText()));
+      }
+      PsiElement statement = RefactoringUtil.getParentStatement(place, false);
+      if (statement == null) {
+        throw new RuntimeExceptionWithAttachments(
+          "Cannot find parent statement for " + place.getClass() + "; parent type is " + place.getParent().getClass(),
+          new Attachment("context.txt", myContainer.getText()));
+      }
+      myAnchor = statement;
     }
   }
 
@@ -183,7 +197,7 @@ class VariableExtractor {
     return elementFactory.createVariableDeclarationStatement(name, type, initializer, myContainer);
   }
 
-  private static PsiElement addDeclaration(PsiElement declaration, PsiExpression initializer, PsiElement anchor) {
+  private static PsiElement addDeclaration(PsiElement declaration, PsiExpression initializer, @NotNull PsiElement anchor) {
     if (anchor instanceof PsiDeclarationStatement) {
       final PsiElement[] declaredElements = ((PsiDeclarationStatement)anchor).getDeclaredElements();
       if (declaredElements.length > 1) {
@@ -213,7 +227,11 @@ class VariableExtractor {
         .createResourceVariable(Objects.requireNonNull(localVariable.getName()), localVariable.getType(), initializer, anchor);
       return anchor.replace(resourceVariable);
     }
-    return anchor.getParent().addBefore(declaration, anchor);
+    PsiElement parent = anchor.getParent();
+    if (parent == null) {
+      throw new IllegalStateException("Unexpectedly anchor has no parent. Anchor class: " + anchor.getClass());
+    }
+    return parent.addBefore(declaration, anchor);
   }
 
   @NotNull

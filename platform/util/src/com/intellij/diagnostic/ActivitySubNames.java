@@ -8,9 +8,10 @@ public final class ActivitySubNames {
 
   public static final String REGISTER_BUNDLED_FONTS = "register bundled fonts";
 
-  public static final String CHECK_SYSTEM_DIR = "check system dirs";
-  public static final String LOCK_SYSTEM_DIRS = "lock system dirs";
-  public static final String START_LOGGING = "start logging";
+  public static final String SETUP_SYSTEM_LIBS = "setup system libs";
   public static final String LOAD_SYSTEM_LIBS = "load system libs";
   public static final String FIX_PROCESS_ENV = "fix process env";
+
+  public static final String INIT_PLUGINS = "plugin initialization";
+  public static final String LOAD_PLUGIN_DESCRIPTORS = "plugin descriptors loading";
 }

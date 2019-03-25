@@ -20,7 +20,6 @@ import com.intellij.codeInsight.generation.MemberChooserObject;
 import com.intellij.codeInsight.generation.PsiElementMemberChooserObject;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
@@ -28,8 +27,6 @@ import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
 import java.util.List;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author Alexey.Ivanov
@@ -47,10 +44,6 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
       result.append(')');
 
       return result.toString();
-    }
-    final PyClass cls = as(element, PyClass.class);
-    if (cls != null && PyNames.TYPES_INSTANCE_TYPE.equals(cls.getQualifiedName())) {
-      return "<old-style class>";
     }
     return element.getName();
   }

@@ -17,9 +17,12 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.FeedbackDescriptionProvider;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -29,12 +32,28 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SendFeedbackAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
-    e.getPresentation().setEnabledAndVisible(info != null && info.getFeedbackUrl() != null);
+    boolean isSupportedOS = SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isWindows;
+    if (info != null && info.getFeedbackUrl() != null && isSupportedOS) {
+      String feedbackSite = getFeedbackHost(info.getFeedbackUrl(), info.getCompanyName());
+      e.getPresentation().setDescription(ActionsBundle.message("action.SendFeedback.detailed.description", feedbackSite));
+      e.getPresentation().setEnabledAndVisible(true);
+    }
+    else {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+  }
+
+  private static String getFeedbackHost(String feedbackUrl, String companyName) {
+    Pattern uriPattern = Pattern.compile("[^:/?#]+://(?:www\\.)?([^/?#]*).*", Pattern.DOTALL);
+    Matcher matcher = uriPattern.matcher(feedbackUrl);
+    return matcher.matches() ? matcher.group(1) : companyName;
   }
 
   @Override
@@ -43,7 +62,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
   }
 
   public static void doPerformAction(@Nullable Project project) {
-    doPerformActionImpl(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription());
+    doPerformActionImpl(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription(project));
   }
 
   public static void doPerformAction(@Nullable Project project, @NotNull String description) {
@@ -59,13 +78,23 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     String url = urlTemplate
       .replace("$BUILD", eap ? appInfo.getBuild().asStringWithoutProductCode() : appInfo.getBuild().asString())
       .replace("$TIMEZONE", System.getProperty("user.timezone"))
+      .replace("$VERSION", appInfo.getFullVersion())
       .replace("$EVAL", la != null && la.isEvaluationLicense() ? "true" : "false")
       .replace("$DESCR", description);
     BrowserUtil.browse(url, project);
   }
 
+  /**
+   * @deprecated use {@link #getDescription(Project)} instead
+   */
+  @Deprecated
   @NotNull
   public static String getDescription() {
+    return getDescription(null);
+  }
+
+  @NotNull
+  public static String getDescription(@Nullable Project project) {
     StringBuilder sb = new StringBuilder("\n\n");
     sb.append(ApplicationInfoEx.getInstanceEx().getBuild().asString()).append(", ");
     String javaVersion = System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"));
@@ -106,6 +135,14 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
         sb.append(SystemInfo.isMac ? "; Retina" : "; HiDPI");
       }
     }
+    for (FeedbackDescriptionProvider ext : EP_NAME.getExtensions()) {
+      String pluginDescription = ext.getDescription(project);
+      if (pluginDescription != null && pluginDescription.length() > 0) {
+        sb.append("\n").append(pluginDescription);
+      }
+    }
     return sb.toString();
   }
+
+  private static final ExtensionPointName<FeedbackDescriptionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.feedbackDescriptionProvider");
 }

@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 /**
  * Calculates width (in pixels) of editor contents.
  */
-class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedDocumentListener, Disposable, FoldingListener, Dumpable {
+class EditorSizeManager implements PrioritizedDocumentListener, Disposable, FoldingListener, InlayModel.Listener, Dumpable {
   private static final Logger LOG = Logger.getInstance(EditorSizeManager.class);
 
   private static final int UNKNOWN_WIDTH = Integer.MAX_VALUE;
@@ -68,6 +68,9 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   private final List<TextRange> myDeferredRanges = new ArrayList<>();
 
+  private boolean myWidestBlockInlayValid;
+  private Inlay myWidestBlockInlay;
+
   private final SoftWrapAwareDocumentParsingListenerAdapter mySoftWrapChangeListener = new SoftWrapAwareDocumentParsingListenerAdapter() {
     @Override
     public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event) {
@@ -88,6 +91,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
   @Override
   public void dispose() {
     myEditor.getSoftWrapModel().getApplianceManager().removeListener(mySoftWrapChangeListener);
+    invalidateCachedBlockInlayWidth();
   }
 
   @Override
@@ -138,13 +142,56 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
       onTextLayoutPerformed(range.getStartOffset(), range.getEndOffset());
     }
     myDeferredRanges.clear();
+    invalidateCachedBlockInlayWidth();
     assertValidState();
   }
 
   @Override
+  public void onAdded(@NotNull Inlay inlay) {
+    if (myDocument.isInBulkUpdate()) return;
+
+    if (inlay.getPlacement() == Inlay.Placement.INLINE || inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
+      onLineInlayUpdate(inlay);
+    }
+    else if (myWidestBlockInlayValid && inlay.getWidthInPixels() > getCachedWidestBlockInlayWidth() &&
+             !myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset())) {
+      myWidestBlockInlay = inlay;
+    }
+  }
+
+  @Override
+  public void onRemoved(@NotNull Inlay inlay) {
+    if (myDocument.isInBulkUpdate()) return;
+
+    if (inlay.getPlacement() == Inlay.Placement.INLINE || inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
+      onLineInlayUpdate(inlay);
+    }
+    else if (inlay == myWidestBlockInlay) {
+      invalidateCachedBlockInlayWidth();
+    }
+  }
+
+  @Override
   public void onUpdated(@NotNull Inlay inlay) {
-    if (myDocument.isInBulkUpdate()
-        || inlay.getPlacement() != Inlay.Placement.INLINE && inlay.getPlacement() != Inlay.Placement.AFTER_LINE_END) return;
+    if (myDocument.isInBulkUpdate()) return;
+
+    if (inlay.getPlacement() == Inlay.Placement.INLINE || inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
+      onLineInlayUpdate(inlay);
+    }
+    else if (myWidestBlockInlayValid &&
+             (inlay == myWidestBlockInlay ||
+              inlay.getWidthInPixels() > getCachedWidestBlockInlayWidth() &&
+              !myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset()))) {
+      if (inlay == myWidestBlockInlay) {
+        invalidateCachedBlockInlayWidth();
+      }
+      else {
+        myWidestBlockInlay = inlay;
+      }
+    }
+  }
+
+  private void onLineInlayUpdate(@NotNull Inlay inlay) {
     if (myDuringDocumentUpdate) {
       if (inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
         myAfterLineEndInlayUpdated = true;
@@ -188,6 +235,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
         .max().orElse(0);
       width = Math.max(width, caretMaxX);
     }
+    width = Math.max(width, insets.left + getMaximumVisibleBlockInlayWidth());
     if (shouldRespectAdditionalColumns(widthWithoutCaret)) {
       width += myEditor.getSettings().getAdditionalColumnsCount() * myView.getPlainSpaceWidth();
     }
@@ -377,6 +425,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
   void reset() {
     assert !myDocument.isInBulkUpdate();
     doInvalidateRange(0, myDocument.getTextLength());
+    invalidateCachedBlockInlayWidth();
   }
 
   void invalidateRange(int startOffset, int endOffset) {
@@ -437,6 +486,29 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
   void setMaxLineWithExtensionWidth(int lineNumber, int width) {
     myWidestLineWithExtension = lineNumber;
     myMaxLineWithExtensionWidth = width;
+  }
+
+  private int getMaximumVisibleBlockInlayWidth() {
+    if (!myWidestBlockInlayValid) {
+      myWidestBlockInlayValid = true;
+      myWidestBlockInlay = null;
+      myEditor.getInlayModel().getBlockElementsInRange(0, myDocument.getTextLength()).forEach(inlay -> {
+        if (!myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset()) &&
+            inlay.getWidthInPixels() > getCachedWidestBlockInlayWidth()) {
+          myWidestBlockInlay = inlay;
+        }
+      });
+    }
+    return getCachedWidestBlockInlayWidth();
+  }
+
+  private int getCachedWidestBlockInlayWidth() {
+    return myWidestBlockInlay == null ? 0 : myWidestBlockInlay.getWidthInPixels();
+  }
+
+  private void invalidateCachedBlockInlayWidth() {
+    myWidestBlockInlayValid = false;
+    myWidestBlockInlay = null;
   }
 
   void textLayoutPerformed(int startOffset, int endOffset) {
@@ -514,6 +586,8 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     return "[cached width: " + myWidthInPixels +
            ", longest visual line: " + myWidthDefiningLineNumber +
            ", cached width is valid: " + myWidthIsValid +
+           ", widest block inlay: " + myWidestBlockInlay +
+           ", widest block inlay is valid: " + myWidestBlockInlayValid +
            ", invalid visual lines: [" + myStartInvalidLine + ", " + myEndInvalidLine + "]" +
            ", max line with extension width: " + myMaxLineWithExtensionWidth +
            ", line widths: " + myLineWidths + "]";

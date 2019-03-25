@@ -141,8 +141,8 @@ public class PsiUtil {
   @Nullable
   public static PsiMethod findNearestMethod(String name, @Nullable PsiClass cls) {
     if (cls == null) return null;
-    for (PsiMethod method : cls.getMethods()) {
-      if (method.getParameterList().isEmpty() && method.getName().equals(name)) {
+    for (PsiMethod method : cls.findMethodsByName(name, false)) {
+      if (method.getParameterList().isEmpty()) {
         return method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT) ? null : method;
       }
     }

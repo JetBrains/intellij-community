@@ -10,6 +10,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.*;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1580,30 +1582,47 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   private static String formatDuration(long duration, @NotNull String unitSeparator, int maxFragments) {
-    String[] units = TIME_UNITS;
-
-    List<String> fragments = new ArrayList<>();
+    TLongArrayList unitValues = new TLongArrayList();
+    TIntArrayList unitIndices = new TIntArrayList();
 
     long count = duration;
     int i = 1;
-    for (; i < units.length && count > 0; i++) {
+    for (; i < TIME_UNITS.length && count > 0; i++) {
       long multiplier = TIME_MULTIPLIERS[i];
       if (count < multiplier) break;
       long remainder = count % multiplier;
       count /= multiplier;
-      if (remainder != 0 || fragments.size() > 0) {
-        fragments.add(0, remainder + unitSeparator + units [i - 1]);
+      if (remainder != 0 || unitValues.size() > 0) {
+        unitValues.insert(0, remainder);
+        unitIndices.insert(0, i - 1);
       }
       else {
         remainder = Math.round(remainder * 100 / (double)multiplier);
         count += remainder / 100;
       }
     }
-    fragments.add(0, count + unitSeparator + units [i - 1]);
-    if (fragments.size() > maxFragments) {
-      fragments = fragments.subList(0, maxFragments);
+    unitValues.insert(0, count);
+    unitIndices.insert(0, i - 1);
+
+    if (unitValues.size() > maxFragments) {
+      int lastUnitIndex = unitIndices.get(maxFragments - 1);
+      long lastMultiplier = TIME_MULTIPLIERS[lastUnitIndex];
+      // Round up if needed
+      if (unitValues.get(maxFragments) > lastMultiplier / 2) {
+        long increment = lastMultiplier - unitValues.get(maxFragments);
+        for (int unit = lastUnitIndex - 1; unit > 0; unit--) {
+          increment *= TIME_MULTIPLIERS[unit];
+        }
+        return formatDuration(duration + increment, unitSeparator, maxFragments);
+      }
     }
-    return join(fragments, " ");
+
+    StringBuilder result = new StringBuilder();
+    for (i = 0; i < unitValues.size() && i < maxFragments; i++) {
+      if (i > 0) result.append(" ");
+      result.append(unitValues.get(i)).append(unitSeparator).append(TIME_UNITS[unitIndices.get(i)]);
+    }
+    return result.toString();
   }
 
   /**

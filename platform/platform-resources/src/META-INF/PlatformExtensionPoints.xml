@@ -8,8 +8,7 @@
     <extensionPoint name="appStarter"
                     interface="com.intellij.openapi.application.ApplicationStarter"/>
 
-    <extensionPoint name="postStartupActivity"
-                    interface="com.intellij.openapi.startup.StartupActivity"/>
+    <extensionPoint name="postStartupActivity" interface="com.intellij.openapi.startup.StartupActivity"/>
 
     <extensionPoint name="defaultProjectTypeProvider"
                     beanClass="com.intellij.openapi.project.DefaultProjectTypeEP"/>
@@ -348,5 +347,7 @@
     <extensionPoint qualifiedName="com.intellij.search.traverseUiHelper" interface="com.intellij.ide.ui.search.TraverseUIHelper"/>
 
     <extensionPoint name="obsoleteStorage" beanClass="com.intellij.configurationStore.ObsoleteStorageBean"/>
+
+    <extensionPoint name="feedbackDescriptionProvider" interface="com.intellij.ide.FeedbackDescriptionProvider"/>
   </extensionPoints>
 </idea-plugin>

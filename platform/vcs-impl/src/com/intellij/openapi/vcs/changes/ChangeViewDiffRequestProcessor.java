@@ -107,6 +107,15 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return true;
   }
 
+  public void updatePreview(boolean state, boolean fromModelRefresh) {
+    if (state) {
+      refresh(fromModelRefresh);
+    }
+    else {
+      clear();
+    }
+  }
+
   //
   // Impl
   //

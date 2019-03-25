@@ -152,6 +152,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private boolean myControlPanelVisible;
   private int myHighlightedLink = -1;
   private Object myHighlightingTag;
+  private final boolean myStoreSize;
+  private boolean myManuallyResized;
 
   private AbstractPopup myHint;
 
@@ -169,8 +171,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public DocumentationComponent(DocumentationManager manager) {
+    this(manager, true);
+  }
+
+  public DocumentationComponent(DocumentationManager manager, boolean storeSize) {
     myManager = manager;
     myIsEmpty = true;
+    myStoreSize = storeSize;
 
     myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "") {
       {
@@ -316,7 +323,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                   @Override
                   public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
                     Rectangle alloc = (Rectangle)a;
-                    if (x < alloc.x + (alloc.width / 2)) {
+                    if (x < alloc.x + (alloc.width / 2f)) {
                       bias[0] = Position.Bias.Forward;
                       return getStartOffset();
                     }
@@ -470,16 +477,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
         super.processMouseMotionEvent(e);
       }
-
-      @NotNull
-      @Override
-      protected ActionButton createSecondaryButton(DefaultActionGroup secondaryActions,
-                                                   Presentation presentation,
-                                                   String place, final Dimension minimumSize) {
-        return new ActionButton.Transparent(secondaryActions, presentation, place, minimumSize);
-      }
     };
-    myToolBar.setSecondaryActionsIcon(AllIcons.Actions.More);
+    myToolBar.setSecondaryActionsIcon(AllIcons.Actions.More, true);
 
     JLayeredPane layeredPane = new JBLayeredPane() {
       @Override
@@ -520,7 +519,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     gearActions.addAll(actions);
     Presentation presentation = new Presentation();
     presentation.setIcon(AllIcons.Actions.More);
-    myCorner = new ActionButton.Transparent(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20));
+    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+    myCorner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20));
     myCorner.setNoIconsInPopup(true);
     layeredPane.add(myCorner);
     layeredPane.setLayer(myCorner, JLayeredPane.POPUP_LAYER);
@@ -671,7 +671,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         setQuickDocFontSize(FontSize.values()[myFontSizeSlider.getValue()]);
         applyFontProps();
         // resize popup according to new font size, if user didn't set popup size manually
-        if (myHint != null && myHint.getDimensionServiceKey() == null) showHint();
+        if (!myManuallyResized && myHint != null && myHint.getDimensionServiceKey() == null) showHint();
       }
     });
 
@@ -878,7 +878,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     Component popupAnchor = getPopupAnchor();
     int maxWidth = popupAnchor != null ? JBUI.scale(435) : MAX_DEFAULT.width;
     Dimension hintSize;
-    if (myHint.getDimensionServiceKey() == null) {
+    if (!myManuallyResized && myHint.getDimensionServiceKey() == null) {
       Dimension preferredSize = myEditorPane.getPreferredSize();
       int width = definitionPreferredWidth();
       width = width < 0 ? preferredSize.width : width;
@@ -892,7 +892,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       hintSize = new Dimension(width, height);
     }
     else {
-      hintSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
+      hintSize = myManuallyResized
+                 ? myHint.getSize()
+                 : DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
       if (hintSize == null) {
         hintSize = new Dimension(MIN_DEFAULT);
       }
@@ -923,8 +925,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (hint == null || mySizeTrackerRegistered) return;
     mySizeTrackerRegistered = true;
     hint.addResizeListener(() -> {
-      hint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
-      hint.storeDimensionSize();
+      myManuallyResized = true;
+      if (myStoreSize) {
+        hint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
+        hint.storeDimensionSize();
+      }
     }, this);
   }
 
@@ -1772,13 +1777,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabledAndVisible(myHint != null && myHint.getDimensionServiceKey() != null);
+      e.getPresentation().setEnabledAndVisible(myHint != null && (myManuallyResized || myHint.getDimensionServiceKey() != null));
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      DimensionService.getInstance().setSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, null, myManager.myProject);
-      myHint.setDimensionServiceKey(null);
+      myManuallyResized = false;
+      if (myStoreSize) {
+        DimensionService.getInstance().setSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, null, myManager.myProject);
+        myHint.setDimensionServiceKey(null);
+      }
       showHint();
     }
   }

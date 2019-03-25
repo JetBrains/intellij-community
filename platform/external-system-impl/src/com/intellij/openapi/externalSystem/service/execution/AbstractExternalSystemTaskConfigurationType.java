@@ -124,6 +124,9 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
                                     @Nullable String executionName,
                                     @NotNull String tasksPrefix,
                                     @NotNull String tasksPostfix) {
+    if (!StringUtil.isEmpty(executionName)) {
+      return executionName;
+    }
     boolean isTasksAbsent = taskNames.isEmpty();
     String rootProjectPath = null;
     if (externalProjectPath != null) {

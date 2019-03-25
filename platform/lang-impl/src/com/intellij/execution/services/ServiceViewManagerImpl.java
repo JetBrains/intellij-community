@@ -21,6 +21,8 @@ import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 
@@ -63,14 +65,30 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     toolWindow.getContentManager().addContent(toolWindowContent);
   }
 
+  @NotNull
   @Override
-  public void selectNode(Object node) {
+  public Promise<Void> selectNode(Object node, boolean activate, boolean focus) {
+    AsyncPromise<Void> result = new AsyncPromise<>();
     AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
-      ServiceView content = myServiceView;
-      if (content != null) {
-        content.selectNode(node);
+      Runnable runnable = () -> {
+        ServiceView view = myServiceView;
+        if (view == null) {
+          result.setError("");
+        }
+        else {
+          view.selectNode(node);
+          result.setResult(null);
+        }
+      };
+      ToolWindow window = activate ? ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.SERVICES) : null;
+      if (window != null) {
+        window.activate(runnable, false, focus);
+      }
+      else {
+        runnable.run();
       }
     });
+    return result;
   }
 
   private void updateToolWindow(ServiceViewContributor.ServiceEvent event) {
@@ -141,7 +159,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   }
 
   private static Icon getToolWindowIcon() {
-    return AllIcons.Toolwindows.ToolWindowRun;
+    return AllIcons.Toolwindows.ToolWindowServices;
   }
 
   static String getToolWindowContextHelpId() {

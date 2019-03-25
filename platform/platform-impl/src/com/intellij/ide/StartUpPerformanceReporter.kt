@@ -7,10 +7,11 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.util.SystemProperties
 import gnu.trove.THashMap
 import java.io.StringWriter
 import java.util.concurrent.TimeUnit
@@ -19,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 
-private val LOG = Logger.getInstance(StartUpMeasurer::class.java)
+private val LOG = logger<StartUpMeasurer>()
 
 class StartUpPerformanceReporter : StartupActivity, DumbAware {
   private val activationCount = AtomicInteger()
@@ -89,7 +90,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     val items = mutableListOf<ActivityImpl>()
     val activities = THashMap<String, MutableList<ActivityImpl>>()
 
-    StartUpMeasurer.processAndClear(Consumer { item ->
+    StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false), Consumer { item ->
       val parallelActivity = item.parallelActivity
       if (parallelActivity == null) {
         items.add(item)
@@ -104,7 +105,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
       }
     })
 
-    if (items.isEmpty() || (ApplicationManager.getApplication().isUnitTestMode && activationNumber > 2)) {
+    if (items.isEmpty()) {
       return
     }
 
@@ -117,7 +118,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.setIndent("  ")
     writer.beginObject()
 
-    writer.name("version").value("4")
+    writer.name("version").value("5")
     writeServiceStats(writer)
 
     val startTime = if (activationNumber == 0) StartUpMeasurer.getClassInitStartTime() else items.first().start
@@ -156,17 +157,17 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     stringWriter.write("\n=== Stop: StartUp Measurement ===")
     var string = stringWriter.toString()
     // to make output more compact (quite a lot slow components) - should we write own JSON encoder? well, for now potentially slow RegExp is ok
-    string = string.replace(Regex(",\\s+(\"start\"|\"end\"|\\{)"), ", $1")
+    string = string.replace(Regex(",\\s+(\"start\"|\"end\"|\"thread\"|\\{)"), ", $1")
     LOG.info(string)
   }
+}
 
-  private fun writeParallelActivities(activities: Map<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonWriter) {
-    // sorted to get predictable JSON
-    for (name in activities.keys.sorted()) {
-      val list = activities.getValue(name)
-      sortItems(list)
-      writeActivities(list, startTime, writer, activityNameToJsonFieldName(name))
-    }
+private fun writeParallelActivities(activities: Map<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonWriter) {
+  // sorted to get predictable JSON
+  for (name in activities.keys.sorted()) {
+    val list = activities.getValue(name)
+    StartUpPerformanceReporter.sortItems(list)
+    writeActivities(list, startTime, writer, activityNameToJsonFieldName(name))
   }
 }
 
@@ -216,8 +217,8 @@ private fun activityNameToJsonFieldName(name: String): String {
   }
 }
 
-private fun writeActivities(slowComponents: List<ActivityImpl>, offset: Long, writer: JsonWriter, fieldName: String) {
-  if (slowComponents.isEmpty()) {
+private fun writeActivities(activities: List<ActivityImpl>, offset: Long, writer: JsonWriter, fieldName: String) {
+  if (activities.isEmpty()) {
     return
   }
 
@@ -225,7 +226,7 @@ private fun writeActivities(slowComponents: List<ActivityImpl>, offset: Long, wr
   writer.name(fieldName)
   writer.beginArray()
 
-  for (item in slowComponents) {
+  for (item in activities) {
     writer.beginObject()
     writer.name("name").value(item.name)
     writeItemTimeInfo(item, item.end - item.start, offset, writer)
@@ -239,6 +240,16 @@ private fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, 
   writer.name("duration").value(TimeUnit.NANOSECONDS.toMillis(duration))
   writer.name("start").value(TimeUnit.NANOSECONDS.toMillis(item.start - offset))
   writer.name("end").value(TimeUnit.NANOSECONDS.toMillis(item.end - offset))
+  writer.name("thread").value(normalizeThreadName(item.thread))
+}
+
+private fun normalizeThreadName(name: String): String {
+  return when {
+    name.startsWith("AWT-EventQueue-") -> "edt"
+    name.startsWith("Idea Main Thread") -> "idea main"
+    name.startsWith("ApplicationImpl pooled thread ") -> name.replace("ApplicationImpl pooled thread ", "pooled ")
+    else -> name
+  }
 }
 
 private fun isSubItem(item: ActivityImpl, itemIndex: Int, list: List<ActivityImpl>): Boolean {

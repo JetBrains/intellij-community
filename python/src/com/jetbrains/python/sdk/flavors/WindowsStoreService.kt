@@ -26,8 +26,12 @@ fun findInstallLocationForPackage(packageName: String): VirtualFile? {
   val process = Runtime.getRuntime().exec(command)
   val result = process.waitFor(5, TimeUnit.SECONDS)
   if (!result) {
-    logger.warn("Error ${process.exitValue()} for command $command")
-    logger.warn(process.errorStream.bufferedReader().readText())
+    reportError(command, "Process still runs after timeout", process, logger)
+    return null
+  }
+  val exitValue = process.exitValue()
+  if (exitValue != 0) {
+    reportError(command, "Process exited $exitValue", process, logger)
     return null
   }
   val line = process.inputStream.bufferedReader().lines().filter { it.isNotBlank() }.findFirst().orElse(null) ?: return null
@@ -37,4 +41,11 @@ fun findInstallLocationForPackage(packageName: String): VirtualFile? {
     return null
   }
   return LocalFileSystem.getInstance().findFileByPath(groupValues[1])
+}
+
+private fun reportError(command: String, error: String, process: Process, logger: Logger) {
+  logger.warn(error)
+  logger.warn(command)
+  logger.warn(process.errorStream.bufferedReader().readText())
+  logger.warn(process.inputStream.bufferedReader().readText())
 }

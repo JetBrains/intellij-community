@@ -465,8 +465,8 @@
 
     <extensionPoint name="projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner"/>
 
-    <extensionPoint name="executor"
-                    interface="com.intellij.execution.Executor"/>
+    <!-- e.g. TeamCity plugin wants DefaultDebugExecutor in constructor -->
+    <extensionPoint name="executor" interface="com.intellij.execution.Executor" registerInPicoContainer="true"/>
 
     <extensionPoint name="executionTargetProvider"
                     interface="com.intellij.execution.ExecutionTargetProvider"/>

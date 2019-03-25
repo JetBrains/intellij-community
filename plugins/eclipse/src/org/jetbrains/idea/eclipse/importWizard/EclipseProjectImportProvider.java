@@ -1,21 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-public class EclipseProjectImportProvider extends ProjectImportProvider {
+public final class EclipseProjectImportProvider extends ProjectImportProvider {
+  private final EclipseProjectOpenProcessor myProcessor = new EclipseProjectOpenProcessor();
 
-  private final EclipseProjectOpenProcessor myProcessor;
-
-  public EclipseProjectImportProvider(final EclipseImportBuilder builder) {
-    super(builder);
-    myProcessor = new EclipseProjectOpenProcessor(builder);
+  @Override
+  protected ProjectImportBuilder doGetBuilder() {
+    return ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(EclipseImportBuilder.class);
   }
 
   @Override
@@ -31,7 +30,7 @@ public class EclipseProjectImportProvider extends ProjectImportProvider {
     return myProcessor.canOpenProject(file);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getFileSample() {
     return "<b>Eclipse</b> project (.project) or classpath (.classpath) file";

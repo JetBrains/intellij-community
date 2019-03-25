@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
@@ -63,17 +62,19 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
  * @author yole
  */
 public class AppUIUtil {
-  private static final Logger LOG = Logger.getInstance(AppUIUtil.class);
   private static final String VENDOR_PREFIX = "jetbrains-";
   private static final boolean DEBUG_MODE = PluginManagerCore.isRunningFromSources();
   private static boolean ourMacDocIconSet = false;
 
+  @NotNull
+  private static Logger getLogger() {
+    return Logger.getInstance(AppUIUtil.class);
+  }
+
   public static void updateWindowIcon(@NotNull Window window) {
-    if (SystemInfo.isWindows &&
-        SystemProperties.getBooleanProperty("ide.native.launcher", false) &&
-        SystemProperties.getBooleanProperty("jbre.win.app.icon.supported", false)) // todo[tav] defined by JBRE, remove when OpenJDK supports it as well
-    {
-      return; // JDK will load icon from the exe resource
+    // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
+    if (SystemInfo.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported")) {
+      return;  // JDK will load icon from the exe resource
     }
 
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
@@ -117,7 +118,7 @@ public class AppUIUtil {
           SVGLoader.load(url, AppUIUtil.class.getResourceAsStream(svgIconUrl), ScaleContext.create(window), size, size);
       }
       catch (IOException e) {
-        LOG.info("Cannot load svg application icon from " + svgIconUrl, e);
+        getLogger().info("Cannot load svg application icon from " + svgIconUrl, e);
       }
     }
     else if (fallbackImageResourcePath != null) {
@@ -160,14 +161,13 @@ public class AppUIUtil {
     }
   }
 
-  public static void updateFrameClass() {
-    if (SystemInfoRt.isWindows || SystemInfoRt.isMac) {
+  public static void updateFrameClass(@NotNull Toolkit toolkit) {
+    if (SystemInfo.isWindows || SystemInfo.isMac) {
       return;
     }
 
     Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_FRAME_CLASS);
     try {
-      Toolkit toolkit = Toolkit.getDefaultToolkit();
       Class<? extends Toolkit> aClass = toolkit.getClass();
       if ("sun.awt.X11.XToolkit".equals(aClass.getName())) {
         ReflectionUtil.setField(aClass, toolkit, null, "awtAppClassName", getFrameClass());
@@ -219,7 +219,7 @@ public class AppUIUtil {
       if (fontDir == null) {
         URL url = AppUIUtil.class.getResource("/fonts/" + name);
         if (url == null) {
-          Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
+          getLogger().warn("Resource missing: " + name);
           return;
         }
 
@@ -233,7 +233,7 @@ public class AppUIUtil {
       GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
     }
     catch (Throwable t) {
-      Logger.getInstance(AppUIUtil.class).warn("Cannot register font: " + name, t);
+      getLogger().warn("Cannot register font: " + name, t);
     }
   }
 
@@ -283,7 +283,7 @@ public class AppUIUtil {
     return iconPath;
   }
 
-  public static void showUserAgreementAndConsentsIfNeeded() {
+  public static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log) {
     if (ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
       EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
       if (!agreement.isAccepted()) {
@@ -293,14 +293,14 @@ public class AppUIUtil {
           EndUserAgreement.setAccepted(agreement);
         }
         catch (Exception e) {
-          Logger.getInstance(AppUIUtil.class).warn(e);
+          log.warn(e);
         }
       }
-      showConsentsAgreementIfNeed();
+      showConsentsAgreementIfNeed(log);
     }
   }
 
-  public static boolean showConsentsAgreementIfNeed() {
+  public static boolean showConsentsAgreementIfNeed(@NotNull Logger log) {
     final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
     AtomicBoolean result = new AtomicBoolean();
     if (consentsToShow.second) {
@@ -313,12 +313,13 @@ public class AppUIUtil {
       };
       if (SwingUtilities.isEventDispatchThread()) {
         runnable.run();
-      } else {
+      }
+      else {
         try {
           SwingUtilities.invokeAndWait(runnable);
         }
         catch (Exception e) {
-          Logger.getInstance(AppUIUtil.class).warn(e);
+          log.warn(e);
         }
       }
     }

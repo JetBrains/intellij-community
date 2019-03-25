@@ -765,7 +765,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @Override
   public Object getData(@NotNull String dataId) {
-    return myProject == null ? null : new TestDataProvider(myProject).getData(dataId);
+    return myProject == null || myProject.isDisposed() ? null : new TestDataProvider(myProject).getData(dataId);
   }
 
   @NotNull

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,6 +17,7 @@ import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 
 /**
  * Due to many bugs and "features" in {@code JComboBox} implementation we provide
@@ -117,7 +104,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     if (!isSwingPopup()) {
       if (visible && (myJBPopup == null || myJBPopup.isDisposed())) {
         final JBList<E> list = createJBList(getModel());
-        myJBPopup = JBPopupFactory.getInstance()
+        myJBPopup = Objects.requireNonNull(getPopupFactory())
           .createListPopupBuilder(list)
           .setItemChoosenCallback(() -> {
             final Object value = list.getSelectedValue();
@@ -145,10 +132,16 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
       return;
     }
 
-    if (getModel().getSize() == 0 && visible) return;
-    if (visible &&
-        ApplicationManager.getApplication() != null /* Allow ComboBox on welcome wizard*/ &&
-        JBPopupFactory.getInstance().getChildFocusedPopup(this) != null) return;
+    if (getModel().getSize() == 0 && visible) {
+      return;
+    }
+
+    if (visible) {
+      JBPopupFactory jbPopupFactory = getPopupFactory();
+      if (jbPopupFactory != null /* allow ComboBox on welcome wizard */ && jbPopupFactory.getChildFocusedPopup(this) != null) {
+        return;
+      }
+    }
 
     final boolean wasShown = isPopupVisible();
     super.setPopupVisible(visible);
@@ -165,19 +158,34 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     }
   }
 
+  @Nullable
+  private static JBPopupFactory getPopupFactory() {
+    if (ApplicationManager.getApplication() == null) {
+      return null;
+    }
+    return JBPopupFactory.getInstance();
+  }
+
   protected JBList<E> createJBList(ComboBoxModel<E> model) {
     return new JBList<>(model);
   }
 
   @Override
   public void eventDispatched(AWTEvent event) {
-    if (event.getID() == WindowEvent.WINDOW_OPENED
-        && ApplicationManager.getApplication() != null /* Allow ComboBox on welcome wizard*/) {
-      final WindowEvent we = (WindowEvent)event;
-      for (JBPopup each : JBPopupFactory.getInstance().getChildPopups(this)) {
-        if (each.getContent() != null && SwingUtilities.isDescendingFrom(each.getContent(), we.getWindow())) {
-          super.setPopupVisible(false);
-        }
+    if (event.getID() != WindowEvent.WINDOW_OPENED) {
+      return;
+    }
+
+    JBPopupFactory jbPopupFactory = getPopupFactory();
+    if (jbPopupFactory == null) {
+      // allow ComboBox on welcome wizard
+      return;
+    }
+
+    WindowEvent we = (WindowEvent)event;
+    for (JBPopup each : jbPopupFactory.getChildPopups(this)) {
+      if (each.getContent() != null && SwingUtilities.isDescendingFrom(each.getContent(), we.getWindow())) {
+        super.setPopupVisible(false);
       }
     }
   }
