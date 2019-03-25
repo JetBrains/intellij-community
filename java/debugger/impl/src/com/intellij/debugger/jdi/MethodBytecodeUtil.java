@@ -292,6 +292,11 @@ public class MethodBytecodeUtil {
       return locations;
     }
 
+    // Android Studio: 'getConstantPool' is not supported on android. (b/123863053)
+    if (!method.declaringType().virtualMachine().canGetConstantPool()) {
+      return locations;
+    }
+
     int lineNumber = locations.get(0).lineNumber();
     List<Boolean> mask = new ArrayList<>(locationsSize);
     visit(method, new MethodVisitor(Opcodes.API_VERSION) {
