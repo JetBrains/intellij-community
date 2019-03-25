@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -34,9 +34,10 @@ public class CommitHelper {
                       @Nullable CommitResultHandler resultHandler) {
     myActionName = actionName;
     myForceSyncCommit = synchronously;
+
+    ChangeListCommitState commitState = new ChangeListCommitState((LocalChangeList)changeList, changes, commitMessage);
     myCommitter =
-      new SingleChangeListCommitter(project, (LocalChangeList)changeList, changes, commitMessage, handlers, additionalData, null,
-                                    actionName, isDefaultChangeListFullyIncluded);
+      new SingleChangeListCommitter(project, commitState, handlers, additionalData, null, actionName, isDefaultChangeListFullyIncluded);
 
     myCommitter.addResultHandler(notNull(resultHandler, new DefaultCommitResultHandler(myCommitter)));
   }

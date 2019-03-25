@@ -52,13 +52,13 @@ class SingleChangeListCommitMessagePolicy(private val project: Project, private 
     }
   }
 
-  fun save(changeList: LocalChangeList, includedChanges: List<Change>, currentMessage: String, success: Boolean) {
-    rememberMessage(currentMessage)
+  fun save(commitState: ChangeListCommitState, success: Boolean) {
+    rememberMessage(commitState.commitMessage)
 
     if (success) {
-      vcsConfiguration.saveCommitMessage(currentMessage)
+      vcsConfiguration.saveCommitMessage(commitState.commitMessage)
 
-      val entireChangeListIncluded = changeList.changes.size == includedChanges.size
+      val entireChangeListIncluded = commitState.changeList.changes.size == commitState.changes.size
       if (!entireChangeListIncluded) forgetMessage()
     }
 
