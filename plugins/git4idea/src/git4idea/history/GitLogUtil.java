@@ -47,6 +47,12 @@ public class GitLogUtil {
    */
   public static final List<String> LOG_ALL = ContainerUtil.immutableList(GitUtil.HEAD, "--branches", "--remotes", "--tags");
   public static final String STDIN = "--stdin";
+  private static final GitLogParser.GitLogOption[] COMMIT_METADATA_OPTIONS = {
+    HASH, PARENTS,
+    COMMIT_TIME, COMMITTER_NAME, COMMITTER_EMAIL,
+    AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL,
+    SUBJECT, BODY, RAW_BODY
+  };
 
   @NotNull
   public static List<? extends VcsCommitMetadata> collectMetadata(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile root,
@@ -58,8 +64,7 @@ public class GitLogUtil {
     }
 
     GitLineHandler h = createGitHandler(project, root);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME, AUTHOR_EMAIL,
-                                           COMMIT_TIME, SUBJECT, COMMITTER_NAME, COMMITTER_EMAIL, AUTHOR_TIME, BODY, RAW_BODY);
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, COMMIT_METADATA_OPTIONS);
     h.setSilent(true);
     // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
     h.addParameters(getNoWalkParameter(vcs));
@@ -322,8 +327,7 @@ public class GitLogUtil {
                                              @NotNull GitLineHandler handler,
                                              @NotNull String... parameters)
     throws VcsException {
-    GitLogParser.GitLogOption[] options = {HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
-      PARENTS, SUBJECT, BODY, RAW_BODY};
+    GitLogParser.GitLogOption[] options = COMMIT_METADATA_OPTIONS;
     if (withRefs) {
       options = ArrayUtil.append(options, REF_NAMES);
     }
