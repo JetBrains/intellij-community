@@ -512,7 +512,7 @@ public class SearchManagerImpl implements SearchManager, SearchTaskCallback {
   @Override
   public void tellClosestResultFound(CloseSearchTask caller, ArrayList<SearchResult> allMatchesAtFrame,
                                      int indexOfClosestResult) {
-    SwingUtilities.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (!caller.isShouldStop()) {
         ((CollectionListModel<SearchResult>)closeSearchResultsList.getModel()).removeAll();
         // allMatchesAtFrame are sorted by definition...
@@ -610,7 +610,7 @@ public class SearchManagerImpl implements SearchManager, SearchTaskCallback {
 
   @Override
   public void tellSearchWasCatchedException(SearchTaskBase caller, IOException e) {
-    SwingUtilities.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (!caller.isShouldStop()) {
         if (caller instanceof CloseSearchTask) {
           setNewStatusText("Search stopped because something went wrong.");
@@ -667,11 +667,11 @@ public class SearchManagerImpl implements SearchManager, SearchTaskCallback {
 
   @Override
   public void updateSearchManageGUIActions() {
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
       searchManageGUI.updateActions();
     }
     else {
-      SwingUtilities.invokeLater(() -> searchManageGUI.updateActions());
+      ApplicationManager.getApplication().invokeLater(() -> searchManageGUI.updateActions());
     }
   }
 

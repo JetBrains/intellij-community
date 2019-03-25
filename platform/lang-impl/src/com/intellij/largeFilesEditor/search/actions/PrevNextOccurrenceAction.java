@@ -32,14 +32,14 @@ public class PrevNextOccurrenceAction extends DumbAwareAction implements Context
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (isEnabled()) {
       mySearchManager.gotoNextOccurrence(myDirectionForward);
     }
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled());
   }
 

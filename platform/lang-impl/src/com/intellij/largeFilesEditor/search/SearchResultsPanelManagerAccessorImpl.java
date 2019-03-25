@@ -58,7 +58,7 @@ public class SearchResultsPanelManagerAccessorImpl implements SearchResultsPanel
       ContentManager contentManager = toolWindow.getContentManager();
       contentManager.addContentManagerListener(new ContentManagerAdapter() {
         @Override
-        public void contentRemoved(ContentManagerEvent event) {
+        public void contentRemoved(@NotNull ContentManagerEvent event) {
           searchResultsToolWindow.tellWasClosed();
         }
       });

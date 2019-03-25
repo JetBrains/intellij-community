@@ -19,14 +19,14 @@ public class LargeFileAppInitializedListener implements ApplicationInitializedLi
     replaceActionByProxy("FindNext", LfeActionNextOccurence::new);
     replaceActionByProxy("FindPrevious", LfeActionPrevOccurrence::new);
     disableActionForLfe("FindUsagesInFile");
-    logger.warn("LFE: actions replaced by proxies");
   }
 
-  private void disableActionForLfe(String actionId) {
+  @SuppressWarnings("SameParameterValue")
+  private static void disableActionForLfe(String actionId) {
     replaceActionByProxy(actionId, LfeActionDisabled::new);
   }
 
-  private void replaceActionByProxy(String actionId, LfeActionFactory lfeActionFactory) {
+  private static void replaceActionByProxy(String actionId, LfeActionFactory lfeActionFactory) {
     ActionManager actionManager = ActionManager.getInstance();
     AnAction originalAction = actionManager.getAction(actionId);
     if (originalAction == null) {

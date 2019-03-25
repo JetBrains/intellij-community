@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 public interface ChangesManager {
 
-
   String makePageTextUpToDate(String initialPageText, long pageNumber);
 
   Change tryRegisterUndoAndGetCorrespondingChange();

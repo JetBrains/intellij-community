@@ -4,6 +4,7 @@ package com.intellij.largeFilesEditor.editor.actinos;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,7 +24,7 @@ public class SimpleAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     try {
       e.getPresentation().setEnabled(isEnabledCallable.call());
     }
@@ -33,7 +34,7 @@ public class SimpleAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     actionPerformedRunnable.run();
   }
 }

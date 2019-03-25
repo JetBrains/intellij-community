@@ -62,9 +62,9 @@ public class ChangesStorageImpl implements ChangesStorage {
   }
 
 
-  private boolean tryToMergeLocalChangeIntoLast(LocalChange localChange,
-                                                MarkedLinkedList<LocalChange> pageChanges,
-                                                MarkedLinkedList<Change> timeSortedChangesList) {
+  private static boolean tryToMergeLocalChangeIntoLast(LocalChange localChange,
+                                                       MarkedLinkedList<LocalChange> pageChanges,
+                                                       MarkedLinkedList<Change> timeSortedChangesList) {
     if (pageChanges.getMarkedSize() == 0) {
       return false;
     }

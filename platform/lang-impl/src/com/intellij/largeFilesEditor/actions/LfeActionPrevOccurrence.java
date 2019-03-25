@@ -3,7 +3,6 @@ package com.intellij.largeFilesEditor.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 
-@SuppressWarnings("ComponentNotRegistered")
 public class LfeActionPrevOccurrence extends LfeActionNextOccurence {
 
   public LfeActionPrevOccurrence(AnAction originalAction) {

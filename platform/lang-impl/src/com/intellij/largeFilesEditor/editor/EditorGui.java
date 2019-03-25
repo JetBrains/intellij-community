@@ -25,12 +25,12 @@ public class EditorGui {
     ONLY_MANAGING_PANEL,
   }
 
-  final String HEADER_NAVIGATION_CARD = "panelNavigationCard";
-  final String HEADER_LOADING_CARD = "panelLoadingCard";
-  final String HEADER_MSG_ERROR_CARD = "panelMsgErrorCard";
-  final String EDITOR_PAGE_VIEW_CARD = "panelEditorPageViewCard";
-  final String EDITOR_LOADING_CARD = "panelEditorLoadingCard";
-  final String EDITOR_EMPTY_CARD = "panelEditorEmptyCard";
+  static final String HEADER_NAVIGATION_CARD = "panelNavigationCard";
+  static final String HEADER_LOADING_CARD = "panelLoadingCard";
+  static final String HEADER_MSG_ERROR_CARD = "panelMsgErrorCard";
+  static final String EDITOR_PAGE_VIEW_CARD = "panelEditorPageViewCard";
+  static final String EDITOR_LOADING_CARD = "panelEditorLoadingCard";
+  static final String EDITOR_EMPTY_CARD = "panelEditorEmptyCard";
 
   JPanel panelMain;
   JPanel panelEditorPageViewCard;
@@ -142,16 +142,16 @@ public class EditorGui {
     }
   }
 
-  private void setCard(JComponent container, String cardName) {
+  private static void setCard(JComponent container, String cardName) {
     CardLayout panelHeaderCardLayout = (CardLayout)container.getLayout();
     panelHeaderCardLayout.show(container, cardName);
   }
 
-  private void setBorderToHeaderPanel(JPanel panelHeader) {
+  private static void setBorderToHeaderPanel(JPanel panelHeader) {
     panelHeader.setBorder(new CustomLineBorder(JBColor.border(), 0, 0, 1, 0));
   }
 
-  private void setSelectingAllTextWhenFocusGained(JTextComponent textComponent) {
+  private static void setSelectingAllTextWhenFocusGained(JTextComponent textComponent) {
     textComponent.addFocusListener(new FocusListener() {
       @Override
       public void focusGained(FocusEvent e) {

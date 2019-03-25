@@ -2,7 +2,6 @@
 package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.largeFilesEditor.systemBuilding.PluginSystemBuilder;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
@@ -16,8 +15,6 @@ import org.jetbrains.annotations.NotNull;
 public class EditorProvider implements FileEditorProvider, DumbAware {
 
   public static final String PROVIDER_ID = "EditorProvider";
-
-  private static final Logger logger = Logger.getInstance(EditorProvider.class);
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {

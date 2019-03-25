@@ -100,11 +100,11 @@ class FrameSearcher {
     }
   }
 
-  private String calculateFoundString(String frameText, FindResult ijFindResult) {
+  private static String calculateFoundString(String frameText, FindResult ijFindResult) {
     return frameText.substring(ijFindResult.getStartOffset(), ijFindResult.getEndOffset());
   }
 
-  private String calculateContextPrefix(String frameText, FindResult ijFindResult, SearchTaskOptions options) {
+  private static String calculateContextPrefix(String frameText, FindResult ijFindResult, SearchTaskOptions options) {
     int contextStartOffset = ijFindResult.getStartOffset();
     int minAllowedContextStartOffset = ijFindResult.getStartOffset() - options.contextOneSideLength;
     if (minAllowedContextStartOffset < 0) {
@@ -138,7 +138,7 @@ class FrameSearcher {
     return str;
   }
 
-  private String calculateContextPostfix(String frameText, FindResult ijFindResult, SearchTaskOptions options) {
+  private static String calculateContextPostfix(String frameText, FindResult ijFindResult, SearchTaskOptions options) {
     int contextEndOffset = ijFindResult.getEndOffset();
     int maxAllowedContextEndOffset = ijFindResult.getEndOffset() + options.contextOneSideLength;
     if (maxAllowedContextEndOffset > frameText.length()) {
@@ -167,7 +167,7 @@ class FrameSearcher {
     String str = frameText.substring(ijFindResult.getEndOffset(), contextEndOffset);
     str = str.replace('\t', ' ');
     if (ellipsis) {
-      str = str + ELLIPSIS;
+      str += ELLIPSIS;
     }
     return str;
   }

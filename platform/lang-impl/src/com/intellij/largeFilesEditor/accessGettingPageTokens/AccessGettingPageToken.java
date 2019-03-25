@@ -22,6 +22,6 @@ public class AccessGettingPageToken extends UserDataHolderBase {
 
   @Override
   public String toString() {
-    return "reason=" + reason.toString() + " pageNumber=" + pageNumber + "";
+    return "reason=" + reason.toString() + " pageNumber=" + pageNumber;
   }
 }

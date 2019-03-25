@@ -131,7 +131,7 @@ public class CloseSearchTask extends SearchTaskBase {
    * @return the closest search result index in 'allMatchesAtFrame' for search direction
    * if such result exists; '-1' if doesn't.
    */
-  private int tryGetClosestResult(ArrayList<SearchResult> allMatchesAtFrame, SearchTaskOptions options) {
+  private static int tryGetClosestResult(ArrayList<SearchResult> allMatchesAtFrame, SearchTaskOptions options) {
     if (allMatchesAtFrame.isEmpty()) {
       return -1;
     }

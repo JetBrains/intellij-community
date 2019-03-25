@@ -24,7 +24,7 @@ public class LfeEditorActionHandlerDisabled extends LfeBaseEditorActionHandler {
                                 @Nullable Caret caret,
                                 DataContext dataContext) {
     // never called
-    logger.warn("Called code, that shouldn't be called. toString()=" + this.toString());
+    logger.warn("Called code, that shouldn't be called. toString()=" + toString());
   }
 
   @Override

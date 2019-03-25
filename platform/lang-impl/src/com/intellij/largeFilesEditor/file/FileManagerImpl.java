@@ -206,7 +206,7 @@ public class FileManagerImpl implements FileManager {
    *
    * @param <E>
    */
-  public class OnePlacePushingQueue<E> extends LinkedBlockingQueue<E> {
+  public static class OnePlacePushingQueue<E> extends LinkedBlockingQueue<E> {
     OnePlacePushingQueue() {
       super(1);   // one place
     }
@@ -292,7 +292,7 @@ public class FileManagerImpl implements FileManager {
       Path tempPathForNewFile = getUnusedFilePath(normPath, ".new.temp");
 
 
-      if (!Files.exists(normPath)) {
+      if (!normPath.toFile().exists()) {
         taskState.oldFileLocationState = FileLocationState.NotExist;
         taskState.progressState = ProgressState.AbortedAndNotReestablished;
         return;
@@ -304,7 +304,7 @@ public class FileManagerImpl implements FileManager {
 
 
       actionResult = tryWriteNewFileToTempPath(this, fileAdapter, tempPathForNewFile);
-      if (Files.exists(tempPathForNewFile)) {
+      if (tempPathForNewFile.toFile().exists()) {
         taskState.newFileLocationState = FileLocationState.AtTempPath;
         taskState.newFileLocationPath = tempPathForNewFile.toString();
       }
@@ -332,11 +332,11 @@ public class FileManagerImpl implements FileManager {
 
 
       actionResult = tryMoveFile(normPath, tempPathForOldFile);  // moving old file outside
-      if (Files.exists(tempPathForOldFile)) {
+      if (tempPathForOldFile.toFile().exists()) {
         taskState.oldFileLocationState = FileLocationState.AtTempPath;
         taskState.oldFileLocationPath = tempPathForOldFile.toString();
       }
-      else if (Files.exists(normPath)) {
+      else if (normPath.toFile().exists()) {
         taskState.oldFileLocationState = FileLocationState.AtNormPath;
         taskState.oldFileLocationPath = normPath.toString();
       }
@@ -350,11 +350,11 @@ public class FileManagerImpl implements FileManager {
 
 
       actionResult = tryMoveFile(tempPathForNewFile, normPath);  // moving new file inside
-      if (Files.exists(normPath)) {
+      if (normPath.toFile().exists()) {
         taskState.newFileLocationState = FileLocationState.AtNormPath;
         taskState.newFileLocationPath = normPath.toString();
       }
-      else if (Files.exists(tempPathForNewFile)) {
+      else if (tempPathForNewFile.toFile().exists()) {
         taskState.newFileLocationState = FileLocationState.AtTempPath;
         taskState.newFileLocationPath = tempPathForNewFile.toString();
       }
@@ -370,7 +370,7 @@ public class FileManagerImpl implements FileManager {
       changesManager.clear();
 
       actionResult = tryDeleteFile(tempPathForOldFile);
-      if (Files.exists(tempPathForOldFile)) {
+      if (tempPathForOldFile.toFile().exists()) {
         taskState.oldFileLocationState = FileLocationState.AtTempPath;
         taskState.oldFileLocationPath = tempPathForOldFile.toString();
       }
@@ -497,7 +497,7 @@ public class FileManagerImpl implements FileManager {
     private Path getUnusedFilePath(Path normPath, String suffix) {
       int counter = 0;
       String path = normPath.toString() + suffix;
-      while (Files.exists(Paths.get(path))) {
+      while (Paths.get(path).toFile().exists()) {
         counter++;
         path = normPath.toString() + suffix + counter;
       }
@@ -554,7 +554,7 @@ public class FileManagerImpl implements FileManager {
   }
 
 
-  private class TaskState {
+  private static class TaskState {
     ProgressState progressState;
     FileLocationState oldFileLocationState;
     FileLocationState newFileLocationState;

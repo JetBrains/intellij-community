@@ -5,6 +5,7 @@ import com.intellij.largeFilesEditor.search.SearchManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -19,7 +20,7 @@ public class StatusTextAction extends com.intellij.find.editorHeaderActions.Stat
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     searchManager.updateStatusText();
     String statusText = searchManager.getStatusText();
 

@@ -6,6 +6,7 @@ import com.intellij.largeFilesEditor.search.SearchManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class FindAllAction extends AnAction {
 
@@ -22,7 +23,7 @@ public class FindAllAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (StringUtil.isEmpty(searchManager.getSearchManageGUI().getSearchTextComponent().getText())) {
       return;
     }

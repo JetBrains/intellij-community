@@ -60,7 +60,7 @@ public class ChangeFileEncodingAction extends com.intellij.openapi.vfs.encoding.
                                                                group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 
-  private DataContext wrapInDataContext(VirtualFile vFile, Editor editor, Component componentParent) {
+  private static DataContext wrapInDataContext(VirtualFile vFile, Editor editor, Component componentParent) {
     DataContext parent = DataManager.getInstance().getDataContext(componentParent);
     return SimpleDataContext.getSimpleContext(
       ContainerUtil.<String, Object>immutableMapBuilder()

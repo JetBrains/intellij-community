@@ -153,7 +153,7 @@ class FileAdapter {
         return "";  // situation, when penultimate page overlaps the last page completely
       }
 
-      minProbStartPos = minProbStartPos + pageSize;
+      minProbStartPos += pageSize;
       if (minProbStartPos >= randomAccessFile.length()) {
         endByte = randomAccessFile.length();
       }
@@ -171,10 +171,10 @@ class FileAdapter {
     }
   }
 
-  private int findPageShiftFrom(long minProbStartPos,
-                                RandomAccessFile randomAccessFile,
-                                Charset charset,
-                                int maxPageBorderShift) throws IOException {
+  private static int findPageShiftFrom(long minProbStartPos,
+                                       RandomAccessFile randomAccessFile,
+                                       Charset charset,
+                                       int maxPageBorderShift) throws IOException {
 
     int offsetToSymbolBeginning = findNextSymbolBeginningOffsetFrom(minProbStartPos, randomAccessFile, charset);
 
@@ -220,7 +220,7 @@ class FileAdapter {
     }
   }
 
-  private int getCharLengthInBytes(char symbol, Charset charset) {
+  private static int getCharLengthInBytes(char symbol, Charset charset) {
         /* when charset=UTF16,  method String::getBytes(charset) adds BOM-bytes, but we don't need them.
            when charset!=UTF16, method String::getBytes(charset) doesn't add any BOM-bytes */
     if (charset.equals(CharsetToolkit.UTF_16_CHARSET)) {
@@ -231,9 +231,9 @@ class FileAdapter {
     }
   }
 
-  private int findNextSymbolBeginningOffsetFrom(long numberOfStartByte,
-                                                RandomAccessFile randomAccessFile,
-                                                Charset charset) throws IOException {
+  private static int findNextSymbolBeginningOffsetFrom(long numberOfStartByte,
+                                                       RandomAccessFile randomAccessFile,
+                                                       Charset charset) throws IOException {
     if (charset.compareTo(CharsetToolkit.UTF8_CHARSET) == 0) {
       return findNextSymbolBeginningOffsetFrom_UTF8(numberOfStartByte, randomAccessFile);
     }
@@ -252,8 +252,8 @@ class FileAdapter {
     //throw new NotImplementedException("not supported yet");
   }
 
-  private int findNextSymbolBeginningOffsetFrom_UTF8(long numberOfStartByte,
-                                                     RandomAccessFile randomAccessFile) throws IOException {
+  private static int findNextSymbolBeginningOffsetFrom_UTF8(long numberOfStartByte,
+                                                            RandomAccessFile randomAccessFile) throws IOException {
     final int maxSymbolLengthInUtf8 = 4;
     randomAccessFile.seek(numberOfStartByte);
     int offset = 0;
@@ -277,7 +277,7 @@ class FileAdapter {
     return 0;
   }
 
-  private int findNextSymbolBeginningOffsetFrom_UTF32(long numberOfStartByte) {
+  private static int findNextSymbolBeginningOffsetFrom_UTF32(long numberOfStartByte) {
     if (numberOfStartByte % 4 == 0) {
       return 0;
     }
@@ -286,9 +286,9 @@ class FileAdapter {
     }
   }
 
-  private int findNextSymbolBeginningOffsetFrom_UTF16(long numberOfStartByte,
-                                                      RandomAccessFile randomAccessFile,
-                                                      Charset charset) throws IOException {
+  private static int findNextSymbolBeginningOffsetFrom_UTF16(long numberOfStartByte,
+                                                             RandomAccessFile randomAccessFile,
+                                                             Charset charset) throws IOException {
     // utf16-text only consists of words (word = 2 bytes)
     long offset = numberOfStartByte % 2;
 
@@ -312,9 +312,8 @@ class FileAdapter {
     }
   }
 
-  @SuppressWarnings("SameParameterValue")
   @NotNull
-  private byte[] getBytesAtTheBeginning(RandomAccessFile randomAccessFile, int maxLength) {
+  private static byte[] getBytesAtTheBeginning(RandomAccessFile randomAccessFile, int maxLength) {
     try {
       randomAccessFile.seek(0);
       byte[] buffer = new byte[maxLength];
@@ -339,8 +338,7 @@ class FileAdapter {
     return new byte[0];
   }
 
-  @SuppressWarnings("SameParameterValue")
-  private Charset tryToGuessCharset(byte[] bytesAtTheBeginning, Charset defaultCharset) {
+  private static Charset tryToGuessCharset(byte[] bytesAtTheBeginning, Charset defaultCharset) {
     Charset result = CharsetToolkit.guessFromBOM(bytesAtTheBeginning);
     return result != null ? result : defaultCharset;
   }

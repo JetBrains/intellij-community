@@ -92,7 +92,7 @@ public class EditorManagerImpl extends UserDataHolderBase
     document = createSpecialDocument();
     document.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         changesManager.onDocumentChangedEvent(event);
       }
     });
@@ -306,7 +306,7 @@ public class EditorManagerImpl extends UserDataHolderBase
 
   @Override
   public void tellPageIsLoaded(Page page, AccessGettingPageToken token) {
-    SwingUtilities.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
 
       if (isDisposed) {
         return;
@@ -357,6 +357,8 @@ public class EditorManagerImpl extends UserDataHolderBase
             SearchResult searchResult = token.getUserData(SearchResult.KEY);
             editorModel.updateSelectedSearchResultSelection(searchResult);
             break;
+          default:
+            break;
         }
 
         tokenLock.release();
@@ -366,7 +368,7 @@ public class EditorManagerImpl extends UserDataHolderBase
 
   @Override
   public void tellCatchedErrorWhileLoadingPage() {
-    SwingUtilities.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       editorModel.setCurrentShowingPage(null);
       editorModel.setViewState(EditorGui.State.ERROR_OPENING);
       tokenLock.release();
@@ -375,7 +377,7 @@ public class EditorManagerImpl extends UserDataHolderBase
 
   @Override
   public void tellSavingFileWasCompleteSuccessfully() {
-    SwingUtilities.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       tokenLock.release();
       setSavingModeOn(false);
 
@@ -400,7 +402,7 @@ public class EditorManagerImpl extends UserDataHolderBase
 
   @Override
   public void tellSavingFileWasCanceledAndEverythingWasReestablished() {
-    SwingUtilities.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       tokenLock.release();
       setSavingModeOn(false);
 
@@ -475,7 +477,7 @@ public class EditorManagerImpl extends UserDataHolderBase
 
   @Override
   public void tellSavingFileWasCorrupted(String messageToUser) {
-    SwingUtilities.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       tokenLock.release();
       setSavingModeOn(false);
       editorModel.setSavingProgress(0);
@@ -490,7 +492,7 @@ public class EditorManagerImpl extends UserDataHolderBase
 
   @Override
   public void tellSavingProgress(int progress) {
-    SwingUtilities.invokeLater(() -> editorModel.setSavingProgress(progress));
+    ApplicationManager.getApplication().invokeLater(() -> editorModel.setSavingProgress(progress));
   }
 
   @Deprecated
@@ -498,7 +500,7 @@ public class EditorManagerImpl extends UserDataHolderBase
     return isExperimentalModeOn;
   }
 
-  private DocumentEx createSpecialDocument() {
+  private static DocumentEx createSpecialDocument() {
     DocumentEx doc = new DocumentImpl("", true, false); // + allowing "\r\n" line separators
     UndoUtil.disableUndoFor(doc); // disabling Undo-functionality, provided by IDEA
     return doc;
@@ -565,7 +567,7 @@ public class EditorManagerImpl extends UserDataHolderBase
     }
   }
 
-  private ITokenLock createTokenLock() {
+  private static ITokenLock createTokenLock() {
     return new TokenLockBase() {
       @Override
       public boolean canBeSet(@NotNull AccessGettingPageToken token) {
@@ -640,7 +642,7 @@ public class EditorManagerImpl extends UserDataHolderBase
 
   private class MyCaretListener implements CaretListener {
     @Override
-    public void caretPositionChanged(CaretEvent e) {
+    public void caretPositionChanged(@NotNull CaretEvent e) {
       searchManager.onCaretPositionChanged(e);
     }
   }

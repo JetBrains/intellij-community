@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.SearchResultsToolWindow;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -75,13 +76,13 @@ public class FindFurtherAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean enabled = searchResultsToolWindow.isButtonFindFurtherEnabled(directionForward);
     e.getPresentation().setEnabled(enabled);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     searchResultsToolWindow.onClickSearchFurther(directionForward, additionMode);
   }
 }

@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 
 
-@SuppressWarnings("WeakerAccess")
 public abstract class SearchTaskBase implements Runnable {
 
   protected final FileDataProviderForSearch fileDataProviderForSearch;

@@ -35,7 +35,7 @@ public class StopRangeSearchAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean enabled = false;
     Project project = searchResultsToolWindow.getProject();
     VirtualFile virtualFile = searchResultsToolWindow.getVirtualFile();
@@ -54,7 +54,7 @@ public class StopRangeSearchAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = searchResultsToolWindow.getProject();
     VirtualFile virtualFile = searchResultsToolWindow.getVirtualFile();
     EditorManager editorManager =

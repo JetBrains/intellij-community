@@ -457,7 +457,7 @@ public class SearchResultsToolWindow extends SimpleToolWindowPanel {
   class SearchFurtherBtnWrapper implements ListElementWrapper {
     private final SimpleTextAttributes greyText = SimpleTextAttributes.EXCLUDED_ATTRIBUTES;
     private final SimpleTextAttributes linkText = new SimpleTextAttributes(
-      SimpleTextAttributes.STYLE_PLAIN, JBColor.linkPressed());
+      SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.linkPressedColor());
     private final boolean isForwardDirection;
     private boolean isEnabled = false;
 

@@ -3,7 +3,6 @@ package com.intellij.largeFilesEditor.changes;
 
 import java.util.Iterator;
 
-@SuppressWarnings("WeakerAccess")
 public class MarkedLinkedList<E> {
   private int size;
   private Node<E> firstElement;
