@@ -137,10 +137,14 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   }
 
   private fun queueIgnoreUpdate(isFullRescan: Boolean, action: () -> Set<FilePath>) {
-    updateQueue.queue(object : Update(ObjectUtils.sentinel(rescanIdentityName)) {
+    //full rescan should have the same update identity, so multiple full rescans can be swallowed instead of spawning new threads
+    val updateIdentity = if (isFullRescan) "${rescanIdentityName}_full" else ObjectUtils.sentinel(rescanIdentityName)
+    updateQueue.queue(object : Update(updateIdentity) {
       override fun canEat(update: Update) = isFullRescan
 
       override fun run() {
+        if (repository.project.isDisposed) return
+
         if (inUpdateMode.compareAndSet(false, true)) {
           fireUpdateStarted()
           val ignored = action()
