@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("DEPRECATION")
+@file:Suppress("DEPRECATION") // declared for import com.intellij.codeInsight.completion.CompletionProgressIndicator
 
 package com.intellij.internal
 
@@ -68,7 +68,7 @@ import kotlin.collections.HashMap
 
 private data class CompletionTime(var cnt: Int, var time: Long)
 
-private data class CompletionParameters(
+private data class CompletionQualityParameters(
   val project: Project,
   val path: String,
   val editor: Editor,
@@ -113,32 +113,27 @@ class CompletionQualityStatsAction : AnAction() {
         // we don't want to complete the same words more than twice
         val wordsFrequencyMap = HashMap<String, Int>()
 
-        var filesProcessed = 0 // for show progress fraction info
         for (file in files) {
           if (indicator.isCanceled) {
             stats.finished = false
             return
           }
 
-          filesProcessed += 1
-          val procentage = filesProcessed.toDouble() / files.size.toDouble()
-          indicator.fraction = procentage
-
           indicator.text = file.path
 
-          val document = application.runReadAction<Document, Exception> { FileDocumentManager.getInstance().getDocument(file) }
-
-          val completionAttempts = application.runReadAction<List<Pair<Int, String>>, Exception> {
-            getCompletionAttempts(PsiManager.getInstance(project).findFile(file)!!, wordsFrequencyMap)
+          val (document, completionAttempts) = application.runReadAction<Pair<Document, List<Pair<Int, String>>>, Exception> {
+            val document = FileDocumentManager.getInstance().getDocument(file) ?: throw Exception("Can't get document: ${file.name}")
+            val psiFile = PsiManager.getInstance(project).findFile(file) ?: throw Exception("Can't find file: ${file.name}")
+            val completionAttempts = getCompletionAttempts(psiFile, wordsFrequencyMap)
+            Pair(document, completionAttempts)
           }
 
           if (completionAttempts.isNotEmpty()) {
             lateinit var newEditor: Editor
             application.invokeAndWait(Runnable {
-              newEditor = application.runWriteAction<Editor, Exception> {
-                val descriptor = OpenFileDescriptor(project, file)
-                FileEditorManager.getInstance(project).openTextEditor(descriptor, true)
-              }
+              val descriptor = OpenFileDescriptor(project, file)
+              newEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true) ?:
+                          throw Exception("Can't open text editor for file: ${file.name}")
             }, ModalityState.NON_MODAL)
 
             val text = document.text
@@ -148,7 +143,7 @@ class CompletionQualityStatsAction : AnAction() {
                   break
                 }
                 val line = StringUtil.offsetToLineNumber(text, offset)
-                evalCompletionAt(CompletionParameters(project, file.path + ":$line", newEditor, text, offset, word, stats, indicator))
+                evalCompletionAt(CompletionQualityParameters(project, "${file.path}:$line", newEditor, text, offset, word, stats, indicator))
               }
             }
             finally {
@@ -206,25 +201,25 @@ class CompletionQualityStatsAction : AnAction() {
     return res
   }
 
-  private fun evalCompletionAt(params: CompletionParameters) {
+  private fun evalCompletionAt(params: CompletionQualityParameters) {
     with(params) {
+      val maxChars = 10
+      val cache = arrayOfNulls<Pair<Int, Int>>(maxChars + 1)
+
       // (typed letters, rank, total)
       val ranks = arrayListOf<Triple<Int, Int, Int>>()
       for (charsTyped in interestingRanks) {
         val (rank, total) = findCorrectElementRank(charsTyped, params)
         ranks.add(Triple(charsTyped, rank, total))
+        cache[charsTyped] = Pair(rank, total)
         if (indicator.isCanceled) {
           return
         }
       }
 
-      val maxChars = 10
-
-      val cache = arrayOfNulls<Pair<Int, Int>>(maxChars)
-
       val charsToFirsts = arrayListOf<Pair<Int, Int>>()
       for (n in interestingCharsToFirsts) {
-        charsToFirsts.add(Pair(n, calcCharsToFirstN(ranks, n, maxChars, cache, params)))
+        charsToFirsts.add(Pair(n, calcCharsToFirstN(n, maxChars, cache, params)))
       }
 
       stats.completions.add(
@@ -233,44 +228,20 @@ class CompletionQualityStatsAction : AnAction() {
   }
 
   // Calculate number of letters needed to type to have necessary word in top N
-  private fun calcCharsToFirstN(ranks: ArrayList<Triple<Int, Int, Int>>,
-                                N: Int,
-                                max: Int,
+  private fun calcCharsToFirstN(N: Int,
+                                maxChars: Int,
                                 cache: Array<Pair<Int, Int>?>,
-                                params: CompletionParameters): Int {
-    var lastCharsTyped = -1
-    for ((charsTyped, rank, _) in ranks) {
-      assert(lastCharsTyped < charsTyped)
-      for (chars in lastCharsTyped + 1 until charsTyped) {
-        val (tryRank, _) = findCorrectElementRank(chars, params)
-        if (tryRank in 0 until N) {
-          return chars
-        }
-      }
-      if (rank in 0 until N) {
-        return charsTyped
-      }
-      lastCharsTyped = charsTyped
-    }
-    return calcCharsToFirstN(ranks.last().first, max, N, cache, params)
-  }
-
-  // Iterate and check from 'from' to 'to'
-  private fun calcCharsToFirstN(from: Int,
-                                to: Int,
-                                N: Int,
-                                cache: Array<Pair<Int, Int>?>,
-                                params: CompletionParameters): Int {
+                                params: CompletionQualityParameters): Int {
     with (params) {
-      for (mid in from until to) {
+      for (charsTyped in 0 .. maxChars) {
         if (indicator.isCanceled) {
           return CAN_NOT_COMPLETE_WORD
         }
 
-        val (rank, total) = cache[mid] ?: findCorrectElementRank(mid, params)
+        val (rank, total) = cache[charsTyped] ?: findCorrectElementRank(charsTyped, params)
 
-        if (cache[mid] == null) {
-          cache[mid] = kotlin.Pair(rank, total)
+        if (cache[charsTyped] == null) {
+          cache[charsTyped] = Pair(rank, total)
         }
 
         if (rank == RANK_EXCESS_LETTERS) {
@@ -278,16 +249,16 @@ class CompletionQualityStatsAction : AnAction() {
         }
 
         if (rank < N) {
-          return mid
+          return charsTyped
         }
       }
       return CAN_NOT_COMPLETE_WORD
     }
-
   }
 
   // Find position necessary word in lookup list after 'charsTyped' typed letters
-  private fun findCorrectElementRank(charsTyped: Int, params: CompletionParameters): Pair<Int, Int> {
+  // Return pair of this position and total number of words in completion lookup
+  private fun findCorrectElementRank(charsTyped: Int, params: CompletionQualityParameters): Pair<Int, Int> {
     with (params) {
       if (charsTyped > word.length) {
         return Pair(RANK_EXCESS_LETTERS, 0)
