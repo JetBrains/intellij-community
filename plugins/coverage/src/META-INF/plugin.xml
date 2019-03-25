@@ -2,6 +2,7 @@
   <name>Coverage</name>
   <depends optional="true" config-file="testng-integration.xml">TestNG-J</depends>
   <depends optional="true" config-file="junit-integration.xml">JUnit</depends>
+  <depends>com.intellij.modules.coverage</depends>
   <depends>com.intellij.modules.java</depends>
 
   <description>
@@ -18,7 +19,6 @@
    </description>
   <vendor>JetBrains</vendor>
 
-  <xi:include href="/META-INF/coverage-common-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationExtension implementation="com.intellij.execution.coverage.CoverageJavaRunConfigurationExtension"/>
     <coverageRunner implementation="com.intellij.coverage.IDEACoverageRunner"/>
