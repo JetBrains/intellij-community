@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention.impl.singlereturn;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
@@ -105,6 +106,11 @@ class ExitContext {
       PsiExpression initializer = myFactory.createExpressionFromText("false", null);
       PsiDeclarationStatement declaration =
         myFactory.createVariableDeclarationStatement(myFinishedVariable, PsiType.BOOLEAN, initializer);
+      PsiModifierList list = ((PsiLocalVariable)declaration.getDeclaredElements()[0]).getModifierList();
+      if (list != null) {
+        // Cannot be final: always reassigned or useless
+        list.setModifierProperty(PsiModifier.FINAL, false);
+      }
       myBlock.addAfter(declaration, start);
     }
     if (myReturnVariableUsed) {
@@ -114,7 +120,11 @@ class ExitContext {
       }
       PsiDeclarationStatement declaration =
         myFactory.createVariableDeclarationStatement(myReturnVariable, myReturnType, myReturnVariableDefaultValue);
-      myBlock.addAfter(declaration, start);
+      PsiLocalVariable var = (PsiLocalVariable)((PsiDeclarationStatement)myBlock.addAfter(declaration, start)).getDeclaredElements()[0];
+      if (var.hasModifierProperty(PsiModifier.FINAL) && !RefactoringUtil.canBeDeclaredFinal(var)) {
+        // Keep final when possible to respect code style setting "generate local variables as 'final'"
+        requireNonNull(var.getModifierList()).setModifierProperty(PsiModifier.FINAL, false);
+      }
       PsiJavaToken end = requireNonNull(myBlock.getRBrace());
       myBlock.addBefore(myFactory.createStatementFromText("return " + myReturnVariable + ";", myBlock), end);
     }
