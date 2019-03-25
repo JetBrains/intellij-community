@@ -5,6 +5,7 @@ import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
@@ -62,6 +63,7 @@ import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.indexing.impl.UpdatableValueContainer
 import com.intellij.util.io.*
 import com.intellij.util.ref.GCUtil
+import com.intellij.util.ref.GCWatcher
 import com.siyeh.ig.JavaOverridingMethodUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -592,13 +594,17 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void "test internalErrorOfStubProcessingInvalidatesIndex"() throws IOException {
+    DefaultLogger.disableStderrDumping(testRootDisposable)
+
     final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
 
-    assertTrue(findClass("Foo") != null)
+    def clazz = Ref.create(findClass("Foo"))
+    assert clazz.get() != null
 
     runFindClassStubIndexQueryThatProducesInvalidResult("Foo")
 
-    GCUtil.tryGcSoftlyReachableObjects() // invalidates cache in findClass
+    GCWatcher.fromClearedRef(clazz).tryGc()
+
     assertNull(findClass("Foo"))
 
     // check invalidation of transient indices state
@@ -606,10 +612,13 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     document.setText("class Foo2 {}")
     PsiDocumentManager.getInstance(project).commitDocument(document)
 
-    assertTrue(findClass("Foo2") != null)
+    clazz = Ref.create(findClass("Foo2"))
+    assert clazz.get() != null
 
     runFindClassStubIndexQueryThatProducesInvalidResult("Foo2")
-    GCUtil.tryGcSoftlyReachableObjects() // invalidates cache in findClass
+
+    GCWatcher.fromClearedRef(clazz).tryGc()
+
     assertNull(findClass("Foo2"))
   }
 
