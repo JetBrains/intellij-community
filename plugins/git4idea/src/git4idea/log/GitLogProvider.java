@@ -355,7 +355,7 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public List<? extends VcsCommitMetadata> readMetadata(@NotNull final VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
-    return GitLogUtil.collectShortDetails(myProject, myVcs, root, hashes);
+    return GitLogUtil.collectMetadata(myProject, myVcs, root, hashes);
   }
 
   @NotNull
