@@ -32,10 +32,8 @@ public class ClassLoadingUtils {
       ArrayReference emptyUrlArray = DebuggerUtilsEx.mirrorOfArray(arrayType, 0, context);
       ClassType loaderClass = (ClassType)process.findClass(context, "java.net.URLClassLoader", context.getClassLoader());
       Method ctorMethod = loaderClass.concreteMethodByName(JVMNameUtil.CONSTRUCTOR_NAME, "([Ljava/net/URL;Ljava/lang/ClassLoader;)V");
-      ClassLoaderReference reference = (ClassLoaderReference)process.newInstance(context, loaderClass, ctorMethod,
-                                                                                 Arrays.asList(emptyUrlArray, context.getClassLoader()));
-      context.keep(reference);
-      return reference;
+      return context.computeAndKeep(() -> (ClassLoaderReference)process
+        .newInstance(context, loaderClass, ctorMethod, Arrays.asList(emptyUrlArray, context.getClassLoader())));
     }
     catch (Exception e) {
       throw new EvaluateException("Error creating evaluation class loader: " + e, e);
