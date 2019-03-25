@@ -96,7 +96,7 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
       extensionsData.findProperty(propCandidate)?.let(processVariable)
     }
     else {
-      if (aClass.qualifiedName !in GradleConventionsContributor.conventions) {
+      if (!shouldSkipDeclarationsAndSetters(aClass.qualifiedName)) {
         processDeclarations(aClass, processor, state, place)
       }
       val propCandidate = place.references.singleOrNull()?.canonicalText ?: return
@@ -156,5 +156,10 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
         if (!processor.execute(wrappedBase, state)) return
       }
     }
+  }
+
+  private fun shouldSkipDeclarationsAndSetters(qualifiedName: String?): Boolean {
+    return qualifiedName in GradleSetterAsMethodContributor.knownDecoratedClasses
+           || qualifiedName in GradleConventionsContributor.conventions
   }
 }
