@@ -6,8 +6,8 @@ import com.intellij.util.ui.ColumnInfo;
 
 import java.util.Comparator;
 
-class ElementColumnInfo extends ColumnInfo<NodeDescriptor, String> {
-  ElementColumnInfo() {
+public class ElementColumnInfo extends ColumnInfo<NodeDescriptor, String> {
+  public ElementColumnInfo() {
     super("Element");
   }
 
