@@ -3,6 +3,7 @@ package circlet.utils
 import com.intellij.credentialStore.*
 import com.intellij.ide.passwordSafe.*
 import runtime.*
+import runtime.persistence.*
 import runtime.reactive.*
 
 object IdeaPasswordSafePersistence : Persistence {
