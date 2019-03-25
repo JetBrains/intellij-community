@@ -487,7 +487,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
     LOG.info("Running packaging tool: " + StringUtil.join(makeSafeToDisplayCommand(cmdline), " "));
     
     try {
-      final GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir);
+      final GeneralCommandLine commandLine =
+        new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(PythonSdkType.activateVirtualEnv(getSdk()));
       final Map<String, String> environment = commandLine.getEnvironment();
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
