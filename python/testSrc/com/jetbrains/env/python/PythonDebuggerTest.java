@@ -828,6 +828,22 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  public void testMultiprocessPool() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_multiprocess_pool.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForOutput("Done");
+        assertFalse(output().contains("KeyboardInterrupt"));
+      }
+    });
+  }
+
+  @Test
   public void testPythonSubprocessWithCParameter() {
     runPythonTest(new PyDebuggerTask("/debug", "test_python_subprocess_with_c_parameter.py") {
       @Override
