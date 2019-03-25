@@ -439,6 +439,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       if (executionConsole instanceof BuildView) {
         actionGroup.addAll(((BuildView)executionConsole).getSwitchActions());
         actionGroup.add(new ShowExecutionErrorsOnlyAction((BuildView)executionConsole));
+        actionGroup.add(new GroupByActionGroup((BuildView)executionConsole));
       }
       DefaultExecutionResult executionResult =
         new DefaultExecutionResult(executionConsole, processHandler, actionGroup.getChildren(null));

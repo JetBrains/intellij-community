@@ -41,7 +41,7 @@ public class ShowExecutionErrorsOnlyAction extends ToggleAction implements DumbA
       return false;
     }
     boolean filteringEnabled = myFilterable.isFilteringEnabled();
-    presentation.setEnabled(filteringEnabled);
+    presentation.setEnabledAndVisible(filteringEnabled);
     if (filteringEnabled && mySelectionStateKey != null &&
         PropertiesComponent.getInstance().getBoolean(mySelectionStateKey, true) &&
         myFilterable.getFilter() != ERROR_FILTER) {
