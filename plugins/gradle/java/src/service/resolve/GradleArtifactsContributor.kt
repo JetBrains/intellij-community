@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.patterns.PsiJavaPatterns.psiElement
@@ -42,12 +42,8 @@ class GradleArtifactsContributor : GradleMethodContextContributor {
     if (methodName != null && place is GrReferenceExpression && psiElement().inside(artifactsClosure).accepts(place)) {
       val text = place.text
       if (!methodCallInfo.contains(text)) {
-        val myPsi = GrLightField(text, JAVA_LANG_OBJECT, place)
-        processor.execute(myPsi, state)
         return false
       }
-
-      if (!GradleResolverUtil.processDeclarations(processor, state, place, GRADLE_API_ARTIFACT_HANDLER)) return false
       // assuming that the method call is addition of an artifact to the given configuration.
       if (!processArtifactAddition(processor, state, place)) return false
     }
