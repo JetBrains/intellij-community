@@ -13,9 +13,11 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ObjectUtils;
-import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import net.miginfocom.swing.MigLayout;
@@ -28,10 +30,9 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
 import static java.awt.Frame.MAXIMIZED_BOTH;
 import static java.awt.Frame.MAXIMIZED_VERT;
-
-import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
 
 /**
  * @author Konstantin Bulenkov
@@ -59,9 +60,10 @@ public class DarculaTitlePane extends JPanel implements Disposable {
   private final Color myInactiveForeground = UIManager.getColor("inactiveCaptionText");
   private Color myActiveForeground = null;
   private boolean myIsActive;
-  private Border myTopBorder = new MyTopBorder();
+  private MyTopBorder myTopBorder = new MyTopBorder();
 
   private static final int menuBarGap = 7;
+  private static final int minMenuHeight = 24;
   private static final int resizeGap = JBUI.scale(3);
 
   public DarculaTitlePane(JRootPane root, DarculaRootPaneUI ui) {
@@ -201,7 +203,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
         JPanel pane = new JPanel(new MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"));
         pane.setOpaque(false);
-        pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin 24");
+        pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin "+minMenuHeight);
         pane.add(projectLabel.getView(), "center, growx, wmin 0, gapbefore " + menuBarGap + ", gapafter " + menuBarGap);
 
         add(pane, "wmin 0, growx");
@@ -516,34 +518,48 @@ public class DarculaTitlePane extends JPanel implements Disposable {
     public void windowStateChanged(WindowEvent e) {
       //noinspection ConstantConditions
       Frame frame = getFrame();
-      if(frame == null) return;
+      if (frame == null) return;
 
-      int state = frame.getExtendedState();
-      if (state == MAXIMIZED_VERT || state == MAXIMIZED_BOTH) {
-        setBorder(null);
-      } else {
-        setBorder(myTopBorder);
-      }
+      myTopBorder.setState(frame.getExtendedState());
     }
   }
 
   private interface MyTopBorderConsts {
     int THICKNESS = 1;
+    Color MENUBAR_BORDER_COLOR = JBColor.namedColor("MenuBar.borderColor", new JBColor(Gray.xCD, Gray.x51));
     Color ACTIVE_COLOR = ObjectUtils.notNull((Color)Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor"),
                                              () -> (Color)Toolkit.getDefaultToolkit().getDesktopProperty("win.frame.activeBorderColor"));
     Color INACTIVE_COLOR = (Color)Toolkit.getDefaultToolkit().getDesktopProperty("win.3d.shadowColor");
   }
 
   private class MyTopBorder implements Border {
+    private int state = Frame.NORMAL;
+
+    public void setState(int value) {
+      state = value;
+    }
+
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      g.setColor(myIsActive ? MyTopBorderConsts.ACTIVE_COLOR : MyTopBorderConsts.INACTIVE_COLOR);
-      RectanglePainter2D.FILL.paint((Graphics2D)g, x, y, width, MyTopBorderConsts.THICKNESS);
+
+      if (topNeeded()) {
+        g.setColor(myIsActive ? MyTopBorderConsts.ACTIVE_COLOR : MyTopBorderConsts.INACTIVE_COLOR);
+        LinePainter2D.paint((Graphics2D)g, x, y, width, y);
+      }
+
+      g.setColor(MyTopBorderConsts.MENUBAR_BORDER_COLOR);
+      int y1 = y + height - JBUI.scale(MyTopBorderConsts.THICKNESS);
+      LinePainter2D.paint((Graphics2D)g, x, y1, width, y1);
+    }
+
+    private boolean topNeeded() {
+      return (state != MAXIMIZED_VERT) && (state != MAXIMIZED_BOTH);
     }
 
     @Override
     public Insets getBorderInsets(Component c) {
-      return JBUI.insetsTop(MyTopBorderConsts.THICKNESS);
+      int scale = JBUI.scale(MyTopBorderConsts.THICKNESS);
+      return topNeeded() ? new Insets(MyTopBorderConsts.THICKNESS, 0, scale, 0) : new Insets(0, 0, scale, 0);
     }
 
     @Override

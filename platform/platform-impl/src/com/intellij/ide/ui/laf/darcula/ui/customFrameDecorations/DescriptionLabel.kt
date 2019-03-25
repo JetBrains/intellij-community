@@ -50,12 +50,16 @@ class DescriptionLabel : Disposable {
     val mouseInsets = 2
     val projectLabelRect = label.bounds
 
-    return listOf(
-      Rectangle(projectLabelRect.x, projectLabelRect.y, mouseInsets, projectLabelRect.height),
-      Rectangle(projectLabelRect.x, projectLabelRect.y, projectLabelRect.width, mouseInsets),
-      Rectangle(projectLabelRect.x, projectLabelRect.maxY.toInt() - mouseInsets, projectLabelRect.width, mouseInsets),
-      Rectangle(projectLabelRect.maxX.toInt() - mouseInsets, projectLabelRect.y, mouseInsets, projectLabelRect.height)
-    )
+    return if(clippedText.equals(label.text)) {
+      emptyList()
+    } else {
+      listOf(
+        Rectangle(projectLabelRect.x, projectLabelRect.y, mouseInsets, projectLabelRect.height),
+        Rectangle(projectLabelRect.x, projectLabelRect.y, projectLabelRect.width, mouseInsets),
+        Rectangle(projectLabelRect.x, projectLabelRect.maxY.toInt() - mouseInsets, projectLabelRect.width, mouseInsets),
+        Rectangle(projectLabelRect.maxX.toInt() - mouseInsets, projectLabelRect.y, mouseInsets, projectLabelRect.height)
+      )
+    }
   }
 
   private val resizedListener = object : ComponentAdapter() {

@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -25,6 +24,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.JBUI;
@@ -50,6 +50,7 @@ import java.util.List;
 public class IdeMenuBar extends JMenuBar implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance(IdeMenuBar.class);
   private static final int COLLAPSED_HEIGHT = 2;
+  private static final int EXPANDING_MOUSE_Y = 12;
 
   private enum State {
     EXPANDED, COLLAPSING, COLLAPSED, EXPANDING, TEMPORARY_EXPANDED;
@@ -285,44 +286,22 @@ public class IdeMenuBar extends JMenuBar implements UISettingsListener {
     if (!(event instanceof MouseEvent)) {
       return;
     }
-
     MouseEvent e = (MouseEvent) event;
-    RelativePoint point = new RelativePoint(e);
 
     if (getState() != State.EXPANDED && !myState.isInProgress()) {
+      RelativePoint point = new RelativePoint(e);
+      RelativeRectangle rect = new RelativeRectangle(this);
       int y = point.getPoint(this).y;
-      boolean mouseInside = y < 25;
+      boolean mouseInside = rect.contains(point);
       if (e.getID() == MouseEvent.MOUSE_EXITED && e.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
-      if (mouseInside && getState() == State.COLLAPSED) {
+      if (y <= JBUI.scale(EXPANDING_MOUSE_Y) && mouseInside && getState() == State.COLLAPSED) {
         setState(State.EXPANDING);
         restartAnimator();
-      }
-      else if (!mouseInside && getState() != State.COLLAPSING && getState() != State.COLLAPSED) {
+      } else if (!mouseInside && getState() != State.COLLAPSING && getState() != State.COLLAPSED) {
         setState(State.COLLAPSING);
         restartAnimator();
       }
     }
-  }
-
-  @Nullable
-  private Component findActualComponent(MouseEvent mouseEvent) {
-    Component component = mouseEvent.getComponent();
-    if (component == null) {
-      return null;
-    }
-    Component deepestComponent;
-    if (getState() != State.EXPANDED &&
-        !getState().isInProgress() &&
-        contains(SwingUtilities.convertPoint(component, mouseEvent.getPoint(), this))) {
-      deepestComponent = this;
-    }
-    else {
-      deepestComponent = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-    }
-    if (deepestComponent != null) {
-      component = deepestComponent;
-    }
-    return component;
   }
 
   void updateMenuActions() { updateMenuActions(false); }

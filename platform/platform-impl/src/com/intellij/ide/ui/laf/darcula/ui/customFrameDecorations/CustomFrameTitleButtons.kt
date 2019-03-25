@@ -106,7 +106,7 @@ open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
   }
 
   protected fun addComponent(component: JComponent) {
-    component.preferredSize = Dimension(45, 23)
+    component.preferredSize = Dimension(47, 28)
     panel.add(component, "top")
   }
 
