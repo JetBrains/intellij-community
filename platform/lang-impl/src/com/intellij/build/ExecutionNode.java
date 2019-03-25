@@ -69,6 +69,8 @@ public class ExecutionNode extends CachingSimpleNode {
   };
 
   private final Collection<ExecutionNode> myChildrenList = new ConcurrentLinkedDeque<>(); //ContainerUtil.newSmartList();
+  private final AtomicInteger myErrors = new AtomicInteger();
+  private final AtomicInteger myWarnings = new AtomicInteger();
   private long startTime;
   private long endTime;
   @Nullable
@@ -84,8 +86,6 @@ public class ExecutionNode extends CachingSimpleNode {
   private Navigatable myNavigatable;
   @Nullable
   private NullableLazyValue<Icon> myPreferredIconValue;
-  private final AtomicInteger myErrors = new AtomicInteger();
-  private final AtomicInteger myWarnings = new AtomicInteger();
   @Nullable
   private Predicate<ExecutionNode> myFilter;
   private volatile boolean myVisible = true;
@@ -221,11 +221,8 @@ public class ExecutionNode extends CachingSimpleNode {
     myFilter = filter;
     for (ExecutionNode node : myChildrenList) {
       node.setFilter(myFilter);
-      node.cleanUpCache();
     }
-    if (getParent() != null) {
-      cleanUpCache();
-    }
+    cleanUpCache();
   }
 
   public void setVisible(boolean visible) {
@@ -238,14 +235,6 @@ public class ExecutionNode extends CachingSimpleNode {
     }
   }
 
-  public static boolean isFailed(@Nullable EventResult result) {
-    return result instanceof FailureResult;
-  }
-
-  public static boolean isSkipped(@Nullable EventResult result) {
-    return result instanceof SkippedResult;
-  }
-
   public boolean isRunning() {
     return endTime <= 0 && !isSkipped(myResult) && !isFailed(myResult);
   }
@@ -256,6 +245,11 @@ public class ExecutionNode extends CachingSimpleNode {
            (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.ERROR);
   }
 
+  @Nullable
+  public EventResult getResult() {
+    return myResult;
+  }
+
   public void setResult(@Nullable EventResult result) {
     myResult = result;
     if (myFilter != null) {
@@ -263,14 +257,9 @@ public class ExecutionNode extends CachingSimpleNode {
     }
   }
 
-  @Nullable
-  public EventResult getResult() {
-    return myResult;
-  }
-
   @Override
   public boolean isAutoExpandNode() {
-    return myAutoExpandNode || isRunning() || isFailed() ;
+    return myAutoExpandNode || (myFilter != null && (isRunning() || isFailed()));
   }
 
   public void setAutoExpandNode(boolean autoExpandNode) {
@@ -290,7 +279,7 @@ public class ExecutionNode extends CachingSimpleNode {
 
     if (myResult instanceof FailureResult) {
       List<Navigatable> result = new SmartList<>();
-      for (Failure failure: ((FailureResult)myResult).getFailures()) {
+      for (Failure failure : ((FailureResult)myResult).getFailures()) {
         ContainerUtil.addIfNotNull(result, failure.getNavigatable());
       }
       return result;
@@ -376,6 +365,14 @@ public class ExecutionNode extends CachingSimpleNode {
              myWarnings.get() > 0 ? NODE_ICON_WARNING :
              NODE_ICON_OK;
     }
+  }
+
+  public static boolean isFailed(@Nullable EventResult result) {
+    return result instanceof FailureResult;
+  }
+
+  public static boolean isSkipped(@Nullable EventResult result) {
+    return result instanceof SkippedResult;
   }
 
   public static Icon getEventResultIcon(@Nullable EventResult result) {
