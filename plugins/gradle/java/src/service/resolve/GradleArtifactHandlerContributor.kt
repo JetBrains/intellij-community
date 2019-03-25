@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import icons.GradleIcons.*
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACT_HANDLER
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_CONFIGURABLE_PUBLISH_ARTIFACT
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
@@ -48,6 +49,7 @@ class GradleArtifactHandlerContributor : NonCodeMembersContributor() {
           putUserData(DELEGATES_TO_KEY, GRADLE_API_CONFIGURABLE_PUBLISH_ARTIFACT)
           putUserData(DELEGATES_TO_STRATEGY_KEY, 1)
         }
+        setBaseIcon(Gradle)
       }
       if (!processor.execute(method1, state)) return
 
@@ -56,6 +58,7 @@ class GradleArtifactHandlerContributor : NonCodeMembersContributor() {
         returnType = PsiType.NULL
         addParameter("artifactNotation", objectType)
         addParameter("artifactNotations", objectVarargType)
+        setBaseIcon(Gradle)
       }
       if (!processor.execute(method2, state)) return
     }
