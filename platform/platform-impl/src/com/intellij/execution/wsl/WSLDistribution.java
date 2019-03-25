@@ -43,7 +43,7 @@ import static com.intellij.util.EnvironmentUtil.SHELL_LOGIN_ARGUMENT;
  */
 public class WSLDistribution {
   static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
-  private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
+  static final int DEFAULT_TOOL_EXECUTION_TIMEOUT = 10_000;
   private static final String RUN_PARAMETER = "run";
   private static final Logger LOG = Logger.getInstance(WSLDistribution.class);
   private static final Key<String> ORIGINAL_COMMAND_LINE = Key.create("wsl.original.command.line");
@@ -79,7 +79,7 @@ public class WSLDistribution {
     try {
       final String key = "PRETTY_NAME";
       final String releaseInfo = "/etc/os-release"; // available for all distributions
-      final ProcessOutput output = executeSimpleCommand(10000, "cat", releaseInfo);
+      final ProcessOutput output = executeSimpleCommand(DEFAULT_TOOL_EXECUTION_TIMEOUT, "cat", releaseInfo);
       if (LOG.isDebugEnabled()) LOG.debug("Reading release info: " + getId());
       if (!output.checkSuccess(LOG)) return null;
       for (String line : output.getStdoutLines(true)) {
@@ -111,7 +111,7 @@ public class WSLDistribution {
   public ProcessOutput executeSimpleCommand(int timeout, @NotNull String... args) throws ExecutionException {
     GeneralCommandLine commandLine = new GeneralCommandLine(getExecutablePath().toString(), getRunCommandLineParameter());
     commandLine.addParameters(args);
-    return executeWslCommandLine(commandLine, timeout, null);
+    return executeOnWsl(commandLine, timeout, null);
   }
 
   /**
@@ -125,7 +125,7 @@ public class WSLDistribution {
                                     @Nullable Consumer<? super ProcessHandler> processHandlerConsumer,
                                     @NotNull String... args) throws ExecutionException {
     GeneralCommandLine commandLine = createWslCommandLine(args);
-    return executeWslCommandLine(commandLine, timeout, processHandlerConsumer);
+    return executeOnWsl(commandLine, timeout, processHandlerConsumer);
   }
 
   /**
@@ -133,9 +133,9 @@ public class WSLDistribution {
    *
    * @see #executeSimpleCommand(int, String...)
    */
-  public ProcessOutput executeWslCommandLine(@NotNull GeneralCommandLine wslCommandLine,
-                                             int timeout,
-                                             @Nullable Consumer<? super ProcessHandler> processHandlerConsumer) throws ExecutionException {
+  public ProcessOutput executeOnWsl(@NotNull GeneralCommandLine wslCommandLine,
+                                    int timeout,
+                                    @Nullable Consumer<? super ProcessHandler> processHandlerConsumer) throws ExecutionException {
     CapturingProcessHandler processHandler = new CapturingProcessHandler(wslCommandLine);
     if (processHandlerConsumer != null) {
       processHandlerConsumer.consume(processHandler);
@@ -340,7 +340,7 @@ public class WSLDistribution {
 
   @NotNull
   public String resolveSymlink(@NotNull String path) {
-    return resolveSymlink(path, RESOLVE_SYMLINK_TIMEOUT);
+    return resolveSymlink(path, DEFAULT_TOOL_EXECUTION_TIMEOUT);
   }
 
   /**

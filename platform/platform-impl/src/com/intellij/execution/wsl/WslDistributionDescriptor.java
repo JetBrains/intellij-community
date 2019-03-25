@@ -16,6 +16,8 @@ import java.util.Objects;
 
 import static com.intellij.execution.wsl.WSLUtil.LOG;
 
+import static com.intellij.execution.wsl.WSLDistribution.DEFAULT_TOOL_EXECUTION_TIMEOUT;
+
 /**
  * Data class describing a WSL distribution.
  * @apiNote Uniqueness of the descriptor defined by {@code id} only. All other fields may not be unique.
@@ -130,9 +132,11 @@ final class WslDistributionDescriptor {
     }
     ProcessOutput pwdOutput;
     try {
-      pwdOutput = !ApplicationManager.getApplication().isDispatchThread() ? distribution.executeSimpleCommand(-1, "pwd") :
+      pwdOutput = !ApplicationManager.getApplication().isDispatchThread() ?
+                  distribution.executeSimpleCommand(DEFAULT_TOOL_EXECUTION_TIMEOUT, "pwd") :
                   ProgressManager.getInstance().runProcessWithProgressSynchronously(
-                    () -> distribution.executeSimpleCommand(-1, "pwd"), "Detecting Windows Drives Mount Point", false, null);
+                    () -> distribution.executeSimpleCommand(DEFAULT_TOOL_EXECUTION_TIMEOUT, "pwd"),
+                    "Detecting Windows Drives Mount Point", false, null);
     }
     catch (ExecutionException e) {
       LOG.warn("Error reading pwd output for " + getId(), e);
