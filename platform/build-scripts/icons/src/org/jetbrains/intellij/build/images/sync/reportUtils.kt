@@ -251,10 +251,10 @@ private val reposMapGuard = Any()
 internal fun findRepo(file: File): File {
   if (!reposMap.containsKey(file)) synchronized(reposMapGuard) {
     if (!reposMap.containsKey(file)) {
-      reposMap += file to findGitRepoRoot(file, silent = true)
+      reposMap = reposMap + (file to findGitRepoRoot(file, silent = true))
     }
   }
-  return reposMap[file]!!
+  return reposMap.getValue(file)
 }
 
 private fun findCommits(context: Context, root: File, changes: Changes) = changes.all()
@@ -281,6 +281,7 @@ private fun commitAndPush(branch: String,
                           message: String,
                           repos: Collection<File>) = repos.parallelStream().map {
   withUser(it, user, email) {
+    execute(it, GIT, "checkout", "-B", branch)
     commitAndPush(it, branch, message)
   }
 }.toList()

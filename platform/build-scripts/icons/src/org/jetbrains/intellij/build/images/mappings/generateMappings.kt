@@ -5,10 +5,7 @@ import com.intellij.openapi.application.PathManager
 import org.jetbrains.intellij.build.images.IconsClassGenerator
 import org.jetbrains.intellij.build.images.ImageCollector
 import org.jetbrains.intellij.build.images.isImage
-import org.jetbrains.intellij.build.images.sync.Context
-import org.jetbrains.intellij.build.images.sync.isAncestorOf
-import org.jetbrains.intellij.build.images.sync.isValidIcon
-import org.jetbrains.intellij.build.images.sync.protectStdErr
+import org.jetbrains.intellij.build.images.sync.*
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
 import java.nio.file.FileVisitResult
@@ -24,7 +21,7 @@ fun main() = generateMappings()
 private fun generateMappings() {
   val mappings = (loadIdeaGeneratedIcons() + loadNonGeneratedIcons("idea")).groupBy {
     "${it.product}#${it.set}"
-  }.values.flatMap {
+  }.toSortedMap().values.flatMap {
     if (it.size > 1) {
       System.err.println("Duplicates were generated $it\nRenaming")
       it.subList(1, it.size).mapIndexed { i, duplicate ->
@@ -36,13 +33,29 @@ private fun generateMappings() {
   val mappingsJson = mappings.joinToString(separator = ",\n") {
     it.toString().prependIndent("     ")
   }
-  println("""
+  val json = """
     |{
     |  "mappings": [
     |$mappingsJson
     |  ]
     |}
-  """.trimMargin())
+  """.trimMargin()
+  val path = File(System.getProperty("mappings.json.path") ?: error("Specify mappings.json.path"))
+  val repo = findGitRepoRoot(path)
+  fun String.normalize() = replace(Regex("\\s+"), " ").trim()
+  if (json.normalize() == path.readText().normalize()) {
+    println("Update is not required")
+  }
+  else {
+    val branch = System.getProperty("branch") ?: "icons-mappings-update"
+    withUser(repo, "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com") {
+      execute(repo, GIT, "checkout", "-B", branch, "origin/master")
+      path.writeText(json)
+      val jsonFile = path.toRelativeString(repo)
+      stageFiles(listOf(jsonFile), repo)
+      commitAndPush(repo, "refs/heads/$branch", "$jsonFile automatic update")
+    }
+  }
 }
 
 private class Mapping(val product: String, val set: String, val path: String) {
