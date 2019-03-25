@@ -25,21 +25,10 @@ public abstract class CompletionService {
    * A "weigher" extension key (see {@link Weigher}) to sort completion items by priority and move the heaviest to the top of the Lookup.
    */
   public static final Key<CompletionWeigher> RELEVANCE_KEY = Key.create("completion");
-  /**
-   * A "weigher" extension key (see {@link Weigher}) to sort the whole lookup descending.
-   * @deprecated use "completion" relevance key instead
-   */
-  @Deprecated public static final Key<CompletionWeigher> SORTING_KEY = Key.create("completionSorting");
 
   public static CompletionService getCompletionService() {
     return ServiceManager.getService(CompletionService.class);
   }
-
-  /**
-   * @return Current lookup advertisement text (at the bottom).
-   */
-  @Nullable
-  public abstract String getAdvertisementText();
 
   /**
    * Set lookup advertisement text (at the bottom) at any time. Will do nothing if no completion process is in progress.
@@ -52,10 +41,6 @@ public abstract class CompletionService {
   /**
    * Run all contributors until any of them returns false or the list is exhausted. If from parameter is not null, contributors
    * will be run starting from the next one after that.
-   * @param parameters
-   * @param from
-   * @param consumer
-   * @return
    */
   public void getVariantsFromContributors(final CompletionParameters parameters,
                                           @Nullable final CompletionContributor from,
@@ -74,15 +59,7 @@ public abstract class CompletionService {
     }
   }
 
-  /**
-   * Create a {@link com.intellij.codeInsight.completion.CompletionResultSet} that will filter variants based on default camel-hump
-   * {@link com.intellij.codeInsight.completion.PrefixMatcher} and give the filtered variants to consumer.
-   * @param parameters
-   * @param consumer
-   * @param contributor
-   * @return
-   */
-  public abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<CompletionResult> consumer,
+  protected abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<CompletionResult> consumer,
                                                       @NotNull CompletionContributor contributor);
 
   @Nullable
@@ -101,14 +78,14 @@ public abstract class CompletionService {
       @Override
       public void startBatch() {
         if (consumer instanceof BatchConsumer) {
-          ((BatchConsumer<? super CompletionResult>)consumer).startBatch();
+          ((BatchConsumer)consumer).startBatch();
         }
       }
 
       @Override
       public void endBatch() {
         if (consumer instanceof BatchConsumer) {
-          ((BatchConsumer<? super CompletionResult>)consumer).endBatch();
+          ((BatchConsumer)consumer).endBatch();
         }
       }
 
