@@ -375,7 +375,7 @@ public class GitLogUtil {
                                getNoWalkParameter(vcs), STDIN);
   }
 
-  public static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
+  static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
     // if we close this stream, RunnerMediator won't be able to send ctrl+c to the process in order to softly kill it
     // see RunnerMediator.sendCtrlEventThroughStream
     String separator = GitVersionSpecialty.LF_SEPARATORS_IN_STDIN.existsIn(vcs.getVersion()) ? "\n" : System.lineSeparator();
@@ -386,12 +386,12 @@ public class GitLogUtil {
   }
 
   @NotNull
-  public static String getNoWalkParameter(@NotNull GitVcs vcs) {
+  static String getNoWalkParameter(@NotNull GitVcs vcs) {
     return GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
   }
 
   @NotNull
-  public static GitLineHandler createGitHandler(@NotNull Project project, @NotNull VirtualFile root) {
+  static GitLineHandler createGitHandler(@NotNull Project project, @NotNull VirtualFile root) {
     return createGitHandler(project, root, Collections.emptyList(), false);
   }
 
