@@ -15,7 +15,10 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.MapForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.*;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
@@ -48,7 +51,6 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
                                 @NotNull IndexStorage<Key, Value> storage) throws IOException {
     this(extension,
          storage,
-         getForwardIndex(extension),
          hasSnapshotMapping(extension) ? new SnapshotInputMappings<>(extension) : null);
     if (!(myIndexId instanceof ID<?, ?>)) {
       throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
@@ -57,7 +59,6 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                                 @NotNull IndexStorage<Key, Value> storage,
-                                @Nullable ForwardIndex<Key, Value> forwardIndex,
                                 @Nullable SnapshotInputMappings<Key, Value, Input> snapshotInputMappings) throws IOException {
     this(extension,
          storage,
@@ -65,19 +66,17 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
                                                                    snapshotInputMappings.getForwardIndexAccessor(),
                                                                    snapshotInputMappings.getInputIndexStorageFile(),
                                                                    true,
-                                                                   true) : null,
-         snapshotInputMappings != null ? snapshotInputMappings.getForwardIndexAccessor() : null,
-         forwardIndex,
+                                                                   true) : getForwardIndexMap(extension),
+         snapshotInputMappings != null ? snapshotInputMappings.getForwardIndexAccessor() : getForwardIndexAccessor(extension),
          snapshotInputMappings);
   }
 
   protected VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                                    @NotNull IndexStorage<Key, Value> storage,
-                                   @Nullable com.intellij.util.indexing.impl.forward.ForwardIndex forwardIndexMap,
+                                   @Nullable ForwardIndex forwardIndexMap,
                                    @Nullable ForwardIndexAccessor<Key, Value, ?, Input> forwardIndexAccessor,
-                                   @Nullable ForwardIndex<Key, Value> forwardIndex,
                                    @Nullable SnapshotInputMappingIndex<Key, Value, Input> snapshotInputMappings) {
-    super(extension, storage, forwardIndexMap, forwardIndexAccessor, forwardIndex);
+    super(extension, storage, forwardIndexMap, forwardIndexAccessor, null);
     SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
     mySnapshotInputMappings = snapshotInputMappings;
     installMemoryModeListener();
@@ -227,9 +226,6 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       Map<Key, Value> map = myInMemoryKeysAndValues.get(fileId);
       if (map != null) return map;
     }
-    if (myForwardIndex instanceof VfsAwareMapReduceIndex.MyMapBasedForwardIndex) {
-      return ((MyMapBasedForwardIndex<Key, Value>)myForwardIndex).getInput(fileId);
-    }
     if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor) {
       ByteArraySequence serializedInputData = getForwardIndexMap().get(fileId);
       AbstractMapForwardIndexAccessor<Key, Value, ?, Input> forwardIndexAccessor = (AbstractMapForwardIndexAccessor<Key, Value, ?, Input>)getForwardIndexAccessor();
@@ -301,45 +297,26 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   }
 
   @Nullable
-  private static <Key, Value> ForwardIndex<Key, Value> getForwardIndex(@NotNull IndexExtension<Key, Value, ?> indexExtension)
-    throws IOException {
-    if (hasSnapshotMapping(indexExtension)) return null;
-
-    if (!(indexExtension instanceof CustomInputsIndexFileBasedIndexExtension)) {
-      return new MyMapBasedForwardIndex<>(indexExtension);
-    }
-    LOG.error("Index `" + indexExtension.getName() + "` will be created without forward index");
-    return null;
+  private static <Key, Value, Input> ForwardIndexAccessor<Key, Value, ?, Input> getForwardIndexAccessor(@NotNull IndexExtension<Key, Value, Input> indexExtension) {
+    if (!shouldCreateForwardIndex(indexExtension)) return null;
+    return new MapForwardIndexAccessor<>(new InputMapExternalizer<>(indexExtension));
   }
 
-  private static class MyMapBasedForwardIndex<Key, Value> extends MapBasedForwardIndex<Key, Value, Map<Key, Value>> {
-    protected MyMapBasedForwardIndex(IndexExtension<Key, Value, ?> indexExtension) throws IOException {
-      super(indexExtension);
-    }
+  @Nullable
+  private static ForwardIndex getForwardIndexMap(@NotNull IndexExtension<?, ?, ?> indexExtension)
+    throws IOException {
+    if (!shouldCreateForwardIndex(indexExtension)) return null;
+    File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)indexExtension.getName());
+    return new PersistentMapBasedForwardIndex(indexStorageFile, false);
+  }
 
-    @NotNull
-    @Override
-    public PersistentHashMap<Integer, Map<Key, Value>> createMap() throws IOException {
-      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
-      try {
-        final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)myIndexExtension.getName());
-        return new PersistentHashMap<>(indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, new InputMapExternalizer<>(myIndexExtension));
-      } finally {
-        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
-      }
+  private static boolean shouldCreateForwardIndex(@NotNull IndexExtension<?, ?, ?> indexExtension) {
+    if (hasSnapshotMapping(indexExtension)) return false;
+    if (indexExtension instanceof CustomInputsIndexFileBasedIndexExtension) {
+      LOG.error("Index `" + indexExtension.getName() + "` will be created without forward index");
+      return false;
     }
-
-    @NotNull
-    @Override
-    protected InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable Map<Key, Value> map) {
-      return new MapInputDataDiffBuilder<>(inputId, map);
-    }
-
-    @NotNull
-    @Override
-    protected Map<Key, Value> convertToMapValueType(int inputId, @NotNull Map<Key, Value> map) {
-      return map;
-    }
+    return true;
   }
 
   private void installMemoryModeListener() {
