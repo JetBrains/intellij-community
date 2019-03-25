@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.MainConfigurationStateSplitter;
@@ -72,7 +73,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     for (CustomScopesProvider scopesProvider : CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject)) {
       List<NamedScope> customScopes = scopesProvider.getFilteredScopes();
       if (ArrayUtil.contains(null, customScopes)) {
-        throw new IllegalStateException("Provider.getFilteredScopes() must not return null scopes, got: " + customScopes+"; provider: "+scopesProvider + " ("+scopesProvider.getClass()+")");
+        throw PluginException.createByClass("Provider.getFilteredScopes() must not return null scopes, got: " + customScopes + "; provider: " + scopesProvider + " (" + scopesProvider.getClass() + ")", null, scopesProvider.getClass());
       }
 
       predefinedScopes.addAll(customScopes);
