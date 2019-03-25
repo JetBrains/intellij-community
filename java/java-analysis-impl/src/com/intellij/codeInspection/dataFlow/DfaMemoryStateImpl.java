@@ -1366,6 +1366,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return state.myFactMap;
       }
       value = resolveVariableValue((DfaVariableValue)value);
+      if (value instanceof DfaVariableValue) {
+        return getDefaultState((DfaVariableValue)value).myFactMap;
+      }
     }
     if (value instanceof DfaBinOpValue) {
       return DfaFactMap.EMPTY.with(DfaFactType.RANGE, getValueFact(value, DfaFactType.RANGE));
