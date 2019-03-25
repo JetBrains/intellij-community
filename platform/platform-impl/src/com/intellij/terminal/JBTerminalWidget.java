@@ -23,7 +23,6 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -55,7 +54,6 @@ import java.awt.event.KeyListener;
 import java.util.List;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable {
-  private Project myProject;
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private JBTerminalWidgetListener myListener;
 
@@ -75,7 +73,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
                           JBTerminalSystemSettingsProviderBase settingsProvider,
                           Disposable parent) {
     super(columns, lines, settingsProvider);
-    myProject = project;
     mySettingsProvider = settingsProvider;
 
     setName("terminal");
@@ -161,20 +158,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
       myListener.showTabs();
       return true;
     }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-    if (!mySettingsProvider.overrideIdeShortcuts()) {
-      actions
-        .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, input -> {
-          if (!myTerminalPanel.getTerminalTextBuffer().isUsingAlternateBuffer()) {
-            if (myProject != null) {
-              ToolWindowManager.getInstance(myProject).activateEditorComponent();
-            }
-            return true;
-          }
-          else {
-            return false;
-          }
-        }).withHidden(true));
-    }
     actions.add(new TerminalAction("Close Session", mySettingsProvider.getCloseSessionKeyStrokes(), input -> {
       myListener.onSessionClosed();
       return true;
@@ -184,7 +167,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
 
   @Override
   public void dispose() {
-    myProject = null;
     close();
   }
 
