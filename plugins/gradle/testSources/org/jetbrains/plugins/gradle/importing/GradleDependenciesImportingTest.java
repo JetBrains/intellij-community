@@ -892,19 +892,19 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                            .withJavaPlugin()
                            .addPostfix(
                              "configurations {",
-                             "  parentCfg",
-                             "  compile.extendsFrom parentCfg",
+                             "  aParentCfg",
+                             "  compile.extendsFrom aParentCfg",
                              "}",
                              "sourceSets {",
-                             "  parentSrc { java.srcDirs = ['src/parent/java'] }",
-                             "  main { java { compileClasspath += parentSrc.output } }",
+                             "  aParentSrc { java.srcDirs = ['src/aParent/java'] }",
+                             "  main { java { compileClasspath += aParentSrc.output } }",
                              "}",
-                             "task parentSrcJar(type:Jar) {",
+                             "task aParentSrcJar(type:Jar) {",
                              "    appendix 'parent'",
-                             "    from sourceSets.parentSrc.output",
+                             "    from sourceSets.aParentSrc.output",
                              "}",
                              "artifacts {",
-                             "  parentCfg parentSrcJar",
+                             "  aParentCfg aParentSrcJar",
                              "}"
                            )
                            .generate()
@@ -920,10 +920,10 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     importProject("");
 
     assertModules("project",
-                  "project.project1", "project.project1.main", "project.project1.test", "project.project1.parentSrc",
+                  "project.project1", "project.project1.main", "project.project1.test", "project.project1.aParentSrc",
                   "project.project2", "project.project2.main", "project.project2.test");
 
-    assertModuleModuleDeps("project.project2.main", "project.project1.main", "project.project1.parentSrc");
+    assertModuleModuleDeps("project.project2.main", "project.project1.main", "project.project1.aParentSrc");
   }
 
 
