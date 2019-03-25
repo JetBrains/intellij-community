@@ -19,6 +19,7 @@ interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
   var defaultCommitActionName: String
 
   fun activate(): Boolean
+  fun deactivate()
 
   fun addStateListener(listener: CommitWorkflowUiStateListener, parent: Disposable)
 
