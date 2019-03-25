@@ -107,34 +107,28 @@ open class DialogCommitWorkflow(val project: Project,
     return addUnversionedFilesToVcs(project, changeList, unversionedFiles, callback, null)
   }
 
-  fun executeDefault(executor: CommitExecutor?, changeList: LocalChangeList, changes: List<Change>, commitMessage: String) {
-    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(true, executor, changeList)
+  fun executeDefault(executor: CommitExecutor?, commitState: ChangeListCommitState) {
+    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(true, executor, commitState.changeList)
     @Suppress("NON_EXHAUSTIVE_WHEN")
     when (beforeCommitChecksResult) {
-      CheckinHandler.ReturnResult.COMMIT -> DefaultNameChangeListCleaner(project, changeList, changes).use {
-        doCommit(changeList, changes, commitMessage)
-      }
+      CheckinHandler.ReturnResult.COMMIT -> DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
       CheckinHandler.ReturnResult.CLOSE_WINDOW ->
-        moveToFailedList(project, changeList, commitMessage, changes, message("commit.dialog.rejected.commit.template", changeList.name))
+        moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
     }
   }
 
-  fun executeCustom(executor: CommitExecutor,
-                    session: CommitSession,
-                    changeList: LocalChangeList,
-                    changes: List<Change>,
-                    commitMessage: String) {
-    if (!configureCommitSession(executor, session, changes, commitMessage)) return
+  fun executeCustom(executor: CommitExecutor, session: CommitSession, commitState: ChangeListCommitState) {
+    if (!configureCommitSession(executor, session, commitState.changes, commitState.commitMessage)) return
 
-    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(false, executor, changeList)
+    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(false, executor, commitState.changeList)
     @Suppress("NON_EXHAUSTIVE_WHEN")
     when (beforeCommitChecksResult) {
       CheckinHandler.ReturnResult.COMMIT -> {
-        val success = doCommitCustom(executor, session, changeList, changes, commitMessage)
+        val success = doCommitCustom(executor, session, commitState)
         if (success) eventDispatcher.multicaster.customCommitSucceeded()
       }
       CheckinHandler.ReturnResult.CLOSE_WINDOW ->
-        moveToFailedList(project, changeList, commitMessage, changes, message("commit.dialog.rejected.commit.template", changeList.name))
+        moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
     }
   }
 
@@ -212,25 +206,21 @@ open class DialogCommitWorkflow(val project: Project,
     return true
   }
 
-  protected open fun doCommit(changeList: LocalChangeList, changes: List<Change>, commitMessage: String) {
+  protected open fun doCommit(commitState: ChangeListCommitState) {
     LOG.debug("Do actual commit")
-    val committer = SingleChangeListCommitter(project, changeList, changes, commitMessage, commitHandlers, additionalData, vcsToCommit,
-                                              DIALOG_TITLE, isDefaultChangeListFullyIncluded)
+    val committer = SingleChangeListCommitter(project, commitState, commitHandlers, additionalData, vcsToCommit, DIALOG_TITLE,
+                                              isDefaultChangeListFullyIncluded)
 
     committer.addResultHandler(resultHandler ?: DefaultCommitResultHandler(committer))
     committer.runCommit(DIALOG_TITLE, false)
   }
 
-  private fun doCommitCustom(executor: CommitExecutor,
-                             session: CommitSession,
-                             changeList: LocalChangeList,
-                             changes: List<Change>,
-                             commitMessage: String): Boolean {
+  private fun doCommitCustom(executor: CommitExecutor, session: CommitSession, commitState: ChangeListCommitState): Boolean {
     var success = false
-    val cleaner = DefaultNameChangeListCleaner(project, changeList, changes)
+    val cleaner = DefaultNameChangeListCleaner(project, commitState)
     try {
       val completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        { session.execute(changes, commitMessage) }, executor.actionText, true, project)
+        { session.execute(commitState.changes, commitState.commitMessage) }, executor.actionText, true, project)
 
       if (completed) {
         LOG.debug("Commit successful")
@@ -250,7 +240,7 @@ open class DialogCommitWorkflow(val project: Project,
       commitHandlers.forEach { it.checkinFailed(errors) }
     }
     finally {
-      finishCustom(commitMessage, success)
+      finishCustom(commitState.commitMessage, success)
     }
     return success
   }
@@ -271,9 +261,9 @@ open class DialogCommitWorkflow(val project: Project,
   }
 }
 
-private class DefaultNameChangeListCleaner(val project: Project, changeList: LocalChangeList, changes: List<Change>) {
-  private val isChangeListFullyIncluded = changeList.changes.size == changes.size
-  private val isDefaultNameChangeList = changeList.hasDefaultName()
+private class DefaultNameChangeListCleaner(val project: Project, commitState: ChangeListCommitState) {
+  private val isChangeListFullyIncluded = commitState.changeList.changes.size == commitState.changes.size
+  private val isDefaultNameChangeList = commitState.changeList.hasDefaultName()
 
   fun use(block: () -> Unit) {
     block()

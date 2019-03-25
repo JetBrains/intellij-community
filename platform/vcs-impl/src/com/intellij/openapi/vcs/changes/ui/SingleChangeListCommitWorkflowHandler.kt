@@ -55,6 +55,8 @@ class SingleChangeListCommitWorkflowHandler(
   private fun getCommitMessage() = ui.commitMessageUi.text
   private fun setCommitMessage(text: String?) = ui.commitMessageUi.setText(text)
 
+  private fun getCommitState() = ChangeListCommitState(getChangeList(), getIncludedChanges(), getCommitMessage())
+
   private val commitHandlers get() = workflow.commitHandlers
   private val commitMessagePolicy get() = workflow.commitMessagePolicy
   private val commitOptions get() = workflow.commitOptions
@@ -139,7 +141,7 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   private fun doExecuteDefault(executor: CommitExecutor?) = try {
-    workflow.executeDefault(executor, getChangeList(), getIncludedChanges(), getCommitMessage())
+    workflow.executeDefault(executor, getCommitState())
   }
   catch (e: InputException) { // TODO Looks like this catch is unnecessary - check
     e.show()
@@ -152,7 +154,7 @@ class SingleChangeListCommitWorkflowHandler(
     saveCommitMessage(true)
 
     (session as? CommitSessionContextAware)?.setContext(workflow.commitContext)
-    refreshChanges { workflow.executeCustom(executor, session, getChangeList(), getIncludedChanges(), getCommitMessage()) }
+    refreshChanges { workflow.executeCustom(executor, session, getCommitState()) }
   }
 
   private fun addUnversionedFiles(): Boolean =
@@ -171,8 +173,7 @@ class SingleChangeListCommitWorkflowHandler(
     setCommitMessage(commitMessagePolicy.commitMessage)
   }
 
-  private fun saveCommitMessage(success: Boolean) =
-    commitMessagePolicy.save(getChangeList(), getIncludedChanges(), getCommitMessage(), success)
+  private fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitState(), success)
 
   private fun initCommitOptions() {
     workflow.initCommitOptions(CommitOptionsImpl(

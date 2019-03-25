@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.ui.ChangeListCommitState
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.DefaultCommitResultHandler
 import com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow
@@ -17,8 +18,8 @@ class AlienCommitWorkflow(val vcs: AbstractVcs<*>, changeListName: String, chang
 
   override fun canExecute(executor: CommitExecutor, changes: Collection<Change>) = true
 
-  override fun doCommit(changeList: LocalChangeList, changes: List<Change>, commitMessage: String) {
-    val committer = AlienCommitter(vcs, changes, commitMessage, commitHandlers, additionalData)
+  override fun doCommit(commitState: ChangeListCommitState) {
+    val committer = AlienCommitter(vcs, commitState.changes, commitState.commitMessage, commitHandlers, additionalData)
 
     committer.addResultHandler(DefaultCommitResultHandler(committer))
     committer.runCommit(DIALOG_TITLE, false)

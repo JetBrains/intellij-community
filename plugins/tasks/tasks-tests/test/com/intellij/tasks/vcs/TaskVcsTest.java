@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
+import com.intellij.openapi.vcs.changes.ui.ChangeListCommitState;
 import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -317,9 +318,9 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     CheckinHandler checkinHandler = new TaskCheckinHandlerFactory().createHandler(panel, new CommitContext());
 
     List<CheckinHandler> handlers = ContainerUtil.list(checkinHandler);
+    ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
     SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(getProject(), changeList, changes, commitMessage, handlers, FunctionUtil.nullConstant(), null, "Commit",
-                                    false);
+      new SingleChangeListCommitter(getProject(), commitState, handlers, FunctionUtil.nullConstant(), null, "Commit", false);
 
     committer.runCommit("Commit", true);
   }
