@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.psi.*
+import com.intellij.psi.impl.PsiClassImplUtil.correctType
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
@@ -54,7 +55,8 @@ fun positionalParametersDistance(map: Map<Argument, PsiParameter>, context: PsiE
   var result = 0L
   for ((argument, parameter) in map) {
     val runtimeType = argument.runtimeType ?: continue
-    result += parameterDistance(runtimeType, parameter.type, context)
+    val parameterType = correctType(parameter.type, context.resolveScope) ?: continue
+    result += parameterDistance(runtimeType, parameterType, context)
   }
   return result
 }
