@@ -32,6 +32,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.Alarm;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Processor;
@@ -266,7 +267,7 @@ public class AbstractPopup implements JBPopup {
 
       if (pinCallback != null) {
         myCaption.setButtonComponent(new InplaceButton(
-          new IconButton("Open as Tool Window", 
+          new IconButton("Open as Tool Window",
                          AllIcons.General.Pin_tab, AllIcons.General.Pin_tab,
                          IconLoader.getDisabledIcon(AllIcons.General.Pin_tab)),
           e -> pinCallback.process(this)
@@ -761,6 +762,7 @@ public class AbstractPopup implements JBPopup {
     debugState("show popup", State.INIT);
     myState = State.SHOWING;
 
+    installWindowHook(this);
     installProjectDisposer();
     addActivity();
 
@@ -1099,6 +1101,14 @@ public class AbstractPopup implements JBPopup {
         };
         Disposer.register(project, myProjectDisposable);
       }
+    }
+  }
+
+  //Sometimes just after popup was shown the WINDOW_ACTIVATED cancels it
+  private static void installWindowHook(final AbstractPopup popup) {
+    if (popup.myCancelOnWindow) {
+      popup.myCancelOnWindow = false;
+      new Alarm(popup).addRequest(() -> popup.myCancelOnWindow = true, 100);
     }
   }
 
