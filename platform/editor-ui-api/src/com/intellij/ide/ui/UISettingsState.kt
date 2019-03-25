@@ -38,7 +38,7 @@ class UISettingsState : BaseState() {
   var recentFilesLimit by property(50)
 
   @get:OptionTag("RECENT_LOCATIONS_LIMIT")
-  var recentLocationsLimit by property(10)
+  var recentLocationsLimit by property(25)
 
   @get:OptionTag("CONSOLE_COMMAND_HISTORY_LIMIT")
   var consoleCommandHistoryLimit by property(300)
