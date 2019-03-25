@@ -223,21 +223,29 @@ public class IdeaApplication {
     if (myArgs.length > 0) {
       PluginManagerCore.getPlugins();
 
-      Iterator<ApplicationStarter> iterator = ((ExtensionPointImpl<ApplicationStarter>)ApplicationStarter.EP_NAME.getPoint(null)).iterator();
-      String key = myArgs[0];
-      while (iterator.hasNext()) {
-        ApplicationStarter starter = iterator.next();
-        if (starter == null) {
-          break;
-        }
-
-        if (Comparing.equal(starter.getCommandName(), key)) {
-          return starter;
-        }
+      ApplicationStarter starter = findStarter(myArgs[0]);
+      if (starter != null) {
+        return starter;
       }
     }
 
     return new IdeStarter();
+  }
+
+  @Nullable
+  public static ApplicationStarter findStarter(@Nullable String key) {
+    Iterator<ApplicationStarter> iterator = ((ExtensionPointImpl<ApplicationStarter>)ApplicationStarter.EP_NAME.getPoint(null)).iterator();
+    while (iterator.hasNext()) {
+      ApplicationStarter starter = iterator.next();
+      if (starter == null) {
+        break;
+      }
+
+      if (Comparing.equal(starter.getCommandName(), key)) {
+        return starter;
+      }
+    }
+    return null;
   }
 
   private void run(@NotNull CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture) {
