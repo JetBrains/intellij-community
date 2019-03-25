@@ -71,7 +71,7 @@ function configureCommandHistory {
   unset __INTELLIJ_COMMAND_HISTFILE__
   if [ -n "$commandHistoryFile" ] && [ -z "`trap -p EXIT`" ]
   then
-    trap "history -w \"$commandHistoryFile\"; HISTFILE=\"$HISTFILE\"" EXIT
+    trap "$(builtin printf 'history -w %q; HISTFILE=%q' "$commandHistoryFile" "$HISTFILE")" EXIT
     if [ -s "$commandHistoryFile" ]
     then
       HISTFILE="$commandHistoryFile"
