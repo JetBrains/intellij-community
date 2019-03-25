@@ -23,6 +23,7 @@ import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator;
 import org.jetbrains.uast.UExpression;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
@@ -95,7 +96,7 @@ class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
         return EMPTY_ARRAY;
       }
 
-      final List<LookupElement> variants = new SmartList<>();
+      final List<LookupElement> variants = Collections.synchronizedList(new SmartList<>());
       processCandidates(extension -> {
         final String key = getNameElement(extension).getStringValue();
         if (key == null || extension.getXmlElement() == null) return true;
