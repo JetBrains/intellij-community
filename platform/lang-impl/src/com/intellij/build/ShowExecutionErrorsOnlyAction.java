@@ -36,7 +36,7 @@ public class ShowExecutionErrorsOnlyAction extends ToggleAction implements DumbA
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    if (!Registry.is("build.view.side-by-side", false)) {
+    if (!Registry.is("build.view.side-by-side", true)) {
       presentation.setVisible(false);
       return false;
     }
