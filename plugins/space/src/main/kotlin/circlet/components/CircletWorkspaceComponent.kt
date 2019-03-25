@@ -57,7 +57,7 @@ class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), 
 
         val lt = workspacesLifetimes.next()
         val wsConfig = ideaConfig(server)
-        val wss = WorkspaceManager(lt, this, IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
+        val wss = WorkspaceManager(lt, this, InMemoryPersistence(), IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
         val response = accessTokenInteractive(lifetime, wsConfig)
         if (response is OAuthTokenResponse.Success) {
             log.info { "response = ${response.accessToken} ${response.expiresIn} ${response.refreshToken} ${response.scope}" }
@@ -79,7 +79,7 @@ class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), 
     private suspend fun autoSignIn(settingsOnStartup: CircletServerSettings, wsLifetime: Lifetime): Boolean {
         if (settingsOnStartup.server.isNotBlank() && settingsOnStartup.enabled) {
             val wsConfig = ideaConfig(settingsOnStartup.server)
-            val wss = WorkspaceManager(wsLifetime, this@CircletWorkspaceComponent, IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
+            val wss = WorkspaceManager(wsLifetime, this@CircletWorkspaceComponent, InMemoryPersistence(), IdeaPasswordSafePersistence, PersistenceConfiguration.nothing, wsConfig)
             if (wss.signInNonInteractive()) {
                 manager.value = wss
                 return true
