@@ -36,7 +36,7 @@ internal open class CommitProjectPanelAdapter(private val handler: SingleChangeL
   override fun getComponent(): JComponent? = (ui as? ComponentContainer)?.component
   override fun getPreferredFocusedComponent(): JComponent? = (ui as? ComponentContainer)?.preferredFocusableComponent
 
-  override fun hasDiffs(): Boolean = getIncludedChanges().isNotEmpty() || getIncludedUnversionedFiles().isNotEmpty()
+  override fun hasDiffs(): Boolean = !handler.isCommitEmpty()
   override fun getVirtualFiles(): Collection<VirtualFile> = getIncludedPaths().mapNotNull { it.virtualFile }
   override fun getSelectedChanges(): Collection<Change> = getIncludedChanges()
   override fun getFiles(): Collection<File> = getIncludedPaths().map { it.ioFile }

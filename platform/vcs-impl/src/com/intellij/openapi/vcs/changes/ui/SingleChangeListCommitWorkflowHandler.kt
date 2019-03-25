@@ -28,7 +28,7 @@ private fun getDefaultCommitActionName(vcses: Collection<AbstractVcs<*>>) =
 
 class SingleChangeListCommitWorkflowHandler(
   internal val workflow: DialogCommitWorkflow,
-  internal val ui: CommitChangeListDialog
+  internal val ui: SingleChangeListCommitWorkflowUi
 ) : CommitWorkflowHandler,
     CommitWorkflowListener,
     CommitWorkflowUiStateListener,
@@ -76,6 +76,8 @@ class SingleChangeListCommitWorkflowHandler(
     ui.addChangeListListener(this, this)
   }
 
+  fun isCommitEmpty(): Boolean = getIncludedChanges().isEmpty() && getIncludedUnversionedFiles().isEmpty()
+
   fun activate(): Boolean {
     workflow.initCommitHandlers(getCommitHandlers(commitPanel, workflow.commitContext))
 
@@ -106,7 +108,7 @@ class SingleChangeListCommitWorkflowHandler(
   override fun getExecutor(executorId: String): CommitExecutor? = workflow.executors.find { it.id == executorId }
 
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean =
-    ui.hasDiffs() || (executor is CommitExecutorBase && !executor.areChangesRequired())
+    !isCommitEmpty() || (executor is CommitExecutorBase && !executor.areChangesRequired())
 
   override fun execute(executor: CommitExecutor) {
     val session = executor.createCommitSession()
