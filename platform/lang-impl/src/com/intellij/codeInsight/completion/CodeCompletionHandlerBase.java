@@ -51,7 +51,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Future;
 
 @SuppressWarnings("deprecation")
@@ -297,9 +296,9 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  private AutoCompletionDecision shouldAutoComplete(CompletionProgressIndicator indicator,
-                                                    List<LookupElement> items,
-                                                    CompletionParameters parameters) {
+  private AutoCompletionDecision shouldAutoComplete(@NotNull CompletionProgressIndicator indicator,
+                                                    @NotNull List<LookupElement> items,
+                                                    @NotNull CompletionParameters parameters) {
     if (!invokedExplicitly) {
       return AutoCompletionDecision.SHOW_LOOKUP;
     }
@@ -341,14 +340,13 @@ public class CodeCompletionHandlerBase {
   }
 
   protected void completionFinished(final CompletionProgressIndicator indicator, boolean hasModifiers) {
-    final List<LookupElement> items = indicator.getLookup().getItems();
-    CompletionParameters parameters = Objects.requireNonNull(indicator.getParameters());
+    List<LookupElement> items = indicator.getLookup().getItems();
     if (items.isEmpty()) {
       LookupManager.hideActiveLookup(indicator.getProject());
 
       Caret nextCaret = getNextCaretToProcess(indicator.getEditor());
       if (nextCaret != null) {
-        invokeCompletion(indicator.getProject(), indicator.getEditor(), parameters.getInvocationCount(), hasModifiers, nextCaret);
+        invokeCompletion(indicator.getProject(), indicator.getEditor(), indicator.getInvocationCount(), hasModifiers, nextCaret);
       }
       else {
         indicator.handleEmptyLookup(true);
@@ -361,7 +359,8 @@ public class CodeCompletionHandlerBase {
     LOG.assertTrue(!indicator.isCanceled(), "canceled");
 
     try {
-      AutoCompletionDecision decision = shouldAutoComplete(indicator, items, parameters);
+      CompletionParameters parameters = indicator.getParameters();
+      AutoCompletionDecision decision = parameters == null ? AutoCompletionDecision.CLOSE_LOOKUP : shouldAutoComplete(indicator, items, parameters);
       if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
         indicator.getLookup().setCalculating(false);
         indicator.showLookup();
