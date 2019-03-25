@@ -22,10 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.util.CollectionQuery;
-import com.intellij.util.Function;
-import com.intellij.util.Query;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
@@ -46,9 +43,8 @@ class RootIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
   private static final FileTypeRegistry ourFileTypes = FileTypeRegistry.getInstance();
 
-  private final Map<VirtualFile, String> myPackagePrefixByRoot = new HashMap<>();
-
-  private final Map<VirtualFile, DirectoryInfo> myRootInfos = new HashMap<>();
+  private final Map<VirtualFile, String> myPackagePrefixByRoot;
+  private final Map<VirtualFile, DirectoryInfo> myRootInfos;
   private final ConcurrentBitSet myNonInterestingIds = new ConcurrentBitSet();
   @NotNull private final Project myProject;
   final PackageDirectoryCache myPackageDirectoryCache;
@@ -61,16 +57,19 @@ class RootIndex {
 
     final RootInfo info = buildRootInfo(project);
 
-    MultiMap<String, VirtualFile> rootsByPackagePrefix = MultiMap.create();
     Set<VirtualFile> allRoots = info.getAllRoots();
+    MultiMap<String, VirtualFile> rootsByPackagePrefix = MultiMap.create(allRoots.size(), 0.75f);
+    myRootInfos = new HashMap<>(allRoots.size());
+    myPackagePrefixByRoot = new HashMap<>(allRoots.size());
     for (VirtualFile root : allRoots) {
       List<VirtualFile> hierarchy = getHierarchy(root, allRoots, info);
       Pair<DirectoryInfo, String> pair = hierarchy != null
                                          ? calcDirectoryInfoAndPackagePrefix(root, hierarchy, info)
                                          : new Pair<>(NonProjectDirectoryInfo.IGNORED, null);
       myRootInfos.put(root, pair.first);
-      rootsByPackagePrefix.putValue(pair.second, root);
-      myPackagePrefixByRoot.put(root, pair.second);
+      String packagePrefix = pair.second;
+      rootsByPackagePrefix.putValue(packagePrefix, root);
+      myPackagePrefixByRoot.put(root, packagePrefix);
     }
     myPackageDirectoryCache = new PackageDirectoryCache(rootsByPackagePrefix) {
       @Override
@@ -302,7 +301,11 @@ class RootIndex {
     }
 
     private static class Graph {
-      private final Map<Module, Node> myNodes = new HashMap<>();
+      private final Map<Module, Node> myNodes;
+
+      Graph(int moduleCount) {
+        myNodes = new HashMap<>(moduleCount);
+      }
     }
 
     private final Project myProject;
@@ -346,12 +349,13 @@ class RootIndex {
 
     @NotNull
     private Pair<Graph, MultiMap<VirtualFile, Node>> initGraphRoots() {
-      Graph graph = new Graph();
+      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+      Module[] modules = moduleManager.getModules();
+      Graph graph = new Graph(modules.length);
 
       MultiMap<VirtualFile, Node> roots = MultiMap.createSmart();
 
-      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      for (final Module module : moduleManager.getModules()) {
+      for (final Module module : modules) {
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         List<OrderEnumerationHandler> handlers = OrderEnumeratorBase.getCustomHandlers(module);
         for (OrderEntry orderEntry : moduleRootManager.getOrderEntries()) {
@@ -438,7 +442,7 @@ class RootIndex {
       if (roots == null) {
         return Collections.emptyList();
       }
-      Stack<Node> stack = new Stack<>();
+      Stack<Node> stack = new Stack<>(roots.size());
       for (VirtualFile root : roots) {
         Collection<Node> nodes = myRoots.get(root);
         for (Node node : nodes) {
@@ -446,14 +450,13 @@ class RootIndex {
         }
       }
 
-      Set<Node> seen = new HashSet<>();
-      List<OrderEntry> result = new ArrayList<>();
+      Set<Node> seen = new HashSet<>(stack.size());
+      List<OrderEntry> result = new ArrayList<>(stack.size());
       while (!stack.isEmpty()) {
         Node node = stack.pop();
-        if (seen.contains(node)) {
+        if (!seen.add(node)) {
           continue;
         }
-        seen.add(node);
 
         for (Edge edge : node.myEdges) {
           result.add(edge.myOrderEntry);
@@ -724,7 +727,7 @@ class RootIndex {
         return Collections.emptyList();
       }
       Collection<Object> producers = libraryRoots.get(root);
-      Set</*Library|SyntheticLibrary*/ Object> libraries = new HashSet<>();
+      Set</*Library|SyntheticLibrary*/ Object> libraries = new HashSet<>(producers.size());
       List<Condition<? super VirtualFile>> exclusions = new SmartList<>();
       for (Object library : producers) {
         if (librariesToIgnore.contains(library)) continue;
@@ -896,7 +899,7 @@ class RootIndex {
    * of a newly created value). Other map operations are not synchronized.
    */
   abstract static class SynchronizedSLRUCache<K, V> extends SLRUMap<K, V> {
-    private final Object myLock = new Object();
+    private final Object myLock = ObjectUtils.sentinel("Root index lock");
 
     SynchronizedSLRUCache(final int protectedQueueSize, final int probationalQueueSize) {
       super(protectedQueueSize, probationalQueueSize);
