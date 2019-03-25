@@ -122,11 +122,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
   private final int myStartCaret;
   private final CompletionThreadingBase myThreading;
-  private final Object myLock = new String("CompletionProgressIndicator");
+  private final Object myLock = ObjectUtils.sentinel("CompletionProgressIndicator");
 
   CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount,
                               CodeCompletionHandlerBase handler, @NotNull OffsetMap offsetMap, @NotNull OffsetsInFile hostOffsets,
-                              boolean hasModifiers, LookupImpl lookup) {
+                              boolean hasModifiers, @NotNull LookupImpl lookup) {
     myEditor = editor;
     myCaret = caret;
     myHandler = handler;
@@ -336,11 +336,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   @Override
-  public void setParameters(CompletionParameters parameters) {
+  public void setParameters(@NotNull CompletionParameters parameters) {
     myParameters = parameters;
   }
 
   @Override
+  @NotNull
   public LookupImpl getLookup() {
     return myLookup;
   }
