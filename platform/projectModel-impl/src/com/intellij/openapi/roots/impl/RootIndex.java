@@ -46,9 +46,9 @@ class RootIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
   private static final FileTypeRegistry ourFileTypes = FileTypeRegistry.getInstance();
 
-  private final Map<VirtualFile, String> myPackagePrefixByRoot = ContainerUtil.newHashMap();
+  private final Map<VirtualFile, String> myPackagePrefixByRoot = new HashMap<>();
 
-  private final Map<VirtualFile, DirectoryInfo> myRootInfos = ContainerUtil.newHashMap();
+  private final Map<VirtualFile, DirectoryInfo> myRootInfos = new HashMap<>();
   private final ConcurrentBitSet myNonInterestingIds = new ConcurrentBitSet();
   @NotNull private final Project myProject;
   final PackageDirectoryCache myPackageDirectoryCache;
@@ -589,7 +589,7 @@ class RootIndex {
 
   @Nullable("returns null only if dir is under ignored folder")
   private static List<VirtualFile> getHierarchy(@NotNull VirtualFile deepDir, @NotNull Set<? extends VirtualFile> allRoots, @NotNull RootInfo info) {
-    List<VirtualFile> hierarchy = ContainerUtil.newArrayList();
+    List<VirtualFile> hierarchy = new ArrayList<>();
     boolean hasContentRoots = false;
     for (VirtualFile dir = deepDir; dir != null; dir = dir.getParent()) {
       hasContentRoots |= info.contentRootOf.get(dir) != null;
@@ -702,7 +702,7 @@ class RootIndex {
     @Nullable
     private Pair<VirtualFile, List<Condition<? super VirtualFile>>> findLibraryRootInfo(@NotNull List<? extends VirtualFile> hierarchy,
                                                                                         boolean source) {
-      Set</*Library|SyntheticLibrary*/ Object> librariesToIgnore = ContainerUtil.newHashSet();
+      Set</*Library|SyntheticLibrary*/ Object> librariesToIgnore = new HashSet<>();
       for (VirtualFile root : hierarchy) {
         librariesToIgnore.addAll(excludedFromLibraries.get(root));
         if (source && libraryOrSdkSources.contains(root)) {
@@ -724,7 +724,7 @@ class RootIndex {
         return Collections.emptyList();
       }
       Collection<Object> producers = libraryRoots.get(root);
-      Set</*Library|SyntheticLibrary*/ Object> libraries = ContainerUtil.newHashSet();
+      Set</*Library|SyntheticLibrary*/ Object> libraries = new HashSet<>();
       List<Condition<? super VirtualFile>> exclusions = new SmartList<>();
       for (Object library : producers) {
         if (librariesToIgnore.contains(library)) continue;
@@ -782,12 +782,12 @@ class RootIndex {
     }
 
     @NotNull
-    private LinkedHashSet<OrderEntry> getLibraryOrderEntries(@NotNull List<? extends VirtualFile> hierarchy,
+    private Set<OrderEntry> getLibraryOrderEntries(@NotNull List<? extends VirtualFile> hierarchy,
                                                              @Nullable VirtualFile libraryClassRoot,
                                                              @Nullable VirtualFile librarySourceRoot,
                                                              @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
                                                              @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
-      LinkedHashSet<OrderEntry> orderEntries = ContainerUtil.newLinkedHashSet();
+      Set<OrderEntry> orderEntries = new LinkedHashSet<>();
       for (VirtualFile root : hierarchy) {
         if (root.equals(libraryClassRoot) && !sourceRootOf.containsKey(root)) {
           orderEntries.addAll(libClassRootEntries.get(root));
