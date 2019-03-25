@@ -52,41 +52,6 @@ public class GitLogUtil {
     SUBJECT, BODY, RAW_BODY
   };
 
-  @NotNull
-  public static List<? extends VcsCommitMetadata> collectMetadata(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile root,
-                                                                  @NotNull List<String> hashes)
-    throws VcsException {
-    VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return Collections.emptyList();
-    }
-
-    GitLineHandler h = createGitHandler(project, root);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, COMMIT_METADATA_OPTIONS);
-    h.setSilent(true);
-    // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
-    h.addParameters(getNoWalkParameter(vcs));
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(STDIN);
-    h.endOptions();
-
-    sendHashesToStdin(vcs, hashes, h);
-
-    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
-    List<GitLogRecord> records = parser.parse(output);
-
-    return ContainerUtil.map(records, record -> {
-      List<Hash> parents = new SmartList<>();
-      for (String parent : record.getParentsHashes()) {
-        parents.add(HashImpl.build(parent));
-      }
-      record.setUsedHandler(h);
-      return factory.createCommitMetadata(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
-                                          record.getSubject(), record.getAuthorName(), record.getAuthorEmail(), record.getFullMessage(),
-                                          record.getCommitterName(), record.getCommitterEmail(), record.getAuthorTimeStamp());
-    });
-  }
-
   public static void readTimedCommits(@NotNull Project project,
                                       @NotNull VirtualFile root,
                                       @NotNull List<String> parameters,
@@ -133,15 +98,37 @@ public class GitLogUtil {
   }
 
   @NotNull
-  private static Collection<VcsRef> parseRefs(@NotNull Collection<String> refs,
-                                              @NotNull Hash hash,
-                                              @NotNull VcsLogObjectsFactory factory,
-                                              @NotNull VirtualFile root) {
-    return ContainerUtil.mapNotNull(refs, refName -> {
-      if (refName.equals(GRAFTED) || refName.equals(REPLACED)) return null;
-      VcsRefType type = GitRefManager.getRefType(refName);
-      refName = GitBranchUtil.stripRefsPrefix(refName);
-      return refName.equals(GitUtil.ORIGIN_HEAD) ? null : factory.createRef(hash, refName, type, root);
+  public static List<? extends VcsCommitMetadata> collectMetadata(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile root,
+                                                                  @NotNull List<String> hashes)
+    throws VcsException {
+    VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return Collections.emptyList();
+    }
+
+    GitLineHandler h = createGitHandler(project, root);
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, COMMIT_METADATA_OPTIONS);
+    h.setSilent(true);
+    // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
+    h.addParameters(getNoWalkParameter(vcs));
+    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters(STDIN);
+    h.endOptions();
+
+    sendHashesToStdin(vcs, hashes, h);
+
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
+    List<GitLogRecord> records = parser.parse(output);
+
+    return ContainerUtil.map(records, record -> {
+      List<Hash> parents = new SmartList<>();
+      for (String parent : record.getParentsHashes()) {
+        parents.add(HashImpl.build(parent));
+      }
+      record.setUsedHandler(h);
+      return factory.createCommitMetadata(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
+                                          record.getSubject(), record.getAuthorName(), record.getAuthorEmail(), record.getFullMessage(),
+                                          record.getCommitterName(), record.getCommitterEmail(), record.getAuthorTimeStamp());
     });
   }
 
@@ -196,34 +183,6 @@ public class GitLogUtil {
     return new LogDataImpl(refs, commits);
   }
 
-  @Nullable
-  public static VcsLogObjectsFactory getObjectsFactoryWithDisposeCheck(@NotNull Project project) {
-    return ReadAction.compute(() -> {
-      if (!project.isDisposed()) {
-        return ServiceManager.getService(project, VcsLogObjectsFactory.class);
-      }
-      return null;
-    });
-  }
-
-  @NotNull
-  private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<GitLogRecord> records,
-                                        @NotNull VcsLogObjectsFactory factory) {
-    return createCommit(project, root, records, factory, GitCommitRequirements.DiffRenameLimit.GIT_CONFIG);
-  }
-
-  @NotNull
-  private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<GitLogRecord> records,
-                                        @NotNull VcsLogObjectsFactory factory, @NotNull GitCommitRequirements.DiffRenameLimit renameLimit) {
-    GitLogRecord record = notNull(ContainerUtil.getLastItem(records));
-    List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), factory::createHash);
-
-    return new GitCommit(project, HashImpl.build(record.getHash()), parents, record.getCommitTime(), root, record.getSubject(),
-                         factory.createUser(record.getAuthorName(), record.getAuthorEmail()), record.getFullMessage(),
-                         factory.createUser(record.getCommitterName(), record.getCommitterEmail()), record.getAuthorTimeStamp(),
-                         ContainerUtil.map(records, GitLogRecord::getStatusInfos), renameLimit);
-  }
-
   /**
    * @deprecated use {@link GitHistoryUtils#history(Project, VirtualFile, String...)} instead.
    */
@@ -262,6 +221,20 @@ public class GitLogUtil {
     List<String> configParameters = requirements.configParameters();
     GitLineHandler handler = createGitHandler(project, root, configParameters, lowPriorityProcess);
     readFullDetailsFromHandler(project, root, commitConsumer, handler, requirements, parameters);
+  }
+
+  public static void readFullDetailsForHashes(@NotNull Project project,
+                                              @NotNull VirtualFile root,
+                                              @NotNull GitVcs vcs,
+                                              @NotNull List<String> hashes,
+                                              @NotNull GitCommitRequirements requirements,
+                                              boolean lowPriorityProcess,
+                                              @NotNull Consumer<? super GitCommit> commitConsumer) throws VcsException {
+    if (hashes.isEmpty()) return;
+    GitLineHandler handler = createGitHandler(project, root, requirements.configParameters(), lowPriorityProcess);
+    sendHashesToStdin(vcs, hashes, handler);
+
+    readFullDetailsFromHandler(project, root, commitConsumer, handler, requirements, getNoWalkParameter(vcs), STDIN);
   }
 
   private static void readFullDetailsFromHandler(@NotNull Project project,
@@ -327,18 +300,45 @@ public class GitLogUtil {
     sw.report();
   }
 
-  public static void readFullDetailsForHashes(@NotNull Project project,
-                                              @NotNull VirtualFile root,
-                                              @NotNull GitVcs vcs,
-                                              @NotNull List<String> hashes,
-                                              @NotNull GitCommitRequirements requirements,
-                                              boolean lowPriorityProcess,
-                                              @NotNull Consumer<? super GitCommit> commitConsumer) throws VcsException {
-    if (hashes.isEmpty()) return;
-    GitLineHandler handler = createGitHandler(project, root, requirements.configParameters(), lowPriorityProcess);
-    sendHashesToStdin(vcs, hashes, handler);
+  @NotNull
+  private static Collection<VcsRef> parseRefs(@NotNull Collection<String> refs,
+                                              @NotNull Hash hash,
+                                              @NotNull VcsLogObjectsFactory factory,
+                                              @NotNull VirtualFile root) {
+    return ContainerUtil.mapNotNull(refs, refName -> {
+      if (refName.equals(GRAFTED) || refName.equals(REPLACED)) return null;
+      VcsRefType type = GitRefManager.getRefType(refName);
+      refName = GitBranchUtil.stripRefsPrefix(refName);
+      return refName.equals(GitUtil.ORIGIN_HEAD) ? null : factory.createRef(hash, refName, type, root);
+    });
+  }
 
-    readFullDetailsFromHandler(project, root, commitConsumer, handler, requirements, getNoWalkParameter(vcs), STDIN);
+  @Nullable
+  public static VcsLogObjectsFactory getObjectsFactoryWithDisposeCheck(@NotNull Project project) {
+    return ReadAction.compute(() -> {
+      if (!project.isDisposed()) {
+        return ServiceManager.getService(project, VcsLogObjectsFactory.class);
+      }
+      return null;
+    });
+  }
+
+  @NotNull
+  private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<GitLogRecord> records,
+                                        @NotNull VcsLogObjectsFactory factory) {
+    return createCommit(project, root, records, factory, GitCommitRequirements.DiffRenameLimit.GIT_CONFIG);
+  }
+
+  @NotNull
+  private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<GitLogRecord> records,
+                                        @NotNull VcsLogObjectsFactory factory, @NotNull GitCommitRequirements.DiffRenameLimit renameLimit) {
+    GitLogRecord record = notNull(ContainerUtil.getLastItem(records));
+    List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), factory::createHash);
+
+    return new GitCommit(project, HashImpl.build(record.getHash()), parents, record.getCommitTime(), root, record.getSubject(),
+                         factory.createUser(record.getAuthorName(), record.getAuthorEmail()), record.getFullMessage(),
+                         factory.createUser(record.getCommitterName(), record.getCommitterEmail()), record.getAuthorTimeStamp(),
+                         ContainerUtil.map(records, GitLogRecord::getStatusInfos), renameLimit);
   }
 
   static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
