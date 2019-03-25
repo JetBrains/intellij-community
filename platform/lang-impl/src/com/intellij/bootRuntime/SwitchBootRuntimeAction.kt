@@ -40,7 +40,7 @@ class SwitchBootRuntimeAction : AnAction(), DumbAware {
           try {
             val file = File(System.getProperty("java.home"))
             if (file.exists()) {
-              val runtime = Local(project, file)
+              val runtime = Local(project, javaHomeToInstallationLocation(file))
               installed = runtime
               bundles.add(installed)
             }
@@ -71,12 +71,22 @@ class SwitchBootRuntimeAction : AnAction(), DumbAware {
       val chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, e.project, WindowManager.getInstance().suggestParentWindow(e.project))
       chooser.choose(LocalFileSystem.getInstance().findFileByIoFile(File("~"))) {
         file -> file.first()?.let{f ->
-        val local = Local(e.project!!, File(f.path))
-        myRuntimeUrlComboboxModel.add(local)
-        bundles.add(local)
-        runtimeCompletionProvider.setItems(bundles)
-        controller.add(local)
-        combobox.selectedItem = local
+        File(f.path).walk().filter { file -> file.name == "tools.jar" ||
+                                             file.name == "jrt-fs.jar"
+        }.firstOrNull()?.let { file ->
+
+          val local = ProgressManager.getInstance().
+            runProcessWithProgressSynchronously<Local, RuntimeException>(
+              {Local(e.project!!, javaHomeToInstallationLocation(javaHomeFromFile(file)))},
+              "Searching for branches containing the selected commit", false, e.project!!
+            )
+
+          myRuntimeUrlComboboxModel.add(local)
+          bundles.add(local)
+          runtimeCompletionProvider.setItems(bundles)
+          controller.add(local)
+          combobox.selectedItem = local
+        }
       }
       }
     }

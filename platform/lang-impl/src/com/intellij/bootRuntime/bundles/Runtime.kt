@@ -42,14 +42,17 @@ abstract class Runtime(initialLocation:File) {
   }
 
   protected fun fetchVersion (): String {
-    val javaFile = installationPath.walk().filter { file -> file.name == JAVA_FILE_NAME }.first()
-    try {
-      val output = ExecUtil.execAndGetOutput(GeneralCommandLine(javaFile.path, "-version"))
-      val matchResult: MatchResult? = "version \"(\\d?(.\\d)*(.\\d)*_*\\d*\\d*-*(ea|release|internal)*)\"".toRegex().find(output.stderr)
-      return matchResult?.groups?.get(1)?.value.orEmpty()
-    }
-    catch (e: ExecutionException) {
-      print("Error: ${e}")
+    installationPath.walk().filter { file -> file.name == JAVA_FILE_NAME }.firstOrNull()?.let { javaFile ->
+      try {
+        val output = ExecUtil.execAndGetOutput(GeneralCommandLine(javaFile.path, "-version"))
+        //val matchResult: MatchResult? = "version \"(\\d?(.\\d)*(.\\d)*_*\\d*\\d*-*(ea|release|internal)*)\"".toRegex().find(output.stderr)
+        val matchResult: MatchResult? = "\\((build [\\d.+-w]*)\\)".toRegex().find(output.stderr)
+        return matchResult?.groups?.get(1)?.value.orEmpty()
+      }
+      catch (e: Exception) {
+        println("tried to execute : ${javaFile.path}, \"-version\")")
+        println("Error: ${e}")
+      }
     }
     return "Undefined"
   }
