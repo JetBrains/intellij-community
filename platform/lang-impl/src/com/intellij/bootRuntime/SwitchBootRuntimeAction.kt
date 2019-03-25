@@ -78,7 +78,7 @@ class SwitchBootRuntimeAction : AnAction(), DumbAware {
           val local = ProgressManager.getInstance().
             runProcessWithProgressSynchronously<Local, RuntimeException>(
               {Local(e.project!!, javaHomeToInstallationLocation(javaHomeFromFile(file)))},
-              "Searching for branches containing the selected commit", false, e.project!!
+              "Initializing Runtime Info", false, e.project!!
             )
 
           myRuntimeUrlComboboxModel.add(local)
