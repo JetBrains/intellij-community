@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -748,13 +749,13 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      return "Replace 'map()' with 'flatMap()'";
+      return CommonQuickFixBundle.message("fix.replace.map.with.flat.map.name");
     }
 
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return "'map()' can be replaced with 'flatMap()'";
+      return CommonQuickFixBundle.message("fix.replace.map.with.flat.map.description");
     }
 
     @Nullable
@@ -785,7 +786,9 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       CommentTracker ct = new CommentTracker();
       String text = ct.text(context.myMapLambdaParameter) + " ->" + ct.text(context.myOptionalExpression);
       PsiExpression qualifier = context.myMapCall.getMethodExpression().getQualifierExpression();
-      ct.replaceAndRestoreComments(context.myMapCall, Objects.requireNonNull(qualifier).getText() + ".flatMap(" + text + ")");
+      String callReplacement = Objects.requireNonNull(qualifier).getText() + ".flatMap(" + text + ")";
+      PsiElement result = ct.replaceAndRestoreComments(context.myMapCall, callReplacement);
+      LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
     }
 
     @NotNull
@@ -795,13 +798,10 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
 
     private static boolean isPresentOptional(PsiExpression optionalExpression) {
-      CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(optionalExpression);
-      if (result == null || !result.expressionWasAnalyzed(optionalExpression)) return false;
-      SpecialFieldValue fact = result.getExpressionFact(optionalExpression, DfaFactType.SPECIAL_FIELD_VALUE);
+      SpecialFieldValue fact = CommonDataflow.getExpressionFact(optionalExpression, DfaFactType.SPECIAL_FIELD_VALUE);
       DfaValue value = SpecialField.OPTIONAL_VALUE.extract(fact);
       if (!(value instanceof DfaFactMapValue)) return false;
-      DfaNullability nullability = ((DfaFactMapValue)value).get(DfaFactType.NULLABILITY);
-      return nullability == DfaNullability.NOT_NULL;
+      return DfaNullability.toNullability(DfaFactType.NULLABILITY.fromDfaValue(value)) == Nullability.NOT_NULL;
     }
 
     private static class Context {
@@ -821,13 +821,13 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      return "Replace 'map()' with 'flatMap()'";
+      return CommonQuickFixBundle.message("fix.replace.map.with.flat.map.name");
     }
 
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return "'map' can be replaced with 'flatMap'";
+      return CommonQuickFixBundle.message("fix.replace.map.with.flat.map.description");
     }
 
     @Nullable

@@ -8,6 +8,6 @@ class Test {
       /*0*/
       /*1*/
       /*2*/
-      opt.flatMap(a -> a.getOptional()).ifPresent(System.out::println);
+      opt.flatMap(Test::getOptional).ifPresent(System.out::println);
   }
 }
