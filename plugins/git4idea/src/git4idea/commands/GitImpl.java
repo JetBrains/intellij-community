@@ -3,6 +3,7 @@ package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -90,15 +91,17 @@ public class GitImpl extends GitImplBase {
     h.endOptions();
 
     final String output = runCommand(h).getOutputOrThrow();
-    return parseFiles(root, output, "!! ");
+    return parseFiles(project, root, output, "!! ");
   }
 
   @NotNull
-  private static Set<VirtualFile> parseFiles(@NotNull VirtualFile root, @Nullable String output, @NotNull String fileStatusPrefix) {
+  private static Set<VirtualFile> parseFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable String output, @NotNull String fileStatusPrefix) {
     if (StringUtil.isEmptyOrSpaces(output)) return emptySet();
 
     final Set<VirtualFile> files = new HashSet<>();
     for (String relPath : output.split("\u0000")) {
+      ProgressManager.checkCanceled();
+      if (project.isDisposed()) return emptySet();
       if (!fileStatusPrefix.isEmpty() && !relPath.startsWith(fileStatusPrefix)) continue;
 
       String relativePath = relPath.substring(fileStatusPrefix.length());
@@ -159,7 +162,7 @@ public class GitImpl extends GitImplBase {
     }
 
     final String output = runCommand(h).getOutputOrThrow();
-    return parseFiles(root, output, "");
+    return parseFiles(project, root, output, "");
   }
 
   @Override
