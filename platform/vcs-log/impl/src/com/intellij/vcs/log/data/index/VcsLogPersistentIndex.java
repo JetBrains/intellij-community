@@ -44,9 +44,7 @@ import com.intellij.vcs.log.data.SingleTaskController;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.VcsLogStorageImpl;
-import com.intellij.vcs.log.impl.FatalErrorHandler;
-import com.intellij.vcs.log.impl.HeavyAwareExecutor;
-import com.intellij.vcs.log.impl.VcsIndexableDetails;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.statistics.VcsLogIndexCollector;
 import com.intellij.vcs.log.util.*;
 import com.intellij.vcsUtil.VcsUtil;
@@ -76,7 +74,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   @NotNull private final Project myProject;
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
   @NotNull private final VcsLogProgress myProgress;
-  @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
+  @NotNull private final Map<VirtualFile, VcsLogIndexer> myIndexers;
   @NotNull private final VcsLogStorage myStorage;
   @NotNull private final Set<VirtualFile> myRoots;
   @NotNull private final VcsLogBigRepositoriesList myBigRepositoriesList;
@@ -103,15 +101,18 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     myStorage = storage;
     myProject = project;
     myProgress = progress;
-    myProviders = providers;
     myFatalErrorsConsumer = fatalErrorsConsumer;
-    myRoots = ContainerUtil.newLinkedHashSet();
     myBigRepositoriesList = VcsLogBigRepositoriesList.getInstance();
     myIndexCollector = VcsLogIndexCollector.getInstance(myProject);
 
+    myIndexers = ContainerUtil.newHashMap();
+    myRoots = ContainerUtil.newLinkedHashSet();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
-      if (VcsLogProperties.get(entry.getValue(), VcsLogProperties.SUPPORTS_INDEXING)) {
-        myRoots.add(entry.getKey());
+      VirtualFile root = entry.getKey();
+      VcsLogProvider provider = entry.getValue();
+      if (VcsLogProperties.get(provider, VcsLogProperties.SUPPORTS_INDEXING) && provider instanceof VcsIndexableLogProvider) {
+        myIndexers.put(root, ((VcsIndexableLogProvider)provider).getIndexer());
+        myRoots.add(root);
       }
     }
 
@@ -594,7 +595,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         indicator.checkCanceled();
 
         List<String> hashes = TroveUtil.map2List(batch, value -> myStorage.getCommitId(value).getHash().asString());
-        myProviders.get(myRoot).readFullDetails(myRoot, hashes, detail -> {
+        myIndexers.get(myRoot).readFullDetails(myRoot, hashes, detail -> {
           storeDetail(detail);
           myNewIndexedCommits.incrementAndGet();
 
@@ -608,7 +609,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     public void indexAll(@NotNull ProgressIndicator indicator) throws VcsException {
       displayProgress(indicator);
 
-      myProviders.get(myRoot).readAllFullDetails(myRoot, details -> {
+      myIndexers.get(myRoot).readAllFullDetails(myRoot, details -> {
         storeDetail(details);
 
         if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) flush();
@@ -640,7 +641,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     private void showIndexingNotification(long timeMillis, int limitMinutes) {
       myIndexCollector.reportIndexingTooLongNotification();
-      AbstractVcs vcs = VcsUtil.findVcsByKey(myProject, myProviders.get(myRoot).getSupportedVcs());
+      AbstractVcs vcs = VcsUtil.findVcsByKey(myProject, myIndexers.get(myRoot).getSupportedVcs());
       String vcsName = vcs != null ? vcs.getDisplayName() : "Vcs";
       Notification notification = VcsNotifier.createNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION, "",
                                                                  vcsName +

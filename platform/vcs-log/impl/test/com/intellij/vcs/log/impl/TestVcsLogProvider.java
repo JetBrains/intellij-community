@@ -123,15 +123,9 @@ public class TestVcsLogProvider implements VcsLogProvider {
   }
 
   @Override
-  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
-                              @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer,
-                              boolean isForIndexing) {
+                              @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer) {
     throw new UnsupportedOperationException();
   }
 

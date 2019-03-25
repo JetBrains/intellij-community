@@ -74,15 +74,9 @@ public final class HgLogProvider implements VcsLogProvider {
   }
 
   @Override
-  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer) throws VcsException {
-    readFullDetails(root, ContainerUtil.newArrayList(), commitConsumer);
-  }
-
-  @Override
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
-                              @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer,
-                              boolean isForIndexing)
+                              @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer)
     throws VcsException {
     // parameter isForIndexing is currently not used
     // since this method is not called from index yet, fast always is false
