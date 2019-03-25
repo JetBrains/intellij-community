@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
@@ -28,7 +27,7 @@ import java.util.Set;
  * After the revert completes, the changes list is automatically refreshed according to the actual changes
  * retrieved from the {@link ChangeListManager}.
  */
-public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Disposable {
+public class ChangesBrowserWithRollback extends ChangesBrowserBase {
   private final Set<Change> myOriginalChanges;
 
   public ChangesBrowserWithRollback(@NotNull Project project, @NotNull List<Change> changes) {
@@ -41,10 +40,6 @@ public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Di
     init();
 
     myViewer.rebuildTree();
-  }
-
-  @Override
-  public void dispose() {
   }
 
   @NotNull
@@ -69,7 +64,8 @@ public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Di
   @Override
   protected DefaultTreeModel buildTreeModel() {
     Collection<Change> allChanges = ChangeListManager.getInstance(myProject).getAllChanges();
-    List<Change> newChanges = ContainerUtil.filter(allChanges, myOriginalChanges::contains);
+
+    List<Change> newChanges = ContainerUtil.filter(allChanges, change -> myOriginalChanges.contains(change) && !isMinorChange(change));
 
     RemoteStatusChangeNodeDecorator decorator = RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator();
     return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), newChanges, decorator);

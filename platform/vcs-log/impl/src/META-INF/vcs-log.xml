@@ -166,6 +166,9 @@
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.ShowDiffPreview"/>
     </group>
+    <group id="Vcs.Log.ChangesBrowserBase.Toolbar">
+      <reference id="Vcs.RepositoryChangesBrowserBaseToolbar"/>
+    </group>
     <group id="Vcs.Log.ChangesBrowser.Toolbar">
       <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
       <reference id="Vcs.Log.ShowOnlyAffectedChanges"/>

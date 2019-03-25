@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.IdeBorderFactory
@@ -81,7 +82,7 @@ internal class GithubPullRequestChangesComponent(project: Project,
 
   internal class PullRequestChangesBrowserWithError(project: Project,
                                                     private val projectUiSettings: GithubPullRequestsProjectUISettings
-  ) : ChangesBrowserBase(project, false, false), ComponentWithEmptyText, Disposable {
+  ) : ChangesBrowserBase(project, false, false), ComponentWithEmptyText {
 
     var commits: List<GitCommit> by Delegates.observable(listOf()) { _, _, _ ->
       myViewer.rebuildTree()
@@ -101,28 +102,29 @@ internal class GithubPullRequestChangesComponent(project: Project,
     override fun buildTreeModel(): DefaultTreeModel {
       val builder = MyTreeModelBuilder(myProject, grouping)
       if (projectUiSettings.zipChanges) {
-        val zipped = CommittedChangesTreeBrowser.zipChanges(commits.flatMap { it.changes })
+        val zipped = filterMinorChanges(CommittedChangesTreeBrowser.zipChanges(commits.flatMap { it.changes }))
         builder.setChanges(zipped, null)
       }
       else {
+        val filter: (Change) -> Boolean = { change -> isMinorChange(change) }
         for (commit in commits) {
-          builder.addCommit(commit)
+          builder.addCommit(commit, filter)
         }
       }
       return builder.build()
     }
-
-    override fun dispose() {}
   }
 
   private class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory) : TreeModelBuilder(project, grouping) {
-    fun addCommit(commit: GitCommit) {
+    fun addCommit(commit: GitCommit, filter: (Change) -> Boolean) {
       val parentNode = CommitTagBrowserNode(commit)
       parentNode.markAsHelperNode()
 
       myModel.insertNodeInto(parentNode, myRoot, myRoot.childCount)
       for (change in commit.changes) {
-        insertChangeNode(change, parentNode, createChangeNode(change, null))
+        if (!filter.invoke(change)) {
+          insertChangeNode(change, parentNode, createChangeNode(change, null))
+        }
       }
     }
   }

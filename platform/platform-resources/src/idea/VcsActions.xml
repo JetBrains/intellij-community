@@ -4,6 +4,8 @@
             icon="AllIcons.Vcs.History"/>
     <action id="Vcs.ShowHistoryForRevision" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryForRevisionAction"
             icon="AllIcons.Vcs.History"/>
+    <action id="Vcs.HideMinorChanges" class="com.intellij.vcs.log.ui.actions.HideMinorChangesAction"
+            icon="AllIcons.Vcs.Ignore_file"/>
 
     <action id="CheckinProject" class="com.intellij.openapi.vcs.actions.CommonCheckinProjectAction" icon="AllIcons.Actions.Commit">
       <keyboard-shortcut first-keystroke="control K" keymap="$default"/>
@@ -234,6 +236,10 @@
             text="Revert Selected Changes" icon="AllIcons.Actions.Rollback"/>
     <action id="Vcs.ApplySelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction$Apply"
             text="Apply Selected Changes"/>
+
+    <group id="Vcs.RepositoryChangesBrowserBaseToolbar">
+      <reference ref="Vcs.HideMinorChanges"/>
+    </group>
 
     <group id="Vcs.RepositoryChangesBrowserToolbar">
       <reference ref="Vcs.RevertSelectedChanges"/>

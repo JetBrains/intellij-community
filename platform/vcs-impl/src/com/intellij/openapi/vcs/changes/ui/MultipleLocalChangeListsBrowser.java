@@ -267,7 +267,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     MyChangeNodeDecorator decorator = new MyChangeNodeDecorator();
 
     TreeModelBuilder builder = new TreeModelBuilder(myProject, getGrouping());
-    builder.setChanges(myChanges, decorator);
+    builder.setChanges(filterMinorChanges(myChanges), decorator);
     builder.setUnversioned(myUnversioned);
 
     if (myHasHiddenUnversioned) {

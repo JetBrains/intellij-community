@@ -32,7 +32,7 @@ public class SimpleChangesBrowser extends ChangesBrowserBase {
   @NotNull
   @Override
   protected DefaultTreeModel buildTreeModel() {
-    return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), myChanges, myChangeNodeDecorator);
+    return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), filterMinorChanges(myChanges), myChangeNodeDecorator);
   }
 
 

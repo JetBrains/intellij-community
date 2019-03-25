@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NonNls;
 public interface VcsActions {
 
   @NonNls String ACTION_COPY_REVISION_NUMBER = "Vcs.CopyRevisionNumberAction";
+  @NonNls String VCS_LOG_CHANGES_BROWSER_BASE_TOOLBAR = "Vcs.Log.ChangesBrowserBase.Toolbar";
   @NonNls String VCS_LOG_CHANGES_BROWSER_TOOLBAR = "Vcs.Log.ChangesBrowser.Toolbar";
   @NonNls String VCS_OPERATIONS_POPUP = "Vcs.Operations.Popup";
 }

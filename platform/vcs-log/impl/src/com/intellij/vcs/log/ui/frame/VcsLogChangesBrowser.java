@@ -92,7 +92,8 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     myListener = new VcsLogUiProperties.PropertiesChangeListener() {
       @Override
       public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-        if (SHOW_CHANGES_FROM_PARENTS.equals(property) || SHOW_ONLY_AFFECTED_CHANGES.equals(property)) {
+        if (SHOW_CHANGES_FROM_PARENTS.equals(property)
+            || SHOW_ONLY_AFFECTED_CHANGES.equals(property)) {
           myViewer.rebuildTree();
         }
       }
@@ -131,6 +132,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
   @Override
   public void dispose() {
+    super.dispose();
     myUiProperties.removeChangeListener(myListener);
   }
 
@@ -265,7 +267,8 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @NotNull
   @Override
   protected DefaultTreeModel buildTreeModel() {
-    Collection<Change> changes = collectAffectedChanges(myChanges);
+    Collection<Change> changes = filterMinorChanges(myChanges);
+    changes = collectAffectedChanges(changes);
     Map<CommitId, Collection<Change>> changesToParents = ContainerUtil.newHashMap();
     for (Map.Entry<CommitId, Set<Change>> entry : myChangesToParents.entrySet()) {
       changesToParents.put(entry.getKey(), collectAffectedChanges(entry.getValue()));
@@ -303,14 +306,17 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     }));
   }
 
+  private boolean checkBooleanProperty(VcsLogUiProperties.VcsLogUiProperty<Boolean> property) {
+    return myUiProperties.exists(property) &&
+           myUiProperties.get(property);
+  }
+
   private boolean isShowChangesFromParents() {
-    return myUiProperties.exists(SHOW_CHANGES_FROM_PARENTS) &&
-           myUiProperties.get(SHOW_CHANGES_FROM_PARENTS);
+    return checkBooleanProperty(SHOW_CHANGES_FROM_PARENTS);
   }
 
   private boolean isShowOnlyAffected() {
-    return myUiProperties.exists(SHOW_ONLY_AFFECTED_CHANGES) &&
-           myUiProperties.get(SHOW_ONLY_AFFECTED_CHANGES);
+    return checkBooleanProperty(SHOW_ONLY_AFFECTED_CHANGES);
   }
 
   @NotNull

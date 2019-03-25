@@ -5,8 +5,12 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * We don't use roaming type PER_OS - path macros is enough ($USER_HOME$/Dropbox for example)
@@ -16,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
   storages = @Storage("vcs.xml")
 )
 public class VcsApplicationSettings implements PersistentStateComponent<VcsApplicationSettings> {
+  @NotNull private final Set<SettingsChangeListener> myListeners = ContainerUtil.newLinkedHashSet();
+
   public String PATCH_STORAGE_LOCATION = null;
   public boolean SHOW_WHITESPACES_IN_LST = true;
   public boolean SHOW_LST_GUTTER_MARKERS = true;
@@ -23,6 +29,7 @@ public class VcsApplicationSettings implements PersistentStateComponent<VcsAppli
   public boolean DETECT_PATCH_ON_THE_FLY = false;
   public boolean ENABLE_PARTIAL_CHANGELISTS = true;
   public boolean MANAGE_IGNORE_FILES = false;
+  public boolean HIDE_MINOR_CHANGES = false;
 
   public static VcsApplicationSettings getInstance() {
     return ServiceManager.getService(VcsApplicationSettings.class);
@@ -37,4 +44,23 @@ public class VcsApplicationSettings implements PersistentStateComponent<VcsAppli
   public void loadState(@NotNull VcsApplicationSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
+
+  public void notifyChangeListeners() {
+    myListeners.forEach(l -> l.onSettingsChanged());
+  }
+
+  @CalledInAwt
+  public void addChangeListener(@NotNull SettingsChangeListener listener) {
+    myListeners.add(listener);
+  }
+
+  @CalledInAwt
+  public void removeChangeListener(@NotNull SettingsChangeListener listener) {
+    myListeners.remove(listener);
+  }
+
+  public interface SettingsChangeListener {
+    void onSettingsChanged();
+  }
+
 }

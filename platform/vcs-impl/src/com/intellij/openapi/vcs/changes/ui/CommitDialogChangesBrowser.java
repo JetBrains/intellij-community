@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -24,17 +23,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public abstract class CommitDialogChangesBrowser extends ChangesBrowserBase implements Disposable {
+public abstract class CommitDialogChangesBrowser extends ChangesBrowserBase {
   public CommitDialogChangesBrowser(@NotNull Project project,
                                     boolean showCheckboxes,
                                     boolean highlightProblems) {
     super(project, showCheckboxes, highlightProblems);
   }
-
-  @Override
-  public void dispose() {
-  }
-
 
   @NotNull
   public abstract LocalChangeList getSelectedChangeList();

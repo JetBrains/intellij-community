@@ -1,17 +1,38 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffContextEx;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
+import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
+import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.vcs.VcsActions;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
@@ -25,10 +46,11 @@ import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class ChangesBrowserBase extends JPanel implements DataProvider {
+public abstract class ChangesBrowserBase extends JPanel implements DataProvider, Disposable  {
   public static final DataKey<ChangesBrowserBase> DATA_KEY =
     DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase");
 
@@ -44,6 +66,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   private final AnAction myShowDiffAction;
 
   @Nullable private Runnable myInclusionChangedListener;
+  @NotNull private final VcsApplicationSettings.SettingsChangeListener mySettingsChangeListener;
 
 
   protected ChangesBrowserBase(@NotNull Project project,
@@ -59,10 +82,23 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
     myViewer.installPopupHandler(myPopupMenuGroup);
 
+    mySettingsChangeListener = new VcsApplicationSettings.SettingsChangeListener() {
+      @Override
+      public void onSettingsChanged() {
+        myViewer.rebuildTree();
+      }
+    };
+    VcsApplicationSettings.getInstance().addChangeListener(mySettingsChangeListener);
+
     myViewerScrollPane = ScrollPaneFactory.createScrollPane(myViewer, true);
     myViewerScrollPane.setBorder(createViewerBorder());
 
     myShowDiffAction = new MyShowDiffAction();
+  }
+
+  @Override
+  public void dispose() {
+    VcsApplicationSettings.getInstance().removeChangeListener(mySettingsChangeListener);
   }
 
   @NotNull
@@ -168,7 +204,8 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   @NotNull
   protected List<AnAction> createToolbarActions() {
     return ContainerUtil.list(
-      myShowDiffAction
+      myShowDiffAction,
+      CustomActionsSchema.getInstance().getCorrectedAction(VcsActions.VCS_LOG_CHANGES_BROWSER_BASE_TOOLBAR)
     );
   }
 
@@ -278,6 +315,144 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (canShowDiff()) showDiff();
+    }
+  }
+
+  @NotNull
+  protected List<Change> filterMinorChanges(@NotNull List<Change> changes) {
+    if (!VcsApplicationSettings.getInstance().HIDE_MINOR_CHANGES) {
+      return changes;
+    }
+
+    return ContainerUtil.filter(changes, change -> !isMinorChange(change));
+  }
+
+  @Nullable
+  protected boolean isMinorChange(@NotNull Change change) {
+    if (!VcsApplicationSettings.getInstance().HIDE_MINOR_CHANGES) {
+      return false;
+    }
+    final ProgressIndicator indicator = new EmptyProgressIndicator();
+
+    final ChangeDiffRequestChain chain = new ChangeDiffRequestChain(
+      ContainerUtil.list(ChangeDiffRequestProducer.create(myProject, change, ContainerUtil.newHashMap())), 0
+    );
+    final MinorChangeDiffContext myContext = new MinorChangeDiffContext(chain);
+    final TextDiffSettingsHolder.TextDiffSettings textSettings = TextDiffViewerUtil.getTextSettings(myContext);
+    final DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+
+    ContentRevision beforeRevision = change.getBeforeRevision();
+    ContentRevision afterRevision = change.getAfterRevision();
+
+    if (beforeRevision == null || afterRevision == null) {
+      return beforeRevision == afterRevision;
+    }
+
+    try {
+      String beforeRevisionContent = beforeRevision.getContent();
+      String afterRevisionContent = afterRevision.getContent();
+      MinorChangeRequest request = new MinorChangeRequest(Arrays.asList(
+        contentFactory.create(beforeRevisionContent, beforeRevision.getFile().getFileType()),
+        contentFactory.create(afterRevisionContent, afterRevision.getFile().getFileType())
+      ));
+      final Disposable disposable = new Disposable() {
+        @Override
+        public void dispose() {
+
+        }
+      };
+
+      TwosideTextDiffProvider provider = DiffUtil.createTextDiffProvider(myProject, request, textSettings, () -> {
+      }, disposable);
+      List<LineFragment> compare = provider.compare(beforeRevisionContent, afterRevisionContent, indicator);
+      return compare.isEmpty();
+    }
+    catch (VcsException e) {
+      VcsBalloonProblemNotifier.showOverVersionControlView(myProject, "failed to resolve file content from vcs\n"
+                                                                      + e.getMessage(), MessageType.ERROR);
+    }
+
+    return false;
+  }
+
+  private static class MinorChangeRequest extends ContentDiffRequest {
+    private final List<DiffContent> myContents;
+
+    MinorChangeRequest(final List<DiffContent> myContents) {
+      this.myContents = myContents;
+    }
+
+    @NotNull
+    @Override
+    public List<DiffContent> getContents() {
+      return myContents;
+    }
+
+    @NotNull
+    @Override
+    public List<String> getContentTitles() {
+      return ContainerUtil.list(null, null, null);
+    }
+
+    @Nullable
+    @Override
+    public String getTitle() {
+      return "none";
+    }
+  }
+
+  private class MinorChangeDiffContext extends DiffContextEx {
+    @NotNull private final UserDataHolder myContext;
+
+    MinorChangeDiffContext(@NotNull UserDataHolder context) {
+      myContext = context;
+    }
+
+    @Override
+    public void reopenDiffRequest() {
+    }
+
+    @Override
+    public void reloadDiffRequest() {
+    }
+
+    @Override
+    public void showProgressBar(boolean enabled) {
+    }
+
+    @Override
+    public void setWindowTitle(@NotNull String title) {
+    }
+
+    @Nullable
+    @Override
+    public Project getProject() {
+      return myProject;
+    }
+
+    @Override
+    public boolean isFocusedInWindow() {
+      return false;
+    }
+
+    @Override
+    public boolean isWindowFocused() {
+      return false;
+    }
+
+    @Override
+    public void requestFocusInWindow() {
+    }
+
+    @Nullable
+    @Override
+    public <T> T getUserData(@NotNull Key<T> key) {
+      return myContext.getUserData(key);
+    }
+
+    @Override
+    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+      myContext.putUserData(key, value);
     }
   }
 

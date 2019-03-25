@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
-public class LocalChangesBrowser extends ChangesBrowserBase implements Disposable {
+public class LocalChangesBrowser extends ChangesBrowserBase {
   @NotNull private final ToggleChangeDiffAction myToggleChangeDiffAction;
   @Nullable private Set<String> myChangeListNames;
 
@@ -33,10 +32,6 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
 
     myViewer.setInclusionHashingStrategy(ChangeListChange.HASHING_STRATEGY);
     myViewer.rebuildTree();
-  }
-
-  @Override
-  public void dispose() {
   }
 
   @NotNull
