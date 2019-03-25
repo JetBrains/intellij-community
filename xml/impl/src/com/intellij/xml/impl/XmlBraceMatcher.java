@@ -156,14 +156,13 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
             pair.isStructural()) return true;
       }
     }
-    return isXmlStructuralBrace(iterator, text, fileType, tokenType);
+    return isXmlStructuralBrace(tokenType);
   }
 
-  protected boolean isXmlStructuralBrace(HighlighterIterator iterator, CharSequence text, FileType fileType, IElementType tokenType) {
+  protected boolean isXmlStructuralBrace(IElementType tokenType) {
     return tokenType == XmlTokenType.XML_START_TAG_START ||
            tokenType == XmlTokenType.XML_TAG_END ||
-           tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END ||
-           tokenType == XmlTokenType.XML_TAG_END && isFileTypeWithSingleHtmlTags(fileType) && isEndOfSingleHtmlTag(text, iterator);
+           tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END;
   }
 
   @Override
@@ -208,11 +207,6 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
     }
     while(count-- > 0) iterator.advance();
     return tokenType == XmlTokenType.XML_END_TAG_START;
-  }
-
-  private boolean isEndOfSingleHtmlTag(CharSequence text,HighlighterIterator iterator) {
-    String tagName = getTagName(text,iterator);
-    return tagName != null && HtmlUtil.isSingleHtmlTag(tagName);
   }
 
   @Override
