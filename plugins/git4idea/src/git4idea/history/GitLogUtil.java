@@ -119,7 +119,7 @@ public class GitLogUtil {
 
     GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, record -> {
       Hash hash = HashImpl.build(record.getHash());
-      List<Hash> parents = getParentHashes(factory, record);
+      List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), factory::createHash);
       commitConsumer.consume(factory.createTimedCommit(hash, parents, record.getCommitTime()));
 
       if (refConsumer != null) {
@@ -203,17 +203,12 @@ public class GitLogUtil {
   private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<GitLogRecord> records,
                                         @NotNull VcsLogObjectsFactory factory, @NotNull DiffRenameLimit renameLimit) {
     GitLogRecord record = notNull(ContainerUtil.getLastItem(records));
-    List<Hash> parents = getParentHashes(factory, record);
+    List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), factory::createHash);
 
     return new GitCommit(project, HashImpl.build(record.getHash()), parents, record.getCommitTime(), root, record.getSubject(),
                          factory.createUser(record.getAuthorName(), record.getAuthorEmail()), record.getFullMessage(),
                          factory.createUser(record.getCommitterName(), record.getCommitterEmail()), record.getAuthorTimeStamp(),
                          ContainerUtil.map(records, GitLogRecord::getStatusInfos), renameLimit);
-  }
-
-  @NotNull
-  public static List<Hash> getParentHashes(@NotNull VcsLogObjectsFactory factory, @NotNull GitLogRecord record) {
-    return ContainerUtil.map(record.getParentsHashes(), factory::createHash);
   }
 
   /**
