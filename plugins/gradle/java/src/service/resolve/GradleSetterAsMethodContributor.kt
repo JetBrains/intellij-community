@@ -8,8 +8,7 @@ import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.ProcessorWithHints
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.util.text.nullize
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrMethodWrapper
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
 import org.jetbrains.plugins.groovy.lang.resolve.getName
@@ -20,6 +19,7 @@ class GradleSetterAsMethodContributor : NonCodeMembersContributor() {
   companion object {
     val knownDecoratedClasses = setOf(
       GRADLE_API_PROJECT,
+      GRADLE_API_CONFIGURABLE_PUBLISH_ARTIFACT,
       GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY
     )
   }
