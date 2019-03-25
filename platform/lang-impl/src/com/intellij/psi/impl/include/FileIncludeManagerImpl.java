@@ -59,8 +59,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   private final Map<String, FileIncludeProvider> myProviderMap;
 
   public void processIncludes(PsiFile file, Processor<? super FileIncludeInfo> processor) {
-    GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
-    List<FileIncludeInfo> infoList = FileIncludeIndex.getIncludes(file.getVirtualFile(), scope);
+    List<FileIncludeInfo> infoList = FileIncludeIndex.getIncludes(file.getVirtualFile(), myProject);
     for (FileIncludeInfo info : infoList) {
       if (!processor.process(info)) {
         return;
