@@ -570,19 +570,20 @@ public class IconUtil {
   public static Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color, boolean keepGray) {
     return filterIcon(g, source, new ColorFilter(color, keepGray));
   }
-  @NotNull
+
+  @Nullable
   public static Icon desaturate(@NotNull Icon source) {
-    return filterIcon(null, source, new DesaturationFilter());
+    return filterIcon(source, () -> new DesaturationFilter(), null);
   }
 
-  @NotNull
+  @Nullable
   public static Icon brighter(@NotNull Icon source, int tones) {
-    return filterIcon(null, source, new BrighterFilter(tones));
+    return filterIcon(source, () -> new BrighterFilter(tones), null);
   }
 
-  @NotNull
+  @Nullable
   public static Icon darker(@NotNull Icon source, int tones) {
-    return filterIcon(null, source, new DarkerFilter(tones));
+    return filterIcon(source, () -> new DarkerFilter(tones), null);
   }
 
   @NotNull
@@ -631,44 +632,48 @@ public class IconUtil {
     }
   }
 
-  private static class DesaturationFilter implements Filter {
-    @NotNull
+  private static class DesaturationFilter extends RGBImageFilter {
+    @SuppressWarnings("UseJBColor")
     @Override
-    public int[] convert(@NotNull int[] rgba) {
-      int min = Math.min(Math.min(rgba[0], rgba[1]), rgba[2]);
-      int max = Math.max(Math.max(rgba[0], rgba[1]), rgba[2]);
-      int grey = (max + min) / 2;
-      return new int[]{grey, grey, grey, rgba[3]};
+    public int filterRGB(int x, int y, int rgb) {
+      Color originalColor = new Color(rgb, true);
+      float[] rgba = originalColor.getRGBComponents(null);
+      float min = Math.min(Math.min(originalColor.getRed(), originalColor.getGreen()), rgba[2]);
+      float max = Math.max(Math.max(rgba[0], rgba[1]), rgba[2]);
+      float grey = (max + min) / 2;
+      return new Color(grey, grey, grey, rgba[3]).getRGB();
     }
   }
 
-  private static class BrighterFilter implements Filter {
+  private static class BrighterFilter extends RGBImageFilter {
     private final int myTones;
 
     BrighterFilter(int tones) {
       myTones = tones;
     }
 
-    @NotNull
+    @SuppressWarnings("UseJBColor")
     @Override
-    public int[] convert(@NotNull int[] rgba) {
-      Color color = ColorUtil.hackBrightness(rgba[0], rgba[1], rgba[2], myTones, 1.1f);
-      return new int[]{color.getRed(), color.getGreen(), color.getBlue(), rgba[3]};
+    public int filterRGB(int x, int y, int rgb) {
+      Color originalColor = new Color(rgb, true);
+      Color filteredColor = ColorUtil.toAlpha(ColorUtil.brighter(originalColor, myTones), originalColor.getAlpha());
+      return filteredColor.getRGB();
     }
   }
 
-  private static class DarkerFilter implements Filter {
+  private static class DarkerFilter extends RGBImageFilter {
     private final int myTones;
 
     DarkerFilter(int tones) {
       myTones = tones;
     }
 
-    @NotNull
+    @SuppressWarnings("UseJBColor")
     @Override
-    public int[] convert(@NotNull int[] rgba) {
-      Color color = ColorUtil.hackBrightness(rgba[0], rgba[1], rgba[2], myTones, 1/1.1f);
-      return new int[]{color.getRed(), color.getGreen(), color.getBlue(), rgba[3]};
+    public int filterRGB(int x, int y, int rgb) {
+      Color originalColor = new Color(rgb, true);
+      Color filteredColor = ColorUtil.toAlpha(ColorUtil.darker(originalColor, myTones), originalColor.getAlpha());
+      return filteredColor.getRGB();
     }
   }
 
