@@ -543,7 +543,11 @@ public class StringUtilTest {
   public void testFormatDurationApproximate() {
     assertEquals("2 m", StringUtil.formatDurationApproximate(120000));
     assertEquals("2 m 3 s", StringUtil.formatDurationApproximate(123000));
+    assertEquals("2 m 4 s", StringUtil.formatDurationApproximate(123789));
     assertEquals("2 m 3 s", StringUtil.formatDurationApproximate(123456));
+    assertEquals("1 h 1 m", StringUtil.formatDurationApproximate(3659009));
+    assertEquals("2 h", StringUtil.formatDurationApproximate(7199000));
+    assertEquals("1 d", StringUtil.formatDurationApproximate((23*60*60 + 59*60 + 59) * 1000L));
     assertEquals("1 yr 1 mo", StringUtil.formatDurationApproximate(33786061001L));
   }
 
