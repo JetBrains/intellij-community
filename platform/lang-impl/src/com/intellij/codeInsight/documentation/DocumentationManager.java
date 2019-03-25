@@ -265,6 +265,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
   }
 
+  @SuppressWarnings("unused") // used by plugin
   public void showJavaDocInfoAtToolWindow(@NotNull PsiElement element, @NotNull PsiElement original) {
     Content content = recreateToolWindow(element, original);
     if (content == null) return;
