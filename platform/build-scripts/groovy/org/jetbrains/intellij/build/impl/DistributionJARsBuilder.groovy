@@ -129,7 +129,7 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.jps.model.serialization", "jps-model.jar")
       withModule("intellij.platform.jps.model.impl", "jps-model.jar")
 
-      if (allProductDependencies.contains("intellij.platform.coverage") && !productLayout.bundledPluginModules.contains("intellij.java.coverage")) {
+      if (allProductDependencies.contains("intellij.platform.coverage")) {
         withModule("intellij.platform.coverage", productLayout.mainJarName)
       }
 
