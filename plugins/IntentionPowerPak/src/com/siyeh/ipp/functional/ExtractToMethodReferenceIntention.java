@@ -152,11 +152,17 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
     processor.substituteElementToRename(method, editor, new Pass<PsiElement>() {
       @Override
       public void pass(PsiElement substitutedElement) {
-        final MemberInplaceRenamer renamer = new MemberInplaceRenamer(method, substitutedElement, editor) {
+        SmartPsiElementPointer<PsiMethod> pointer = SmartPointerManager.createPointer(method);
+        MemberInplaceRenamer renamer = new MemberInplaceRenamer(method, substitutedElement, editor) {
           @Override
           protected boolean performRefactoring() {
             if (super.performRefactoring()) {
-              ApplicationManager.getApplication().invokeLater(() -> processMethodsDuplicates(method));
+              ApplicationManager.getApplication().invokeLater(() -> {
+                PsiMethod restored = pointer.getElement();
+                if (restored != null) {
+                  processMethodsDuplicates(restored);
+                }
+              });
               return true;
             }
             return false;
