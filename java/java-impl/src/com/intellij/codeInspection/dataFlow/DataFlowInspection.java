@@ -184,13 +184,6 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   private class OptionsPanel extends JPanel {
     private static final int BUTTON_OFFSET = 20;
     private final JButton myConfigureAnnotations;
-    private final JCheckBox myIgnoreAssertions;
-    private final JCheckBox myReportConstantReferences;
-    private final JCheckBox mySuggestNullables;
-    private final JCheckBox myDontReportTrueAsserts;
-    private final JCheckBox myTreatUnknownMembersAsNullable;
-    private final JCheckBox myReportNullArguments;
-    private final JCheckBox myReportNullableMethodsReturningNotNull;
 
     private OptionsPanel() {
       super(new GridBagLayout());
@@ -201,37 +194,37 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.anchor = GridBagConstraints.NORTHWEST;
 
-      mySuggestNullables = createCheckBoxWithHTML(
+      JCheckBox suggestNullables = createCheckBoxWithHTML(
         message("inspection.data.flow.nullable.quickfix.option"),
         SUGGEST_NULLABLE_ANNOTATIONS, box -> SUGGEST_NULLABLE_ANNOTATIONS = box.isSelected());
 
-      myDontReportTrueAsserts = createCheckBoxWithHTML(
+      JCheckBox dontReportTrueAsserts = createCheckBoxWithHTML(
         message("inspection.data.flow.true.asserts.option"),
         DONT_REPORT_TRUE_ASSERT_STATEMENTS, box -> DONT_REPORT_TRUE_ASSERT_STATEMENTS = box.isSelected());
 
-      myIgnoreAssertions = createCheckBoxWithHTML(
+      JCheckBox ignoreAssertions = createCheckBoxWithHTML(
         "Ignore assert statements",
         IGNORE_ASSERT_STATEMENTS, box -> IGNORE_ASSERT_STATEMENTS = box.isSelected());
 
-      myReportConstantReferences = createCheckBoxWithHTML(
+      JCheckBox reportConstantReferences = createCheckBoxWithHTML(
         "Warn when reading a value guaranteed to be constant",
         REPORT_CONSTANT_REFERENCE_VALUES, box -> REPORT_CONSTANT_REFERENCE_VALUES = box.isSelected());
 
-      myTreatUnknownMembersAsNullable = createCheckBoxWithHTML(
+      JCheckBox treatUnknownMembersAsNullable = createCheckBoxWithHTML(
         "Treat non-annotated members and parameters as @Nullable",
         TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, box -> TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = box.isSelected());
 
-      myReportNullArguments = createCheckBoxWithHTML(
+      JCheckBox reportNullArguments = createCheckBoxWithHTML(
         "Report not-null required parameter with null-literal argument usages",
         REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER, box -> REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = box.isSelected());
 
-      myReportNullableMethodsReturningNotNull = createCheckBoxWithHTML(
+      JCheckBox reportNullableMethodsReturningNotNull = createCheckBoxWithHTML(
         "Report nullable methods that always return a non-null value",
         REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL, box -> REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = box.isSelected());
 
       gc.insets = JBUI.emptyInsets();
       gc.gridy = 0;
-      add(mySuggestNullables, gc);
+      add(suggestNullables, gc);
 
       myConfigureAnnotations = NullableNotNullDialog.createConfigureAnnotationsButton(this);
       gc.gridy++;
@@ -244,22 +237,22 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       gc.weighty = 1;
       gc.insets.left = 0;
       gc.gridy++;
-      add(myDontReportTrueAsserts, gc);
+      add(dontReportTrueAsserts, gc);
 
       gc.gridy++;
-      add(myIgnoreAssertions, gc);
+      add(ignoreAssertions, gc);
 
       gc.gridy++;
-      add(myReportConstantReferences, gc);
+      add(reportConstantReferences, gc);
 
       gc.gridy++;
-      add(myTreatUnknownMembersAsNullable, gc);
+      add(treatUnknownMembersAsNullable, gc);
 
       gc.gridy++;
-      add(myReportNullArguments, gc);
+      add(reportNullArguments, gc);
 
       gc.gridy++;
-      add(myReportNullableMethodsReturningNotNull, gc);
+      add(reportNullableMethodsReturningNotNull, gc);
     }
 
     @Override
