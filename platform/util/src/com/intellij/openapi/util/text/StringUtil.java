@@ -1580,29 +1580,29 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   private static String formatDuration(long duration, @NotNull String unitSeparator, int maxFragments) {
-    String[] units = TIME_UNITS;
-
     List<String> fragments = new ArrayList<>();
 
     long count = duration;
     int i = 1;
-    for (; i < units.length && count > 0; i++) {
+    for (; i < TIME_UNITS.length && count > 0; i++) {
       long multiplier = TIME_MULTIPLIERS[i];
       if (count < multiplier) break;
       long remainder = count % multiplier;
       count /= multiplier;
       if (remainder != 0 || fragments.size() > 0) {
-        fragments.add(0, remainder + unitSeparator + units [i - 1]);
+        fragments.add(0, remainder + unitSeparator + TIME_UNITS[i - 1]);
       }
       else {
         remainder = Math.round(remainder * 100 / (double)multiplier);
         count += remainder / 100;
       }
     }
-    fragments.add(0, count + unitSeparator + units [i - 1]);
+
+    fragments.add(0, count + unitSeparator + TIME_UNITS[i - 1]);
     if (fragments.size() > maxFragments) {
       fragments = fragments.subList(0, maxFragments);
     }
+
     return join(fragments, " ");
   }
 
