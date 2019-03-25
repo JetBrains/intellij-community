@@ -6,6 +6,13 @@ class UseBuilder {
 //in: PsiParameter:builder
 //exit: SEQUENTIAL PsiMethod:test
 
+    public NewMethodResult newMethod(Builder builder, int[] arr) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
+
     static class Builder {
         Builder foo(String s) {
             return this;

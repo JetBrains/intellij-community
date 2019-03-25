@@ -12,4 +12,5 @@ class Test {
 //in: PsiParameter:args
 //exit: RETURN PsiMethod:foo<-PsiLiteralExpression:null
 //exit: SEQUENTIAL PsiIfStatement
+//exit count: 2
 }

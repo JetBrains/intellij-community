@@ -3,6 +3,13 @@ public class Test {
     new A() {
       void fe() {System.out.println("");}//ins and outs
 //exit: SEQUENTIAL PsiMethod:fe
+
+        public NewMethodResult newMethod() {
+            return new NewMethodResult();
+        }
+
+        public class NewMethodResult {
+        }
     }
   }
 }

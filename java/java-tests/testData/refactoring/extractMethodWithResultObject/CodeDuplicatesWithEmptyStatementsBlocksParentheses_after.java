@@ -13,4 +13,11 @@ class Test {
     System.out.println(2);
   }//ins and outs
 //exit: SEQUENTIAL PsiMethod:method2
+
+    public NewMethodResult newMethod() {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

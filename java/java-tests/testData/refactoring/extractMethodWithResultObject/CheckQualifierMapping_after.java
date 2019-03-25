@@ -13,4 +13,11 @@ class Test {
   }//ins and outs
 //in: PsiLocalVariable:a
 //exit: SEQUENTIAL PsiExpressionStatement
+
+    public NewMethodResult newMethod(String a) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

@@ -4,4 +4,11 @@ class X {
     int i = myI++;
   }//ins and outs
 //exit: SEQUENTIAL PsiMethod:foo
+
+    public NewMethodResult newMethod() {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

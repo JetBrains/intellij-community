@@ -8,4 +8,11 @@ class Test {
     System.out.println(foos.length);
   }//ins and outs
 //exit: EXPRESSION PsiReferenceExpression:foos
+
+    public NewMethodResult newMethod() {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

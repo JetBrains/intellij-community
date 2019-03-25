@@ -5,4 +5,11 @@ class Test {
   }//ins and outs
 //in: PsiParameter:ss
 //exit: SEQUENTIAL PsiExpressionStatement
+
+    public NewMethodResult newMethod(String[] ss) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

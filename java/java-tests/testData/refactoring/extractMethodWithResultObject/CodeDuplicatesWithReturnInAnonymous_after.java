@@ -14,4 +14,5 @@ class Test10 {
   }//ins and outs
 //exit: RETURN PsiMethod:test<-PsiLiteralExpression:0
 //exit: SEQUENTIAL PsiExpressionStatement
+//exit count: 2
 }

@@ -8,4 +8,11 @@ public class Test
 //in: PsiParameter:tr
 //exit: SEQUENTIAL PsiMethod:foo
 
+    public NewMethodResult newMethod(List<? extends List<T>> tr) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
+
 }

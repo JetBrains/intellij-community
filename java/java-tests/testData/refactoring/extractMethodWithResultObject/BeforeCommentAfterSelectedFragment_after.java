@@ -10,4 +10,11 @@ class CommentAfterSelectedFragment {
 //in: PsiParameter:debugMode
 //out: PsiLocalVariable:i
 //exit: SEQUENTIAL PsiIfStatement
+
+    public NewMethodResult newMethod(boolean debugMode) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

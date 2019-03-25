@@ -21,4 +21,5 @@ class X {
 //in: PsiParameter:b
 //exit: RETURN PsiMethod:fun2<-PsiMethodCallExpression:fun1(x)
 //exit: SEQUENTIAL PsiIfStatement
+//exit count: 2
 }

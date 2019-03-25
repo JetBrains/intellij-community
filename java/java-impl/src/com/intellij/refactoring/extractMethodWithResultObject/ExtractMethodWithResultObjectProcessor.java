@@ -4,20 +4,25 @@ package com.intellij.refactoring.extractMethodWithResultObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * @author Pavel.Dolgov
@@ -33,6 +38,9 @@ public class ExtractMethodWithResultObjectProcessor {
   private final Map<PsiReferenceExpression, PsiVariable> myInputs = new HashMap<>();
   private final Set<PsiVariable> myOutputVariables = new HashSet<>();
   private final Map<PsiStatement, Exit> myExits = new HashMap<>();
+
+  // in the order the expressions appear in the original code
+  private final List<Pair.NonNull<String, PsiExpression>> myParameters = new ArrayList<>();
 
   private PsiClass myTargetClass;
   private PsiElement myAnchor;
@@ -50,12 +58,16 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   private static class Exit {
-    final ExitType myType;
-    final PsiElement myExitedElement;
+    private final ExitType myType;
+    private final PsiElement myExitedElement;
 
     private Exit(ExitType type, PsiElement element) {
       myType = type;
       myExitedElement = element;
+    }
+
+    PsiElement getExitedElement() {
+      return myExitedElement;
     }
 
     @Override
@@ -350,7 +362,7 @@ public class ExtractMethodWithResultObjectProcessor {
       }
     }
     if (lowerBoundType == null) {
-      lowerBoundType = ObjectUtils.tryCast(exception.getType(), PsiClassType.class);
+      lowerBoundType = tryCast(exception.getType(), PsiClassType.class);
     }
     if (lowerBoundType == null) {
       return null;
@@ -430,24 +442,68 @@ public class ExtractMethodWithResultObjectProcessor {
   void doRefactoring() {
     LOG.warn("doRefactoring");
 
+    createMethod();
+
+    dumpTexts(myExits.entrySet().stream().map(ExtractMethodWithResultObjectProcessor::getExitText), "exit");
+    dumpElements(myOutputVariables, "out");
+    dumpElements(new HashSet<>(myInputs.values()), "in");
+    dumpText("ins and outs");
+  }
+
+  private void createMethod() {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
-    dumpTexts(myExits.entrySet().stream().map(ExtractMethodWithResultObjectProcessor::getExitText), factory, "exit");
-    dumpElements(myOutputVariables, factory, "out");
-    dumpElements(new HashSet<>(myInputs.values()), factory, "in");
-    dumpText(factory, "ins and outs");
+    Set<PsiElement> exited = myExits.values().stream().map(Exit::getExitedElement).collect(Collectors.toSet());
+    if (exited.size() == 1) {
+      PsiClass resultClass = factory.createClass("NewMethodResult");
+      myAnchor.getParent().addAfter(resultClass, myAnchor);
+
+      PsiMethod method = factory.createMethod("newMethod", factory.createType(resultClass), myAnchor);
+      PsiParameterList parameterList = method.getParameterList();
+
+      Map<PsiVariable, Pair<PsiExpression, Integer>> orderedInputs = new HashMap<>();
+      myInputs.forEach((expression, variable) -> {
+        int offset = expression.getTextOffset();
+        Pair<PsiExpression, Integer> pair = orderedInputs.get(variable);
+        if (pair == null || pair.second > offset) {
+          orderedInputs.put(variable, new Pair<>(expression, offset));
+        }
+      });
+
+      EntryStream.of(orderedInputs)
+        .sortedBy(entry -> entry.getValue().second)
+        .forKeyValue((variable, pair) -> {
+          String name = notNull(variable.getName());
+          myParameters.add(Pair.createNonNull(name, pair.first));
+
+          PsiParameter parameter = factory.createParameter(name, variable.getType(), method);
+          parameter = (PsiParameter)parameterList.add(parameter);
+          notNull(parameter.getModifierList()).setModifierProperty(PsiModifier.FINAL,
+                                                                   variable.hasModifierProperty(PsiModifier.FINAL));
+
+        });
+
+      PsiCodeBlock body = method.getBody();
+      assert body != null;
+      body.add(factory.createStatementFromText("return new NewMethodResult();", body.getRBrace()));
+      myAnchor.getParent().addAfter(method, myAnchor);
+    }
+    else {
+      dumpText("exit count: " + exited.size());
+    }
   }
 
-  private void dumpElements(Collection<? extends PsiElement> elements, PsiElementFactory factory, String prefix) {
-    dumpTexts(elements.stream().map(PsiElement::toString), factory, prefix);
+  private void dumpElements(Collection<? extends PsiElement> elements, String prefix) {
+    dumpTexts(elements.stream().map(PsiElement::toString), prefix);
   }
 
-  private void dumpTexts(Stream<String> elements, PsiElementFactory factory, String prefix) {
+  private void dumpTexts(Stream<String> elements, String prefix) {
     elements
       .sorted(Comparator.reverseOrder())
-      .forEach(text -> dumpText(factory, prefix + ": " + text));
+      .forEach(text -> dumpText(prefix + ": " + text));
   }
 
-  private void dumpText(PsiElementFactory factory, String text) {
+  private void dumpText(String text) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
     PsiElement comment = factory.createCommentFromText("//" + text, null);
     myAnchor.getParent().addAfter(comment, myAnchor);
     LOG.warn(text);

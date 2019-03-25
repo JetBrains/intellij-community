@@ -9,4 +9,11 @@ class Test {
 //in: PsiLocalVariable:levels
 //in: PsiLocalVariable:nextWinNumber
 //exit: SEQUENTIAL PsiMethod:foo
+
+    public NewMethodResult newMethod(Integer[] levels, Integer[] nextWinNumber) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

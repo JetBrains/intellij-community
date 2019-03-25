@@ -8,4 +8,11 @@ class A {
     }//ins and outs
 //in: PsiParameter:i
 //exit: SEQUENTIAL PsiExpressionStatement
+
+    public NewMethodResult newMethod(int i) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

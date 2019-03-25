@@ -13,6 +13,7 @@ class Conditional {
 //in: PsiParameter:s
 //exit: RETURN PsiMethod:bar<-PsiReferenceExpression:n
 //exit: SEQUENTIAL PsiIfStatement
+//exit count: 2
 
     int[] baz(String[] z) {
         if (z != null) {

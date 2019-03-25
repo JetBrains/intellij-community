@@ -29,4 +29,11 @@ class C extends D {
     }//ins and outs
 //in: PsiLocalVariable:i
 //exit: SEQUENTIAL PsiExpressionStatement
+
+    public NewMethodResult newMethod(int i) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

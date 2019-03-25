@@ -15,6 +15,13 @@ class RenamedParameter {
 //in: PsiLocalVariable:b
 //exit: SEQUENTIAL PsiMethod:foo
 
+    public NewMethodResult newMethod(String b, String a) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
+
     public void bar() {
         String a = "t";
         String b = "s";

@@ -9,4 +9,11 @@ class C {
       System.out.println(c);
     }//ins and outs
 //exit: EXPRESSION PsiReferenceExpression:c
+
+    public NewMethodResult newMethod() {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

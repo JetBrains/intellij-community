@@ -13,4 +13,5 @@ class Foo {
 //in: PsiParameter:a
 //exit: RETURN PsiMethod:bar<-PsiLiteralExpression:true
 //exit: SEQUENTIAL PsiForStatement
+//exit count: 2
 }

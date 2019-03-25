@@ -14,6 +14,13 @@ class Foo {
                 setVisible( false );
             }//ins and outs
 //exit: SEQUENTIAL PsiMethod:actionPerformed
+
+            public NewMethodResult newMethod() {
+                return new NewMethodResult();
+            }
+
+            public class NewMethodResult {
+            }
         };
     }
 }

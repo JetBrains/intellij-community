@@ -10,6 +10,7 @@ class Test {
 //in: PsiParameter:a
 //exit: RETURN PsiMethod:foo<-PsiReferenceExpression:n
 //exit: SEQUENTIAL PsiIfStatement
+//exit count: 2
 
     public static Integer bar(Integer[] a) {
         if (a.length != 0) {

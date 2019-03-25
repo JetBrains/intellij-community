@@ -17,4 +17,11 @@ class Test {
         list2.add(true);
     }//ins and outs
 //exit: SEQUENTIAL PsiMethod:method2
+
+    public NewMethodResult newMethod() {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

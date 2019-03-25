@@ -11,5 +11,12 @@ class Test {
 //in: PsiLocalVariable:a
 //exit: SEQUENTIAL PsiMethod:test
 
+    public NewMethodResult newMethod(int a) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
+
 
 }

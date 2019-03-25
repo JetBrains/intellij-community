@@ -14,6 +14,13 @@ class C {
 //out: PsiLocalVariable:l1
 //exit: SEQUENTIAL PsiDeclarationStatement
 
+    public NewMethodResult newMethod(Object[] array) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
+
     String[] getObjects() {
     }
 }

@@ -5,4 +5,11 @@ class Test {
     }//ins and outs
 //in: PsiLocalVariable:f
 //exit: EXPRESSION PsiReferenceExpression:f
+
+    public NewMethodResult newMethod(String f) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

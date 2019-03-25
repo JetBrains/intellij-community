@@ -8,6 +8,7 @@ class C {
 //in: PsiLocalVariable:i
 //exit: CONTINUE PsiBlockStatement<-PsiContinueStatement
 //exit: SEQUENTIAL PsiIfStatement
+//exit count: 2
 
     {
         for(int i = 0; i < 10; i++){

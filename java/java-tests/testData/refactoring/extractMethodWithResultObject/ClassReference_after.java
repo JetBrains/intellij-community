@@ -7,6 +7,13 @@ class C {
     }
   }//ins and outs
 //exit: RETURN PsiMethod:foo<-PsiMethodCallExpression:A.getInstance()
+
+    public NewMethodResult newMethod() {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }
 class A {
   static A getInstance() {

@@ -11,4 +11,11 @@ class Test {
 //in: PsiParameter:bb
 //in: PsiParameter:ss
 //exit: SEQUENTIAL PsiMethod:foo
+
+    public NewMethodResult newMethod(String[] ss, int i, String[] bb) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

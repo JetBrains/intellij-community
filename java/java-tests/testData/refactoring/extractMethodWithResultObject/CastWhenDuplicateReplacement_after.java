@@ -6,4 +6,11 @@ class Test {
     }//ins and outs
 //in: PsiParameter:x
 //exit: EXPRESSION PsiMethodCallExpression:((String)x).substring(1)
+
+    public NewMethodResult newMethod(Object x) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

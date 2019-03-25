@@ -10,6 +10,7 @@ class X {
 //out: PsiLocalVariable:x
 //exit: CONTINUE PsiBlockStatement<-PsiContinueStatement
 //exit: SEQUENTIAL PsiDeclarationStatement
+//exit count: 2
 
     private String bar(Object o) {
     return "";

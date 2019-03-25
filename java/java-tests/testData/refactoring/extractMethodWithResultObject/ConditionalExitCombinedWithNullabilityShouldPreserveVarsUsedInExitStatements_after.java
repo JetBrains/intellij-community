@@ -13,4 +13,5 @@ class X {
 //in: PsiParameter:testName
 //exit: RETURN PsiMethod:guessTestDataName<-PsiBinaryExpression:strings.substring(0) + testName
 //exit: SEQUENTIAL PsiForeachStatement
+//exit count: 2
 }

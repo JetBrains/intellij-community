@@ -14,4 +14,11 @@ class C {
     }//ins and outs
 //in: PsiLocalVariable:array
 //exit: SEQUENTIAL PsiForStatement
+
+    public NewMethodResult newMethod(Object[] array) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

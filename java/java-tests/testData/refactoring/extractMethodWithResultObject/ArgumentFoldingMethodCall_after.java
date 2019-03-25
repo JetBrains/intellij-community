@@ -14,6 +14,13 @@ class C {
 //exit: RETURN PsiMethod:foo<-void
 //exit: SEQUENTIAL PsiMethod:foo
 
+    public NewMethodResult newMethod() {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
+
     private void bar() {
         if (y.isEmpty()) return;
         y.remove(0);

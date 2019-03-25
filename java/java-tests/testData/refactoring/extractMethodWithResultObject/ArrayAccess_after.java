@@ -8,4 +8,11 @@ class Test {
 //in: PsiLocalVariable:i
 //in: PsiParameter:ss
 //exit: SEQUENTIAL PsiMethod:foo
+
+    public NewMethodResult newMethod(String[] ss, int i) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }

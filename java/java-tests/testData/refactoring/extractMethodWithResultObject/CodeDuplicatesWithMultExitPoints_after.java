@@ -7,4 +7,5 @@ class A {
 //in: PsiParameter:o
 //exit: RETURN PsiMethod:foo<-PsiLiteralExpression:0
 //exit: SEQUENTIAL PsiIfStatement
+//exit count: 2
 }

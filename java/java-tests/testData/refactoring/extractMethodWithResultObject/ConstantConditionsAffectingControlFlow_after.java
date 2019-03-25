@@ -9,4 +9,11 @@ public /*abstract*/ class WillWorkTest {
 //in: PsiLocalVariable:i
 //out: PsiLocalVariable:k
 //exit: RETURN PsiMethod:opera<-PsiReferenceExpression:k
+
+    public NewMethodResult newMethod(int i) {
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+    }
 }
