@@ -67,6 +67,7 @@ public class FileManagerImpl implements FileManager {
   @Override
   public void dispose() {
     needToOpenNewPageExecutor.shutdown();
+    savingFileExecutor.shutdown();
     try {
       fileAdapter.closeFile();
     }
