@@ -292,16 +292,18 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
    *                      two possible situations - the quick doc is shown automatically on mouse over element; the quick doc is shown
    *                      on explicit action call (Ctrl+Q). We want to close the doc on, say, editor viewport position change
    *                      at the first situation but don't want to do that at the second
+   * @param useStoredPopupSize whether popup size previously set by user (via mouse-dragging) should be used, or default one should be used
    */
   public void showJavaDocInfo(@NotNull Editor editor,
                               @NotNull PsiElement element,
                               @NotNull PsiElement original,
                               @Nullable Runnable closeCallback,
                               @Nullable String documentation,
-                              boolean closeOnSneeze) {
+                              boolean closeOnSneeze,
+                              boolean useStoredPopupSize) {
     myEditor = editor;
     myCloseOnSneeze = closeOnSneeze;
-    showJavaDocInfo(element, original, false, closeCallback, documentation);
+    showJavaDocInfo(element, original, false, closeCallback, documentation, useStoredPopupSize);
   }
 
   public void showJavaDocInfo(@NotNull PsiElement element,
@@ -314,14 +316,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                               PsiElement original,
                               boolean requestFocus,
                               @Nullable Runnable closeCallback) {
-    showJavaDocInfo(element, original, requestFocus, closeCallback, null);
+    showJavaDocInfo(element, original, requestFocus, closeCallback, null, true);
   }
 
   public void showJavaDocInfo(@NotNull PsiElement element,
                               PsiElement original,
                               boolean requestFocus,
                               @Nullable Runnable closeCallback,
-                              @Nullable String documentation) {
+                              @Nullable String documentation,
+                              boolean useStoredPopupSize) {
     if (!element.isValid()) {
       return;
     }
@@ -330,12 +333,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       @Override
       public void updatePopup(Object lookupItemObject) {
         if (lookupItemObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupItemObject, requestFocus, this, original, null, null);
+          doShowJavaDocInfo((PsiElement)lookupItemObject, requestFocus, this, original, null, null, useStoredPopupSize);
         }
       }
     };
 
-    doShowJavaDocInfo(element, requestFocus, updateProcessor, original, closeCallback, documentation);
+    doShowJavaDocInfo(element, requestFocus, updateProcessor, original, closeCallback, documentation, useStoredPopupSize);
   }
 
   public void showJavaDocInfo(Editor editor, @Nullable PsiFile file, boolean requestFocus) {
@@ -388,11 +391,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       @Override
       public void updatePopup(Object lookupIteObject) {
         if (lookupIteObject == null) {
-          doShowJavaDocInfo(finalElement, false, this, originalElement, closeCallback, CodeInsightBundle.message("no.documentation.found"));
+          doShowJavaDocInfo(finalElement, false, this, originalElement, closeCallback, CodeInsightBundle.message("no.documentation.found"),
+                            true);
           return;
         }
         if (lookupIteObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupIteObject, false, this, originalElement, closeCallback, null);
+          doShowJavaDocInfo((PsiElement)lookupIteObject, false, this, originalElement, closeCallback, null, true);
           return;
         }
 
@@ -405,7 +409,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         );
 
         if (element == null) {
-          doShowJavaDocInfo(finalElement, false, this, originalElement, closeCallback, CodeInsightBundle.message("no.documentation.found"));
+          doShowJavaDocInfo(finalElement, false, this, originalElement, closeCallback, CodeInsightBundle.message("no.documentation.found"),
+                            true);
           return;
         }
 
@@ -418,12 +423,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           }
         }
         else {
-          doShowJavaDocInfo(element, false, this, originalElement, closeCallback, null);
+          doShowJavaDocInfo(element, false, this, originalElement, closeCallback, null, true);
         }
       }
     };
 
-    doShowJavaDocInfo(element, requestFocus, updateProcessor, originalElement, closeCallback, null);
+    doShowJavaDocInfo(element, requestFocus, updateProcessor, originalElement, closeCallback, null, true);
   }
 
   public PsiElement findTargetElement(Editor editor, PsiFile file) {
@@ -439,7 +444,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                                  PopupUpdateProcessor updateProcessor,
                                  PsiElement originalElement,
                                  @Nullable Runnable closeCallback,
-                                 @Nullable String documentation) {
+                                 @Nullable String documentation,
+                                 boolean useStoredPopupSize) {
     Project project = getProject(element);
     if (!project.isOpen()) return;
 
@@ -488,7 +494,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     }
     else {
-      showInPopup(element, requestFocus, updateProcessor, originalElement, closeCallback);
+      showInPopup(element, requestFocus, updateProcessor, originalElement, closeCallback, useStoredPopupSize);
     }
   }
 
@@ -496,11 +502,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                            boolean requestFocus,
                            PopupUpdateProcessor updateProcessor,
                            PsiElement originalElement,
-                           @Nullable Runnable closeCallback) {
+                           @Nullable Runnable closeCallback,
+                           boolean useStoredPopupSize) {
     Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
     myFocusedBeforePopup = new WeakReference<>(focusedComponent);
 
-    DocumentationComponent component = myTestDocumentationComponent == null ? new DocumentationComponent(this) :
+    DocumentationComponent component = myTestDocumentationComponent == null ? new DocumentationComponent(this, useStoredPopupSize) :
                                        myTestDocumentationComponent;
     ActionListener actionListener = new ActionListener() {
       @Override
@@ -564,7 +571,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       hint.cancel();
     });
 
-    if (DimensionService.getInstance().getSize(NEW_JAVADOC_LOCATION_AND_SIZE, myProject) != null) {
+    if (useStoredPopupSize && DimensionService.getInstance().getSize(NEW_JAVADOC_LOCATION_AND_SIZE, myProject) != null) {
       hint.setDimensionServiceKey(NEW_JAVADOC_LOCATION_AND_SIZE);
     }
 
