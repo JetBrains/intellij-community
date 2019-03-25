@@ -13,6 +13,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.xml.DomUtil
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
+import java.util.*
 
 fun locateExtensionsByPsiClass(psiClass: PsiClass): List<ExtensionCandidate> {
   return findExtensionsByClassName(psiClass.project, ClassUtil.getJVMClassName(psiClass) ?: return emptyList())
@@ -53,7 +54,7 @@ internal fun processExtensionDeclarations(name: String, project: Project, strict
 }
 
 private fun findExtensionsByClassName(project: Project, className: String): List<ExtensionCandidate> {
-  val result = SmartList<ExtensionCandidate>()
+  val result = Collections.synchronizedList(SmartList<ExtensionCandidate>())
   val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
   processExtensionsByClassName(project, className) { tag, _ ->
     result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(tag)))
@@ -90,7 +91,7 @@ internal class ExtensionByExtensionPointLocator(private val project: Project,
   }
 
   override fun findCandidates(): List<ExtensionCandidate> {
-    val result = SmartList<ExtensionCandidate>()
+    val result = Collections.synchronizedList(SmartList<ExtensionCandidate>())
     val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
     processCandidates {
       result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(it)))
