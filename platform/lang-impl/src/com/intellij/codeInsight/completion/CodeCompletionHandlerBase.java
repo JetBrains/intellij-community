@@ -581,13 +581,11 @@ public class CodeCompletionHandlerBase {
     offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
     offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
 
-    WatchingInsertionContext context = new WatchingInsertionContext(offsetMap, psiFile, completionChar,
-        lookup != null ? lookup.getItems() : Collections.emptyList(),
-        editor);
-    return context;
+    List<LookupElement> items = lookup != null ? lookup.getItems() : Collections.emptyList();
+    return new WatchingInsertionContext(offsetMap, psiFile, completionChar, items, editor);
   }
 
-  private WatchingInsertionContext callHandleInsert(CompletionProgressIndicator indicator, LookupElement item, char completionChar) {
+  private static WatchingInsertionContext callHandleInsert(CompletionProgressIndicator indicator, LookupElement item, char completionChar) {
     final Editor editor = indicator.getEditor();
 
     final int caretOffset = indicator.getCaret().getOffset();
