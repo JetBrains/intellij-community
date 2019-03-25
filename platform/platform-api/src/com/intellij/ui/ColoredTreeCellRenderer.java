@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.util.treeView.AbstractTreeUi;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -107,6 +108,9 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   }
 
   protected final boolean isFocused() {
+    if (ApplicationManager.getApplication().isOnAir()) {
+      return false;
+    }
     if (!myFocusedCalculated) {
       myFocused = calcFocusedState();
       myFocusedCalculated = true;
