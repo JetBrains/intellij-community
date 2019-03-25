@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.execution.CommandLineUtil;
@@ -262,8 +262,11 @@ public class EnvironmentUtil {
     @NotNull
     protected List<String> getShellProcessCommand() throws Exception {
       String shellScript = getShell();
-      if (shellScript == null || !new File(shellScript).canExecute()) {
-        throw new Exception("shell:" + shellScript);
+      if (StringUtil.isEmptyOrSpaces(shellScript)) {
+        throw new Exception("empty $SHELL");
+      }
+      if (!new File(shellScript).canExecute()) {
+        throw new Exception("$SHELL points to a missing or non-executable file: " + shellScript);
       }
       return buildShellProcessCommand(shellScript, true, true, false);
     }
