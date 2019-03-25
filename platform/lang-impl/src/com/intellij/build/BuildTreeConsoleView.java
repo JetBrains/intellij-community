@@ -15,6 +15,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
@@ -91,6 +92,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final TableColumn myTimeColumn;
   private final String myWorkingDir;
   private final AtomicBoolean myDisposed = new AtomicBoolean();
+  private final AtomicBoolean myShownFirstError = new AtomicBoolean();
   private final StructureTreeModel<SimpleTreeStructure> myTreeModel;
   private final TreeTableTree myTree;
   private final ExecutionNode myRootNode;
@@ -312,10 +314,18 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
             MessageEvent messageEvent = (MessageEvent)event;
             currentNode.setStartTime(messageEvent.getEventTime());
             currentNode.setEndTime(messageEvent.getEventTime());
-            currentNode.setNavigatable(messageEvent.getNavigatable(myProject));
+            Navigatable messageEventNavigatable = messageEvent.getNavigatable(myProject);
+            currentNode.setNavigatable(messageEventNavigatable);
             final MessageEventResult messageEventResult = messageEvent.getResult();
             currentNode.setResult(messageEventResult);
             myGroupingEvents.add(Pair.pair(event, currentNode));
+            if (messageEvent.getKind() == MessageEvent.Kind.ERROR) {
+              if (messageEventNavigatable != null && myShownFirstError.compareAndSet(false, true)) {
+                GuiUtils.invokeLaterIfNeeded(() -> messageEventNavigatable.navigate(false),
+                                             ModalityState.defaultModalityState(),
+                                             myProject.getDisposed());
+              }
+            }
           }
         }
         nodesMap.put(eventId, currentNode);
