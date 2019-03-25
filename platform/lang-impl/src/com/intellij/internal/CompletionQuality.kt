@@ -88,7 +88,6 @@ private val interestingCharsToFirsts: IntArray = intArrayOf(1, 3)
 
 class CompletionQualityStatsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val application = ApplicationManager.getApplication()
     val editor = e.getData(CommonDataKeys.EDITOR) as? EditorImpl
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
 
@@ -101,9 +100,11 @@ class CompletionQualityStatsAction : AnAction() {
     val task = object : Task.Backgroundable(project, "Emulating completion", true) {
       override fun run(indicator: ProgressIndicator) {
         val files = (if (dialog.scope is GlobalSearchScope) {
-          application.runReadAction<Collection<VirtualFile>, Exception> {
-            FileTypeIndex.getFiles(fileType, dialog.scope as GlobalSearchScope)
+          lateinit var collectionFiles: Collection<VirtualFile>
+          runReadAction {
+            collectionFiles = FileTypeIndex.getFiles(fileType, dialog.scope as GlobalSearchScope)
           }
+          collectionFiles
         }
         else {
           (dialog.scope as LocalSearchScope).virtualFiles.asList()
@@ -121,14 +122,16 @@ class CompletionQualityStatsAction : AnAction() {
 
           indicator.text = file.path
 
-          val (document, completionAttempts) = application.runReadAction<Pair<Document, List<Pair<Int, String>>>, Exception> {
-            val document = FileDocumentManager.getInstance().getDocument(file) ?: throw Exception("Can't get document: ${file.name}")
+          lateinit var document: Document
+          lateinit var completionAttempts: List<Pair<Int, String>>
+          runReadAction {
+            document = FileDocumentManager.getInstance().getDocument(file) ?: throw Exception("Can't get document: ${file.name}")
             val psiFile = PsiManager.getInstance(project).findFile(file) ?: throw Exception("Can't find file: ${file.name}")
-            val completionAttempts = getCompletionAttempts(psiFile, wordsFrequencyMap)
-            Pair(document, completionAttempts)
+            completionAttempts = getCompletionAttempts(psiFile, wordsFrequencyMap)
           }
 
           if (completionAttempts.isNotEmpty()) {
+            val application = ApplicationManager.getApplication()
             lateinit var newEditor: Editor
             application.invokeAndWait(Runnable {
               val descriptor = OpenFileDescriptor(project, file)
@@ -148,7 +151,7 @@ class CompletionQualityStatsAction : AnAction() {
             }
             finally {
               application.invokeAndWait(Runnable {
-                application.runWriteAction {
+                runWriteAction {
                   document.setText(text)
                   FileDocumentManager.getInstance().saveDocument(document)
                 }
