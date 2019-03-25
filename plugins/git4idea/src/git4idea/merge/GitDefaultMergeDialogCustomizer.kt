@@ -105,8 +105,8 @@ open class GitDefaultMergeDialogCustomizer(
   private fun loadCherryPickCommitDetails(repository: GitRepository): CherryPickDetails? {
     val cherryPickHead = tryResolveRef(repository, CHERRY_PICK_HEAD) ?: return null
 
-    val shortDetails = GitLogUtil.collectShortDetails(project, GitVcs.getInstance(project), repository.root,
-                                                      listOf(cherryPickHead.asString()))
+    val shortDetails = GitLogUtil.collectMetadata(project, GitVcs.getInstance(project), repository.root,
+                                                  listOf(cherryPickHead.asString()))
 
     val result = shortDetails.singleOrNull() ?: return null
     return CherryPickDetails(cherryPickHead.toShortString(), result.author.name, result.subject)

@@ -49,10 +49,8 @@ public class GitLogUtil {
   public static final String STDIN = "--stdin";
 
   @NotNull
-  public static List<? extends VcsCommitMetadata> collectShortDetails(@NotNull Project project,
-                                                                      @NotNull GitVcs vcs,
-                                                                      @NotNull VirtualFile root,
-                                                                      @NotNull List<String> hashes)
+  public static List<? extends VcsCommitMetadata> collectMetadata(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile root,
+                                                                  @NotNull List<String> hashes)
     throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
