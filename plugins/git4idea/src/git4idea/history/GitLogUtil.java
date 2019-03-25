@@ -150,7 +150,6 @@ public class GitLogUtil {
   @NotNull
   public static VcsLogProvider.DetailedLogData collectMetadata(@NotNull Project project,
                                                                @NotNull VirtualFile root,
-                                                               boolean lowPriorityProcess,
                                                                String... params) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
@@ -161,7 +160,7 @@ public class GitLogUtil {
     List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
 
     try {
-      GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), lowPriorityProcess);
+      GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), false);
       readRecordsFromHandler(project, root, true, false, false, false, record -> {
         GitCommit commit = createCommit(project, root, Collections.singletonList(record), factory);
         commits.add(commit);
@@ -183,7 +182,7 @@ public class GitLogUtil {
 
     return new LogDataImpl(refs, commits);
   }
-  
+
   @Nullable
   public static VcsLogObjectsFactory getObjectsFactoryWithDisposeCheck(@NotNull Project project) {
     return ReadAction.compute(() -> {
