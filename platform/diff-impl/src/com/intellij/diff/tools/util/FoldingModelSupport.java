@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
+import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.DiffDividerDrawUtil;
 import com.intellij.diff.util.DiffDrawUtil;
@@ -18,11 +19,15 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntFunction;
@@ -84,22 +89,12 @@ public class FoldingModelSupport {
    * Iterator returns ranges of changed lines: start1, end1, start2, end2, ...
    */
   @Nullable
-  protected Data computeFoldedRanges(@Nullable final Iterator<int[]> changedLines,
+  protected Data computeFoldedRanges(@Nullable Project project,
+                                     @Nullable final Iterator<int[]> changedLines,
                                      @NotNull final Settings settings) {
     if (changedLines == null || settings.range == -1) return null;
 
-    int[] lineCount = ReadAction.compute(() -> {
-      ProgressManager.checkCanceled();
-
-      int[] result = new int[myCount];
-      for (int i = 0; i < myCount; i++) {
-        result[i] = getLineCount(myEditors[i].getDocument());
-      }
-      return result;
-    });
-
-
-    FoldingBuilder builder = new FoldingBuilder(lineCount, settings);
+    FoldingBuilder builder = new FoldingBuilder(project, myEditors, settings);
     return builder.build(changedLines);
   }
 
@@ -109,7 +104,7 @@ public class FoldingModelSupport {
   protected void install(@Nullable final Iterator<int[]> changedLines,
                          @Nullable final UserDataHolder context,
                          @NotNull final Settings settings) {
-    Data data = computeFoldedRanges(changedLines, settings);
+    Data data = computeFoldedRanges(null, changedLines, settings);
     install(data, context, settings);
   }
 
@@ -138,15 +133,42 @@ public class FoldingModelSupport {
     updateLineNumbers(true);
   }
 
-  protected static class FoldingBuilder {
+  private static class FoldingBuilder extends FoldingBuilderBase {
+    @Nullable private final Project myProject;
+    @NotNull private final EditorEx[] myEditors;
+
+    private FoldingBuilder(@Nullable Project project, @NotNull EditorEx[] editors, @NotNull Settings settings) {
+      super(countLines(editors), settings);
+      myProject = project;
+      myEditors = editors;
+    }
+
+    private static int[] countLines(@NotNull EditorEx[] editors) {
+      return ReadAction.compute(() -> {
+        int[] lineCount = new int[editors.length];
+        for (int i = 0; i < editors.length; i++) {
+          lineCount[i] = getLineCount(editors[i].getDocument());
+        }
+        return lineCount;
+      });
+    }
+
+    @Nullable
+    @Override
+    protected String getDescription(int lineNumber, int index) {
+      if (myProject == null) return null;
+      return getLineSeparatorDescription(myProject, myEditors[index].getDocument(), lineNumber);
+    }
+  }
+
+  protected abstract static class FoldingBuilderBase {
     @NotNull private final Settings mySettings;
+    @NotNull private final int[] myLineCount;
     private final int myCount;
 
-    @NotNull private final int[] myLineCount;
     @NotNull private final List<Data.Group> myGroups = new ArrayList<>();
 
-    public FoldingBuilder(@NotNull int[] lineCount,
-                          @NotNull Settings settings) {
+    public FoldingBuilderBase(int[] lineCount, @NotNull Settings settings) {
       mySettings = settings;
       myLineCount = lineCount;
       myCount = lineCount.length;
@@ -212,8 +234,36 @@ public class FoldingModelSupport {
         regions[i] = new LineRange(starts[i], ends[i]);
       }
       boolean hasFolding = ContainerUtil.or(regions, Objects::nonNull);
-      return hasFolding ? new Data.Block(regions) : null;
+      if (!hasFolding) return null;
+
+      String[] descriptions = new String[myCount];
+      for (int i = 0; i < myCount; i++) {
+        descriptions[i] = getDescription(ends[i], i);
+      }
+
+      return new Data.Block(regions, descriptions);
     }
+
+    @Nullable
+    protected abstract String getDescription(int lineNumber, int index);
+  }
+
+  @Nullable
+  protected static String getLineSeparatorDescription(@NotNull Project project, @NotNull Document document, int lineNumber) {
+    return ReadAction.compute(() -> {
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (psiFile == null) return null;
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+
+      if (document.getLineCount() == lineNumber) return null;
+      int offset = document.getLineStartOffset(lineNumber);
+
+      FileBreadcrumbsCollector collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, virtualFile);
+      Iterable<? extends Crumb> crumbs = collector.computeCrumbs(virtualFile, document, offset, null);
+      if (!crumbs.iterator().hasNext()) return null;
+
+      return StringUtil.join(crumbs, it -> it.getText(), " > ");
+    });
   }
 
   private class FoldingInstaller {
@@ -258,7 +308,7 @@ public class FoldingModelSupport {
           if (region != null) region.setExpanded(true);
         }
       }
-      return hasFolding ? new FoldedBlock(regions) : null;
+      return hasFolding ? new FoldedBlock(regions, block.descriptions) : null;
     }
   }
 
@@ -603,9 +653,11 @@ public class FoldingModelSupport {
 
     private static class Block {
       @NotNull public final LineRange[] ranges;
+      @NotNull public final String[] descriptions;
 
-      private Block(@NotNull LineRange[] ranges) {
+      private Block(@NotNull LineRange[] ranges, @NotNull String[] descriptions) {
         this.ranges = ranges;
+        this.descriptions = descriptions;
       }
     }
   }
@@ -689,12 +741,15 @@ public class FoldingModelSupport {
    */
   protected class FoldedBlock {
     @NotNull private final FoldRegion[] myRegions;
+    @NotNull private final String[] myDescriptions;
     @NotNull private final int[] myLines;
     @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>(myCount);
 
-    public FoldedBlock(@NotNull FoldRegion[] regions) {
+    public FoldedBlock(@NotNull FoldRegion[] regions, @NotNull String[] descriptions) {
       assert regions.length == myCount;
+      assert descriptions.length == myCount;
       myRegions = regions;
+      myDescriptions = descriptions;
       myLines = new int[myCount];
     }
 
@@ -706,7 +761,8 @@ public class FoldingModelSupport {
         if (region == null || !region.isValid()) continue;
         myHighlighters.addAll(DiffDrawUtil.createLineSeparatorHighlighter(myEditors[i],
                                                                           region.getStartOffset(), region.getEndOffset(),
-                                                                          getHighlighterCondition(group, i)));
+                                                                          getHighlighterCondition(group, i),
+                                                                          myDescriptions[i]));
       }
     }
 

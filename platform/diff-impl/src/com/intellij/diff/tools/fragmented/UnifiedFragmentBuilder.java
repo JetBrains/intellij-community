@@ -54,6 +54,11 @@ class UnifiedFragmentBuilder {
   private int lastProcessedLine2 = -1;
   private int totalLines = 0;
 
+  @NotNull
+  public Side getMasterSide() {
+    return myMasterSide;
+  }
+
   public void exec() {
     if (myFragments.isEmpty()) {
       myEqual = true;
