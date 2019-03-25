@@ -122,6 +122,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     toolbarActions.addAll(view.createConsoleActions());
     toolbarActions.add(new PinBuildViewAction(buildsView));
     toolbarActions.add(new ShowExecutionErrorsOnlyAction(view));
+    toolbarActions.add(new GroupByActionGroup(view));
   }
 
   @Nullable

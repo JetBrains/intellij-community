@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.build.BuildView;
 import com.intellij.build.DefaultBuildDescriptor;
+import com.intellij.build.GroupByActionGroup;
 import com.intellij.build.ShowExecutionErrorsOnlyAction;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -313,7 +314,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       final ConsoleView console = createConsoleViewAndAttachToProcess(executor, processHandler);
 
       AnAction[] actions = console instanceof BuildView ?
-                           new AnAction[]{new ShowExecutionErrorsOnlyAction((BuildView)console)} : AnAction.EMPTY_ARRAY;
+                           new AnAction[]{
+                             new ShowExecutionErrorsOnlyAction((BuildView)console),
+                             new GroupByActionGroup((BuildView)console)
+                           } : AnAction.EMPTY_ARRAY;
       DefaultExecutionResult res = new DefaultExecutionResult(console, processHandler, actions);
       if (MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
         MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment());

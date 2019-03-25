@@ -34,8 +34,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -66,7 +68,7 @@ public class ExecutionNode extends CachingSimpleNode {
     }
   };
 
-  private final List<ExecutionNode> myChildrenList = ContainerUtil.newSmartList();
+  private final Collection<ExecutionNode> myChildrenList = new ConcurrentLinkedDeque<>(); //ContainerUtil.newSmartList();
   private long startTime;
   private long endTime;
   @Nullable
@@ -86,6 +88,7 @@ public class ExecutionNode extends CachingSimpleNode {
   private final AtomicInteger myWarnings = new AtomicInteger();
   @Nullable
   private Predicate<ExecutionNode> myFilter;
+  private volatile boolean myVisible = true;
 
   public ExecutionNode(Project aProject, ExecutionNode parentNode) {
     super(aProject, parentNode);
@@ -94,6 +97,7 @@ public class ExecutionNode extends CachingSimpleNode {
   @Override
   protected SimpleNode[] buildChildren() {
     Stream<ExecutionNode> stream = myChildrenList.stream();
+    stream = stream.filter(node -> node.myVisible);
     if (myFilter != null) {
       stream = stream.filter(myFilter);
     }
@@ -167,14 +171,11 @@ public class ExecutionNode extends CachingSimpleNode {
     cleanUpCache();
   }
 
-  public void add(int index, ExecutionNode node) {
-    myChildrenList.add(index, node);
-    node.setFilter(myFilter);
-    cleanUpCache();
-  }
-
   void removeChildren() {
     myChildrenList.clear();
+    myErrors.set(0);
+    myWarnings.set(0);
+    myResult = null;
     cleanUpCache();
   }
 
@@ -222,7 +223,19 @@ public class ExecutionNode extends CachingSimpleNode {
       node.setFilter(myFilter);
       node.cleanUpCache();
     }
-    cleanUpCache();
+    if (getParent() != null) {
+      cleanUpCache();
+    }
+  }
+
+  public void setVisible(boolean visible) {
+    if (myVisible != visible) {
+      myVisible = visible;
+      SimpleNode parent = getParent();
+      if (parent instanceof CachingSimpleNode) {
+        ((CachingSimpleNode)parent).cleanUpCache();
+      }
+    }
   }
 
   public static boolean isFailed(@Nullable EventResult result) {
@@ -257,7 +270,7 @@ public class ExecutionNode extends CachingSimpleNode {
 
   @Override
   public boolean isAutoExpandNode() {
-    return myAutoExpandNode;
+    return myAutoExpandNode || isRunning() || isFailed() ;
   }
 
   public void setAutoExpandNode(boolean autoExpandNode) {
@@ -302,6 +315,25 @@ public class ExecutionNode extends CachingSimpleNode {
     else if (kind == MessageEvent.Kind.WARNING) {
       myWarnings.incrementAndGet();
     }
+  }
+
+  ExecutionNode copy(ExecutionNode parent) {
+    ExecutionNode copy = new ExecutionNode(myProject, parent);
+    copy.startTime = startTime;
+    copy.endTime = endTime;
+    copy.myTitle = myTitle;
+    copy.myTooltip = myTooltip;
+    copy.myHint = myHint;
+    copy.myResult = myResult;
+    copy.myAutoExpandNode = myAutoExpandNode;
+    copy.myNavigatable = myNavigatable;
+    copy.myPreferredIconValue = myPreferredIconValue;
+    copy.myErrors.set(myErrors.get());
+    copy.myWarnings.set(myWarnings.get());
+    copy.myFilter = myFilter;
+    copy.myName = myName;
+    copy.myClosedIcon = myClosedIcon;
+    return copy;
   }
 
   private String getCurrentHint() {
