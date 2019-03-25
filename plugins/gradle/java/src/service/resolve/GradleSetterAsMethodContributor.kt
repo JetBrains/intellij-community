@@ -17,10 +17,14 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 
 class GradleSetterAsMethodContributor : NonCodeMembersContributor() {
 
-  override fun getClassNames(): Collection<String> = listOf(
-    GRADLE_API_PROJECT,
-    GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY
-  )
+  companion object {
+    val knownDecoratedClasses = setOf(
+      GRADLE_API_PROJECT,
+      GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY
+    )
+  }
+
+  override fun getClassNames(): Collection<String> = knownDecoratedClasses
 
   override fun processDynamicElements(qualifierType: PsiType,
                                       aClass: PsiClass?,
