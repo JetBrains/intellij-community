@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.pom.java.LanguageLevel;
@@ -105,8 +104,7 @@ public class JavaKeywordCompletion {
   JavaKeywordCompletion(CompletionParameters parameters, JavaCompletionSession session) {
     myParameters = parameters;
     mySession = session;
-    myKeywordMatcher = Registry.is("ide.completion.typo.tolerance") ? session.getMatcher()
-                                                                    : new FixingLayoutPlainMatcher(session.getMatcher().getPrefix());
+    myKeywordMatcher = new StartOnlyMatcher(session.getMatcher());
     myPosition = parameters.getPosition();
     myPrevLeaf = prevSignificantLeaf(myPosition);
 
