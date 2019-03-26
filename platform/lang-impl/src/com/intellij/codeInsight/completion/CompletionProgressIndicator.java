@@ -12,7 +12,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -377,10 +376,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!myLookup.isShown()) {
       if (hideAutopopupIfMeaningless()) {
         return;
-      }
-
-      if (Registry.is("dump.threads.on.empty.lookup") && myLookup.isCalculating() && myLookup.getItems().isEmpty()) {
-        PerformanceWatcher.getInstance().dumpThreads("emptyLookup/", true);
       }
 
       if (!myLookup.showLookup()) {
