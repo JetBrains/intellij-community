@@ -19,6 +19,10 @@ import kotlin.streams.toList
 fun main() = generateMappings()
 
 private fun generateMappings() {
+  val exclusions = System.getProperty("mappings.json.exclude.paths")
+                     ?.split(",")
+                     ?.map(String::trim)
+                   ?: emptyList()
   val mappings = (loadIdeaGeneratedIcons() + loadNonGeneratedIcons("idea")).groupBy {
     "${it.product}#${it.set}"
   }.toSortedMap().values.flatMap {
@@ -29,6 +33,10 @@ private fun generateMappings() {
       } + it.first()
     }
     else it
+  }.filter { mapping ->
+    exclusions.none { excluded ->
+      mapping.path.startsWith(excluded)
+    }
   }
   val mappingsJson = mappings.joinToString(separator = ",\n") {
     it.toString().prependIndent("     ")
