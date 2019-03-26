@@ -64,30 +64,32 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     buildDialog(project, dir, builder);
 
     final Ref<String> selectedTemplateName = Ref.create(null);
-    final T createdElement =
-      builder.show(getErrorTitle(), getDefaultTemplateName(dir), new CreateFileFromTemplateDialog.FileCreator<T>() {
+    builder.show(getErrorTitle(), getDefaultTemplateName(dir),
+                 new CreateFileFromTemplateDialog.FileCreator<T>() {
 
-        @Override
-        public T createFile(@NotNull String name, @NotNull String templateName) {
-          selectedTemplateName.set(templateName);
-          return CreateFromTemplateAction.this.createFile(name, templateName, dir);
-        }
+                   @Override
+                   public T createFile(@NotNull String name, @NotNull String templateName) {
+                     selectedTemplateName.set(templateName);
+                     return CreateFromTemplateAction.this.createFile(name, templateName, dir);
+                   }
 
-        @Override
-        public boolean startInWriteAction() {
-          return CreateFromTemplateAction.this.startInWriteAction();
-        }
+                   @Override
+                   public boolean startInWriteAction() {
+                     return CreateFromTemplateAction.this.startInWriteAction();
+                   }
 
-        @Override
-        @NotNull
-        public String getActionName(@NotNull String name, @NotNull String templateName) {
-          return CreateFromTemplateAction.this.getActionName(dir, name, templateName);
-        }
-      });
-    if (createdElement != null) {
-      view.selectElement(createdElement);
-      postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
-    }
+                   @Override
+                   @NotNull
+                   public String getActionName(@NotNull String name, @NotNull String templateName) {
+                     return CreateFromTemplateAction.this.getActionName(dir, name, templateName);
+                   }
+                 },
+                 createdElement -> {
+                   if (createdElement != null) {
+                     view.selectElement(createdElement);
+                     postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
+                   }
+                 });
   }
 
   protected void postProcess(T createdElement, String templateName, Map<String,String> customProperties) {
