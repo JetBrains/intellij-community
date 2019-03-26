@@ -172,7 +172,7 @@ public class ThreadTracker {
         String trace = PerformanceWatcher.printStacktrace("", thread, stackTrace);
         String traceBefore = PerformanceWatcher.printStacktrace("", thread, traceBeforeWait);
 
-        String internalDiagnostic = stackTrace.length < 5 ? null : "(diagnostic: " +
+        String internalDiagnostic = stackTrace.length < 5 ? "stackTrace.length: "+stackTrace.length : "(diagnostic: " +
               "0: "+ stackTrace[0].getClassName() + " : "+ stackTrace[0].getClassName().equals("sun.misc.Unsafe")
               + " . " +stackTrace[0].getMethodName() +" : "+ stackTrace[0].getMethodName().equals("unpark")
               + " 2: "+ stackTrace[2].getClassName() +" : "+ stackTrace[2].getClassName().equals("java.util.concurrent.FutureTask")
