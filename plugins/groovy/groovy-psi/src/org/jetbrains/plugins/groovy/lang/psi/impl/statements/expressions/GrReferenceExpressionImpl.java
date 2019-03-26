@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
@@ -64,6 +65,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DO
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.getRValue;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRValue;
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.IncompleteKt.resolveIncomplete;
+import static org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalculatorKt.getTypeFromCandidate;
 
 /**
  * @author ilyas
@@ -188,7 +190,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
     }
 
-    PsiType result = getNominalTypeInner(resolved);
+    PsiType result = getNominalTypeInner(resolveResult);
     if (result == null) return null;
 
     result = TypesUtil.substituteAndNormalizeType(result, resolveResult.getSubstitutor(), resolveResult.getSpreadState(), this);
@@ -196,7 +198,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Nullable
-  private PsiType getNominalTypeInner(@Nullable PsiElement resolved) {
+  private PsiType getNominalTypeInner(GroovyResolveResult result) {
+    PsiElement resolved = result.getElement();
     if (resolved instanceof GroovyProperty) {
       return ((GroovyProperty)resolved).getPropertyType();
     }
@@ -247,14 +250,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         return method.getParameterList().getParameters()[0].getType();
       }
 
-      if (getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
-        //'class' property with explicit generic
-        PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null &&
-            CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
-            "getClass".equals(method.getName())) {
-          return getTypeFromClassRef();
-        }
+      if (result instanceof GroovyMethodResult) {
+        return getTypeFromCandidate((GroovyMethodResult)result, this);
       }
 
       return PsiUtil.getSmartReturnType(method);
