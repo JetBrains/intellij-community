@@ -10,6 +10,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -107,6 +108,11 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
       @Override
       public void settingsChanged(@NotNull CodeStyleSettings settings) {
         ensureCurrentPanel().reset(settings);
+      }
+
+      @Override
+      public void overridingStatusChanged() {
+        ApplicationManager.getApplication().invokeLater(() -> mySchemesPanel.updateOverridingMessage(), ModalityState.any());
       }
     });
 

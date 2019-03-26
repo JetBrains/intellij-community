@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,15 +26,15 @@ import org.editorconfig.configmanagement.LineEndingsManager;
 import org.editorconfig.configmanagement.StandardEditorConfigProperties;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.plugincomponents.EditorConfigNotifier;
+import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 public class Utils {
 
@@ -197,4 +198,32 @@ public class Utils {
     result.append("\n");
   }
 
+
+  public static boolean editorConfigExists(@NotNull Project project) {
+    SettingsProviderComponent settingsProvider  = SettingsProviderComponent.getInstance();
+    String basePath = project.getBasePath();
+    if (basePath == null) return false;
+    File projectDir = new File(basePath);
+    Set<String> rootDirs = settingsProvider.getRootDirs(project);
+    if (rootDirs.isEmpty()) {
+        rootDirs = Collections.singleton(basePath);
+    }
+    for (String rootDir : rootDirs) {
+      File currRoot = new File(rootDir);
+      while (currRoot != null) {
+        if (containsEditorConfig(currRoot)) return true;
+        if (EditorConfigRegistry.shouldStopAtProjectRoot() && FileUtil.filesEqual(currRoot, projectDir)) break;
+        currRoot = currRoot.getParentFile();
+      }
+    }
+    return false;
+  }
+
+  private static boolean containsEditorConfig(@NotNull File dir) {
+    if (dir.exists() && dir.isDirectory()) {
+      File file = new File(dir.getPath() + File.separator + ".editorconfig");
+      if (file.exists()) return true;
+    }
+    return false;
+  }
 }
