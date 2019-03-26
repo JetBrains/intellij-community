@@ -1907,4 +1907,11 @@ class Abc {
     myFixture.type('O')
     myFixture.assertPreferredCompletionItems 0, 'SubOther'
   }
+
+  void "test correct typos"() {
+    myFixture.configureByText("a.java", "class MyClass { MyCals<caret> }")
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult("class MyClass { MyClass<caret> }")
+  }
 }

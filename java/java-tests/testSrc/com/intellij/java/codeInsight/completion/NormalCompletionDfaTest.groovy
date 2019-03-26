@@ -142,7 +142,7 @@ public class Main {
 
     public static void main(String[] args) {
         PublicInterface i = PublicInterface.createPrivateImplementation();
-        i.getV<caret>x
+        i.getVa<caret>x
     }
 }'''
 

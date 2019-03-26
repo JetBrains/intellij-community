@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * For completion FAQ, see {@link CompletionContributor}.
@@ -45,13 +47,19 @@ public abstract class CompletionService {
   public void getVariantsFromContributors(final CompletionParameters parameters,
                                           @Nullable final CompletionContributor from,
                                           final Consumer<CompletionResult> consumer) {
+    getVariantsFromContributors(parameters, from, createMatcher(suggestPrefix(parameters), false), consumer);
+  }
+
+  protected void getVariantsFromContributors(CompletionParameters parameters,
+                                           @Nullable CompletionContributor from,
+                                           PrefixMatcher matcher, Consumer<CompletionResult> consumer) {
     final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
 
     for (int i = contributors.indexOf(from) + 1; i < contributors.size(); i++) {
       ProgressManager.checkCanceled();
       CompletionContributor contributor = contributors.get(i);
 
-      CompletionResultSet result = createResultSet(parameters, consumer, contributor);
+      CompletionResultSet result = createResultSet(parameters, consumer, contributor, matcher);
       contributor.fillCompletionVariants(parameters, result);
       if (result.isStopped()) {
         return;
@@ -60,7 +68,13 @@ public abstract class CompletionService {
   }
 
   protected abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<CompletionResult> consumer,
-                                                      @NotNull CompletionContributor contributor);
+                                                         @NotNull CompletionContributor contributor, PrefixMatcher matcher);
+
+  protected abstract String suggestPrefix(CompletionParameters parameters);
+
+  @NotNull
+  protected abstract PrefixMatcher createMatcher(String prefix, boolean typoTolerant);
+
 
   @Nullable
   public abstract CompletionProcess getCurrentCompletion();
@@ -74,7 +88,9 @@ public abstract class CompletionService {
   public void performCompletion(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
     final Set<LookupElement> lookupSet = ContainerUtil.newConcurrentSet();
 
-    getVariantsFromContributors(parameters, null, new BatchConsumer<CompletionResult>() {
+    AtomicBoolean typoTolerant = new AtomicBoolean();
+
+    BatchConsumer<CompletionResult> batchConsumer = new BatchConsumer<CompletionResult>() {
       @Override
       public void startBatch() {
         if (consumer instanceof BatchConsumer) {
@@ -91,11 +107,20 @@ public abstract class CompletionService {
 
       @Override
       public void consume(CompletionResult result) {
+        if (typoTolerant.get() && result.getLookupElement().getAutoCompletionPolicy() != AutoCompletionPolicy.NEVER_AUTOCOMPLETE) {
+          result = result.withLookupElement(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(result.getLookupElement()));
+        }
         if (lookupSet.add(result.getLookupElement())) {
           consumer.consume(result);
         }
       }
-    });
+    };
+    String prefix = suggestPrefix(parameters);
+    getVariantsFromContributors(parameters, null, createMatcher(prefix, false), batchConsumer);
+    if (lookupSet.isEmpty() && prefix.length() > 2) {
+      typoTolerant.set(true);
+      getVariantsFromContributors(parameters, null, createMatcher(prefix, true), batchConsumer);
+    }
   }
 
   public abstract CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher);
