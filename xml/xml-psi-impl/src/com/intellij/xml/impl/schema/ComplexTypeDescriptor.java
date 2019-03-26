@@ -50,8 +50,8 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     new FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement>() {
 
     @Override
-    protected XmlElementDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, final XmlElement p) {
-      return complexTypeDescriptor.doCollectElements();
+    protected XmlElementDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, final XmlElement context) {
+      return complexTypeDescriptor.doCollectElements(context);
     }
 
     @Override
@@ -137,29 +137,39 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   // Read-only calculation
-  private XmlElementDescriptor[] doCollectElements() {
+  private XmlElementDescriptor[] doCollectElements(XmlElement context) {
     final Map<String,XmlElementDescriptor> map = new LinkedHashMap<>(5);
-    createProcessor(map).startProcessing(myTag);
-    addSubstitutionGroups(map, myDocumentDescriptor, new HashSet<>());
-    filterAbstractElements(map);
-    return map.values().toArray(
-      XmlElementDescriptor.EMPTY_ARRAY
-    );
+    XmlNSDescriptor descriptor = null;
+    if (context instanceof XmlTag) {
+      descriptor = ((XmlTag)context).getNSDescriptor(myDocumentDescriptor.getDefaultNamespace(), true);
+    }
+    processElements(createProcessor(map, descriptor instanceof XmlNSDescriptorImpl ? (XmlNSDescriptorImpl)descriptor : myDocumentDescriptor), map);
+    return map.values().toArray(XmlElementDescriptor.EMPTY_ARRAY);
   }
 
-  protected XmlSchemaTagsProcessor createProcessor(final Map<String, XmlElementDescriptor> map) {
-    return new XmlSchemaTagsProcessor(myDocumentDescriptor) {
+  protected void processElements(XmlSchemaTagsProcessor processor, Map<String, XmlElementDescriptor> map) {
+    processor.startProcessing(myTag);
+    addSubstitutionGroups(map, myDocumentDescriptor, new HashSet<>());
+    filterAbstractElements(map);
+  }
+
+  protected XmlSchemaTagsProcessor createProcessor(final Map<String, XmlElementDescriptor> map, final XmlNSDescriptorImpl nsDescriptor) {
+    return new XmlSchemaTagsProcessor(nsDescriptor) {
       @Override
       protected void tagStarted(XmlTag tag, String tagName, XmlTag context, @Nullable XmlTag ref) {
         String refName = ref == null ? null : ref.getAttributeValue(REF_ATTR_NAME);
-        addElementDescriptor(tag, tagName, map, refName);
+        addElementDescriptor(tag, tagName, map, refName, myDocumentDescriptor);
       }
     };
   }
 
-  protected void addElementDescriptor(XmlTag tag, String tagName, Map<String, XmlElementDescriptor> map, @Nullable String refName) {
+  protected void addElementDescriptor(XmlTag tag,
+                                      String tagName,
+                                      Map<String, XmlElementDescriptor> map,
+                                      @Nullable String refName,
+                                      XmlNSDescriptorImpl nsDescriptor) {
     if ("element".equals(tagName) && tag.getAttribute("name") != null) {
-      XmlElementDescriptor element = myDocumentDescriptor.createElementDescriptor(tag);
+      XmlElementDescriptor element = nsDescriptor.createElementDescriptor(tag);
       String name = refName == null ? element.getName() : refName;
       addElementDescriptor(map, element, name);
     }
@@ -503,8 +513,12 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   }
 
+  public String getTypeName() {
+    return myTag.getAttributeValue(NAME_ATTR_NAME);
+  }
+
   @Override
   public String toString() {
-    return myTag.getAttributeValue(NAME_ATTR_NAME);
+    return getTypeName();
   }
 }
