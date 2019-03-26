@@ -187,6 +187,20 @@ class VisiblePackBuilderTest {
     assertCommits(visiblePack.visibleGraph, 2)
   }
 
+  @Test
+  fun `filter by range where ref is unresolved`() {
+    val graph = graph {
+      1(3) *"master"
+      2(3) *"feature"
+      3(4)
+      4()
+    }
+    val filters = VcsLogFilterObject.collection(VcsLogFilterObject.fromRange("master", "unknown"))
+
+    val visiblePack = graph.build(filters)
+    assertEquals(0, visiblePack.visibleGraph.visibleCommitCount, "Graph should be empty, but was: $graph")
+  }
+
   private fun GraphCommit<Int>.toVcsCommit(storage: VcsLogStorage) = TimedVcsCommitImpl(storage.getCommitId(this.id)!!.hash, storage.getHashes(this.parents), 1)
 
   private fun assertDoesNotContain(graph: VisibleGraph<Int>, id: Int) {
