@@ -37,13 +37,6 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.javaCoverageEngineExtension" interface="com.intellij.coverage.JavaCoverageEngineExtension"/>
   </extensionPoints>
-  <project-components>
-    <component>
-      <interface-class>com.intellij.coverage.CoverageDataManager</interface-class>
-      <implementation-class>com.intellij.coverage.CoverageDataManagerImpl</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-  </project-components>
   <actions>
     <group id="IDEACoverageMenu" popup="false">
       <reference ref="CoverageMenu"/>
