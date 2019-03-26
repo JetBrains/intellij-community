@@ -1894,6 +1894,8 @@ class Abc {
 
   void testPutCaretInsideParensInFixedPlusVarargOverloads() { doTest('\n') }
 
+  void testSuggestCurrentClassInSecondSuperGenericParameter() { doTest('\n') }
+
   void "test after new editing prefix back and forth when sometimes there are expected type suggestions and sometimes not"() {
     myFixture.addClass("class Super {}")
     myFixture.addClass("class Sub extends Super {}")
