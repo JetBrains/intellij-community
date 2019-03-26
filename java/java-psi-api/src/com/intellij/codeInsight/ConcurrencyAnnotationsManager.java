@@ -17,7 +17,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
@@ -42,6 +41,8 @@ public class ConcurrencyAnnotationsManager {
     fillDefaults(myGuardedByList, GUARDED_BY);
     fillDefaults(myThreadSafeList, THREAD_SAFE);
     fillDefaults(myNotThreadSafeList, NOT_THREAD_SAFE);
+
+    myImmutableList.add("com.google.auto.value.AutoValue");
   }
 
   private static void fillDefaults(List<? super String> list, final String annoName) {
