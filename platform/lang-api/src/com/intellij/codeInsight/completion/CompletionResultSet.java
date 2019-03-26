@@ -145,7 +145,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     if (stop) {
       stopHere();
     }
-    myCompletionService.getVariantsFromContributors(parameters, myContributor, new BatchConsumer<CompletionResult>() {
+    myCompletionService.getVariantsFromContributors(parameters, myContributor, getPrefixMatcher(), new BatchConsumer<CompletionResult>() {
       @Override
       public void startBatch() {
         CompletionResultSet.this.startBatch();

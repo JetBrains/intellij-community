@@ -74,17 +74,30 @@ public final class CompletionServiceImpl extends CompletionService {
   }
 
   @Override
-  protected CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<CompletionResult> consumer,
-                                             @NotNull CompletionContributor contributor) {
+  protected String suggestPrefix(CompletionParameters parameters) {
     final PsiElement position = parameters.getPosition();
     final int offset = parameters.getOffset();
     TextRange range = position.getTextRange();
     assert range.containsOffset(offset) : position + "; " + offset + " not in " + range;
     //noinspection deprecation
-    final String prefix = CompletionData.findPrefixStatic(position, offset);
-    CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
-    CompletionSorterImpl sorter = defaultSorter(parameters, matcher);
-    return new CompletionResultSetImpl(consumer, matcher, contributor, parameters, sorter, null);
+    return CompletionData.findPrefixStatic(position, offset);
+  }
+
+  @Override
+  @NotNull
+  protected PrefixMatcher createMatcher(String prefix, boolean typoTolerant) {
+    return createMatcher(prefix, true, typoTolerant);
+  }
+
+  @NotNull
+  private static CamelHumpMatcher createMatcher(String prefix, boolean caseSensitive, boolean typoTolerant) {
+    return new CamelHumpMatcher(prefix, caseSensitive, typoTolerant);
+  }
+
+  @Override
+  protected CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<CompletionResult> consumer,
+                                             @NotNull CompletionContributor contributor, PrefixMatcher matcher) {
+    return new CompletionResultSetImpl(consumer, matcher, contributor, parameters, defaultSorter(parameters, matcher), null);
   }
 
   @Override
@@ -178,7 +191,9 @@ public final class CompletionServiceImpl extends CompletionService {
     @NotNull
     @Override
     public CompletionResultSet caseInsensitive() {
-      return withPrefixMatcher(new CamelHumpMatcher(getPrefixMatcher().getPrefix(), false));
+      PrefixMatcher matcher = getPrefixMatcher();
+      boolean typoTolerant = matcher instanceof CamelHumpMatcher && ((CamelHumpMatcher)matcher).isTypoTolerant();
+      return withPrefixMatcher(createMatcher(matcher.getPrefix(), false, typoTolerant));
     }
 
     @Override

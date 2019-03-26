@@ -404,6 +404,7 @@ public class NameUtil {
     private final String pattern;
     private String separators = "";
     private MatchingCaseSensitivity caseSensitivity = MatchingCaseSensitivity.NONE;
+    private boolean typoTolerant = Registry.is("ide.completion.typo.tolerance");
 
     public MatcherBuilder(String pattern) {
       this.pattern = pattern;
@@ -419,9 +420,14 @@ public class NameUtil {
       return this;
     }
 
+    public MatcherBuilder typoTolerant() {
+      this.typoTolerant = true;
+      return this;
+    }
+
     public MinusculeMatcher build() {
-      return Registry.is("ide.completion.typo.tolerance") ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators)
-                                                          : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+      return typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators)
+                          : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
     }
   }
 
