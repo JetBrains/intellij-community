@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.find.FindSettings;
@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -177,7 +178,8 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     @Override
     protected void canRun() throws ConfigurationException {
       super.canRun();
-      if (!checkType(getMigrationType())) throw new ConfigurationException("\'" + myTypeCodeFragment.getText() + "\' is invalid type");
+      if (!checkType(getMigrationType()))
+        throw new ConfigurationException("\'" + StringUtil.escapeXmlEntities(myTypeCodeFragment.getText()) + "\' is an invalid type");
       if (isVoidVariableMigration()) throw new ConfigurationException("\'void\' is not applicable");
     }
 
