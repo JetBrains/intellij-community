@@ -78,14 +78,18 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         collectCommitsReachableFromHeads(dataPack, explicitMatchingHeads)
         else TIntHashSet()
 
-      val commitsForRangeFilter = filterByRange(dataPack, rangeFilters)
-      if (commitsForRangeFilter != null) {
-        commitCandidates = TroveUtil.union(listOf(commitsReachableFromHeads, commitsForRangeFilter))
-        forceFilterByVcs = false
-      }
-      else {
-        commitCandidates = null
-        forceFilterByVcs = true
+      when (val commitsForRangeFilter = filterByRange(dataPack, rangeFilters)) {
+        is RangeFilterResult.Commits -> {
+          commitCandidates = TroveUtil.union(listOf(commitsReachableFromHeads, commitsForRangeFilter.commits))
+          forceFilterByVcs = false
+        }
+        is RangeFilterResult.Error -> {
+          commitCandidates = null
+          forceFilterByVcs = true
+        }
+        is RangeFilterResult.InvalidRange -> {
+          return Pair(VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false, filters), CommitCountStage.ALL)
+        }
       }
 
       /*
@@ -178,7 +182,13 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount, namesData)
   }
 
-  private fun filterByRange(dataPack: DataPack, rangeFilter: VcsLogRangeFilter): TIntHashSet? {
+  private sealed class RangeFilterResult {
+    class Commits(val commits: TIntHashSet) : RangeFilterResult()
+    object InvalidRange : RangeFilterResult()
+    object Error: RangeFilterResult()
+  }
+
+  private fun filterByRange(dataPack: DataPack, rangeFilter: VcsLogRangeFilter): RangeFilterResult {
     val set = TIntHashSet()
     for (range in rangeFilter.ranges) {
       var rangeResolvedAnywhere = false
@@ -186,7 +196,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         val resolvedRange = resolveCommits(dataPack, root, range)
         if (resolvedRange != null) {
           val commits = getCommitsByRange(dataPack, root, resolvedRange)
-          if (commits == null) return null // error => will be handled by the VCS provider
+          if (commits == null) return RangeFilterResult.Error // error => will be handled by the VCS provider
           else TroveUtil.addAll(set, commits)
           rangeResolvedAnywhere = true
         }
@@ -195,10 +205,10 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       // Otherwise, if none of the roots know about the range => return null and let VcsLogProviders handle the range
       if (!rangeResolvedAnywhere) {
         LOG.warn("Range limits unresolved for: $range")
-        return null
+        return RangeFilterResult.InvalidRange
       }
     }
-    return set
+    return RangeFilterResult.Commits(set)
   }
 
   private fun resolveCommits(dataPack: DataPack, root: VirtualFile, range: VcsLogRangeFilter.RefRange): Pair<CommitId, CommitId>? {
