@@ -229,8 +229,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
 
   public static void makeFinalIfNeeded(@NotNull InsertionContext context, @NotNull PsiVariable variable) {
     PsiElement place = context.getFile().findElementAt(context.getTailOffset() - 1);
-    if (!Registry.is("java.completion.make.outer.variables.final") ||
-        place == null || PsiUtil.isLanguageLevel8OrHigher(place) || JspPsiUtil.isInJspFile(place)) {
+    if (place == null || PsiUtil.isLanguageLevel8OrHigher(place) || JspPsiUtil.isInJspFile(place)) {
       return;
     }
 
