@@ -185,7 +185,7 @@ class CheckOutputThread(PyDBDaemonThread):
         pydb_daemon_threads = PyDBDaemonThread.created_pydb_daemon_threads
         started_at = time.time()
         while time.time() < started_at + timeout:
-            if len(pydb_daemon_threads) == 1 and pydb_daemon_threads.get(self, None) is 1:
+            if len(pydb_daemon_threads) == 1 and pydb_daemon_threads.get(self, None):
                 return
         pydev_log.debug("The following pydb threads may not finished correctly: %s"
                         % ', '.join([t.getName() for t in pydb_daemon_threads if t is not self]))
