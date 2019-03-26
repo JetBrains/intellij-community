@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module relativePaths="true" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <exclude-output />
+<module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5">
+    <output url="file://$MODULE_DIR$/target/classes" />
+    <output-test url="file://$MODULE_DIR$/target/test-classes" />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/compatibilityResources" type="java-resource" />
       <excludeFolder url="file://$MODULE_DIR$/out" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -69,6 +71,53 @@
     <orderEntry type="library" name="NanoXML" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.maven:maven-embedder:3.0.5" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.maven:maven-settings:3.0.5" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.maven:maven-core:3.0.5" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.maven:maven-settings-builder:3.0.5" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.maven:maven-repository-metadata:3.0.5" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.maven:maven-aether-provider:3.0.5" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.aether:aether-spi:1.13.1" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.aether:aether-impl:1.13.1" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.aether:aether-api:1.13.1" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.aether:aether-util:1.13.1" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.plexus:plexus-interpolation:1.14" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.maven:maven-plugin-api:3.0.5" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.maven:maven-model-builder:3.0.5" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Maven: org.apache.maven:maven-compat:3.0.5" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.plexus:plexus-utils:2.0.6" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.plexus:plexus-classworlds:2.4" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.sisu:sisu-inject-plexus:2.3.0" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.sisu:sisu-inject-bean:2.3.0" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.sisu:sisu-guice:no_aop:3.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.sisu:sisu-guava:0.9.9" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.plexus:plexus-component-annotations:1.5.5" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.plexus:plexus-sec-dispatcher:1.3" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.plexus:plexus-cipher:1.7" level="project" />
+    <orderEntry type="library" name="Maven: commons-cli:commons-cli:1.2" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.nexus:nexus-indexer:3.0.4" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.nexus:nexus-indexer-artifact:1.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.plugin:plugin-host-api:1.0.3" level="project" />
+    <orderEntry type="library" name="Maven: javax.inject:javax.inject:1" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.maven:maven-artifact:2.2.1" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.maven:maven-model:2.2.1" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.maven.wagon:wagon-provider-api:1.0-beta-6" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.maven.archetype:archetype-common:2.0-alpha-4" level="project" />
+    <orderEntry type="library" name="Maven: net.sourceforge.jchardet:jchardet:1.0" level="project" />
+    <orderEntry type="library" name="Maven: dom4j:dom4j:1.6.1" level="project" />
+    <orderEntry type="library" name="Maven: xml-apis:xml-apis:1.0.b2" level="project" />
+    <orderEntry type="library" name="Maven: jdom:jdom:1.0" level="project" />
+    <orderEntry type="library" name="Maven: commons-io:commons-io:1.3.1" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.plexus:plexus-velocity:1.1.3" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.velocity:velocity:1.5" level="project" />
+    <orderEntry type="library" name="Maven: commons-lang:commons-lang:2.1" level="project" />
+    <orderEntry type="library" name="Maven: oro:oro:2.0.8" level="project" />
+    <orderEntry type="library" name="Maven: commons-collections:commons-collections:3.2" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.spice:spice-inject-plexus:1.3.4" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.spice:spice-inject-bean:1.3.4" level="project" />
+    <orderEntry type="library" name="Maven: org.sonatype.spice.inject:guice-patches:noaop:2.1.6" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.lucene:lucene-core:2.4.1" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.lucene:lucene-highlighter:2.4.1" level="project" />
   </component>
   <component name="copyright">
     <Base>

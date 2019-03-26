@@ -258,7 +258,6 @@ public class FileReferenceSet {
     }
     curSep = curSep == wsHead ? curSep + sepLen : wsHead; // reset offsets & start again for simplicity
     sepLen = 0;
-    System.out.println("======");
 
     while (curSep >= 0) {
       int nextSep = findSeparatorOffset(decoded, curSep + sepLen);
@@ -275,7 +274,6 @@ public class FileReferenceSet {
                   "text=" + refText + ", start=" + startInElement);
       }
       FileReference reference = createFileReference(new TextRange(refStart, refEnd), index++, refText);
-      System.out.println("rt:" + refText + ", start: " + refStart + ", end: " + refEnd);
       if (reference != null) {
         referencesList.add(reference);
       }

@@ -1,0 +1,1 @@
+non_hardcoded_func(rb"./<caret>");

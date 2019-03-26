@@ -1435,22 +1435,36 @@ public class PythonCompletionTest extends PyTestCase {
     assertContainsElements(suggested, "'k1'", "'k2'");
   }
 
-  public void testPathCompletion() {
+  public void testStringAbsolutePathCompletion() {
     String newPath = myFixture.getTestDataPath() + "/pathCompletion/";
-    final List<String> suggested = doTestByText("read_csv(\"" + newPath + "<caret>\")", 1);
-    String trimmedPath = newPath.startsWith("/") ? newPath.substring(1) : newPath;
-    String[] strings = ArrayUtil.toStringArray(
-      ContainerUtil.map(new String[]{"first", "second"}, s -> trimmedPath + s));
-    assertContainsElements(suggested, strings);
+    final List<String> suggested = doTestByText("not_a_hardcoded_func(\"" + newPath + "<caret>\")", 1);
+    System.out.println("Suggested:" + suggested);
+    assertContainsElements(suggested, "a.py", "subdir");
   }
 
-  public void testPathCompletion(String strToComplete, List<String> expectedResult) {
-    String newPath = myFixture.getTestDataPath() + "/pathCompletion/";
-    final List<String> suggested = doTestByText(strToComplete, 1);
-    String trimmedPath = newPath.startsWith("/") ? newPath.substring(1) : newPath;
-    String[] strings = ArrayUtil.toStringArray(
-      ContainerUtil.map(new String[]{"first", "second"}, s -> trimmedPath + s));
-    assertContainsElements(suggested, strings);
+  public void testStringRelativePathHardcodedFunc() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("hardcodedFunction.py");
+    myFixture.completeBasic();
+    assertSameElements(myFixture.getLookupElementStrings(), "a.py", "hardcodedFunction.py");
+  }
+
+  public void testMultipartStringPath() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertSameElements(suggested, "a.py", "subdir");
+  }
+
+  public void testRbStringPath() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertSameElements(suggested, "a.py", "subdir");
   }
 
   private void assertNoVariantsInExtendedCompletion() {
