@@ -14,7 +14,7 @@ public class ClassNewInstance {
         newInstance();
     }
 
-    void alsoBad(Class<XX> xx) throws IllegalAccessException {
+    void alsoBad(Class<XX> xx) throws IllegalAccessException, InstantiationException {
         xx.<warning descr="Call to 'newInstance()' may throw undeclared checked exceptions">newInstance</warning>();
     }
 
