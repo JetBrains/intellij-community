@@ -15,34 +15,29 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class FixingLayoutPlainMatcher extends PrefixMatcher {
-  @Nullable private final String myAlternativePrefix;
+public class StartOnlyMatcher extends PrefixMatcher {
+  private final PrefixMatcher myDelegate;
 
-  public FixingLayoutPlainMatcher(String prefix) {
-    super(prefix);
-    myAlternativePrefix = FixingLayoutMatcher.fixLayout(prefix);
+  public StartOnlyMatcher(PrefixMatcher delegate) {
+    super(delegate.getPrefix());
+    myDelegate = delegate;
   }
 
   @Override
   public boolean isStartMatch(String name) {
-    return StringUtil.startsWithIgnoreCase(name, getPrefix()) || 
-           myAlternativePrefix != null && StringUtil.startsWithIgnoreCase(name, myAlternativePrefix);
+    return myDelegate.isStartMatch(name);
   }
 
   @Override
   public boolean prefixMatches(@NotNull String name) {
-    return StringUtil.containsIgnoreCase(name, getPrefix()) || 
-           myAlternativePrefix != null && StringUtil.containsIgnoreCase(name, myAlternativePrefix);
+    return myDelegate.prefixMatches(name) && myDelegate.isStartMatch(name);
   }
 
   @NotNull
   @Override
   public PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
-    return new FixingLayoutPlainMatcher(prefix);
+    return new StartOnlyMatcher(myDelegate.cloneWithPrefix(prefix));
   }
 }
