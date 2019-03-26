@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.patterns
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PsiMethodPattern
+import com.intellij.psi.PsiMethod
 import com.intellij.util.ProcessingContext
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
@@ -11,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder.checkKind
 
 val closureCallKey: Key<GrCall> = Key.create<GrCall>("groovy.pattern.closure.call")
 
@@ -32,6 +34,12 @@ fun psiMethod(containingClass: String, vararg names: String): PsiMethodPattern {
   val methodPattern = GroovyPatterns.psiMethod()
   val withName = if (names.isEmpty()) methodPattern else methodPattern.withName(*names)
   return withName.definedInClass(containingClass)
+}
+
+fun PsiMethodPattern.withKind(kind: Any): PsiMethodPattern {
+  return with(object : PatternCondition<PsiMethod>("withKind") {
+    override fun accepts(t: PsiMethod, context: ProcessingContext?): Boolean = checkKind(t, kind)
+  })
 }
 
 fun groovyClosure(): GroovyClosurePattern = GroovyClosurePattern()
