@@ -50,17 +50,18 @@ public class TestComparisionFailedState extends TestFailedState {
                                     @NotNull final String actualText,
                                     @NotNull final String expectedText,
                                     @Nullable final String filePath) {
-    this(localizedMessage, stackTrace, actualText, expectedText, filePath, null);
+    this(localizedMessage, stackTrace, actualText, expectedText, true, filePath, null);
   }
 
   public TestComparisionFailedState(@Nullable final String localizedMessage,
                                     @Nullable final String stackTrace,
                                     @NotNull final String actualText,
                                     @NotNull final String expectedText,
+                                    boolean printExpectedAndActualValues,
                                     @Nullable final String expectedFilePath,
                                     @Nullable final String actualFilePath) {
     super(localizedMessage, stackTrace);
-    myHyperlink = new DiffHyperlink(expectedText, actualText, expectedFilePath, actualFilePath, true);
+    myHyperlink = new DiffHyperlink(expectedText, actualText, expectedFilePath, actualFilePath, printExpectedAndActualValues);
 
     myErrorMsgPresentation = StringUtil.isEmptyOrSpaces(localizedMessage) ? "" : localizedMessage;
     myStacktracePresentation = StringUtil.isEmptyOrSpaces(stackTrace) ? "" : stackTrace;
