@@ -405,7 +405,7 @@
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
       <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" />
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
-      <separator/>
+      <separator text="File templates"/>
       <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
