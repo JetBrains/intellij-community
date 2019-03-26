@@ -6,14 +6,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Roman.Chernyatchik
  */
 public abstract class AbstractCoverageProjectViewNodeDecorator implements ProjectViewNodeDecorator {
+  @Nullable
   private final CoverageDataManager myCoverageDataManager;
 
-  public AbstractCoverageProjectViewNodeDecorator(final CoverageDataManager coverageDataManager) {
+  public AbstractCoverageProjectViewNodeDecorator(@Nullable CoverageDataManager coverageDataManager) {
     myCoverageDataManager = coverageDataManager;
   }
 
@@ -21,6 +23,7 @@ public abstract class AbstractCoverageProjectViewNodeDecorator implements Projec
     myCoverageDataManager = CoverageDataManager.getInstance(project);
   }
 
+  @Nullable
   protected CoverageDataManager getCoverageDataManager() {
     return myCoverageDataManager;
   }
