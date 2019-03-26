@@ -139,6 +139,11 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     }
   }
 
+  @Override
+  public boolean hasManagement() throws ExecutionException {
+    return useConda || super.hasManagement();
+  }
+
   @NotNull
   private List<PyPackage> parseCondaToolOutput(@NotNull String s) throws ExecutionException {
     final String[] lines = StringUtil.splitByLines(s);
