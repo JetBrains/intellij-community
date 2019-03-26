@@ -42,12 +42,12 @@ class JBBundledAnnotationsProviderTest : LightPlatformTestCase() {
     val provider = JBBundledAnnotationsProvider()
     val lib = createLibrary()
 
-    assertThat(provider.getLocations(lib, "junit", "junit", "4.12"))
+    assertThat(provider.getLocations(lib, "junit", "junit", "4.1"))
       .hasSize(1)
       .usingElementComparatorIgnoringFields("myRepositoryUrls")
       .containsOnly(AnnotationsLocation("org.jetbrains.externalAnnotations.junit", "junit", "4.12-an1"))
 
-    assertThat(provider.getLocations(lib, "junit", "junit", "4.15"))
+    assertThat(provider.getLocations(lib, "junit", "junit", "4.9"))
       .hasSize(1)
       .usingElementComparatorIgnoringFields("myRepositoryUrls")
       .containsOnly(AnnotationsLocation("org.jetbrains.externalAnnotations.junit", "junit", "4.12-an1"))
@@ -58,7 +58,7 @@ class JBBundledAnnotationsProviderTest : LightPlatformTestCase() {
     val provider = JBBundledAnnotationsProvider()
     val lib = createLibrary()
 
-    assertThat(provider.getLocations(lib, "junit", "junit", "4.11")).hasSize(0)
+    assertThat(provider.getLocations(lib, "junit", "junit", "3.9")).hasSize(0)
     assertThat(provider.getLocations(lib, "junit", "junit", "5.0")).hasSize(0)
   }
 
