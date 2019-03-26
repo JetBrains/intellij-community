@@ -86,10 +86,16 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @Nullable
   private String getCondaDirectory() {
-    final VirtualFile homeDirectory = getSdk().getHomeDirectory();
+    final VirtualFile condaDirectory = getCondaDirectory(getSdk());
+    return condaDirectory == null ? null : condaDirectory.getPath();
+  }
+
+  @Nullable
+  public static VirtualFile getCondaDirectory(@NotNull Sdk sdk) {
+    final VirtualFile homeDirectory = sdk.getHomeDirectory();
     if (homeDirectory == null) return null;
-    if (SystemInfo.isWindows) return homeDirectory.getParent().getPath();
-    return homeDirectory.getParent().getParent().getPath();
+    if (SystemInfo.isWindows) return homeDirectory.getParent();
+    return homeDirectory.getParent().getParent();
   }
 
   @Override
