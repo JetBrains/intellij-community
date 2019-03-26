@@ -482,6 +482,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     uiDefaults.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
     uiDefaults.put("Balloon.error.textInsets", new JBInsets(3, 8, 3, 8).asUIResource());
+    if (Registry.is("ide.tree.ui.experimental")) {
+      uiDefaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
+      uiDefaults.put("Tree.repaintWholeRow", true);
+    }
 
     patchFileChooserStrings(uiDefaults);
 
