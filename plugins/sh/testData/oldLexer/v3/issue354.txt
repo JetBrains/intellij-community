@@ -1,0 +1,6 @@
+$ ('$')
+{ ('{')
+word ('var')
+Parameter expansion operator '##' ('##')
+word ('abc')
+} ('}')

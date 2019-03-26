@@ -1,0 +1,8 @@
+word ('read')
+WHITE_SPACE (' ')
+STRING2 (''test'')
+WHITE_SPACE (' ')
+assignment_word ('a')
+[ ('[')
+number ('0')
+] (']')

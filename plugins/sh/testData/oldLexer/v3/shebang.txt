@@ -1,0 +1,7 @@
+shebang ('#!\n')
+shebang ('#!/bin/bash\n')
+shebang ('#!/bin/bash\n')
+shebang ('#!/bin/bash\n')
+\n ('\n')
+\n ('\n')
+shebang ('#!/bin/bash')

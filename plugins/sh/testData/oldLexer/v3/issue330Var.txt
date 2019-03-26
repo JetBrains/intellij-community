@@ -1,0 +1,7 @@
+word ('eval')
+WHITE_SPACE (' ')
+string_begin ('"')
+string_content ('\${')
+var ('$a')
+string_content ('}')
+string_end ('"')

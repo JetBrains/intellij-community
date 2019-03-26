@@ -1,0 +1,4 @@
+$ ('$')
+{ ('{')
+Parameter expansion operator '#' ('#')
+} ('}')

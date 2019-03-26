@@ -4,8 +4,6 @@ import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
 public class BashFileLexerTest extends LexerTestCase {
   @Override
   protected Lexer createLexer() {
@@ -20,7 +18,7 @@ public class BashFileLexerTest extends LexerTestCase {
   @NotNull
   @Override
   protected String getPathToTestDataFile(String extension) {
-    return new File(getDirPath(), getTestName(true) + extension).getAbsolutePath();
+    return getDirPath() + "/" + getTestName(true) + extension;
   }
 
   public void testFirst()       { doFileTest("sh"); }

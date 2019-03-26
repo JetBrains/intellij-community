@@ -1,0 +1,8 @@
+$ ('$')
+{ ('{')
+Parameter expansion operator '#' ('#')
+word ('array_var')
+[ ('[')
+Parameter expansion operator '@' ('@')
+] (']')
+} ('}')

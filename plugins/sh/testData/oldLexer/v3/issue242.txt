@@ -1,0 +1,8 @@
+word ('eval')
+WHITE_SPACE (' ')
+string_begin ('"')
+var ('$1')
+string_content ('=\$(printf 'a' \"')
+var ('$1')
+string_content ('\")')
+string_end ('"')

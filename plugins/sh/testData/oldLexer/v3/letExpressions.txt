@@ -1,0 +1,7 @@
+let ('let')
+WHITE_SPACE (' ')
+assignment_word ('a')
++= ('+=')
+int ('1')
+\n ('\n')
+let ('let')
