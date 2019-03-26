@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyClosurePattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
+import org.jetbrains.plugins.groovy.lang.resolve.processReceiverType
 
 /**
  * @author Vladislav.Soroka
@@ -64,6 +65,6 @@ class GradleProjectContributor : GradleMethodContextContributor {
   }
 
   override fun process(methodCallInfo: List<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
-    return processDelegatedDeclarations(processor, state, place, GRADLE_API_PROJECT)
+    return GradleProjectAwareType(GRADLE_API_PROJECT, place.containingFile).processReceiverType(processor, state, place)
   }
 }

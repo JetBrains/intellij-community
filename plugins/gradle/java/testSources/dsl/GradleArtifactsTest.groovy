@@ -16,6 +16,11 @@ import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassName
 @CompileStatic
 class GradleArtifactsTest extends GradleHighlightingBaseTest implements ResolveTest {
 
+  @Override
+  protected List<String> getParentCalls() {
+    return []
+  }
+
   @Test
   void artifactsTest() {
     importProject("apply plugin: 'java'")
@@ -40,11 +45,6 @@ class GradleArtifactsTest extends GradleHighlightingBaseTest implements ResolveT
     } run()
   }
 
-  @Override
-  protected List<String> getParentCalls() {
-    return super.getParentCalls() + 'buildscript'
-  }
-
   void 'closure delegate'() {
     doTest('artifacts { <caret> }') {
       closureDelegateTest(GRADLE_API_ARTIFACT_HANDLER, 1)
@@ -58,7 +58,7 @@ class GradleArtifactsTest extends GradleHighlightingBaseTest implements ResolveT
   }
 
   void 'unresolved reference'() {
-    doTest('artifacts { <caret>foo }') {
+    doTest('artifacts { <caret>foo }', super.getParentCalls()) {
       resolveTest(null)
     }
   }
