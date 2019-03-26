@@ -24,6 +24,7 @@ class GradleArtifactHandlerContributor : NonCodeMembersContributor() {
                                       processor: PsiScopeProcessor,
                                       place: PsiElement,
                                       state: ResolveState) {
+    if (qualifierType !is GradleProjectAwareType) return
     if (clazz == null) return
     if (!processor.shouldProcessMethods()) return
 
