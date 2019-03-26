@@ -20,7 +20,18 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 class PyOverridingClassDunderMembersProvider : PyClassMembersProviderBase(), PyOverridingClassMembersProvider {
 
   override fun resolveMember(type: PyClassType, name: String, location: PsiElement?, resolveContext: PyResolveContext): PsiElement? {
-    return if (name !in processedMembers) null else super.resolveMember(type, name, location, resolveContext)
+    if (PyUtil.isObjectClass(type.pyClass)) return null
+
+    val pyLocation = location as? PyExpression
+    val context = resolveContext.typeEvalContext
+    val direction = if (pyLocation != null && context.maySwitchToAST(location)) AccessDirection.of(pyLocation) else AccessDirection.READ
+
+    return when (name) {
+      PyNames.__CLASS__ -> processDunderClass(type, pyLocation, direction, context)
+      PyNames.DOC -> processNotOverridden(type, PyNames.DOC, pyLocation, direction, context, overridesDocOrModule(type, location).first)
+      "__module__" -> processNotOverridden(type, "__module__", pyLocation, direction, context, overridesDocOrModule(type, location).second)
+      else -> emptyList()
+    }.firstOrNull()
   }
 
   override fun getMembers(clazz: PyClassType, location: PsiElement?, context: TypeEvalContext): Collection<PyCustomMember> {
@@ -31,27 +42,46 @@ class PyOverridingClassDunderMembersProvider : PyClassMembersProviderBase(), PyO
 
     val result = mutableListOf<PyCustomMember>()
 
-    if (clazz.isDefinition && clazz.pyClass.isNewStyleClass(context) || /* override */
-        !clazz.isDefinition && !clazz.pyClass.isNewStyleClass(context) /* provide */) {
-      result.addAll(resolveInObject(clazz, PyNames.__CLASS__, pyLocation, direction, context))
-    }
+    result.addAll(toCustomMembers(PyNames.__CLASS__, processDunderClass(clazz, pyLocation, direction, context)))
 
     val (overridesDoc, overridesModule) = overridesDocOrModule(clazz, location)
-    if (!overridesDoc) result.addAll(resolveInObject(clazz, PyNames.DOC, pyLocation, direction, context))
-    if (!overridesModule) result.addAll(resolveInObject(clazz, "__module__", pyLocation, direction, context))
+    result.addAll(toCustomMembers(PyNames.DOC, processNotOverridden(clazz, PyNames.DOC, pyLocation, direction, context, overridesDoc)))
+    result.addAll(toCustomMembers("__module__", processNotOverridden(clazz, "__module__", pyLocation, direction, context, overridesModule)))
 
     return result
   }
+
+  private fun processDunderClass(type: PyClassType,
+                                 location: PyExpression?,
+                                 direction: AccessDirection,
+                                 context: TypeEvalContext): List<PsiElement> {
+    return if (type.isDefinition && type.pyClass.isNewStyleClass(context) || /* override */
+               !type.isDefinition && !type.pyClass.isNewStyleClass(context) /* provide */) {
+      resolveInObject(type, PyNames.__CLASS__, location, direction, context)
+    }
+    else emptyList()
+  }
+
+  private fun processNotOverridden(type: PyClassType,
+                                   name: String,
+                                   location: PyExpression?,
+                                   direction: AccessDirection,
+                                   context: TypeEvalContext,
+                                   overridden: Boolean): List<PsiElement> {
+    return if (!overridden) resolveInObject(type, name, location, direction, context) else emptyList()
+  }
+
+  private fun toCustomMembers(name: String, resolved: List<PsiElement>) = resolved.map { PyCustomMember(name, it) }
 
   private fun resolveInObject(type: PyClassType,
                               name: String,
                               location: PyExpression?,
                               direction: AccessDirection,
-                              context: TypeEvalContext): List<PyCustomMember> {
+                              context: TypeEvalContext): List<PsiElement> {
     val objectType = PyBuiltinCache.getInstance(type.pyClass).objectType ?: return emptyList()
     val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context)
     val results = objectType.resolveMember(name, location, direction, resolveContext) ?: return emptyList()
-    return results.asSequence().mapNotNull { it.element }.map { PyCustomMember(name, it) }.toList()
+    return results.mapNotNull { it.element }
   }
 
   private fun overridesDocOrModule(type: PyClassType, location: PsiElement?): Pair<Boolean, Boolean> {
@@ -77,9 +107,5 @@ class PyOverridingClassDunderMembersProvider : PyClassMembersProviderBase(), PyO
     if (!type.isDefinition) cls.processInstanceLevelDeclarations(processor, location)
 
     return overridesDoc to overridesModule
-  }
-
-  companion object {
-    private val processedMembers = listOf<String>(PyNames.__CLASS__, PyNames.DOC, "__module__")
   }
 }
