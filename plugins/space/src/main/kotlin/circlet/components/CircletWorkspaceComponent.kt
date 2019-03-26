@@ -23,7 +23,7 @@ private val log = logger<CircletWorkspaceComponent>()
 // monitors CircletConfigurable state, creates and exposed instance of Workspace, provides various state properties and callbacks.
 class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), LifetimedComponent by SimpleLifetimedComponent() {
 
-    private val ideaClintPersistenceConfiguration = PersistenceConfiguration()
+    private val ideaClientPersistenceConfiguration = PersistenceConfiguration()
 
     private val workspacesLifetimes = SequentialLifetimes(lifetime)
     private val manager = mutableProperty<WorkspaceManager?>(null)
@@ -60,7 +60,7 @@ class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), 
 
         val lt = workspacesLifetimes.next()
         val wsConfig = ideaConfig(server)
-        val wss = WorkspaceManager(lt, this, InMemoryPersistence(), IdeaPasswordSafePersistence, ideaClintPersistenceConfiguration, wsConfig)
+        val wss = WorkspaceManager(lt, this, InMemoryPersistence(), IdeaPasswordSafePersistence, ideaClientPersistenceConfiguration, wsConfig)
         val response = accessTokenInteractive(lifetime, wsConfig)
         if (response is OAuthTokenResponse.Success) {
             log.info { "response = ${response.accessToken} ${response.expiresIn} ${response.refreshToken} ${response.scope}" }
@@ -82,7 +82,7 @@ class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), 
     private suspend fun autoSignIn(settingsOnStartup: CircletServerSettings, wsLifetime: Lifetime): Boolean {
         if (settingsOnStartup.server.isNotBlank() && settingsOnStartup.enabled) {
             val wsConfig = ideaConfig(settingsOnStartup.server)
-            val wss = WorkspaceManager(wsLifetime, this@CircletWorkspaceComponent, InMemoryPersistence(), IdeaPasswordSafePersistence, ideaClintPersistenceConfiguration, wsConfig)
+            val wss = WorkspaceManager(wsLifetime, this@CircletWorkspaceComponent, InMemoryPersistence(), IdeaPasswordSafePersistence, ideaClientPersistenceConfiguration, wsConfig)
             if (wss.signInNonInteractive()) {
                 manager.value = wss
                 return true
