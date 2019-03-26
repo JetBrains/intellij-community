@@ -373,6 +373,9 @@
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
     </group>
 
+    <group id="BuildMenu" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
+      <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
+    </group>
 
     <!-- Tools -->
     <group id="ToolsBasicGroup">
