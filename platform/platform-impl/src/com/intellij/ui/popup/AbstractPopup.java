@@ -771,7 +771,6 @@ public class AbstractPopup implements JBPopup {
     debugState("show popup", State.INIT);
     myState = State.SHOWING;
 
-    installWindowHook(this);
     installProjectDisposer();
     addActivity();
 
@@ -784,6 +783,7 @@ public class AbstractPopup implements JBPopup {
     }
 
     prepareToShow();
+    installWindowHook(this);
 
     Dimension sizeToSet = null;
 
