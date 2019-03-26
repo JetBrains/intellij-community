@@ -101,7 +101,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   @Override
   @NotNull
   public String getFamilyName() {
-    return getText();
+    return XmlErrorMessages.message("create.namespace.declaration.quickfix.family");
   }
 
   @Override
