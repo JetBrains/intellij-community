@@ -142,7 +142,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   protected IElementType unpackToken(int data) {
     if (myLexer instanceof RestartableLexer) {
-      return ((RestartableLexer)(myLexer)).unpackTokenData(data);
+      return ((RestartableLexer)(myLexer)).unpackToken(data);
     }
     else {
       return IElementType.find((short)Math.abs(data));
@@ -363,7 +363,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
           public TokenInfo next() {
             pos--;
             return new TokenInfo(mySegments.getSegmentStart(pos), mySegments.getSegmentEnd(pos),
-                                 ((RestartableLexer)myLexer).unpackTokenData(mySegments.getSegmentData(pos)),((RestartableLexer)myLexer).unpackState(mySegments.getSegmentData(pos)) );
+                                 ((RestartableLexer)myLexer).unpackToken(mySegments.getSegmentData(pos)), ((RestartableLexer)myLexer).unpackState(mySegments.getSegmentData(pos)) );
           }
         };
       }
