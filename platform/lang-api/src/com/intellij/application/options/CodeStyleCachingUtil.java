@@ -2,7 +2,6 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -15,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 class CodeStyleCachingUtil {
   private final static Logger LOG = Logger.getInstance(CodeStyleCachingUtil.class);
   private final static Object COMPUTATION_LOCK = new Object();
-
-  private final static ExtensionPointName<CodeStyleSettingsModifier> CODE_STYLE_SETTINGS_MODIFIER_EP_NAME =
-    ExtensionPointName.create("com.intellij.codeStyleSettingsModifier");
 
   @NotNull
   static CodeStyleSettings getCachedCodeStyle(@NotNull PsiFile file) {
@@ -43,7 +39,7 @@ class CodeStyleCachingUtil {
       //noinspection deprecation
       myCachedSettings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
       TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(file, myCachedSettings);
-      for (CodeStyleSettingsModifier modifier : CODE_STYLE_SETTINGS_MODIFIER_EP_NAME.getExtensionList()) {
+      for (CodeStyleSettingsModifier modifier : CodeStyleSettingsModifier.EP_NAME.getExtensionList()) {
         if (modifier.modifySettings(modifiableSettings, file)) {
           LOG.debug("Modifier: " + modifier.getClass().getName());
           modifiableSettings.setModifier(modifier);

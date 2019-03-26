@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.modifier;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -14,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Experimental
 public interface CodeStyleSettingsModifier {
+  ExtensionPointName<CodeStyleSettingsModifier> EP_NAME = ExtensionPointName.create("com.intellij.codeStyleSettingsModifier");
 
   /**
    * Modifies given settings. The modifier may add dependencies to the transient code style settings to update them if the dependencies
@@ -24,6 +28,24 @@ public interface CodeStyleSettingsModifier {
    * @return True if the modifier has made any changes, false otherwise.
    */
   boolean modifySettings(@NotNull TransientCodeStyleSettings settings, @NotNull PsiFile file);
+
+  /**
+   * Checks if the modifier may potentially override project code style settings. This may include enabled/disabled flag in settings,
+   * a presense of certain files and etc. The method is called on a pooled thread and thus may not return immediately.
+   *
+   * @param project The project to check the overriding status for.
+   * @return True if the modifier may override project setting, false otherwise (default).
+   */
+  default boolean mayOverrideSettingsOf(@NotNull Project project) {
+    return false;
+  }
+
+  /**
+   * @return The name of the modifier to be shown in UI.
+   */
+  default String getName() {
+    return "Unknown";
+  }
 
   /**
    * A factory method which returns status bar UI contributor for the given settings given that the settings have been modified by this

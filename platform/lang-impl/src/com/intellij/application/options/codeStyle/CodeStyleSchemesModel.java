@@ -17,11 +17,14 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.application.options.schemes.SchemesModel;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import com.intellij.util.EventDispatcher;
@@ -31,8 +34,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
+  private final static Logger LOG = Logger.getInstance(CodeStyleSchemesModel.class);
+
   private final List<CodeStyleScheme> mySchemes = new ArrayList<>();
   private CodeStyleScheme mySelectedScheme;
   private final CodeStyleScheme myProjectScheme;
@@ -42,6 +49,9 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   private final EventDispatcher<CodeStyleSchemesModelListener> myDispatcher = EventDispatcher.create(CodeStyleSchemesModelListener.class);
   private final Project myProject;
   private boolean myUiEventsEnabled = true;
+
+  private       String myOverridingStatus     = null;
+  private final Lock   myOverridingStatusLock = new ReentrantLock();
 
   public CodeStyleSchemesModel(Project project) {
     myProject = project;
@@ -105,6 +115,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     myDispatcher.getMulticaster().schemeListChanged();
     myDispatcher.getMulticaster().currentSchemeChanged(this);
 
+    updateOverridingStatus();
   }
 
   private void updateClonedSettings() {
@@ -144,6 +155,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     commitClonedSettings();
     commitProjectSettings();
     CodeStyleSchemesImpl.getSchemeManager().setSchemes(getIdeSchemes(), mySelectedScheme instanceof ProjectScheme ? null : mySelectedScheme, null);
+    updateOverridingStatus();
   }
 
   private void commitProjectSettings() {
@@ -309,6 +321,60 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
       if (currentSettings != null && !originalSettings.equals(currentSettings)) {
         return true;
       }
+    }
+    return false;
+  }
+
+  public void updateOverridingStatus() {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        myOverridingStatusLock.lock();
+        List<CodeStyleSettingsModifier> modifiers = getOverridingModifiers();
+        final StringBuilder messageBuilder = new StringBuilder();
+        if (modifiers.size() > 0) {
+          messageBuilder.append("May be overridden by ");
+          boolean isList = false;
+          for (CodeStyleSettingsModifier modifier : modifiers) {
+            if (isList) messageBuilder.append(", ");
+            messageBuilder.append(modifier.getName());
+            isList = true;
+          }
+        }
+        myOverridingStatus = messageBuilder.toString();
+      }
+      finally {
+        myOverridingStatusLock.unlock();
+      }
+      myDispatcher.getMulticaster().overridingStatusChanged();
+    });
+  }
+
+  @Nullable
+  public String getOverridingStatus() {
+    if (myOverridingStatusLock.tryLock()) {
+      try {
+        return !myOverridingStatus.isEmpty() ? myOverridingStatus : null;
+      }
+      finally {
+        myOverridingStatusLock.unlock();
+      }
+    }
+    return null;
+  }
+
+  private List<CodeStyleSettingsModifier> getOverridingModifiers() {
+    return
+      ContainerUtil.filter(
+        CodeStyleSettingsModifier.EP_NAME.getExtensionList(),
+        modifier -> safeGetOverridingStatus(modifier, getProject()));
+  }
+
+  private static boolean safeGetOverridingStatus(@NotNull CodeStyleSettingsModifier modifier, @NotNull Project project) {
+    try {
+      return modifier.mayOverrideSettingsOf(project);
+    }
+    catch (Throwable t) {
+      LOG.error(t);
     }
     return false;
   }
