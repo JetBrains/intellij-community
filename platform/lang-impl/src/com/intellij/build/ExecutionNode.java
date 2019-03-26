@@ -28,12 +28,10 @@ import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -57,16 +55,7 @@ public class ExecutionNode extends CachingSimpleNode {
   private static final Icon NODE_ICON_STATISTICS = ICON_16;
   private static final Icon NODE_ICON_SIMPLE = ICON_16;
   private static final Icon NODE_ICON_DEFAULT = ICON_16;
-  private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.FS() {
-    @Override
-    protected Component getRendererOwner(Component component) {
-      if (component instanceof JTree && !component.isShowing()) {
-        CellRendererPane pane = UIUtil.getParentOfType(CellRendererPane.class, component);
-        if (pane != null) return pane.getParent();
-      }
-      return null;
-    }
-  };
+  private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.FS();
 
   private final Collection<ExecutionNode> myChildrenList = new ConcurrentLinkedDeque<>(); //ContainerUtil.newSmartList();
   private final AtomicInteger myErrors = new AtomicInteger();
