@@ -56,8 +56,8 @@ public class ProjectConfigurationDirectoryConcealer implements TreeStructureProv
         Collection<AbstractTreeNode> result = new ArrayList<>();
         for (AbstractTreeNode moduleChild : moduleChildren) {
           if (moduleChild instanceof PsiDirectoryNode) {
-            final PsiDirectory value = ((PsiDirectoryNode)moduleChild).getValue();
-            if (value.getName().equals(Project.DIRECTORY_STORE_FOLDER) && Registry.is("projectView.hide.dot.idea")) {
+            PsiDirectory directory = ((PsiDirectoryNode)moduleChild).getValue();
+            if (directory != null && directory.getName().equals(Project.DIRECTORY_STORE_FOLDER) && Registry.is("projectView.hide.dot.idea")) {
               continue;
             }
           }
