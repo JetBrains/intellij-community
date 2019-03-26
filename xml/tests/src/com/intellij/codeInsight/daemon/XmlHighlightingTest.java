@@ -2102,6 +2102,17 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
+  public void testRedefineGroup() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "RedefineGroup/test.xml"),
+        getVirtualFile(BASE_PATH + "RedefineGroup/originalschema.xsd"),
+        getVirtualFile(BASE_PATH + "RedefineGroup/redefinedschema.xsd"),
+      },
+      true, false
+    );
+  }
+
   public void testMultipleImports() throws Exception {
     doTest(
       new VirtualFile[] {
