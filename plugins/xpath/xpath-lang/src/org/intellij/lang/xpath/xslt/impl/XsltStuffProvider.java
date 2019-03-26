@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -163,11 +162,11 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
                     final MoveRenameUsageInfo info = (MoveRenameUsageInfo)usageInfo;
                     return buildGroup(info.getReferencedElement(), usageInfo, true);
                 } else {
-                    final PsiReference[] references = u.getElement().getReferences();
-                    for (PsiReference reference : references) {
-                        if (reference.getRangeInElement().equals(usageInfo.getRangeInElement())) {
-                            return buildGroup(reference.resolve(), usageInfo, false);
-                        }
+                    for (UsageTarget target : targets) {
+                        UsageGroup group = target instanceof PsiElementUsageTarget ?
+                                           buildGroup(((PsiElementUsageTarget)target).getElement(), usageInfo, false) :
+                                           null;
+                        if (group != null) return group;
                     }
                 }
             }
