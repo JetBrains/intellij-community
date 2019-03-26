@@ -172,8 +172,8 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     DumbService dumbService = DumbService.getInstance(project);
-    GlobalSearchScope globalUseScope = dumbService.runReadActionInSmartMode(
-      () -> StubHierarchyInheritorSearcher.restrictScope(new JavaSourceFilterScope(GlobalSearchScopeUtil.toGlobalSearchScope(useScope, project))));
+    GlobalSearchScope globalUseScope = ReadAction.compute(
+      () -> new JavaSourceFilterScope(GlobalSearchScopeUtil.toGlobalSearchScope(useScope, project)));
     Collection<PsiReferenceList> candidates =
       dumbService.runReadActionInSmartMode(() -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
 
