@@ -279,16 +279,10 @@ public class RecursionManager {
       }
 
       reentrancyCount = value;
-      checkZero();
-
     }
 
     private void prohibitResultCaching(MyKey realKey) {
       reentrancyCount++;
-
-      if (!checkZero()) {
-        throw new AssertionError("zero1");
-      }
 
       boolean inLoop = false;
       for (Map.Entry<MyKey, Integer> entry: new ArrayList<>(progressMap.entrySet())) {
@@ -300,10 +294,6 @@ public class RecursionManager {
           inLoop = true;
         }
       }
-
-      if (!checkZero()) {
-        throw new AssertionError("zero2");
-      }
     }
 
     private void checkDepth(String s) {
@@ -313,15 +303,6 @@ public class RecursionManager {
         throw new AssertionError("_Inconsistent depth " + s + "; depth=" + oldDepth + "; enters=" + enters + "; exits=" + exits + "; map=" + progressMap);
       }
     }
-
-    private boolean checkZero() {
-      if (!progressMap.isEmpty() && !new Integer(0).equals(progressMap.get(progressMap.keySet().iterator().next()))) {
-        LOG.error("Prisoner Zero has escaped: " + progressMap + "; value=" + progressMap.get(progressMap.keySet().iterator().next()));
-        return false;
-      }
-      return true;
-    }
-
   }
 
   private static class MemoizedValue {
