@@ -88,14 +88,12 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
   public void testIllegalArgumentInIsExcludedMethod() {
     addExcludePattern("xxx_excluded_directory");
     DirectoryInfo info = myIndex.getInfoForFile(myContentRoot);
-    boolean successeded = false;
     try {
       info.isExcluded(myContentRoot.getParent());
-      successeded = true;
+      fail("DirectoryInfo#isExcluded must fail because its argument is not under DirectoryInfo's root");
     }
     catch (AssertionError ignored) {
     }
-    assertFalse("DirectoryInfo#isExcluded must fail it its argument is not under DirectoryInfo's root", successeded);
   }
 
   public void testExcludeFileFromLibrary() throws IOException {
