@@ -67,7 +67,7 @@ public class AfterTestEvent extends AbstractTestEvent {
           String filePath = ObjectUtils.nullizeByCondition(decode(eventXml.getEventTestResultFilePath()), emptyString);
           String actualFilePath = ObjectUtils.nullizeByCondition(
             decode(eventXml.getEventTestResultActualFilePath()), emptyString);
-          testProxy.setTestComparisonFailed(exceptionMsg, stackTrace, actualText, expectedText, filePath, actualFilePath);
+          testProxy.setTestComparisonFailed(exceptionMsg, stackTrace, actualText, expectedText, filePath, actualFilePath, true);
         }
         else {
           Couple<String> comparisonPair =
