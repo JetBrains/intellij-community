@@ -31,6 +31,8 @@
                      enabledByDefault="true" level="ERROR" unfair="true"
                      implementationClass="com.intellij.bash.shellcheck.BashShellcheckInspection"
                      displayName="ShellCheck" groupName="Bash"/>
+    <defaultLiveTemplatesProvider implementation="com.intellij.bash.template.BashTemplateProvider"/>
+    <liveTemplateContext implementation="com.intellij.bash.template.BashContextType"/>
   </extensions>
   <actions>
     <action id="runShellFileAction" class="com.intellij.bash.run.BashRunFileAction" text="Run File"

@@ -1,0 +1,3 @@
+while [[ condition ]]; do
+    
+done
