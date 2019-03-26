@@ -1,3 +1,5 @@
+import java.lang.reflect.InvocationTargetException;
+
 class Lambda {{
   XYZ xyz = () -> //end of line comment
           String.class.getConstructor().newInstance();
