@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.extended;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.lang.Language;
@@ -83,6 +84,16 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
 
     }
     return false;
+  }
+
+  @Override
+  public boolean mayOverrideSettingsOf(@NotNull Project project) {
+    return Utils.isEnabled(CodeStyle.getSettings(project)) && Utils.editorConfigExists(project);
+  }
+
+  @Override
+  public String getName() {
+    return "EditorConfig";
   }
 
   private static boolean processOptions(@NotNull MyContext context,
