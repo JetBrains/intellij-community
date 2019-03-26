@@ -16,7 +16,6 @@ import com.intellij.util.text.VersionComparatorUtil
 class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
 
   private val myPluginId = PluginId.getId("org.jetbrains.java.knownAnnotations")
-  private val packagePrefix = "org.jetbrains.externalAnnotations."
   private val knownAnnotations: Map<String, Map<VersionRange, AnnotationsLocation>> by lazy { buildAnnotations() }
 
   override fun getLocations(library: Library,
