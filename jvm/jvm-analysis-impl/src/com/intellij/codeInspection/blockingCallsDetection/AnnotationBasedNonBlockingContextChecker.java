@@ -2,7 +2,11 @@
 package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UMethod;
@@ -21,10 +25,10 @@ public class AnnotationBasedNonBlockingContextChecker implements NonBlockingCont
 
   @Override
   public boolean isApplicable(@NotNull PsiFile file) {
-    if (myNonBlockingAnnotations.isEmpty()) return false;
-    PsiClass annotationClass = JavaPsiFacade.getInstance(file.getProject())
-      .findClass(BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATION, file.getResolveScope());
-    return annotationClass != null;
+    return myNonBlockingAnnotations != null &&
+           StreamEx.of(BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATION)
+             .append(myNonBlockingAnnotations)
+             .anyMatch(annotation -> JavaPsiFacade.getInstance(file.getProject()).findClass(annotation, file.getResolveScope()) != null);
   }
 
   @Override
