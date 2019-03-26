@@ -17,7 +17,13 @@
         <xs:element type="essentialPluginType" name="essential-plugin" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element type="welcome-screenType" name="welcome-screen"/>
         <xs:element type="customize-ide-wizardType" name="customize-ide-wizard" minOccurs="0"/>
-        <xs:element type="pluginsPageType" name="plugins-page" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element type="pluginsPageType" name="plugins-page" minOccurs="0" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:documentation>
+              Deprecated and no longer used since 2019.2. Use customize-ide-wizard instead.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
         <xs:element type="editorType" name="editor" minOccurs="0"/>
         <xs:element type="pluginsType" name="plugins" minOccurs="0"/>
         <xs:element type="evaluationType" name="evaluation" minOccurs="0"/>
