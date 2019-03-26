@@ -36,7 +36,7 @@ import java.util.stream.Stream;
  *   <li>{@code C()} calls {@code A()} which calls {@code B()} which calls {@code C()} and gets {@code null} as the result (if {@code C()} is first in the stack)</li>
  * </ol>
  * Most likely, the results of {@code C()} would be different in those 3 cases, and it'd be unwise to cache just any of them randomly,
- * whatever is calculated first. In a multithreaded environment, that'd lead to unpredictability.<p></p>
+ * whatever is calculated first. In a multi-threaded environment, that'd lead to unpredictability.<p></p>
  * 
  * Of the 3 possible scenarios above, caching for {@code C()} makes sense only for the last one, because that's the result we'd get if there were no caching at all.
  * Therefore, if you use any kind of caching in an endless-recursion-prone environment, please ensure you don't cache incomplete results
@@ -131,18 +131,6 @@ public class RecursionManager {
 
       @NotNull
       @Override
-      public StackStamp markStack() {
-        final int stamp = ourStack.get().reentrancyCount;
-        return new StackStamp() {
-          @Override
-          public boolean mayCacheNow() {
-            return stamp == ourStack.get().reentrancyCount;
-          }
-        };
-      }
-
-      @NotNull
-      @Override
       public List<Object> currentStack() {
         ArrayList<Object> result = new ArrayList<>();
         LinkedHashMap<MyKey, Integer> map = ourStack.get().progressMap;
@@ -163,6 +151,34 @@ public class RecursionManager {
 
     };
   }
+
+  /**
+   * Used in pair with {@link RecursionGuard.StackStamp#mayCacheNow()} to ensure that cached are only the reliable values,
+   * not depending on anything incomplete due to recursive prevention policies.
+   * A typical usage is this:
+   * {@code
+   *  RecursionGuard.StackStamp stamp = RecursionManager.createGuard("id").markStack();
+   *
+   *   Result result = doComputation();
+   *
+   *   if (stamp.mayCacheNow()) {
+   *     cache(result);
+   *   }
+   *   return result;
+   * }
+   * @return an object representing the current stack state, managed by {@link RecursionManager}
+   */
+  @NotNull
+  public static RecursionGuard.StackStamp markStack() {
+    int stamp = ourStack.get().reentrancyCount;
+    return new RecursionGuard.StackStamp() {
+      @Override
+      public boolean mayCacheNow() {
+        return stamp == ourStack.get().reentrancyCount;
+      }
+    };
+  }
+
 
   private static class MyKey {
     final String guardId;

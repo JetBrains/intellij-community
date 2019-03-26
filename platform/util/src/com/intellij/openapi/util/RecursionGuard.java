@@ -39,24 +39,11 @@ public abstract class RecursionGuard {
   @Nullable
   public abstract <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, @NotNull Computable<T> computation);
 
-  /**
-   * Used in pair with {@link RecursionGuard.StackStamp#mayCacheNow()} to ensure that cached are only the reliable values,
-   * not depending on anything incomplete due to recursive prevention policies.
-   * A typical usage is this:
-   * {@code
-   *  RecursionGuard.StackStamp stamp = RecursionManager.createGuard("id").markStack();
-   *
-   *   Result result = doComputation();
-   *
-   *   if (stamp.mayCacheNow()) {
-   *     cache(result);
-   *   }
-   *   return result;
-   * }
-   * @return an object representing the current stack state, managed by {@link RecursionManager}
-   */
+  /** Use {@link RecursionManager#markStack()} instead */
   @NotNull
-  public abstract StackStamp markStack();
+  public StackStamp markStack() {
+    return RecursionManager.markStack();
+  }
 
   /**
    * @return the current thread-local stack of keys passed to {@link #doPreventingRecursion(Object, boolean, Computable)}
