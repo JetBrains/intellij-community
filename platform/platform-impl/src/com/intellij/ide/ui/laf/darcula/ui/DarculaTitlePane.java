@@ -3,15 +3,15 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.CustomFrameIdeMenuBar;
-import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.CustomFrameTitleButtons;
-import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.PathDescription;
-import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.ResizableCustomFrameTitleButtons;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.IdeRootPane;
+import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons;
+import com.intellij.openapi.wm.impl.customFrameDecorations.PathDescription;
+import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -51,7 +51,6 @@ public class DarculaTitlePane extends JPanel implements Disposable {
   private Window myWindow;
   private final JRootPane myRootPane;
   private int myState;
-  private final DarculaRootPaneUI rootPaneUI;
 
   private CustomFrameTitleButtons buttonPanes;
   private final JLabel titleLabel = new JLabel();
@@ -66,9 +65,8 @@ public class DarculaTitlePane extends JPanel implements Disposable {
   private static final int minMenuHeight = 24;
   private static final int resizeGap = JBUI.scale(3);
 
-  public DarculaTitlePane(JRootPane root, DarculaRootPaneUI ui) {
+  public DarculaTitlePane(JRootPane root) {
     this.myRootPane = root;
-    rootPaneUI = ui;
 
     myState = -1;
 
@@ -199,7 +197,12 @@ public class DarculaTitlePane extends JPanel implements Disposable {
       myMenuBar = createMenuBar();
       add(myMenuBar);
       if (myRootPane instanceof IdeRootPane) {
-        myIdeMenu = new CustomFrameIdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance(), this);
+        myIdeMenu = new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()){
+          @Override
+          public Border getBorder() {
+            return JBUI.Borders.empty();
+          }
+        };
 
         JPanel pane = new JPanel(new MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"));
         pane.setOpaque(false);

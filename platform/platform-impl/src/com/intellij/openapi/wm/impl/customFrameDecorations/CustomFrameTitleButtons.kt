@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations
+package com.intellij.openapi.wm.impl.customFrameDecorations
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.style.ComponentStyle
-import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.style.ComponentStyleState
-import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.style.StyleManager
+import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyle
+import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyleState
+import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
 import com.intellij.ui.JBColor
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
@@ -14,6 +14,7 @@ import java.awt.Color
 import java.awt.Dimension
 import javax.accessibility.AccessibleContext
 import javax.swing.*
+import javax.swing.plaf.ButtonUI
 import javax.swing.plaf.basic.BasicButtonUI
 
 open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
@@ -70,7 +71,7 @@ open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
       icon = closeInactive
     }.build()
 
-  protected val panel = JPanel(MigLayout("top, ins 0 5 0 0, gap 0, hidemode 3, novisualpadding"))
+  protected val panel = JPanel(MigLayout("top, ins 0 5 0 0, gap 0, hidemode 3, novisualpadding")).apply { isOpaque = false }
 
   private val myCloseButton: JButton = createButton("Close", myCloseAction)
 
@@ -127,7 +128,14 @@ open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
   }
 
   protected fun createButton(accessibleName: String, action: Action): JButton {
-    val button = JButton().apply { ui = BasicButtonUI() }
+    val button = object : JButton(){
+      init {
+        super.setUI(BasicButtonUI())
+      }
+
+      override fun setUI(ui: ButtonUI?) {
+      }
+    }
     button.action = action
     button.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName)
     button.text = null
