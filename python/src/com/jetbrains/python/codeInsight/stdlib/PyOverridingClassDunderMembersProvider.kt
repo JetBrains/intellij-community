@@ -19,6 +19,10 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyOverridingClassDunderMembersProvider : PyClassMembersProviderBase(), PyOverridingClassMembersProvider {
 
+  override fun resolveMember(type: PyClassType, name: String, location: PsiElement?, resolveContext: PyResolveContext): PsiElement? {
+    return if (name !in processedMembers) null else super.resolveMember(type, name, location, resolveContext)
+  }
+
   override fun getMembers(clazz: PyClassType, location: PsiElement?, context: TypeEvalContext): Collection<PyCustomMember> {
     if (PyUtil.isObjectClass(clazz.pyClass)) return emptyList()
 
@@ -73,5 +77,9 @@ class PyOverridingClassDunderMembersProvider : PyClassMembersProviderBase(), PyO
     if (!type.isDefinition) cls.processInstanceLevelDeclarations(processor, location)
 
     return overridesDoc to overridesModule
+  }
+
+  companion object {
+    private val processedMembers = listOf<String>(PyNames.__CLASS__, PyNames.DOC, "__module__")
   }
 }
