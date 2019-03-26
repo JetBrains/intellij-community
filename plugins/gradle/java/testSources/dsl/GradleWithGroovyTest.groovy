@@ -21,18 +21,9 @@ class GradleWithGroovyTest extends GradleHighlightingBaseTest implements Resolve
     return super.getParentCalls() + 'buildscript'
   }
 
-  @Override
-  protected String injectRepo(String config) {
-    return config
-  }
-
   @Test
   void artifactsTest() {
-    importProject('''\
-plugins { id 'java' }
-repositories { maven { url 'http://maven.labs.intellij.net/repo1' } }
-dependencies { compile 'org.codehaus.groovy:groovy:2.5.6' }
-''')
+    importProject("apply plugin: 'java'; dependencies { compile 'org.codehaus.groovy:groovy:2.5.6' }")
     new RunAll().append {
       'Project#allprojects call'()
     } append {
