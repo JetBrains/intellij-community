@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.*;
@@ -258,7 +258,9 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       createOrWaitPrepare(debugProcess, position);
     }
     else {
-      LOG.error("Unable to create request for breakpoint with null position: " + toString() + " at " + myXBreakpoint.getSourcePosition());
+      XSourcePosition xPosition = myXBreakpoint.getSourcePosition();
+      LOG.error("Unable to create request for breakpoint with null position: " + toString() + " at " + xPosition +
+                ", file valid = " + (xPosition != null && xPosition.getFile().isValid()));
     }
     updateUI();
   }
