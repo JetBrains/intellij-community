@@ -977,15 +977,14 @@ public class PluginManagerCore {
         result.add(descriptor);
       }
       else {
-        int oldIndex = result.indexOf(descriptor);
-        IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
-        if (VersionComparatorUtil.compare(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
-          if (isIncompatible(descriptor) && isCompatible(oldDescriptor)) {
-            getLogger().info("newer plugin is incompatible, ignoring: " + descriptor.getPath());
-          }
-          else {
-            result.set(oldIndex, descriptor);
-          }
+        int prevIndex = result.indexOf(descriptor);
+        IdeaPluginDescriptorImpl prevDescriptor = result.get(prevIndex);
+        boolean compatible = isCompatible(descriptor);
+        boolean prevCompatible = isCompatible(prevDescriptor);
+        boolean newer = VersionComparatorUtil.compare(descriptor.getVersion(), prevDescriptor.getVersion()) > 0;
+        if (compatible && !prevCompatible || compatible == prevCompatible && newer) {
+          result.set(prevIndex, descriptor);
+          getLogger().info(descriptor.getPath() + " overrides " + prevDescriptor.getPath());
         }
       }
     }
