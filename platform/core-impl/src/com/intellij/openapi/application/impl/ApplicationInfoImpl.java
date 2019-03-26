@@ -155,7 +155,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String HELP_ELEMENT_NAME = "help";
   private static final String ATTRIBUTE_HELP_FILE = "file";
   private static final String ATTRIBUTE_HELP_ROOT = "root";
-  private static final String PLUGINS_PAGE_ELEMENT_NAME = "plugins-page";
   private static final String ELEMENT_DOCUMENTATION = "documentation";
   private static final String ELEMENT_SUPPORT = "support";
   private static final String ELEMENT_YOUTRACK = "youtrack";
