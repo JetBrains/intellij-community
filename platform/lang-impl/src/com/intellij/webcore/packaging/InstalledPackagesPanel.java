@@ -278,7 +278,7 @@ public class InstalledPackagesPanel extends JPanel {
     return ObjectUtils.tryCast(myPackageManagementService, PackageManagementServiceEx.class);
   }
 
-  private void updateUninstallUpgrade() {
+  protected void updateUninstallUpgrade() {
     final int[] selected = myPackagesTable.getSelectedRows();
     boolean upgradeAvailable = false;
     boolean canUninstall = selected.length != 0;

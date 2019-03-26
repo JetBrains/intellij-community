@@ -1,8 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -27,13 +31,22 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     }
 
     fun findDetectedAssociatedEnvironment(module: Module, existingSdks: List<Sdk>): PyDetectedSdk? {
-      detectVirtualEnvs(module, existingSdks).firstOrNull { it.isAssociatedWithModule(module) }?.let {
-        return it
-      }
-      detectCondaEnvs(module, existingSdks).firstOrNull { it.isAssociatedWithModule(module) }?.let {
-        return it
-      }
-      return null
+      // TODO: Move all interpreter detection away from EDT & use proper synchronization for that
+      val progress = ProgressManager.getInstance()
+      return progress.run(object : Task.WithResult<PyDetectedSdk?, Exception>(module.project,
+                                                                              "Looking for Virtual Environments",
+                                                                              false) {
+        override fun compute(indicator: ProgressIndicator): PyDetectedSdk? {
+          indicator.isIndeterminate = true
+          detectVirtualEnvs(module, existingSdks).firstOrNull { it.isAssociatedWithModule(module) }?.let {
+            return it
+          }
+          detectCondaEnvs(module, existingSdks).firstOrNull { it.isAssociatedWithModule(module) }?.let {
+            return it
+          }
+          return null
+        }
+      })
     }
 
     private fun findExistingSystemWideSdk(existingSdks: List<Sdk>) =

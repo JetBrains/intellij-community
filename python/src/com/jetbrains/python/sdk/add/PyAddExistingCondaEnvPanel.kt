@@ -15,16 +15,26 @@
  */
 package com.jetbrains.python.sdk.add
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.sdk.*
+import com.sun.glass.ui.Application
 import icons.PythonIcons
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.awt.BorderLayout
 import javax.swing.Icon
+import javax.swing.SwingUtilities
+import javax.swing.SwingWorker
 
 /**
  * @author vlan
@@ -34,10 +44,8 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
                                  private val existingSdks: List<Sdk>,
                                  override var newProjectPath: String?) : PyAddSdkPanel() {
   override val panelName: String = "Existing environment"
-  override val icon: Icon = PythonIcons.Python.Condaenv
-  private val sdkComboBox = PySdkPathChoosingComboBox(detectCondaEnvs(module, existingSdks)
-                                                        .filterNot { it.isAssociatedWithAnotherModule(module) },
-                                                      null)
+  override val icon: Icon = PythonIcons.Python.Anaconda
+  private val sdkComboBox = PySdkPathChoosingComboBox(listOf(), null)
   private val makeSharedField = JBCheckBox("Make available to all projects")
 
   init {
@@ -47,6 +55,17 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)
+    ApplicationManager.getApplication().executeOnPooledThread(object: Runnable {
+      override fun run() {
+        if (module != null && module.isDisposed) return
+        val sdks = detectCondaEnvs(module, existingSdks)
+        ApplicationManager.getApplication().invokeLater({
+          sdks.forEach {
+            sdkComboBox.childComponent.addItem(it)
+          }
+        }, ModalityState.any())
+      }
+    })
   }
 
   override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox))
