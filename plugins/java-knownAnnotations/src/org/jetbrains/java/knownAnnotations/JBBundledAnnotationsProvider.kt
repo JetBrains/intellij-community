@@ -1,6 +1,10 @@
 package org.jetbrains.java.knownAnnotations
 
-import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.TypeAdapter
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonToken
+import com.google.gson.stream.JsonWriter
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider
 import com.intellij.ide.extensionResources.ExtensionsRootType
@@ -13,7 +17,7 @@ class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
 
   private val myPluginId = PluginId.getId("org.jetbrains.java.knownAnnotations")
   private val packagePrefix = "org.jetbrains.externalAnnotations."
-  private val knownAnnotations: Collection<AnnotationsLocation> by lazy { buildAnnotations() }
+  private val knownAnnotations: Map<String, Map<VersionRange, AnnotationsLocation>> by lazy { buildAnnotations() }
 
   override fun getLocations(library: Library,
                             artifactId: String?,
@@ -24,16 +28,9 @@ class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
     if (groupId == null) return emptyList()
     if (version == null) return emptyList()
 
-    return knownAnnotations.asSequence()
-      .filter {
-        it.groupId == groupId &&
-        it.artifactId == artifactId &&
-        versionMatches(it.version, version)
-      }
-      .map {
-        AnnotationsLocation(packagePrefix + it.groupId, it.artifactId, it.version, *it.repositoryUrls.toTypedArray())
-      }
-      .toList()
+    val matchers = knownAnnotations["${groupId}:${artifactId}"] ?: return emptyList()
+
+    return listOf(matchers.entries.find { it.key.matches(version) }?.value ?: return emptyList())
   }
 
   private fun versionMatches(available: String, requested: String): Boolean {
@@ -47,27 +44,38 @@ class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
   private fun extractMajor(versionStr: String): String = versionStr.split('(', ')', '.', '_', '-', ';', ':', '/', ',', ' ', '+', '~')[0]
   private fun dropAnSuffix(versionStr: String): String = versionStr.split(Regex("-an[\\d]+$"))[0]
 
-  private fun buildAnnotations(): Collection<AnnotationsLocation> {
+  private fun buildAnnotations(): Map<String, Map<VersionRange, AnnotationsLocation>> {
     val extensionsRootType = ExtensionsRootType.getInstance()
     val annotationsFile = extensionsRootType.findResource(myPluginId, "predefinedExternalAnnotations.json")
                           ?: extensionsRootType.run {
                             extractBundledResources(myPluginId, "")
                             findResource(myPluginId, "predefinedExternalAnnotations.json")
                           }
-                          ?: return emptyList()
+                          ?: return emptyMap()
 
+    val gsonBuilder = GsonBuilder()
+    gsonBuilder.registerTypeAdapter(VersionRange::class.java, VersionRangeTypeAdapter())
     val raw: Array<RepositoryDescriptor> =
-      Gson().fromJson(FileUtil.loadFile(annotationsFile, Charsets.UTF_8), Array<RepositoryDescriptor>::class.java)
+      gsonBuilder.create().fromJson(FileUtil.loadFile(annotationsFile, Charsets.UTF_8), Array<RepositoryDescriptor>::class.java)
+
 
     return raw.asSequence()
       .flatMap { rd ->
-        rd.artifacts.asSequence().map { ad ->
-          AnnotationsLocation(ad.groupId, ad.artifactId, ad.version, rd.repositoryUrl)
-        }
-      }.toList()
+        rd.artifacts.asSequence()
+          .map { "${it.groupId}:${it.artifactId}" to it.annotations }
+          .map { entry ->
+            entry.first to
+              entry.second.mapValues { rdEntry ->
+                AnnotationsLocation(rdEntry.value.groupId,
+                                    rdEntry.value.artifactId,
+                                    rdEntry.value.version,
+                                    rd.repositoryUrl)
+              }
+          }
+      }.toMap()
   }
 
-  private data class RepositoryDescriptor(val repositoryUrl: String, val artifacts: Array<ArtifactDescriptor>) {
+  private data class RepositoryDescriptor(val repositoryUrl: String, val artifacts: Array<AnnotationMatcher>) {
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
       if (other !is RepositoryDescriptor) return false
@@ -85,5 +93,82 @@ class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
     }
   }
 
+  private data class AnnotationMatcher(val groupId: String, val artifactId: String, val annotations: Map<VersionRange, ArtifactDescriptor>)
+
+  private class VersionRange(val lowerBound: String, val lowerInclusive: Boolean = false,
+                             val upperBound: String, val upperInclusive: Boolean = false) {
+    fun matches(version: String): Boolean {
+      if (upperBound == lowerBound) {
+        return upperBound == version
+      }
+
+      val lowerSatisfied = if (lowerInclusive) {
+        VersionComparatorUtil.compare(lowerBound, version) <= 0
+      } else {
+        VersionComparatorUtil.compare(lowerBound, version) < 0
+      }
+
+      val upperSatisfied = if (upperInclusive) {
+        VersionComparatorUtil.compare(version, upperBound) <= 0
+      } else {
+        VersionComparatorUtil.compare(version, upperBound) < 0
+      }
+
+      return lowerSatisfied && upperSatisfied
+    }
+  }
+
   private data class ArtifactDescriptor(val groupId: String, val artifactId: String, val version: String)
+
+  private class VersionRangeTypeAdapter: TypeAdapter<VersionRange>() {
+    override fun read(reader: JsonReader): VersionRange? {
+      if (reader.peek() == JsonToken.NULL) {
+        reader.nextNull()
+        return null
+      }
+      val rangeString = reader.nextString()
+
+      val beginInclusive = rangeString.startsWith('[')
+      val endInclusive = rangeString.endsWith(']')
+
+      val versions = rangeString.trim('[',']','(',')').split(',').map { it.trim() }
+      when {
+        versions.size > 1 -> return VersionRange(versions[0], beginInclusive, versions[1], endInclusive)
+        versions.size == 1 -> return VersionRange(lowerBound = versions[0], upperBound = versions[0])
+        else -> throw IllegalArgumentException("Failed to parse string $rangeString as version range.")
+      }
+    }
+
+    override fun write(writer: JsonWriter, range: VersionRange?) {
+      if (range == null) {
+        writer.nullValue()
+        return
+      }
+
+      if (range.lowerBound == range.upperBound) {
+        writer.value(range.lowerBound)
+        return
+      }
+
+      val sb = StringBuilder().apply {
+        if (range.lowerInclusive) {
+          append("[")
+        } else {
+          append("(")
+        }
+        append(range.lowerBound)
+        append(", ")
+        append(range.upperBound)
+        if (range.upperInclusive) {
+          append(']')
+        } else {
+          append(')')
+        }
+      }
+
+
+      writer.value(sb.toString())
+    }
+  }
 }
+
