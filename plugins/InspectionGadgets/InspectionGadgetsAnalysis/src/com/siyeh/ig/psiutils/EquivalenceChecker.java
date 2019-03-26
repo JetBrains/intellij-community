@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -728,6 +729,12 @@ public class EquivalenceChecker {
         return EXACT_MISMATCH;
       }
       Match match = expressionsMatch(qualifier1, qualifier2);
+      if (!match.isExactMatch() && PsiUtil.isArrayClass(((PsiMember)element1).getContainingClass()) &&
+          !((GenericsUtil.getLeastUpperBound(qualifier1.getType(), qualifier2.getType(),
+                                             referenceExpression1.getManager())) instanceof PsiArrayType)) {
+        // access to the member (length or clone()) of incompatible arrays 
+        return EXACT_MISMATCH;
+      }
       if (match.isExactMismatch()) {
         return new Match(qualifier1, qualifier2);
       }
