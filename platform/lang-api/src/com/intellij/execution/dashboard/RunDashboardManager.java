@@ -16,7 +16,6 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.components.ServiceManager;
@@ -79,8 +78,8 @@ public interface RunDashboardManager {
 
   void setTypes(Set<String> types);
 
-  @Nullable
-  RunDashboardContributor getContributor(@NotNull ConfigurationType type);
+  @NotNull
+  List<RunDashboardCustomizer> getCustomizers(@NotNull RunnerAndConfigurationSettings settings, @Nullable RunContentDescriptor descriptor);
 
   @NotNull
   Condition<Content> getReuseCondition();

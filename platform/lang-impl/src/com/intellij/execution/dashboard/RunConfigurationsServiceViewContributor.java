@@ -39,7 +39,7 @@ public class RunConfigurationsServiceViewContributor
   public List<RunConfigurationNode> getNodes(@NotNull Project project) {
     RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(project);
     return ContainerUtil.map(runDashboardManager.getRunConfigurations(),
-                             value -> new RunConfigurationNode(project, value, runDashboardManager.getContributor(value.first.getType())));
+                             value -> new RunConfigurationNode(project, value, runDashboardManager.getCustomizers(value.first, value.second)));
   }
 
   @NotNull
@@ -113,8 +113,12 @@ public class RunConfigurationsServiceViewContributor
 
       @Override
       public boolean handleDoubleClick(@NotNull MouseEvent event) {
-        RunDashboardContributor contributor = node.getContributor();
-        return contributor != null && contributor.handleDoubleClick(node.getConfigurationSettings().getConfiguration());
+        for (RunDashboardCustomizer customizer : node.getCustomizers()) {
+          if (customizer.handleDoubleClick(event, node)) {
+            return true;
+          }
+        }
+        return false;
       };
     };
   }
