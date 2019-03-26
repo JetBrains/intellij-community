@@ -33,19 +33,16 @@ class GradleArtifactHandlerContributor : NonCodeMembersContributor() {
     val manager = place.manager
     val objectVarargType = PsiEllipsisType(getJavaLangObject(place))
 
-    // TODO store configurations in a map
-    for (configuration in data.configurations) {
-      val configurationName = configuration.name ?: continue
-      if (methodName != null && configurationName != methodName) continue
+    val configuration = data.configurations[methodName] ?: return
+    val configurationName = configuration.name ?: return
 
-      val method = GrLightMethodBuilder(manager, configurationName).apply {
-        methodKind = ourMethodKind
-        containingClass = clazz
-        returnType = null
-        addParameter("artifactNotation", objectVarargType)
-        setBaseIcon(Gradle)
-      }
-      if (!processor.execute(method, state)) return
+    val method = GrLightMethodBuilder(manager, configurationName).apply {
+      methodKind = ourMethodKind
+      containingClass = clazz
+      returnType = null
+      addParameter("artifactNotation", objectVarargType)
+      setBaseIcon(Gradle)
     }
+    if (!processor.execute(method, state)) return
   }
 }
