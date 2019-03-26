@@ -64,7 +64,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public int BRANCH_INFO_UPDATE_TIME = 10;
     public boolean PREVIEW_PUSH_ON_COMMIT_AND_PUSH = true;
     public boolean PREVIEW_PUSH_PROTECTED_ONLY = false;
-    public boolean COMMIT_RENAMES_SEPARATELY = false;
+    public boolean COMMIT_RENAMES_SEPARATELY = true;
     public boolean ADD_SUFFIX_TO_CHERRY_PICKS_OF_PUBLISHED_COMMITS = true;
 
     @Property(surroundWithTag = false, flat = true)
