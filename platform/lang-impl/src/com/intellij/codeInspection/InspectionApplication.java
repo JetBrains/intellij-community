@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -18,7 +18,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,7 +59,6 @@ public class InspectionApplication {
   public String myProfilePath;
   public boolean myRunWithEditorSettings;
   public boolean myRunGlobalToolsOnly;
-  private Project myProject;
   private int myVerboseLevel;
   public String myOutputFormat;
 
@@ -108,8 +109,8 @@ public class InspectionApplication {
   }
 
   private void run() {
-
     File tmpDir = null;
+    Project project = null;
     try {
       myProjectPath = myProjectPath.replace(File.separatorChar, '/');
       VirtualFile vfsProject = LocalFileSystem.getInstance().findFileByPath(myProjectPath);
@@ -121,28 +122,28 @@ public class InspectionApplication {
       logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
       final ConversionService conversionService = ConversionService.getInstance();
       if (conversionService.convertSilently(myProjectPath, createConversionListener()).openingIsCanceled()) {
-        gracefulExit();
+        gracefulExit(null);
         return;
       }
-      myProject = ProjectUtil.openOrImport(myProjectPath, null, false);
 
-      if (myProject == null) {
+      project = ProjectUtil.openOrImport(myProjectPath, null, false);
+      if (project == null) {
         logError("Unable to open project");
-        gracefulExit();
+        gracefulExit(null);
         return;
       }
 
       ApplicationManager.getApplication().runWriteAction(() -> VirtualFileManager.getInstance().refreshWithoutFileWatcher(false));
 
-      PatchProjectUtil.patchProject(myProject);
+      PatchProjectUtil.patchProject(project);
 
       logMessageLn(1, InspectionsBundle.message("inspection.done"));
       logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
 
-      InspectionProfileImpl inspectionProfile = loadInspectionProfile();
+      InspectionProfileImpl inspectionProfile = loadInspectionProfile(project);
       if (inspectionProfile == null) return;
 
-      final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(myProject);
+      final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(project);
 
       GlobalInspectionContextImpl context = im.createNewGlobalContext();
       context.setExternalProfile(inspectionProfile);
@@ -151,9 +152,9 @@ public class InspectionApplication {
       final AnalysisScope scope;
       if (mySourceDirectory == null) {
         final String scopeName = System.getProperty("idea.analyze.scope");
-        final NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(myProject, scopeName) : null;
-        scope = namedScope != null ? new AnalysisScope(GlobalSearchScopesCore.filterScope(myProject, namedScope), myProject)
-                                   : new AnalysisScope(myProject);
+        final NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
+        scope = namedScope != null ? new AnalysisScope(GlobalSearchScopesCore.filterScope(project, namedScope), project)
+                                   : new AnalysisScope(project);
       }
       else {
         mySourceDirectory = mySourceDirectory.replace(File.separatorChar, '/');
@@ -164,7 +165,7 @@ public class InspectionApplication {
           printHelp();
         }
 
-        PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(vfsDir);
+        PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(vfsDir);
         scope = new AnalysisScope(psiDirectory);
       }
 
@@ -199,56 +200,11 @@ public class InspectionApplication {
       }
 
       final List<File> inspectionsResults = new ArrayList<>();
-      ProgressManager.getInstance().runProcess(() -> {
-        if (!GlobalInspectionContextUtil.canRunInspections(myProject, false)) {
-          gracefulExit();
-          return;
-        }
-        context.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
-        logMessageLn(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
-        if (!myErrorCodeRequired) {
-          closeProject();
-        }
-      }, new ProgressIndicatorBase() {
-        private String lastPrefix = "";
-        private int myLastPercent = -1;
-
-        @Override
-        public void setText(String text) {
-          if (myVerboseLevel == 0) return;
-
-          if (myVerboseLevel == 1) {
-            String prefix = getPrefix(text);
-            if (prefix == null) return;
-            if (prefix.equals(lastPrefix)) {
-              logMessage(1, ".");
-              return;
-            }
-            lastPrefix = prefix;
-            logMessageLn(1, "");
-            logMessageLn(1, prefix);
-            return;
-          }
-
-          if (myVerboseLevel == 3) {
-            if (!isIndeterminate() && getFraction() > 0) {
-              final int percent = (int)(getFraction() * 100);
-              if (myLastPercent == percent) return;
-              String prefix = getPrefix(text);
-              myLastPercent = percent;
-              String msg = (prefix != null ? prefix : InspectionsBundle.message("inspection.display.name")) + " " + percent + "%";
-              logMessageLn(2, msg);
-            }
-            return;
-          }
-
-          logMessageLn(2, text);
-        }
-      });
+      runUnderProgress(project, context, scope, resultsDataPath, inspectionsResults);
       File resultsDataFile = new File(resultsDataPath);
       if (!resultsDataFile.exists() && !resultsDataFile.mkdirs()) {
         logError("Unable to create output directory " + resultsDataPath);
-        gracefulExit();
+        gracefulExit(project);
       }
       final String descriptionsFile = resultsDataPath + File.separatorChar + DESCRIPTIONS + XML_EXTENSION;
       describeInspections(descriptionsFile,
@@ -274,7 +230,7 @@ public class InspectionApplication {
     catch (Throwable e) {
       LOG.error(e);
       logError(e.getMessage());
-      gracefulExit();
+      gracefulExit(project);
     }
     finally {
       // delete tmp dir
@@ -284,33 +240,90 @@ public class InspectionApplication {
     }
   }
 
-  private void gracefulExit() {
+  private void runUnderProgress(@NotNull Project project,
+                                @NotNull GlobalInspectionContextImpl context,
+                                @NotNull AnalysisScope scope,
+                                @NotNull String resultsDataPath,
+                                @NotNull List<File> inspectionsResults) {
+    ProgressManager.getInstance().runProcess(() -> {
+      if (!GlobalInspectionContextUtil.canRunInspections(project, false)) {
+        gracefulExit(project);
+        return;
+      }
+      context.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
+      logMessageLn(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
+      if (!myErrorCodeRequired) {
+        closeProject(project);
+      }
+    }, new ProgressIndicatorBase() {
+      private String lastPrefix = "";
+      private int myLastPercent = -1;
+
+      @Override
+      public void setText(String text) {
+        if (myVerboseLevel == 0) return;
+
+        if (myVerboseLevel == 1) {
+          String prefix = getPrefix(text);
+          if (prefix == null) return;
+          if (prefix.equals(lastPrefix)) {
+            logMessage(1, ".");
+            return;
+          }
+          lastPrefix = prefix;
+          logMessageLn(1, "");
+          logMessageLn(1, prefix);
+          return;
+        }
+
+        if (myVerboseLevel == 3) {
+          if (!isIndeterminate() && getFraction() > 0) {
+            final int percent = (int)(getFraction() * 100);
+            if (myLastPercent == percent) return;
+            String prefix = getPrefix(text);
+            myLastPercent = percent;
+            String msg = (prefix != null ? prefix : InspectionsBundle.message("inspection.display.name")) + " " + percent + "%";
+            logMessageLn(2, msg);
+          }
+          return;
+        }
+
+        logMessageLn(2, text);
+      }
+    });
+  }
+
+  private void gracefulExit(@Nullable Project project) {
     if (myErrorCodeRequired) {
       System.exit(1);
     }
     else {
-      closeProject();
+      if (project != null) {
+        closeProject(project);
+      }
       throw new RuntimeException("Failed to proceed");
     }
   }
 
-  private void closeProject() {
-    if (myProject != null && !myProject.isDisposed()) {
-      ProjectUtil.closeAndDispose(myProject);
-      myProject = null;
+  private static void closeProject(@NotNull Project project) {
+    if (!project.isDisposed()) {
+      // see PlatformTestUtil.forceCloseProjectWithoutSaving about why we don't dispose as part of forceCloseProject
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project, false /* do not dispose */);
+      // explicitly dispose because `dispose` option for forceCloseProject doesn't work todo why?
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
     }
   }
 
   @Nullable
-  private InspectionProfileImpl loadInspectionProfile() throws IOException, JDOMException {
+  private InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
     InspectionProfileImpl inspectionProfile = null;
 
     //fetch profile by name from project file (project profiles can be disabled)
     if (myProfileName != null) {
-      inspectionProfile = loadProfileByName(myProfileName);
+      inspectionProfile = loadProfileByName(project, myProfileName);
       if (inspectionProfile == null) {
         logError("Profile with configured name (" + myProfileName + ") was not found (neither in project nor in config directory)");
-        gracefulExit();
+        gracefulExit(project);
         return null;
       }
       return inspectionProfile;
@@ -320,7 +333,7 @@ public class InspectionApplication {
       inspectionProfile = loadProfileByPath(myProfilePath);
       if (inspectionProfile == null) {
         logError("Failed to load profile from \'" + myProfilePath + "\'");
-        gracefulExit();
+        gracefulExit(project);
         return null;
       }
       return inspectionProfile;
@@ -328,14 +341,14 @@ public class InspectionApplication {
 
     if (myStubProfile != null) {
       if (!myRunWithEditorSettings) {
-        inspectionProfile = loadProfileByName(myStubProfile);
+        inspectionProfile = loadProfileByName(project, myStubProfile);
         if (inspectionProfile != null) return inspectionProfile;
 
         inspectionProfile = loadProfileByPath(myStubProfile);
         if (inspectionProfile != null) return inspectionProfile;
       }
 
-      inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+      inspectionProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
       logError("Using default project profile");
     }
     return inspectionProfile;
@@ -351,14 +364,15 @@ public class InspectionApplication {
   }
 
   @Nullable
-  private InspectionProfileImpl loadProfileByName(final String profileName) {
-    InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(profileName, false);
+  private InspectionProfileImpl loadProfileByName(@NotNull Project project, @NotNull String profileName) {
+    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
+    InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
     if (inspectionProfile != null) {
       logMessageLn(1, "Loaded shared project profile \'" + profileName + "\'");
     }
     else {
       //check if ide profile is used for project
-      for (InspectionProfileImpl profile : InspectionProjectProfileManager.getInstance(myProject).getProfiles()) {
+      for (InspectionProfileImpl profile : profileManager.getProfiles()) {
         if (Comparing.strEqual(profile.getName(), profileName)) {
           inspectionProfile = profile;
           logMessageLn(1, "Loaded local profile \'" + profileName + "\'");
