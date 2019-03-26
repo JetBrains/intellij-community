@@ -34,12 +34,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 /**
+ * Hides .idea directory in Project View.
+ *
  * @author yole
  */
-public class PlatformProjectViewStructureProvider implements TreeStructureProvider, DumbAware {
+public class ProjectConfigurationDirectoryConcealer implements TreeStructureProvider, DumbAware {
   private final Project myProject;
 
-  public PlatformProjectViewStructureProvider(Project project) {
+  public ProjectConfigurationDirectoryConcealer(Project project) {
     myProject = project;
   }
 
