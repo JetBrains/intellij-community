@@ -6,10 +6,10 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.TestsScope;
+import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -58,7 +58,7 @@ public class FileColorsModel implements Cloneable {
   }
 
   private void initPredefinedAndGlobalScopes() {
-    for (NamedScope scope : DefaultScopesProvider.getInstance(myProject).getAllCustomScopes()) {
+    for (NamedScope scope : CustomScopesAggregator.getAllCustomScopes(myProject)) {
       String scopeName = scope.getName();
       String colorName = scope instanceof FileColorName ? ((FileColorName)scope).colorName() : null;
 
