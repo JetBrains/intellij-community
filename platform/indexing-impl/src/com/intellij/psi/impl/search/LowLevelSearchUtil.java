@@ -53,18 +53,22 @@ public class LowLevelSearchUtil {
   // null -> there were nothing injected found
   private static Boolean processInjectedFile(PsiElement element,
                                              @NotNull StringSearcher searcher,
-                                             @NotNull ProgressIndicator progress,
+                                             int start, @NotNull ProgressIndicator progress,
                                              InjectedLanguageManager injectedLanguageManager,
                                              @NotNull TextOccurenceProcessor processor) {
     if (!(element instanceof PsiLanguageInjectionHost)) return null;
     if (injectedLanguageManager == null) return null;
-    List<Pair<PsiElement,TextRange>> list = injectedLanguageManager.getInjectedPsiFiles(element);
+    List<Pair<PsiElement, TextRange>> list = injectedLanguageManager.getInjectedPsiFiles(element);
     if (list == null) return null;
+    boolean hasMatchedRange = false;
     for (Pair<PsiElement, TextRange> pair : list) {
+      if (!pair.second.containsRange(start, start + searcher.getPatternLength())) continue;
+      hasMatchedRange = true;
       final PsiElement injected = pair.getFirst();
       if (!processElementsContainingWordInElement(processor, injected, searcher, false, progress)) return Boolean.FALSE;
     }
-    return Boolean.TRUE;
+
+    return hasMatchedRange ? Boolean.TRUE : null;
   }
 
   /**
@@ -130,7 +134,7 @@ public class LowLevelSearchUtil {
       if (!contains) contains = run.getTextLength() - start >= patternLength;  //do not compute if already contains
       if (contains) {
         if (processInjectedPsi) {
-          Boolean result = processInjectedFile(run, searcher, progress, injectedLanguageManager, processor);
+          Boolean result = processInjectedFile(run, searcher, start, progress, injectedLanguageManager, processor);
           if (result != null) {
             return result.booleanValue() ? lastElement : null;
           }
