@@ -86,7 +86,7 @@
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
     </group>
 
-    <group id="BuildMenu" popup="true">
+    <group id="Java.BuildMenu">
       <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="AllIcons.Actions.Compile">
         <add-to-group group-id="TouchBarDefault" anchor="before" relative-to-action="RunConfiguration"/>
       </action>
@@ -99,7 +99,7 @@
       <separator/>
       <action id="BuildArtifact" class="com.intellij.compiler.actions.BuildArtifactAction"/>
 
-      <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
+      <add-to-group group-id="BuildMenu"/>
     </group>
 
     <action id="DebugBuildProcess" class="com.intellij.compiler.actions.DebugBuildProcessToggleAction"/>
