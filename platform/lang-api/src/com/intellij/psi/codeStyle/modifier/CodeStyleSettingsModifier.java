@@ -43,9 +43,7 @@ public interface CodeStyleSettingsModifier {
   /**
    * @return The name of the modifier to be shown in UI.
    */
-  default String getName() {
-    return "Unknown";
-  }
+  String getName();
 
   /**
    * A factory method which returns status bar UI contributor for the given settings given that the settings have been modified by this
