@@ -275,40 +275,43 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     final Comparator<VariantInfo> DISTANCE_TO_CURRENT_COMPARATOR =
       Comparator.comparingInt(a -> Math.abs(a.myStartPoint.x - myCurrentVariant.myStartPoint.x));
 
-    void selectNext(Direction direction) {
+    private VariantInfo getPreviousVariant() {
       int currentIndex = myVariants.indexOf(myCurrentVariant);
+      return myVariants.get(currentIndex > 0 ? currentIndex - 1 : myVariants.size() - 1);
+    }
+
+    private VariantInfo getNextVariant() {
+      int currentIndex = myVariants.indexOf(myCurrentVariant);
+      return myVariants.get(currentIndex < myVariants.size() - 1 ? currentIndex + 1 : 0);
+    }
+
+    void selectNext(Direction direction) {
       int currentLineY = myCurrentVariant.myStartPoint.y;
+      VariantInfo next = null;
       switch (direction) {
         case LEFT:
-          if (currentIndex > 0) {
-            select(myVariants.get(currentIndex - 1));
-          }
+          next = getPreviousVariant();
           break;
         case RIGHT:
-          if (currentIndex < myVariants.size() - 1) {
-            select(myVariants.get(currentIndex + 1));
-          }
+          next = getNextVariant();
           break;
         case UP:
-          if (currentIndex > 0) {
-            int previousLineY = myVariants.stream().mapToInt(v -> v.myStartPoint.y).filter(v -> v < currentLineY).max().orElse(-1);
-            VariantInfo bestMatch = myVariants.stream()
-              .filter(v -> v.myStartPoint.y == previousLineY)
-              .min(DISTANCE_TO_CURRENT_COMPARATOR)
-              .orElse(myVariants.get(currentIndex - 1));
-            select(bestMatch);
-          }
+          int previousLineY = myVariants.stream().mapToInt(v -> v.myStartPoint.y).filter(v -> v < currentLineY).max().orElse(-1);
+          next = myVariants.stream()
+            .filter(v -> v.myStartPoint.y == previousLineY)
+            .min(DISTANCE_TO_CURRENT_COMPARATOR)
+            .orElseGet(this::getPreviousVariant);
           break;
         case DOWN:
-          if (currentIndex < myVariants.size() - 1) {
-            int nextLineY = myVariants.stream().mapToInt(v -> v.myStartPoint.y).filter(v -> v > currentLineY).min().orElse(-1);
-            VariantInfo bestMatch = myVariants.stream()
-              .filter(v -> v.myStartPoint.y == nextLineY)
-              .min(DISTANCE_TO_CURRENT_COMPARATOR)
-              .orElse(myVariants.get(currentIndex + 1));
-            select(bestMatch);
-          }
+          int nextLineY = myVariants.stream().mapToInt(v -> v.myStartPoint.y).filter(v -> v > currentLineY).min().orElse(-1);
+          next = myVariants.stream()
+            .filter(v -> v.myStartPoint.y == nextLineY)
+            .min(DISTANCE_TO_CURRENT_COMPARATOR)
+            .orElseGet(this::getNextVariant);
           break;
+      }
+      if (next != null) {
+        select(next);
       }
     }
 
