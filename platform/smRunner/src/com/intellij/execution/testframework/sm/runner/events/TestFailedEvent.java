@@ -37,6 +37,7 @@ public class TestFailedEvent extends TreeNodeEvent {
   private final long myDurationMillis;
   private final boolean myExpectedFileTemp;
   private final boolean myActualFileTemp;
+  private boolean myPrintExpectedAndActualValues = true;
 
   public TestFailedEvent(@NotNull TestFailed testFailed, boolean testError) {
     this(testFailed, testError, null);
@@ -78,6 +79,11 @@ public class TestFailedEvent extends TreeNodeEvent {
     myDurationMillis = parseDuration(attributes.get("duration"));
     myActualFileTemp = Boolean.parseBoolean(attributes.get("actualIsTempFile"));
     myExpectedFileTemp = Boolean.parseBoolean(attributes.get("expectedIsTempFile"));
+    myPrintExpectedAndActualValues = parsePrintExpectedAndActual(testFailed);
+  }
+
+  private static boolean parsePrintExpectedAndActual(@NotNull TestFailed testFailed) {
+    return !Boolean.FALSE.toString().equals(testFailed.getAttributes().get("printExpectedAndActual"));
   }
 
   public boolean isExpectedFileTemp() {
@@ -195,6 +201,10 @@ public class TestFailedEvent extends TreeNodeEvent {
   @Nullable
   public String getExpectedFilePath() {
     return myExpectedFilePath;
+  }
+
+  public boolean shouldPrintExpectedAndActualValues() {
+    return myPrintExpectedAndActualValues;
   }
 
   @Nullable
