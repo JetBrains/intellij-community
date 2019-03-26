@@ -91,7 +91,11 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
         if (AbstractPopup.isCloseRequest(event)) {
           // Do not process a close request if the tree shows a speed search popup
           SpeedSearchSupply supply = SpeedSearchSupply.getSupply(tree);
-          return supply != null && StringUtil.isEmpty(supply.getEnteredPrefix());
+          boolean res = supply == null || StringUtil.isEmpty(supply.getEnteredPrefix());
+          if (res) {
+            myPopup.cancel(event);
+          }
+          return res;
         }
         return false;
       })

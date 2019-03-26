@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.ui.popup.HintUpdateSupply;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -25,6 +24,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 /**
  * @author max
@@ -107,8 +107,17 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       return false;
     }
 
+    /**
+     *  Keep in mind that by setting KeyEventHandler it gets a responsibility to close popup in case of close request.
+     *  In common cases it looks like:
+     *
+     *  if (AbstractPopup.isCloseRequest(e) && mySpeedSearch.isNotActive()) {
+     *    myPopup.cancel(e);
+     *    return true;
+     *  }
+     */
     @Nullable
-    default BooleanFunction<KeyEvent> getKeyEventHandler() {
+    default BiPredicate<KeyEvent, JBPopup> getKeyEventHandler() {
       return null;
     }
 
@@ -394,9 +403,9 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       .setCouldPin(myCouldPin)
       .setOkHandler(myItemChosenRunnable);
 
-    BooleanFunction<KeyEvent> keyEventHandler = myChooserComponent.getKeyEventHandler();
+    BiPredicate<KeyEvent, JBPopup> keyEventHandler = myChooserComponent.getKeyEventHandler();
     if (keyEventHandler != null) {
-      builder.setKeyEventHandler(keyEventHandler);
+      builder.setKeyEventHandler(event -> keyEventHandler.test(event, myPopup));
     }
 
     if (myCommandButton != null) {
