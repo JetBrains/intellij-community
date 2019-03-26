@@ -68,7 +68,7 @@
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyFilesOrDirectories"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler" id="moveFileOrDir"/>
 
-    <treeStructureProvider implementation="com.intellij.platform.PlatformProjectViewStructureProvider"/>
+    <treeStructureProvider implementation="com.intellij.platform.ProjectConfigurationDirectoryConcealer"/>
 
     <programRunner implementation="com.intellij.execution.runners.DefaultRunProgramRunner" order="last"/>
 
