@@ -1,0 +1,17 @@
+<idea-plugin>
+  <id>com.intellij.example</id>
+  <extensions defaultExtensionNs="com.intellij">
+    <intentionAction>
+      <className>MyIntentionAction</className>
+    </intentionAction>
+    <intentionAction>
+      <className>MyIntentionActionWithDescription</className>
+    </intentionAction>
+    <intentionAction>
+      <className>MyIntentionActionWithoutBeforeAfter</className>
+    </intentionAction>
+    <intentionAction>
+      <className>MyQuickFixIntentionAction</className>
+    </intentionAction>
+  </extensions>
+</idea-plugin>

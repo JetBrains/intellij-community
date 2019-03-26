@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -28,7 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
-import org.jetbrains.idea.devkit.util.PsiUtil;
+import org.jetbrains.idea.devkit.util.*;
 
 abstract class DescriptionNotFoundInspectionBase extends DevKitInspectionBase {
 
@@ -59,7 +58,8 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitInspectionBase {
       if (dir == null) continue;
       final PsiFile descr = dir.findFile("description.html");
       if (descr != null) {
-        if (!hasBeforeAndAfterTemplate(dir.getVirtualFile())) {
+        if (!skipIfNotRegistered(aClass) &&
+            !hasBeforeAndAfterTemplate(dir.getVirtualFile())) {
           PsiElement problem = aClass.getNameIdentifier();
           ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(problem == null ? nameIdentifier : problem,
                                                                                 getHasNotBeforeAfterError(),
@@ -72,6 +72,9 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitInspectionBase {
       }
     }
 
+    if (skipIfNotRegistered(aClass)) {
+      return null;
+    }
 
     final PsiElement problem = aClass.getNameIdentifier();
     final ProblemDescriptor problemDescriptor = manager
@@ -84,6 +87,8 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitInspectionBase {
   protected CreateHtmlDescriptionFix getFix(Module module, String descriptionDir) {
     return new CreateHtmlDescriptionFix(descriptionDir, module, myDescriptionType);
   }
+
+  protected abstract boolean skipIfNotRegistered(PsiClass epClass);
 
   private static boolean hasBeforeAndAfterTemplate(@NotNull VirtualFile dir) {
     boolean hasBefore = false;
