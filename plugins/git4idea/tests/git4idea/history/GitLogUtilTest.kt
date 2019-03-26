@@ -10,6 +10,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.GitCommit
 import git4idea.config.GitVersion
 import git4idea.test.*
+import junit.framework.TestCase
 import org.junit.Assume.assumeTrue
 
 class GitLogUtilTest : GitSingleRepoTest() {
@@ -70,6 +71,15 @@ class GitLogUtilTest : GitSingleRepoTest() {
 
   @Throws(Exception::class)
   fun `test readFullDetails without fullMergeDiff`() {
+    `run test for merge diff`(false)
+  }
+
+  @Throws(Exception::class)
+  fun `test readFullDetails with fullMergeDiff`() {
+    `run test for merge diff`(true)
+  }
+
+  private fun `run test for merge diff`(withMergeDiff: Boolean) {
     repo.checkoutNew("testBranch")
     touch("fileToMerge1.txt", "content")
     repo.addCommit("Add fileToMerge1.txt")
@@ -82,10 +92,10 @@ class GitLogUtilTest : GitSingleRepoTest() {
     }
 
     val details = ContainerUtil.newArrayList<VcsFullCommitDetails>()
-    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details), true, true, true, true, false)
+    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details), true, true, true, true, withMergeDiff)
     val lastCommit = ContainerUtil.getFirstItem(details)
 
     assertNotNull(lastCommit)
-    assertTrue(lastCommit!!.getChanges(0).isEmpty())
+    TestCase.assertEquals(withMergeDiff, !lastCommit!!.getChanges(0).isEmpty())
   }
 }
