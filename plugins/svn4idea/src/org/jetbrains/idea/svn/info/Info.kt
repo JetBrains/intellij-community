@@ -44,6 +44,12 @@ class Info(val file: File?,
   @Deprecated("Use url property", ReplaceWith("url"))
   fun getURL() = url
 
+  @Deprecated("Use repositoryRootUrl property", ReplaceWith("repositoryRootUrl"))
+  fun getRepositoryRootURL(): Url? = repositoryRootUrl
+
+  @Deprecated("Use repositoryId property", ReplaceWith("repositoryId"))
+  fun getRepositoryUUID(): String? = repositoryId
+
   companion object {
     const val SCHEDULE_ADD = "add"
   }
