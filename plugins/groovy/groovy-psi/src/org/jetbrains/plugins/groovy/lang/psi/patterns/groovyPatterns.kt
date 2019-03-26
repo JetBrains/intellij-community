@@ -28,8 +28,10 @@ fun groovyList(): GroovyExpressionPattern.Capture<GrListOrMap> {
   })
 }
 
-fun psiMethod(containingClass: String, vararg name: String): PsiMethodPattern {
-  return GroovyPatterns.psiMethod().withName(*name).definedInClass(containingClass)
+fun psiMethod(containingClass: String, vararg names: String): PsiMethodPattern {
+  val methodPattern = GroovyPatterns.psiMethod()
+  val withName = if (names.isEmpty()) methodPattern else methodPattern.withName(*names)
+  return withName.definedInClass(containingClass)
 }
 
 fun groovyClosure(): GroovyClosurePattern = GroovyClosurePattern()
