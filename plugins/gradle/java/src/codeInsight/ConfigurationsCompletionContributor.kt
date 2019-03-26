@@ -28,7 +28,7 @@ class ConfigurationsCompletionContributor : AbstractGradleCompletionContributor(
                                 result: CompletionResultSet) {
       val position = params.position
       val extensionsData = GradleExtensionsContributor.getExtensionsFor(position) ?: return
-      for (configuration in extensionsData.configurations) {
+      for (configuration in extensionsData.configurations.values) {
         if (isScriptClasspath != configuration.scriptClasspath) continue
 
         val confVar = object : GrLightVariable(position.manager, configuration.name, GRADLE_API_CONFIGURATION, position) {

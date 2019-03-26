@@ -66,7 +66,7 @@ public class GradleUnresolvedReferenceFilter extends GroovyUnresolvedHighlightFi
     Set<String> toIgnore = new HashSet<>(IGNORE_SET);
     GradleExtensionsSettings.GradleExtensionsData extensionsData = GradleExtensionsContributor.Companion.getExtensionsFor(expression);
     if (extensionsData != null) {
-      for (GradleExtensionsSettings.GradleExtension extension : extensionsData.extensions) {
+      for (GradleExtensionsSettings.GradleExtension extension : extensionsData.extensions.values()) {
         if (StringUtil.isNotEmpty(extension.namedObjectTypeFqn)) {
           toIgnore.add(extension.namedObjectTypeFqn);
         }

@@ -54,7 +54,7 @@ class PropertiesTasksCompletionContributor : AbstractGradleCompletionContributor
         result.addElement(elementBuilder)
       }
 
-      for (gradleTask in extensionsData.tasks) {
+      for (gradleTask in extensionsData.tasksMap.values) {
         val docRef = Ref.create<String>()
         val taskVar = object : GrLightVariable(position.manager, gradleTask.name, gradleTask.typeFqn, position) {
           override fun getNavigationElement(): PsiElement {

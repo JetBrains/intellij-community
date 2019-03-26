@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
@@ -33,8 +32,7 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-@State(name = "GradleExtensions", storages = {@Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)})
-public class GradleExtensionsSettings implements PersistentStateComponent<GradleExtensionsSettings.Settings> {
+public class GradleExtensionsSettings {
 
   private static final Logger LOG = Logger.getInstance(GradleExtensionsSettings.class);
   private final Settings myState = new Settings();
@@ -46,18 +44,6 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
         myState.remove(linkedProjectPaths);
       }
     });
-  }
-
-  @Nullable
-  @Override
-  public Settings getState() {
-    // cleanup GradleExtensions entries created by previous version from workspace file
-    // TODO remove PersistentStateComponent implementation in future version
-    return new Settings();
-  }
-
-  @Override
-  public void loadState(@NotNull Settings state) {
   }
 
   @NotNull
@@ -81,9 +67,6 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
   }
 
   public static class Settings {
-    @Property(surroundWithTag = false)
-    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "project", keyAttributeName = "path")
-    @NotNull
     public Map<String, GradleProject> projects = new HashMap<>();
 
     public void add(@NotNull String rootPath,
@@ -119,7 +102,7 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
           gradleExtension.name = extension.getName();
           gradleExtension.rootTypeFqn = extension.getTypeFqn();
           gradleExtension.namedObjectTypeFqn = extension.getNamedObjectTypeFqn();
-          extensionsData.extensions.add(gradleExtension);
+          extensionsData.extensions.put(extension.getName(), gradleExtension);
         }
         for (org.jetbrains.plugins.gradle.model.GradleConvention convention : gradleExtensions.getConventions()) {
           GradleConvention gradleConvention = new GradleConvention();
@@ -131,7 +114,7 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
           GradleProp gradleProp = new GradleProp();
           gradleProp.name = property.getName();
           gradleProp.typeFqn = property.getTypeFqn();
-          extensionsData.properties.add(gradleProp);
+          extensionsData.properties.put(gradleProp.name, gradleProp);
         }
         for (ExternalTask task : gradleExtensions.getTasks()) {
           GradleTask gradleTask = new GradleTask();
@@ -153,15 +136,16 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
           }
 
           gradleTask.description = description.toString();
-          extensionsData.tasks.add(gradleTask);
+          extensionsData.tasksMap.put(gradleTask.name, gradleTask);
         }
+        extensionsData.tasks = new SmartList<>(extensionsData.tasksMap.values());
         for (org.jetbrains.plugins.gradle.model.GradleConfiguration configuration : gradleExtensions.getConfigurations()) {
           GradleConfiguration gradleConfiguration = new GradleConfiguration();
           gradleConfiguration.name = configuration.getName();
           gradleConfiguration.description = configuration.getDescription();
           gradleConfiguration.visible = configuration.isVisible();
           gradleConfiguration.scriptClasspath = configuration.isScriptClasspathConfiguration();
-          extensionsData.configurations.add(gradleConfiguration);
+          extensionsData.configurations.put(configuration.getName(), gradleConfiguration);
         }
         gradleProject.extensions.put(entry.getKey(), extensionsData);
         extensionsData.myGradleProject = gradleProject;
@@ -196,42 +180,29 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     }
   }
 
-  @Tag("sub-project")
   static class GradleProject {
-    @Property(surroundWithTag = false)
-    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "project", keyAttributeName = "path")
-    @NotNull
     public Map<String, GradleExtensionsData> extensions = new HashMap<>();
   }
 
-
-  @Tag("extensions")
   public static class GradleExtensionsData {
-    public GradleExtensionsData() {
-    }
-
-    @Transient
     private GradleProject myGradleProject;
-
-    @Attribute("parent")
     public String parent;
-    @Property(surroundWithTag = false)
-    @XCollection
-    public List<GradleExtension> extensions = new SmartList<>();
-    @Property(surroundWithTag = false)
-    @XCollection
-    public List<GradleConvention> conventions = new SmartList<>();
-    @Property(surroundWithTag = false)
-    @XCollection
-    public List<GradleProp> properties = new SmartList<>();
-    @Property(surroundWithTag = false)
-    @XCollection
-    public List<GradleTask> tasks = new SmartList<>();
-    @Property(surroundWithTag = false)
-    @XCollection
-    public List<GradleConfiguration> configurations = new SmartList<>();
+    @NotNull
+    public final Map<String, GradleExtension> extensions = new HashMap<>();
+    @NotNull
+    public final List<GradleConvention> conventions = new SmartList<>();
+    @NotNull
+    public final Map<String, GradleProp> properties = new HashMap<>();
+    @NotNull
+    public final Map<String, GradleTask> tasksMap = new LinkedHashMap<>();
+    /**
+     * @deprecated to be removed, use {@link GradleExtensionsData#tasksMap} instead
+     */
+    @Deprecated
+    public List<GradleTask> tasks = Collections.emptyList();
 
-    @Transient
+    @NotNull
+    public final Map<String, GradleConfiguration> configurations = new HashMap<>();
     @Nullable
     public GradleExtensionsData getParent() {
       if (myGradleProject == null) return null;
@@ -251,9 +222,8 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     @NotNull
     private static Collection<GradleProp> findAllProperties(@NotNull GradleExtensionsData extensionsData,
                                                             @NotNull Map<String, GradleProp> result) {
-      for (GradleProp property : extensionsData.properties) {
-        if (result.containsKey(property.name)) continue;
-        result.put(property.name, property);
+      for (GradleProp property : extensionsData.properties.values()) {
+        result.putIfAbsent(property.name, property);
       }
       if (extensionsData.getParent() != null) {
         findAllProperties(extensionsData.getParent(), result);
@@ -263,9 +233,8 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
 
     @Nullable
     private static GradleProp findProperty(@NotNull GradleExtensionsData extensionsData, String propName) {
-      for (GradleProp property : extensionsData.properties) {
-        if (property.name.equals(propName)) return property;
-      }
+      GradleProp prop = extensionsData.properties.get(propName);
+      if (prop != null) return prop;
       if (extensionsData.parent != null && extensionsData.myGradleProject != null) {
         GradleExtensionsData parentData = extensionsData.myGradleProject.extensions.get(extensionsData.parent);
         if (parentData != null) {
@@ -280,13 +249,9 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     String getTypeFqn();
   }
 
-  @Tag("ext")
   public static class GradleExtension implements TypeAware {
-    @Attribute("name")
     public String name;
-    @Attribute("type")
     public String rootTypeFqn = CommonClassNames.JAVA_LANG_OBJECT_SHORT;
-    @Attribute("objectType")
     public String namedObjectTypeFqn;
 
     @Override
@@ -295,11 +260,8 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     }
   }
 
-  @Tag("convention")
   public static class GradleConvention implements TypeAware {
-    @Attribute("name")
     public String name;
-    @Attribute("type")
     public String typeFqn = CommonClassNames.JAVA_LANG_OBJECT_SHORT;
 
     @Override
@@ -308,14 +270,10 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     }
   }
 
-  @Tag("prop")
   public static class GradleProp implements TypeAware {
-    @Attribute("name")
     public String name;
-    @Attribute("type")
     public String typeFqn = CommonClassNames.JAVA_LANG_STRING;
     @Nullable
-    @Text
     public String value;
 
     @Override
@@ -324,14 +282,10 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     }
   }
 
-  @Tag("task")
   public static class GradleTask implements TypeAware {
-    @Attribute("name")
     public String name;
-    @Attribute("type")
     public String typeFqn = GradleCommonClassNames.GRADLE_API_DEFAULT_TASK;
     @Nullable
-    @Text
     public String description;
 
     @Override
@@ -340,15 +294,10 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     }
   }
 
-  @Tag("conf")
   public static class GradleConfiguration {
-    @Attribute("name")
     public String name;
-    @Attribute("visible")
     public boolean visible = true;
-    @Attribute("scriptClasspath")
     public boolean scriptClasspath;
-    @Text
     public String description;
   }
 }

@@ -24,7 +24,7 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
                           "java" to "org.gradle.api.plugins.JavaPluginConvention"),
                     conventionsMap)
 
-    val extensionsMap = extensions.extensions.map { it.name to it.typeFqn }.toMap()
+    val extensionsMap = extensions.extensions.mapValues { entry -> entry.value.typeFqn }
 
 
     val baseVer = GradleVersion.version(gradleVersion).baseVersion

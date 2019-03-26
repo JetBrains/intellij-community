@@ -92,7 +92,7 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
         processor.execute(variable, state)
       }
 
-      extensionsData.tasks.firstOrNull { it.name == propCandidate }?.let(processVariable)
+      extensionsData.tasksMap[propCandidate]?.let(processVariable)
       extensionsData.findProperty(propCandidate)?.let(processVariable)
     }
     else {
