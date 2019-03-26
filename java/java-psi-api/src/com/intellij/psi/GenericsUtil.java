@@ -71,8 +71,8 @@ public class GenericsUtil {
       final PsiType componentType1 = ((PsiArrayType)type1).getComponentType();
       final PsiType componentType2 = ((PsiArrayType)type2).getComponentType();
       final PsiType componentType = getLeastUpperBound(componentType1, componentType2, compared, manager);
-      if (componentType1 instanceof PsiPrimitiveType && 
-          componentType2 instanceof PsiPrimitiveType && 
+      if ((componentType1 instanceof PsiPrimitiveType ||
+           componentType2 instanceof PsiPrimitiveType) &&
           componentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
         final GlobalSearchScope resolveScope = GlobalSearchScope.allScope(manager.getProject());
