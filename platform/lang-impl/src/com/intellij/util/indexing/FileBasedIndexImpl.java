@@ -316,11 +316,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   @Override
   public void initComponent() {
-    Iterator<FileBasedIndexExtension> indexExtensionsIterator = IndexInfrastructure.hasIndices() ?
-      ((ExtensionPointImpl<FileBasedIndexExtension>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint(null)).iterator() :
-      Collections.emptyIterator();
-
-    myStateFuture = IndexInfrastructure.submitGenesisTask(new FileIndexDataInitialization(indexExtensionsIterator));
+    myStateFuture = IndexInfrastructure.submitGenesisTask(new FileIndexDataInitialization());
     
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
       waitUntilIndicesAreInitialized();
@@ -2364,14 +2360,14 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     private final AtomicBoolean versionChanged = new AtomicBoolean();
     private boolean currentVersionCorrupted;
     private SerializationManagerEx mySerializationManagerEx;
-    private final Iterator<? extends FileBasedIndexExtension> myIndexExtensions;
 
-    FileIndexDataInitialization(Iterator<? extends FileBasedIndexExtension> extensions) {
-      myIndexExtensions = extensions;
-    }
-
-    private void initAssociatedDataForExtensions(@NotNull Iterator<? extends FileBasedIndexExtension> extensions) {
+    private void initAssociatedDataForExtensions() {
       long started = System.nanoTime();
+      Iterator<FileBasedIndexExtension> extensions = 
+        IndexInfrastructure.hasIndices() ?
+        ((ExtensionPointImpl<FileBasedIndexExtension>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint(null)).iterator() :
+        Collections.emptyIterator();
+
       // todo: init contentless indices first ?
       while (extensions.hasNext()) {
         FileBasedIndexExtension<?, ?> extension = extensions.next();
@@ -2411,7 +2407,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
     @Override
     protected void prepare() {
-      initAssociatedDataForExtensions(myIndexExtensions);
+      initAssociatedDataForExtensions();
       
       mySerializationManagerEx = SerializationManagerEx.getInstanceEx();
       File indexRoot = PathManager.getIndexRoot();
