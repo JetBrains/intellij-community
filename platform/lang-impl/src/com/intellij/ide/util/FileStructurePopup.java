@@ -266,6 +266,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       .setMovable(true)
       .setBelongsToGlobalPopupStack(true)
       //.setCancelOnClickOutside(false) //for debug and snapshots
+      .setCancelOnOtherWindowOpen(true)
       .setCancelKeyEnabled(false)
       .setDimensionServiceKey(null, getDimensionServiceKey(), true)
       .setCancelCallback(() -> myCanClose)
@@ -284,6 +285,15 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     ((AbstractPopup)myPopup).setShowHints(true);
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
+    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
+      @Override
+      public boolean dispatch(@NotNull AWTEvent e) {
+        if (e instanceof WindowEvent && e.getID() == WindowEvent.WINDOW_OPENED && ((WindowEvent)e).getWindow() instanceof JDialog) {
+          //myPopup.cancel();
+        }
+        return false;
+      }
+    }, this);
 
     rebuildAndSelect(false, myInitialElement).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
