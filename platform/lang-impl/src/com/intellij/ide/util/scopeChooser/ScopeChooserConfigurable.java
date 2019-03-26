@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
@@ -125,10 +126,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   private void checkForPredefinedNames() throws ConfigurationException {
     final Set<String> predefinedScopes = new HashSet<>();
-    for (CustomScopesProvider scopesProvider : CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensionList(myProject)) {
-      for (NamedScope namedScope : scopesProvider.getFilteredScopes()) {
-        predefinedScopes.add(namedScope.getName());
-      }
+    for (NamedScope scope : CustomScopesAggregator.getAllCustomScopes(myProject)) {
+      predefinedScopes.add(scope.getName());
     }
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode)myRoot.getChildAt(i);

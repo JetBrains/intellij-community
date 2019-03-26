@@ -7,10 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
-import com.intellij.psi.search.scope.packageSet.CustomScopesProvider;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -49,14 +47,5 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
   @NotNull
   public NamedScope getProblemsScope() {
     return ProblemsScope.INSTANCE;
-  }
-
-  @NotNull
-  public List<NamedScope> getAllCustomScopes() {
-    final List<NamedScope> scopes = new SmartList<>();
-    for (CustomScopesProvider provider : CUSTOM_SCOPES_PROVIDER.getExtensionList(myProject)) {
-      scopes.addAll(provider.getFilteredScopes());
-    }
-    return scopes;
   }
 }
