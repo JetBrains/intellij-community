@@ -64,12 +64,10 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
                                                   @NotNull String classFQN,
                                                   @Nullable PsiClass psiClass) {
     if (psiClass == null) return false;
-    for (PsiMethod method : psiClass.getMethods()) {
-      if (method.getName().equals(methodName)) {
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass == null) return false;
-        return classFQN.equals(containingClass.getQualifiedName());
-      }
+    for (PsiMethod method : psiClass.findMethodsByName(methodName, false)) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) return false;
+      return classFQN.equals(containingClass.getQualifiedName());
     }
     return isLastMethodDefinitionIn(methodName, classFQN, psiClass.getSuperClass());
   }
