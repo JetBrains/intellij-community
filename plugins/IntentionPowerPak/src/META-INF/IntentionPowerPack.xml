@@ -42,12 +42,6 @@
     </intentionAction>
 
     <intentionAction>
-      <className>com.siyeh.ipp.expression.ExpandLogicalBracketsIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.boolean</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
       <className>com.siyeh.ipp.trivialif.ExpandBooleanIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.boolean</categoryKey>
@@ -346,7 +340,7 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.expression.ExpandArithmeticBracketsIntention</className>
+      <className>com.siyeh.ipp.expression.expand.ExpandBracketsIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
