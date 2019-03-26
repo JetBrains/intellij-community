@@ -51,7 +51,7 @@ private fun getBaseTypeFromResult(result: GroovyResolveResult, arguments: Argume
   }
 }
 
-private fun getTypeFromCandidate(result: GroovyMethodResult, context: PsiElement): PsiType? {
+fun getTypeFromCandidate(result: GroovyMethodResult, context: PsiElement): PsiType? {
   val candidate = result.candidate ?: return null
   for (ext in ep.extensions) {
     return ext.getType(candidate.receiver, candidate.method, candidate.argumentMapping?.arguments, context) ?: continue
