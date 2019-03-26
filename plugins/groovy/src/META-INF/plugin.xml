@@ -626,8 +626,6 @@
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex"/>
 
-    <hierarchy.indexer implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.hierarchy.GrStubIndexer"/>
-
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GrAliasedImportedElementSearcher"/>
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>

@@ -15,26 +15,19 @@
  */
 package com.intellij.psi.stubsHierarchy;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
+@Deprecated
 public abstract class HierarchyService {
-  public static HierarchyService getService(@NotNull Project project) {
-    return ServiceManager.getService(project, HierarchyService.class);
-  }
 
   @NotNull
   public static ClassHierarchy getHierarchy(@NotNull Project project) {
-    return getService(project).getHierarchy();
+    return new ClassHierarchy();
   }
 
-  @NotNull
-  public abstract ClassHierarchy getHierarchy();
-
-  public abstract void clearHierarchy();
 
 }

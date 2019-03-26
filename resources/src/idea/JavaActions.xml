@@ -354,13 +354,6 @@
     <action id="GenerateModuleDescriptors" class="com.intellij.codeInspection.java19api.Java9GenerateModuleDescriptorsAction">
       <add-to-group group-id="CodeMenu" anchor="last"/>
     </action>
-    <action id="StubHierarchy" class="com.intellij.psi.stubsHierarchy.impl.test.BuildStubsHierarchyAction" text="Build Stub Hierarchy" internal="true">
-      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
-    </action>
-
-    <action id="TestStubHierarchy" class="com.intellij.psi.stubsHierarchy.impl.test.TestStubHierarchyAction" text="Test Stub Hierarchy" internal="true">
-      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
-    </action>
 
     <group id="AnalyzeJavaMenu">
       <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>

@@ -16,17 +16,14 @@
 package com.intellij.psi.stubsHierarchy;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
+@Deprecated
 public abstract class SmartClassAnchor {
-  @NotNull
-  public abstract VirtualFile retrieveFile();
-
   @NotNull
   public abstract PsiClass retrieveClass(@NotNull Project project);
 }

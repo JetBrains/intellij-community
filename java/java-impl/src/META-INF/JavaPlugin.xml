@@ -865,8 +865,6 @@
     <codeInsight.template.postfixTemplateProvider language="JAVA" implementationClass="com.intellij.codeInsight.template.postfix.templates.JavaPostfixTemplateProvider"/>
     <codeInsight.folding.collapseBlockHandler language="JAVA" implementationClass="com.intellij.codeInsight.folding.impl.JavaCollapseBlockHandler"/>
     <spellchecker.support language="JAVA" implementationClass="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
-    <hierarchy.indexer implementation="com.intellij.psi.stubsHierarchy.impl.JavaStubIndexer"/>
-    <fileBasedIndex implementation="com.intellij.psi.stubsHierarchy.impl.StubHierarchyIndex"/>
     <refactoring.elementListenerProvider implementation="com.intellij.codeInspection.ex.AdditionalAnnotationsRefactoringElementListener"/>
     <outOfSourcesChecker implementation="com.intellij.openapi.projectRoots.JavaOutOfSourcesChecker"/>
     <hierarchy.referenceProcessor implementation="com.intellij.ide.hierarchy.call.JavaCallReferenceProcessor"/>
