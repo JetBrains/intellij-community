@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,21 @@ package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 
+import java.util.Set;
+
 public class FileEqualsUsageInspection extends DevKitInspectionBase {
+
   static final String MESSAGE =
-    "Do not use File.equals/hashCode/compareTo as they don't honor case-sensitivity on MacOS. " +
+    "Do not use File.equals/hashCode/compareTo as they don't honor case-sensitivity on macOS. " +
     "Please use FileUtil.filesEquals/fileHashCode/compareFiles instead";
+
+  private static final Set<String> METHOD_NAMES = ContainerUtil.immutableSet("equals", "compareTo", "hashCode");
 
   @Override
   @NotNull
@@ -41,9 +48,13 @@ public class FileEqualsUsageInspection extends DevKitInspectionBase {
         PsiClass clazz = method.getContainingClass();
         if (clazz == null) return;
 
-        String methodName = method.getName();
         if (CommonClassNames.JAVA_IO_FILE.equals(clazz.getQualifiedName()) &&
-            ("equals".equals(methodName) || "compareTo".equals(methodName) || "hashCode".equals(methodName))) {
+            METHOD_NAMES.contains(method.getName())) {
+          if (JavaPsiFacade.getInstance(holder.getProject()).findClass(FileUtil.class.getName(),
+                                                                       expression.getResolveScope()) == null) {
+            return;
+          }
+          
           holder.registerProblem(methodExpression, MESSAGE, ProblemHighlightType.LIKE_DEPRECATED);
         }
       }

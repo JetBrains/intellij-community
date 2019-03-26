@@ -25,6 +25,7 @@ public class FileEqualsUsageInspectionTest extends PluginModuleTestCase {
     super.setUp();
 
     myFixture.enableInspections(new FileEqualsUsageInspection());
+    myFixture.addClass("package com.intellij.openapi.util.io; public class FileUtil {}");
   }
 
   public void testEquals() {
