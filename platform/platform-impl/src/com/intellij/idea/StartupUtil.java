@@ -14,7 +14,6 @@ import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.ide.startupWizard.StartupWizard;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -571,13 +570,6 @@ public class StartupUtil {
       new CustomizeIDEWizardDialog(provider).show();
       PluginManagerCore.invalidatePlugins();
       appStarter.startupWizardFinished();
-      return;
-    }
-
-    List<ApplicationInfoEx.PluginChooserPage> pages = appInfo.getPluginChooserPages();
-    if (!pages.isEmpty()) {
-      new StartupWizard(pages).show();
-      PluginManagerCore.invalidatePlugins();
     }
   }
 }

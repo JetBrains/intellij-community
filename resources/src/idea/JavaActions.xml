@@ -652,7 +652,7 @@
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </group>
 
-    <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction">
+    <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction" internal="true">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>
     </action>
 
