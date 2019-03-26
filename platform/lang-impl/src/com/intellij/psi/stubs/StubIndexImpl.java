@@ -441,11 +441,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
   @Override
   public void initComponent() {
-    Iterator<StubIndexExtension<?, ?>> extensionsIterator = IndexInfrastructure.hasIndices() ?
-      ((ExtensionPointImpl<StubIndexExtension<?, ?>>)StubIndexExtension.EP_NAME.getPoint(null)).iterator() : 
-      Collections.emptyIterator();
-    
-    myStateFuture = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization(extensionsIterator));
+    myStateFuture = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization());
 
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
       try {
@@ -604,17 +600,17 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   private class StubIndexInitialization extends IndexInfrastructure.DataInitialization<AsyncState> {
     private final AsyncState state = new AsyncState();
     private final StringBuilder updated = new StringBuilder();
-    private final Iterator<? extends StubIndexExtension<?, ?>> myExtensionsIterator;
-
-    StubIndexInitialization(@NotNull Iterator<? extends StubIndexExtension<?, ?>> extensionsIterator) {
-      myExtensionsIterator = extensionsIterator;
-    }
 
     @Override
     protected void prepare() {
+      Iterator<StubIndexExtension<?, ?>> extensionsIterator = 
+        IndexInfrastructure.hasIndices() ?
+          ((ExtensionPointImpl<StubIndexExtension<?, ?>>)StubIndexExtension.EP_NAME.getPoint(null)).iterator() :
+          Collections.emptyIterator();
+
       boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
-      while(myExtensionsIterator.hasNext()) {
-        StubIndexExtension extension = myExtensionsIterator.next();
+      while(extensionsIterator.hasNext()) {
+        StubIndexExtension extension = extensionsIterator.next();
         if (extension == null) break;
         extension.getKey(); // initialize stub index keys 
         
