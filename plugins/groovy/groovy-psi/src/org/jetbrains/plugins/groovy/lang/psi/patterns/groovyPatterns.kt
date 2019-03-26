@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.patterns
 
 import com.intellij.openapi.util.Key
@@ -14,15 +14,23 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 val closureCallKey: Key<GrCall> = Key.create<GrCall>("groovy.pattern.closure.call")
 
-inline fun <reified T : GroovyPsiElement> groovyElement(): GroovyElementPattern.Capture<T> = GroovyElementPattern.Capture(T::class.java)
+inline fun <reified T : GroovyPsiElement> groovyElement(): GroovyElementPattern.Capture<T> {
+  return GroovyElementPattern.Capture(T::class.java)
+}
 
-inline fun <reified T : GrExpression> groovyExpression(): GroovyExpressionPattern.Capture<T> = GroovyExpressionPattern.Capture(T::class.java)
+inline fun <reified T : GrExpression> groovyExpression(): GroovyExpressionPattern.Capture<T> {
+  return GroovyExpressionPattern.Capture(T::class.java)
+}
 
-fun groovyList(): GroovyExpressionPattern.Capture<GrListOrMap> = groovyExpression<GrListOrMap>().with(object : PatternCondition<GrListOrMap>("isList") {
-  override fun accepts(t: GrListOrMap, context: ProcessingContext?) = !t.isMap
-})
+fun groovyList(): GroovyExpressionPattern.Capture<GrListOrMap> {
+  return groovyExpression<GrListOrMap>().with(object : PatternCondition<GrListOrMap>("isList") {
+    override fun accepts(t: GrListOrMap, context: ProcessingContext?) = !t.isMap
+  })
+}
 
-fun psiMethod(containingClass: String, vararg name: String): PsiMethodPattern = GroovyPatterns.psiMethod().withName(*name).definedInClass(containingClass)
+fun psiMethod(containingClass: String, vararg name: String): PsiMethodPattern {
+  return GroovyPatterns.psiMethod().withName(*name).definedInClass(containingClass)
+}
 
 fun groovyClosure(): GroovyClosurePattern = GroovyClosurePattern()
 
