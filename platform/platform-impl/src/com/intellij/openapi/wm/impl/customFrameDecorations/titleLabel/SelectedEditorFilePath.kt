@@ -1,15 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.wm.impl.customFrameDecorations
+package com.intellij.openapi.wm.impl.customFrameDecorations.titleLabel
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.constraints.isDisposed
+import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.project.guessCurrentProject
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.wm.impl.FrameTitleBuilder
+import com.intellij.openapi.vfs.VirtualFile
 import sun.swing.SwingUtilities2
 import java.awt.*
 import java.awt.event.*
@@ -18,7 +19,7 @@ import javax.swing.JLabel
 import javax.swing.UIManager
 
 
-class PathDescription(disposable: Disposable) {
+open class SelectedEditorFilePath(val disposable: Disposable) {
   companion object {
     const val fileSeparatorChar = '/'
     const val ellipsisSymbol = "\u2026"
@@ -31,6 +32,10 @@ class PathDescription(disposable: Disposable) {
       label.revalidate()
       label.repaint()
     }
+
+  fun isClipped(): Boolean {
+    return clippedText.equals(path)
+  }
 
   private val label = object : JLabel() {
     override fun paint(g: Graphics?) {
@@ -47,22 +52,12 @@ class PathDescription(disposable: Disposable) {
 
   }
 
-  fun getView(): JComponent = this.label
-
-  fun getListenerBoundses(): List<Rectangle> {
-    val mouseInsets = 2
-    val projectLabelRect = label.bounds
-
-    return if(clippedText.equals(label.text)) {
-      emptyList()
-    } else {
-      listOf(
-        Rectangle(projectLabelRect.x, projectLabelRect.y, mouseInsets, projectLabelRect.height),
-        Rectangle(projectLabelRect.x, projectLabelRect.y, projectLabelRect.width, mouseInsets),
-        Rectangle(projectLabelRect.x, projectLabelRect.maxY.toInt() - mouseInsets, projectLabelRect.width, mouseInsets),
-        Rectangle(projectLabelRect.maxX.toInt() - mouseInsets, projectLabelRect.y, mouseInsets, projectLabelRect.height)
-      )
+  var inited = false
+  open fun getView(): JComponent {
+    if(!inited) {
+      init()
     }
+    return this.label
   }
 
   private val resizedListener = object : ComponentAdapter() {
@@ -71,20 +66,70 @@ class PathDescription(disposable: Disposable) {
     }
   }
 
-  init {
+  private var path: String? = null
+    set(value) {
+      if (value == field) return
+      field = value
+      label.text = path
+
+      update()
+    }
+
+  private fun init() {
+    inited = true
+    var subscriptionDisposable: Disposable? = null
+
     ApplicationManager.getApplication().messageBus.connect(disposable)
       .subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
         override fun projectOpened(project: Project) {
-          update()
+          if (subscriptionDisposable != null && !subscriptionDisposable!!.isDisposed) {
+            Disposer.dispose(subscriptionDisposable!!)
+          }
+
+          val dsp = Disposer.newDisposable()
+          Disposer.register(disposable, dsp)
+          subscriptionDisposable = dsp
+
+          changeProject(project, dsp)
         }
       })
-    this.label.addComponentListener(resizedListener)
-    Disposer.register(disposable, Disposable { this.label.removeComponentListener(resizedListener) })
+
+    getView().addComponentListener(resizedListener)
+    Disposer.register(disposable, Disposable { getView().removeComponentListener(resizedListener) })
   }
 
+
+  protected open fun changeProject(project: Project, dsp: Disposable) {
+    val fileEditorManager = FileEditorManager.getInstance(project)
+
+    fun updatePath() {
+      path = if (fileEditorManager is FileEditorManagerEx) {
+        fileEditorManager.currentFile?.canonicalPath
+      }
+      else {
+        fileEditorManager?.selectedEditor?.file?.canonicalPath
+      }
+    }
+
+    project.messageBus.connect(dsp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+        updatePath()
+      }
+
+      override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+        updatePath()
+      }
+
+      override fun selectionChanged(event: FileEditorManagerEvent) {
+        updatePath()
+      }
+    })
+
+    update()
+  }
+
+
   private fun update() {
-    val path = getProjectPath()
-    label.text = path
     clippedText = path?.let {
       val fm = label.getFontMetrics(label.font)
 
@@ -94,18 +139,14 @@ class PathDescription(disposable: Disposable) {
       val textWidth = SwingUtilities2.stringWidth(label, fm, path)
 
       if (textWidth > width) {
-        label.toolTipText = path
-        clipString(label, path, width)
+        getView().toolTipText = path
+        clipString(label, path!!, width)
       }
       else {
-        label.toolTipText = null
+        getView().toolTipText = null
         path
       }
     }
-  }
-
-  private fun getProjectPath(): String? {
-    return guessCurrentProject(this.label).basePath
   }
 
   private fun clipString(component: JComponent, string: String, maxWidth: Int): String {
@@ -115,7 +156,6 @@ class PathDescription(disposable: Disposable) {
       symbolWidth > maxWidth -> ""
       symbolWidth == maxWidth -> ellipsisSymbol
       else -> {
-
         val availTextWidth = maxWidth - symbolWidth
 
         val separate = string.split(fileSeparatorChar)
@@ -133,5 +173,4 @@ class PathDescription(disposable: Disposable) {
       }
     }
   }
-
 }

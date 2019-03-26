@@ -10,8 +10,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons;
-import com.intellij.openapi.wm.impl.customFrameDecorations.PathDescription;
 import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons;
+import com.intellij.openapi.wm.impl.customFrameDecorations.titleLabel.CustomDecorationPath;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -54,7 +54,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
   private CustomFrameTitleButtons buttonPanes;
   private final JLabel titleLabel = new JLabel();
-  private final PathDescription myPathDescription = new PathDescription(this);
+  private final CustomDecorationPath mySelectedEditorFilePath = new CustomDecorationPath(this);
 
   private final Color myInactiveForeground = UIManager.getColor("inactiveCaptionText");
   private Color myActiveForeground = null;
@@ -165,7 +165,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
     }
 
     hitTestSpots.add(menuRect);
-    hitTestSpots.addAll(myPathDescription.getListenerBoundses());
+    hitTestSpots.addAll(mySelectedEditorFilePath.getListenerBounds());
     hitTestSpots.add(iconRect);
     hitTestSpots.add(buttonsRect);
 
@@ -207,7 +207,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
         JPanel pane = new JPanel(new MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"));
         pane.setOpaque(false);
         pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin "+minMenuHeight);
-        pane.add(myPathDescription.getView(), "center, growx, wmin 0, gapbefore " + menuBarGap + ", gapafter " + menuBarGap);
+        pane.add(mySelectedEditorFilePath.getView(), "center, growx, wmin 0, gapbefore " + menuBarGap + ", gapafter " + menuBarGap);
 
         add(pane, "wmin 0, growx");
       }
