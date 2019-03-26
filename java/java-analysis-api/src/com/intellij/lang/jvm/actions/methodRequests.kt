@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
+import java.util.function.Function
+import java.util.function.Supplier
 import com.intellij.openapi.util.Pair as JBPair
 
 private class SimpleMethodRequest(
@@ -57,8 +59,8 @@ fun constructorRequest(project: Project, parameters: List<JBPair<String, PsiType
 fun setMethodParametersRequest(parameters: Iterable<Map.Entry<String, JvmType>>): ChangeParametersRequest =
   SimpleChangeParametersRequest(parameters.map { expectedParameter(it.value, it.key) })
 
-fun updateMethodParametersRequest(parametersOwnerPointer: () -> JvmMethod?,
-                                  updateFunction: (List<ExpectedParameter>) -> List<ExpectedParameter>): ChangeParametersRequest =
+fun updateMethodParametersRequest(parametersOwnerPointer: Supplier<JvmMethod?>,
+                                  updateFunction: Function<List<ExpectedParameter>, List<ExpectedParameter>>): ChangeParametersRequest =
   UpdateParametersRequest(parametersOwnerPointer, updateFunction)
 
 private class SimpleChangeParametersRequest(private val parameters: List<ExpectedParameter>) : ChangeParametersRequest {
@@ -68,15 +70,15 @@ private class SimpleChangeParametersRequest(private val parameters: List<Expecte
 
 }
 
-private class UpdateParametersRequest(val parametersOwnerPointer: () -> JvmMethod?,
-                                      val updateFunction: (List<ExpectedParameter>) -> List<ExpectedParameter>) : ChangeParametersRequest {
+private class UpdateParametersRequest(val parametersOwnerPointer: Supplier<JvmMethod?>,
+                                      val updateFunction: Function<List<ExpectedParameter>, List<ExpectedParameter>>) : ChangeParametersRequest {
 
   override fun getExpectedParameters(): List<ExpectedParameter> {
-    val jvmMethod = parametersOwnerPointer()
+    val jvmMethod = parametersOwnerPointer.get()
                     ?: throw IllegalStateException("parametersOwnerPointer is invalid, please check isValid() before calling this method")
-    return updateFunction(jvmMethod.parameters.map { ChangeParametersRequest.ExistingParameterWrapper(it) })
+    return updateFunction.apply(jvmMethod.parameters.map { ChangeParametersRequest.ExistingParameterWrapper(it) })
   }
 
-  override fun isValid(): Boolean = parametersOwnerPointer() != null
+  override fun isValid(): Boolean = parametersOwnerPointer.get() != null
 
 }
