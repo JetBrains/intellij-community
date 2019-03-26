@@ -218,9 +218,10 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       protected boolean onDoubleClick(MouseEvent event) {
         if (myLastSelection instanceof RunDashboardRunConfigurationNode && myLastSelection.getChildren().isEmpty()) {
           RunDashboardRunConfigurationNode node = (RunDashboardRunConfigurationNode)myLastSelection;
-          RunDashboardContributor contributor = node.getContributor();
-          if (contributor != null) {
-            return contributor.handleDoubleClick(node.getConfigurationSettings().getConfiguration());
+          for (RunDashboardCustomizer customizer : node.getCustomizers()) {
+            if (customizer.handleDoubleClick(event, node)) {
+              return true;
+            }
           }
         }
         return false;

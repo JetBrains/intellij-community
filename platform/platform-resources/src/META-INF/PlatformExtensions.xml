@@ -564,6 +564,9 @@
 
     <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
 
+    <runDashboardCustomizer implementation="com.intellij.execution.testframework.sm.runner.SMTRunnerRunDashboardCustomizer"
+                            order="first" id="smtRunnerCustomizer"/>
+
     <!--context providers-->
     <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>
