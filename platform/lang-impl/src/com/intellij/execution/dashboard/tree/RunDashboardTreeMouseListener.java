@@ -3,13 +3,13 @@ package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.dashboard.hyperlink.RunDashboardHyperlinkComponent;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -26,24 +26,19 @@ public class RunDashboardTreeMouseListener extends RunDashboardLinkMouseListener
 
   @Override
   protected Object getAimedObject(MouseEvent e) {
-    Object aimedObject = null;
-    final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
-    if (path != null) {
-      DefaultMutableTreeNode treeNode = ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
-      if (treeNode != null) {
-        aimedObject = treeNode.getUserObject();
-      }
-    }
-    return aimedObject;
+    return TreeUtil.getLastUserObject(myTree.getPathForLocation(e.getX(), e.getY()));
   }
 
   @Override
   protected void repaintComponent(MouseEvent e) {
-    TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
-    Rectangle bounds = path == null ? null : myTree.getPathBounds(path);
-    if (bounds != null) {
-      myTree.repaint(bounds);
+    ExpandableItemsHandler<Integer> handler = myTree.getExpandableItemsHandler();
+    if (handler.isEnabled() && !handler.getExpandedItems().isEmpty()) {
+      // Dispatch MOUSE_ENTERED in order to repaint ExpandableItemsHandler's tooltip component, since it ignores MOUSE_MOVE.
+      myTree.dispatchEvent(new MouseEvent((Component)e.getSource(), MouseEvent.MOUSE_ENTERED, e.getWhen(), e.getModifiers(),
+                                          e.getX(), e.getY(), e.getClickCount(), e.isPopupTrigger(), e.getButton()));
     }
+    // Repaint all tree since nodes which cursor just leaved should be repaint too.
+    myTree.repaint();
   }
 
   @Nullable
