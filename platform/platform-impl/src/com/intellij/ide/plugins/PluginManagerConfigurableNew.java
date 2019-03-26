@@ -54,7 +54,6 @@ import java.awt.event.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
-import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -786,9 +785,9 @@ public class PluginManagerConfigurableNew
           addGroup(groups, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "sortBy:downloads");
           addGroup(groups, allRepositoriesMap, "Top Rated", "orderBy=rating", "sortBy:rating");
         }
-        catch (UnknownHostException e) {
+        catch (IOException e) {
           PluginManagerMain.LOG
-            .info("Main plugin repository '" + e.getMessage() + "' is not available. Please check your network settings.");
+            .info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
         }
 
         for (String host : UpdateSettings.getInstance().getPluginHosts()) {
@@ -1384,7 +1383,6 @@ public class PluginManagerConfigurableNew
     List<IdeaPluginDescriptor> list = new ArrayList<>();
     Map<String, IdeaPluginDescriptor> map = new HashMap<>();
     Map<String, List<IdeaPluginDescriptor>> custom = new HashMap<>();
-    IOException exception = null;
 
     for (String host : RepositoryHelper.getPluginHosts()) {
       try {
@@ -1402,23 +1400,13 @@ public class PluginManagerConfigurableNew
       }
       catch (IOException e) {
         if (host == null) {
-          //noinspection InstanceofCatchParameter
-          if (e instanceof UnknownHostException) {
             PluginManagerMain.LOG
-              .info("Main plugin repository '" + e.getMessage() + "' is not available. Please check your network settings.");
-          }
-          else {
-            exception = e;
-          }
+              .info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
         }
         else {
           PluginManagerMain.LOG.info(host, e);
         }
       }
-    }
-
-    if (exception != null) {
-      throw exception;
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
