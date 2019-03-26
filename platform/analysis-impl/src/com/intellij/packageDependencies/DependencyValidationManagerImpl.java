@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies;
 
-import com.intellij.diagnostic.PluginException;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.MainConfigurationStateSplitter;
@@ -12,6 +11,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
@@ -69,16 +69,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @Override
   @NotNull
   public List<NamedScope> getPredefinedScopes() {
-    final List<NamedScope> predefinedScopes = new ArrayList<>();
-    for (CustomScopesProvider scopesProvider : CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject)) {
-      List<NamedScope> customScopes = scopesProvider.getFilteredScopes();
-      if (customScopes.contains(null)) {
-        throw PluginException.createByClass("Provider.getFilteredScopes() must not return null scopes, got: " + customScopes + "; provider: " + scopesProvider + " (" + scopesProvider.getClass() + ")", null, scopesProvider.getClass());
-      }
-
-      predefinedScopes.addAll(customScopes);
-    }
-    return predefinedScopes;
+    return CustomScopesAggregator.getAllCustomScopes(myProject);
   }
 
   @Override
