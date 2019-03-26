@@ -802,6 +802,11 @@ public class EquivalenceChecker {
     else if (classReference1 != classReference2) {
       return EXACT_MISMATCH;
     }
+    else if (!typesAreEquivalent(newExpression1.getType(), newExpression2.getType())) {
+      // both classReference1 and classReference2 nulls
+      // could be new int[0] and new long[0]
+      return EXACT_MISMATCH;
+    }
     final PsiExpression[] arrayDimensions1 = newExpression1.getArrayDimensions();
     final PsiExpression[] arrayDimensions2 = newExpression2.getArrayDimensions();
     if (!expressionsAreEquivalent(arrayDimensions1, arrayDimensions2, false).isExactMatch()) {
