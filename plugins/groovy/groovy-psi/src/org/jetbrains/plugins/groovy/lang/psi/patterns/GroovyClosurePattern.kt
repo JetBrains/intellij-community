@@ -5,6 +5,7 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
 import com.intellij.psi.PsiMethod
 import com.intellij.util.ProcessingContext
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
@@ -19,6 +20,18 @@ class GroovyClosurePattern : GroovyExpressionPattern<GrClosableBlock, GroovyClos
 
         val method = call.resolveMethod() ?: return false
         return methodPattern.accepts(method)
+      }
+    })
+  }
+
+  fun inMethodResult(condition: PatternCondition<in GroovyMethodResult>): GroovyClosurePattern {
+    return with(object : PatternCondition<GrClosableBlock>("closureInMethodResult") {
+      override fun accepts(closure: GrClosableBlock, context: ProcessingContext?): Boolean {
+        val call = getCall(closure) ?: return false
+        context?.put(closureCallKey, call)
+
+        val result = call.advancedResolve() as? GroovyMethodResult ?: return false
+        return condition.accepts(result, context)
       }
     })
   }
