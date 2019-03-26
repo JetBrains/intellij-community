@@ -29,23 +29,18 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
-import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.ui.tree.treeTable.TreeTableModelWithColumns;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
-import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
-import com.intellij.ui.treeStructure.treetable.TreeTable;
-import com.intellij.ui.treeStructure.treetable.TreeTableModel;
-import com.intellij.ui.treeStructure.treetable.TreeTableTree;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -55,15 +50,11 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
+import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.io.File;
 import java.util.List;
 import java.util.*;
@@ -73,6 +64,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.intellij.build.BuildView.CONSOLE_VIEW_NAME;
+import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
 /**
  * @author Vladislav.Soroka
@@ -87,19 +79,15 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   private final Project myProject;
   private final ConsoleViewHandler myConsoleViewHandler;
-  @NotNull
-  private final BuildViewSettingsProvider myViewSettingsProvider;
-  private final TableColumn myTimeColumn;
   private final String myWorkingDir;
   private final AtomicBoolean myDisposed = new AtomicBoolean();
   private final AtomicBoolean myShownFirstError = new AtomicBoolean();
   private final StructureTreeModel<SimpleTreeStructure> myTreeModel;
-  private final TreeTableTree myTree;
+  private final Tree myTree;
   private final ExecutionNode myRootNode;
   private final ExecutionNode myBuildProgressRootNode;
   @NotNull private final BuildViewGroupingSupport myGroupingSupport;
   private final ConcurrentLinkedDeque<Pair<BuildEvent, ExecutionNode>> myGroupingEvents = new ConcurrentLinkedDeque<>();
-  private volatile int myTimeColumnWidth;
   @Nullable
   private volatile Predicate<ExecutionNode> myExecutionTreeFilter;
 
@@ -109,25 +97,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                               @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
     myProject = project;
     myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
-    final ColumnInfo[] COLUMNS = {
-      new TreeColumnInfo("name"),
-      new ColumnInfo("time elapsed") {
-        @Nullable
-        @Override
-        public Object valueOf(Object o) {
-          if (o instanceof DefaultMutableTreeNode) {
-            final Object userObject = ((DefaultMutableTreeNode)o).getUserObject();
-            if (userObject instanceof ExecutionNode) {
-              String duration = ((ExecutionNode)userObject).getDuration();
-              updateTimeColumnWidth("___" + duration, false);
-              return duration;
-            }
-          }
-          return null;
-        }
-      }
-    };
-    myViewSettingsProvider = buildViewSettingsProvider;
     myGroupingSupport = new BuildViewGroupingSupport(this);
     myGroupingSupport.addPropertyChangeListener(e -> changeGrouping());
 
@@ -138,84 +107,11 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
     SimpleTreeStructure treeStructure = new SimpleTreeStructure.Impl(myRootNode);
     myTreeModel = new StructureTreeModel<>(treeStructure);
-    final TreeTableModel model = new TreeTableModelWithColumns(new AsyncTreeModel(myTreeModel, this), COLUMNS);
-
-    DefaultTableCellRenderer timeColumnCellRenderer = new DefaultTableCellRenderer() {
-      @Override
-      public Component getTableCellRendererComponent(JTable table,
-                                                     Object value,
-                                                     boolean isSelected,
-                                                     boolean hasFocus,
-                                                     int row,
-                                                     int column) {
-        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        setHorizontalAlignment(SwingConstants.RIGHT);
-        Color fg = isSelected ? UIUtil.getTreeSelectionForeground(hasFocus) : SimpleTextAttributes.GRAY_ATTRIBUTES.getFgColor();
-        setForeground(fg);
-        return this;
-      }
-    };
-
-    TreeTable treeTable = new TreeTable(model) {
-      @Override
-      public TableCellRenderer getCellRenderer(int row, int column) {
-        if (column == 1) {
-          return timeColumnCellRenderer;
-        }
-        return super.getCellRenderer(row, column);
-      }
-    };
-    treeTable.setRootVisible(false);
-    EditSourceOnDoubleClickHandler.install(treeTable);
-    EditSourceOnEnterKeyHandler.install(treeTable, null);
-
-    myTree = treeTable.getTree();
-    treeTable.addFocusListener(new FocusListener() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        treeTable.setSelectionBackground(UIUtil.getTreeSelectionBackground(true));
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-        treeTable.setSelectionBackground(UIUtil.getTreeSelectionBackground(false));
-      }
-    });
-    final TreeCellRenderer treeCellRenderer = myTree.getCellRenderer();
-    myTree.setCellRenderer((tree, value, selected, expanded, leaf, row, hasFocus) -> {
-      final Component rendererComponent =
-        treeCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-      if (rendererComponent instanceof SimpleColoredComponent) {
-        Color bg = UIUtil.getTreeBackground(selected, true);
-        Color fg = UIUtil.getTreeForeground(selected, true);
-        if (selected) {
-          for (SimpleColoredComponent.ColoredIterator it = ((SimpleColoredComponent)rendererComponent).iterator(); it.hasNext(); ) {
-            it.next();
-            int offset = it.getOffset();
-            int endOffset = it.getEndOffset();
-            SimpleTextAttributes currentAttributes = it.getTextAttributes();
-            SimpleTextAttributes newAttributes =
-              new SimpleTextAttributes(bg, fg, currentAttributes.getWaveColor(), currentAttributes.getStyle());
-            it.split(endOffset - offset, newAttributes);
-          }
-        }
-
-        SpeedSearchUtil.applySpeedSearchHighlighting(treeTable, (SimpleColoredComponent)rendererComponent, true, selected);
-      }
-      return rendererComponent;
-    });
-    new TreeTableSpeedSearch(treeTable).setComparator(new SpeedSearchComparator(false));
-    treeTable.setTableHeader(null);
-
-    myTimeColumn = treeTable.getColumnModel().getColumn(1);
-    myTimeColumn.setResizable(false);
-    updateTimeColumnWidth(StringUtil.formatDurationApproximate(11111L), true);
-
-    TreeUtil.installActions(myTree);
+    myTree = initTree(new AsyncTreeModel(myTreeModel, this));
 
     JPanel myContentPanel = new JPanel();
     myContentPanel.setLayout(new CardLayout());
-    myContentPanel.add(ScrollPaneFactory.createScrollPane(treeTable, SideBorder.LEFT), TREE);
+    myContentPanel.add(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT), TREE);
 
     myPanel.setLayout(new BorderLayout());
     ThreeComponentsSplitter myThreeComponentsSplitter = new ThreeComponentsSplitter() {
@@ -242,6 +138,39 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                              buildViewSettingsProvider);
     myThreeComponentsSplitter.setLastComponent(myConsoleViewHandler.getComponent());
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
+  }
+
+  private static Tree initTree(@NotNull AsyncTreeModel model) {
+    Tree tree = new MyTree(model);
+    UIUtil.putClientProperty(tree, ANIMATION_IN_RENDERER_ALLOWED, true);
+    tree.setRootVisible(false);
+    EditSourceOnDoubleClickHandler.install(tree);
+    EditSourceOnEnterKeyHandler.install(tree, null);
+    new TreeSpeedSearch(tree).setComparator(new SpeedSearchComparator(false));
+    TreeUtil.installActions(tree);
+    return tree;
+  }
+
+  private void installContextMenu(@NotNull StartBuildEvent startBuildEvent) {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      final DefaultActionGroup group = new DefaultActionGroup();
+      final DefaultActionGroup rerunActionGroup = new DefaultActionGroup();
+      AnAction[] restartActions = startBuildEvent.getRestartActions();
+      for (AnAction anAction : restartActions) {
+        rerunActionGroup.add(anAction);
+      }
+      if (restartActions.length > 0) {
+        group.addAll(rerunActionGroup);
+        group.addSeparator();
+      }
+      EditSourceAction edit = new EditSourceAction();
+      ActionUtil.copyFrom(edit, "EditSource");
+      group.add(edit);
+      group.addSeparator();
+      group.add(new ShowExecutionErrorsOnlyAction(this));
+
+      PopupHandler.installPopupHandler(myTree, group, "BuildView");
+    });
   }
 
   @Override
@@ -367,13 +296,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     if (event instanceof FinishEvent) {
       currentNode.setEndTime(event.getEventTime());
       currentNode.setResult(((FinishEvent)event).getResult());
-      final String text = "__" + currentNode.getDuration();
-      ApplicationManager.getApplication().invokeLater(() -> {
-        int timeColumnWidth = new JLabel(text, SwingConstants.RIGHT).getPreferredSize().width;
-        if (myTimeColumnWidth < timeColumnWidth) {
-          myTimeColumnWidth = timeColumnWidth;
-        }
-      });
     }
 
     if (event instanceof FinishBuildEvent) {
@@ -381,7 +303,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       String time = DateFormatUtil.formatDateTime(event.getEventTime());
       aHint = aHint == null ? "at " + time : aHint + " at " + time;
       currentNode.setHint(aHint);
-      updateTimeColumnWidth(myTimeColumnWidth);
       if (myConsoleViewHandler.myExecutionNode == null) {
         ExecutionNode element = getBuildProgressRootNode();
         ApplicationManager.getApplication().invokeLater(() -> myConsoleViewHandler.setNode(element));
@@ -390,27 +311,19 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     scheduleUpdate(currentNode);
   }
 
-  private void installContextMenu(@NotNull StartBuildEvent startBuildEvent) {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      final DefaultActionGroup group = new DefaultActionGroup();
-      final DefaultActionGroup rerunActionGroup = new DefaultActionGroup();
-      AnAction[] restartActions = startBuildEvent.getRestartActions();
-      for (AnAction anAction : restartActions) {
-        rerunActionGroup.add(anAction);
-      }
-      if (restartActions.length > 0) {
-        group.addAll(rerunActionGroup);
-        group.addSeparator();
-      }
-      EditSourceAction edit = new EditSourceAction();
-      ActionUtil.copyFrom(edit, "EditSource");
-      group.add(edit);
-      group.addSeparator();
-      group.add(new ShowExecutionErrorsOnlyAction(this));
-
-      TreeTable treeTable = myTree.getTreeTable();
-      PopupHandler.installPopupHandler(treeTable, group, "BuildView");
-    });
+  protected void expand(Tree tree) {
+    TreeUtil.expand(tree,
+                    path -> {
+                      ExecutionNode node = TreeUtil.getLastUserObject(ExecutionNode.class, path);
+                      if (node != null && node.isAutoExpandNode() && node.getChildCount() > 0) {
+                        return TreeVisitor.Action.CONTINUE;
+                      }
+                      else {
+                        return TreeVisitor.Action.SKIP_CHILDREN;
+                      }
+                    },
+                    path -> {
+                    });
   }
 
   @Override
@@ -493,19 +406,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   @Override
   public void onEvent(@NotNull BuildEvent event) {
     myTreeModel.getInvoker().runOrInvokeLater(() -> onEventInternal(event));
-  }
-
-  protected void expand(TreeTableTree tree) {
-    TreeUtil.expand(tree,
-                    path -> {
-                      ExecutionNode node = TreeUtil.getLastUserObject(ExecutionNode.class, path);
-                      if (node != null && node.isAutoExpandNode() && node.getChildCount() > 0) {
-                        return TreeVisitor.Action.CONTINUE;
-                      } else {
-                        return TreeVisitor.Action.SKIP_CHILDREN;
-                      }
-                    },
-                    path -> {});
   }
 
   void scheduleUpdate(ExecutionNode executionNode) {
@@ -598,17 +498,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     });
   }
 
-  private void updateTimeColumnWidth(String text, boolean force) {
-    int timeColumnWidth = new JLabel(text, SwingConstants.RIGHT).getPreferredSize().width;
-    if (myTimeColumnWidth > timeColumnWidth) {
-      timeColumnWidth = myTimeColumnWidth;
-    }
-
-    if (force || myTimeColumn.getMaxWidth() < timeColumnWidth || myTimeColumn.getWidth() < timeColumnWidth) {
-      updateTimeColumnWidth(timeColumnWidth);
-    }
-  }
-
   private void changeGrouping() {
     for (Pair<BuildEvent, ExecutionNode> pair : myGroupingEvents) {
       BuildEvent event = pair.first;
@@ -648,12 +537,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         scheduleUpdate(node);
       }
     }
-  }
-
-  private void updateTimeColumnWidth(int width) {
-    myTimeColumn.setPreferredWidth(width);
-    myTimeColumn.setMinWidth(width);
-    myTimeColumn.setMaxWidth(width);
   }
 
   @Nullable
@@ -747,7 +630,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     private ExecutionNode myExecutionNode;
 
     ConsoleViewHandler(Project project,
-                       TreeTableTree tree,
+                       @NotNull Tree tree,
                        @NotNull ExecutionNode buildProgressRootNode,
                        ThreeComponentsSplitter threeComponentsSplitter,
                        @Nullable ExecutionConsole executionConsole,
@@ -871,6 +754,74 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     public void clear() {
       myPanel.setVisible(false);
       getTaskOutputView().clear();
+    }
+  }
+
+  private static class MyTree extends Tree {
+    private MyTree(TreeModel treemodel) {
+      super(treemodel);
+    }
+
+    @Override
+    public void setUI(final TreeUI ui) {
+      super.setUI(ui);
+      final int fontHeight = getFontMetrics(getFont()).getHeight();
+      final int iconHeight = AllIcons.RunConfigurations.TestPassed.getIconHeight();
+      setRowHeight(Math.max(fontHeight, iconHeight) + 2);
+      setLargeModel(true);
+    }
+
+    public boolean isExpandableHandlerVisibleForCurrentRow(int row) {
+      final ExpandableItemsHandler<Integer> handler = getExpandableItemsHandler();
+      final Collection<Integer> items = handler.getExpandedItems();
+      return items.size() == 1 && row == items.iterator().next();
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      super.paint(g);
+      Rectangle visibleRect = getVisibleRect();
+      Rectangle clip = g.getClipBounds();
+      final int visibleRowCount = TreeUtil.getVisibleRowCountForFixedRowHeight(this);
+      final int firstRow = getClosestRowForLocation(0, visibleRect.y);
+      for (int row = firstRow; row < Math.min(firstRow + visibleRowCount + 1, getRowCount()); row++) {
+        if (isExpandableHandlerVisibleForCurrentRow(row)) continue;
+        if (row == -1) continue;
+        Object node = getPathForRow(row).getLastPathComponent();
+        if (!(node instanceof DefaultMutableTreeNode)) continue;
+        Object data = ((DefaultMutableTreeNode)node).getUserObject();
+        if (!(data instanceof ExecutionNode)) continue;
+        final String duration = ((ExecutionNode)data).getDuration();
+        if (duration == null) continue;
+
+        Rectangle rowBounds = getRowBounds(row);
+        rowBounds.x = 0;
+        rowBounds.width = Integer.MAX_VALUE;
+
+        if (rowBounds.intersects(clip)) {
+          Rectangle fullRowRect = new Rectangle(visibleRect.x, rowBounds.y, visibleRect.width, rowBounds.height);
+          paintRowData(this, duration, fullRowRect, (Graphics2D)g, isRowSelected(row), hasFocus());
+        }
+      }
+    }
+
+    private static void paintRowData(Tree tree, String duration, Rectangle bounds, Graphics2D g, boolean isSelected, boolean hasFocus) {
+      g.setFont(tree.getFont().deriveFont(Font.PLAIN, UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
+      int totalWidth = tree.getFontMetrics(g.getFont()).stringWidth(duration) + 2;
+      int x = bounds.x + bounds.width - totalWidth;
+      g.setColor(isSelected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeBackground());
+      int leftOffset = 5;
+      g.fillRect(x - leftOffset, bounds.y, totalWidth + leftOffset, bounds.height);
+      g.translate(0, bounds.y - 1);
+      if (isSelected) {
+        g.setColor(UIUtil.getTreeSelectionForeground(hasFocus));
+      }
+      else {
+        g.setColor(new JBColor(0x808080, 0x808080));
+      }
+      g.drawString(duration, x, SimpleColoredComponent.getTextBaseLine(tree.getFontMetrics(tree.getFont()), bounds.height) + 1);
+      g.translate(0, -bounds.y + 1);
+      GraphicsUtil.setupAAPainting(g).restore();
     }
   }
 }
