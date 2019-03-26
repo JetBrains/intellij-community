@@ -53,4 +53,5 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
   public void testTooManyVarargsPolyArguments() {
     doTest(true, false);
   }
+  public void testNoArraySuperType() { doTest(true, true);}
 }
