@@ -875,20 +875,21 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void setHintSize() {
-    Component popupAnchor = getPopupAnchor();
-    int maxWidth = popupAnchor != null ? JBUI.scale(435) : MAX_DEFAULT.width;
     Dimension hintSize;
     if (!myManuallyResized && myHint.getDimensionServiceKey() == null) {
-      Dimension preferredSize = myEditorPane.getPreferredSize();
-      int width = definitionPreferredWidth();
-      width = width < 0 ? preferredSize.width : width;
-      width = Math.min(maxWidth, Math.max(JBUI.scale(300), width));
+      int minWidth = JBUI.scale(300);
+      int maxWidth = getPopupAnchor() != null ? JBUI.scale(435) : MAX_DEFAULT.width;
+
+      int width = Math.max(definitionPreferredWidth(), myEditorPane.getMinimumSize().width);
+      width = Math.min(maxWidth, Math.max(minWidth, width));
+
       myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
       myEditorPane.setText(myDecoratedText);
-      preferredSize = myEditorPane.getPreferredSize();
+      Dimension preferredSize = myEditorPane.getPreferredSize();
 
       int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
       height = Math.min(MAX_DEFAULT.height, Math.max(MIN_DEFAULT.height, height));
+
       hintSize = new Dimension(width, height);
     }
     else {
