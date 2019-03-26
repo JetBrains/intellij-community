@@ -23,12 +23,14 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
 
   @Override
   public void decorate(PackageDependenciesNode node, ColoredTreeCellRenderer cellRenderer) {
+    final CoverageDataManager dataManager = getCoverageDataManager();
+    if (dataManager == null) return;
+
     final PsiElement element = node.getPsiElement();
     if (element == null || !element.isValid()) {
       return;
     }
 
-    final CoverageDataManager dataManager = getCoverageDataManager();
     final CoverageSuitesBundle currentSuite = dataManager.getCurrentSuitesBundle();
     final Project project = element.getProject();
 
@@ -49,6 +51,7 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
   @Override
   public void decorate(ProjectViewNode node, PresentationData data) {
     final CoverageDataManager coverageDataManager = getCoverageDataManager();
+    if (coverageDataManager == null) return;
     final CoverageSuitesBundle currentSuite = coverageDataManager.getCurrentSuitesBundle();
 
     final Project project = node.getProject();
