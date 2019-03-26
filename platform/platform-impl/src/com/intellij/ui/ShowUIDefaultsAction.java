@@ -35,6 +35,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -101,6 +102,9 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   updateValue(pair, colorUIResource, row, column);
                   changed = true;
                 }
+              } else if (value instanceof Boolean) {
+                updateValue(pair, !((Boolean)value), row, column);
+                changed = true;
               } else if (value instanceof Integer) {
                 Integer newValue = editNumber(key.toString(), value.toString());
                 if (newValue != null) {
@@ -168,6 +172,14 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                                                          int row,
                                                          int column) {
             value = column == 0 ? ((Pair)value).first : ((Pair)value).second;
+            if (value instanceof Boolean) {
+              TableCellRenderer renderer = table.getDefaultRenderer(Boolean.class);
+              if (renderer != null) {
+                JCheckBox box = (JCheckBox)renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                box.setHorizontalAlignment(SwingConstants.LEFT);
+                return box;
+              }
+            }
             final JPanel panel = new JPanel(new BorderLayout());
             final JLabel label = new JLabel(value == null ? "" : value.toString());
             panel.add(label, BorderLayout.CENTER);
@@ -472,6 +484,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         if (column != 1) return false;
         Object value = ((Pair)getValueAt(row, column)).second;
         return (value instanceof Color ||
+                value instanceof Boolean ||
                 value instanceof Integer ||
                 value instanceof EmptyBorder ||
                 value instanceof Insets ||
