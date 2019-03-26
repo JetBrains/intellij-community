@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.execution.CommandLineUtil;
@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import static java.util.Collections.unmodifiableMap;
@@ -249,7 +248,7 @@ public class EnvironmentUtil {
       builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
       Process process = builder.start();
       StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
-      int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
+      int rv = waitAndTerminateAfter(process);
       gobbler.stop();
 
       String lines = FileUtil.loadFile(envFile);
@@ -262,8 +261,11 @@ public class EnvironmentUtil {
     @NotNull
     protected List<String> getShellProcessCommand() throws Exception {
       String shellScript = getShell();
-      if (shellScript == null || !new File(shellScript).canExecute()) {
-        throw new Exception("shell:" + shellScript);
+      if (StringUtil.isEmptyOrSpaces(shellScript)) {
+        throw new Exception("empty $SHELL");
+      }
+      if (!new File(shellScript).canExecute()) {
+        throw new Exception("$SHELL points to a missing or non-executable file: " + shellScript);
       }
       return buildShellProcessCommand(shellScript, true, true, false);
     }
@@ -277,7 +279,7 @@ public class EnvironmentUtil {
   /**
    * Builds a login shell command list from the {@code shellScript} path.
    *
-   * @param shellScript   path to the shell script, probably taken from envrionment variable {@code SHELL}
+   * @param shellScript   path to the shell script, probably taken from environment variable {@code SHELL}
    * @param isLogin       true iff it should be login shell, usually {@code -l} parameter
    * @param isInteractive true iff it should be interactive shell, usually {@code -i} parameter
    * @param isCommand     true iff command should accept a command, instead of script name, usually {@code -c} parameter
@@ -291,8 +293,7 @@ public class EnvironmentUtil {
                                                       boolean isCommand) {
     List<String> commands = ContainerUtil.newArrayList(shellScript);
     if (isLogin && !shellScript.endsWith("/tcsh") && !shellScript.endsWith("/csh")) {
-      // Act as a login shell
-      // tsch does allow to use -l with any other options
+      // *csh do not allow to use -l with any other options
       commands.add(SHELL_LOGIN_ARGUMENT);
     }
     if (isInteractive) {
@@ -335,8 +336,8 @@ public class EnvironmentUtil {
     return parseEnv(lines);
   }
 
-  private static int waitAndTerminateAfter(@NotNull Process process, int timeoutMillis) {
-    Integer exitCode = waitFor(process, timeoutMillis);
+  private static int waitAndTerminateAfter(@NotNull Process process) {
+    Integer exitCode = waitFor(process, SHELL_ENV_READING_TIMEOUT);
     if (exitCode != null) {
       return exitCode;
     }
