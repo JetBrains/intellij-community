@@ -23,7 +23,8 @@ private fun generateMappings() {
                      ?.split(",")
                      ?.map(String::trim)
                    ?: emptyList()
-  val mappings = (loadIdeaGeneratedIcons() + loadNonGeneratedIcons("idea")).groupBy {
+  val context = Context()
+  val mappings = (loadIdeaGeneratedIcons(context) + loadNonGeneratedIcons(context,"idea")).groupBy {
     "${it.product}#${it.set}"
   }.toSortedMap().values.flatMap {
     if (it.size > 1) {
@@ -83,9 +84,9 @@ private class Mapping(val product: String, val set: String, val path: String) {
   }
 }
 
-private fun loadIdeaGeneratedIcons(): Collection<Mapping> {
-  val homePath = PathManager.getHomePath()
-  val home = File(homePath)
+private fun loadIdeaGeneratedIcons(context: Context): Collection<Mapping> {
+  val home = context.devRepoDir
+  val homePath =  home.absolutePath
   val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
   val util = project.modules.find {
     it.name == "intellij.platform.util"
@@ -111,8 +112,8 @@ private fun loadIdeaGeneratedIcons(): Collection<Mapping> {
   }
 }
 
-private fun loadNonGeneratedIcons(vararg skip: String): Collection<Mapping> {
-  val iconsRepo = Context().iconsRepoDir
+private fun loadNonGeneratedIcons(context: Context, vararg skip: String): Collection<Mapping> {
+  val iconsRepo = context.iconsRepoDir
   val toSkip = sequenceOf(*skip)
     .map(iconsRepo::resolve)
     .map(File::toString)
