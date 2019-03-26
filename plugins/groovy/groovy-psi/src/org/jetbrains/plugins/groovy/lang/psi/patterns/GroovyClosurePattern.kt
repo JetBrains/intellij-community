@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.patterns
 
 import com.intellij.patterns.ElementPattern
@@ -25,26 +11,33 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 
 class GroovyClosurePattern : GroovyExpressionPattern<GrClosableBlock, GroovyClosurePattern>(GrClosableBlock::class.java) {
 
-  fun inMethod(methodPattern: ElementPattern<out PsiMethod>): GroovyClosurePattern = with(object : PatternCondition<GrClosableBlock>("closureInMethod") {
-    override fun accepts(closure: GrClosableBlock, context: ProcessingContext?): Boolean {
+  fun inMethod(methodPattern: ElementPattern<out PsiMethod>): GroovyClosurePattern {
+    return with(object : PatternCondition<GrClosableBlock>("closureInMethod") {
+      override fun accepts(closure: GrClosableBlock, context: ProcessingContext?): Boolean {
+        val call = getCall(closure) ?: return false
+        context?.put(closureCallKey, call)
+
+        val method = call.resolveMethod() ?: return false
+        return methodPattern.accepts(method)
+      }
+    })
+  }
+
+  companion object {
+    private fun getCall(closure: GrClosableBlock): GrCall? {
       val parent = closure.parent
-      val call = when (parent) {
+      when (parent) {
         is GrCall -> {
-          if (closure !in parent.closureArguments) return false
-          parent
+          return if (closure in parent.closureArguments) parent else null
         }
         is GrArgumentList -> {
-          val grandParent = parent.parent as? GrCall ?: return false
-          if (grandParent.closureArguments.isNotEmpty()) return false
-          if (grandParent.expressionArguments.lastOrNull() != closure) return false
-          grandParent
+          val grandParent = parent.parent as? GrCall ?: return null
+          if (grandParent.closureArguments.isNotEmpty()) return null
+          if (grandParent.expressionArguments.lastOrNull() != closure) return null
+          return grandParent
         }
-        else -> return false
+        else -> return null
       }
-      context?.put(closureCallKey, call)
-
-      val method = call.resolveMethod() ?: return false
-      return methodPattern.accepts(method)
     }
-  })
+  }
 }
