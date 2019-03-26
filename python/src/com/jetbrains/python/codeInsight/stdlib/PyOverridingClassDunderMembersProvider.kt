@@ -39,6 +39,11 @@ class PyOverridingClassDunderMembersProvider : PyClassMembersProviderBase(), PyO
     return result
   }
 
+  override fun resolveMember(type: PyClassType, name: String, location: PsiElement?, resolveContext: PyResolveContext): PsiElement? {
+    if (!PyUtil.isSpecialName(name)) return null
+    return super.resolveMember(type, name, location, resolveContext)
+  }
+
   private fun resolveInObject(type: PyClassType,
                               name: String,
                               location: PyExpression?,
