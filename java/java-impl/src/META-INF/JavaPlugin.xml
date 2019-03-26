@@ -65,6 +65,9 @@
       <implementation-class>com.intellij.openapi.projectRoots.impl.DefaultJdkConfigurator</implementation-class>
       <headless-implementation-class/>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.module.WebModuleTypeRegistrar</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
