@@ -12,20 +12,19 @@ import org.jetbrains.annotations.Nullable;
  * @author Roman.Chernyatchik
  */
 public abstract class AbstractCoverageProjectViewNodeDecorator implements ProjectViewNodeDecorator {
-  @Nullable
-  private final CoverageDataManager myCoverageDataManager;
+  private Project myProject;
 
-  public AbstractCoverageProjectViewNodeDecorator(@Nullable CoverageDataManager coverageDataManager) {
-    myCoverageDataManager = coverageDataManager;
+  @Deprecated
+  public AbstractCoverageProjectViewNodeDecorator(@SuppressWarnings("unused") @Nullable CoverageDataManager coverageDataManager) {
   }
 
   public AbstractCoverageProjectViewNodeDecorator(@NotNull Project project) {
-    myCoverageDataManager = CoverageDataManager.getInstance(project);
+    myProject = project;
   }
 
   @Nullable
-  protected CoverageDataManager getCoverageDataManager() {
-    return myCoverageDataManager;
+  protected final CoverageDataManager getCoverageDataManager() {
+    return CoverageDataManager.getInstance(myProject);
   }
 
   protected static void appendCoverageInfo(ColoredTreeCellRenderer cellRenderer, String coverageInfo) {
