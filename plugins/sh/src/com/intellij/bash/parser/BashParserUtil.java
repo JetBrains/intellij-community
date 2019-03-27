@@ -66,7 +66,8 @@ public class BashParserUtil extends GeneratedParserUtilBase {
   }
 
   static boolean condOp(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
-    return consumeTokenFast(b, BashTokenTypes.conditionalOperators);
+    return consumeTokenFast(b, BashTokenTypes.conditionalOperators) ||
+        consumeTokenFast(b, BashTokenTypes.arithmeticEqualityOps) || consumeTokenFast(b, BashTypes.EQ);
   }
 
   static boolean paramExpansionOp(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
