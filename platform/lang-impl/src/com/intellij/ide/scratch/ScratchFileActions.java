@@ -57,7 +57,7 @@ public class ScratchFileActions {
 
     private static final String ACTION_ID = "NewScratchFile";
 
-    private NotNullLazyValue<String> myActionText = NotNullLazyValue.createValue(
+    private final NotNullLazyValue<String> myActionText = NotNullLazyValue.createValue(
       () -> NewActionGroup.isActionInNewPopupMenu(this) ? ActionsBundle.actionText(ACTION_ID) : ActionsBundle.message("action.NewScratchFile.text.with.new")
     );
 
@@ -234,8 +234,11 @@ public class ScratchFileActions {
         e.getPresentation().setEnabledAndVisible(false);
         return;
       }
-      Set<Language> languages = files.filter(isScratch).transform(fileLanguage(project)).filter(notNull()).
-        addAllTo(ContainerUtil.newLinkedHashSet());
+      Set<Language> languages = files
+        .filter(isScratch)
+        .map(fileLanguage(project))
+        .filter(notNull())
+        .addAllTo(ContainerUtil.newLinkedHashSet());
       String langName = languages.size() == 1 ? languages.iterator().next().getDisplayName() : languages.size() + " different";
       e.getPresentation().setText(String.format("Change %s (%s)...", getLanguageTerm(), langName));
       e.getPresentation().setEnabledAndVisible(true);
@@ -257,7 +260,7 @@ public class ScratchFileActions {
 
     @NotNull
     protected Condition<VirtualFile> fileFilter(Project project) {
-      return file -> ScratchRootType.getInstance().containsFile(file);
+      return file -> !file.isDirectory() && ScratchRootType.getInstance().containsFile(file);
     }
 
     @NotNull
