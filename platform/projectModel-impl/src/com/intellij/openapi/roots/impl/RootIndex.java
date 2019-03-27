@@ -61,8 +61,10 @@ class RootIndex {
     MultiMap<String, VirtualFile> rootsByPackagePrefix = MultiMap.create(allRoots.size(), 0.75f);
     myRootInfos = new HashMap<>(allRoots.size());
     myPackagePrefixByRoot = new HashMap<>(allRoots.size());
+    List<List<VirtualFile>> hierarchies = new ArrayList<>(allRoots.size());
     for (VirtualFile root : allRoots) {
       List<VirtualFile> hierarchy = getHierarchy(root, allRoots, info);
+      hierarchies.add(hierarchy);
       Pair<DirectoryInfo, String> pair = hierarchy != null
                                          ? calcDirectoryInfoAndPackagePrefix(root, hierarchy, info)
                                          : new Pair<>(NonProjectDirectoryInfo.IGNORED, null);
@@ -71,12 +73,63 @@ class RootIndex {
       rootsByPackagePrefix.putValue(packagePrefix, root);
       myPackagePrefixByRoot.put(root, packagePrefix);
     }
+    storeContentsBeneathExcluded(allRoots, hierarchies);
+
     myPackageDirectoryCache = new PackageDirectoryCache(rootsByPackagePrefix) {
       @Override
       protected boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
         return getInfoForFile(dir).isInProject(dir) && packageName.equals(getPackageName(dir));
       }
     };
+  }
+
+  private void storeContentsBeneathExcluded(@NotNull Set<? extends VirtualFile> allRoots, @NotNull List<? extends List<VirtualFile>> hierarchies) {
+    // exploit allRoots being LinkedHashSet
+    int i = 0;
+    for (VirtualFile root : allRoots) {
+      List<VirtualFile> hierarchy = hierarchies.get(i++);
+      if (hierarchy == null) continue;
+      // calculate bits "hasContentBeneath" and "hasExcludedBeneath" for which we need all other DirectoryInfos built
+      DirectoryInfo dirInfo = myRootInfos.get(root);
+      assert dirInfo != null;
+      boolean hasContent = !isExcluded(dirInfo) && dirInfo.getContentRoot() != null;
+      if (hasContent) {
+        // start with the strict parent and update all parent excluded dir infos
+        for (int k = 1; k < hierarchy.size(); k++) {
+          VirtualFile file = hierarchy.get(k);
+          DirectoryInfo parentInfo = myRootInfos.get(file);
+          if (isExcluded(parentInfo)) {
+            addContentBeneathExcludedInfo(parentInfo, file, dirInfo);
+          }
+        }
+      }
+    }
+  }
+
+  private void addContentBeneathExcludedInfo(@NotNull DirectoryInfo parentExcludedInfo,
+                                             @NotNull VirtualFile parentFile,
+                                             @NotNull DirectoryInfo childInfo) {
+    List<DirectoryInfoImpl> beneathInfo;
+    if (parentExcludedInfo instanceof NonProjectDirectoryInfo.WithBeneathInfo) {
+      beneathInfo = ((NonProjectDirectoryInfo.WithBeneathInfo)parentExcludedInfo).myContentInfosBeneath;
+    }
+    else if (parentExcludedInfo instanceof NonProjectDirectoryInfo) {
+      NonProjectDirectoryInfo.WithBeneathInfo newInfo = new NonProjectDirectoryInfo.WithBeneathInfo((NonProjectDirectoryInfo)parentExcludedInfo);
+      myRootInfos.put(parentFile, newInfo);
+      beneathInfo = newInfo.myContentInfosBeneath;
+    }
+    else if (parentExcludedInfo instanceof DirectoryInfoImpl) {
+      beneathInfo = ((DirectoryInfoImpl)parentExcludedInfo).myContentInfosBeneath;
+    }
+    else {
+      throw new RuntimeException("unknown info: "+parentExcludedInfo);
+    }
+    beneathInfo.add((DirectoryInfoImpl)childInfo);
+  }
+
+  private static boolean isExcluded(@NotNull DirectoryInfo info) {
+    return info instanceof DirectoryInfoImpl && info.isExcluded(((DirectoryInfoImpl)info).getRoot())
+      || info instanceof NonProjectDirectoryInfo && ((NonProjectDirectoryInfo)info).isExcluded();
   }
 
   void onLowMemory() {
