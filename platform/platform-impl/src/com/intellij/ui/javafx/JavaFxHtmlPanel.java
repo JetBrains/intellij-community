@@ -8,6 +8,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -24,10 +25,7 @@ import org.cef.CefClient;
 import org.cef.CefSettings;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
-import org.cef.handler.CefFocusHandler;
-import org.cef.handler.CefFocusHandlerAdapter;
-import org.cef.handler.CefLifeSpanHandlerAdapter;
-import org.cef.handler.CefLoadHandlerAdapter;
+import org.cef.handler.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +63,14 @@ public class JavaFxHtmlPanel implements Disposable {
     CefSettings settings = new CefSettings();
     settings.windowless_rendering_enabled = false;
     settings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_ERROR;
+    if (SystemInfo.isMac) {
+      String JCEF_FRAMEWORKS_PATH = System.getProperty("java.home") + "/lib/Frameworks";
+      CefApp.addAppHandler(new CefAppHandlerAdapter(new String[] {
+        "--framework-dir-path=" + JCEF_FRAMEWORKS_PATH + "/Chromium Embedded Framework.framework",
+        "--browser-subprocess-path=" + JCEF_FRAMEWORKS_PATH + "/jcef Helper.app/Contents/MacOS/jcef Helper",
+        "--disable-gpu"
+      }) {});
+    }
     ourCefApp = CefApp.getInstance(settings);
     ourCefClient = ourCefApp.createClient();
     ourCefClient.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
@@ -175,11 +181,11 @@ public class JavaFxHtmlPanel implements Disposable {
   public void setBackground(Color background) {
     this.background = background;
     myPanelWrapper.setBackground(background);
-    ApplicationManager.getApplication().invokeLater(() -> runFX(() -> {
-      if (myPanel != null) {
-        myPanel.getScene().setFill(toFxColor(background));
-      }
-    }));
+    //ApplicationManager.getApplication().invokeLater(() -> runFX(() -> {
+    //  if (myPanel != null) {
+    //    myPanel.getScene().setFill(toFxColor(background));
+    //  }
+    //}));
   }
 
   private boolean isHtmlLoaded() {
