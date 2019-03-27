@@ -126,13 +126,15 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
   private void updateScreenState(IdeFrame frame) {
     myFullScreen = frame instanceof IdeFrameEx && ((IdeFrameEx)frame).isInFullScreen();
 
-    JMenuBar bar = getJMenuBar();
-    if (bar != null) {
-      bar.setVisible(myFullScreen && isDecoratedMenu());
-    }
+    if(isDecoratedMenu()) {
+      JMenuBar bar = getJMenuBar();
+      if (bar != null) {
+        bar.setVisible(myFullScreen);
+      }
 
-    if (myCustomFrameTitlePane != null) {
-      myCustomFrameTitlePane.setVisible(!myFullScreen);
+      if (myCustomFrameTitlePane != null) {
+        myCustomFrameTitlePane.setVisible(!myFullScreen);
+      }
     }
   }
 
