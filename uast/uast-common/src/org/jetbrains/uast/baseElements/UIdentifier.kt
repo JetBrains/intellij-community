@@ -22,7 +22,7 @@ import org.jetbrains.uast.internal.log
 open class UIdentifier(
   override val sourcePsi: PsiElement?,
   override val uastParent: UElement?
-) : JvmDeclarationUElement {
+) : UElement {
   /**
    * Returns the identifier name.
    */
