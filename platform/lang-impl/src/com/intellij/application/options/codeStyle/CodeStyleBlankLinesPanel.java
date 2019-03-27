@@ -28,6 +28,7 @@ import com.intellij.ui.OptionGroup;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.IntegerField;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -118,29 +119,25 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
   @Nullable
   private OptionGroup createOptionsGroup(@NotNull String groupName, @NotNull List<CodeStyleSettingPresentation> settings) {
     OptionGroup optionGroup = new OptionGroup(groupName);
-
+    final List<IntOption> groupOptions = new SmartList<>();
     for (CodeStyleSettingPresentation setting: settings) {
       if (myAllOptionsAllowed || myAllowedOptions.contains(setting.getFieldName())) {
-        doCreateOption(optionGroup, new IntOption(setting.getUiName(), setting.getFieldName()));
+        groupOptions.add(new IntOption(setting.getUiName(), setting.getFieldName()));
       }
     }
     for (Trinity<Class<? extends CustomCodeStyleSettings>, String, String> each : myCustomOptions.get(groupName)) {
-      doCreateOption(optionGroup, new IntOption(each.third, each.first, each.second));
+      groupOptions.add(new IntOption(each.third, each.first, each.second));
     }
-
+    groupOptions.forEach(option -> {
+      String title = option.myIntField.getName();
+      String renamed = myRenamedFields.get(option.getFieldName());
+      if (renamed != null) title = renamed;
+      optionGroup.add(new JBLabel(title), option.myIntField);
+    });
+    myOptions.addAll(groupOptions);
     if (optionGroup.getComponents().length == 0) return null;
 
     return optionGroup;
-  }
-
-  private void doCreateOption(OptionGroup optionGroup, IntOption option) {
-    String title = option.myIntField.getName();
-    String renamed = myRenamedFields.get(option.getFieldName());
-    if (renamed != null) title = renamed;
-
-    JBLabel l = new JBLabel(title);
-    optionGroup.add(l, option.myIntField);
-    myOptions.add(option);
   }
 
   @Override
@@ -241,7 +238,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     private final Field myTarget;
     private Class<? extends CustomCodeStyleSettings> myTargetClass;
     private int myCurrValue = Integer.MAX_VALUE;
-    private String myFieldName;
+    private final String myFieldName;
 
     private IntOption(@NotNull String title, String fieldName) {
       this(title, CommonCodeStyleSettings.class, fieldName, false);
