@@ -125,7 +125,7 @@
     <projectService serviceInterface="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager"
                     serviceImplementation="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager"/>
 
-    <moduleRendererFactory implementation="com.intellij.ide.util.DefaultModuleRendererFactory" order="last"/>
+    <moduleRendererFactory implementation="com.intellij.ide.util.DefaultModuleRendererFactory" order="last,before platform"/>
 
 
     <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
