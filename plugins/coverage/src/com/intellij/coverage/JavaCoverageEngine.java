@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.CommonBundle;
@@ -253,7 +253,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @NotNull
   @Override
-  public CoverageAnnotator getCoverageAnnotator(Project project) {
+  public CoverageAnnotator getCoverageAnnotator(@NotNull Project project) {
     return JavaCoverageAnnotator.getInstance(project);
   }
 
@@ -614,7 +614,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     TestFramework testFramework = TestFrameworks.detectFramework(psiClass);
     if (testFramework == null) return;
     Arrays.stream(psiClass.getAllMethods())
-      .filter(method -> testFramework.isTestMethod(method) && 
+      .filter(method -> testFramework.isTestMethod(method) &&
                         testName.equals(CoverageListener.sanitize(method.getName(), className.length())))
       .forEach(elements::add);
   }
