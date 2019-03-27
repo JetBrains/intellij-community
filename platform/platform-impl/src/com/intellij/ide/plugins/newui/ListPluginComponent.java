@@ -419,7 +419,7 @@ public class ListPluginComponent extends CellPluginComponent {
     group.add(new MyAnAction("Uninstall", IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        if (!myPluginModel.showUninstallDialog(selection)) {
+        if (!MyPluginModel.showUninstallDialog(selection)) {
           return;
         }
         for (CellPluginComponent component : selection) {
@@ -479,7 +479,7 @@ public class ListPluginComponent extends CellPluginComponent {
             return;
           }
         }
-        if (!myPluginModel.showUninstallDialog(selection)) {
+        if (!MyPluginModel.showUninstallDialog(selection)) {
           return;
         }
         for (CellPluginComponent component : selection) {
