@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="intellij.properties" />
     <orderEntry type="module" module-name="intellij.markdown" />
     <orderEntry type="module" module-name="intellij.configurationScript" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.conda" />
   </component>
 </module>
