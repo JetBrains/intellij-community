@@ -301,6 +301,11 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-4537
+  public void testAfterDeletionBySlice() {
+    doTest();
+  }
+
+  // PY-4537
   public void testAfterDeletionGlobal() {
     doTest();
   }
