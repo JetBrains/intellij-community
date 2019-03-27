@@ -41,7 +41,6 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
-import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxInjectPageLanguageIntention;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxWrapWithDefineIntention;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxBuiltInTagDescriptor;
 
@@ -109,9 +108,7 @@ public class JavaFxAnnotator implements Annotator {
           final List<String> langs = JavaFxPsiUtil.parseInjectedLanguages((XmlFile)element.getContainingFile());
           if (langs.isEmpty()) {
             final ASTNode openTag = element.getNode().findChildByType(XmlTokenType.XML_NAME);
-            final Annotation annotation =
-              holder.createErrorAnnotation(openTag != null ? openTag.getPsi() : element, "Page language not specified.");
-            annotation.registerFix(new JavaFxInjectPageLanguageIntention());
+            holder.createErrorAnnotation(openTag != null ? openTag.getPsi() : element, "Page language not specified.");
           }
         }
       }

@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -18,7 +17,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
@@ -28,9 +26,6 @@ import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection;
-import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxInjectPageLanguageIntention;
-
-import java.util.Set;
 
 public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   public static final DefaultLightProjectDescriptor JAVA_FX_WITH_GROOVY_DESCRIPTOR = new DefaultLightProjectDescriptor() {
@@ -133,18 +128,6 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     final IntentionAction intention =
       myFixture.getAvailableIntention("Create field 'btn'", path, getTestName(false) + ".java");
     assertNull(intention);
-  }
-
-  public void testRegisterPageLanguage() {
-    myFixture.configureByFile(getTestName(true) + ".fxml");
-    final IntentionAction intention = myFixture.findSingleIntention("Specify page language");
-    assertNotNull(intention);
-    Set<String> languages = JavaFxInjectPageLanguageIntention.getAvailableLanguages(getProject());
-    assertContainsElements(languages, "groovy");
-    JavaFxInjectPageLanguageIntention languageIntention =
-      (JavaFxInjectPageLanguageIntention)((IntentionActionDelegate)intention).getDelegate();
-    languageIntention.registerPageLanguage(getProject(), (XmlFile)myFixture.getFile(), "groovy");
-    myFixture.checkResultByFile(getTestName(true) + ".fxml", getTestName(true) + "_after.fxml", true);
   }
 
   public void testWrapWithDefine() {
