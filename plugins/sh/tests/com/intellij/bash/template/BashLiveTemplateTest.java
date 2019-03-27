@@ -13,13 +13,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.junit.Ignore;
 
 import java.util.List;
 import java.util.Set;
 
 import static java.util.stream.Collectors.toList;
 
-
+@Ignore
 public class BashLiveTemplateTest extends BashBaseFixtureTestCase {
 
   private Set<String> BASH_LIVE_TEMPLATES = ContainerUtil.newHashSet(

@@ -1,7 +1,9 @@
 package com.intellij.bash.lexer;
 
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.junit.Ignore;
 
+@Ignore
 public class BashHighlightingLexerTest extends LightCodeInsightFixtureTestCase {
   public void testLexerHighlighting() {
     //test #398, which had a broken lexer which broke the file highlighting with errors after new text was entered

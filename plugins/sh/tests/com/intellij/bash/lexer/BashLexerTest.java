@@ -14,6 +14,7 @@ import java.util.List;
 import static com.intellij.bash.lexer.BashTokenTypes.*;
 import static junit.framework.TestCase.assertNotSame;
 
+@Ignore
 public class BashLexerTest {
   @Test
   public void testInitialState() {
