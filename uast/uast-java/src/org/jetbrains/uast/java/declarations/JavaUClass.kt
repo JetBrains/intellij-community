@@ -28,10 +28,6 @@ abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement
   @Suppress("OverridingDeprecatedMember")
   override val psi get() = javaPsi
 
-  @Suppress("unused") // Used in Kotlin, to be removed in 2018.1
-  @Deprecated("use AbstractJavaUClass(givenParent)", ReplaceWith("AbstractJavaUClass(givenParent)"))
-  constructor() : this(null)
-
   override val uastDeclarations: MutableList<UDeclaration> by lz {
     mutableListOf<UDeclaration>().apply {
       addAll(fields)

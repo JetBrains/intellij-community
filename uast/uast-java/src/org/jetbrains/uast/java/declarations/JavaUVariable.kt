@@ -30,10 +30,6 @@ abstract class AbstractJavaUVariable(givenParent: UElement?) : JavaAbstractUElem
   override val psi
     get() = javaPsi
 
-  @Suppress("unused") // Used in Kotlin 1.1.4, to be removed in 2018.1
-  @Deprecated("use AbstractJavaUVariable(givenParent) instead", ReplaceWith("AbstractJavaUVariable(givenParent)"))
-  constructor() : this(null)
-
   override val uastInitializer: UExpression? by lz {
     val initializer = javaPsi.initializer ?: return@lz null
     getLanguagePlugin().convertElement(initializer, this) as? UExpression

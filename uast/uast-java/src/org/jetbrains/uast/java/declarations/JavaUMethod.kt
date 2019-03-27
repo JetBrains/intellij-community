@@ -30,9 +30,6 @@ open class JavaUMethod(
     sourcePsi.parameterList.parameters.map { JavaUParameter(it, this) }
   }
 
-  override val isOverride: Boolean
-    get() = sourcePsi.modifierList.hasAnnotation("java.lang.Override")
-
   override val uastAnchor: UIdentifier
     get() = UIdentifier((sourcePsi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: sourcePsi.nameIdentifier, this)
 
