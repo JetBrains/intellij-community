@@ -108,7 +108,7 @@ class CompletionQualityStatsAction : AnAction() {
         }
         else {
           (dialog.scope as LocalSearchScope).virtualFiles.asList()
-        }).sortedBy { it.name } // sort files to have same order each run
+        }).sortedBy { it.path } // sort files to have same order each run
 
         // map to count words frequency
         // we don't want to complete the same words more than twice
