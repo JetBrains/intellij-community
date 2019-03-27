@@ -21,6 +21,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -303,9 +304,9 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   }
 
   public void testCreateDir() {
-    String path = mySrcDir1.getPath().replace('/', File.separatorChar);
-    assertTrue(new File(path + File.separatorChar + "dir1" + File.separatorChar + "dir2").mkdirs());
-    assertTrue(new File(path + File.separatorChar + "CVS").mkdirs());
+    String path = mySrcDir1.getPath();
+    assertTrue(new File(path + "/dir1/dir2").mkdirs());
+    assertTrue(new File(path + "/CVS").mkdirs());
     VirtualFileManager.getInstance().syncRefresh();
   }
 
@@ -355,8 +356,8 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
     final FileTypeManagerEx fileTypeManager = (FileTypeManagerEx)FileTypeManager.getInstance();
     final String list = fileTypeManager.getIgnoredFilesList();
-    final String list1 = list + ";" + "newDir";
     try {
+      final String list1 = list + ";" + "newDir";
       ApplicationManager.getApplication().runWriteAction(() -> fileTypeManager.setIgnoredFilesList(list1));
       assertNotInProject(newDir);
     }
@@ -742,7 +743,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertIteratedContent(myFileIndex, Arrays.asList(fileRoot, fileSourceRoot, fileTestSourceRoot), null);
 
     // removing file content root
-    PsiTestUtil.removeContentEntry(myModule, contentEntry.getFile());
+    PsiTestUtil.removeContentEntry(myModule, ObjectUtils.notNull(contentEntry.getFile()));
     assertNotInProject(fileRoot);
     assertFalse(myFileIndex.isInContent(fileRoot));
     assertFalse(myFileIndex.isInSource(fileRoot));
@@ -895,7 +896,8 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     SourceFolder contentSourceFolder = PsiTestUtil.addSourceContentToRoots(myModule2, contentSourceRoot);
     checkInfo(contentSourceRoot, myModule2, false, false, "", contentSourceFolder, JavaSourceRootType.SOURCE, myModule2, myModule3);
 
-    assertIteratedContent(myModule2, Arrays.asList(sourceFile, contentSourceFile, sourceRoot, contentSourceRoot),
+    assertIteratedContent(myModule2,
+                          Arrays.asList(sourceFile, contentSourceFile, sourceRoot, contentSourceRoot),
                           Arrays.asList(excludedFile, myExcludeDir));
   }
 
@@ -936,7 +938,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   }
 
   public void testSourceRootFromUnsupportedFileSystem() {
-    VirtualFile httpFile = HttpFileSystem.getInstance().findFileByPath("example.com");
+    VirtualFile httpFile = ObjectUtils.notNull(HttpFileSystem.getInstance().findFileByPath("example.com"));
     PsiTestUtil.addSourceRoot(myModule, httpFile);
     assertNotInProject(httpFile);
   }
