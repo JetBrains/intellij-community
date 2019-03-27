@@ -224,6 +224,12 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
+  private static boolean isUnderProductionSources(DomElement domElement, @NotNull Module module) {
+    VirtualFile virtualFile = DomUtil.getFile(domElement).getVirtualFile();
+    return virtualFile != null &&
+           ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION);
+  }
+
   private static void annotateIdeaPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, @NotNull Module module) {
     //noinspection deprecation
     highlightAttributeNotUsedAnymore(ideaPlugin.getIdeaPluginVersion(), holder);
@@ -283,14 +289,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       return;
     }
 
-    XmlTag xmlTag = ideaPlugin.getXmlTag();
-    if (xmlTag == null) return;
-
-    VirtualFile virtualFile = xmlTag.getContainingFile().getVirtualFile();
-    if (virtualFile == null ||
-        !ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION)) {
-      return;
-    }
+    if (!isUnderProductionSources(ideaPlugin, module)) return;
 
     final Vendor vendor = ideaPlugin.getVendor();
     if (!DomUtil.hasXml(vendor)) {
@@ -305,6 +304,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
   private static void checkPluginIcon(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, Module module) {
     if (!hasRealPluginId(ideaPlugin)) return;
+    if (!isUnderProductionSources(ideaPlugin, module)) return;
 
     Collection<VirtualFile> pluginIconFiles =
       FilenameIndex.getVirtualFilesByName(module.getProject(), PLUGIN_ICON_SVG_FILENAME, GlobalSearchScope.moduleScope(module));
