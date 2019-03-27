@@ -25,6 +25,9 @@ abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement
 
   abstract override val javaPsi: PsiClass
 
+  @Suppress("OverridingDeprecatedMember")
+  override val psi get() = javaPsi
+
   @Suppress("unused") // Used in Kotlin, to be removed in 2018.1
   @Deprecated("use AbstractJavaUClass(givenParent)", ReplaceWith("AbstractJavaUClass(givenParent)"))
   constructor() : this(null)
@@ -44,27 +47,24 @@ abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement
     }
 
   override val uastSuperTypes: List<UTypeReferenceExpression> by lazy {
-    psi.extendsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty() +
-    psi.implementsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty()
+    javaPsi.extendsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty() +
+    javaPsi.implementsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty()
   }
 
   override val uastAnchor: UIdentifier?
-    get() = UIdentifier(psi.nameIdentifier, this)
+    get() = UIdentifier(javaPsi.nameIdentifier, this)
 
   override val annotations: List<UAnnotation>
-    get() = psi.annotations.map { JavaUAnnotation(it, this) }
+    get() = javaPsi.annotations.map { JavaUAnnotation(it, this) }
 
-  override fun equals(other: Any?): Boolean = other is AbstractJavaUClass && psi == other.psi
-  override fun hashCode(): Int = psi.hashCode()
+  override fun equals(other: Any?): Boolean = other is AbstractJavaUClass && javaPsi == other.javaPsi
+  override fun hashCode(): Int = javaPsi.hashCode()
 }
 
-class JavaUClass private constructor(psi: PsiClass, val givenParent: UElement?) :
-  AbstractJavaUClass(givenParent), UAnchorOwner, PsiClass by psi {
+class JavaUClass private constructor(override val sourcePsi: PsiClass, val givenParent: UElement?) :
+  AbstractJavaUClass(givenParent), UAnchorOwner, PsiClass by sourcePsi {
 
-  override val psi: PsiClass
-    get() = javaPsi
-
-  override val javaPsi: PsiClass = unwrap<UClass, PsiClass>(psi)
+  override val javaPsi: PsiClass = unwrap<UClass, PsiClass>(sourcePsi)
 
   override fun getSuperClass(): UClass? = super.getSuperClass()
   override fun getFields(): Array<UField> = super.getFields()
@@ -83,23 +83,24 @@ class JavaUClass private constructor(psi: PsiClass, val givenParent: UElement?) 
 }
 
 class JavaUAnonymousClass(
-  psi: PsiAnonymousClass,
+  override val sourcePsi: PsiAnonymousClass,
   uastParent: UElement?
-) : AbstractJavaUClass(uastParent), UAnonymousClass, UAnchorOwner, PsiAnonymousClass by psi {
-  override val psi: PsiAnonymousClass
-    get() = javaPsi
+) : AbstractJavaUClass(uastParent), UAnonymousClass, UAnchorOwner, PsiAnonymousClass by sourcePsi {
 
-  override val javaPsi: PsiAnonymousClass = unwrap<UAnonymousClass, PsiAnonymousClass>(psi)
+  @Suppress("OverridingDeprecatedMember")
+  override val psi: PsiAnonymousClass get() = sourcePsi
+
+  override val javaPsi: PsiAnonymousClass = sourcePsi
 
   override val uastSuperTypes: List<UTypeReferenceExpression> by lazy {
-    listOf(createJavaUTypeReferenceExpression(psi.baseClassReference)) + super.uastSuperTypes
+    listOf(createJavaUTypeReferenceExpression(sourcePsi.baseClassReference)) + super.uastSuperTypes
   }
 
   override val uastAnchor: UIdentifier? by lazy {
     when (javaPsi) {
       is PsiEnumConstantInitializer ->
         (javaPsi.parent as? PsiEnumConstant)?.let { UIdentifier(it.nameIdentifier, this) }
-      else -> UIdentifier(psi.baseClassReference.referenceNameElement, this)
+      else -> UIdentifier(sourcePsi.baseClassReference.referenceNameElement, this)
     }
   }
 

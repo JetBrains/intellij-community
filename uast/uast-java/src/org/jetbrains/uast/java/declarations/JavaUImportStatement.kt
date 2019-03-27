@@ -24,13 +24,16 @@ import org.jetbrains.uast.UImportStatement
 import org.jetbrains.uast.UMultiResolvable
 
 class JavaUImportStatement(
-  override val psi: PsiImportStatementBase,
+  override val sourcePsi: PsiImportStatementBase,
   uastParent: UElement?
 ) : JavaAbstractUElement(uastParent), UImportStatement, JvmDeclarationUElement, UMultiResolvable {
   override val isOnDemand: Boolean
-    get() = psi.isOnDemand
-  override val importReference: JavaDumbUElement? by lz { psi.importReference?.let { JavaDumbUElement(it, this, it.qualifiedName) } }
-  override fun resolve(): PsiElement? = psi.resolve()
+    get() = sourcePsi.isOnDemand
+  override val importReference: JavaDumbUElement? by lz { sourcePsi.importReference?.let { JavaDumbUElement(it, this, it.qualifiedName) } }
+  override fun resolve(): PsiElement? = sourcePsi.resolve()
   override fun multiResolve(): Iterable<ResolveResult> =
-    psi.importReference?.multiResolve(false)?.asIterable() ?: emptyList()
+    sourcePsi.importReference?.multiResolve(false)?.asIterable() ?: emptyList()
+
+  @Suppress("OverridingDeprecatedMember")
+  override val psi get() = sourcePsi
 }

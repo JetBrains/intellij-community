@@ -50,25 +50,25 @@ class JavaUastApiTest : AbstractJavaUastTest() {
   @Test
   fun testPackageInfo() {
     doTest("Simple/package-info.java") { name, file ->
-      val index2 = file.psi.text.indexOf("foo")
-      val literal = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index2), PsiLiteralExpression::class.java)!!
+      val index2 = file.sourcePsi.text.indexOf("foo")
+      val literal = PsiTreeUtil.getParentOfType(file.sourcePsi.findElementAt(index2), PsiLiteralExpression::class.java)!!
       val uLiteral = literal.toUElement()!!
       UsefulTestCase.assertInstanceOf(uLiteral, ULiteralExpression::class.java)
       val uAnnotation = uLiteral.getParentOfType<UAnnotation>()
       TestCase.assertNotNull(uAnnotation)
-      TestCase.assertEquals("ParentPackage", (uAnnotation as UAnnotationEx).uastAnchor?.psi?.text)
+      TestCase.assertEquals("ParentPackage", (uAnnotation as UAnnotationEx).uastAnchor?.sourcePsi?.text)
     }
   }
 
   @Test
   fun testCallExpression() {
     doTest("Simple/CallExpression.java") { name, file ->
-      val index = file.psi.text.indexOf("format")
-      val callExpression = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), PsiCallExpression::class.java)!!
+      val index = file.sourcePsi.text.indexOf("format")
+      val callExpression = PsiTreeUtil.getParentOfType(file.sourcePsi.findElementAt(index), PsiCallExpression::class.java)!!
       assertNotNull(callExpression.toUElementOfType<UCallExpression>())
 
-      val index2 = file.psi.text.indexOf("q")
-      val literal = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index2), PsiLiteralExpression::class.java)!!
+      val index2 = file.sourcePsi.text.indexOf("q")
+      val literal = PsiTreeUtil.getParentOfType(file.sourcePsi.findElementAt(index2), PsiLiteralExpression::class.java)!!
       val uLiteral = literal.toUElement()!!
       UsefulTestCase.assertInstanceOf(uLiteral, ULiteralExpression::class.java)
       UsefulTestCase.assertInstanceOf(uLiteral.uastParent, UCallExpression::class.java)
@@ -80,8 +80,8 @@ class JavaUastApiTest : AbstractJavaUastTest() {
   @Test
   fun testCallExpressionAlternatives() {
     doTest("Simple/CallExpression.java") { name, file ->
-      val index = file.psi.text.indexOf("format")
-      val callExpression = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), PsiCallExpression::class.java)!!
+      val index = file.sourcePsi.text.indexOf("format")
+      val callExpression = PsiTreeUtil.getParentOfType(file.sourcePsi.findElementAt(index), PsiCallExpression::class.java)!!
 
       val javaUastLanguagePlugin = UastLanguagePlugin.byLanguage(callExpression.language)!!
 

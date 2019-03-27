@@ -47,6 +47,7 @@ interface UElement {
    * **Note**: that some UElements are synthetic and do not have an underlying PSI element;
    * this doesn't mean that they are invalid.
    */
+  @Suppress("DEPRECATION")
   val sourcePsi: PsiElement?
     get() = psi
 
@@ -54,6 +55,7 @@ interface UElement {
    * Returns the element which try to mimic Java-api psi element: [com.intellij.psi.PsiClass], [com.intellij.psi.PsiMethod] or [com.intellij.psi.PsiAnnotation] etc.
    * Will return null if this UElement doesn't have Java representation or it is not implemented.
    */
+  @Suppress("DEPRECATION")
   val javaPsi: PsiElement?
     get() = psi
 
@@ -61,7 +63,7 @@ interface UElement {
    * Returns true if this element is valid, false otherwise.
    */
   val isPsiValid: Boolean
-    get() = psi?.isValid ?: true
+    get() = sourcePsi?.isValid ?: true
 
   /**
    * Returns the list of comments for this element.

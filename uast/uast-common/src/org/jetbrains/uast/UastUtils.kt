@@ -106,10 +106,10 @@ fun UElement.getContainingUMethod(): UMethod? = getParentOfType(UMethod::class.j
 fun UElement.getContainingUVariable(): UVariable? = getParentOfType(UVariable::class.java)
 
 @Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingMethod()?.javaPsi"))
-fun UElement.getContainingMethod(): PsiMethod? = getContainingUMethod()?.psi
+fun UElement.getContainingMethod(): PsiMethod? = getContainingUMethod()?.javaPsi
 
 @Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingUClass()?.javaPsi"))
-fun UElement.getContainingClass(): PsiClass? = getContainingUClass()?.psi
+fun UElement.getContainingClass(): PsiClass? = getContainingUClass()?.javaPsi
 
 @Deprecated(message = "Useless function, will be removed in IDEA 2019.1",
             replaceWith = ReplaceWith("PsiTreeUtil.getParentOfType(this, PsiClass::class.java)"))
@@ -164,10 +164,10 @@ fun UExpression.evaluateString(): String? = evaluate() as? String
 /**
  * Get a physical [File] for this file, or null if there is no such file on disk.
  */
-fun UFile.getIoFile(): File? = psi.virtualFile?.let { VfsUtilCore.virtualToIoFile(it) }
+fun UFile.getIoFile(): File? = sourcePsi.virtualFile?.let { VfsUtilCore.virtualToIoFile(it) }
 
 tailrec fun UElement.getUastContext(): UastContext {
-  val psi = this.psi
+  val psi = this.sourcePsi
   if (psi != null) {
     return ServiceManager.getService(psi.project, UastContext::class.java) ?: error("UastContext not found")
   }
@@ -176,7 +176,7 @@ tailrec fun UElement.getUastContext(): UastContext {
 }
 
 tailrec fun UElement.getLanguagePlugin(): UastLanguagePlugin {
-  val psi = this.psi
+  val psi = this.sourcePsi
   if (psi != null) {
     val uastContext = ServiceManager.getService(psi.project, UastContext::class.java) ?: error("UastContext not found")
     return uastContext.findPlugin(psi) ?: error("Language plugin was not found for $this (${this.javaClass.name})")
@@ -185,7 +185,7 @@ tailrec fun UElement.getLanguagePlugin(): UastLanguagePlugin {
   return (uastParent ?: error("PsiElement should exist at least for UFile")).getLanguagePlugin()
 }
 
-fun Collection<UElement?>.toPsiElements(): List<PsiElement> = mapNotNull { it?.psi }
+fun Collection<UElement?>.toPsiElements(): List<PsiElement> = mapNotNull { it?.sourcePsi }
 
 /**
  * A helper function for getting parents for given [PsiElement] that could be considered as identifier.

@@ -29,7 +29,7 @@ interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated, UAnchorOwne
    */
   override val psi: PsiModifierListOwner
 
-  override fun getOriginalElement(): PsiElement? = psi.originalElement
+  override fun getOriginalElement(): PsiElement? = sourcePsi?.originalElement
 
   /**
    * Returns the declaration name identifier. If declaration is anonymous other implementation dependant psi element will be returned.
