@@ -139,6 +139,8 @@ public interface BashTypes {
   IElementType OR_OR = new BashTokenType("||");
   IElementType PIPE = new BashTokenType("|");
   IElementType PIPE_AMP = new BashTokenType("|&");
+  IElementType QUOTE = new BashTokenType("\"");
+  IElementType RAW_STRING = new BashTokenType("RAW_STRING");
   IElementType REDIRECT_GREATER_AMP = new BashTokenType(">&");
   IElementType REDIRECT_GREATER_BAR = new BashTokenType(">|");
   IElementType REDIRECT_HERE_STRING = new BashTokenType("<<<");
@@ -154,7 +156,6 @@ public interface BashTypes {
   IElementType SHEBANG = new BashTokenType("shebang");
   IElementType SHIFT_LEFT = new BashTokenType("<<");
   IElementType SHIFT_RIGHT = new BashTokenType(">>");
-  IElementType RAW_STRING = new BashTokenType("RAW_STRING");
   IElementType STRING_BEGIN = new BashTokenType("string_begin");
   IElementType STRING_CONTENT = new BashTokenType("string_content");
   IElementType STRING_END = new BashTokenType("string_end");

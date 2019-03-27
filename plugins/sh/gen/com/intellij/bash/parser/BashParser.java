@@ -2357,10 +2357,10 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (string_begin (string_content | vars)* string_end) | RAW_STRING
+  // ('"' (word | vars | <<notQuote>>)* '"') | RAW_STRING
   public static boolean string(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string")) return false;
-    if (!nextTokenIs(b, "<string>", RAW_STRING, STRING_BEGIN)) return false;
+    if (!nextTokenIs(b, "<string>", QUOTE, RAW_STRING)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, STRING, "<string>");
     r = string_0(b, l + 1);
@@ -2369,20 +2369,20 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // string_begin (string_content | vars)* string_end
+  // '"' (word | vars | <<notQuote>>)* '"'
   private static boolean string_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string_0")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, STRING_BEGIN);
+    r = consumeToken(b, QUOTE);
     p = r; // pin = 1
     r = r && report_error_(b, string_0_1(b, l + 1));
-    r = p && consumeToken(b, STRING_END) && r;
+    r = p && consumeToken(b, QUOTE) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // (string_content | vars)*
+  // (word | vars | <<notQuote>>)*
   private static boolean string_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string_0_1")) return false;
     while (true) {
@@ -2393,12 +2393,15 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // string_content | vars
+  // word | vars | <<notQuote>>
   private static boolean string_0_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string_0_1_0")) return false;
     boolean r;
-    r = consumeToken(b, STRING_CONTENT);
+    Marker m = enter_section_(b);
+    r = consumeToken(b, WORD);
     if (!r) r = vars(b, l + 1);
+    if (!r) r = notQuote(b, l + 1);
+    exit_section_(b, m, null, r);
     return r;
   }
 

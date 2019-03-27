@@ -21,13 +21,7 @@ public interface BashString extends BashCompositeElement {
   List<BashVariable> getVariableList();
 
   @Nullable
-  PsiElement getString2();
-
-  @Nullable
-  PsiElement getStringBegin();
-
-  @Nullable
-  PsiElement getStringEnd();
+  PsiElement getRawString();
 
   @NotNull
   PsiReference[] getReferences();

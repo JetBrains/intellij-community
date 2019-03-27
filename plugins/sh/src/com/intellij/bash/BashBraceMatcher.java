@@ -14,7 +14,7 @@ public class BashBraceMatcher implements PairedBraceMatcher, BashTokenTypes {
       new BracePair(LEFT_SQUARE, RIGHT_SQUARE, false),
       new BracePair(LEFT_DOUBLE_PAREN, RIGHT_DOUBLE_PAREN, true),
       new BracePair(LEFT_DOUBLE_BRACKET, RIGHT_DOUBLE_BRACKET, false),
-      new BracePair(STRING_BEGIN, STRING_END, false),
+      new BracePair(QUOTE, QUOTE, false),
       new BracePair(EXPR_CONDITIONAL_LEFT, EXPR_CONDITIONAL_RIGHT, false),
       new BracePair(HEREDOC_MARKER_START, HEREDOC_MARKER_END, false),
       new BracePair(DO, DONE, true),

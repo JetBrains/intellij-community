@@ -29,6 +29,7 @@
     RIGHT_SQUARE = ']'
     BANG = '!'
     BACKQUOTE = '`'
+    QUOTE = '"'
 
     LEFT_DOUBLE_BRACKET = "[["
     RIGHT_DOUBLE_BRACKET = "]]"
@@ -100,7 +101,7 @@ private redirection_inner ::= ('<&' | '>&') (num | '-')
                             | ('>' | '<' | '>>' | '<<' | '<<<' | '<&' | '>&' | '<<-' | '<>' | '>|') w
 
 private num ::= number | int | hex | octal
-string ::= (string_begin (string_content | vars)* string_end) | RAW_STRING {
+string ::= ('"' (word | vars | <<notQuote>>)* '"') | RAW_STRING {
   pin(".*")=1
   methods=[getReferences]
 }

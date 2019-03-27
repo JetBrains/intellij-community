@@ -90,11 +90,14 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
     "then"                        { return THEN; }
     "until"                       { return UNTIL; }
     "while"                       { return WHILE; }
-    "[[ "                         { return LEFT_DOUBLE_BRACKET; }
     "trap"                        { return TRAP; }
     "let"                         { return LET; }
 
     "time"                        { return TIME; }
+
+    "&"                           { return AMP; }
+    ";"                           { return SEMI; }
+    ","                           { return COMMA; }
 
 
     "&&"                         { return AND_AND; }
@@ -103,10 +106,14 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
     "="                          { return EQ; }
     "+="                         { return ADD_EQ; }
 
-    ","                         { return COMMA; }
-
     "[[ "                       { return LEFT_DOUBLE_BRACKET; }
     " ]]"                       { return RIGHT_DOUBLE_BRACKET; }
+
+    "(("                       { return LEFT_DOUBLE_PAREN; }
+    "))"                       { return RIGHT_DOUBLE_PAREN; }
+
+    " ]"                        { return EXPR_CONDITIONAL_RIGHT; }
+    "[ "                        { return EXPR_CONDITIONAL_LEFT; }
     "&&"                        { return AND_AND; }
     "||"                        { return OR_OR; }
     "$"                         { return DOLLAR; }
@@ -114,8 +121,8 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
     ")"                         { return RIGHT_PAREN; }
     "{"                         { return LEFT_CURLY; }
     "}"                         { return RIGHT_CURLY; }
-    "["                          { return LEFT_SQUARE; }
-    "]"                          { return RIGHT_SQUARE; }
+    "["                         { return LEFT_SQUARE; }
+    "]"                         { return RIGHT_SQUARE; }
     ">"                         { return GT; }
     "<"                         { return LT; }
     "<<"                        { return SHIFT_LEFT; }
@@ -134,14 +141,11 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
 
 //        "!"                           { return ARITH_NEGATE; } // todo: never match wtf?
 
-    "&"                           { return ARITH_BITWISE_AND; }
     "~"                           { return ARITH_BITWISE_NEGATE; }
     "^"                           { return ARITH_BITWISE_XOR; }
 
     "?"                           { return ARITH_QMARK; }
     ":"                           { return ARITH_COLON; }
-
-    "#"                           { return ARITH_BASE_CHAR; }
 
     "`"                           { return BACKQUOTE; }
     "|"                           { return PIPE; }
@@ -183,7 +187,7 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
     {Variable}                    { return VAR; }
 
 
-    {Quote}                       { return STRING_BEGIN; }
+    {Quote}                       { return QUOTE; }
 
     {RawString}                   { return RAW_STRING; }
 }
@@ -681,12 +685,12 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
 //  \"                            { if (!stringParsingState().isInSubstring() && stringParsingState().isSubstringAllowed()) {
 //                                    stringParsingState().enterString();
 //                                    goToState(X_STRINGMODE);
-//                                    return STRING_BEGIN;
+//                                    return QUOTE;
 //                                  }
 //
 //                                  stringParsingState().leaveString();
 //                                  backToPreviousState();
-//                                  return STRING_END;
+//                                  return QUOTE;
 //                                }
 //
 //  /* Backquote expression inside of evaluated strings */
@@ -827,7 +831,7 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
 //<YYINITIAL, S_TEST, S_TEST_COMMAND, S_ARITH, S_ARITH_SQUARE_MODE, S_ARITH_ARRAY_MODE, S_CASE, S_CASE_PATTERN, S_SUBSHELL, S_ASSIGNMENT_LIST, S_PARAM_EXPANSION, S_BACKQUOTE> {
 //    <X_HERE_STRING> {
 //        {StringStart}                 { stringParsingState().enterString(); if (yystate() == X_HERE_STRING && !isInHereStringContent()) enterHereStringContent();
-//goToState(X_STRINGMODE); return STRING_BEGIN; }
+//goToState(X_STRINGMODE); return QUOTE; }
 //
 //        "$"\'{SingleCharacter}*\'     |
 //        \'{UnescapedCharacter}*\'        { if (yystate() == X_HERE_STRING && !isInHereStringContent()) enterHereStringContent(); return RAW_STRING; }

@@ -52,20 +52,8 @@ public class BashStringImpl extends BashCompositeElementImpl implements BashStri
 
   @Override
   @Nullable
-  public PsiElement getString2() {
+  public PsiElement getRawString() {
     return findChildByType(RAW_STRING);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getStringBegin() {
-    return findChildByType(STRING_BEGIN);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getStringEnd() {
-    return findChildByType(STRING_END);
   }
 
   @NotNull

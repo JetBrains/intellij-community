@@ -77,6 +77,12 @@ public class BashParserUtil extends GeneratedParserUtilBase {
     return consumeTokenFast(b, "\\\n");
   }
 
+  static boolean notQuote(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
+    if (b.getTokenType() == BashTypes.QUOTE) return false;
+    b.advanceLexer();
+    return true;
+  }
+
   static boolean parseUntilSpace(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level, Parser parser) {
     PsiBuilder.Marker mark = b.mark();
     while (true) {

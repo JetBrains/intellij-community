@@ -12,6 +12,7 @@ public class BashParserTest extends ParsingTestCase {
     return "testData";
   }
 
+  public void testStrings()       { doTest(true); }
   public void testShebang()       { doTest(true); }
   public void testFirst()         { doTest(true); }
   public void testLines()         { doTest(true); }
