@@ -16,7 +16,6 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.uast.JvmDeclarationUElement
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
@@ -24,7 +23,7 @@ import org.jetbrains.uast.UExpression
 class UnknownJavaExpression(
   override val sourcePsi: PsiElement,
   uastParent: UElement?
-) : JavaAbstractUElement(uastParent), UExpression, JvmDeclarationUElement {
+) : JavaAbstractUElement(uastParent), UExpression, UElement {
   override fun asLogString(): String = "[!] " + UnknownJavaExpression::class.java.simpleName + " ($sourcePsi)"
 
   override val annotations: List<UAnnotation>

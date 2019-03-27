@@ -18,7 +18,6 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiImportStatementBase
 import com.intellij.psi.ResolveResult
-import org.jetbrains.uast.JvmDeclarationUElement
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UImportStatement
 import org.jetbrains.uast.UMultiResolvable
@@ -26,7 +25,7 @@ import org.jetbrains.uast.UMultiResolvable
 class JavaUImportStatement(
   override val sourcePsi: PsiImportStatementBase,
   uastParent: UElement?
-) : JavaAbstractUElement(uastParent), UImportStatement, JvmDeclarationUElement, UMultiResolvable {
+) : JavaAbstractUElement(uastParent), UImportStatement, UMultiResolvable {
   override val isOnDemand: Boolean
     get() = sourcePsi.isOnDemand
   override val importReference: JavaDumbUElement? by lz { sourcePsi.importReference?.let { JavaDumbUElement(it, this, it.qualifiedName) } }

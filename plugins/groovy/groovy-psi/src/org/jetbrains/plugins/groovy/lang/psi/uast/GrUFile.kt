@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.uast.*
 import java.util.*
 
-class GrUFile(override val psi: GroovyFile, override val languagePlugin: UastLanguagePlugin) : UFile, JvmDeclarationUElement {
+class GrUFile(override val psi: GroovyFile, override val languagePlugin: UastLanguagePlugin) : UFile {
   override val packageName: String
     get() = psi.packageName
 

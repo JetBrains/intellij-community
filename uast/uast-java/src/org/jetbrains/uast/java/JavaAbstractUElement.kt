@@ -21,7 +21,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 
-abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithComments, JvmDeclarationUElement {
+abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithComments, UElement {
 
   @Suppress("unused") // Used in Kotlin 1.2, to be removed in 2018.1
   @Deprecated("use JavaAbstractUElement(givenParent)", ReplaceWith("JavaAbstractUElement(givenParent)"))

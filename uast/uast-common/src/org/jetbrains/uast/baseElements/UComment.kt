@@ -19,7 +19,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.jetbrains.uast.internal.log
 
-class UComment(override val sourcePsi: PsiComment, override val uastParent: UElement) : JvmDeclarationUElement {
+class UComment(override val sourcePsi: PsiComment, override val uastParent: UElement) : UElement {
 
   @Suppress("OverridingDeprecatedMember")
   override val psi get() = sourcePsi
