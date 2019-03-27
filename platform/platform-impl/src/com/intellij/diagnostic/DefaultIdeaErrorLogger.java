@@ -1,14 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import com.android.tools.analytics.AnalyticsSettings;
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AndroidStudioSystemHealthMonitorAdapter;
-import com.intellij.ide.ExceptionRegistry;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.StackTrace;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.notification.Notification;
@@ -20,12 +15,10 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.io.MappingFailedException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -94,21 +87,16 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   public void handle(IdeaLoggingEvent event) {
     if (ourLoggerBroken) return;
 
-    // Android Studio: track exception count
-    if (AnalyticsSettings.getOptedIn()) {
-      Throwable t = event.getThrowable();
-      if (t != null) {
-        if (isReportableCrash(t)) {
-          StackTrace stackTrace = ExceptionRegistry.INSTANCE.register(t);
-          incrementAndSaveExceptionCount(t);
-          AndroidStudioSystemHealthMonitorAdapter.reportException(t, stackTrace);
-        }
-      }
-    }
-
     try {
       Throwable throwable = event.getThrowable();
       MemoryKind kind = getOOMErrorKind(throwable);
+
+      // Android Studio: track and filer exceptions
+      boolean handled = AndroidStudioSystemHealthMonitorAdapter.handleExceptionEvent(event, kind);
+      if (handled) {
+        return;
+      }
+
       if (kind != null) {
         ourOomOccurred = true;
         SwingUtilities.invokeAndWait(() -> new OutOfMemoryDialog(kind).show());
@@ -126,34 +114,6 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       if (message != null && message.contains("Could not initialize class com.intellij.diagnostic.MessagePool") ||
           e instanceof NullPointerException && ApplicationManager.getApplication() == null) {
         ourLoggerBroken = true;
-      }
-    }
-  }
-
-  public static boolean isReportableCrash(@NotNull Throwable t) {
-    if (t instanceof ClassNotFoundException) {
-      String cls = t.getMessage();
-      if (cls != null && cls.startsWith("com.sun.jdi.")) {
-        // Android Studio:
-        // Running on a JRE. We're already warning about that in the System Health Monitor.
-        // https://code.google.com/p/android/issues/detail?id=225130
-        return false;
-      }
-    }
-
-    return !(t instanceof Logger.EmptyThrowable);
-  }
-
-  private static void incrementAndSaveExceptionCount(@NotNull Throwable t) {
-    AndroidStudioSystemHealthMonitorAdapter.incrementAndSaveExceptionCount();
-    PluginId pluginId = IdeErrorsDialog.findPluginId(t);
-    if (pluginId != null) {
-      IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-      if (plugin != null && plugin.isBundled()) {
-        AndroidStudioSystemHealthMonitorAdapter.incrementAndSaveBundledPluginsExceptionCount();
-      }
-      else {
-        AndroidStudioSystemHealthMonitorAdapter.incrementAndSaveNonBundledPluginsExceptionCount();
       }
     }
   }

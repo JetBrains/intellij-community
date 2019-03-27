@@ -44,7 +44,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   public IdeMessagePanel(@Nullable IdeFrame frame, @NotNull MessagePool messagePool) {
     super(new BorderLayout());
 
-    myIcon = new IdeErrorsIcon(frame != null);
+    myIcon = new IdeErrorsIcon(false /* frame != null */); // Android Studio: never blink errors icon
     myIcon.setVerticalAlignment(SwingConstants.CENTER);
     add(myIcon, BorderLayout.CENTER);
     new ClickListener() {

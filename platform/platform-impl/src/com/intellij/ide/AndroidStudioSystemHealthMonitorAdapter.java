@@ -16,9 +16,11 @@
 package com.intellij.ide;
 
 import com.android.annotations.NonNull;
+import com.intellij.diagnostic.VMOptions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 
 public class AndroidStudioSystemHealthMonitorAdapter {
 
@@ -30,37 +32,19 @@ public class AndroidStudioSystemHealthMonitorAdapter {
     }
   }
 
-  public static void incrementAndSaveBundledPluginsExceptionCount() {
-    if (ourListener != null) {
-      ourListener.incrementAndSaveBundledPluginsExceptionCount();
-    }
-  }
-
-  public static void incrementAndSaveExceptionCount() {
-    if (ourListener != null) {
-      ourListener.incrementAndSaveExceptionCount();
-    }
-  }
-
-
-  public static void incrementAndSaveNonBundledPluginsExceptionCount() {
-    if (ourListener != null) {
-      ourListener.incrementAndSaveNonBundledPluginsExceptionCount();
-    }
-  }
-
   public static void recordWriteLockWaitTime(long elapsed) {
     if (ourListener != null) {
       ourListener.recordWriteLockWaitTime(elapsed);
     }
   }
 
-  public static void reportException(Throwable t, StackTrace trace) {
+  public static boolean handleExceptionEvent(IdeaLoggingEvent event, VMOptions.MemoryKind memoryKind) {
     if (ourListener != null) {
-      ourListener.reportException(t, trace);
+      return ourListener.handleExceptionEvent(event, memoryKind);
+    } else {
+      return false;
     }
   }
-
 
   public static void registerEventsListener(@NonNull EventsListener listener) {
     assert ourListener == null;
@@ -72,17 +56,12 @@ public class AndroidStudioSystemHealthMonitorAdapter {
     ourListener = null;
   }
 
+
   public interface EventsListener {
     void countActionInvocation(Class<? extends AnAction> aClass, Presentation presentation, AnActionEvent event);
 
-    void incrementAndSaveBundledPluginsExceptionCount();
-
-    void incrementAndSaveExceptionCount();
-
-    void incrementAndSaveNonBundledPluginsExceptionCount();
-
-    void reportException(Throwable t, StackTrace trace);
-
     void recordWriteLockWaitTime(long elapsed);
+
+    boolean handleExceptionEvent(IdeaLoggingEvent event, VMOptions.MemoryKind memoryKind);
   }
 }
