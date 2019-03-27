@@ -11,6 +11,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
 import sun.swing.SwingUtilities2
 import java.awt.*
 import java.awt.event.*
@@ -33,6 +35,8 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
       label.repaint()
     }
 
+  private var clippedProjectName: String = ""
+
   fun isClipped(): Boolean {
     return clippedText.equals(path)
   }
@@ -43,9 +47,10 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
 
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g.setColor(UIManager.getColor("Label.disabledForeground"))
+
       val h = height - insets.top - insets.bottom
 
-      SwingUtilities2.drawStringUnderlineCharAt(this, g, clippedText, -1, insets.left, getBaseline(width, h))
+      SwingUtilities2.drawStringUnderlineCharAt(this, g, clippedProjectName + clippedText, -1, insets.left, getBaseline(width, h))
     }
   }.apply {
     isEnabled = false
@@ -66,11 +71,13 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
     }
   }
 
-  private var path: String? = null
+  private var projectName: String = ""
+
+  private var path: String = ""
     set(value) {
       if (value == field) return
       field = value
-      label.text = path
+      label.text = projectName + path
 
       update()
     }
@@ -100,14 +107,15 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
 
 
   protected open fun changeProject(project: Project, dsp: Disposable) {
+    projectName = "[${project.name}] "
     val fileEditorManager = FileEditorManager.getInstance(project)
 
     fun updatePath() {
       path = if (fileEditorManager is FileEditorManagerEx) {
-        fileEditorManager.currentFile?.canonicalPath
+        fileEditorManager.currentFile?.canonicalPath ?: ""
       }
       else {
-        fileEditorManager?.selectedEditor?.file?.canonicalPath
+        fileEditorManager?.selectedEditor?.file?.canonicalPath ?: ""
       }
     }
 
@@ -128,23 +136,41 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
     update()
   }
 
-
   private fun update() {
-    clippedText = path?.let {
+    clippedText = path.let {
       val fm = label.getFontMetrics(label.font)
+      val pnfm = fm
 
       val insets = label.getInsets(null)
       val width: Int = label.width - (insets.right + insets.left)
 
+      val pnWidth = SwingUtilities2.stringWidth(label, pnfm, projectName)
       val textWidth = SwingUtilities2.stringWidth(label, fm, path)
+      val symbolWidth = SwingUtilities2.stringWidth(label, fm, ellipsisSymbol)
 
-      if (textWidth > width) {
-        getView().toolTipText = path
-        clipString(label, path!!, width)
-      }
-      else {
-        getView().toolTipText = null
-        path
+      when {
+        pnWidth > width -> {
+          getView().toolTipText = path
+          clippedProjectName = ""
+          ""
+        }
+
+        pnWidth == width || pnWidth + symbolWidth >= width -> {
+          label.toolTipText = path
+          clippedProjectName = projectName
+          ""
+        }
+
+        textWidth > width - pnWidth -> {
+          getView().toolTipText = path
+          clippedProjectName = projectName
+          clipString(label, path, width - pnWidth)
+        }
+        else -> {
+          getView().toolTipText = null
+          clippedProjectName = projectName
+          path
+        }
       }
     }
   }
@@ -153,8 +179,7 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
     val fm = component.getFontMetrics(component.font)
     val symbolWidth = SwingUtilities2.stringWidth(component, fm, ellipsisSymbol)
     return when {
-      symbolWidth > maxWidth -> ""
-      symbolWidth == maxWidth -> ellipsisSymbol
+      symbolWidth >= maxWidth -> ""
       else -> {
         val availTextWidth = maxWidth - symbolWidth
 
@@ -166,10 +191,9 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
           if (stringWidth <= availTextWidth) {
             str = fileSeparatorChar + separate[i] + str
           }
-
         }
 
-        return ellipsisSymbol + str
+        return if(str.isEmpty()) "" else ellipsisSymbol + str
       }
     }
   }

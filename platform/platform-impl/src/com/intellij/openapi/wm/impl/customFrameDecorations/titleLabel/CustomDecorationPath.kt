@@ -11,23 +11,6 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class CustomDecorationPath(disposable: Disposable) : SelectedEditorFilePath(disposable) {
-  val panel = JPanel(MigLayout("novisualpadding, ins 0, fillx", "[min!][]")).apply { isOpaque = false }
-  val projectName = JLabel("").apply { font = JBUI.Fonts.label().asBold() }
-
-  override fun getView(): JComponent {
-    return panel
-  }
-
-  init {
-    panel.add(projectName)
-    panel.add(super.getView(), "growx, wmin 0")
-  }
-
-  override fun changeProject(project: Project, dsp: Disposable) {
-    projectName.text = "[${project.name}]"
-    super.changeProject(project, dsp)
-  }
-
   fun getListenerBounds(): List<Rectangle> {
     val mouseInsets = 2
     val projectLabelRect = getView().bounds
