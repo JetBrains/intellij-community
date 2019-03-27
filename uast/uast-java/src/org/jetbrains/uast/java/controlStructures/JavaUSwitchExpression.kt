@@ -188,7 +188,7 @@ internal class DummyUBreakExpression(val valueExpressionPsi: PsiExpression,
 }
 
 class JavaUDefaultCaseExpression(override val sourcePsi: PsiElement?, givenParent: UElement?)
-  : JavaAbstractUExpression(givenParent), JvmDeclarationUElement {
+  : JavaAbstractUExpression(givenParent), UElement {
 
   override val annotations: List<UAnnotation>
     get() = emptyList()

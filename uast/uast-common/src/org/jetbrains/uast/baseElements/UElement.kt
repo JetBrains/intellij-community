@@ -126,9 +126,6 @@ interface UElement {
   fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitElement(this, data)
 }
 
-@Deprecated("No use anymore, all declarations were moved to UElement. To be removed in 2018.2")
-interface JvmDeclarationUElement : UElement
-
 @get:ApiStatus.Experimental
 val UElement?.sourcePsiElement: PsiElement?
   get() = this?.sourcePsi
