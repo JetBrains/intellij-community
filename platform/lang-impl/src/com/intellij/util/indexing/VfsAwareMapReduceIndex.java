@@ -91,10 +91,31 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   @NotNull
   @Override
   protected Map<Key, Value> mapInput(@Nullable Input content) {
-    if (mySnapshotInputMappings != null && !myInMemoryMode.get()) {
-      return mySnapshotInputMappings.readDataOrMap(content);
+    Map<Key, Value> data;
+    boolean containsSnapshotData = true;
+    if (mySnapshotInputMappings != null && !myInMemoryMode.get() && content != null) {
+      try {
+        data = mySnapshotInputMappings.readData(content);
+        if (data != null) {
+          return data;
+        } else {
+          containsSnapshotData = false;
+        }
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
-    return super.mapInput(content);
+    data = super.mapInput(content);
+    if (!containsSnapshotData) {
+      try {
+        mySnapshotInputMappings.putData(content, data);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return data;
   }
 
   @NotNull

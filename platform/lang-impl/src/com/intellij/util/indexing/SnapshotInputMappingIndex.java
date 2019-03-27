@@ -13,8 +13,10 @@ public interface SnapshotInputMappingIndex<Key, Value, Input> {
   @NotNull
   Map<Key, Value> readData(int hashId) throws IOException;
 
-  @NotNull
-  Map<Key, Value> readDataOrMap(@Nullable Input content);
+  @Nullable
+  Map<Key, Value> readData(@NotNull Input content) throws IOException;
+
+  void putData(@NotNull Input content, @NotNull Map<Key, Value> data) throws IOException;
 
   int getHashId(@Nullable Input content) throws IOException;
 
