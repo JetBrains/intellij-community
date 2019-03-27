@@ -15,7 +15,7 @@ class C {
 //exit: SEQUENTIAL PsiMethod:foo
 
     public NewMethodResult newMethod() {
-        if (x.isEmpty()) return;
+        if (x.isEmpty()) return new NewMethodResult();
         x.remove(0);
         y.add(str());
         baz();

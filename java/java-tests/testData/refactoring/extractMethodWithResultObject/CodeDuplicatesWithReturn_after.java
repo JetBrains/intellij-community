@@ -9,12 +9,14 @@ class C {
 
     public NewMethodResult newMethod(Object o) {
         Integer i = new Integer(o.hashCode());
-        return i.toString(); // todo
-        return new NewMethodResult();
+        return new NewMethodResult(i.toString());
     }
 
     public class NewMethodResult {
-        public NewMethodResult() {
+        private String returnResult;
+
+        public NewMethodResult(String returnResult) {
+            this.returnResult = returnResult;
         }
     }
 

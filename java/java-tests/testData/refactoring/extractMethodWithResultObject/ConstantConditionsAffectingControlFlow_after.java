@@ -13,14 +13,15 @@ public /*abstract*/ class WillWorkTest {
     public NewMethodResult newMethod(int i) {
         int k;
         if (true) k = i;
-        return k; //todo
-        return new NewMethodResult(k);
+        return new NewMethodResult(k, k);
     }
 
     public class NewMethodResult {
+        private int returnResult;
         private int k;
 
-        public NewMethodResult(int k) {
+        public NewMethodResult(int returnResult, int k) {
+            this.returnResult = returnResult;
             this.k = k;
         }
     }
