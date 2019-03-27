@@ -263,13 +263,9 @@ public class KeymapUtil {
     if (shortcuts.length == 0) {
       return "";
     }
-    StringBuilder buffer = new StringBuilder();
-    for (int i = 0; i < shortcuts.length; i++) {
-      Shortcut shortcut = shortcuts[i];
-      if (i > 0) {
-        buffer.append(' ');
-      }
-      buffer.append(getShortcutText(shortcut));
+    StringJoiner buffer = new StringJoiner(" ");
+    for (Shortcut shortcut : shortcuts) {
+      buffer.add(getShortcutText(shortcut));
     }
     return buffer.toString();
   }

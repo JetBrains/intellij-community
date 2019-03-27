@@ -510,13 +510,9 @@ public class PlatformTestUtil {
   }
 
   public static String print(Collection c) {
-    StringBuilder result = new StringBuilder();
-    for (Iterator iterator = c.iterator(); iterator.hasNext();) {
-      Object each = iterator.next();
-      result.append(toString(each, null));
-      if (iterator.hasNext()) {
-        result.append("\n");
-      }
+    StringJoiner result = new StringJoiner("\n");
+    for (Object each : c) {
+      result.add(toString(each, null));
     }
 
     return result.toString();

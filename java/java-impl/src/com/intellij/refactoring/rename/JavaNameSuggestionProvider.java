@@ -102,11 +102,9 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
       prefix = codeStyleManager.getPrefixByVariableKind(kind);
       if (kind == VariableKind.STATIC_FINAL_FIELD) {
         final String[] words = NameUtil.splitNameIntoWords(name);
-        StringBuilder buffer = new StringBuilder();
-        for (int i = 0; i < words.length; i++) {
-          String word = words[i];
-          if (i > 0) buffer.append('_');
-          buffer.append(StringUtil.toUpperCase(word));
+        StringJoiner buffer = new StringJoiner("_");
+        for (String word : words) {
+          buffer.add(StringUtil.toUpperCase(word));
         }
         return new String[] {buffer.toString()};
       }

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.StringJoiner;
 
 /**
  * A launcher class for command-line formatter.
@@ -159,10 +160,9 @@ public class FormatterStarter extends ApplicationStarterEx {
   }
 
   private static void logArgs(@NotNull String[] args) {
-    StringBuilder sb = new StringBuilder();
+    StringJoiner sb = new StringJoiner(",");
     for (String arg : args) {
-      if (sb.length() > 0) sb.append(",");
-      sb.append(arg);
+      sb.add(arg);
     }
     LOG.info("Arguments: " + sb);
   }
