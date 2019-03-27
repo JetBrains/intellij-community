@@ -19,7 +19,7 @@ class DetachedJavaUastTest : AbstractJavaUastTest() {
   )
 
   override fun check(testName: String, file: UFile) {
-    val detachablePsiElements = PsiTreeUtil.collectElementsOfType(file.psi, *detachers.keys.toTypedArray())
+    val detachablePsiElements = PsiTreeUtil.collectElementsOfType(file.sourcePsi, *detachers.keys.toTypedArray())
       .map { psiElement -> psiElement to detachers.entries.first { it.key.isAssignableFrom(psiElement.javaClass) }.value }
 
     for ((element, detacher) in detachablePsiElements) {

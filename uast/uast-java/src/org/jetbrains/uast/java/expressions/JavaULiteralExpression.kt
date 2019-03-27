@@ -22,16 +22,16 @@ import org.jetbrains.uast.ULiteralExpression
 import org.jetbrains.uast.expressions.UInjectionHost
 
 class JavaULiteralExpression(
-  override val psi: PsiLiteralExpressionImpl,
+  override val sourcePsi: PsiLiteralExpressionImpl,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), ULiteralExpression, UInjectionHost {
-  override fun evaluate(): Any? = psi.value
+  override fun evaluate(): Any? = sourcePsi.value
   override val value: Any? by lz { evaluate() }
 
   override val isString: Boolean
     get() = super<UInjectionHost>.isString
 
   override val psiLanguageInjectionHost: PsiLanguageInjectionHost
-    get() = psi
+    get() = sourcePsi
 
 }

@@ -61,7 +61,7 @@ interface UMethod : UDeclaration, PsiMethod {
   override fun isConstructor(): Boolean
 
   @Deprecated("Use uastBody instead.", ReplaceWith("uastBody"))
-  override fun getBody(): PsiCodeBlock? = psi.body
+  override fun getBody(): PsiCodeBlock? = javaPsi.body
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitMethod(this)) return
@@ -76,7 +76,7 @@ interface UMethod : UDeclaration, PsiMethod {
       annotations.joinTo(buffer = this, separator = "\n", postfix = "\n", transform = UAnnotation::asRenderString)
     }
 
-    append(psi.renderModifiers())
+    append(javaPsi.renderModifiers())
     append("fun ").append(name)
 
     uastParameters.joinTo(this, prefix = "(", postfix = ")") { parameter ->
@@ -87,7 +87,7 @@ interface UMethod : UDeclaration, PsiMethod {
       annotationsText + parameter.name + ": " + parameter.type.canonicalText
     }
 
-    psi.returnType?.let { append(" : " + it.canonicalText) }
+    javaPsi.returnType?.let { append(" : " + it.canonicalText) }
 
     val body = uastBody
     append(when (body) {
@@ -124,7 +124,7 @@ interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
    */
   val uastDefaultValue: UExpression?
 
-  override fun getDefaultValue(): PsiAnnotationMemberValue? = psi.defaultValue
+  override fun getDefaultValue(): PsiAnnotationMemberValue? = (javaPsi as? PsiAnnotationMethod)?.defaultValue
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitMethod(this)) return

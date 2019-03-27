@@ -35,7 +35,7 @@ interface UEvaluator {
 
   fun PsiElement.languageExtension(): UEvaluatorExtension? = languageExtensions.firstOrNull { it.language == language }
 
-  fun UElement.languageExtension(): UEvaluatorExtension? = psi?.languageExtension()
+  fun UElement.languageExtension(): UEvaluatorExtension? = sourcePsi?.languageExtension()
 
   fun analyze(method: UMethod, state: UEvaluationState = method.createEmptyState())
 

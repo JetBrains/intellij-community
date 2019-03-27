@@ -16,6 +16,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiDoWhileStatement
+import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.ChildRole
 import org.jetbrains.uast.UDoWhileExpression
 import org.jetbrains.uast.UElement
@@ -23,14 +24,14 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UIdentifier
 
 class JavaUDoWhileExpression(
-  override val psi: PsiDoWhileStatement,
+  override val sourcePsi: PsiDoWhileStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UDoWhileExpression {
-  override val condition: UExpression by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
-  override val body: UExpression by lz { JavaConverter.convertOrEmpty(psi.body, this) }
+  override val condition: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.condition, this) }
+  override val body: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
 
   override val doIdentifier: UIdentifier
-    get() = UIdentifier(psi.getChildByRole(ChildRole.DO_KEYWORD), this)
+    get() = UIdentifier(sourcePsi.getChildByRole(ChildRole.DO_KEYWORD), this)
   override val whileIdentifier: UIdentifier
-    get() = UIdentifier(psi.getChildByRole(ChildRole.WHILE_KEYWORD), this)
+    get() = UIdentifier(sourcePsi.getChildByRole(ChildRole.WHILE_KEYWORD), this)
 }

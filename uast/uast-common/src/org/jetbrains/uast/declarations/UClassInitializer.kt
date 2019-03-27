@@ -27,6 +27,8 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A class initializer wrapper to be used in [UastVisitor].
  */
 interface UClassInitializer : UDeclaration, PsiClassInitializer {
+
+  @Suppress("OverridingDeprecatedMember")
   override val psi: PsiClassInitializer
 
   /**
@@ -34,8 +36,12 @@ interface UClassInitializer : UDeclaration, PsiClassInitializer {
    */
   val uastBody: UExpression
 
+  @Suppress("DEPRECATION")
+  private val javaPsiInternal
+    get() = (this as? UClassInitializerEx)?.javaPsi ?: psi
+
   @Deprecated("Use uastBody instead.", ReplaceWith("uastBody"))
-  override fun getBody(): PsiCodeBlock = psi.body
+  override fun getBody(): PsiCodeBlock = javaPsiInternal.body
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitInitializer(this)) return

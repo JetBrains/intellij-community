@@ -26,7 +26,7 @@ class UVariableValue private constructor(
 
   override fun identityEquals(other: UValue): UValue =
     if (this == other) super.valueEquals(other)
-    else when (variable.psi.type) {
+    else when (variable.type) {
       PsiType.BYTE, PsiType.FLOAT, PsiType.DOUBLE, PsiType.LONG,
       PsiType.SHORT, PsiType.INT, PsiType.CHAR, PsiType.BOOLEAN -> super.valueEquals(other)
 
@@ -76,11 +76,11 @@ class UVariableValue private constructor(
       filterTo(linkedSetOf()) { it !is UVariableValue || variable != it.variable }
 
     fun create(variable: UVariable, value: UValue, dependencies: Set<UDependency> = emptySet()): UVariableValue {
-      when (variable.psi.type) {
+      when (variable.type) {
         PsiType.BYTE, PsiType.SHORT -> {
           val constant = value.toConstant()
           if (constant is UIntConstant && constant.type == UNumericType.INT) {
-            val castConstant = UIntConstant(constant.value, variable.psi.type)
+            val castConstant = UIntConstant(constant.value, variable.type)
             return create(variable, value.coerceConstant(castConstant), dependencies)
           }
         }

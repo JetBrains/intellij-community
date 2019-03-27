@@ -55,7 +55,7 @@ class MapBasedEvaluationContext(
   @Throws(ProcessCanceledException::class)
   private fun getOrCreateEvaluator(declaration: UDeclaration, state: UEvaluationState? = null): UEvaluator {
     val containingFile = declaration.getContainingUFile()
-    val modificationStamp = containingFile?.psi?.modificationStamp ?: -1L
+    val modificationStamp = containingFile?.sourcePsi?.modificationStamp ?: -1L
     val evaluatorWithStamp = evaluators[declaration]?.get()
     if (evaluatorWithStamp != null && evaluatorWithStamp.stamp == modificationStamp) {
       return evaluatorWithStamp.evaluator

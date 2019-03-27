@@ -48,7 +48,7 @@ fun <T> UElement.findElementByText(refText: String, cls: Class<T>): T {
   val matchingElements = mutableListOf<T>()
   accept(object : UastVisitor {
     override fun visitElement(node: UElement): Boolean {
-      if (cls.isInstance(node) && node.psi?.text == refText) {
+      if (cls.isInstance(node) && node.sourcePsi?.text == refText) {
         matchingElements.add(node as T)
       }
       return false
@@ -67,7 +67,7 @@ fun <T> UElement.findElementByText(refText: String, cls: Class<T>): T {
 inline fun <reified T : Any> UElement.findElementByText(refText: String): T = findElementByText(refText, T::class.java)
 
 inline fun <reified T : UElement> UElement.findElementByTextFromPsi(refText: String, strict: Boolean = true): T =
-  (this.psi ?: throw AssertionError("no psi for $this")).findUElementByTextFromPsi(refText, strict)
+  (this.sourcePsi ?: throw AssertionError("no sourcePsi for $this")).findUElementByTextFromPsi(refText, strict)
 
 inline fun <reified T : UElement> PsiElement.findUElementByTextFromPsi(refText: String, strict: Boolean = true): T {
   val elementAtStart = this.findElementAt(this.text.indexOf(refText))
@@ -76,8 +76,8 @@ inline fun <reified T : UElement> PsiElement.findUElementByTextFromPsi(refText: 
     .let {
       if (strict) it.dropWhile { !it.text.contains(refText) } else it
     }.mapNotNull { it.toUElementOfType<T>() }.firstOrNull() ?: throw AssertionError("requested text '$refText' not found as ${T::class.java}")
-  if (strict && uElementContainingText.psi != null && uElementContainingText.psi?.text != refText) {
-    throw AssertionError("requested text '$refText' found as '${uElementContainingText.psi?.text}' in $uElementContainingText")
+  if (strict && uElementContainingText.sourcePsi != null && uElementContainingText.sourcePsi?.text != refText) {
+    throw AssertionError("requested text '$refText' found as '${uElementContainingText.sourcePsi?.text}' in $uElementContainingText")
   }
   return uElementContainingText;
 }

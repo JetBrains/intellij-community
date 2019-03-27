@@ -84,7 +84,7 @@ class UastContext(val project: Project) : UastLanguagePlugin {
   }
 
   private tailrec fun UElement.getLanguage(): Language {
-    psi?.language?.let { return it }
+    sourcePsi?.language?.let { return it }
     val containingElement = this.uastParent ?: throw IllegalStateException("At least UFile should have a language")
     return containingElement.getLanguage()
   }

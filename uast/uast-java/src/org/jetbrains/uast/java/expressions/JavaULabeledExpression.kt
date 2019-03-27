@@ -22,16 +22,16 @@ import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.ULabeledExpression
 
 class JavaULabeledExpression(
-  override val psi: PsiLabeledStatement,
+  override val sourcePsi: PsiLabeledStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), ULabeledExpression {
   override val label: String
-    get() = psi.labelIdentifier.text
+    get() = sourcePsi.labelIdentifier.text
 
   override val labelIdentifier: UIdentifier?
-    get() = UIdentifier(psi.labelIdentifier, this)
+    get() = UIdentifier(sourcePsi.labelIdentifier, this)
 
-  override val expression: UExpression by lz { JavaConverter.convertOrEmpty(psi.statement, this) }
+  override val expression: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.statement, this) }
 
   override fun evaluate(): Any? = expression.evaluate()
 }

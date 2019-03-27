@@ -135,7 +135,7 @@ val UExpression.sourceInjectionHost: PsiLanguageInjectionHost?
  * NOTE: consider using [sourceInjectionHost] as more performant. Probably will be deprecated in future.
  */
 val ULiteralExpression.psiLanguageInjectionHost: PsiLanguageInjectionHost?
-  get() = this.psi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }
+  get() = this.sourcePsi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }
 
 // Workaround until everything will migrate to `UInjectionHost` from `ULiteralExpression`, see KT-27283
 @ApiStatus.Experimental

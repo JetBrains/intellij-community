@@ -45,7 +45,7 @@ interface ValuesTestBase {
     assertEqualsToFile("Log values", valuesFile, file.asLogValues(evaluationContext, cachedOnly = false))
 
     if (file is JavaUFile) {
-      val copyFile = JavaUFile(file.psi, file.languagePlugin)
+      val copyFile = JavaUFile(file.sourcePsi, file.languagePlugin)
       assertEqualsToFile("Log cached values", valuesFile, copyFile.asLogValues(evaluationContext, cachedOnly = true))
     }
   }
