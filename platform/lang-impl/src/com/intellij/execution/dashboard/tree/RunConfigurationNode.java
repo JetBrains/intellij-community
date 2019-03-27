@@ -112,6 +112,12 @@ public class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigu
   @NotNull
   @Override
   public Collection<? extends AbstractTreeNode> getChildren() {
+    for (RunDashboardCustomizer customizer : myCustomizers) {
+      Collection<? extends AbstractTreeNode> children = customizer.getChildren(this);
+      if (children != null) {
+        return children;
+      }
+    }
     return Collections.emptyList();
   }
 
