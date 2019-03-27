@@ -84,6 +84,9 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightTestCase() {
   fun testConstantConditionsAffectingControlFlow() = doTest()
   fun testContinueInside() = doTest()
   fun testCopyParamAnnotations() = doTest()
+  fun testParameterUsedInReturnedExpression() = doTest()
+  fun testParameterUsedInReturnCondition() = doTest()
+  fun testMethodUsedInReturnCondition() = doTest()
 
   fun test() = doTest()
 
