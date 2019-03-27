@@ -121,11 +121,11 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
 
     for (CodeStyleSettingPresentation setting: settings) {
       if (myAllOptionsAllowed || myAllowedOptions.contains(setting.getFieldName())) {
-        doCreateOption(optionGroup, new IntOption(setting.getUiName(), setting.getFieldName()), setting.getFieldName());
+        doCreateOption(optionGroup, new IntOption(setting.getUiName(), setting.getFieldName()));
       }
     }
     for (Trinity<Class<? extends CustomCodeStyleSettings>, String, String> each : myCustomOptions.get(groupName)) {
-      doCreateOption(optionGroup, new IntOption(each.third, each.first, each.second), each.second);
+      doCreateOption(optionGroup, new IntOption(each.third, each.first, each.second));
     }
 
     if (optionGroup.getComponents().length == 0) return null;
@@ -133,9 +133,9 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     return optionGroup;
   }
 
-  private void doCreateOption(OptionGroup optionGroup, IntOption option, String fieldName) {
+  private void doCreateOption(OptionGroup optionGroup, IntOption option) {
     String title = option.myIntField.getName();
-    String renamed = myRenamedFields.get(fieldName);
+    String renamed = myRenamedFields.get(option.getFieldName());
     if (renamed != null) title = renamed;
 
     JBLabel l = new JBLabel(title);
@@ -241,6 +241,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     private final Field myTarget;
     private Class<? extends CustomCodeStyleSettings> myTargetClass;
     private int myCurrValue = Integer.MAX_VALUE;
+    private String myFieldName;
 
     private IntOption(@NotNull String title, String fieldName) {
       this(title, CommonCodeStyleSettings.class, fieldName, false);
@@ -253,6 +254,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
 
     // dummy is used to distinguish constructors
     private IntOption(@NotNull String title, Class<?> fieldClass, String fieldName, boolean dummy) {
+      myFieldName = fieldName;
       try {
         myTarget = fieldClass.getField(fieldName);
       }
@@ -276,6 +278,10 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       catch (IllegalAccessException e) {
         throw new RuntimeException(e);
       }
+    }
+
+    private String getFieldName(){
+      return myFieldName;
     }
 
     public void setFieldValue(CodeStyleSettings settings, int value) {
