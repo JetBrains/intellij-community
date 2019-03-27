@@ -299,6 +299,12 @@ public final class DefaultTreeUI extends BasicTreeUI {
   @Override
   protected MouseListener createMouseListener() {
     return new MouseEventAdapter<MouseListener>(super.createMouseListener()) {
+      @Override
+      public void mouseDragged(MouseEvent event) {
+        Object property = UIUtil.getClientProperty(event.getSource(), "DnD Source"); // DnDManagerImpl.SOURCE_KEY
+        if (property == null) super.mouseDragged(event); // use Swing-based DnD only if custom DnD is not set
+      }
+
       @NotNull
       @Override
       protected MouseEvent convert(@NotNull MouseEvent event) {
