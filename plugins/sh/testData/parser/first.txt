@@ -25,16 +25,12 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(string_begin)('"')
-              PsiElement(string_content)('Hello      World')
-              PsiElement(string_end)('"')
-  PsiWhiteSpace(' ')
-  PsiWhiteSpace(' ')
-  PsiWhiteSpace(' ')
-  PsiWhiteSpace(' ')
-  PsiWhiteSpace(' ')
-  PsiWhiteSpace(' ')
-  PsiWhiteSpace(' ')
+              PsiElement(")('"')
+              PsiElement(word)('Hello')
+              PsiWhiteSpace('      ')
+              PsiElement(word)('World')
+              PsiElement(")('"')
+  PsiWhiteSpace('       ')
   PsiComment(Comment)('# This is a comment, too!')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -46,9 +42,11 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(string_begin)('"')
-              PsiElement(string_content)('Hello World')
-              PsiElement(string_end)('"')
+              PsiElement(")('"')
+              PsiElement(word)('Hello')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('World')
+              PsiElement(")('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -59,9 +57,13 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(string_begin)('"')
-              PsiElement(string_content)('Hello * World')
-              PsiElement(string_end)('"')
+              PsiElement(")('"')
+              PsiElement(word)('Hello')
+              PsiWhiteSpace(' ')
+              PsiElement(*)('*')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('World')
+              PsiElement(")('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND

@@ -46,7 +46,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(assignment_word)('avr')
+          PsiElement(word)('avr')
           PsiElement(=)('=')
           PsiElement(int)('1')
   PsiElement(\n)('\n')
@@ -55,10 +55,10 @@ BASH_FILE
       PsiElement(trap)('trap')
       PsiWhiteSpace(' ')
       STRING
-        PsiElement(string_begin)('"')
+        PsiElement(")('"')
         VARIABLE
           PsiElement(var)('$avr')
-        PsiElement(string_end)('"')
+        PsiElement(")('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     TRAP_COMMAND

@@ -3,12 +3,12 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(assignment_word)('file')
+          PsiElement(word)('file')
           PsiElement(=)('=')
           STRING
-            PsiElement(string_begin)('"')
-            PsiElement(string_content)('foo')
-            PsiElement(string_end)('"')
+            PsiElement(")('"')
+            PsiElement(word)('foo')
+            PsiElement(")('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST

@@ -10,11 +10,12 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(string_begin)('"')
-              PsiElement(string_content)('foo: ')
+              PsiElement(")('"')
+              PsiElement(word)('foo:')
+              PsiWhiteSpace(' ')
               VARIABLE
                 PsiElement(var)('$res')
-              PsiElement(string_end)('"')
+              PsiElement(")('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST

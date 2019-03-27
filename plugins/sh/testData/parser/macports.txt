@@ -25,13 +25,13 @@ BASH_FILE
                   PsiElement(cond_op)('-z')
                   PsiWhiteSpace(' ')
                   STRING
-                    PsiElement(string_begin)('"')
+                    PsiElement(")('"')
                     PsiElement($)('$')
                     SHELL_PARAMETER_EXPANSION
                       PsiElement({)('{')
                       PsiElement(word)('MACPORTS')
                       PsiElement(})('}')
-                    PsiElement(string_end)('"')
+                    PsiElement(")('"')
                   PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
@@ -52,7 +52,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(assignment_word)('VER')
+          PsiElement(word)('VER')
           PsiElement(=)('=')
           COMMAND_SUBSTITUTION_COMMAND
             PsiElement(`)('`')
@@ -65,9 +65,9 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(string_begin)('"')
-                        PsiElement(string_content)('s/MacPorts-\(.*\)-.*-.*.pkg/\1/')
-                        PsiElement(string_end)('"')
+                        PsiElement(")('"')
+                        PsiElement(word)('s/MacPorts-\(.*\)-.*-.*.pkg/\1/')
+                        PsiElement(")('"')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       REDIRECTION

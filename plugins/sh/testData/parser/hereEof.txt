@@ -1,10 +1,7 @@
 BASH_FILE
   PsiComment(shebang)('#!/usr/bin/env bash\n')
   PsiElement(\n)('\n')
-  PsiWhiteSpace(' ')
-  PsiWhiteSpace(' ')
-  PsiWhiteSpace(' ')
-  PsiWhiteSpace(' ')
+  PsiWhiteSpace('    ')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE

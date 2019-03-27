@@ -70,8 +70,7 @@ BASH_FILE
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
                   PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
+            PsiWhiteSpace('  ')
             PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PIPELINE_COMMAND
@@ -141,8 +140,7 @@ BASH_FILE
                   PsiWhiteSpace(' ')
                   SIMPLE_COMMAND_ELEMENT
                     PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
+            PsiWhiteSpace('  ')
             PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PIPELINE_COMMAND
@@ -163,8 +161,8 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(string_begin)('"')
-              PsiElement(string_end)('"')
+              PsiElement(")('"')
+              PsiElement(")('"')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -181,8 +179,8 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(string_begin)('"')
-              PsiElement(string_end)('"')
+              PsiElement(")('"')
+              PsiElement(")('"')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -204,7 +202,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(string_begin)('"')
+              PsiElement(")('"')
               PsiElement($)('$')
               SHELL_PARAMETER_EXPANSION
                 PsiElement({)('{')
@@ -217,7 +215,7 @@ BASH_FILE
               PsiElement(string_content)(' /tmp/')
               VARIABLE
                 PsiElement(var)('$FILE')
-              PsiElement(string_end)('"')
+              PsiElement(")('"')
         PsiWhiteSpace(' ')
         PsiElement(|)('|')
         PsiWhiteSpace(' ')
