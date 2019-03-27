@@ -51,6 +51,16 @@
   </xi:include>
   <xi:include href="/META-INF/coverage-common-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <module value="com.intellij.modules.externalSystem"/>
+  <xi:include href="/componentSets/ExternalSystemComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <extensionPoints>
+    <xi:include href="/META-INF/ExternalSystemExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <xi:include href="/META-INF/ExternalSystemExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+  </extensions>
+  <xi:include href="/idea/ExternalSystemActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
   <application-components>
     <component>
       <implementation-class>com.intellij.internal.statistic.updater.StatisticsJobsScheduler</implementation-class>
