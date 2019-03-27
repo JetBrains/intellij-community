@@ -53,6 +53,7 @@ class PythonCommunityPluginModules {
         "$context.applicationInfo.majorVersion.$context.applicationInfo.minorVersionMainPart.$pluginBuildNumber"
       }
       doNotCreateSeparateJarForLocalizableResources()
+      withProjectLibrary("libthrift")  // Required for "Python Console" in intellij.python.community.impl module
       body.delegate = delegate
       body()
     }
