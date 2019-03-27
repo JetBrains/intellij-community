@@ -52,8 +52,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
   private boolean myIsFirstUpdate = true;
   private final Map<String, String> myRenamedFields = new THashMap<>();
 
-  private final MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>> myCustomOptions
-    = new MultiMap<>();
+  private final MultiMap<String, IntOption> myCustomOptions = new MultiMap<>();
 
   private final JPanel myPanel = new JPanel(new GridBagLayout());
 
@@ -125,10 +124,8 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
         groupOptions.add(new IntOption(setting.getUiName(), setting.getFieldName()));
       }
     }
-    for (Trinity<Class<? extends CustomCodeStyleSettings>, String, String> each : myCustomOptions.get(groupName)) {
-      groupOptions.add(new IntOption(each.third, each.first, each.second));
-    }
-    groupOptions.forEach(option -> {
+    groupOptions.addAll(myCustomOptions.get(groupName));
+    sortOptions(groupOptions).forEach(option -> {
       String title = option.myIntField.getName();
       String renamed = myRenamedFields.get(option.getFieldName());
       if (renamed != null) title = renamed;
@@ -213,7 +210,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
                                @Nullable String anchorFieldName,
                                Object... options) {
     if (myIsFirstUpdate) {
-      myCustomOptions.putValue(groupName, Trinity.create(settingsClass, fieldName, title));
+      myCustomOptions.putValue(groupName, new IntOption(title, settingsClass, fieldName,anchor, anchorFieldName));
     }
 
     for (IntOption option : myOptions) {
@@ -233,7 +230,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     }
   }
 
-  private class IntOption {
+  private class IntOption extends OrderedOption{
     private final IntegerField myIntField;
     private final Field myTarget;
     private Class<? extends CustomCodeStyleSettings> myTargetClass;
@@ -244,13 +241,18 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       this(title, CommonCodeStyleSettings.class, fieldName, false);
     }
 
-    private IntOption(@NotNull String title, Class<? extends CustomCodeStyleSettings> targetClass, String fieldName) {
-      this(title, targetClass, fieldName, false);
+    private IntOption(@NotNull String title, Class<? extends CustomCodeStyleSettings> targetClass, String fieldName, @Nullable OptionAnchor anchor, @Nullable String anchorOptionName) {
+      this(title, targetClass, fieldName, false, anchor, anchorOptionName);
       myTargetClass = targetClass;
     }
 
     // dummy is used to distinguish constructors
     private IntOption(@NotNull String title, Class<?> fieldClass, String fieldName, boolean dummy) {
+      this(title, fieldClass, fieldName, dummy, null, null);
+    }
+
+    private IntOption(@NotNull String title, Class<?> fieldClass, String fieldName, boolean dummy, @Nullable OptionAnchor anchor, @Nullable String anchorOptionName) {
+      super(fieldName, anchor, anchorOptionName);
       myFieldName = fieldName;
       try {
         myTarget = fieldClass.getField(fieldName);
