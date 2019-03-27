@@ -51,14 +51,14 @@ ArithWordAfter =  {ArithWordFirst} | [0-9#!]
 ParamExpansionWordFirst = [a-zA-Z0-9_] | {EscapedChar} | {LineContinuation}
 ParamExpansionWord = {ParamExpansionWordFirst}+
 
-AssignListWordFirst = [[\p{Letter}]||[0-9_/@?.*:&%\^+~,-]] | {EscapedChar} | {LineContinuation}
-AssignListWordAfter =  {AssignListWordFirst} | [#!]
+AssignListWordFirst = [[\p{Letter}]||[0-9_/@?.*:&%\^~,]] | {EscapedChar} | {LineContinuation}
+AssignListWordAfter =  {AssignListWordFirst} | [$#!]
 AssignListWord = {AssignListWordFirst}{AssignListWordAfter}*
 
 Word = {WordFirst}{WordAfter}*
 ArithWord = {ArithWordFirst}{ArithWordAfter}*
 AssignmentWord = [[\p{Letter}]||[_]] [[\p{Letter}]||[0-9_]]*
-Variable = "$" ({AssignmentWord} | [@$#0-9?!*_-])
+Variable = "$" {AssignmentWord} | "$"[@$#0-9?!*_-]
 
 ArithExpr = ({ArithWord} | [0-9a-z+*-] | {Variable} )+
 
@@ -72,10 +72,35 @@ CasePattern = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 
 Filedescriptor = "&" {IntegerLiteral} | "&-"
 
+%state EXPRESSIONS
 
 %%
 
-<YYINITIAL> {
+<EXPRESSIONS> {
+    "~"                           { return ARITH_BITWISE_NEGATE; }
+    "^"                           { return ARITH_BITWISE_XOR; }
+
+    "?"                           { return ARITH_QMARK; }
+    ":"                           { return ARITH_COLON; }
+
+    "+"                           { return ARITH_PLUS; }
+    "++"                          { return ARITH_PLUS_PLUS; }
+    "-"                           { return ARITH_MINUS; }
+    "--"                          { return ARITH_MINUS_MINUS; }
+    "=="                          { return ARITH_EQ; }
+
+    "**"                          { return EXPONENT; }
+    "*"                           { return MULT; }
+    "/"                           { return DIV; }
+    "%"                           { return MOD; }
+
+    {ArithWord}                   { return WORD; }
+
+    "))"                          { yybegin(YYINITIAL); return RIGHT_DOUBLE_PAREN; }
+}
+
+
+<YYINITIAL, EXPRESSIONS> {
     "case"                        { return CASE; }
     "!"                           { return BANG; }
     "do"                          { return DO; }
@@ -99,57 +124,43 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
     ";"                           { return SEMI; }
     ","                           { return COMMA; }
 
+    "&&"                          { return AND_AND; }
+    "||"                          { return OR_OR; }
 
-    "&&"                         { return AND_AND; }
-    "||"                         { return OR_OR; }
+    "="                           { return EQ; }
+    "+="                          { return ADD_EQ; }
 
-    "="                          { return EQ; }
-    "+="                         { return ADD_EQ; }
+    "[[ "                         { return LEFT_DOUBLE_BRACKET; }
+    " ]]"                         { return RIGHT_DOUBLE_BRACKET; }
 
-    "[[ "                       { return LEFT_DOUBLE_BRACKET; }
-    " ]]"                       { return RIGHT_DOUBLE_BRACKET; }
+    " ]"                          { return EXPR_CONDITIONAL_RIGHT; }
+    "[ "                          { return EXPR_CONDITIONAL_LEFT; }
+    "&&"                          { return AND_AND; }
+    "||"                          { return OR_OR; }
+    "$"                           { return DOLLAR; }
+    "("                           { return LEFT_PAREN; }
+    ")"                           { return RIGHT_PAREN; }
+    "{"                           { return LEFT_CURLY; }
+    "}"                           { return RIGHT_CURLY; }
+    "["                           { return LEFT_SQUARE; }
+    "]"                           { return RIGHT_SQUARE; }
+    ">"                           { return GT; }
+    "<"                           { return LT; }
+    "<<"                          { return SHIFT_LEFT; }
+    ">>"                          { return SHIFT_RIGHT; }
+    ">="                          { return GE; }
+    "<="                          { return LE; }
+    "!="                          { return ARITH_NE; }
 
-    "(("                       { return LEFT_DOUBLE_PAREN; }
-    "))"                       { return RIGHT_DOUBLE_PAREN; }
 
-    " ]"                        { return EXPR_CONDITIONAL_RIGHT; }
-    "[ "                        { return EXPR_CONDITIONAL_LEFT; }
-    "&&"                        { return AND_AND; }
-    "||"                        { return OR_OR; }
-    "$"                         { return DOLLAR; }
-    "("                         { return LEFT_PAREN; }
-    ")"                         { return RIGHT_PAREN; }
-    "{"                         { return LEFT_CURLY; }
-    "}"                         { return RIGHT_CURLY; }
-    "["                         { return LEFT_SQUARE; }
-    "]"                         { return RIGHT_SQUARE; }
-    ">"                         { return GT; }
-    "<"                         { return LT; }
-    "<<"                        { return SHIFT_LEFT; }
-    ">>"                        { return SHIFT_RIGHT; }
-    ">="                        { return GE; }
-    "<="                        { return LE; }
-    "!="                        { return ARITH_NE; }
-
-    "--"                          { return ARITH_MINUS_MINUS; }
-    "=="                          { return ARITH_EQ; }
-    "**"                          { return EXPONENT; }
-    "*"                           { return MULT; }
-    "/"                           { return DIV; }
-    "%"                           { return MOD; }
     "<<"                          { return SHIFT_LEFT; }
 
 //        "!"                           { return ARITH_NEGATE; } // todo: never match wtf?
 
-    "~"                           { return ARITH_BITWISE_NEGATE; }
-    "^"                           { return ARITH_BITWISE_XOR; }
 
-    "?"                           { return ARITH_QMARK; }
-    ":"                           { return ARITH_COLON; }
 
     "`"                           { return BACKQUOTE; }
     "|"                           { return PIPE; }
-
 
   "<>"                            { return REDIRECT_LESS_GREATER; }
   "<&"                            { return REDIRECT_LESS_AMP; }
@@ -157,7 +168,6 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
   "<&"                            { return REDIRECT_LESS_AMP; }
   ">&"                            { return REDIRECT_GREATER_AMP; }
   ">|"                            { return REDIRECT_GREATER_BAR; }
-
 
   "|&"                            { return PIPE_AMP; }
 
@@ -174,8 +184,6 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
     {Filedescriptor}              { return FILEDESCRIPTOR; }
 
 
-    {Word}                        { return WORD; }
-    {ArithWord}                   { return WORD; }
     {AssignListWord}              { return WORD; }
 
     {Shebang}                     { return SHEBANG; }
@@ -186,13 +194,19 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
     {LineTerminator}              { return LINEFEED; }
     {Variable}                    { return VAR; }
 
-
     {Quote}                       { return QUOTE; }
 
     {RawString}                   { return RAW_STRING; }
 }
 
-   [^]                            { return BAD_CHARACTER; }
+<YYINITIAL> {
+    {Word}                        { return WORD; }
+    "(("                          { yybegin(EXPRESSIONS); return LEFT_DOUBLE_PAREN; }
+}
+
+
+
+[^]                               { return BAD_CHARACTER; }
 
 ///************* STATES ************/
 ///* If in a conditional expression */

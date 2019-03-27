@@ -1,3 +1,9 @@
+*
+Hello *
+Hello * World
+
+$(( 1 * 1 ))
+
 %
 a%b
 a%b}

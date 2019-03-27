@@ -37,6 +37,10 @@ name='name'
 dir=$name.git $(( 1+2 ))
 dir3=$name.git$(( 1+2 ))
 
+cd -
+
+dir3=$name.git$(( 1-2 ))
+
 echo $dir
 echo $dir3
 
