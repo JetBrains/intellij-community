@@ -75,13 +75,20 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   @Nullable
   public static File getCondaEnvRoot(@NotNull final String binaryPath) {
     final File binary = new File(binaryPath);
-    final File bin = binary.getParentFile();
-    if (bin == null) return null;
-    final File root = bin.getParentFile();
-    if (root == null) return null;
-    final File rootContainer = root.getParentFile();
-    if (rootContainer == null) return null;
-    return "envs".equals(rootContainer.getName()) ? root : null;
+    final File parent = binary.getParentFile();
+    if (parent == null) return null;
+    final File parent2 = parent.getParentFile();
+    if (parent2 == null) return null;
+    final File parent3 = parent2.getParentFile();
+    if (parent3 != null && "envs".equals(parent3.getName())) {
+      return parent2;
+    }
+    else if ("envs".equals(parent2.getName())) {
+      return parent;
+    }
+    else {
+      return null;
+    }
   }
 
   @Override
