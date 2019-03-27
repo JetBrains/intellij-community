@@ -9,19 +9,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.AbstractLayoutCache;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 
 import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.openapi.util.registry.Registry.is;
+import static com.intellij.util.ReflectionUtil.getMethod;
+import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 
 @SuppressWarnings("unused")
 public final class DefaultTreeUI extends BasicTreeUI {
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
+  private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
 
   private static void logStackTrace(@NotNull String message) {
     if (LOG.isDebugEnabled()) LOG.warn(new IllegalStateException(message));
@@ -59,6 +64,27 @@ public final class DefaultTreeUI extends BasicTreeUI {
     return null;
   }
 
+  private static void setBackground(@NotNull JTree tree, @NotNull Component component, @Nullable Color background, boolean opaque) {
+    if (component instanceof JComponent) {
+      ((JComponent)component).setOpaque(opaque);
+    }
+    if (background != null) {
+      component.setBackground(background);
+    }
+    else if (component.isOpaque()) {
+      component.setBackground(tree.getBackground());
+    }
+  }
+
+  private static boolean isSuspiciousRenderer(Component component) {
+    if (component instanceof JComponent) {
+      Method method = getMethod(component.getClass(), "validate");
+      Class<?> type = method == null ? null : method.getDeclaringClass();
+      return Component.class.equals(type) || Container.class.equals(type);
+    }
+    return true;
+  }
+
   private static int getExpandedRow(@NotNull JTree tree) {
     if (tree instanceof Tree) {
       Tree custom = (Tree)tree;
@@ -77,8 +103,28 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   private final Control control = new DefaultControl();
 
+  @Nullable
   private JTree getTree() {
     return super.tree; // TODO: tree ???
+  }
+
+  @Nullable
+  private Component getRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
+    TreeCellRenderer renderer = currentCellRenderer; // TODO: currentCellRenderer ???
+    if (renderer == null) return null;
+    Component component = renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, focused);
+    if (component == null) return null;
+
+    CellRendererPane pane = rendererPane; // TODO: rendererPane ???
+    if (pane != null && pane != component.getParent()) pane.add(component);
+
+    if (LOG.isDebugEnabled()) {
+      Class<? extends TreeCellRenderer> type = renderer.getClass();
+      if (!SUSPICIOUS.contains(type) && isSuspiciousRenderer(component) && SUSPICIOUS.add(type)) {
+        LOG.debug("suspicious renderer " + type);
+      }
+    }
+    return component;
   }
 
   private boolean isLeaf(@Nullable Object value) {
@@ -146,7 +192,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
             g.fillRect(viewportX, insets.top + bounds.y, viewportWidth, bounds.height);
           }
           int offset = painter.getRendererOffset(control, depth, leaf);
-          painter.paint(g, insets.left, insets.top + bounds.y, offset, bounds.height, control, depth, leaf, expanded, selected);
+          painter.paint(g, insets.left, insets.top + bounds.y, offset, bounds.height, control, depth, leaf, expanded, selected && focused);
           // TODO: editingComponent, editingRow ???
           if (editingComponent == null || editingRow != row) {
             int width = viewportX + viewportWidth - insets.left - offset - vsbWidth;
@@ -155,10 +201,9 @@ public final class DefaultTreeUI extends BasicTreeUI {
             }
             if (width > 0) {
               Object value = path.getLastPathComponent();
-              // TODO: currentCellRenderer, rendererPane ???
-              Component component = currentCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, lead);
+              Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead);
               if (component != null) {
-                if (background != null) component.setBackground(background);
+                setBackground(tree, component, background, false);
                 rendererPane.paintComponent(g, component, tree, insets.left + offset, bounds.y, width, bounds.height, true);
               }
             }
@@ -219,12 +264,13 @@ public final class DefaultTreeUI extends BasicTreeUI {
         if (editingComponent != null && editingRow == row) {
           size = editingComponent.getPreferredSize();
         }
-        else if (currentCellRenderer != null) {
+        else {
           boolean selected = tree.isRowSelected(row);
-          Component component = currentCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, false);
-          rendererPane.add(component); // Only ever removed when UI changes, this is OK!
-          component.validate();
-          size = component.getPreferredSize();
+          Component component = getRenderer(tree, value, selected, expanded, leaf, row, false);
+          if (component != null) {
+            component.validate();
+            size = component.getPreferredSize();
+          }
         }
         if (size == null) return null;
 
