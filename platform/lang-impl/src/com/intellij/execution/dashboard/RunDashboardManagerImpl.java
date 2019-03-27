@@ -146,12 +146,11 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     });
     connection.subscribe(RunDashboardManager.DASHBOARD_TOPIC, new RunDashboardListener() {
       @Override
-      public void contentChanged(boolean withStructure) {
-        updateDashboard(withStructure);
+      public void configurationChanged(@NotNull RunConfiguration configuration, boolean withStructure) {
+        updateDashboardIfNeeded(configuration, withStructure);
       }
     });
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-
       @Override
       public void exitDumbMode() {
         updateDashboard(false);
@@ -360,10 +359,16 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   private void updateDashboardIfNeeded(@Nullable RunnerAndConfigurationSettings settings) {
-    if (settings != null &&
-        (isShowInDashboard(settings.getConfiguration()) ||
-        !filterByContent(ExecutionManagerImpl.getInstance(myProject).getDescriptors(s -> settings.equals(s))).isEmpty())) {
-      updateDashboard(true);
+    if (settings != null) {
+      updateDashboardIfNeeded(settings.getConfiguration(), true);
+    }
+  }
+
+  private void updateDashboardIfNeeded(@NotNull RunConfiguration configuration, boolean withStructure) {
+    if (isShowInDashboard(configuration) ||
+        !filterByContent(ExecutionManagerImpl.getInstance(myProject).getDescriptors(s -> configuration.equals(s.getConfiguration())))
+          .isEmpty()) {
+      updateDashboard(withStructure);
     }
   }
 
@@ -390,12 +395,14 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   @Override
-  public void updateDashboard(final boolean withStructure) {
+  public void updateDashboard(boolean withStructure) {
     myProject.getMessageBus().syncPublisher(ServiceViewContributor.TOPIC).handle(new ServiceViewContributor.ServiceEvent(
       RunConfigurationsServiceViewContributor.class
     ));
 
-    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    if (Registry.is("ide.service.view")) return;
+
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     if (toolWindowManager == null) return;
 
     toolWindowManager.invokeLater(() -> {
@@ -404,11 +411,10 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       }
 
       if (withStructure) {
-        boolean canCreate = !Registry.is("ide.service.view");
-        boolean available = hasContent() && canCreate;
+        boolean available = hasContent();
         ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolWindowId());
         if (toolWindow == null) {
-          if (canCreate && (!myState.configurationTypes.isEmpty() || available)) {
+          if (!myState.configurationTypes.isEmpty() || available) {
             toolWindow = createToolWindow(toolWindowManager, available);
           }
           if (available) {
@@ -417,12 +423,10 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
           return;
         }
 
-        if (canCreate) {
-          boolean doShow = !toolWindow.isAvailable() && available;
-          toolWindow.setAvailable(available, null);
-          if (doShow) {
-            toolWindow.show(null);
-          }
+        boolean doShow = !toolWindow.isAvailable() && available;
+        toolWindow.setAvailable(available, null);
+        if (doShow) {
+          toolWindow.show(null);
         }
       }
 
